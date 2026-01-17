@@ -38,7 +38,6 @@ from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
@@ -62,8 +61,8 @@ all_files_meta = get_all_sample_files()
     ids=[m["path"] for m in all_files_meta["data"] if not m["encrypted"]],
 )
 @pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
-def test_read(meta):
-    pdf_path = SAMPLE_ROOT / meta["path"]
+def test_read(meta, sample_files_dir):
+    pdf_path = sample_files_dir / meta["path"]
     reader = PdfReader(pdf_path)
     try:
         reader.pages[0]
@@ -89,7 +88,7 @@ def test_read(meta):
         ("https://arxiv.org/pdf/2201.00029.pdf", None),
     ],
 )
-def test_page_operations(pdf_path, password):
+def test_page_operations(pdf_path, password, resources_dir):
     """
     This test just checks if the operation throws an exception.
 
@@ -99,7 +98,7 @@ def test_page_operations(pdf_path, password):
     if pdf_path.startswith("http"):
         pdf_path = BytesIO(get_data_from_url(pdf_path, pdf_path.split("/")[-1]))
     else:
-        pdf_path = RESOURCE_ROOT / pdf_path
+        pdf_path = resources_dir / pdf_path
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
@@ -141,14 +140,14 @@ def test_page_operations(pdf_path, password):
     ],
 )
 def test_mediabox_expansion_after_rotation(
-    angle: float, expected_width: int, expected_height: int
+    angle: float, expected_width: int, expected_height: int, resources_dir
 ):
     """
     Mediabox dimensions after rotation at a non-right angle with expansion are correct.
 
     The test was validated against pillow (see PR #2282)
     """
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    pdf_path = resources_dir / "crazyones.pdf"
     writer = PdfWriter(clone_from=pdf_path)
 
     transformation = Transformation().rotate(angle)
@@ -162,12 +161,12 @@ def test_mediabox_expansion_after_rotation(
     assert math.isclose(mediabox.height, expected_height, abs_tol=2)
 
 
-def test_transformation_equivalence():
-    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
+def test_transformation_equivalence(resources_dir):
+    pdf_path = resources_dir / "labeled-edges-center-image.pdf"
     writer_base = PdfWriter(clone_from=pdf_path)
     page_base = writer_base.pages[0]
 
-    pdf_path = RESOURCE_ROOT / "box.pdf"
+    pdf_path = resources_dir / "box.pdf"
     writer_add = PdfWriter(clone_from=pdf_path)
     page_box = writer_add.pages[0]
 
@@ -196,11 +195,11 @@ def test_transformation_equivalence():
     )
 
 
-def test_transformation_equivalence2():
-    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
+def test_transformation_equivalence2(resources_dir):
+    pdf_path = resources_dir / "labeled-edges-center-image.pdf"
     reader_base = PdfReader(pdf_path)
 
-    pdf_path = RESOURCE_ROOT / "box.pdf"
+    pdf_path = resources_dir / "box.pdf"
     reader_add = PdfReader(pdf_path)
 
     writer = PdfWriter()
@@ -231,7 +230,7 @@ def test_transformation_equivalence2():
     )
     # No special assert: Visual check the page has been  increased and all is visible (box+graph)
 
-    pdf_path = RESOURCE_ROOT / "commented-xmp.pdf"
+    pdf_path = resources_dir / "commented-xmp.pdf"
     reader_comments = PdfReader(pdf_path)
 
     writer = PdfWriter()
@@ -247,10 +246,8 @@ def test_transformation_equivalence2():
     # No special assert: Visual check the overlay has its comments at the good position
 
 
-def test_get_user_unit_property():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    assert reader.pages[0].user_unit == 1
+def test_get_user_unit_property(crazyones_pdf_reader):
+    assert crazyones_pdf_reader.pages[0].user_unit == 1
 
 
 def compare_dict_objects(d1, d2):
@@ -263,8 +260,8 @@ def compare_dict_objects(d1, d2):
 
 
 @pytest.mark.slow
-def test_page_transformations():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+def test_page_transformations(resources_dir):
+    pdf_path = resources_dir / "crazyones.pdf"
     writer = PdfWriter(clone_from=pdf_path)
 
     page: PageObject = writer.pages[0]
@@ -291,17 +288,14 @@ def test_page_transformations():
 @pytest.mark.parametrize(
     ("pdf_path", "password"),
     [
-        (RESOURCE_ROOT / "crazyones.pdf", None),
-        (RESOURCE_ROOT / "attachment.pdf", None),
-        (RESOURCE_ROOT / "side-by-side-subfig.pdf", None),
-        (
-            RESOURCE_ROOT / "libreoffice-writer-password.pdf",
-            "openpassword",
-        ),
+        ("crazyones.pdf", None),
+        ("attachment.pdf", None),
+        ("side-by-side-subfig.pdf", None),
+        ("libreoffice-writer-password.pdf", "openpassword"),
     ],
 )
-def test_compress_content_streams(pdf_path, password):
-    reader = PdfReader(pdf_path)
+def test_compress_content_streams(pdf_path, password, resources_dir):
+    reader = PdfReader(resources_dir / pdf_path)
 
     writer = PdfWriter()
     if password:
@@ -322,9 +316,8 @@ def test_compress_content_streams(pdf_path, password):
         reader.pages[0].compress_content_streams()
 
 
-def test_page_properties():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    page = reader.pages[0]
+def test_page_properties(crazyones_pdf_page_one):
+    page = crazyones_pdf_page_one
     assert page.mediabox == RectangleObject((0, 0, 612, 792))
     assert page.cropbox == RectangleObject((0, 0, 612, 792))
     assert page.bleedbox == RectangleObject((0, 0, 612, 792))
@@ -335,8 +328,8 @@ def test_page_properties():
     assert page.bleedbox == RectangleObject((0, 1, 100, 101))
 
 
-def test_page_rotation():
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+def test_page_rotation(resources_dir):
+    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
     page = writer.pages[0]
     with pytest.raises(ValueError) as exc:
         page.rotate(91)
@@ -358,8 +351,8 @@ def test_page_rotation():
     assert math.isclose(page.mediabox.top, 612, abs_tol=0.1)
 
 
-def test_page_indirect_rotation():
-    reader = PdfReader(RESOURCE_ROOT / "indirect-rotation.pdf")
+def test_page_indirect_rotation(resources_dir):
+    reader = PdfReader(resources_dir / "indirect-rotation.pdf")
     page = reader.pages[0]
 
     # test rotation
@@ -470,7 +463,7 @@ def test_extract_text_operator_t_star():  # L1266, L1267
         page.extract_text()
 
 
-def test_extract_text_visitor_callbacks():
+def test_extract_text_visitor_callbacks(resources_dir):
     """
     Extract text in rectangle-objects or simple tables.
 
@@ -654,7 +647,7 @@ def test_extract_text_visitor_callbacks():
         return ("".join(t.text for t in cell_texts)).strip()
 
     # Test 1: We test the analysis of page 7 "2.1 LRS model".
-    reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+    reader = PdfReader(resources_dir / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
     page_lrs_model = reader.pages[6]
 
     # We ignore the invisible large rectangles.
@@ -726,7 +719,7 @@ def test_extract_text_visitor_callbacks():
 
     # Test 3: Read a table in a document using a non-translating
     #         but scaling Tm-operand
-    reader = PdfReader(RESOURCE_ROOT / "Sample_Td-matrix.pdf")
+    reader = PdfReader(resources_dir / "Sample_Td-matrix.pdf")
     page_td_model = reader.pages[0]
     # We store the translations of the Td-executions.
     list_td = []
@@ -748,7 +741,7 @@ def test_extract_text_visitor_callbacks():
     ("pdf_path", "password", "embedded", "unembedded"),
     [
         (
-            RESOURCE_ROOT / "crazyones.pdf",
+            "crazyones.pdf",
             None,
             {
                 "/HHXGQB+SFTI1440",
@@ -758,7 +751,7 @@ def test_extract_text_visitor_callbacks():
             set(),
         ),
         (
-            RESOURCE_ROOT / "attachment.pdf",
+            "attachment.pdf",
             None,
             {
                 "/HHXGQB+SFTI1440",
@@ -768,35 +761,35 @@ def test_extract_text_visitor_callbacks():
             set(),
         ),
         (
-            RESOURCE_ROOT / "libreoffice-writer-password.pdf",
+            "libreoffice-writer-password.pdf",
             "openpassword",
             {"/BAAAAA+DejaVuSans"},
             set(),
         ),
         (
-            RESOURCE_ROOT / "imagemagick-images.pdf",
+            "imagemagick-images.pdf",
             None,
             set(),
             {"/Helvetica"},
         ),
-        (RESOURCE_ROOT / "imagemagick-lzw.pdf", None, set(), set()),
+        ("imagemagick-lzw.pdf", None, set(), set()),
         (
-            RESOURCE_ROOT / "reportlab-inline-image.pdf",
+            "reportlab-inline-image.pdf",
             None,
             set(),
             {"/Helvetica"},
         ),
         # fonts in annotations
         (
-            RESOURCE_ROOT / "FormTestFromOo.pdf",
+            "FormTestFromOo.pdf",
             None,
             {"/CAAAAA+LiberationSans", "/EAAAAA+SegoeUI", "/BAAAAA+LiberationSerif"},
             {"/LiberationSans", "/ZapfDingbats"},
         ),
     ],
 )
-def test_get_fonts(pdf_path, password, embedded, unembedded):
-    reader = PdfReader(pdf_path, password=password)
+def test_get_fonts(pdf_path, password, embedded, unembedded, resources_dir):
+    reader = PdfReader(resources_dir / pdf_path, password=password)
     a = set()
     b = set()
     for page in reader.pages:
@@ -844,9 +837,8 @@ def test_get_fonts2():
     )
 
 
-def test_annotation_getter():
-    pdf_path = RESOURCE_ROOT / "commented.pdf"
-    reader = PdfReader(pdf_path)
+def test_annotation_getter(resources_dir):
+    reader = PdfReader(resources_dir / "commented.pdf")
     annotations = reader.pages[0].annotations
     assert annotations is not None
     assert isinstance(annotations[0], IndirectObject)
@@ -885,11 +877,9 @@ def test_annotation_getter():
     }
 
 
-def test_annotation_setter(pdf_file_path):
+def test_annotation_setter(pdf_file_path, crazyones_pdf_page_one):
     # Arange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
+    page = crazyones_pdf_page_one
     writer = PdfWriter()
     writer.add_page(page)
     with pytest.raises(ValueError):
@@ -966,10 +956,10 @@ def test_empyt_password_1088():
     len(reader.pages)
 
 
-@pytest.mark.enable_socket
-def test_old_habibi():
+@pytest.mark.samples
+def test_old_habibi(sample_files_dir):
     # this habibi has multiple characters associated with the h
-    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
+    reader = PdfReader(sample_files_dir / "015-arabic/habibi.pdf")
     txt = reader.pages[0].extract_text()  # very odd file
     # extract from acrobat reader "حَبيبي habibi􀀃􀏲􀎒􀏴􀎒􀎣􀋴
     assert "habibi" in txt
@@ -977,8 +967,8 @@ def test_old_habibi():
 
 
 @pytest.mark.samples
-def test_read_link_annotation():
-    reader = PdfReader(SAMPLE_ROOT / "016-libre-office-link/libre-office-link.pdf")
+def test_read_link_annotation(sample_files_dir):
+    reader = PdfReader(sample_files_dir / "016-libre-office-link/libre-office-link.pdf")
     assert len(reader.pages[0].annotations) == 1
     annot = dict(reader.pages[0].annotations[0].get_object())
     expected = {
@@ -1217,9 +1207,8 @@ def test_merge_transformed_page_into_blank():
     assert inserted_blank.page_number is not None
 
 
-def test_pages_printing():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_pages_printing(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     assert str(reader.pages) == "[PageObject(0)]"
     assert len(reader.pages[0].images) == 0
     with pytest.raises(KeyError):
@@ -1276,9 +1265,8 @@ def test_del_pages():
     assert len(writer.flattened_pages) == 0
 
 
-def test_pdf_pages_missing_type():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_pdf_pages_missing_type(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     del reader.trailer["/Root"]["/Pages"]["/Kids"][0].get_object()["/Type"]
     reader.pages[0]
     writer = PdfWriter(clone_from=reader)
@@ -1299,7 +1287,7 @@ def test_merge_with_stream_wrapped_in_save_restore():
 
 
 @pytest.mark.samples
-def test_compression():
+def test_compression(sample_files_dir):
     """Test for issue #1897"""
 
     def create_stamp_pdf() -> BytesIO:
@@ -1316,7 +1304,7 @@ def test_compression():
     template = PdfReader(create_stamp_pdf())
     template_page = template.pages[0]
     writer = PdfWriter()
-    writer.append(SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
+    writer.append(sample_files_dir / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
     nb1 = len(writer._objects)
 
     # 1 page only is modified
@@ -1444,21 +1432,21 @@ def test_missing_basefont_in_type3():
     reader.pages[0]._get_fonts()
 
 
-def test_invalid_index():
-    src_abs = RESOURCE_ROOT / "git.pdf"
+def test_invalid_index(resources_dir):
+    src_abs = resources_dir / "git.pdf"
     reader = PdfReader(src_abs)
     with pytest.raises(TypeError):
         _ = reader.pages["0"]
 
 
-def test_negative_index():
-    src_abs = RESOURCE_ROOT / "git.pdf"
+def test_negative_index(resources_dir):
+    src_abs = resources_dir / "git.pdf"
     reader = PdfReader(src_abs)
     assert reader.pages[0] == reader.pages[-1]
 
 
-def test_get_contents_as_bytes():
-    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+def test_get_contents_as_bytes(crazyones_pdf_writer):
+    writer = crazyones_pdf_writer
     co = writer.pages[0]["/Contents"][0]
     expected = co.get_data()
     assert writer.pages[0]._get_contents_as_bytes() == expected
@@ -1468,14 +1456,14 @@ def test_get_contents_as_bytes():
     assert writer.pages[0]._get_contents_as_bytes() is None
 
 
-def test_recursive_get_page_from_node():
-    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+def test_recursive_get_page_from_node(crazyones_pdf_path):
+    writer = PdfWriter(crazyones_pdf_path, incremental=True)
     writer.root_object["/Pages"].get_object()[
         NameObject("/Parent")
     ] = writer.root_object["/Pages"].indirect_reference
     with pytest.raises(PyPdfError):
         writer.add_page(writer.pages[0])
-    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer = PdfWriter(crazyones_pdf_path, incremental=True)
     writer.insert_page(writer.pages[0], -1)
     with pytest.raises(ValueError):
         writer.insert_page(writer.pages[0], -10)
@@ -1585,9 +1573,8 @@ def test_delete_non_existent_annotations():
     assert page.annotations is None
 
 
-def test_replace_contents_on_reader():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_replace_contents_on_reader(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     content_stream = ContentStream(stream=None, pdf=reader)
     content_stream.set_data(b"Test data")
@@ -1617,7 +1604,7 @@ def test_replace_contents_on_reader__indirect_reference():
     writer.add_page(lhs)
 
 
-def test_merge_page__coverage():
+def test_merge_page__coverage(resources_dir):
     # Test with some otherwise untested cases.
 
     # Own resources are missing.
@@ -1641,7 +1628,7 @@ def test_merge_page__coverage():
     assert page.mediabox == RectangleObject((0.0, 0.0, 20, 10))
 
     # With transformation.
-    path = RESOURCE_ROOT / "crazyones.pdf"
+    path = resources_dir / "crazyones.pdf"
     page = PdfWriter(clone_from=path).pages[0]
     page.indirect_reference = None
     page2 = PageObject.create_blank_page(width=20, height=5)

@@ -54,10 +54,6 @@ filter_inputs = (
     string.whitespace,  # Add more
 )
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
 
 @pytest.mark.parametrize(
     ("predictor", "s"), list(cartesian_product([1], filter_inputs))
@@ -355,10 +351,9 @@ def test_1bit_image_extraction():
 
 
 @pytest.mark.enable_socket
-def test_png_transparency_reverse():
+def test_png_transparency_reverse(resources_dir):
     """Cf issue #1599"""
-    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
-    reader = PdfReader(pdf_path)
+    reader = PdfReader(resources_dir / "labeled-edges-center-image.pdf")
     refimg = Image.open(
         BytesIO(get_data_from_url(name="labeled-edges-center-image.png"))
     )
@@ -657,11 +652,11 @@ def test_ascii85decode__ignore_whitespaces(caplog):
 
 
 @pytest.mark.enable_socket
-def test_ccitt_fax_decode__black_is_1():
+def test_ccitt_fax_decode__black_is_1(resources_dir):
     url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
     name = "issue3193.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    other_reader = PdfReader(RESOURCE_ROOT / "imagemagick-CCITTFaxDecode.pdf")
+    other_reader = PdfReader(resources_dir / "imagemagick-CCITTFaxDecode.pdf")
 
     actual_image = reader.pages[0].images[0].image
     expected_image_inverted = other_reader.pages[0].images[0].image

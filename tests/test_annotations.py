@@ -24,15 +24,10 @@ from pypdf.generic import ArrayObject, FloatObject, NumberObject
 
 from . import get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
-
-def test_ellipse(pdf_file_path):
+def test_ellipse(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
@@ -49,9 +44,9 @@ def test_ellipse(pdf_file_path):
         writer.write(fp)
 
 
-def test_text(pdf_file_path):
+def test_text(pdf_file_path, resources_dir):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
+    pdf_path = resources_dir / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()
@@ -70,10 +65,9 @@ def test_text(pdf_file_path):
         writer.write(fp)
 
 
-def test_free_text(pdf_file_path):
+def test_free_text(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
@@ -136,13 +130,10 @@ def test_annotation_dictionary():
     assert a.flags == 123
 
 
-def test_polygon(pdf_file_path):
+def test_polygon(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(crazyones_pdf_page_one)
 
     with pytest.raises(ValueError):
         Polygon(
@@ -159,13 +150,10 @@ def test_polygon(pdf_file_path):
         writer.write(fp)
 
 
-def test_polyline(pdf_file_path):
+def test_polyline(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(crazyones_pdf_page_one)
 
     with pytest.raises(
             ValueError,
@@ -185,13 +173,10 @@ def test_polyline(pdf_file_path):
         writer.write(fp)
 
 
-def test_line(pdf_file_path):
+def test_line(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(crazyones_pdf_page_one)
 
     # Act
     line_annotation = Line(
@@ -207,13 +192,10 @@ def test_line(pdf_file_path):
         writer.write(fp)
 
 
-def test_rectangle(pdf_file_path):
+def test_rectangle(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(crazyones_pdf_page_one)
 
     # Act
     square_annotation = Rectangle(
@@ -229,11 +211,9 @@ def test_rectangle(pdf_file_path):
         writer.write(fp)
 
 
-def test_highlight(pdf_file_path):
+def test_highlight(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
+    page = crazyones_pdf_page_one
     writer = PdfWriter()
     writer.add_page(page)
 
@@ -293,9 +273,9 @@ def test_highlight(pdf_file_path):
         writer.write(fp)
 
 
-def test_link(pdf_file_path):
+def test_link(pdf_file_path, resources_dir):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
+    pdf_path = resources_dir / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()
@@ -340,9 +320,9 @@ def test_link(pdf_file_path):
         writer.write(fp)
 
 
-def test_popup(caplog):
+def test_popup(caplog, resources_dir):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
+    pdf_path = resources_dir / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()

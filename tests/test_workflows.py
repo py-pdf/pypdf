@@ -36,11 +36,9 @@ SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 sys.path.append(str(PROJECT_ROOT))
 
 
-def test_basic_features(tmp_path):
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_basic_features(crazyones_pdf_path, crazyones_pdf_reader, tmp_path):
+    reader = crazyones_pdf_reader
     writer = PdfWriter()
-
     assert len(reader.pages) == 1
 
     # add page 1 from input1 to output document, unchanged
@@ -63,7 +61,7 @@ def test_basic_features(tmp_path):
     # add page 4 from input1, but first add a watermark from another PDF:
     page3 = reader.pages[0]
     page3 = writer.add_page(page3)
-    watermark_pdf = pdf_path
+    watermark_pdf = crazyones_pdf_path
     watermark = PdfReader(watermark_pdf)
     page3.merge_page(watermark.pages[0])
 
@@ -84,27 +82,27 @@ def test_basic_features(tmp_path):
         writer.write(output_stream)
 
 
-def test_dropdown_items():
-    inputfile = RESOURCE_ROOT / "libreoffice-form.pdf"
+def test_dropdown_items(resources_dir):
+    inputfile = resources_dir / "libreoffice-form.pdf"
     reader = PdfReader(inputfile)
     fields = reader.get_fields()
     assert "/Opt" in fields["Nationality"]
 
 
-def test_pdfreader_file_load():
+def test_pdfreader_file_load(crazyones_pdf_path, resources_dir):
     """
     Test loading and parsing of a file.
 
     Extract text of the file and compare to expected textual output. Expected
     outcome: file loads, text matches expected.
     """
-    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
+    with open(crazyones_pdf_path, "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
         page = reader.pages[0]
 
         # Retrieve the text of the PDF
-        with open(RESOURCE_ROOT / "crazyones.txt", "rb") as pdftext_file:
+        with open(resources_dir / "crazyones.txt", "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
         text = page.extract_text().encode("utf-8")
@@ -117,19 +115,19 @@ def test_pdfreader_file_load():
         assert text == pdftext
 
 
-def test_pdfreader_jpeg_image():
+def test_pdfreader_jpeg_image(resources_dir):
     """
     Test loading and parsing of a file. Extract the image of the file and
     compare to expected textual output.
 
     Expected outcome: file loads, image matches expected.
     """
-    with open(RESOURCE_ROOT / "jpeg.pdf", "rb") as inputfile:
+    with open(resources_dir / "jpeg.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
 
         # Retrieve the text of the image
-        with open(RESOURCE_ROOT / "jpeg.txt") as pdftext_file:
+        with open(resources_dir / "jpeg.txt") as pdftext_file:
             imagetext = pdftext_file.read()
 
         page = reader.pages[0]
@@ -140,8 +138,8 @@ def test_pdfreader_jpeg_image():
         assert binascii.hexlify(data).decode() == imagetext
 
 
-def test_decrypt():
-    with open(RESOURCE_ROOT / "libreoffice-writer-password.pdf", "rb") as inputfile:
+def test_decrypt(resources_dir):
+    with open(resources_dir / "libreoffice-writer-password.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         assert reader.is_encrypted is True
         reader.decrypt("openpassword")
@@ -155,8 +153,8 @@ def test_decrypt():
         }
 
 
-def test_text_extraction_encrypted():
-    inputfile = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
+def test_text_extraction_encrypted(resources_dir):
+    inputfile = resources_dir / "libreoffice-writer-password.pdf"
     reader = PdfReader(inputfile)
     assert reader.is_encrypted is True
     reader.decrypt("openpassword")
@@ -169,15 +167,15 @@ def test_text_extraction_encrypted():
 
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
-def test_rotate(degree):
-    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
+def test_rotate(degree, resources_dir):
+    with open(resources_dir / "crazyones.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
         page.rotate(degree)
 
 
-def test_rotate_45():
-    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
+def test_rotate_45(resources_dir):
+    with open(resources_dir / "crazyones.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
@@ -268,8 +266,8 @@ def test_extract_textbench(enable, url, pages):
         pass
 
 
-def test_transform_compress_identical_objects():
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "two-different-pages.pdf")
+def test_transform_compress_identical_objects(resources_dir):
+    writer = PdfWriter(clone_from=resources_dir / "two-different-pages.pdf")
 
     for page in writer.pages:
         op = Transformation().scale(sx=0.8, sy=0.8)
@@ -285,8 +283,8 @@ def test_transform_compress_identical_objects():
 
 
 @pytest.mark.slow
-def test_orientations():
-    p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
+def test_orientations(resources_dir):
+    p = PdfReader(resources_dir / "test Orient.pdf").pages[0]
     p.extract_text("", "")
     p.extract_text("", "", 0)
     p.extract_text("", "", 0, 200)
@@ -334,14 +332,14 @@ def test_orientations():
         ),
     ],
 )
-def test_overlay(pdf_file_path, base_path, overlay_path):
+def test_overlay(pdf_file_path, base_path, overlay_path, resources_dir):
     if base_path.startswith("http"):
         base_path = BytesIO(get_data_from_url(base_path, name="tika-935981.pdf"))
     else:
         base_path = PROJECT_ROOT / base_path
     writer = PdfWriter(clone_from=base_path)
 
-    reader_overlay = PdfReader(PROJECT_ROOT / overlay_path)
+    reader_overlay = PdfReader(resources_dir / overlay_path)
     overlay = reader_overlay.pages[0]
 
     for page in writer.pages:
@@ -594,11 +592,11 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
-def test_merge_output(caplog):
+def test_merge_output(caplog, crazyones_pdf_path, resources_dir):
     # Arrange
-    base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"
-    crazy = RESOURCE_ROOT / "crazyones.pdf"
-    expected = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
+    base = resources_dir / "Seige_of_Vicksburg_Sample_OCR.pdf"
+    crazy = crazyones_pdf_path
+    expected = resources_dir / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
 
     # Act
     merger = PdfWriter()
@@ -962,9 +960,9 @@ def test_fields_returning_stream():
     assert "BtchIssQATit_time" in reader.get_form_text_fields()["TimeStampData"]
 
 
-def test_replace_image(tmp_path):
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "labeled-edges-center-image.pdf")
-    reader = PdfReader(RESOURCE_ROOT / "jpeg.pdf")
+def test_replace_image(resources_dir, tmp_path):
+    writer = PdfWriter(clone_from=resources_dir / "labeled-edges-center-image.pdf")
+    reader = PdfReader(resources_dir / "jpeg.pdf")
     img = reader.pages[0].images[0].image
     if int(pil_version.split(".")[0]) < 9:
         img = img.convert("RGB")
@@ -1100,11 +1098,11 @@ def test_text_extraction_layout_mode(pdf_path, expected_path):
 
 
 @pytest.mark.enable_socket
-def test_layout_mode_space_vertically():
+def test_layout_mode_space_vertically(resources_dir):
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
     # remove automatically added final newline
     expected = (
-        (RESOURCE_ROOT / "AEO.1172.layout.txt").read_text(encoding="utf-8").rstrip()
+        (resources_dir / "AEO.1172.layout.txt").read_text(encoding="utf-8").rstrip()
     )
     assert expected == reader.pages[0].extract_text(
         extraction_mode="layout", layout_mode_space_vertically=False
@@ -1115,14 +1113,14 @@ def test_layout_mode_space_vertically():
 @pytest.mark.parametrize(
     ("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)]
 )
-def test_layout_mode_rotations(rotation, strip_rotated):
+def test_layout_mode_rotations(rotation, strip_rotated, resources_dir):
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(name="iss2138.pdf")))
     rotated_page = writer.pages[0].rotate(rotation)
     rotated_page.transfer_rotation_to_content()
     expected = ""
     if not strip_rotated:
         expected = (
-            (RESOURCE_ROOT / "AEO.1172.layout.rot180.txt")
+            (resources_dir / "AEO.1172.layout.rot180.txt")
             .read_text(encoding="utf-8")
             .rstrip()
         )  # remove automatically added final newline
@@ -1133,11 +1131,9 @@ def test_layout_mode_rotations(rotation, strip_rotated):
     )
 
 
-def test_text_extraction_invalid_mode():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_text_extraction_invalid_mode(crazyones_pdf_reader):
     with pytest.raises(ValueError, match="Invalid text extraction mode"):
-        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
+        crazyones_pdf_reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
 
 
 @pytest.mark.enable_socket

@@ -21,11 +21,6 @@ from pypdf.generic import ContentStream, NameObject, NullObject
 
 from . import get_data_from_url, get_image_data
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
-
 
 def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
     if isinstance(path, Image.Image):
@@ -84,22 +79,22 @@ def image_similarity(
 
 
 @pytest.mark.samples
-def test_image_similarity_one():
-    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+def test_image_similarity_one(sample_files_dir):
+    path_a = sample_files_dir / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
     path_b = path_a
     assert image_similarity(path_a, path_b) == 1
 
 
 @pytest.mark.samples
-def test_image_similarity_zero():
-    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
-    path_b = SAMPLE_ROOT / "009-pdflatex-geotopo/page-23-Im2.png"
+def test_image_similarity_zero(sample_files_dir):
+    path_a = sample_files_dir / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+    path_b = sample_files_dir / "009-pdflatex-geotopo/page-23-Im2.png"
     assert image_similarity(path_a, path_b) == 0
 
 
 @pytest.mark.samples
-def test_image_similarity_mid():
-    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+def test_image_similarity_mid(sample_files_dir):
+    path_a = sample_files_dir / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
     img_b = Image.open(path_a)
     draw = ImageDraw.Draw(img_b)
 
@@ -189,28 +184,28 @@ def test_image_new_property():
     ("src", "page_index", "image_key", "expected"),
     [
         (
-            SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf",
+            "009-pdflatex-geotopo/GeoTopo.pdf",
             23,
             "/Im2",
-            SAMPLE_ROOT / "009-pdflatex-geotopo/page-23-Im2.png",
+            "009-pdflatex-geotopo/page-23-Im2.png",
         ),
         (
-            SAMPLE_ROOT / "003-pdflatex-image/pdflatex-image.pdf",
+            "003-pdflatex-image/pdflatex-image.pdf",
             0,
             "/Im1",
-            SAMPLE_ROOT / "003-pdflatex-image/page-0-Im1.jpg",
+            "003-pdflatex-image/page-0-Im1.jpg",
         ),
         (
-            SAMPLE_ROOT / "018-base64-image/base64image.pdf",
+            "018-base64-image/base64image.pdf",
             0,
             "/QuickPDFImd32aa1ab",
-            SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png",
+            "018-base64-image/page-0-QuickPDFImd32aa1ab.png",
         ),
         (
-            SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf",
+            "019-grayscale-image/grayscale-image.pdf",
             0,
             "/X0",
-            SAMPLE_ROOT / "019-grayscale-image/page-0-X0.png",
+            "019-grayscale-image/page-0-X0.png",
         ),
     ],
     ids=[
@@ -221,14 +216,14 @@ def test_image_new_property():
     ],
 )
 @pytest.mark.samples
-def test_image_extraction(src, page_index, image_key, expected):
-    reader = PdfReader(src)
+def test_image_extraction(src, page_index, image_key, expected, sample_files_dir):
+    reader = PdfReader(sample_files_dir / src)
     actual_image = reader.pages[page_index].images[image_key]
     if not expected.exists():
         # A little helper for test generation
         with open(f"page-{page_index}-{actual_image.name}", "wb") as fp:
             fp.write(actual_image.data)
-    assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
+    assert image_similarity(BytesIO(actual_image.data), sample_files_dir / expected) >= 0.99
 
 
 @pytest.mark.enable_socket
@@ -392,7 +387,7 @@ def test_ff_fe_starting_lut():
 
 
 @pytest.mark.enable_socket
-def test_inline_image_extraction():
+def test_inline_image_extraction(resources_dir):
     """Cf #2598"""
     url = "https://github.com/py-pdf/pypdf/files/14982414/lebo102.pdf"
     name = "iss2598.pdf"
@@ -421,7 +416,7 @@ def test_inline_image_extraction():
     assert writer.pages[0].inline_images is not None
     writer.pages[0].merge_scaled_page(writer.pages[0], 0.25)
     assert writer.pages[0].inline_images is None
-    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    reader = PdfReader(resources_dir / "imagemagick-ASCII85Decode.pdf")
     writer.pages[0].merge_page(reader.pages[0])
     assert list(writer.pages[0].images.keys()) == [
         "/Im0",
@@ -481,8 +476,8 @@ def test_extract_image_from_object(caplog):
     assert "does not seem to be an Image" in caplog.text
 
 
-def test_extract_jpeg_with_explicit_quality():
-    reader = PdfReader(RESOURCE_ROOT / "side-by-side-subfig.pdf")
+def test_extract_jpeg_with_explicit_quality(resources_dir):
+    reader = PdfReader(resources_dir / "side-by-side-subfig.pdf")
     page = reader.pages[0]
     x_object = page["/Resources"]["/XObject"]["/Im1"]
     assert x_object["/Filter"] == "/DCTDecode"

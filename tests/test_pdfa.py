@@ -8,11 +8,6 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
-
 
 def is_pdfa1b_compliant(src: BytesIO):
     """Check if a PDF is PDF/A-1b compliant."""
@@ -36,11 +31,11 @@ def is_pdfa1b_compliant(src: BytesIO):
 @pytest.mark.parametrize(
     ("src", "diagnostic_write_name"),
     [
-        (SAMPLE_ROOT / "021-pdfa/crazyones-pdfa.pdf", None),
+        ("021-pdfa/crazyones-pdfa.pdf", None),
     ],
 )
-def test_pdfa(src: Path, diagnostic_write_name: Optional[str]):
-    with open(src, "rb") as fp:
+def test_pdfa(src: Path, diagnostic_write_name: Optional[str], sample_files_dir):
+    with open(sample_files_dir / src, "rb") as fp:
         data = BytesIO(fp.read())
     reader = PdfReader(src)
     assert is_pdfa1b_compliant(data)
