@@ -4,7 +4,7 @@ from enum import IntEnum
 from typing import Any, Optional, Union, cast
 
 from .._codecs import fill_from_encoding
-from .._codecs.core_fontmetrics import CORE_FONT_METRICS
+from .._codecs.core_font_metrics import CORE_FONT_METRICS
 from .._font import Font
 from .._utils import logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes
@@ -355,15 +355,13 @@ class TextStreamAppearance(BaseStreamAppearance):
                 NameObject("/BaseFont"): NameObject("/Helvetica"),
                 NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
             })
-            font_descriptor = CORE_FONT_METRICS["Helvetica"]
-            font_descriptor.character_widths["default"] = 2 * font_descriptor.character_widths[" "]
             font = Font(
                 name="Helvetica",
                 character_map={},
                 encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
                 sub_type="Type1",
-                font_descriptor = font_descriptor,
-                character_widths = font_descriptor.character_widths
+                font_descriptor=CORE_FONT_METRICS["Helvetica"].font_descriptor,
+                character_widths=CORE_FONT_METRICS["Helvetica"].character_widths
             )
 
         font_glyph_byte_map: dict[str, bytes]

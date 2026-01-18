@@ -242,7 +242,8 @@ class Font:
                         pdf_font_dict, character_map, encoding, character_widths
                     )
                 elif name in CORE_FONT_METRICS:
-                    font_descriptor, character_widths = CORE_FONT_METRICS[name]
+                    font_descriptor = CORE_FONT_METRICS[name].font_descriptor
+                    character_widths = CORE_FONT_METRICS[name].character_widths
                 if "/FontDescriptor" in pdf_font_dict:
                     font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
                     if "/MissingWidth" in font_descriptor_obj:
