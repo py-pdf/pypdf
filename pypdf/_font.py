@@ -249,6 +249,11 @@ class Font:
                     if "/MissingWidth" in font_descriptor_obj:
                         character_widths["default"] = cast(int, font_descriptor_obj["/MissingWidth"].get_object())
                     font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
+                elif "/FontBBox" in pdf_font_dict:
+                    # For Type3 without Font Descriptor but with FontBBox, see Table 110 in the PDF specification 2.0
+                    bbox_tuple = tuple(map(float, cast(ArrayObject, pdf_font_dict["/FontBBox"])))
+                    assert len(bbox_tuple) == 4, bbox_tuple
+                    font_descriptor = FontDescriptor(name=name, bbox=bbox_tuple)
 
         else:
             # Composite font or CID font - CID fonts have a /W array mapping character codes
