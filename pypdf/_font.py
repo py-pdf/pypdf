@@ -166,24 +166,6 @@ class FontDescriptor:
                     __name__
                 )
 
-    @staticmethod
-    def _add_default_width(current_widths: dict[str, int]) -> None:
-        if not current_widths:
-            current_widths["default"] = 500
-            return
-
-        if "default" in current_widths:
-            return
-
-        if " " in current_widths and current_widths[" "] != 0:
-            # Setting default to twice the space width
-            current_widths["default"] = int(2 * current_widths[" "])
-            return
-
-        # Use the average width of existing glyph widths
-        valid_widths = [w for w in current_widths.values() if w > 0]
-        current_widths["default"] = sum(valid_widths) // len(valid_widths) if valid_widths else 500
-
     @classmethod
     def from_font_resource(
         cls,
@@ -206,7 +188,6 @@ class FontDescriptor:
                 )
             elif font_name in CORE_FONT_METRICS:
                 font_descriptor = CORE_FONT_METRICS[font_name]
-                cls._add_default_width(font_descriptor.character_widths)
 
                 return font_descriptor
 
@@ -219,8 +200,6 @@ class FontDescriptor:
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, pdf_font_dict.get("/FontDescriptor", DictionaryObject())
                 )
-            if "default" not in font_kwargs["character_widths"]:
-                cls._add_default_width(font_kwargs["character_widths"])
 
             return cls(**font_kwargs)
 
@@ -240,8 +219,6 @@ class FontDescriptor:
             )
             if "/DW" in d_font:
                 font_kwargs["character_widths"]["default"] = d_font["/DW"].get_object()
-            else:
-                cls._add_default_width(font_kwargs["character_widths"])
             font_kwargs = cls._parse_font_descriptor(
                 font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
             )
@@ -280,9 +257,24 @@ class Font:
     character_map: dict[Any, Any] = field(default_factory=dict)
     sub_type: str = "Unknown"
     font_descriptor: FontDescriptor = field(default_factory=FontDescriptor)
-    character_widths: dict[str, int] = field(default_factory=dict)
+    character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
     space_width: Union[float, int] = 250
     interpretable: bool = True
+
+    @staticmethod
+    def _add_default_width(current_widths: dict[str, int]) -> None:
+        if not current_widths:
+            current_widths["default"] = 500
+            return
+
+        if " " in current_widths and current_widths[" "] != 0:
+            # Setting default to twice the space width
+            current_widths["default"] = int(2 * current_widths[" "])
+            return
+
+        # Use the average width of existing glyph widths
+        valid_widths = [w for w in current_widths.values() if w > 0]
+        current_widths["default"] = sum(valid_widths) // len(valid_widths) if valid_widths else 500
 
     @classmethod
     def from_font_resource(
@@ -311,6 +303,8 @@ class Font:
             font_descriptor = FontDescriptor()  # Save some overhead if font is not interpretable
         character_widths = font_descriptor.character_widths
 
+        if "default" not in character_widths:
+            cls._add_default_width(character_widths)
         space_width = font_descriptor.character_widths.get(" ")
         if not space_width or space_width == 0:
             space_width = font_descriptor.character_widths["default"] // 2
