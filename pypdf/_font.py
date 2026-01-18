@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject
+from pypdf.generic import ArrayObject, DictionaryObject
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
@@ -30,86 +30,6 @@ class FontDescriptor:
     italic_angle: float = 0.0  # Non-italic
     flags: int = 32  # Non-serif, non-symbolic, not fixed width
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
-
-    character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
-
-    @staticmethod
-    def _parse_font_descriptor(font_kwargs: dict[str, Any], font_descriptor_obj: DictionaryObject) -> dict[str, Any]:
-        font_descriptor_dict: DictionaryObject = (
-            font_descriptor_obj.get_object()
-            if isinstance(font_descriptor_obj, IndirectObject)
-            else font_descriptor_obj
-        )
-        for source_key, target_key in [
-            ("/FontName", "name"),
-            ("/FontFamily", "family"),
-            ("/FontWeight", "weight"),
-            ("/Ascent", "ascent"),
-            ("/Descent", "descent"),
-            ("/CapHeight", "cap_height"),
-            ("/XHeight", "x_height"),
-            ("/ItalicAngle", "italic_angle"),
-            ("/Flags", "flags"),
-            ("/FontBBox", "bbox")
-        ]:
-            if source_key in font_descriptor_dict:
-                font_kwargs[target_key] = font_descriptor_dict[source_key]
-        # Handle missing bbox gracefully - PDFs may have fonts without valid bounding boxes
-        if "bbox" in font_kwargs:
-            bbox_tuple = tuple(map(float, font_kwargs["bbox"]))
-            assert len(bbox_tuple) == 4, bbox_tuple
-            font_kwargs["bbox"] = bbox_tuple
-        return font_kwargs
-
-    @classmethod
-    def from_font_resource(
-        cls,
-        pdf_font_dict: DictionaryObject,
-        encoding: Optional[Union[str, dict[int, str]]] = None,
-        char_map: Optional[dict[Any, Any]] = None
-    ) -> "FontDescriptor":
-        from pypdf._codecs.core_fontmetrics import CORE_FONT_METRICS  # noqa: PLC0415
-        # Prioritize information from the PDF font dictionary
-        font_name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
-        font_kwargs: dict[str, Any] = {"character_widths": {}}
-
-        # Deal with fonts by type; Type1, TrueType and certain Type3
-        if pdf_font_dict.get("/Subtype") in ("/Type1", "/MMType1", "/TrueType", "/Type3"):
-            if font_name in CORE_FONT_METRICS:
-                font_descriptor = CORE_FONT_METRICS[font_name]
-
-                return font_descriptor
-
-            if "/FontDescriptor" in pdf_font_dict:  # TODO: This does not account for some Type3 fonts;
-                                                    #       see tests/test_cmap.py::test_ascii_charset
-                font_descriptor_resource = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
-                font_descriptor_obj = cast(DictionaryObject, font_descriptor_resource)
-                if "/MissingWidth" in font_descriptor_obj:
-                    font_kwargs["character_widths"]["default"] = font_descriptor_obj["/MissingWidth"].get_object()
-                font_kwargs = cls._parse_font_descriptor(
-                    font_kwargs, pdf_font_dict.get("/FontDescriptor", DictionaryObject())
-                )
-
-            return cls(**font_kwargs)
-
-        # Composite font or CID font - CID fonts have a /W array mapping character codes
-        # to widths stashed in /DescendantFonts. No need to test for /DescendantFonts though,
-        # because all other fonts have already been dealt with.
-        if not (encoding and char_map):
-            encoding, char_map = get_encoding(pdf_font_dict)
-        d_font: DictionaryObject
-        for d_font_idx, d_font in enumerate(
-            cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
-        ):
-            d_font = cast(DictionaryObject, d_font.get_object())
-            cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
-            if "/DW" in d_font:
-                font_kwargs["character_widths"]["default"] = d_font["/DW"].get_object()
-            font_kwargs = cls._parse_font_descriptor(
-                font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
-            )
-
-        return cls(**font_kwargs)
 
 
 @dataclass(frozen=True)
@@ -267,15 +187,41 @@ class Font:
         valid_widths = [w for w in current_widths.values() if w > 0]
         current_widths["default"] = sum(valid_widths) // len(valid_widths) if valid_widths else 500
 
+    @staticmethod
+    def _parse_font_descriptor(font_descriptor_obj: DictionaryObject) -> dict[str, Any]:
+        font_descriptor_kwargs: dict[Any, Any] = {}
+        for source_key, target_key in [
+            ("/FontName", "name"),
+            ("/FontFamily", "family"),
+            ("/FontWeight", "weight"),
+            ("/Ascent", "ascent"),
+            ("/Descent", "descent"),
+            ("/CapHeight", "cap_height"),
+            ("/XHeight", "x_height"),
+            ("/ItalicAngle", "italic_angle"),
+            ("/Flags", "flags"),
+            ("/FontBBox", "bbox")
+        ]:
+            if source_key in font_descriptor_obj:
+                font_descriptor_kwargs[target_key] = font_descriptor_obj[source_key]
+        # Handle missing bbox gracefully - PDFs may have fonts without valid bounding boxes
+        if "bbox" in font_descriptor_kwargs:
+            bbox_tuple = tuple(map(float, font_descriptor_kwargs["bbox"]))
+            assert len(bbox_tuple) == 4, bbox_tuple
+            font_descriptor_kwargs["bbox"] = bbox_tuple
+        return font_descriptor_kwargs
+
     @classmethod
     def from_font_resource(
         cls,
         pdf_font_dict: DictionaryObject,
     ) -> "Font":
+        from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
         # Can collect base_font, name and encoding directly from font resource
         name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
         sub_type = pdf_font_dict.get("/Subtype", "Unknown").removeprefix("/")
         encoding, character_map = get_encoding(pdf_font_dict)
+        font_descriptor = None
         character_widths: dict[str, int] = {}
         interpretable = True
 
@@ -295,6 +241,13 @@ class Font:
                     cls._collect_tt_t1_character_widths(
                         pdf_font_dict, character_map, encoding, character_widths
                     )
+                elif name in CORE_FONT_METRICS:
+                    font_descriptor, character_widths = CORE_FONT_METRICS[name]
+                if "/FontDescriptor" in pdf_font_dict:
+                    font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
+                    if "/MissingWidth" in font_descriptor_obj:
+                        character_widths["default"] = cast(int, font_descriptor_obj["/MissingWidth"].get_object())
+                    font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
 
         else:
             # Composite font or CID font - CID fonts have a /W array mapping character codes
@@ -311,8 +264,11 @@ class Font:
                 )
                 if "/DW" in d_font:
                     character_widths["default"] = cast(int, d_font["/DW"].get_object())
+                font_descriptor_obj = d_font.get("/FontDescriptor", DictionaryObject()).get_object()
+                font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
 
-        font_descriptor = FontDescriptor.from_font_resource(pdf_font_dict, encoding, character_map)
+        if not font_descriptor:
+            font_descriptor = FontDescriptor(name=name)
 
         if "default" not in character_widths:
             cls._add_default_width(character_widths)
