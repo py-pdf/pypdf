@@ -466,3 +466,27 @@ def test_flatten__cyclic_references():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Detected cyclic page references\.$"):
         reader._flatten()
+
+
+@pytest.mark.enable_socket
+@pytest.mark.timeout(10)
+def test_get_outline__cyclic_references(caplog):
+    url = ""
+    name = "circular_outline.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+
+    assert reader.outline == [
+        {
+            "/%is_open%": True,
+            "/Page": reader.pages[0].indirect_reference,
+            "/Title": "Bookmark A",
+            "/Type": "/Fit"
+        },
+        {
+            "/%is_open%": True,
+            "/Page": reader.pages[0].indirect_reference,
+            "/Title": "Bookmark B",
+            "/Type": "/Fit"
+        }
+    ]
+    assert caplog.messages[0].startswith("Detected cycle in outline structure for {")

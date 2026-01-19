@@ -855,7 +855,14 @@ class PdfDocCommon:
             return outline
 
         # see if there are any more outline items
+        visited: set[int] = set()
         while True:
+            node_id = id(node)
+            if node_id in visited:
+                logger_warning(f"Detected cycle in outline structure for {node}", __name__)
+                break
+            visited.add(node_id)
+
             outline_obj = self._build_outline_item(node)
             if outline_obj:
                 outline.append(outline_obj)
