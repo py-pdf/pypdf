@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769111664014,
+  "lastUpdate": 1769111690118,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -88579,6 +88579,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03392382253621924",
             "extra": "mean: 800.1977641999986 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "19735763b856cccf0f69630d0f582a448ec5d8bb",
+          "message": "DEV: Bump wheel from 0.44.0 to 0.46.2 (#3608)\n\n* Bump wheel from 0.44.0 to 0.46.2 in /requirements\n\nBumps [wheel](https://github.com/pypa/wheel) from 0.44.0 to 0.46.2.\n- [Release notes](https://github.com/pypa/wheel/releases)\n- [Changelog](https://github.com/pypa/wheel/blob/main/docs/news.rst)\n- [Commits](https://github.com/pypa/wheel/compare/0.44.0...0.46.2)\n\n---\nupdated-dependencies:\n- dependency-name: wheel\n  dependency-version: 0.46.2\n  dependency-type: direct:development\n...\n\n---------\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-01-22T20:51:38+01:00",
+          "tree_id": "bb4f5ebb4e0686fb7ba21d4b35cc88580fcded48",
+          "url": "https://github.com/py-pdf/pypdf/commit/19735763b856cccf0f69630d0f582a448ec5d8bb"
+        },
+        "date": 1769111685235,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.81045067599977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016243123848494818",
+            "extra": "mean: 72.40893316666568 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.728763368749187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014655287347383195",
+            "extra": "mean: 63.57778908333363 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1033974310649406,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02245537551787757",
+            "extra": "mean: 906.291760199997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4821353518313755,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03000075854063447",
+            "extra": "mean: 2.074106360799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18465227701082734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1401130753330753",
+            "extra": "mean: 5.415584449800008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2276119322411523,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03754301817175568",
+            "extra": "mean: 814.5896710000045 msec\nrounds: 5"
           }
         ]
       }
