@@ -22,7 +22,7 @@ docutils==0.20.1
     # via flit
 exceptiongroup==1.2.2
     # via pytest
-filelock==3.20.3
+filelock==3.19.1
     # via virtualenv
 flit==3.11.0
     # via -r dev.in
@@ -42,6 +42,7 @@ packaging==24.1
     # via
     #   build
     #   pytest
+    #   wheel
 pillow==11.3.0
     # via -r dev.in
 pip-tools==7.4.1
@@ -78,7 +79,7 @@ urllib3==2.6.3
     # via requests
 virtualenv==20.36.1
     # via pre-commit
-wheel==0.44.0
+wheel==0.46.2
     # via
     #   -r dev.in
     #   pip-tools
