@@ -1,20 +1,15 @@
 """Test the pypdf_cmap module."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader
 from pypdf._cmap import get_encoding, parse_bfchar
 from pypdf._codecs import charset_encoding
 from pypdf._font import Font
 from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject
 
 from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.enable_socket
@@ -218,25 +213,22 @@ def test_eten_b5():
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
 
 
-def test_missing_entries_in_cmap():
+def test_missing_entries_in_cmap(crazyones_pdf_reader):
     """
     Issue #2702: this issue is observed on damaged pdfs
     use of this file in test has been discarded as too slow/long
     we will create the same error from crazyones
     """
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    p = reader.pages[0]
+    p = crazyones_pdf_reader.pages[0]
     p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(
-        99999999, 0, reader
+        99999999, 0, crazyones_pdf_reader
     )
     p.extract_text()
 
 
-def test_null_missing_width():
+def test_null_missing_width(crazyones_pdf_writer):
     """For coverage of #2792"""
-    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
-    page = writer.pages[0]
+    page = crazyones_pdf_writer.pages[0]
     ft = page["/Resources"]["/Font"]["/F1"]
     ft[NameObject("/Widths")] = ArrayObject()
     ft["/FontDescriptor"][NameObject("/MissingWidth")] = NullObject()

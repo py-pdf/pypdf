@@ -7,7 +7,6 @@ The tested code might be in _page.py.
 import re
 from dataclasses import asdict
 from io import BytesIO
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -21,16 +20,11 @@ from pypdf.generic import ContentStream
 
 from . import get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
-
 
 @pytest.mark.samples
 @pytest.mark.parametrize(("visitor_text"), [None, lambda a, b, c, d, e: None])  # noqa: ARG005
-def test_multi_language(visitor_text):
-    reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
+def test_multi_language(visitor_text, resources_dir, sample_files_dir):
+    reader = PdfReader(resources_dir / "multilang.pdf")
     txt = reader.pages[0].extract_text(visitor_text=visitor_text)
     assert "Hello World" in txt, "English not correctly extracted"
     # iss #1296
@@ -58,7 +52,7 @@ def test_multi_language(visitor_text):
     ), "CUSTOM_RTL_MIN/MAX failed"
     set_custom_rtl(-1, -1, [])  # to prevent further errors
 
-    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi-rotated.pdf")
+    reader = PdfReader(sample_files_dir / "015-arabic/habibi-rotated.pdf")
     assert "habibi" in reader.pages[0].extract_text(visitor_text=visitor_text)
     assert "حَبيبي" in reader.pages[0].extract_text(visitor_text=visitor_text)
     assert "habibi" in reader.pages[1].extract_text(visitor_text=visitor_text)
@@ -82,15 +76,14 @@ def test_multi_language(visitor_text):
         )
     ],
 )
-def test_visitor_text_matrices(file_name, constraints):
+def test_visitor_text_matrices(file_name, constraints, resources_dir):
     """
     Checks if the matrices given to the visitor_text function when calling
     `extract_text` on the first page of `file_name` match some given constraints.
     `constraints` is a dictionary mapping a line of text to a constraint that should
     evaluate to `True` on its expected x,y-coordinates.
     """
-    reader = PdfReader(RESOURCE_ROOT / file_name)
-
+    reader = PdfReader(resources_dir / file_name)
     lines = []
 
     def visitor_text(text, cm, tm, font_dict, font_size) -> None:
@@ -172,29 +165,29 @@ def test_uninterpretable_type3_font(mock_logger_warning):
 
 
 @pytest.mark.enable_socket
-def test_layout_mode_epic_page_fonts():
+def test_layout_mode_epic_page_fonts(resources_dir):
     url = "https://github.com/py-pdf/pypdf/files/13836944/Epic.Page.PDF"
     name = "Epic Page.PDF"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    expected = (RESOURCE_ROOT / "Epic.Page.layout.txt").read_text(encoding="utf-8")
+    expected = (resources_dir / "Epic.Page.layout.txt").read_text(encoding="utf-8")
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
 
-def test_layout_mode_uncommon_operators():
+def test_layout_mode_uncommon_operators(resources_dir):
     # Coverage for layout mode Tc, Tz, Ts, ', ", TD, TL, and Tw
-    reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
-    expected = (RESOURCE_ROOT / "toy.layout.txt").read_text(encoding="utf-8")
+    reader = PdfReader(resources_dir / "toy.pdf")
+    expected = (resources_dir / "toy.layout.txt").read_text(encoding="utf-8")
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
 
 @pytest.mark.enable_socket
-def test_layout_mode_type0_font_widths():
+def test_layout_mode_type0_font_widths(resources_dir):
     # Cover both the 'int int int' and 'int [int int ...]' formats for Type0
     # /DescendantFonts /W array entries.
     url = "https://github.com/py-pdf/pypdf/files/13533204/Claim.Maker.Alerts.Guide_pg2.PDF"
     name = "Claim Maker Alerts Guide_pg2.PDF"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    expected = (RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt").read_text(
+    expected = (resources_dir / "Claim Maker Alerts Guide_pg2.layout.txt").read_text(
         encoding="utf-8"
     )
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
@@ -220,9 +213,9 @@ def dummy_visitor_text(text, ctm, tm, fd, fs):
 
 
 @patch("pypdf._page.logger_warning")
-def test_layout_mode_warnings(mock_logger_warning):
+def test_layout_mode_warnings(mock_logger_warning, resources_dir):
     # Check that a warning is issued when an argument is ignored
-    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    reader = PdfReader(resources_dir / "hello-world.pdf")
     page = reader.pages[0]
     page.extract_text(extraction_mode="plain", visitor_text=dummy_visitor_text)
     mock_logger_warning.assert_not_called()
@@ -254,23 +247,23 @@ def test_space_position_calculation():
     assert "Shortly after the Geneva BOF session, the" in extracted
 
 
-def test_text_leading_height_unit():
+def test_text_leading_height_unit(resources_dir):
     """Tests for #2262"""
-    reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
+    reader = PdfReader(resources_dir / "toy.pdf")
     page = reader.pages[0]
     extracted = page.extract_text()
     assert "Something[cited]\n" in extracted
 
 
-def test_layout_mode_space_vertically_font_height_weight():
+def test_layout_mode_space_vertically_font_height_weight(crazyones_pdf_path, resources_dir):
     """Tests layout mode with vertical space and font height weight (issue #2915)"""
-    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
+    with open(crazyones_pdf_path, "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
         page = reader.pages[0]
 
         # Normal behaviour
-        with open(RESOURCE_ROOT / "crazyones_layout_vertical_space.txt", "rb") as pdftext_file:
+        with open(resources_dir / "crazyones_layout_vertical_space.txt", "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
         text = page.extract_text(extraction_mode="layout", layout_mode_space_vertically=True).encode("utf-8")
@@ -283,7 +276,7 @@ def test_layout_mode_space_vertically_font_height_weight():
         assert text == pdftext
 
         # Blank lines are added to truly separate paragraphs
-        with open(RESOURCE_ROOT / "crazyones_layout_vertical_space_font_height_weight.txt", "rb") as pdftext_file:
+        with open(resources_dir / "crazyones_layout_vertical_space_font_height_weight.txt", "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
         text = page.extract_text(extraction_mode="layout", layout_mode_space_vertically=True,
@@ -412,9 +405,9 @@ def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
     assert caplog.records[-1].msg == msg
 
 
-def test_process_operation__cm_multiplication_issue():
+def test_process_operation__cm_multiplication_issue(crazyones_pdf_path):
     """Test for #3262."""
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(clone_from=crazyones_pdf_path)
     page = writer.pages[0]
     content = page.get_contents().get_data()
     content = content.replace(b" 1 0 0 1 72 720 cm ", b" 0.70278 65.3 163.36 cm ")

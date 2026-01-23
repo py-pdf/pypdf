@@ -1,6 +1,5 @@
 """Test the pypdf._xobj_image_helpers module."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -12,10 +11,6 @@ from pypdf.errors import EmptyImageDataError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
 
 from . import get_data_from_url, get_image_data
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.enable_socket
@@ -135,14 +130,14 @@ def test_extended_image_frombytes_zero_data():
         _extended_image_from_bytes(mode, size, data)
 
 
-def test_handle_flate__autodesk_indexed():
-    reader = PdfReader(RESOURCE_ROOT / "AutoCad_Diagram.pdf")
+def test_handle_flate__autodesk_indexed(resources_dir):
+    reader = PdfReader(resources_dir / "AutoCad_Diagram.pdf")
     page = reader.pages[0]
     for name, image in page.images.items():
         assert name.startswith("/")
         image.image.load()
 
-    data = RESOURCE_ROOT.joinpath("AutoCad_Diagram.pdf").read_bytes()
+    data = resources_dir.joinpath("AutoCad_Diagram.pdf").read_bytes()
     data = data.replace(b"/DeviceRGB\x00255", b"/DeviceRGB")
     reader = PdfReader(BytesIO(data))
     page = reader.pages[0]

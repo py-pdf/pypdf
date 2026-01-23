@@ -41,10 +41,6 @@ from pypdf.generic import (
 from . import get_data_from_url, is_sublist
 from .test_images import image_similarity
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
@@ -56,8 +52,8 @@ def _get_write_target(convert) -> Any:
     return target
 
 
-def test_writer_exception_non_binary(tmp_path, caplog):
-    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+def test_writer_exception_non_binary(tmp_path, caplog, resources_dir):
+    src = resources_dir / "pdflatex-outline.pdf"
 
     reader = PdfReader(src)
     writer = PdfWriter()
@@ -69,8 +65,8 @@ def test_writer_exception_non_binary(tmp_path, caplog):
     assert caplog.text.endswith(ending)
 
 
-def test_writer_clone():
-    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+def test_writer_clone(resources_dir):
+    src = resources_dir / "pdflatex-outline.pdf"
 
     reader = PdfReader(src)
     writer = PdfWriter(clone_from=reader)
@@ -82,8 +78,8 @@ def test_writer_clone():
     assert "PageObject" in str(type(writer.pages[0]))
 
 
-def test_clone_metadata():
-    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+def test_clone_metadata(resources_dir):
+    src = resources_dir / "pdflatex-outline.pdf"
     reader = PdfReader(src)
 
     writer = PdfWriter(clone_from=reader)
@@ -110,9 +106,9 @@ def test_clone_metadata():
     assert writer.metadata == {"/foo": "bar"}
 
 
-def test_writer_clone_bookmarks():
+def test_writer_clone_bookmarks(resources_dir):
     # Arrange
-    src = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
+    src = resources_dir / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
     reader = PdfReader(src)
     writer = PdfWriter()
 
@@ -152,7 +148,7 @@ def test_writer_clone_bookmarks():
     assert len(reader2.outline) == 2
 
 
-def writer_operate(writer: PdfWriter) -> None:
+def writer_operate(writer: PdfWriter, resources_dir: Path) -> None:
     """
     To test the writer that initialized by each of the four usages.
 
@@ -160,8 +156,8 @@ def writer_operate(writer: PdfWriter) -> None:
         writer: A PdfWriter object
 
     """
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    pdf_outline_path = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    pdf_path = resources_dir / "crazyones.pdf"
+    pdf_outline_path = resources_dir / "pdflatex-outline.pdf"
 
     reader = PdfReader(pdf_path)
     reader_outline = PdfReader(pdf_outline_path)
@@ -263,10 +259,10 @@ def writer_operate(writer: PdfWriter) -> None:
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_traditional_usage(convert, needs_cleanup):
+def test_writer_operations_by_traditional_usage(convert, needs_cleanup, resources_dir):
     write_data_here = _get_write_target(convert)
     writer = PdfWriter()
-    writer_operate(writer)
+    writer_operate(writer, resources_dir)
 
     # finally, write "output" to pypdf-output.pdf
     if needs_cleanup:
@@ -288,11 +284,11 @@ def test_writer_operations_by_traditional_usage(convert, needs_cleanup):
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
+def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup, resources_dir):
     write_data_here = _get_write_target(convert)
 
     with PdfWriter() as writer:
-        writer_operate(writer)
+        writer_operate(writer, resources_dir)
 
         # finally, write "output" to pypdf-output.pdf
         if needs_cleanup:
@@ -314,11 +310,11 @@ def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_semi_new_traditional_usage(convert, needs_cleanup):
+def test_writer_operations_by_semi_new_traditional_usage(convert, needs_cleanup, resources_dir):
     write_data_here = _get_write_target(convert)
 
     with PdfWriter() as writer:
-        writer_operate(writer)
+        writer_operate(writer, resources_dir)
 
         # finally, write "output" to pypdf-output.pdf
         writer.write(write_data_here)
@@ -335,12 +331,12 @@ def test_writer_operations_by_semi_new_traditional_usage(convert, needs_cleanup)
         (BytesIO(), False),
     ],
 )
-def test_writer_operation_by_new_usage(convert, needs_cleanup):
+def test_writer_operation_by_new_usage(convert, needs_cleanup, resources_dir):
     write_data_here = _get_write_target(convert)
 
     # This includes write "output" to pypdf-output.pdf
     with PdfWriter(write_data_here) as writer:
-        writer_operate(writer)
+        writer_operate(writer, resources_dir)
 
     if needs_cleanup:
         Path(write_data_here).unlink()
@@ -353,8 +349,8 @@ def test_writer_operation_by_new_usage(convert, needs_cleanup):
         "reportlab-inline-image.pdf",
     ],
 )
-def test_remove_images(pdf_file_path, input_path):
-    pdf_path = RESOURCE_ROOT / input_path
+def test_remove_images(pdf_file_path, input_path, resources_dir):
+    pdf_path = resources_dir / input_path
 
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
@@ -405,8 +401,8 @@ def test_remove_images_sub_level():
         "reportlab-inline-image.pdf",
     ],
 )
-def test_remove_text(input_path, pdf_file_path):
-    pdf_path = RESOURCE_ROOT / input_path
+def test_remove_text(input_path, pdf_file_path, resources_dir):
+    pdf_path = resources_dir / input_path
 
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
@@ -482,10 +478,8 @@ def test_remove_text_all_operators(pdf_file_path):
         writer.write(output_stream)
 
 
-def test_write_metadata(pdf_file_path):
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-
-    reader = PdfReader(pdf_path)
+def test_write_metadata(pdf_file_path, crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     writer = PdfWriter()
 
     writer.add_page(reader.pages[0])
@@ -507,12 +501,12 @@ def test_write_metadata(pdf_file_path):
     assert metadata.get("/Title") == "The Crazy Ones"
 
 
-def test_fill_form(pdf_file_path):
-    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+def test_fill_form(pdf_file_path, resources_dir):
+    reader = PdfReader(resources_dir / "form.pdf")
     writer = PdfWriter()
 
     writer.append(reader, [0])
-    writer.append(RESOURCE_ROOT / "crazyones.pdf", [0])
+    writer.append(resources_dir / "crazyones.pdf", [0])
 
     writer.update_page_form_field_values(
         writer.pages[0], {"foo": "some filled in text"}, flags=1, flatten=True
@@ -532,8 +526,8 @@ def test_fill_form(pdf_file_path):
         writer.write(output_stream)
 
 
-def test_fill_form_with_qualified():
-    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+def test_fill_form_with_qualified(resources_dir):
+    reader = PdfReader(resources_dir / "form.pdf")
     reader.add_form_topname("top")
 
     writer = PdfWriter()
@@ -554,8 +548,8 @@ def test_fill_form_with_qualified():
     ("use_128bit", "user_password", "owner_password"),
     [(True, "userpwd", "ownerpwd"), (False, "userpwd", "ownerpwd")],
 )
-def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
-    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path, resources_dir):
+    reader = PdfReader(resources_dir / "form.pdf")
     writer = PdfWriter()
 
     page = reader.pages[0]
@@ -608,8 +602,8 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     assert new_text == orig_text
 
 
-def test_add_outline_item(pdf_file_path):
-    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
+def test_add_outline_item(pdf_file_path, resources_dir):
+    reader = PdfReader(resources_dir / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -661,8 +655,8 @@ def test_add_outline_item(pdf_file_path):
         assert reader.outline[1][0]["/Count"] == 0
 
 
-def test_add_named_destination(pdf_file_path):
-    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
+def test_add_named_destination(pdf_file_path, resources_dir):
+    reader = PdfReader(resources_dir / "pdflatex-outline.pdf")
     writer = PdfWriter()
     assert writer.get_named_dest_root() == []
 
@@ -726,8 +720,8 @@ def test_add_named_destination_sort_order(pdf_file_path):
         writer.write(output_stream)
 
 
-def test_add_uri(pdf_file_path):
-    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
+def test_add_uri(pdf_file_path, resources_dir):
+    reader = PdfReader(resources_dir / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -763,8 +757,8 @@ def test_add_uri(pdf_file_path):
         writer.write(output_stream)
 
 
-def test_link_annotation(pdf_file_path):
-    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
+def test_link_annotation(pdf_file_path, resources_dir):
+    reader = PdfReader(resources_dir / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -817,9 +811,9 @@ def test_link_annotation(pdf_file_path):
         writer.write(output_stream)
 
 
-def test_io_streams():
+def test_io_streams(resources_dir):
     """This is the example from the docs ("Streaming data")."""
-    filepath = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    filepath = resources_dir / "pdflatex-outline.pdf"
     with open(filepath, "rb") as fh:
         bytes_stream = BytesIO(fh.read())
 
@@ -833,9 +827,8 @@ def test_io_streams():
         writer.write(output_stream)
 
 
-def test_regression_issue670(pdf_file_path):
-    filepath = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(filepath, strict=False)
+def test_regression_issue670(pdf_file_path, crazyones_pdf_path):
+    reader = PdfReader(crazyones_pdf_path, strict=False)
     for _ in range(2):
         writer = PdfWriter()
         writer.add_page(reader.pages[0])
@@ -843,9 +836,9 @@ def test_regression_issue670(pdf_file_path):
             writer.write(f_pdf)
 
 
-def test_issue301():
+def test_issue301(resources_dir):
     """Test with invalid stream length object."""
-    with open(RESOURCE_ROOT / "issue-301.pdf", "rb") as f:
+    with open(resources_dir / "issue-301.pdf", "rb") as f:
         reader = PdfReader(f)
         writer = PdfWriter()
         writer.append_pages_from_reader(reader)
@@ -853,9 +846,9 @@ def test_issue301():
         writer.write(b)
 
 
-def test_append_pages_from_reader_append():
+def test_append_pages_from_reader_append(resources_dir):
     """Use append_pages_from_reader with a callable."""
-    with open(RESOURCE_ROOT / "issue-301.pdf", "rb") as f:
+    with open(resources_dir / "issue-301.pdf", "rb") as f:
         reader = PdfReader(f)
         writer = PdfWriter()
         writer.append_pages_from_reader(reader, callable)
@@ -900,11 +893,11 @@ def test_some_appends(pdf_file_path, url, name):
     merger.write(pdf_file_path)
 
 
-def test_pdf_header():
+def test_pdf_header(resources_dir):
     writer = PdfWriter()
     assert writer.pdf_header == "%PDF-1.3"
 
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader = PdfReader(resources_dir / "crazyones.pdf")
     writer.add_page(reader.pages[0])
     assert writer.pdf_header == "%PDF-1.5"
 
@@ -956,9 +949,8 @@ def test_write_dict_stream_object(pdf_file_path):
         assert k in objects_hash, f"Missing {v}"
 
 
-def test_add_single_annotation(pdf_file_path):
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_add_single_annotation(pdf_file_path, crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
@@ -986,8 +978,8 @@ def test_add_single_annotation(pdf_file_path):
 
 
 @pytest.mark.samples
-def test_colors_in_outline_item(pdf_file_path):
-    reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+def test_colors_in_outline_item(pdf_file_path, sample_files_dir):
+    reader = PdfReader(sample_files_dir / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     purple_rgb = (0.5019607843137255, 0.0, 0.5019607843137255)
@@ -1007,8 +999,8 @@ def test_colors_in_outline_item(pdf_file_path):
 
 
 @pytest.mark.samples
-def test_write_empty_stream():
-    reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+def test_write_empty_stream(sample_files_dir):
+    reader = PdfReader(sample_files_dir / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
@@ -1017,9 +1009,9 @@ def test_write_empty_stream():
     assert exc.value.args[0] == "Output(stream='') is empty."
 
 
-def test_startup_dest():
+def test_startup_dest(resources_dir):
     pdf_file_writer = PdfWriter()
-    pdf_file_writer.append_pages_from_reader(PdfReader(RESOURCE_ROOT / "issue-604.pdf"))
+    pdf_file_writer.append_pages_from_reader(PdfReader(resources_dir / "issue-604.pdf"))
 
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = pdf_file_writer.pages[9]
@@ -1144,8 +1136,8 @@ def test_append_multiple():
 
 
 @pytest.mark.samples
-def test_set_page_label(pdf_file_path):
-    src = RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
+def test_set_page_label(pdf_file_path, resources_dir, sample_files_dir):
+    src = resources_dir / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
     reader = PdfReader(src)
 
     expected = [
@@ -1239,10 +1231,8 @@ def test_set_page_label(pdf_file_path):
 
     pdf_file_path.unlink()
 
-    src = (
-        SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
-    )  # File with pre existing labels
-    reader = PdfReader(src)
+    # File with pre existing labels
+    reader = PdfReader(sample_files_dir / "009-pdflatex-geotopo/GeoTopo.pdf")
 
     # Tests adding labels to existing ones
     expected = ["i", "ii", "A", "B", "1"]
@@ -1263,8 +1253,7 @@ def test_set_page_label(pdf_file_path):
     pdf_file_path.unlink()
 
     # Tests prefix and start.
-    src = RESOURCE_ROOT / "issue-604.pdf"  # File without page labels
-    reader = PdfReader(src)
+    reader = PdfReader(resources_dir / "issue-604.pdf")  # File without page labels
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
@@ -1510,9 +1499,9 @@ def test_named_dest_page_number():
     assert len(writer.root_object["/Names"]["/Dests"]["/Names"]) == 6
 
 
-def test_update_form_fields(tmp_path):
+def test_update_form_fields(tmp_path, resources_dir):
     write_data_here = tmp_path / "out.pdf"
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "FormTestFromOo.pdf")
     writer.update_page_form_field_values(
         writer.pages[0],
         {
@@ -1566,7 +1555,7 @@ def test_update_form_fields(tmp_path):
     assert all(x in flds["RadioGroup1"]["/_States_"] for x in ["/1", "/2", "/3"])
     assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
 
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "FormTestFromOo.pdf")
     writer.add_annotation(
         page_number=0,
         annotation=Link(target_page_index=1, rect=RectangleObject([0, 0, 100, 100])),
@@ -1743,9 +1732,8 @@ def test_iss1862():
     writer.pages[0]["/Resources"]["/Font"]["/F1"]["/CharProcs"]["/B"].get_data()
 
 
-def test_empty_objects_before_cloning():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_empty_objects_before_cloning(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     writer = PdfWriter(clone_from=reader)
     nb_obj_reader = len(reader.xref_objStm) + sum(
         len(reader.xref[i]) for i in reader.xref
@@ -1832,14 +1820,14 @@ def test_watermark_rendering(tmp_path):
 
 @pytest.mark.samples
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
-def test_watermarking_reportlab_rendering(tmp_path):
+def test_watermarking_reportlab_rendering(tmp_path, resources_dir, sample_files_dir):
     """
     This test is showing a rotated+mirrored watermark in pypdf==3.15.4.
 
     Replacing the generate_base with e.g. the crazyones did not show the issue.
     """
-    base_path = SAMPLE_ROOT / "022-pdfkit/pdfkit.pdf"
-    watermark_path = SAMPLE_ROOT / "013-reportlab-overlay/reportlab-overlay.pdf"
+    base_path = sample_files_dir / "022-pdfkit/pdfkit.pdf"
+    watermark_path = sample_files_dir / "013-reportlab-overlay/reportlab-overlay.pdf"
 
     reader = PdfReader(base_path)
     base_page = reader.pages[0]
@@ -1849,7 +1837,7 @@ def test_watermarking_reportlab_rendering(tmp_path):
     base_page = writer.add_page(base_page)
     base_page.merge_page(watermark)
 
-    target_png_path = RESOURCE_ROOT / "test_watermarking_reportlab_rendering.png"
+    target_png_path = resources_dir / "test_watermarking_reportlab_rendering.png"
     pdf_path = tmp_path / "out.pdf"
     png_path = tmp_path / "test_watermarking_reportlab_rendering.png"
 
@@ -1896,8 +1884,8 @@ def test_da_missing_in_annot():
     )
 
 
-def test_missing_fields(pdf_file_path):
-    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+def test_missing_fields(pdf_file_path, resources_dir):
+    reader = PdfReader(resources_dir / "form.pdf")
 
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
@@ -1918,8 +1906,8 @@ def test_missing_fields(pdf_file_path):
     assert exc.value.args[0] == "No /Fields dictionary in PDF of PdfWriter Object"
 
 
-def test_missing_info():
-    reader = PdfReader(RESOURCE_ROOT / "missing_info.pdf")
+def test_missing_info(crazyones_pdf_reader, resources_dir):
+    reader = PdfReader(resources_dir / "missing_info.pdf")
 
     writer = PdfWriter(clone_from=reader)
     assert len(writer.pages) == len(reader.pages)
@@ -1928,7 +1916,7 @@ def test_missing_info():
     writer.write(b)
     assert b"/Info" not in b.getvalue()
 
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader = crazyones_pdf_reader
     writer.metadata = reader.metadata
     assert dict(writer._info) == dict(reader._info)
     assert writer.metadata == reader.metadata
@@ -2077,8 +2065,8 @@ def test_viewerpreferences():
     assert writer.viewer_preferences is None
 
 
-def test_extra_spaces_in_da_text(caplog):
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "form.pdf")
+def test_extra_spaces_in_da_text(caplog, resources_dir):
+    writer = PdfWriter(clone_from=resources_dir / "form.pdf")
     t = writer.pages[0]["/Annots"][0].get_object()["/DA"]
     t = t.replace("/Helv", "/Helv   ")
     writer.pages[0]["/Annots"][0].get_object()[NameObject("/DA")] = TextStringObject(t)
@@ -2103,8 +2091,8 @@ def test_object_contains_indirect_reference_to_self():
     writer.append(reader)
 
 
-def test_remove_image_per_type():
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "reportlab-inline-image.pdf")
+def test_remove_image_per_type(resources_dir):
+    writer = PdfWriter(clone_from=resources_dir / "reportlab-inline-image.pdf")
     writer.remove_images(ImageType.INLINE_IMAGES)
 
     assert all(
@@ -2114,7 +2102,7 @@ def test_remove_image_per_type():
 
     writer.remove_images()
 
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
     writer.remove_images(ImageType.DRAWING_IMAGES)
     assert all(
         x not in writer.pages[1].get_contents().get_data()
@@ -2311,9 +2299,9 @@ def test_reattach_fields():
     assert len(writer.reattach_fields(writer.pages[1])) == 0
 
 
-def test_get_pagenumber_from_indirectobject():
+def test_get_pagenumber_from_indirectobject(resources_dir):
     """Test test_get_pagenumber_from_indirectobject"""
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    pdf_path = resources_dir / "crazyones.pdf"
     writer = PdfWriter(clone_from=pdf_path)
     assert writer._get_page_number_by_indirect(None) is None
     assert writer._get_page_number_by_indirect(NullObject()) is None
@@ -2324,9 +2312,8 @@ def test_get_pagenumber_from_indirectobject():
     assert writer._get_page_number_by_indirect(ind.idnum + 1) is None
 
 
-def test_replace_object():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_replace_object(crazyones_pdf_path, crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     writer = PdfWriter(clone_from=reader)
     with pytest.raises(ValueError):
         writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
@@ -2335,7 +2322,7 @@ def test_replace_object():
     writer._replace_object(writer.pages[0].indirect_reference, pg)
 
     # mainly for coverage
-    reader = PdfReader(pdf_path)  # reload a new instance
+    reader = PdfReader(crazyones_pdf_path)  # reload a new instance
     with pytest.raises(ValueError):
         reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
     with pytest.raises(ValueError):
@@ -2349,30 +2336,26 @@ def test_replace_object():
     writer.add_page(pg)
 
 
-def test_mime_jupyter():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    writer = PdfWriter(clone_from=reader)
-    assert reader._repr_mimebundle_(("include",), ("exclude",)) == {}
+def test_mime_jupyter(crazyones_pdf_reader):
+    writer = PdfWriter(clone_from=crazyones_pdf_reader)
+    assert crazyones_pdf_reader._repr_mimebundle_(("include",), ("exclude",)) == {}
     assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
 
 
-def test_init_without_named_arg():
+def test_init_without_named_arg(crazyones_pdf_path, crazyones_pdf_reader):
     """Test to use file_obj argument and not clone_from"""
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    writer = PdfWriter(clone_from=reader)
+    writer = PdfWriter(clone_from=crazyones_pdf_reader)
     nb = len(writer._objects)
-    writer = PdfWriter(reader)
+    writer = PdfWriter(crazyones_pdf_reader)
     assert len(writer._objects) == nb
-    with open(pdf_path, "rb") as f:
+    with open(crazyones_pdf_path, "rb") as f:
         writer = PdfWriter(f)
         f.seek(0, 0)
         by = BytesIO(f.read())
     assert len(writer._objects) == nb
-    writer = PdfWriter(pdf_path)
+    writer = PdfWriter(crazyones_pdf_path)
     assert len(writer._objects) == nb
-    writer = PdfWriter(str(pdf_path))
+    writer = PdfWriter(str(crazyones_pdf_path))
     assert len(writer._objects) == nb
     writer = PdfWriter(by)
     assert len(writer._objects) == nb
@@ -2391,8 +2374,8 @@ def test_i_in_choice_fields():
     assert "/I" not in writer.get_fields()["State"].indirect_reference.get_object()
 
 
-def test_selfont():
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+def test_selfont(resources_dir):
+    writer = PdfWriter(clone_from=resources_dir / "FormTestFromOo.pdf")
     writer.update_page_form_field_values(
         writer.pages[0],
         {"Text1": ("Text_1", "", 5), "Text2": ("Text_2", "/F3", 0)},
@@ -2490,9 +2473,9 @@ def test_set_need_appearances_writer():
     writer.set_need_appearances_writer()
 
 
-def test_utf16_metadata():
+def test_utf16_metadata(crazyones_pdf_writer):
     """See #2754"""
-    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    writer = crazyones_pdf_writer
     writer.add_metadata(
         {
             "/Subject": "Invoice №AI_047",
@@ -2512,10 +2495,10 @@ def test_utf16_metadata():
 
 
 @pytest.mark.enable_socket
-def test_increment_writer(caplog):
+def test_increment_writer(caplog, crazyones_pdf_path, resources_dir):
     """Tests for #2811"""
     writer = PdfWriter(
-        RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf",
+        resources_dir / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf",
         incremental=True,
     )
     # Contains JBIG2 not decoded for the moment
@@ -2525,7 +2508,7 @@ def test_increment_writer(caplog):
     b = BytesIO()
     writer.write(b)
     with open(
-        RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf", "rb"
+        resources_dir / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf", "rb"
     ) as f:
         assert b.getvalue() == f.read(-1)
     b.seek(0)
@@ -2567,13 +2550,13 @@ def test_increment_writer(caplog):
     writer = PdfWriter(b, incremental=True)
     assert writer.list_objects_in_increment() == []  # no flowdown of properties
 
-    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer = PdfWriter(crazyones_pdf_path, incremental=True)
     # 1 object is modified: page 0  inherits MediaBox so is changed
     assert len(writer.list_objects_in_increment()) == 1
     b = BytesIO()
     writer.write(b)
 
-    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=False)
+    writer = PdfWriter(crazyones_pdf_path, incremental=False)
     # 1 object is modified: page 0  inherits MediaBox so is changed
     assert len(writer.list_objects_in_increment()) == len(writer._objects)
 
@@ -2581,7 +2564,7 @@ def test_increment_writer(caplog):
     url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
     name = "iss2343b.pdf"
     writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader = PdfReader(crazyones_pdf_path)
     pg = writer.insert_page(reader.pages[0], 4)
     assert (
         pg.raw_get("/Parent")
@@ -2592,7 +2575,7 @@ def test_increment_writer(caplog):
     assert len(writer.flattened_pages) == 285
 
     # clone without info
-    writer = PdfWriter(RESOURCE_ROOT / "missing_info.pdf", incremental=True)
+    writer = PdfWriter(resources_dir / "missing_info.pdf", incremental=True)
     assert len(writer.list_objects_in_increment()) == 0
     assert writer.metadata is None
     writer.metadata = {}
@@ -2637,9 +2620,9 @@ def test_destination_page_is_none():
     writer.append(reader)
 
 
-def test_stream_not_closed():
+def test_stream_not_closed(resources_dir):
     """Tests for #2905"""
-    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    src = resources_dir / "pdflatex-outline.pdf"
     with NamedTemporaryFile(suffix=".pdf") as tmp:
         with PdfReader(src) as reader, PdfWriter() as writer:
             writer.add_page(reader.pages[0])
@@ -2763,23 +2746,23 @@ def test_incremental_read():
     assert len(writer._objects) == 5
 
 
-def test_compress_identical_objects__after_remove_images():
+def test_compress_identical_objects__after_remove_images(resources_dir):
     """Test for #3237"""
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "AutoCad_Diagram.pdf")
     writer.remove_images()
     writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
 
 
-def test_merge__process_named_dests__no_dests_in_source_file():
+def test_merge__process_named_dests__no_dests_in_source_file(resources_dir):
     """Test for #3279"""
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
 
     # Hacky solution to avoid attribute errors.
     names = DictionaryObject()
     names.indirect_reference = names
     writer.root_object[NameObject("/Names")] = names
 
-    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    reader = PdfReader(resources_dir / "hello-world.pdf")
     destination = Destination(title="test.pdf", page=reader.pages[0], fit=Fit("/Fit"))
     with mock.patch.object(reader, "_get_named_destinations", return_value={"test.pdf": destination}):
         writer.append(reader)
@@ -2789,10 +2772,10 @@ def test_merge__process_named_dests__no_dests_in_source_file():
         }
 
 
-def test_insert_filtered_annotations__link_without_destination():
+def test_insert_filtered_annotations__link_without_destination(resources_dir):
     """Test for #3211"""
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
-    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
+    reader = PdfReader(resources_dir / "hello-world.pdf")
 
     annotations = [
         DictionaryObject({
@@ -2811,7 +2794,7 @@ def test_insert_filtered_annotations__link_without_destination():
     )
     assert result == []
 
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
     del annotations[0]["/A"]["/D"]
     result = writer._insert_filtered_annotations(
         annots=annotations, page=writer.pages[0], pages={}, reader=reader
@@ -2840,9 +2823,9 @@ def test_insert_filtered_annotations__annotations_are_no_list(caplog):
     ]
 
 
-def test_unterminated_object__with_incremental_writer():
+def test_unterminated_object__with_incremental_writer(resources_dir):
     """Test for #3118"""
-    reader = PdfReader(RESOURCE_ROOT / "bytes.pdf")
+    reader = PdfReader(resources_dir / "bytes.pdf")
     writer = PdfWriter(reader, incremental=True)
 
     writer.add_blank_page(72, 72)
@@ -2853,8 +2836,8 @@ def test_unterminated_object__with_incremental_writer():
     assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1240\n%%EOF\n"
 
 
-def test_wrong_size_in_incremental_pdf(caplog):
-    source_data = RESOURCE_ROOT.joinpath("crazyones.pdf").read_bytes()
+def test_wrong_size_in_incremental_pdf(caplog, resources_dir):
+    source_data = resources_dir.joinpath("crazyones.pdf").read_bytes()
     writer = PdfWriter(BytesIO(source_data), incremental=True)
     writer._add_object(DictionaryObject())
 

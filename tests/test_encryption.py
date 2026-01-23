@@ -14,10 +14,11 @@ from pypdf.errors import DependencyError, PdfReadError
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
 USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
 HAS_AES = USE_CRYPTOGRAPHY or USE_PYCRYPTODOME
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+
+
+@pytest.fixture
+def encrytion_dir(resources_dir) -> Path:
+    return resources_dir / "encryption"
 
 
 @pytest.mark.parametrize(
@@ -69,7 +70,7 @@ SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
         ("r6-owner-password.pdf", True),
     ],
 )
-def test_encryption(name, requires_aes):
+def test_encryption(name, requires_aes, encrytion_dir):
     """
     Encrypted PDFs are handled correctly.
 
@@ -79,7 +80,7 @@ def test_encryption(name, requires_aes):
     - Decryption works for encrypted PDFs
     - Metadata is properly extracted from the decrypted PDF
     """
-    inputfile = RESOURCE_ROOT / "encryption" / name
+    inputfile = encrytion_dir / name
     if requires_aes and not HAS_AES:
         with pytest.raises(DependencyError) as exc:
             ipdf = pypdf.PdfReader(inputfile)
@@ -116,7 +117,7 @@ def test_encryption(name, requires_aes):
     ],
 )
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
+def test_pdf_with_both_passwords(name, user_passwd, owner_passwd, encrytion_dir):
     """
     PDFs with both user and owner passwords are handled correctly.
 
@@ -126,7 +127,7 @@ def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
     - The correct password type is returned after decryption
     - The number of pages is correctly identified after decryption
     """
-    inputfile = RESOURCE_ROOT / "encryption" / name
+    inputfile = encrytion_dir / name
     ipdf = pypdf.PdfReader(inputfile)
     assert ipdf.is_encrypted
     assert ipdf.decrypt(user_passwd) == PasswordType.USER_PASSWORD
@@ -142,14 +143,14 @@ def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
     ],
 )
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_read_page_from_encrypted_file_aes_256(pdffile, password):
+def test_read_page_from_encrypted_file_aes_256(pdffile, password, resources_dir):
     """
     A page can be read from an encrypted.
 
     This is a regression test for issue 327:
     IndexError for get_page() of decrypted file
     """
-    path = RESOURCE_ROOT / pdffile
+    path = resources_dir / pdffile
     pypdf.PdfReader(path, password=password).pages[0]
 
 
@@ -168,10 +169,10 @@ def test_read_page_from_encrypted_file_aes_256(pdffile, password):
 )
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_merge_encrypted_pdfs(names):
+def test_merge_encrypted_pdfs(names, encrytion_dir):
     """Encrypted PDFs can be merged after decryption."""
     merger = pypdf.PdfWriter()
-    files = [RESOURCE_ROOT / "encryption" / x for x in names]
+    files = [encrytion_dir / x for x in names]
     pdfs = [pypdf.PdfReader(x) for x in files]
     for pdf in pdfs:
         if pdf.is_encrypted:
@@ -199,11 +200,10 @@ def test_encrypt_decrypt_with_cipher_class(cryptcls):
     assert crypt.decrypt(crypt.encrypt(message)) == message
 
 
-def test_attempt_decrypt_unencrypted_pdf():
+def test_attempt_decrypt_unencrypted_pdf(crazyones_pdf_path):
     """Attempting to decrypt an unencrypted PDF raises a PdfReadError."""
-    path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(PdfReadError) as exc:
-        PdfReader(path, password="nonexistent")
+        PdfReader(crazyones_pdf_path, password="nonexistent")
     assert exc.value.args[0] == "Not an encrypted file"
 
 
@@ -244,11 +244,11 @@ def test_alg_v5_generate_values():
         ("ABCD", False),
     ],
 )
-def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
+def test_pdf_encrypt(pdf_file_path, alg, requires_aes, encrytion_dir):
     user_password = secrets.token_urlsafe(10)
     owner_password = secrets.token_urlsafe(10)
 
-    reader = PdfReader(RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    reader = PdfReader(encrytion_dir / "unencrypted.pdf")
     page = reader.pages[0]
     text0 = page.extract_text()
 
@@ -298,11 +298,11 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
     "count",
     [1, 2, 3, 4, 5, 10],
 )
-def test_pdf_encrypt_multiple(pdf_file_path, count):
+def test_pdf_encrypt_multiple(pdf_file_path, count, encrytion_dir):
     user_password = secrets.token_urlsafe(10)
     owner_password = secrets.token_urlsafe(10)
 
-    reader = PdfReader(RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    reader = PdfReader(encrytion_dir / "unencrypted.pdf")
     page = reader.pages[0]
     text0 = page.extract_text()
 
@@ -344,10 +344,10 @@ def test_aes_decrypt_corrupted_data():
 
 
 @pytest.mark.samples
-def test_encrypt_stream_dictionary(pdf_file_path):
+def test_encrypt_stream_dictionary(pdf_file_path, sample_files_dir):
     user_password = secrets.token_urlsafe(10)
 
-    reader = PdfReader(SAMPLE_ROOT / "023-cmyk-image/cmyk-image.pdf")
+    reader = PdfReader(sample_files_dir / "023-cmyk-image/cmyk-image.pdf")
     page = reader.pages[0]
     original_image_obj = reader.get_object(page.images["/I"].indirect_reference)
 

@@ -19,7 +19,6 @@ from . import get_data_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def page_ops(pdf_path, password):
@@ -140,8 +139,8 @@ def text_extraction(pdf_path):
     return text
 
 
-def test_text_extraction(benchmark):
-    file_path = SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
+def test_text_extraction(benchmark, sample_files_dir):
+    file_path = sample_files_dir / "009-pdflatex-geotopo/GeoTopo.pdf"
     benchmark(text_extraction, file_path)
 
 

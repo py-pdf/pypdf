@@ -6,7 +6,6 @@ import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 
@@ -48,10 +47,6 @@ from pypdf.generic._image_inline import (
 )
 
 from . import ReaderDummy, get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 class ChildDummy(DictionaryObject):
@@ -640,11 +635,9 @@ def test_remove_child_found_in_tree():
     tree.empty_tree()
 
 
-def test_remove_child_in_tree():
-    pdf = RESOURCE_ROOT / "form.pdf"
-
+def test_remove_child_in_tree(resources_dir):
+    reader = PdfReader(resources_dir / "form.pdf")
     tree = TreeObject()
-    reader = PdfReader(pdf)
     writer = PdfWriter()
     writer._add_object(tree)
     writer.add_page(reader.pages[0])
@@ -1029,14 +1022,13 @@ def test_destination_withoutzoom():
     writer.write(out)
 
 
-def test_encodedstream_set_data():
+def test_encodedstream_set_data(crazyones_pdf_reader):
     """
     EncodedStreamObject.set_data to extend data stream works.
 
     Checks also the flate_encode.
     """
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    reader = crazyones_pdf_reader
     co = reader.pages[0]["/Contents"][0].get_object()
     co.set_data(b"%hello\n" + co.get_data())
     assert b"hello" in co.get_data()
@@ -1252,11 +1244,11 @@ def test_missing_hashbin():
     assert t.hash_bin() == hash((ByteStringObject, b"123"))
 
 
-def test_is_null_or_none():
+def test_is_null_or_none(crazyones_pdf_reader):
     assert is_null_or_none(NullObject())
     assert not is_null_or_none(PdfObject())
 
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader = crazyones_pdf_reader
     # used with get
     assert is_null_or_none(reader.root_object.get("/do_no_exist"))
     # object unknown...
@@ -1267,14 +1259,14 @@ def test_is_null_or_none():
     assert is_null_or_none(writer.pages[0]["/Contents"][-1])
 
 
-def test_coverage_arrayobject():
+def test_coverage_arrayobject(crazyones_pdf_reader):
     writer = PdfWriter()
     a = ArrayObject([1])
     assert isinstance(a.replicate(writer)[0], int)
     assert isinstance(a.clone(writer)[0], int)
     a.indirect_reference = IndirectObject(1, 0, writer)
     assert isinstance(a.clone(writer)[0], int)
-    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    r = crazyones_pdf_reader
     a = ArrayObject([r.pages[0]["/Contents"][0].get_object()])
     aa = a.clone(writer)
     assert isinstance(aa[0], IndirectObject)
@@ -1283,7 +1275,7 @@ def test_coverage_arrayobject():
         assert isinstance(v, PdfObject)
 
 
-def test_coverage_streamobject():
+def test_coverage_streamobject(crazyones_pdf_reader):
     writer = PdfWriter()
     s = StreamObject()
     del s.decoded_self
@@ -1296,7 +1288,7 @@ def test_coverage_streamobject():
     co.indirect_reference = IndirectObject(1, 0, writer)
     assert co == co.clone(writer)
 
-    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    r = crazyones_pdf_reader
     co = r.pages[0].get_contents()
     co[NameObject("/testkey")] = NameObject("/test")
     co.decoded_self = None
