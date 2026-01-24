@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Union, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
@@ -300,6 +300,18 @@ class Font:
             character_widths=character_widths,
             space_width=space_width,
             interpretable=interpretable
+        )
+
+    def as_font_resource(self) -> DictionaryObject:
+        # For now, this returns a font resource that only works with the 14 Adobe Core fonts.
+        return (
+            DictionaryObject({
+                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/Name"): NameObject(f"/{self.name}"),
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/BaseFont"): NameObject(f"/{self.name}"),
+                NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+            })
         )
 
     def text_width(self, text: str = "") -> float:
