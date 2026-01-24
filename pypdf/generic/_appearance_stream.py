@@ -463,8 +463,9 @@ class TextStreamAppearance(BaseStreamAppearance):
         if user_font_size > 0:
             font_size = user_font_size
 
-        # Try to find a resource dictionary for the font
-        document_resources: Any = cast(
+        # Try to find a resource dictionary for the font by examining the annotation and, if that fails,
+        # the AcroForm resources dictionary
+        acro_form_resources: Any = cast(
             DictionaryObject,
             cast(
                 DictionaryObject,
@@ -474,16 +475,17 @@ class TextStreamAppearance(BaseStreamAppearance):
                 ),
             ).get_object(),
         )
-        document_font_resources = document_resources.get("/Font", DictionaryObject()).get_object()
+        acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject()).get_object()
+        font_resource = acro_form_font_resources.get(font_name, None)
         # CORE_FONT_METRICS is the dict with Standard font metrics
-        if font_name not in document_font_resources and font_name.removeprefix("/") not in CORE_FONT_METRICS:
+        if font_name not in acro_form_font_resources and font_name.removeprefix("/") not in CORE_FONT_METRICS:
             # ...or AcroForm dictionary
             document_resources = cast(
                 dict[Any, Any],
                 acro_form.get("/DR", {}),
             )
             document_font_resources = document_resources.get_object().get("/Font", DictionaryObject()).get_object()
-        font_resource = document_font_resources.get(font_name, None)
+            font_resource = document_font_resources.get(font_name, None)
         if not is_null_or_none(font_resource):
             font_resource = cast(DictionaryObject, font_resource.get_object())
 
@@ -535,6 +537,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             is_comb=is_comb,
             max_length=max_length
         )
+
         if AnnotationDictionaryAttributes.AP in annotation:
             for key, value in (
                 cast(DictionaryObject, annotation[AnnotationDictionaryAttributes.AP]).get("/N", {}).items()
