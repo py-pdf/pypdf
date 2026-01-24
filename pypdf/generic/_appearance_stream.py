@@ -477,15 +477,6 @@ class TextStreamAppearance(BaseStreamAppearance):
         )
         acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject()).get_object()
         font_resource = acro_form_font_resources.get(font_name, None)
-        # CORE_FONT_METRICS is the dict with Standard font metrics
-        if font_name not in acro_form_font_resources and font_name.removeprefix("/") not in CORE_FONT_METRICS:
-            # ...or AcroForm dictionary
-            document_resources = cast(
-                dict[Any, Any],
-                acro_form.get("/DR", {}),
-            )
-            document_font_resources = document_resources.get_object().get("/Font", DictionaryObject()).get_object()
-            font_resource = document_font_resources.get(font_name, None)
         if not is_null_or_none(font_resource):
             font_resource = cast(DictionaryObject, font_resource.get_object())
 
