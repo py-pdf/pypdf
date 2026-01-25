@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769350483204,
+  "lastUpdate": 1769350516947,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -88711,6 +88711,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03754301817175568",
             "extra": "mean: 814.5896710000045 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "f18e13c91cd47fa740997df4a7307fbc976388e1",
+          "message": "REL: 6.6.1\n\n## What's new\n\n### Robustness (ROB)\n- `/AcroForm` might be NullObject (#3601) by @joshkersey\n- Handle missing font bounding boxes gracefully (#3600) by @LudovA\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.6.0...6.6.1)",
+          "timestamp": "2026-01-25T15:11:47+01:00",
+          "tree_id": "5ad31b182c8d976dd58f4d64651226b0fb651586",
+          "url": "https://github.com/py-pdf/pypdf/commit/f18e13c91cd47fa740997df4a7307fbc976388e1"
+        },
+        "date": 1769350511419,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.172216242308552,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019810370140292497",
+            "extra": "mean: 82.15430781817449 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.1982772002142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0062170694367895815",
+            "extra": "mean: 43.10664931578482 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1377813999073816,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03004122858578012",
+            "extra": "mean: 878.9034520000087 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3988796082250341,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11079921606562092",
+            "extra": "mean: 2.5070221173999814 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.19521120866316516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14083004167740498",
+            "extra": "mean: 5.12265666940001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.363015451117013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001914671186209917",
+            "extra": "mean: 733.6673983999844 msec\nrounds: 5"
           }
         ]
       }
