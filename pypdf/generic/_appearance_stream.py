@@ -443,6 +443,23 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:
             default_appearance = default_appearance.get_object()
 
+        # Retrieve field text and selected values
+        field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
+        if (
+                field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
+                field_flags & FieldDictionaryAttributes.FfBits.Combo == 0
+        ):
+            text = "\n".join(annotation.get_inherited(FieldDictionaryAttributes.Opt, []))
+            selection = field.get("/V", [])
+            if not isinstance(selection, list):
+                selection = [selection]
+        else:  # /Tx
+            text = field.get("/V", "")
+            selection = []
+
+        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
+        text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
+
         # Derive font name, size and color from the default appearance. Also set
         # user-provided font name and font size in the default appearance, if given.
         # For a font name, this presumes that we can find an associated font resource
@@ -479,23 +496,6 @@ class TextStreamAppearance(BaseStreamAppearance):
         font_resource = acro_form_font_resources.get(font_name, None)
         if not is_null_or_none(font_resource):
             font_resource = cast(DictionaryObject, font_resource.get_object())
-
-        # Retrieve field text and selected values
-        field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
-        if (
-                field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
-                field_flags & FieldDictionaryAttributes.FfBits.Combo == 0
-        ):
-            text = "\n".join(annotation.get_inherited(FieldDictionaryAttributes.Opt, []))
-            selection = field.get("/V", [])
-            if not isinstance(selection, list):
-                selection = [selection]
-        else:  # /Tx
-            text = field.get("/V", "")
-            selection = []
-
-        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
-        text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
 
         # Retrieve formatting information
         is_comb = False
