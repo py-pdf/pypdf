@@ -2917,3 +2917,11 @@ def test_merge_with_null_acroform_does_not_raise_typeerror():
     target.merge(0, source)
 
     assert "/AcroForm" not in target.root_object
+
+
+def test_compress_identical_objects__info_is_none():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.compress_identical_objects()
+
+    writer.metadata = None
+    writer.compress_identical_objects()
