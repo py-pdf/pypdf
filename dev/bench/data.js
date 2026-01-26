@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769428716416,
+  "lastUpdate": 1769428719846,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -88975,6 +88975,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03354152309484388",
             "extra": "mean: 795.158993199999 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "ad47d50fd7475650d71913c8c0927e9a79249c75",
+          "message": "REL: 6.6.2\n\n## What's new\n\n### Security (SEC)\n- Detect cyclic references when retrieving outlines (#3610) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.6.1...6.6.2)",
+          "timestamp": "2026-01-26T12:55:26+01:00",
+          "tree_id": "3a0c5e70c52095355e20a238a06517ae597f0741",
+          "url": "https://github.com/py-pdf/pypdf/commit/ad47d50fd7475650d71913c8c0927e9a79249c75"
+        },
+        "date": 1769428715694,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.760739296635128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01574565468678719",
+            "extra": "mean: 72.67051416667177 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.014549311674035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017137623207000026",
+            "extra": "mean: 62.443218384612024 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0824502962161546,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02999847918531943",
+            "extra": "mean: 923.8299472000051 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4936927165329483,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03701350631105289",
+            "extra": "mean: 2.0255514543999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18368622879776134,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0328328594857472",
+            "extra": "mean: 5.444066256600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.22545158804593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032358761112621814",
+            "extra": "mean: 816.0257082000044 msec\nrounds: 5"
           }
         ]
       }
