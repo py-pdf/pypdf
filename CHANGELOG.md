@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.6.2, 2026-01-26
+
+### Security (SEC)
+- Detect cyclic references when retrieving outlines (#3610)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.6.1...6.6.2)
+
 ## Version 6.6.1, 2026-01-25
 
 ### Robustness (ROB)
