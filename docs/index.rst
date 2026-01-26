@@ -21,8 +21,8 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    :maxdepth: 1
 
    user/installation
-   user/migration-1-to-2
    user/robustness
+   user/security
    user/suppress-warnings
    user/metadata
    user/extract-text
@@ -38,10 +38,12 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    user/add-javascript
    user/viewer-preferences
    user/forms
+   user/handling-outlines
    user/streaming-data
    user/file-size
    user/pdf-version-support
    user/pdfa-compliance
+
 
 
 .. toctree::
@@ -86,6 +88,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
    meta/CHANGELOG
    meta/changelog-v1
+   meta/migration-1-to-2
    meta/project-governance
    meta/taking-ownership
    meta/history

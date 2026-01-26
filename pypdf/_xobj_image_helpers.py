@@ -1,11 +1,11 @@
-"""Code in here is only used by pypdf.filters._xobj_to_image"""
+"""Functions to convert an image XObject to an image"""
 
 import sys
 from io import BytesIO
-from typing import Any, Literal, Union, cast
+from typing import Any, Literal, Optional, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
-from .constants import ColorSpaces
+from .constants import ColorSpaces, StreamAttributes
 from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .errors import EmptyImageDataError, PdfReadError
@@ -25,7 +25,7 @@ else:
 
 
 try:
-    from PIL import Image, UnidentifiedImageError  # noqa: F401
+    from PIL import Image, UnidentifiedImageError
 except ImportError:
     raise ImportError(
         "pillow is required to do image extraction. "
@@ -39,7 +39,7 @@ mode_str_type: TypeAlias = Literal[
 MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
 
-def _get_imagemode(
+def _get_image_mode(
     color_space: Union[str, list[Any], Any],
     color_components: int,
     prev_mode: mode_str_type,
@@ -66,7 +66,7 @@ def _get_imagemode(
         )  # pragma: no cover
     elif not color_space:
         return "", False
-    elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
+    elif color_space[0].startswith("/Cal"):  # /CalRGB or /CalGray
         color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
@@ -74,7 +74,7 @@ def _get_imagemode(
         color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space_str = color_space[1].get_object()
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
         if mode in ("RGB", "CMYK"):
@@ -82,7 +82,7 @@ def _get_imagemode(
         return mode, invert_color
     elif color_space[0] == "/Separation":
         color_space_str = color_space[2].get_object()
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, True
@@ -97,7 +97,7 @@ def _get_imagemode(
                     __name__,
                 )
             return "L", True
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, invert_color
@@ -139,7 +139,7 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
     return bytes(byte_buffer)
 
 
-def _extended_image_frombytes(
+def _extended_image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
     try:
@@ -189,7 +189,7 @@ def _handle_flate(
     Process image encoded in flateEncode
     Returns img, image_format, extension, color inversion
     """
-    extension = ".png"  # mime_type = "image/png"
+    extension = ".png"  # mime_type: "image/png"
     image_format = "PNG"
     lookup: Any
     base: Any
@@ -202,7 +202,7 @@ def _handle_flate(
     elif mode == "4bits":
         mode = "P"
         data = bits2byte(data, size, 4)
-    img = _extended_image_frombytes(mode, size, data)
+    img = _extended_image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -217,7 +217,7 @@ def _handle_flate(
                 "P": (0, "", ""),
                 "RGB": (3, "P", "RGB"),
                 "CMYK": (4, "P", "CMYK"),
-            }[_get_imagemode(base, 0, "")[0]]
+            }[_get_image_mode(base, 0, "")[0]]
         except KeyError:  # pragma: no cover
             logger_warning(
                 f"Base {base} not coded please share the pdf file with pypdf dev team",
@@ -245,7 +245,7 @@ def _handle_flate(
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     b"".join(
-                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]
+                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
                         for x in range(img.size[0])
                     )
                     for y in range(img.size[1])
@@ -257,10 +257,10 @@ def _handle_flate(
                     logger_warning(f"Invalid Lookup Table in {obj_as_text}", __name__)
                     lookup = None
                 elif mode == "L":
-                    # gray lookup does not work : it is converted to a similar RGB lookup
+                    # gray lookup does not work: it is converted to a similar RGB lookup
                     lookup = b"".join([bytes([b, b, b]) for b in lookup])
                     mode = "RGB"
-                # TODO : cf https://github.com/py-pdf/pypdf/pull/2039
+                # TODO: https://github.com/py-pdf/pypdf/pull/2039
                 # this is a work around until PIL is able to process CMYK images
                 elif mode == "CMYK":
                     _rgb = []
@@ -277,9 +277,8 @@ def _handle_flate(
                     img.putpalette(lookup, rawmode=mode)
             img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
     elif not isinstance(color_space, NullObject) and color_space[0] == "/ICCBased":
-        # see Table 66 - Additional Entries Specific to an ICC Profile
-        # Stream Dictionary
-        mode2 = _get_imagemode(color_space, colors, mode)[0]
+        # Table 65 - Additional Entries Specific to an ICC Profile Stream Dictionary
+        mode2 = _get_image_mode(color_space, colors, mode)[0]
         if mode != mode2:
             img = Image.frombytes(mode2, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
@@ -299,9 +298,9 @@ def _handle_jpx(
     Process image encoded in flateEncode
     Returns img, image_format, extension, inversion
     """
-    extension = ".jp2"  # mime_type = "image/x-jp2"
-    img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
-    mode, invert_color = _get_imagemode(color_space, colors, mode)
+    extension = ".jp2"  # mime_type: "image/x-jp2"
+    img1: Image.Image = Image.open(BytesIO(data), formats=("JPEG2000",))
+    mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
         mode = cast(mode_str_type, img1.mode)
         invert_color = mode in ("CMYK",)
@@ -317,7 +316,7 @@ def _handle_jpx(
         img = Image.frombytes(mode, img1.size, img1.tobytes())
     else:  # pragma: no cover
         img = img1.convert(mode)
-    # for CMYK conversion :
+    # CMYK conversion
     # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
     # not implemented for the moment as I need to get properly the ICC
     if img.mode == "CMYK":
@@ -376,11 +375,11 @@ def _get_mode_and_invert_color(
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
     if x_object_obj.get("/BitsPerComponent", 8) < 8:
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
         )
     else:
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             color_space,
             2
             if (
@@ -394,3 +393,185 @@ def _get_mode_and_invert_color(
             "",
         )
     return mode, invert_color
+
+
+def _xobj_to_image(
+        x_object: dict[str, Any],
+        pillow_parameters: Union[dict[str, Any], None] = None
+) -> tuple[Optional[str], bytes, Any]:
+    """
+    Users need to have the pillow package installed.
+
+    It's unclear if pypdf will keep this function here, hence it's private.
+    It might get removed at any point.
+
+    Args:
+        x_object:
+        pillow_parameters: parameters provided to Pillow Image.save() method,
+            cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
+
+    Returns:
+        Tuple[file extension, bytes, PIL.Image.Image]
+
+    """
+    def _apply_alpha(
+        img: Image.Image,
+        x_object: dict[str, Any],
+        obj_as_text: str,
+        image_format: str,
+        extension: str,
+    ) -> tuple[Image.Image, str, str]:
+        alpha = None
+        if IA.S_MASK in x_object:  # add alpha channel
+            alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
+            if img.size != alpha.size:
+                logger_warning(
+                    f"image and mask size not matching: {obj_as_text}", __name__
+                )
+            else:
+                # TODO: implement mask
+                if alpha.mode != "L":
+                    alpha = alpha.convert("L")
+                if img.mode == "P":
+                    img = img.convert("RGB")
+                elif img.mode == "1":
+                    img = img.convert("L")
+                img.putalpha(alpha)
+            if "JPEG" in image_format:
+                image_format = "JPEG2000"
+                extension = ".jp2"
+            else:
+                image_format = "PNG"
+                extension = ".png"
+        return img, extension, image_format
+
+    # For error reporting
+    obj_as_text = (
+        x_object.indirect_reference.__repr__()
+        if x_object is None  # pragma: no cover
+        else x_object.__repr__()
+    )
+
+    # Get size and data
+    size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
+    data = x_object.get_data()  # type: ignore
+    if isinstance(data, str):  # pragma: no cover
+        data = data.encode()
+    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
+        data = data[:-1]
+
+    # Get color properties
+    colors = x_object.get("/Colors", 1)
+    color_space: Any = x_object.get("/ColorSpace", NullObject()).get_object()
+    if isinstance(color_space, list) and len(color_space) == 1:
+        color_space = color_space[0].get_object()
+
+    mode, invert_color = _get_mode_and_invert_color(x_object, colors, color_space)
+
+    # Get filters
+    filters = x_object.get(StreamAttributes.FILTER, NullObject()).get_object()
+    lfilters = filters[-1] if isinstance(filters, list) else filters
+    decode_parms = x_object.get(StreamAttributes.DECODE_PARMS, None)
+    if decode_parms and isinstance(decode_parms, (tuple, list)):
+        decode_parms = decode_parms[0]
+    else:
+        decode_parms = {}
+    if not isinstance(decode_parms, dict):
+        decode_parms = {}
+
+    extension = None
+    if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
+        img, image_format, extension, _ = _handle_flate(
+            size,
+            data,
+            mode,
+            color_space,
+            colors,
+            obj_as_text,
+        )
+    elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
+        # I'm not sure if the following logic is correct.
+        # There might not be any relationship between the filters and the
+        # extension
+        if lfilters == FT.LZW_DECODE:
+            image_format = "TIFF"
+            extension = ".tiff"  # mime_type = "image/tiff"
+        else:
+            image_format = "PNG"
+            extension = ".png"  # mime_type = "image/png"
+        try:
+            img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+        except UnidentifiedImageError:
+            img = _extended_image_from_bytes(mode, size, data)
+    elif lfilters == FT.DCT_DECODE:
+        img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
+        # invert_color kept unchanged
+    elif lfilters == FT.JPX_DECODE:
+        img, image_format, extension, invert_color = _handle_jpx(
+            size, data, mode, color_space, colors
+        )
+    elif lfilters == FT.CCITT_FAX_DECODE:
+        img, image_format, extension, invert_color = (
+            Image.open(BytesIO(data), formats=("TIFF",)),
+            "TIFF",
+            ".tiff",
+            False,
+        )
+    elif lfilters == FT.JBIG2_DECODE:
+        img, image_format, extension, invert_color = (
+            Image.open(BytesIO(data), formats=("PNG", "PPM")),
+            "PNG",
+            ".png",
+            False,
+        )
+    elif mode == "CMYK":
+        img, image_format, extension, invert_color = (
+            _extended_image_from_bytes(mode, size, data),
+            "TIFF",
+            ".tif",
+            False,
+        )
+    elif mode == "":
+        raise PdfReadError(f"ColorSpace field not found in {x_object}")
+    else:
+        img, image_format, extension, invert_color = (
+            _extended_image_from_bytes(mode, size, data),
+            "PNG",
+            ".png",
+            False,
+        )
+
+    img = _apply_decode(img, x_object, lfilters, color_space, invert_color)
+    img, extension, image_format = _apply_alpha(
+        img, x_object, obj_as_text, image_format, extension
+    )
+
+    if pillow_parameters is None:
+        pillow_parameters = {}
+    # Preserve JPEG image quality - see issue #3515.
+    if image_format == "JPEG":
+        # This prevents: Cannot use 'keep' when original image is not a JPEG:
+        # "JPEG" is the value of PIL.JpegImagePlugin.JpegImageFile.format
+        img.format = "JPEG"
+        if "quality" not in pillow_parameters:
+            pillow_parameters["quality"] = "keep"
+
+    # Save image to bytes
+    img_byte_arr = BytesIO()
+    try:
+        img.save(img_byte_arr, format=image_format, **pillow_parameters)
+    except OSError:  # pragma: no cover  # covered with pillow 10.3
+        # in case of we convert to RGBA and then to PNG
+        img1 = img.convert("RGBA")
+        image_format = "PNG"
+        extension = ".png"
+        img_byte_arr = BytesIO()
+        img1.save(img_byte_arr, format=image_format)
+    data = img_byte_arr.getvalue()
+
+    try:  # temporary try/except until other fixes of images
+        img = Image.open(BytesIO(data))
+    except Exception as exception:
+        logger_warning(f"Failed loading image: {exception}", __name__)
+        img = None  # type: ignore[assignment,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
+    return extension, data, img

@@ -1,5 +1,93 @@
 # CHANGELOG
 
+## Version 6.6.2, 2026-01-26
+
+### Security (SEC)
+- Detect cyclic references when retrieving outlines (#3610)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.6.1...6.6.2)
+
+## Version 6.6.1, 2026-01-25
+
+### Robustness (ROB)
+- `/AcroForm` might be NullObject (#3601)
+- Handle missing font bounding boxes gracefully (#3600)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.6.0...6.6.1)
+
+## Version 6.6.0, 2026-01-09
+
+### Security (SEC)
+- Improve handling of partially broken PDF files (#3594)
+
+### Deprecations (DEP)
+- Block common page content modifications when assigned to reader (#3582)
+
+### New Features (ENH)
+- Embellishments to generated text appearance streams (#3571)
+
+### Bug Fixes (BUG)
+- Do not consider multi-byte BOM-like sequences as BOMs (#3589)
+
+### Robustness (ROB)
+- Avoid empty FlateDecode outputs without warning (#3579)
+
+### Documentation (DOC)
+- Add outlines documentation and link it in User Guide (#3511)
+
+### Developer Experience (DEV)
+- Add PyPy 3.11 to test matrix and benchmarks (#3574)
+
+### Maintenance (MAINT)
+- Fix compatibility with Pillow >= 12.1.0 (#3590)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.5.0...6.6.0)
+
+## Version 6.5.0, 2025-12-21
+
+### New Features (ENH)
+- Limit jbig2dec memory usage (#3576)
+- FontDescriptor: Initiate from embedded font resource (#3551)
+
+### Robustness (ROB)
+- Allow fallback to PBM files for jbig2dec without PNG support (#3567)
+- Use warning instead of error for early EOD for RunLengthDecode (#3548)
+
+### Developer Experience (DEV)
+- Test with macOS as well (#3401)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.2...6.5.0)
+
+## Version 6.4.2, 2025-12-14
+
+### Bug Fixes (BUG)
+- Fix KeyError when flattening form field without /Font in resources (#3554)
+
+### Robustness (ROB)
+- Allow deleting non-existent annotations (#3559)
+
+### Documentation (DOC)
+- Fix level of attachment heading (#3560)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.1...6.4.2)
+
+## Version 6.4.1, 2025-12-07
+
+### Performance Improvements (PI)
+- Optimize loop for layout mode text extraction (#3543)
+
+### Bug Fixes (BUG)
+- Do not fail on choice field without /Opt key (#3540)
+
+### Documentation (DOC)
+- Document possible issues with merge_page and clipping (#3546)
+- Add some notes about library security (#3545)
+
+### Maintenance (MAINT)
+- Use CORE_FONT_METRICS for widths where possible (#3526)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.0...6.4.1)
+
 ## Version 6.4.0, 2025-11-23
 
 ### Security (SEC)

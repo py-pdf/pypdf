@@ -6,13 +6,12 @@ import pytest
 from PIL import Image
 
 from pypdf import PdfReader
-from pypdf._xobj_image_helpers import _extended_image_frombytes, _handle_flate
+from pypdf._xobj_image_helpers import _extended_image_from_bytes, _handle_flate, _xobj_to_image
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, PdfReadError
-from pypdf.filters import _xobj_to_image
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
 
-from . import get_data_from_url
+from . import get_data_from_url, get_image_data
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -40,7 +39,7 @@ def test_get_imagemode_recursion_depth():
 def test_handle_flate__image_mode_1(caplog):
     data = b"\x00\xe0\x00"
     lookup = DecodedStreamObject()
-    expected_data = [
+    expected_data = (
         (66, 66, 66),
         (66, 66, 66),
         (66, 66, 66),
@@ -50,7 +49,7 @@ def test_handle_flate__image_mode_1(caplog):
         (66, 66, 66),
         (66, 66, 66),
         (66, 66, 66),
-    ]
+    )
 
     # No trailing data.
     lookup.set_data(b"\x42\x42\x42\x00\x13\x37")
@@ -64,7 +63,7 @@ def test_handle_flate__image_mode_1(caplog):
         colors=2,
         obj_as_text="dummy",
     )
-    assert expected_data == list(result[0].getdata())
+    assert expected_data == get_image_data(result[0])
     assert not caplog.text
 
     # Trailing whitespace.
@@ -79,7 +78,7 @@ def test_handle_flate__image_mode_1(caplog):
         colors=2,
         obj_as_text="dummy",
     )
-    assert expected_data == list(result[0].getdata())
+    assert expected_data == get_image_data(result[0])
     assert not caplog.text
 
     # Trailing non-whitespace character.
@@ -99,7 +98,7 @@ def test_handle_flate__image_mode_1(caplog):
         colors=2,
         obj_as_text="dummy",
     )
-    assert expected_data == list(result[0].getdata())
+    assert expected_data == get_image_data(result[0])
     assert "Too many lookup values: Expected 6, got 7." in caplog.text
 
     # Not enough lookup data.
@@ -107,7 +106,7 @@ def test_handle_flate__image_mode_1(caplog):
     # here, but received a custom padding of `0`.
     lookup.set_data(b"\x42\x42\x42\x00\x13")
     caplog.clear()
-    expected_short_data = [entry if entry[0] == 66 else (0, 19, 0) for entry in expected_data]
+    expected_short_data = tuple([entry if entry[0] == 66 else (0, 19, 0) for entry in expected_data])
     result = _handle_flate(
         size=(3, 3),
         data=data,
@@ -123,7 +122,7 @@ def test_handle_flate__image_mode_1(caplog):
         colors=2,
         obj_as_text="dummy",
     )
-    assert expected_short_data == list(result[0].getdata())
+    assert expected_short_data == get_image_data(result[0])
     assert "Not enough lookup values: Expected 6, got 5." in caplog.text
 
 
@@ -133,7 +132,7 @@ def test_extended_image_frombytes_zero_data():
     data = b""
 
     with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
-        _extended_image_frombytes(mode, size, data)
+        _extended_image_from_bytes(mode, size, data)
 
 
 def test_handle_flate__autodesk_indexed():

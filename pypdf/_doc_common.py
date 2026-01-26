@@ -599,7 +599,7 @@ class PdfDocCommon:
             fileobj.write("\n")
         retval[key] = Field(field)
         obj = retval[key].indirect_reference.get_object()  # to get the full object
-        if obj.get(FA.FT, "") == "/Ch":
+        if obj.get(FA.FT, "") == "/Ch" and obj.get(NameObject(FA.Opt)):
             retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
         if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
             #  Checkbox
@@ -833,7 +833,10 @@ class PdfDocCommon:
         return self._get_outline()
 
     def _get_outline(
-        self, node: Optional[DictionaryObject] = None, outline: Optional[Any] = None
+        self,
+        node: Optional[DictionaryObject] = None,
+        outline: Optional[Any] = None,
+        visited: Optional[set[int]] = None,
     ) -> OutlineType:
         if outline is None:
             outline = []
@@ -855,7 +858,15 @@ class PdfDocCommon:
             return outline
 
         # see if there are any more outline items
+        if visited is None:
+            visited = set()
         while True:
+            node_id = id(node)
+            if node_id in visited:
+                logger_warning(f"Detected cycle in outline structure for {node}", __name__)
+                break
+            visited.add(node_id)
+
             outline_obj = self._build_outline_item(node)
             if outline_obj:
                 outline.append(outline_obj)
@@ -863,7 +874,13 @@ class PdfDocCommon:
             # check for sub-outline
             if "/First" in node:
                 sub_outline: list[Any] = []
-                self._get_outline(cast(DictionaryObject, node["/First"]), sub_outline)
+                # Pass a copy to allow multiple outer entries to reference the same inner one.
+                inner_visited = visited.copy()
+                self._get_outline(
+                    node=cast(DictionaryObject, node["/First"]),
+                    outline=sub_outline,
+                    visited=inner_visited,
+                )
                 if sub_outline:
                     outline.append(sub_outline)
 
@@ -1170,7 +1187,11 @@ class PdfDocCommon:
             for attr in inheritable_page_attributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
+            pages_reference = getattr(pages, "indirect_reference", object())
             for page in cast(ArrayObject, pages[PagesAttributes.KIDS]):
+                if getattr(page, "indirect_reference", object()) == pages_reference:
+                    raise PdfReadError("Detected cyclic page references.")
+
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page

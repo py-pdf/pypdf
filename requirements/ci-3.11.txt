@@ -6,11 +6,11 @@
 #
 cffi==1.17.1
     # via cryptography
-coverage[toml]==7.10.1
+coverage[toml]==7.13.0
     # via
     #   -r requirements/ci.in
     #   pytest-cov
-cryptography==44.0.1
+cryptography==44.0.2
     # via -r requirements/ci.in
 defusedxml==0.7.1
     # via fpdf2
@@ -18,7 +18,7 @@ exceptiongroup==1.2.2
     # via pytest
 execnet==2.1.1
     # via pytest-xdist
-fonttools==4.54.1
+fonttools==4.61.0
     # via fpdf2
 fpdf2==2.8.1
     # via -r requirements/ci.in
@@ -30,7 +30,7 @@ mypy-extensions==1.0.0
     # via mypy
 packaging==24.1
     # via pytest
-pillow==11.3.0
+pillow==12.1.0
     # via
     #   -r requirements/ci.in
     #   fpdf2
@@ -60,7 +60,7 @@ pytest-xdist==3.6.1
     # via -r requirements/ci.in
 pyyaml==6.0.2
     # via -r requirements/ci.in
-ruff==0.13.0
+ruff==0.14.14
     # via -r requirements/ci.in
 tomli==2.0.2
     # via
@@ -68,8 +68,6 @@ tomli==2.0.2
     #   mypy
     #   pytest
 typeguard==4.3.0
-    # via -r requirements/ci.in
-types-pillow==10.2.0.20240822
     # via -r requirements/ci.in
 typing-extensions==4.12.2
     # via

@@ -6,9 +6,9 @@ from collections import Counter as CounterType
 from collections.abc import MutableMapping
 from typing import Any, Union
 
+from ..._font import Font
 from ...errors import PdfReadError
 from .. import mult
-from ._font import Font
 from ._text_state_params import TextStateParams
 
 TextStateManagerChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
@@ -108,7 +108,7 @@ class TextStateManager:
             except (UnicodeEncodeError, UnicodeDecodeError):
                 txt = value.decode("utf-8", "replace")
             txt = "".join(
-                self.font.char_map.get(x, x) for x in txt
+                self.font.character_map.get(x, x) for x in txt
             )
         else:
             txt = value

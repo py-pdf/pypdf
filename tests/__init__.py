@@ -1,10 +1,13 @@
 import concurrent.futures
+import os
 import ssl
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 from urllib.error import HTTPError
+
+from PIL import Image
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -16,6 +19,24 @@ import yaml
 from pypdf.generic import DictionaryObject, IndirectObject
 
 
+def _get_data_from_url(url: str) -> bytes:
+    ssl._create_default_https_context = ssl._create_unverified_context
+    attempts = 0
+    while attempts < 3:
+        try:
+            with urllib.request.urlopen(  # noqa: S310
+                    url
+            ) as response:
+                return response.read()
+        except HTTPError as e:
+            if attempts < 3:
+                attempts += 1
+            else:
+                raise e
+    raise ValueError(f"Unknown error handling {url}")
+
+
+# TODO: Make keyword-only and drop name being optional.
 def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> bytes:
     """
     Download a File from a URL and return its contents.
@@ -35,32 +56,21 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
     if name is None:
         raise ValueError("A name must always be specified")
 
-    cache_dir = Path(__file__).parent / "pdf_cache"
+    if os.getenv("GITHUB_JOB", None) is not None:
+        cache_dir = Path("tests", "pdf_cache").resolve()
+    else:
+        cache_dir = Path(__file__).parent / "pdf_cache"
     if not cache_dir.exists():
         cache_dir.mkdir()
     cache_path = cache_dir / name
 
     if url is not None:
         if url.startswith("file://"):
-            with open(url[7:].replace("\\", "/"), "rb") as fp:
-                return fp.read()
+            path = Path(url[7:].replace("\\", "/"))
+            return path.read_bytes()
         if not cache_path.exists():
-            ssl._create_default_https_context = ssl._create_unverified_context
-            attempts = 0
-            while attempts < 3:
-                try:
-                    with urllib.request.urlopen(  # noqa: S310
-                        url
-                    ) as response, cache_path.open("wb") as out_file:
-                        out_file.write(response.read())
-                    break
-                except HTTPError as e:
-                    if attempts < 3:
-                        attempts += 1
-                    else:
-                        raise e
-    with open(cache_path, "rb") as fp:
-        return fp.read()
+            cache_path.write_bytes(_get_data_from_url(url))
+    return cache_path.read_bytes()
 
 
 def _strip_position(line: str) -> str:
@@ -141,15 +151,6 @@ def download_test_pdfs():
         concurrent.futures.wait(futures)
 
 
-def test_csv_consistency():
-    pdfs = read_yaml_to_list_of_dicts(Path(__file__).parent / "example_files.csv")
-    # Ensure the names are unique
-    assert len(pdfs) == len({pdf["name"] for pdf in pdfs})
-
-    # Ensure the urls are unique
-    assert len(pdfs) == len({pdf["url"] for pdf in pdfs})
-
-
 class PILContext:
     """Allow changing the PIL/Pillow configuration for some limited scope."""
 
@@ -170,3 +171,13 @@ class PILContext:
             # Error.
             return None
         return True
+
+
+def get_image_data(
+        image: Image.Image, band: Union[int, None] = None
+) -> Union[tuple[tuple[int, ...], ...], tuple[float, ...]]:
+    try:
+        return image.get_flattened_data(band=band)
+    except AttributeError:
+        # For Pillow < 12.1.0
+        return tuple(image.getdata(band=band))

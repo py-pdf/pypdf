@@ -105,6 +105,10 @@ known_third_party = ["pytest", "setuptools"]
 [tool.coverage.run]
 source = ["pypdf"]
 branch = true
+patch = [
+    "subprocess",
+]
+parallel = true
 
 [tool.coverage.report]
 # Regexes for lines to exclude from consideration

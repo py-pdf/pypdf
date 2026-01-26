@@ -11,7 +11,16 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import EmbeddedFile, NullObject, TextStringObject, ViewerPreferences
+from pypdf.errors import PdfReadError
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    EmbeddedFile,
+    NameObject,
+    NullObject,
+    TextStringObject,
+    ViewerPreferences,
+)
 from tests import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -449,3 +458,100 @@ def test_outline__issue3462():
         "Page 1",
         "Page 2"
     ]
+
+
+def test_flatten__cyclic_references():
+    path = RESOURCES_ROOT / "crazyones.pdf"
+
+    reader = PdfReader(path)
+    assert len(reader.pages) == 1
+    reader._flatten()
+
+    # Make the first child point to the object itself.
+    pages_object = reader.get_object(10)
+    pages_object[NameObject("/Kids")][0].indirect_reference.idnum = 10
+    reader.resolved_objects[(10, 0)] = pages_object
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Detected cyclic page references\.$"):
+        reader._flatten()
+
+
+@pytest.mark.enable_socket
+@pytest.mark.timeout(10)
+def test_get_outline__cyclic_references(caplog):
+    url = "https://github.com/user-attachments/files/24859044/circular_outline.pdf"
+    name = "circular_outline.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+
+    assert reader.outline == [
+        {
+            "/%is_open%": True,
+            "/Page": reader.pages[0].indirect_reference,
+            "/Title": "Bookmark A",
+            "/Type": "/Fit"
+        },
+        {
+            "/%is_open%": True,
+            "/Page": reader.pages[0].indirect_reference,
+            "/Title": "Bookmark B",
+            "/Type": "/Fit"
+        }
+    ]
+    assert caplog.messages[0].startswith("Detected cycle in outline structure for {")
+
+
+@pytest.mark.enable_socket
+@pytest.mark.timeout(10)
+def test_get_outline__cyclic_references__nested_handling(caplog):
+    url = "https://github.com/user-attachments/files/24859044/circular_outline.pdf"
+    name = "circular_outline.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
+
+    nested_outline = DictionaryObject()
+    writer._add_object(nested_outline)
+    nested_outline.update({
+        NameObject("/Title"): TextStringObject("Nested entry"),
+        NameObject("/Parent"): writer.get_object(5),
+        NameObject("/Dest"): ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")]),
+        NameObject("/Next"): writer.get_object(6),
+    })
+    writer.get_object(5)[NameObject("/First")] = nested_outline.indirect_reference
+    writer.get_object(6)[NameObject("/First")] = nested_outline.indirect_reference
+
+    assert writer.outline == [
+        {
+            "/%is_open%": True,
+            "/Page": writer.pages[0].indirect_reference,
+            "/Title": "Bookmark A",
+            "/Type": "/Fit"
+        },
+        [
+            {
+                "/%is_open%": True,
+                "/Page": writer.pages[0].indirect_reference,
+                "/Title": "Nested entry",
+                "/Type": "/Fit"
+            },
+            {
+                "/%is_open%": True,
+                "/Page": writer.pages[0].indirect_reference,
+                "/Title": "Bookmark B",
+                "/Type": "/Fit"
+            }
+        ],
+        {
+            "/%is_open%": True,
+            "/Page": writer.pages[0].indirect_reference,
+            "/Title": "Bookmark B",
+            "/Type": "/Fit"
+        },
+        [
+            {
+                "/%is_open%": True,
+                "/Page": writer.pages[0].indirect_reference,
+                "/Title": "Nested entry",
+                "/Type": "/Fit"
+            }
+        ]
+    ]
+    assert caplog.messages[0].startswith("Detected cycle in outline structure for {")

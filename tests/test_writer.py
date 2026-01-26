@@ -1804,8 +1804,8 @@ def test_watermark_rendering(tmp_path):
     name = "srcwatermark.pdf"
     page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
     writer = PdfWriter()
+    page = writer.add_page(page)
     page.merge_page(watermark, over=False)
-    writer.add_page(page)
 
     target_png_path = tmp_path / "target.png"
     url = "https://github.com/py-pdf/pypdf/assets/96178532/d5c72d0e-7047-4504-bbf6-bc591c80d7c0"
@@ -1846,8 +1846,8 @@ def test_watermarking_reportlab_rendering(tmp_path):
     watermark = PdfReader(watermark_path).pages[0]
 
     writer = PdfWriter()
+    base_page = writer.add_page(base_page)
     base_page.merge_page(watermark)
-    writer.add_page(base_page)
 
     target_png_path = RESOURCE_ROOT / "test_watermarking_reportlab_rendering.png"
     pdf_path = tmp_path / "out.pdf"
@@ -1884,7 +1884,7 @@ def test_da_missing_in_annot():
     ff = reader.get_fields()
     # check for autosize processing
     assert (
-        b"0 Tf"
+        b" 0 Tf"
         not in ff["PCN-1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
     )
     f2 = writer.get_object(ff["PCN-2"].indirect_reference.idnum)
@@ -2438,8 +2438,8 @@ def test_field_box_upside_down():
     writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
     writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
     assert writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data() == (
-        b"q\n/Tx BMC \nq\n1 1 105.29520000000001 10.835000000000036 re\n"
-        b"W\nBT\n/Helv 8.0 Tf 0 g\n2 2.8350000000000364 Td\n(0) Tj\nET\n"
+        b"q\n/Tx BMC \nq\n2 1 102.29520000000001 9.835000000000036 re\n"
+        b"W\nBT\n/Helv 8.0 Tf 0 g\n2 3.0455000000000183 Td\n(0) Tj\nET\n"
         b"Q\nEMC\nQ\n"
     )
     box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
@@ -2873,3 +2873,55 @@ def test_wrong_size_in_incremental_pdf(caplog):
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Got index error while flattening\.$"):
         PdfWriter(BytesIO(modified_data), incremental=True)
+
+
+@pytest.mark.enable_socket
+def test_flatten_form_field_without_font_in_resources():
+    """
+    This test is a regression test for issue #3553.
+    Flatten form field with /Resources lacking /Font.
+    """
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-3553.pdf")))
+    writer = PdfWriter()
+    writer.append(reader)
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Unique reference numberRow1": "test"},
+        flatten=True,
+    )
+    b = BytesIO()
+    writer.write(b)
+
+    reader = PdfReader(b)
+    form_text_fields = reader.get_form_text_fields()
+    assert form_text_fields["Unique reference numberRow1"] == "test"
+
+
+def test_merge_with_null_acroform_does_not_raise_typeerror():
+    """
+    Source PDFs may contain '/AcroForm null'.
+
+    Test for issue #3598.
+    """
+    src_writer = PdfWriter()
+    src_writer.add_blank_page(72, 72)
+    src_writer.root_object[NameObject("/AcroForm")] = NullObject()
+
+    src_bytes = BytesIO()
+    src_writer.write(src_bytes)
+    src_bytes.seek(0)
+
+    source = PdfReader(src_bytes)
+
+    target = PdfWriter()
+    target.merge(0, source)
+
+    assert "/AcroForm" not in target.root_object
+
+
+def test_compress_identical_objects__info_is_none():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.compress_identical_objects()
+
+    writer.metadata = None
+    writer.compress_identical_objects()

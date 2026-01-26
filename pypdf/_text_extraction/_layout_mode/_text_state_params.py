@@ -4,8 +4,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Union
 
+from ..._font import Font
 from .. import mult, orient
-from ._font import Font
 
 
 @dataclass
@@ -72,9 +72,9 @@ class TextStateParams:
         if self.space_tx < 1e-6:
             # if the " " char is assigned 0 width (e.g. for fine tuned spacing
             # with TJ int operators a la crazyones.pdf), calculate space_tx as
-            # a TD_offset of -2 * font.space_width where font.space_width is
-            # the space_width calculated in _cmap.py.
-            self.space_tx = round(self.word_tx("", self.font.space_width * -2), 3)
+            # a td_offset of -1 * font.space_width where font.space_width is
+            # the space_width calculated in _font.py.
+            self.space_tx = round(self.word_tx("", -self.font.space_width), 3)
         self.font_height = self.font_size * math.sqrt(
             self.transform[1] ** 2 + self.transform[3] ** 2
         )
@@ -101,7 +101,7 @@ class TextStateParams:
         return mult(self.font_size_matrix(), self.transform)
 
     def displacement_matrix(
-        self, word: Union[str, None] = None, TD_offset: float = 0.0
+        self, word: Union[str, None] = None, td_offset: float = 0.0
     ) -> list[float]:
         """
         Text displacement matrix
@@ -109,16 +109,22 @@ class TextStateParams:
         Args:
             word (str, optional): Defaults to None in which case self.txt displacement is
                 returned.
-            TD_offset (float, optional): translation applied by TD operator. Defaults to 0.0.
+            td_offset (float, optional): translation applied by TD operator. Defaults to 0.0.
 
         """
         word = word if word is not None else self.txt
-        return [1.0, 0.0, 0.0, 1.0, self.word_tx(word, TD_offset), 0.0]
+        return [1.0, 0.0, 0.0, 1.0, self.word_tx(word, td_offset), 0.0]
 
-    def word_tx(self, word: str, TD_offset: float = 0.0) -> float:
+    def word_tx(self, word: str, td_offset: float = 0.0) -> float:
         """Horizontal text displacement for any word according this text state"""
+        width: float = 0.0
+        for char in word:
+            if char == " ":
+                width += self.font.space_width
+            else:
+                width += self.font.text_width(char)
         return (
-            (self.font_size * ((self.font.word_width(word) - TD_offset) / 1000.0))
+            (self.font_size * ((width - td_offset) / 1000.0))
             + self.Tc
             + word.count(" ") * self.Tw
         ) * (self.Tz / 100.0)

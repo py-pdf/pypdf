@@ -19,13 +19,13 @@ repos:
         args: ['--maxkb=1000']
 
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.13.0
+    rev: v0.14.14
     hooks:
     -   id: ruff-check
         args: ['--fix']
 
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.20.0
+    rev: v3.21.2
     hooks:
     -   id: pyupgrade
         args: [--py39-plus]
@@ -34,5 +34,4 @@ repos:
     rev: v1.17.1
     hooks:
       - id: mypy
-        additional_dependencies: [types-Pillow==10.2.0.20240822]
         files: ^pypdf/.*

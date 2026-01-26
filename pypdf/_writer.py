@@ -32,6 +32,7 @@ import enum
 import hashlib
 import re
 import struct
+import sys
 import uuid
 from collections.abc import Iterable, Mapping
 from io import BytesIO, FileIO, IOBase
@@ -47,6 +48,11 @@ from typing import (
     Union,
     cast,
 )
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
@@ -393,7 +399,7 @@ class PdfWriter(PdfDocCommon):
         deprecation_no_replacement("with_as_usage", "5.0")
         self._with_as_usage = value
 
-    def __enter__(self) -> "PdfWriter":
+    def __enter__(self) -> Self:
         """Store how writer is initialized by 'with'."""
         c: bool = self._cloned
         t = self.temp_fileobj
@@ -894,11 +900,7 @@ class PdfWriter(PdfDocCommon):
         pg_res = cast(DictionaryObject, page[PG.RESOURCES])
         if "/Resources" in appearance_stream_obj:
             ap_stream_res = cast(DictionaryObject, appearance_stream_obj["/Resources"])
-            # No need to check "if "/Font" in ap_stream_res", because the only reason this
-            # code runs would be if we are flattening form fields, and the associated code
-            # either adds a Font resource or no resource at all. This probably needs to
-            # change if we want to use this method to flatten markup annotations.
-            ap_stream_font_dict = cast(DictionaryObject, ap_stream_res["/Font"])
+            ap_stream_font_dict = cast(DictionaryObject, ap_stream_res.get("/Font", DictionaryObject()))
             if "/Font" not in pg_res:
                 pg_res[NameObject("/Font")] = DictionaryObject()
             pg_font_res = cast(DictionaryObject, pg_res["/Font"])
@@ -1636,7 +1638,8 @@ class PdfWriter(PdfDocCommon):
         # remove orphans (if applicable)
         orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
 
-        orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+        if not is_null_or_none(self._info):
+            orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
 
         try:
             orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
@@ -2753,7 +2756,7 @@ class PdfWriter(PdfDocCommon):
                     pag[NameObject("/Annots")] = lst
                 self.clean_page(pag)
 
-        if "/AcroForm" in _ro and _ro["/AcroForm"] is not None:
+        if "/AcroForm" in _ro and not is_null_or_none(_ro["/AcroForm"]):
             if "/AcroForm" not in self._root_object:
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
@@ -2945,7 +2948,7 @@ class PdfWriter(PdfDocCommon):
                             outlist.append(self._add_object(anc))
             else:
                 d = cast("DictionaryObject", ano["/A"]).get("/D", NullObject())
-                if d is None or isinstance(d, NullObject):
+                if is_null_or_none(d):
                     continue
                 if isinstance(d, str):
                     # it is a named dest

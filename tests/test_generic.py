@@ -41,10 +41,10 @@ from pypdf.generic import (
     read_string_from_stream,
 )
 from pypdf.generic._image_inline import (
-    extract_inline_A85,
-    extract_inline_AHx,
-    extract_inline_DCT,
-    extract_inline_RL,
+    extract_inline__ascii85_decode,
+    extract_inline__ascii_hex_decode,
+    extract_inline__dct_decode,
+    extract_inline__run_length_decode,
 )
 
 from . import ReaderDummy, get_data_from_url
@@ -1158,36 +1158,36 @@ def test_array_operators():
 
 def test_unitary_extract_inline_buffer_invalid():
     with pytest.raises(PdfReadError):
-        extract_inline_AHx(BytesIO())
+        extract_inline__ascii_hex_decode(BytesIO())
     with pytest.raises(PdfReadError):
-        extract_inline_AHx(BytesIO(4095 * b"00" + b"   "))
+        extract_inline__ascii_hex_decode(BytesIO(4095 * b"00" + b"   "))
     with pytest.raises(PdfReadError):
-        extract_inline_AHx(BytesIO(b"00"))
+        extract_inline__ascii_hex_decode(BytesIO(b"00"))
     with pytest.raises(PdfReadError):
-        extract_inline_A85(BytesIO())
+        extract_inline__ascii85_decode(BytesIO())
     with pytest.raises(PdfReadError):
-        extract_inline_A85(BytesIO(a85encode(b"1")))
+        extract_inline__ascii85_decode(BytesIO(a85encode(b"1")))
     with pytest.raises(PdfReadError):
-        extract_inline_A85(BytesIO(a85encode(b"1") + b"~> Q"))
+        extract_inline__ascii85_decode(BytesIO(a85encode(b"1") + b"~> Q"))
     with pytest.raises(PdfReadError):
-        extract_inline_A85(BytesIO(a85encode(b"1234578" * 990)))
+        extract_inline__ascii85_decode(BytesIO(a85encode(b"1234578" * 990)))
     with pytest.raises(PdfReadError):
-        extract_inline_RL(BytesIO())
+        extract_inline__run_length_decode(BytesIO())
     with pytest.raises(PdfReadError):
-        extract_inline_RL(BytesIO(b"\x01\x01\x80"))
+        extract_inline__run_length_decode(BytesIO(b"\x01\x01\x80"))
     with pytest.raises(PdfReadError):
-        extract_inline_DCT(BytesIO(b"\xFF\xD9"))
+        extract_inline__dct_decode(BytesIO(b"\xFF\xD9"))
 
 
 def test_unitary_extract_inline():
     # AHx
     b = 16000 * b"00"
-    assert len(extract_inline_AHx(BytesIO(b + b" EI"))) == len(b)
+    assert len(extract_inline__ascii_hex_decode(BytesIO(b + b" EI"))) == len(b)
     with pytest.raises(PdfReadError):
-        extract_inline_AHx(BytesIO(b + b"> "))
+        extract_inline__ascii_hex_decode(BytesIO(b + b"> "))
     # RL
     b = 8200 * b"\x00\xAB" + b"\x80"
-    assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)
+    assert len(extract_inline__run_length_decode(BytesIO(b + b" EI"))) == len(b)
 
     # default
     # EIDD instead of EI; using A85

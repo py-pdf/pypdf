@@ -21,6 +21,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Ermeson, Felipe](https://github.com/FelipeErmeson)
 * [Freitag, François](https://github.com/francoisfreitag)
 * [Gagnon, William G.](https://github.com/williamgagnon)
+* [Gillard, James](https://github.com/jgillard)
 * [Górny, Michał](https://github.com/mgorny)
 * [Grillo, Miguel](https://github.com/Ineffable22)
 * [Gutteridge, David H.](https://github.com/dhgutteridge)
@@ -64,6 +65,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf from April 2022 to January 2025. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 * [Thomas, Reuben](https://github.com/rrthomas)
 * [Tobeabellwether](https://github.com/Tobeabellwether)
+* [van Alst, Ludo](https://github.com/LudovA)
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * [Wilson, Huon](https://github.com/huonw)
 * ztravis
