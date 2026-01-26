@@ -5,8 +5,9 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import build_char_map, get_encoding, parse_bfchar
+from pypdf._cmap import get_encoding, parse_bfchar
 from pypdf._codecs import charset_encoding
+from pypdf._font import Font
 from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject
 
 from . import get_data_from_url
@@ -136,7 +137,8 @@ def test_text_extraction_of_specific_pages(
 def test_iss1533():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss1533.pdf")))
     reader.pages[0].extract_text()  # no error
-    assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
+    font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F"])
+    assert font.character_map["\x01"] == "Ü"
 
 
 @pytest.mark.enable_socket

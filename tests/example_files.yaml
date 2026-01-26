@@ -110,5 +110,17 @@
   url: https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf
 - local_filename: iss3268.pdf
   url: https://github.com/user-attachments/files/20060394/broken.pdf
+- local_filename: direct-link.pdf
+  url: https://github.com/user-attachments/files/20348304/tst.pdf
+- local_filename: named-reference.pdf
+  url: https://github.com/user-attachments/files/20455804/MinimalJob.pdf
 - local_filename: large_lzw_example_encoded.dat
   url: https://github.com/user-attachments/files/20923310/large_lzw_example_encoded.dat.txt
+- local_filename: issue-3419.pdf
+  url: https://github.com/user-attachments/files/21578875/layout-parser-paper-with-empty-pages.pdf
+- local_filename: issue-3429.pdf
+  url: https://github.com/user-attachments/files/21711469/bomb.pdf
+- local_filename: issue-3508.pdf
+  url: https://github.com/user-attachments/files/23211824/repair-manual-thermo-230-300-350-2012-en.pdf
+- local_filename: issue-3553.pdf
+  url: https://github.com/user-attachments/files/23996861/ATOLCertificate.pdf

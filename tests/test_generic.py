@@ -1,6 +1,8 @@
 """Test the pypdf.generic module."""
 
 import codecs
+import gc
+import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
@@ -10,7 +12,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import CheckboxRadioButtonAttributes
-from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -39,10 +41,10 @@ from pypdf.generic import (
     read_string_from_stream,
 )
 from pypdf.generic._image_inline import (
-    extract_inline_A85,
-    extract_inline_AHx,
-    extract_inline_DCT,
-    extract_inline_RL,
+    extract_inline__ascii85_decode,
+    extract_inline__ascii_hex_decode,
+    extract_inline__dct_decode,
+    extract_inline__run_length_decode,
 )
 
 from . import ReaderDummy, get_data_from_url
@@ -198,9 +200,9 @@ def test_name_object(caplog):
         NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "Name read error"
 
-    with pytest.warns(
-        DeprecationWarning,
-        match="surfix is deprecated and will be removed in pypdf 6.0.0. Use prefix instead.",
+    with pytest.raises(
+        DeprecationError,
+        match=r"surfix is deprecated and was removed in pypdf 5\.0\.0\. Use prefix instead\.",
     ):
         _ = NameObject.surfix
 
@@ -246,9 +248,9 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    with pytest.warns(
-            expected_warning=DeprecationWarning,
-            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and will"
+    with pytest.raises(
+            expected_exception=DeprecationError,
+            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and was"
     ):
         NameObject("hello").write_to_stream(b)
 
@@ -916,6 +918,63 @@ def test_cloning(caplog):
     assert isinstance(obj21.get("/Test2"), IndirectObject)
 
 
+def test_cloning_indirect_obj_keeps_hard_reference():
+    """
+    Reported in #3450
+
+    Ensure that cloning an IndirectObject keeps a hard reference to
+    the underlying object, preventing its deallocation, which could allow
+    `id(obj)` to return the same value for different objects.
+    """
+    writer1 = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer1)
+
+    # Create a weak reference to the underlying object to test later
+    # if it is still alive in memory or not
+    obj_weakref = weakref.ref(indirect_object.pdf)
+    assert obj_weakref() is not None
+
+    writer2 = PdfWriter()
+    indirect_object.clone(writer2)
+
+    # Mimic indirect_object/writer1 going out of scope and being
+    # garbage collected. Clone should have kept a hard reference to
+    # it, preventing its deallocation.
+    del indirect_object
+    del writer1
+    gc.collect()
+    assert obj_weakref() is not None
+
+
+def test_cloning_null_obj_keeps_hard_reference():
+    """
+    Ensure that cloning a NullObject keeps a hard reference to
+    the underlying object, preventing its deallocation, which could allow
+    `id(obj)` to return the same value for different objects.
+    """
+    writer1 = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer1)
+    null_obj = NullObject()
+    null_obj.indirect_reference = indirect_object
+
+    # Create a weak reference to the underlying object to test later
+    # if it is still alive in memory or not
+    obj_weakref = weakref.ref(indirect_object.pdf)
+    assert obj_weakref() is not None
+
+    writer2 = PdfWriter()
+    null_obj.clone(writer2)
+
+    # Mimic indirect_object/writer1 going out of scope and being
+    # garbage collected. Clone should have kept a hard reference to
+    # it, preventing its deallocation.
+    del indirect_object
+    del writer1
+    del null_obj
+    gc.collect()
+    assert obj_weakref() is not None
+
+
 @pytest.mark.enable_socket
 def test_append_with_indirectobject_not_pointing(caplog):
     """
@@ -1099,36 +1158,36 @@ def test_array_operators():
 
 def test_unitary_extract_inline_buffer_invalid():
     with pytest.raises(PdfReadError):
-        extract_inline_AHx(BytesIO())
+        extract_inline__ascii_hex_decode(BytesIO())
     with pytest.raises(PdfReadError):
-        extract_inline_AHx(BytesIO(4095 * b"00" + b"   "))
+        extract_inline__ascii_hex_decode(BytesIO(4095 * b"00" + b"   "))
     with pytest.raises(PdfReadError):
-        extract_inline_AHx(BytesIO(b"00"))
+        extract_inline__ascii_hex_decode(BytesIO(b"00"))
     with pytest.raises(PdfReadError):
-        extract_inline_A85(BytesIO())
+        extract_inline__ascii85_decode(BytesIO())
     with pytest.raises(PdfReadError):
-        extract_inline_A85(BytesIO(a85encode(b"1")))
+        extract_inline__ascii85_decode(BytesIO(a85encode(b"1")))
     with pytest.raises(PdfReadError):
-        extract_inline_A85(BytesIO(a85encode(b"1") + b"~> Q"))
+        extract_inline__ascii85_decode(BytesIO(a85encode(b"1") + b"~> Q"))
     with pytest.raises(PdfReadError):
-        extract_inline_A85(BytesIO(a85encode(b"1234578" * 990)))
+        extract_inline__ascii85_decode(BytesIO(a85encode(b"1234578" * 990)))
     with pytest.raises(PdfReadError):
-        extract_inline_RL(BytesIO())
+        extract_inline__run_length_decode(BytesIO())
     with pytest.raises(PdfReadError):
-        extract_inline_RL(BytesIO(b"\x01\x01\x80"))
+        extract_inline__run_length_decode(BytesIO(b"\x01\x01\x80"))
     with pytest.raises(PdfReadError):
-        extract_inline_DCT(BytesIO(b"\xFF\xD9"))
+        extract_inline__dct_decode(BytesIO(b"\xFF\xD9"))
 
 
 def test_unitary_extract_inline():
     # AHx
     b = 16000 * b"00"
-    assert len(extract_inline_AHx(BytesIO(b + b" EI"))) == len(b)
+    assert len(extract_inline__ascii_hex_decode(BytesIO(b + b" EI"))) == len(b)
     with pytest.raises(PdfReadError):
-        extract_inline_AHx(BytesIO(b + b"> "))
+        extract_inline__ascii_hex_decode(BytesIO(b + b"> "))
     # RL
     b = 8200 * b"\x00\xAB" + b"\x80"
-    assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)
+    assert len(extract_inline__run_length_decode(BytesIO(b + b" EI"))) == len(b)
 
     # default
     # EIDD instead of EI; using A85
@@ -1256,3 +1315,23 @@ def test_contentstream_arrayobject_containing_nullobject(caplog):
     content_stream = ContentStream(stream=input_stream, pdf=None)
     assert content_stream.get_data() == b"Hello World!\n"
     assert caplog.text == ""
+
+
+@pytest.mark.enable_socket
+def test_build_link__go_to_action_without_destination():
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-3419.pdf")))
+    writer = PdfWriter()
+    for page in reader.pages:
+        writer.add_page(page)
+    assert len(writer.pages) == len(reader.pages)
+
+
+@pytest.mark.enable_socket
+def test_dictionaryobject__length_0_stream():
+    """Test for issue #3052."""
+    url = "https://github.com/user-attachments/files/18734105/correct.pdf"
+    name = "issue3052.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    output = BytesIO()
+    writer.write(output)
+    assert b"\n8 0 obj\n<<\n/Length 0\n>>\nstream\n\nendstream\nendobj\n" in output.getvalue()

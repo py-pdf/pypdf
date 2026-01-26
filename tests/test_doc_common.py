@@ -1,15 +1,26 @@
 """Test the pypdf._doc_common module."""
+import itertools
 import re
 import shutil
 import subprocess
 from io import BytesIO
+from operator import itemgetter
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import EmbeddedFile, NullObject, ViewerPreferences
+from pypdf.errors import PdfReadError
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    EmbeddedFile,
+    NameObject,
+    NullObject,
+    TextStringObject,
+    ViewerPreferences,
+)
 from tests import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -121,6 +132,7 @@ def test_byte_encoded_named_destinations():
             if action["/S"] == "/GoTo":
                 named_dest = action["/D"]
                 assert str(named_dest) in reader.named_destinations
+                assert TextStringObject(named_dest) in reader.named_destinations
 
     assert reader.named_destinations == {
         "Doc-Start": {
@@ -131,12 +143,21 @@ def test_byte_encoded_named_destinations():
             "/Top": 667.198,
             "/Zoom": NullObject()
         },
-        "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴": {
-            "/Title": "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴",
+        "cite.dacÃ\xadk2025racerflightweightstaticdata": {
+            "/Title": "cite.dacÃ\xadk2025racerflightweightstaticdata",
             "/Page": page.indirect_reference,
             "/Type": "/XYZ",
             "/Left": 133.768,
             "/Top": 614.424,
+            "/Zoom": NullObject()
+        },
+        # This is the same as the previous entry, but with `str(name)` instead of the title.
+        "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴": {
+            "/Left": 133.768,
+            "/Page": page.indirect_reference,
+            "/Title": "cite.dacÃ\xadk2025racerflightweightstaticdata",
+            "/Top": 614.424,
+            "/Type": "/XYZ",
             "/Zoom": NullObject()
         },
         "page.1": {
@@ -177,3 +198,360 @@ def test_named_destinations__tree_is_null_object():
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     assert reader.named_destinations == {}
+
+
+@pytest.mark.enable_socket
+def test_outline__issue3462():
+    url = "https://github.com/user-attachments/files/22293402/e371fffe0b_a7cccde95a.pdf"
+    name = "issue3462.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+
+    outline_flat = list(
+        itertools.chain.from_iterable(
+            entry if isinstance(entry, list) else [entry] for entry in reader.outline
+        )
+    )
+    assert list(map(itemgetter("/Title"), outline_flat)) == [
+        "AR 2021 - Daftar Isi",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "AR 2021 Book 001 (Highlights - Ikhtisar Saham)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "AR 2021 Book 002 (Laporan Manajemen)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "AR 2021 Book 003-1 (Profil Perusahaan)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "Page 10",
+        "Page 11",
+        "Page 12",
+        "Page 13",
+        "Page 14",
+        "Page 15",
+        "Page 16",
+        "Page 17",
+        "Page 18",
+        "Page 19",
+        "Page 20",
+        "Page 21",
+        "Page 22",
+        "Page 23",
+        "Page 24",
+        "Page 25",
+        "Page 26",
+        "Page 27",
+        "Page 28",
+        "Page 29",
+        "Page 30",
+        "Page 31",
+        "Page 32",
+        "Page 33",
+        "Page 34",
+        "Page 35",
+        "Page 36",
+        "Page 37",
+        "Page 38",
+        "Page 39",
+        "Page 40",
+        "Page 41",
+        "Page 42",
+        "Page 43",
+        "Page 44",
+        "Page 45",
+        "Page 46",
+        "Page 47",
+        "AR 2021 Book 003-2 (Sumber Daya Manusia)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "Page 10",
+        "Page 11",
+        "Page 12",
+        "AR 2021 Book 003-3 (Komposisi pemegang saham)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "AR 2021 Book 003-4 (Kronologis Pencatatan Saham)",
+        "Page 1",
+        "Page 2",
+        "AR 2021 Book 003-5 (Akuntan Publik Independen)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "AR 2021 Book 004 (Analisa dan Pembahasan Manajemen)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "Page 10",
+        "Page 11",
+        "Page 12",
+        "Page 13",
+        "Page 14",
+        "Page 15",
+        "Page 16",
+        "Page 17",
+        "Page 18",
+        "Page 19",
+        "Page 20",
+        "Page 21",
+        "AR 2021 Book 005-1 (Tata Kelola Perusahaan)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "Page 10",
+        "Page 11",
+        "Page 12",
+        "AR 2021 Book 005-2 (Direksi-Komisaris)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "Page 10",
+        "Page 11",
+        "Page 12",
+        "Page 13",
+        "Page 14",
+        "Page 15",
+        "Page 16",
+        "Page 17",
+        "Page 18",
+        "Page 19",
+        "Page 20",
+        "Page 21",
+        "Page 22",
+        "Page 23",
+        "Page 24",
+        "Page 25",
+        "Page 26",
+        "Page 27",
+        "Page 28",
+        "Page 29",
+        "Page 30",
+        "Page 31",
+        "Page 32",
+        "Page 33",
+        "Page 34",
+        "Page 35",
+        "Page 36",
+        "Page 37",
+        "Page 38",
+        "AR 2021 Book 005-3 (Komite Audit)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "AR 2021 Book 005-4 (Sekretaris Perusahaan)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "Page 10",
+        "AR 2021 Book 005-5 (Unit Audit Internal)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "AR 2021 Book 005-6 (Sistem Pengendalian Internal)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "AR 2021 Book 005-7 (Program Saham)",
+        "Page 1",
+        "AR 2021 Book 005-8 ( Whistleblowing)",
+        "Page 1",
+        "Page 2",
+        "Page 3",
+        "Page 4",
+        "Page 5",
+        "Page 6",
+        "Page 7",
+        "Page 8",
+        "Page 9",
+        "Page 10",
+        "Page 11",
+        "Page 12",
+        "Page 13",
+        "Page 14",
+        "Page 15",
+        "Page 16",
+        "Page 17",
+        "Page 18",
+        "Page 19",
+        "Page 20",
+        "Page 21",
+        "Page 22",
+        "Page 23",
+        "Page 24",
+        "Page 25",
+        "AR 2021 Book 006 (Tanggung Jawab Sosial - CSR)",
+        "Page 1",
+        "Page 2",
+        "AR 2021 Book 007-1 (LAPORAN KEUANGAN KONSOLIDASIAN)",
+        "Page 1",
+        "AR 2021 Book 007-2 (Isi Laporan Keuangan)",
+        "AR 2021 Book 008 (Tanggung Jawab Atas Laporan Tahunan)",
+        "Page 1",
+        "Page 2"
+    ]
+
+
+def test_flatten__cyclic_references():
+    path = RESOURCES_ROOT / "crazyones.pdf"
+
+    reader = PdfReader(path)
+    assert len(reader.pages) == 1
+    reader._flatten()
+
+    # Make the first child point to the object itself.
+    pages_object = reader.get_object(10)
+    pages_object[NameObject("/Kids")][0].indirect_reference.idnum = 10
+    reader.resolved_objects[(10, 0)] = pages_object
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Detected cyclic page references\.$"):
+        reader._flatten()
+
+
+@pytest.mark.enable_socket
+@pytest.mark.timeout(10)
+def test_get_outline__cyclic_references(caplog):
+    url = "https://github.com/user-attachments/files/24859044/circular_outline.pdf"
+    name = "circular_outline.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+
+    assert reader.outline == [
+        {
+            "/%is_open%": True,
+            "/Page": reader.pages[0].indirect_reference,
+            "/Title": "Bookmark A",
+            "/Type": "/Fit"
+        },
+        {
+            "/%is_open%": True,
+            "/Page": reader.pages[0].indirect_reference,
+            "/Title": "Bookmark B",
+            "/Type": "/Fit"
+        }
+    ]
+    assert caplog.messages[0].startswith("Detected cycle in outline structure for {")
+
+
+@pytest.mark.enable_socket
+@pytest.mark.timeout(10)
+def test_get_outline__cyclic_references__nested_handling(caplog):
+    url = "https://github.com/user-attachments/files/24859044/circular_outline.pdf"
+    name = "circular_outline.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
+
+    nested_outline = DictionaryObject()
+    writer._add_object(nested_outline)
+    nested_outline.update({
+        NameObject("/Title"): TextStringObject("Nested entry"),
+        NameObject("/Parent"): writer.get_object(5),
+        NameObject("/Dest"): ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")]),
+        NameObject("/Next"): writer.get_object(6),
+    })
+    writer.get_object(5)[NameObject("/First")] = nested_outline.indirect_reference
+    writer.get_object(6)[NameObject("/First")] = nested_outline.indirect_reference
+
+    assert writer.outline == [
+        {
+            "/%is_open%": True,
+            "/Page": writer.pages[0].indirect_reference,
+            "/Title": "Bookmark A",
+            "/Type": "/Fit"
+        },
+        [
+            {
+                "/%is_open%": True,
+                "/Page": writer.pages[0].indirect_reference,
+                "/Title": "Nested entry",
+                "/Type": "/Fit"
+            },
+            {
+                "/%is_open%": True,
+                "/Page": writer.pages[0].indirect_reference,
+                "/Title": "Bookmark B",
+                "/Type": "/Fit"
+            }
+        ],
+        {
+            "/%is_open%": True,
+            "/Page": writer.pages[0].indirect_reference,
+            "/Title": "Bookmark B",
+            "/Type": "/Fit"
+        },
+        [
+            {
+                "/%is_open%": True,
+                "/Page": writer.pages[0].indirect_reference,
+                "/Title": "Nested entry",
+                "/Type": "/Fit"
+            }
+        ]
+    ]
+    assert caplog.messages[0].startswith("Detected cycle in outline structure for {")

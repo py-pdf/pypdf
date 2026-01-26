@@ -1,0 +1,24 @@
+name: 'URL Check'
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 6 * * 1
+
+jobs:
+  url-check:
+    name: URL check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install requirements
+        run:
+          pip install pyyaml Pillow
+      - name: Check URLs
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE"
+          python .github/scripts/check_urls.py

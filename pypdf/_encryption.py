@@ -28,7 +28,7 @@ import hashlib
 import secrets
 import struct
 from enum import Enum, IntEnum
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 from pypdf._crypt_providers import (
     CryptAES,
@@ -625,7 +625,7 @@ class AlgV5:
         key: bytes,
         p: int,
         metadata_encrypted: bool,
-    ) -> Dict[Any, Any]:
+    ) -> dict[Any, Any]:
         user_password = user_password[:127]
         owner_password = owner_password[:127]
         u_value, ue_value = AlgV5.compute_U_value(R, user_password, key)
@@ -640,7 +640,7 @@ class AlgV5:
         }
 
     @staticmethod
-    def compute_U_value(R: int, password: bytes, key: bytes) -> Tuple[bytes, bytes]:
+    def compute_U_value(R: int, password: bytes, key: bytes) -> tuple[bytes, bytes]:
         """
         Algorithm 3.8 Computing the encryption dictionary’s U (user password)
         and UE (user encryption key) values.
@@ -679,7 +679,7 @@ class AlgV5:
     @staticmethod
     def compute_O_value(
         R: int, password: bytes, key: bytes, u_value: bytes
-    ) -> Tuple[bytes, bytes]:
+    ) -> tuple[bytes, bytes]:
         """
         Algorithm 3.9 Computing the encryption dictionary’s O (owner password)
         and OE (owner encryption key) values.
@@ -966,7 +966,7 @@ class Encryption:
             self._key = key
         return rc
 
-    def verify_v4(self, password: bytes) -> Tuple[bytes, PasswordType]:
+    def verify_v4(self, password: bytes) -> tuple[bytes, PasswordType]:
         # verify owner password first
         key = AlgV4.verify_owner_password(
             password,
@@ -994,7 +994,7 @@ class Encryption:
             return key, PasswordType.USER_PASSWORD
         return b"", PasswordType.NOT_DECRYPTED
 
-    def verify_v5(self, password: bytes) -> Tuple[bytes, PasswordType]:
+    def verify_v5(self, password: bytes) -> tuple[bytes, PasswordType]:
         # TODO: use SASLprep process
         # verify owner password first
         key = AlgV5.verify_owner_password(

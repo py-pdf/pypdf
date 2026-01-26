@@ -1,7 +1,7 @@
 """Helpers for working with PDF types."""
 
 import sys
-from typing import List, Literal, Union
+from typing import Literal, Union
 
 if sys.version_info[:2] >= (3, 10):
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484
@@ -13,7 +13,7 @@ from .generic._base import NameObject, NullObject, NumberObject
 from .generic._data_structures import ArrayObject, Destination
 from .generic._outline import OutlineItem
 
-BorderArrayType: TypeAlias = List[Union[NameObject, NumberObject, ArrayObject]]
+BorderArrayType: TypeAlias = list[Union[NameObject, NumberObject, ArrayObject]]
 
 OutlineItemType: TypeAlias = Union[OutlineItem, Destination]
 
@@ -22,12 +22,12 @@ FitType: TypeAlias = Literal[
 ]
 # These go with the FitType, they specify values for the fit
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
-ZoomArgsType: TypeAlias = List[ZoomArgType]
+ZoomArgsType: TypeAlias = list[ZoomArgType]
 
 # Recursive types like the following are not yet supported by Sphinx:
 #    OutlineType = List[Union[Destination, "OutlineType"]]
 # Hence use this for the moment:
-OutlineType = List[Union[Destination, List[Union[Destination, List[Destination]]]]]
+OutlineType = list[Union[Destination, list[Union[Destination, list[Destination]]]]]
 
 LayoutType: TypeAlias = Literal[
     "/NoLayout",

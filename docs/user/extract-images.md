@@ -5,39 +5,63 @@ In order to use the following code you need to install optional
 dependencies, see [installation guide](installation.md).
 ```
 
-Every page of a PDF document can contain an arbitrary amount of images.
+Every page of a PDF document can contain an arbitrary number of images.
 The names of the files may not be unique.
 
-```python
+```{testsetup}
+pypdf_test_setup("user/extract-images", {
+    "example.pdf": "../resources/example.pdf",
+})
+```
+
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
 
 page = reader.pages[0]
 
-for count, image_file_object in enumerate(page.images):
-    with open(str(count) + image_file_object.name, "wb") as fp:
-        fp.write(image_file_object.data)
+for i, image_file_object in enumerate(page.images):
+    file_name = "out-image-" + str(i) + "-" + image_file_object.name
+    image_file_object.image.save(file_name)
 ```
 
-# Other images
+## Other images
 
 Some other objects can contain images, such as stamp annotations.
 
-For example, this document contains such stamps:
-[test_stamp.pdf](https://github.com/user-attachments/files/15751424/test_stamp.pdf)
-
 You can extract the image from the annotation with the following code:
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("test_stamp.pdf")
+reader = PdfReader("example.pdf")
 im = (
-    reader.pages[0]["/Annots"][0]
+    reader.pages[0]["/Annots"][4]["/Parent"]
     .get_object()["/AP"]["/N"]["/Resources"]["/XObject"]["/Im4"]
     .decode_as_image()
 )
 
-im.show()
+im.save("out-annotation-image.png")
+```
+
+## Error handling
+
+Iterating over `page.images` directly will raise an exception on the first issue.
+If you expect some more or less broken PDF files, but still want to retrieve as many images as possible,
+consider making this a multistep process:
+
+```{testcode}
+from pypdf import PdfReader
+
+reader = PdfReader("example.pdf")
+
+for page in reader.pages:
+    for name in page.images.keys():
+        try:
+            # Try to retrieve actual image.
+            image = page.images[name]
+        except Exception as exception:
+            # Handle exceptions.
+            pass
 ```
