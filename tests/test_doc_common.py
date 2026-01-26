@@ -479,7 +479,7 @@ def test_flatten__cyclic_references():
 @pytest.mark.enable_socket
 @pytest.mark.timeout(10)
 def test_get_outline__cyclic_references(caplog):
-    url = ""
+    url = "https://github.com/user-attachments/files/24859044/circular_outline.pdf"
     name = "circular_outline.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
@@ -503,7 +503,7 @@ def test_get_outline__cyclic_references(caplog):
 @pytest.mark.enable_socket
 @pytest.mark.timeout(10)
 def test_get_outline__cyclic_references__nested_handling(caplog):
-    url = ""
+    url = "https://github.com/user-attachments/files/24859044/circular_outline.pdf"
     name = "circular_outline.pdf"
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
 
