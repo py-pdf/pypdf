@@ -32,6 +32,7 @@ import enum
 import hashlib
 import re
 import struct
+import sys
 import uuid
 from collections.abc import Iterable, Mapping
 from io import BytesIO, FileIO, IOBase
@@ -47,6 +48,11 @@ from typing import (
     Union,
     cast,
 )
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
@@ -393,7 +399,7 @@ class PdfWriter(PdfDocCommon):
         deprecation_no_replacement("with_as_usage", "5.0")
         self._with_as_usage = value
 
-    def __enter__(self) -> "PdfWriter":
+    def __enter__(self) -> Self:
         """Store how writer is initialized by 'with'."""
         c: bool = self._cloned
         t = self.temp_fileobj

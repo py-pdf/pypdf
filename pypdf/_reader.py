@@ -43,6 +43,11 @@ from typing import (
     cast,
 )
 
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._utils import (
@@ -186,7 +191,7 @@ class PdfReader(PdfDocCommon):
             raise WrongPasswordError("Wrong password")
         self._override_encryption = False
 
-    def __enter__(self) -> "PdfReader":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(

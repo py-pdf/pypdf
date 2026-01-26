@@ -87,7 +87,7 @@ class ViewerPreferences(DictionaryObject):
     def PRINT_SCALING(self) -> NameObject:
         return NameObject("/PrintScaling")
 
-    def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":
+    def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":  # noqa: PYI034
         def _add_prop_bool(key: str, default: Optional[BooleanObject]) -> property:
             return property(
                 lambda self: self._get_bool(key, default),
