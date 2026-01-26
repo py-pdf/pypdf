@@ -19,7 +19,7 @@ repos:
         args: ['--maxkb=1000']
 
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.13.0
+    rev: v0.14.14
     hooks:
     -   id: ruff-check
         args: ['--fix']

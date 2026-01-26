@@ -40,6 +40,11 @@ if sys.version_info[:2] >= (3, 10):
 else:
     from typing_extensions import TypeGuard  # PEP 647
 
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
@@ -478,7 +483,7 @@ FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
 class FloatObject(float, PdfObject):
     def __new__(
         cls, value: Any = "0.0", context: Optional[Any] = None
-    ) -> "FloatObject":
+    ) -> Self:
         try:
             value = float(value)
             return float.__new__(cls, value)
@@ -537,7 +542,7 @@ class FloatObject(float, PdfObject):
 class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b"[^+-.0-9]")
 
-    def __new__(cls, value: Any) -> "NumberObject":
+    def __new__(cls, value: Any) -> Self:
         try:
             return int.__new__(cls, int(value))
         except ValueError:
@@ -659,7 +664,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     utf16_bom: bytes
     _original_bytes: Optional[bytes] = None
 
-    def __new__(cls, value: Any) -> "TextStringObject":
+    def __new__(cls, value: Any) -> Self:
         original_bytes = None
         if isinstance(value, bytes):
             original_bytes = value
