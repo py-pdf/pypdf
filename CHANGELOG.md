@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Version 6.6.1, 2026-01-25
+
+### Robustness (ROB)
+- `/AcroForm` might be NullObject (#3601)
+- Handle missing font bounding boxes gracefully (#3600)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.6.0...6.6.1)
+
 ## Version 6.6.0, 2026-01-09
 
 ### Security (SEC)
