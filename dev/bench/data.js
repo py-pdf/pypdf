@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769447976733,
+  "lastUpdate": 1769519386336,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -88181,6 +88181,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002886762315736888",
             "extra": "mean: 669.2609097999991 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5d6d7f06a5e343cfd2e14ea67922febe993811ca",
+          "message": "DEP: Deprecate support for abbreviations in decode_stream_data (#3617)\n\nThe inline image abbreviations were previously supported in the\npublicly facing `decode_stream_data` function. Doing some analysis\nshowed that this support was limited:\n\n  * Our own code would always map to the \"proper\" names beforehand, thus\n    we possibly never tested this variant and it has been incomplete.\n  * Only abbreviations for the filter names were supported. Already\n    using `/F` instead of `/Filter` for the filter names itself or\n    specifying `/DP` instead of `/DecodeParams` would fail, as well as\n    all other keys from table 91 and 92 of the PDF 2.0 specification.\n\nWith this in mind, only external API users might have used this API in\nthe full manner, although we never seem to have received specific\nreports about the not supported/mapped parameters. Thus, deprecating the\nabbreviations specific to inline images in this generic function seems\nlike the best way to move forward.\n\nWhile I was working on this to analyze the current behavior, I wrote\nsome basic inline image tests for the previously unsupported filter\nabbreviations CCF and DCT (at least in `decode_stream_data`). The new\nabbreviations were added for completeness (although deprecated\ndirectly), showing that using `PageObject.images` never errored out or\nwould run into the deprecation now due to proper mapping in our own\ncode.",
+          "timestamp": "2026-01-27T14:06:57+01:00",
+          "tree_id": "174a85246d5787b0709eb5ba05a718570074d086",
+          "url": "https://github.com/py-pdf/pypdf/commit/5d6d7f06a5e343cfd2e14ea67922febe993811ca"
+        },
+        "date": 1769519381651,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0565419311831663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0065153963227916984",
+            "extra": "mean: 327.1671132000165 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.623413140303047,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004766984583773012",
+            "extra": "mean: 64.00650043749678 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27439721364855313,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02554651780156977",
+            "extra": "mean: 3.6443518747999972 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.697447080587192,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010326453443446112",
+            "extra": "mean: 56.505325058828795 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08969112602492196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009960279374759446",
+            "extra": "mean: 11.149375019800015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4845366469042338,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014905058779754452",
+            "extra": "mean: 673.610855000004 msec\nrounds: 5"
           }
         ]
       }
