@@ -181,7 +181,7 @@ class Font:
 
         if " " in current_widths and current_widths[" "] != 0:
             # Setting default to once or twice the space width, depending on fixed pitch
-            if flags & FontFlags.FIXED_PITCH:
+            if (flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
                 current_widths["default"] = current_widths[" "]
                 return
 
@@ -286,7 +286,7 @@ class Font:
             cls._add_default_width(character_widths, font_descriptor.flags)
         space_width = character_widths.get(" ", 0)
         if space_width == 0:
-            if font_descriptor.flags & FontFlags.FIXED_PITCH:
+            if (font_descriptor.flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
                 space_width = character_widths["default"]
             else:
                 space_width = character_widths["default"] // 2
