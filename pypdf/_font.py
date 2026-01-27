@@ -282,7 +282,7 @@ class Font:
         if not font_descriptor:
             font_descriptor = FontDescriptor(name=name)
 
-        if "default" not in character_widths:
+        if character_widths.get("default", 0) == 0:
             cls._add_default_width(character_widths, font_descriptor.flags)
         space_width = character_widths.get(" ", 0)
         if space_width == 0:
