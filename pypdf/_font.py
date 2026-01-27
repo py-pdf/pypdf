@@ -217,6 +217,7 @@ class Font:
         pdf_font_dict: DictionaryObject,
     ) -> "Font":
         from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
+
         # Can collect base_font, name and encoding directly from font resource
         name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
         sub_type = pdf_font_dict.get("/Subtype", "Unknown").removeprefix("/")
