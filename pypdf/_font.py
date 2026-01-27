@@ -61,6 +61,92 @@ class FontDescriptor:
             font_kwargs["bbox"] = bbox_tuple
         return font_kwargs
 
+    @classmethod
+    def from_font_resource(
+        cls,
+        pdf_font_dict: DictionaryObject,
+        encoding: Optional[Union[str, dict[int, str]]] = None,
+        char_map: Optional[dict[Any, Any]] = None
+    ) -> "FontDescriptor":
+        from pypdf._codecs.core_fontmetrics import CORE_FONT_METRICS  # noqa: PLC0415
+        # Prioritize information from the PDF font dictionary
+        font_name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
+        font_kwargs: dict[str, Any] = {"character_widths": {}}
+
+        # Deal with fonts by type; Type1, TrueType and certain Type3
+        if pdf_font_dict.get("/Subtype") in ("/Type1", "/MMType1", "/TrueType", "/Type3"):
+            if font_name in CORE_FONT_METRICS:
+                font_descriptor = CORE_FONT_METRICS[font_name]
+
+                return font_descriptor
+
+            if "/FontDescriptor" in pdf_font_dict:  # TODO: This does not account for some Type3 fonts;
+                                                    #       see tests/test_cmap.py::test_ascii_charset
+                font_descriptor_resource = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
+                font_descriptor_obj = cast(DictionaryObject, font_descriptor_resource)
+                if "/MissingWidth" in font_descriptor_obj:
+                    font_kwargs["character_widths"]["default"] = font_descriptor_obj["/MissingWidth"].get_object()
+                font_kwargs = cls._parse_font_descriptor(
+                    font_kwargs, pdf_font_dict.get("/FontDescriptor", DictionaryObject())
+                )
+
+            return cls(**font_kwargs)
+
+        # Composite font or CID font - CID fonts have a /W array mapping character codes
+        # to widths stashed in /DescendantFonts. No need to test for /DescendantFonts though,
+        # because all other fonts have already been dealt with.
+        if not (encoding and char_map):
+            encoding, char_map = get_encoding(pdf_font_dict)
+        d_font: DictionaryObject
+        for d_font_idx, d_font in enumerate(
+            cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
+        ):
+            d_font = cast(DictionaryObject, d_font.get_object())
+            cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
+            if "/DW" in d_font:
+                font_kwargs["character_widths"]["default"] = d_font["/DW"].get_object()
+            font_kwargs = cls._parse_font_descriptor(
+                font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
+            )
+
+        return cls(**font_kwargs)
+
+
+@dataclass(frozen=True)
+class CoreFontMetrics:
+    font_descriptor: FontDescriptor
+    character_widths: dict[str, int]
+
+
+@dataclass
+class Font:
+    """
+    A font object for use during text extraction and for producing
+    text appearance streams.
+
+    Attributes:
+        name: Font name, derived from font["/BaseFont"]
+        character_map: The font's character map
+        encoding: Font encoding
+        sub_type: The font type, such as Type1, TrueType, or Type3.
+        font_descriptor: Font metrics, including a mapping of characters to widths
+        character_widths: A mapping of characters to widths
+        space_width: The width of a space, or an approximation
+        interpretable: Default True. If False, the font glyphs cannot
+            be translated to characters, e.g. Type3 fonts that do not define
+            a '/ToUnicode' mapping.
+
+    """
+
+    name: str
+    encoding: Union[str, dict[int, str]]
+    character_map: dict[Any, Any] = field(default_factory=dict)
+    sub_type: str = "Unknown"
+    font_descriptor: FontDescriptor = field(default_factory=FontDescriptor)
+    character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
+    space_width: Union[float, int] = 250
+    interpretable: bool = True
+
     @staticmethod
     def _collect_tt_t1_character_widths(
         pdf_font_dict: DictionaryObject,
@@ -166,101 +252,6 @@ class FontDescriptor:
                     __name__
                 )
 
-    @classmethod
-    def from_font_resource(
-        cls,
-        pdf_font_dict: DictionaryObject,
-        encoding: Optional[Union[str, dict[int, str]]] = None,
-        char_map: Optional[dict[Any, Any]] = None
-    ) -> "FontDescriptor":
-        from pypdf._codecs.core_fontmetrics import CORE_FONT_METRICS  # noqa: PLC0415
-        # Prioritize information from the PDF font dictionary
-        font_name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
-        font_kwargs: dict[str, Any] = {"character_widths": {}}
-
-        # Deal with fonts by type; Type1, TrueType and certain Type3
-        if pdf_font_dict.get("/Subtype") in ("/Type1", "/MMType1", "/TrueType", "/Type3"):
-            if "/Widths" in pdf_font_dict:
-                if not (encoding and char_map):
-                    encoding, char_map = get_encoding(pdf_font_dict)
-                cls._collect_tt_t1_character_widths(
-                    pdf_font_dict, char_map, encoding, font_kwargs["character_widths"]
-                )
-            elif font_name in CORE_FONT_METRICS:
-                font_descriptor = CORE_FONT_METRICS[font_name]
-
-                return font_descriptor
-
-            if "/FontDescriptor" in pdf_font_dict:  # TODO: This does not account for some Type3 fonts;
-                                                    #       see tests/test_cmap.py::test_ascii_charset
-                font_descriptor_resource = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
-                font_descriptor_obj = cast(DictionaryObject, font_descriptor_resource)
-                if "/MissingWidth" in font_descriptor_obj:
-                    font_kwargs["character_widths"]["default"] = font_descriptor_obj["/MissingWidth"].get_object()
-                font_kwargs = cls._parse_font_descriptor(
-                    font_kwargs, pdf_font_dict.get("/FontDescriptor", DictionaryObject())
-                )
-
-            return cls(**font_kwargs)
-
-        # Composite font or CID font - CID fonts have a /W array mapping character codes
-        # to widths stashed in /DescendantFonts. No need to test for /DescendantFonts though,
-        # because all other fonts have already been dealt with.
-        if not (encoding and char_map):
-            encoding, char_map = get_encoding(pdf_font_dict)
-        d_font: DictionaryObject
-        for d_font_idx, d_font in enumerate(
-            cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
-        ):
-            d_font = cast(DictionaryObject, d_font.get_object())
-            cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
-            cls._collect_cid_character_widths(
-                d_font, char_map, font_kwargs["character_widths"]
-            )
-            if "/DW" in d_font:
-                font_kwargs["character_widths"]["default"] = d_font["/DW"].get_object()
-            font_kwargs = cls._parse_font_descriptor(
-                font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
-            )
-
-        return cls(**font_kwargs)
-
-
-@dataclass(frozen=True)
-class CoreFontMetrics:
-    font_descriptor: FontDescriptor
-    character_widths: dict[str, int]
-
-
-@dataclass
-class Font:
-    """
-    A font object for use during text extraction and for producing
-    text appearance streams.
-
-    Attributes:
-        name: Font name, derived from font["/BaseFont"]
-        character_map: The font's character map
-        encoding: Font encoding
-        sub_type: The font type, such as Type1, TrueType, or Type3.
-        font_descriptor: Font metrics, including a mapping of characters to widths
-        character_widths: A mapping of characters to widths
-        space_width: The width of a space, or an approximation
-        interpretable: Default True. If False, the font glyphs cannot
-            be translated to characters, e.g. Type3 fonts that do not define
-            a '/ToUnicode' mapping.
-
-    """
-
-    name: str
-    encoding: Union[str, dict[int, str]]
-    character_map: dict[Any, Any] = field(default_factory=dict)
-    sub_type: str = "Unknown"
-    font_descriptor: FontDescriptor = field(default_factory=FontDescriptor)
-    character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
-    space_width: Union[float, int] = 250
-    interpretable: bool = True
-
     @staticmethod
     def _add_default_width(current_widths: dict[str, int]) -> None:
         if not current_widths:
@@ -285,23 +276,43 @@ class Font:
         name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
         sub_type = pdf_font_dict.get("/Subtype", "Unknown").removeprefix("/")
         encoding, character_map = get_encoding(pdf_font_dict)
-
-        # Type3 fonts that do not specify a "/ToUnicode" mapping cannot be
-        # reliably converted into character codes unless all named chars
-        # in /CharProcs map to a standard adobe glyph. See §9.10.2 of the
-        # PDF 1.7 standard.
+        character_widths: dict[str, int] = {}
         interpretable = True
-        if sub_type == "Type3" and "/ToUnicode" not in pdf_font_dict:
-            interpretable = all(
-                cname in adobe_glyphs
-                for cname in pdf_font_dict.get("/CharProcs") or []
-            )
 
-        if interpretable:
-            font_descriptor = FontDescriptor.from_font_resource(pdf_font_dict, encoding, character_map)
+        # Deal with fonts by type; Type1, TrueType and certain Type3
+        if pdf_font_dict.get("/Subtype") in ("/Type1", "/MMType1", "/TrueType", "/Type3"):
+            # Type3 fonts that do not specify a "/ToUnicode" mapping cannot be
+            # reliably converted into character codes unless all named chars
+            # in /CharProcs map to a standard adobe glyph. See §9.10.2 of the
+            # PDF 1.7 standard.
+            if sub_type == "Type3" and "/ToUnicode" not in pdf_font_dict:
+                interpretable = all(
+                    cname in adobe_glyphs
+                    for cname in pdf_font_dict.get("/CharProcs") or []
+                )
+            if interpretable:  # Save some overhead if font is not interpretable
+                if "/Widths" in pdf_font_dict:
+                    cls._collect_tt_t1_character_widths(
+                        pdf_font_dict, character_map, encoding, character_widths
+                    )
+
         else:
-            font_descriptor = FontDescriptor()  # Save some overhead if font is not interpretable
-        character_widths = font_descriptor.character_widths
+            # Composite font or CID font - CID fonts have a /W array mapping character codes
+            # to widths stashed in /DescendantFonts. No need to test for /DescendantFonts though,
+            # because all other fonts have already been dealt with.
+            d_font: DictionaryObject
+            for d_font_idx, d_font in enumerate(
+                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
+            ):
+                d_font = cast(DictionaryObject, d_font.get_object())
+                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
+                cls._collect_cid_character_widths(
+                    d_font, character_map, character_widths
+                )
+                if "/DW" in d_font:
+                    character_widths["default"] = cast(int, d_font["/DW"].get_object())
+
+        font_descriptor = FontDescriptor.from_font_resource(pdf_font_dict, encoding, character_map)
 
         if "default" not in character_widths:
             cls._add_default_width(character_widths)
