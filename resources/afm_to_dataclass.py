@@ -129,7 +129,7 @@ class Parser:
                 raise NotImplementedError(name, line)
             # Add default width
             try:
-                if flags & FontFlags.FIXED_PITCH:
+                if (flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
                     character_widths["default"] = character_widths[" "]
                 else:
                     character_widths["default"] = 2 * character_widths[" "]
