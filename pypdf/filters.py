@@ -50,6 +50,7 @@ from typing import Any, Optional, Union, cast
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
+    deprecate,
     deprecation_with_replacement,
     logger_warning,
 )
@@ -753,7 +754,16 @@ class JBIG2Decode:
         return Version(version) >= Version("0.19")
 
 
-def decode_stream_data(stream: Any) -> bytes:
+def _deprecate_inline_image_filters(filter_name: str, old_name: str, new_name: str) -> None:
+    if filter_name != old_name:
+        return
+    deprecate(
+        f"The filter name {old_name} is deprecated and will be removed in pypdf 7.0.0. Use {new_name} instead.",
+        4,
+    )
+
+
+def decode_stream_data(stream: StreamObject) -> bytes:
     """
     Decode the stream data based on the specified filters.
 
@@ -787,19 +797,26 @@ def decode_stream_data(stream: Any) -> bytes:
         if isinstance(params, NullObject):
             params = {}
         if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
+            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.AHx, new_name=FT.ASCII_HEX_DECODE)
             data = ASCIIHexDecode.decode(data)
         elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
+            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.A85, new_name=FT.ASCII_85_DECODE)
             data = ASCII85Decode.decode(data)
         elif filter_name in (FT.LZW_DECODE, FTA.LZW):
+            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.LZW, new_name=FT.LZW_DECODE)
             data = LZWDecode.decode(data, params)
         elif filter_name in (FT.FLATE_DECODE, FTA.FL):
+            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.FL, new_name=FT.FLATE_DECODE)
             data = FlateDecode.decode(data, params)
         elif filter_name in (FT.RUN_LENGTH_DECODE, FTA.RL):
+            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.RL, new_name=FT.RUN_LENGTH_DECODE)
             data = RunLengthDecode.decode(data)
-        elif filter_name == FT.CCITT_FAX_DECODE:
+        elif filter_name in (FT.CCITT_FAX_DECODE, FTA.CCF):
+            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.CCF, new_name=FT.CCITT_FAX_DECODE)
             height = stream.get(IA.HEIGHT, ())
             data = CCITTFaxDecode.decode(data, params, height)
-        elif filter_name == FT.DCT_DECODE:
+        elif filter_name in (FT.DCT_DECODE, FTA.DCT):
+            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.DCT, new_name=FT.DCT_DECODE)
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
