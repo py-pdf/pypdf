@@ -800,7 +800,7 @@ class FontFlags(IntFlag):
     """
     A class defining font flags in PDF document font descriptor resources.
 
-    Defined in table 121 of the PDF 2.0 reverence.
+    Defined in table 121 of the PDF 2.0 reference.
     """
 
     FIXED_PITCH = 1 << 0
