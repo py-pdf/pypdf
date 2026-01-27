@@ -94,7 +94,7 @@ class Parser:
                 if value != "0":
                     flags += FontFlags.ITALIC
             if key == "IsFixedPitch":
-                flags += int(value.lower() == "true") & FontFlags.FIXED_PITCH
+                flags += FontFlags.FIXED_PITCH * (value.lower() == "true")
             if key == "FontBBox":
                 bbox = tuple(map(float, value.split(" ")[:4]))  # type: ignore
             if key == "EncodingScheme":
