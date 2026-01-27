@@ -7,6 +7,7 @@ from pypdf.generic import ArrayObject, DictionaryObject
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
+from .constants import FontFlags
 
 
 @dataclass(frozen=True)
@@ -173,13 +174,17 @@ class Font:
                 )
 
     @staticmethod
-    def _add_default_width(current_widths: dict[str, int]) -> None:
+    def _add_default_width(current_widths: dict[str, int], flags: int) -> None:
         if not current_widths:
             current_widths["default"] = 500
             return
 
         if " " in current_widths and current_widths[" "] != 0:
-            # Setting default to twice the space width
+            # Setting default to once or twice the space width, depending on fixed pitch
+            if flags & FontFlags.FIXED_PITCH:
+                current_widths["default"] = current_widths[" "]
+                return
+
             current_widths["default"] = int(2 * current_widths[" "])
             return
 
@@ -278,10 +283,13 @@ class Font:
             font_descriptor = FontDescriptor(name=name)
 
         if "default" not in character_widths:
-            cls._add_default_width(character_widths)
+            cls._add_default_width(character_widths, font_descriptor.flags)
         space_width = character_widths.get(" ", 0)
         if space_width == 0:
-            space_width = character_widths["default"] // 2
+            if font_descriptor.flags & FontFlags.FIXED_PITCH:
+                space_width = character_widths["default"]
+            else:
+                space_width = character_widths["default"] // 2
 
         return cls(
             name=name,
