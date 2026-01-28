@@ -2158,7 +2158,7 @@ class PageObject(DictionaryObject):
         Add an action which will launch on the open or close trigger event of this page.
 
         Args:
-            trigger: "open" or "close" trigger events.
+            trigger: "open" or "close" trigger event.
             action: An instance of a subclass of Action;
                     JavaScript is currently the only available action type.
 
@@ -2230,6 +2230,17 @@ class PageObject(DictionaryObject):
         self[NameObject("/AA")] = additional_actions
 
     def delete_action(self, trigger: Literal["open", "close"]) -> None:
+        """
+        Delete an action associated with an open or close trigger event of this page.
+
+        Args:
+            trigger: "open" or "close" trigger event.
+
+        # Example: Display all actions triggered by a page open.
+        >>> page.delete_action("open")
+        # Example: Display all actions triggered by a page close.
+        >>> page.delete_action("close")
+        """
         if trigger not in {"open", "close"}:
             raise ValueError("The trigger must be 'open' or 'close'")
 
@@ -2239,6 +2250,7 @@ class PageObject(DictionaryObject):
             raise ValueError("An additional-actions dictionary is absent; nothing to delete")
 
         additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
+
         if trigger_name in additional_actions:
             del additional_actions[trigger_name]
 
