@@ -276,11 +276,16 @@ def _handle_flate(
                 if lookup is not None:
                     img.putpalette(lookup, rawmode=mode)
             img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
-    elif not isinstance(color_space, NullObject) and color_space[0] == "/ICCBased":
-        # Table 65 - Additional Entries Specific to an ICC Profile Stream Dictionary
-        mode2 = _get_image_mode(color_space, colors, mode)[0]
-        if mode != mode2:
-            img = Image.frombytes(mode2, size, data)  # reloaded as mode may have changed
+    elif not is_null_or_none(color_space) and color_space[0] == "/ICCBased":
+        # Exclude pure black-and-white images.
+        # TODO: The remaining code still does not look correct. Shouldn't the proper way be
+        #       to use the original image and apply the ICC transformation on it?
+        #       For now, this just loads the original image with a different color space.
+        if mode != "1":
+            # Table 65 - Additional Entries Specific to an ICC Profile Stream Dictionary
+            mode2 = _get_image_mode(color_space, colors, mode)[0]
+            if mode != mode2:
+                img = Image.frombytes(mode, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
         extension = ".tif"
         image_format = "TIFF"

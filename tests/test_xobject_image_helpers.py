@@ -213,3 +213,25 @@ def test_p_image_with_alpha_mask():
     for i in range(10):
         for j in range(10):
             assert image.getpixel((i, j)) == (0, 0, 0, 255 * (i == j))
+
+
+@pytest.mark.enable_socket
+def test_handle_flate__icc_based__image_mode_1():
+    url = "https://github.com/user-attachments/files/23756943/pypdf_bug_3534_iccbased.pdf"
+    name = "issue3534.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    image = page.images[0].image
+    assert image is not None
+    image.load()
+    assert image.size == (64, 64)
+    assert image.mode == "1"
+
+    for y in range(64):
+        for x in range(64):
+            # Determine which chess square this pixel belongs to
+            square_x = x // 8
+            square_y = y // 8
+            is_black_square = (square_x + square_y) % 2 == 1
+            assert image.getpixel((x, y)) == 255 * int(not is_black_square)
