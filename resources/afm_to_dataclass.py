@@ -75,7 +75,7 @@ class Parser:
             if key == "FontName":
                 name = value
                 if "Times" in value:
-                    flags += FontFlags.SERIF
+                    flags |= FontFlags.SERIF
             if key == "Weight":
                 weight = value
             if key == "FamilyName":
@@ -92,16 +92,16 @@ class Parser:
             if key == "ItalicAngle":
                 italic_angle = cast(float, value)
                 if value != "0":
-                    flags += FontFlags.ITALIC
+                    flags |= FontFlags.ITALIC
             if key == "IsFixedPitch":
-                flags += FontFlags.FIXED_PITCH * (value.lower() == "true")
+                flags |= FontFlags.FIXED_PITCH * (value.lower() == "true")
             if key == "FontBBox":
                 bbox = tuple(map(float, value.split(" ")[:4]))  # type: ignore
             if key == "EncodingScheme":
                 if value == "FontSpecific":
-                    flags += FontFlags.SYMBOLIC
+                    flags |= FontFlags.SYMBOLIC
                 else:
-                    flags += FontFlags.NONSYMBOLIC
+                    flags |= FontFlags.NONSYMBOLIC
 
             # Add copyright information. This is available in two fields: "Comment" and "Notice".
             # However, all information available in "Comment" is also available in "Notice", and
