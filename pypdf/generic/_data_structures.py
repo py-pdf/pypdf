@@ -511,41 +511,43 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             stream.write(b"\n")
         stream.write(b">>")
 
+    @classmethod
+    def _get_next_obj_position(
+            cls, p: int, p1: int, remaining_generations: list[int], pdf: PdfReaderProtocol
+    ) -> int:
+        out = p1
+        for generation in remaining_generations:
+            loc = pdf.xref[generation]
+            try:
+                values = [x for x in loc.values() if p < x <= p1]
+                if values:
+                    out = min(out, *values)
+            except ValueError:
+                pass
+        return out
+
+    @classmethod
+    def _read_unsized_from_stream(
+            cls, stream: StreamType, pdf: PdfReaderProtocol
+    ) -> bytes:
+        # we are just pointing at beginning of the stream
+        eon = cls._get_next_obj_position(stream.tell(), 2 ** 32, list(pdf.xref), pdf) - 1
+        curr = stream.tell()
+        rw = stream.read(eon - stream.tell())
+        p = rw.find(b"endstream")
+        if p < 0:
+            raise PdfReadError(
+                f"Unable to find 'endstream' marker for obj starting at {curr}."
+            )
+        stream.seek(curr + p + 9)
+        return rw[: p - 1]
+
     @staticmethod
     def read_from_stream(
         stream: StreamType,
         pdf: Optional[PdfReaderProtocol],
         forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
     ) -> "DictionaryObject":
-        def get_next_obj_pos(
-            p: int, p1: int, rem_gens: list[int], pdf: PdfReaderProtocol
-        ) -> int:
-            out = p1
-            for gen in rem_gens:
-                loc = pdf.xref[gen]
-                try:
-                    values = [x for x in loc.values() if p < x <= p1]
-                    if values:
-                        out = min(out, *values)
-                except ValueError:
-                    pass
-            return out
-
-        def read_unsized_from_stream(
-            stream: StreamType, pdf: PdfReaderProtocol
-        ) -> bytes:
-            # we are just pointing at beginning of the stream
-            eon = get_next_obj_pos(stream.tell(), 2**32, list(pdf.xref), pdf) - 1
-            curr = stream.tell()
-            rw = stream.read(eon - stream.tell())
-            p = rw.find(b"endstream")
-            if p < 0:
-                raise PdfReadError(
-                    f"Unable to find 'endstream' marker for obj starting at {curr}."
-                )
-            stream.seek(curr + p + 9)
-            return rw[: p - 1]
-
         tmp = stream.read(2)
         if tmp != b"<<":
             raise PdfReadError(
@@ -657,7 +659,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 elif pdf is not None and not pdf.strict:
                     stream.seek(pstart, 0)
-                    data["__streamdata__"] = read_unsized_from_stream(stream, pdf)
+                    data["__streamdata__"] = DictionaryObject._read_unsized_from_stream(stream, pdf)
                     pos = stream.tell()
                 else:
                     stream.seek(pos, 0)

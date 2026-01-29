@@ -1973,141 +1973,158 @@ class PdfWriter(PdfDocCommon):
 
         jump_operators = []
         if to_delete & ObjectDeletionFlag.DRAWING_IMAGES:
-            jump_operators = (
-                [
-                    b"w", b"J", b"j", b"M", b"d", b"i",
-                    b"W", b"W*",
-                    b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n",
-                    b"m", b"l", b"c", b"v", b"y", b"h", b"re",
-                    b"sh"
-                ]
-            )
+            jump_operators = [
+                b"w", b"J", b"j", b"M", b"d", b"i",
+                b"W", b"W*",
+                b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n",
+                b"m", b"l", b"c", b"v", b"y", b"h", b"re",
+                b"sh"
+            ]
         if to_delete & ObjectDeletionFlag.TEXT:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
-
-        def clean(
-            content: ContentStream,
-            images: list[str],
-            forms: list[str],
-            text_filters: Optional[dict[str, Any]] = None
-        ) -> None:
-            nonlocal jump_operators, to_delete
-
-            font_id = None
-            font_ids_to_delete = []
-            if text_filters and to_delete & ObjectDeletionFlag.TEXT:
-                font_ids_to_delete = text_filters.get("font_ids", [])
-
-            i = 0
-            while i < len(content.operations):
-                operands, operator = content.operations[i]
-                if operator == b"Tf":
-                    font_id = operands[0]
-                if (
-                    (
-                        operator == b"INLINE IMAGE"
-                        and (to_delete & ObjectDeletionFlag.INLINE_IMAGES)
-                    )
-                    or (operator in jump_operators)
-                    or (
-                        operator == b"Do"
-                        and (to_delete & ObjectDeletionFlag.XOBJECT_IMAGES)
-                        and (operands[0] in images)
-                    )
-                ):
-                    if (
-                        not to_delete & ObjectDeletionFlag.TEXT
-                        or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
-                        or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
-                    ):
-                        del content.operations[i]
-                    else:
-                        i += 1
-                else:
-                    i += 1
-            content.get_data()  # this ensures ._data is rebuilt from the .operations
-
-        def clean_forms(
-            elt: DictionaryObject, stack: list[DictionaryObject]
-        ) -> tuple[list[str], list[str]]:
-            nonlocal to_delete
-            # elt in recursive call is a new ContentStream object, so we have to check the indirect_reference
-            if (elt in stack) or (
-                hasattr(elt, "indirect_reference")
-                and any(
-                    elt.indirect_reference == getattr(x, "indirect_reference", -1)
-                    for x in stack
-                )
-            ):
-                # to prevent infinite looping
-                return [], []  # pragma: no cover
-            try:
-                d = cast(
-                    dict[Any, Any],
-                    cast(DictionaryObject, elt["/Resources"])["/XObject"],
-                )
-            except KeyError:
-                d = {}
-            images = []
-            forms = []
-            for k, v in d.items():
-                o = v.get_object()
-                try:
-                    content: Any = None
-                    if (
-                        to_delete & ObjectDeletionFlag.XOBJECT_IMAGES
-                        and o["/Subtype"] == "/Image"
-                    ):
-                        content = NullObject()  # to delete the image keeping the entry
-                        images.append(k)
-                    if o["/Subtype"] == "/Form":
-                        forms.append(k)
-                        if isinstance(o, ContentStream):
-                            content = o
-                        else:
-                            content = ContentStream(o, self)
-                            content.update(
-                                {
-                                    k1: v1
-                                    for k1, v1 in o.items()
-                                    if k1 not in ["/Length", "/Filter", "/DecodeParms"]
-                                }
-                            )
-                            try:
-                                content.indirect_reference = o.indirect_reference
-                            except AttributeError:  # pragma: no cover
-                                pass
-                        stack.append(elt)
-                        clean_forms(content, stack)  # clean subforms
-                    if content is not None:
-                        if isinstance(v, IndirectObject):
-                            self._objects[v.idnum - 1] = content
-                        else:
-                            # should only occur in a PDF not respecting PDF spec
-                            # where streams must be indirected.
-                            d[k] = self._add_object(content)  # pragma: no cover
-                except (TypeError, KeyError):
-                    pass
-            for im in images:
-                del d[im]  # for clean-up
-            if isinstance(elt, StreamObject):  # for /Form
-                if not isinstance(elt, ContentStream):  # pragma: no cover
-                    e = ContentStream(elt, self)
-                    e.update(elt.items())
-                    elt = e
-                clean(elt, images, forms, text_filters)  # clean the content
-            return images, forms
 
         if not isinstance(page, PageObject):
             page = PageObject(self, page.indirect_reference)  # pragma: no cover
         if "/Contents" in page:
             content = cast(ContentStream, page.get_contents())
 
-            images, forms = clean_forms(page, [])
+            images, forms = self._remove_objects_from_page__clean_forms(
+                elt=page, stack=[], jump_operators=jump_operators, to_delete=to_delete, text_filters=text_filters,
+            )
 
-            clean(content, images, forms, text_filters)
+            self._remove_objects_from_page__clean(
+                content=content, images=images, forms=forms,
+                jump_operators=jump_operators, to_delete=to_delete,
+                text_filters=text_filters
+            )
             page.replace_contents(content)
         return [], []  # type: ignore[return-value]
+
+    def _remove_objects_from_page__clean(
+            self,
+            content: ContentStream,
+            images: list[str],
+            forms: list[str],
+            jump_operators: list[bytes],
+            to_delete: ObjectDeletionFlag,
+            text_filters: Optional[dict[str, Any]] = None,
+    ) -> None:
+        font_id = None
+        font_ids_to_delete = []
+        if text_filters and to_delete & ObjectDeletionFlag.TEXT:
+            font_ids_to_delete = text_filters.get("font_ids", [])
+
+        i = 0
+        while i < len(content.operations):
+            operands, operator = content.operations[i]
+            if operator == b"Tf":
+                font_id = operands[0]
+            if (
+                (
+                    operator == b"INLINE IMAGE"
+                    and (to_delete & ObjectDeletionFlag.INLINE_IMAGES)
+                )
+                or (operator in jump_operators)
+                or (
+                    operator == b"Do"
+                    and (to_delete & ObjectDeletionFlag.XOBJECT_IMAGES)
+                    and (operands[0] in images)
+                )
+            ):
+                if (
+                    not to_delete & ObjectDeletionFlag.TEXT
+                    or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
+                    or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
+                ):
+                    del content.operations[i]
+                else:
+                    i += 1
+            else:
+                i += 1
+        content.get_data()  # this ensures ._data is rebuilt from the .operations
+
+    def _remove_objects_from_page__clean_forms(
+            self,
+            elt: DictionaryObject,
+            stack: list[DictionaryObject],
+            jump_operators: list[bytes],
+            to_delete: ObjectDeletionFlag,
+            text_filters: Optional[dict[str, Any]] = None,
+    ) -> tuple[list[str], list[str]]:
+        # elt in recursive call is a new ContentStream object, so we have to check the indirect_reference
+        if (elt in stack) or (
+                hasattr(elt, "indirect_reference") and any(
+                    elt.indirect_reference == getattr(x, "indirect_reference", -1)
+                    for x in stack
+                )
+        ):
+            # to prevent infinite looping
+            return [], []  # pragma: no cover
+        try:
+            d = cast(
+                dict[Any, Any],
+                cast(DictionaryObject, elt["/Resources"])["/XObject"],
+            )
+        except KeyError:
+            d = {}
+        images = []
+        forms = []
+        for k, v in d.items():
+            o = v.get_object()
+            try:
+                content: Any = None
+                if (
+                        to_delete & ObjectDeletionFlag.XOBJECT_IMAGES
+                        and o["/Subtype"] == "/Image"
+                ):
+                    content = NullObject()  # to delete the image keeping the entry
+                    images.append(k)
+                if o["/Subtype"] == "/Form":
+                    forms.append(k)
+                    if isinstance(o, ContentStream):
+                        content = o
+                    else:
+                        content = ContentStream(o, self)
+                        content.update(
+                            {
+                                k1: v1
+                                for k1, v1 in o.items()
+                                if k1 not in ["/Length", "/Filter", "/DecodeParms"]
+                            }
+                        )
+                        try:
+                            content.indirect_reference = o.indirect_reference
+                        except AttributeError:  # pragma: no cover
+                            pass
+                    stack.append(elt)
+
+                    # clean subforms
+                    self._remove_objects_from_page__clean_forms(
+                        elt=content, stack=stack, jump_operators=jump_operators, to_delete=to_delete,
+                        text_filters=text_filters,
+                    )
+                if content is not None:
+                    if isinstance(v, IndirectObject):
+                        self._objects[v.idnum - 1] = content
+                    else:
+                        # should only occur in a PDF not respecting PDF spec
+                        # where streams must be indirected.
+                        d[k] = self._add_object(content)  # pragma: no cover
+            except (TypeError, KeyError):
+                pass
+        for im in images:
+            del d[im]  # for clean-up
+        if isinstance(elt, StreamObject):  # for /Form
+            if not isinstance(elt, ContentStream):  # pragma: no cover
+                e = ContentStream(elt, self)
+                e.update(elt.items())
+                elt = e
+            # clean the content
+            self._remove_objects_from_page__clean(
+                content=elt, images=images, forms=forms, jump_operators=jump_operators,
+                to_delete=to_delete, text_filters=text_filters
+            )
+        return images, forms
 
     def remove_images(
         self,
@@ -2688,42 +2705,8 @@ class PdfWriter(PdfDocCommon):
 
         arr: Any
 
-        def _process_named_dests(dest: Any) -> None:
-            arr = dest.dest_array
-            if "/Names" in self._root_object and dest["/Title"] in cast(
-                list[Any],
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
-                ).get("/Names", DictionaryObject()),
-            ):
-                # already exists: should not duplicate it
-                pass
-            elif dest["/Page"] is None or isinstance(dest["/Page"], NullObject):
-                pass
-            elif isinstance(dest["/Page"], int):
-                # the page reference is a page number normally not a PDF Reference
-                # page numbers as int are normally accepted only in external goto
-                try:
-                    p = reader.pages[dest["/Page"]]
-                except IndexError:
-                    return
-                assert p.indirect_reference is not None
-                try:
-                    arr[NumberObject(0)] = NumberObject(
-                        srcpages[p.indirect_reference.idnum].page_number
-                    )
-                    self.add_named_destination_array(dest["/Title"], arr)
-                except KeyError:
-                    pass
-            elif dest["/Page"].indirect_reference.idnum in srcpages:
-                arr[NumberObject(0)] = srcpages[
-                    dest["/Page"].indirect_reference.idnum
-                ].indirect_reference
-                self.add_named_destination_array(dest["/Title"], arr)
-
         for dest in reader._named_destinations.values():
-            _process_named_dests(dest)
+            self._merge__process_named_dests(dest=dest, reader=reader, srcpages=srcpages)
 
         outline_item_typ: TreeObject
         if outline_item is not None:
@@ -2789,6 +2772,40 @@ class PdfWriter(PdfDocCommon):
 
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)
+
+    def _merge__process_named_dests(self, dest: Any, reader: PdfDocCommon, srcpages: dict[int, PageObject]) -> None:
+        arr: Any = dest.dest_array
+        if "/Names" in self._root_object and dest["/Title"] in cast(
+            list[Any],
+            cast(
+                DictionaryObject,
+                cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
+            ).get("/Names", DictionaryObject()),
+        ):
+            # already exists: should not duplicate it
+            pass
+        elif dest["/Page"] is None or isinstance(dest["/Page"], NullObject):
+            pass
+        elif isinstance(dest["/Page"], int):
+            # the page reference is a page number normally not a PDF Reference
+            # page numbers as int are normally accepted only in external goto
+            try:
+                p = reader.pages[dest["/Page"]]
+            except IndexError:
+                return
+            assert p.indirect_reference is not None
+            try:
+                arr[NumberObject(0)] = NumberObject(
+                    srcpages[p.indirect_reference.idnum].page_number
+                )
+                self.add_named_destination_array(dest["/Title"], arr)
+            except KeyError:
+                pass
+        elif dest["/Page"].indirect_reference.idnum in srcpages:
+            arr[NumberObject(0)] = srcpages[
+                dest["/Page"].indirect_reference.idnum
+            ].indirect_reference
+            self.add_named_destination_array(dest["/Title"], arr)
 
     def _add_articles_thread(
         self,
