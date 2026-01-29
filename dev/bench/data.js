@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769689888907,
+  "lastUpdate": 1769689909958,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -90295,6 +90295,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.037657156669589756",
             "extra": "mean: 795.7116642000074 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "026e08a459edbb20d39cad64adb952b23769380b",
+          "message": "MAINT: Avoid code duplicates for test file directories (#3621)\n\nIncludes some additional refactoring of test utilities.",
+          "timestamp": "2026-01-29T13:28:45+01:00",
+          "tree_id": "c7cec07c1ae8c7b995d20b03c715cf652cb83225",
+          "url": "https://github.com/py-pdf/pypdf/commit/026e08a459edbb20d39cad64adb952b23769380b"
+        },
+        "date": 1769689905745,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.467176767024977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0185632808840601",
+            "extra": "mean: 74.25461307143065 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.784413023713793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01473087363883158",
+            "extra": "mean: 56.2290135000012 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.11866813523242,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02385379090678547",
+            "extra": "mean: 893.9201613999984 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5023122828799872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018034612610890614",
+            "extra": "mean: 1.9907934447999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18778718957085602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.20497494703340208",
+            "extra": "mean: 5.325176878600013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2466072101313708,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030266903614668144",
+            "extra": "mean: 802.1772951999992 msec\nrounds: 5"
           }
         ]
       }
