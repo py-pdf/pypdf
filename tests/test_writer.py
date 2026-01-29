@@ -38,13 +38,9 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_data_from_url, is_sublist
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, is_sublist
 from .test_images import image_similarity
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 

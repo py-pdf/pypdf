@@ -7,7 +7,6 @@ The tested code might be in _page.py.
 import re
 from dataclasses import asdict
 from io import BytesIO
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -19,12 +18,7 @@ from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_oper
 from pypdf.errors import PdfReadError
 from pypdf.generic import ContentStream
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 
 @pytest.mark.samples

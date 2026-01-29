@@ -1,7 +1,11 @@
 """Utility functions and classes for testing."""
 import logging
+from typing import Union
+
+from PIL import Image
 
 from pypdf import PageObject
+from pypdf.generic import DictionaryObject, IndirectObject
 
 
 class PositionedText:
@@ -182,3 +186,28 @@ def extract_table(
 def extract_cell_text(cell_texts: list[PositionedText]) -> str:
     """Joins the text-objects of a cell."""
     return ("".join(t.text for t in cell_texts)).strip()
+
+
+def get_image_data(
+        image: Image.Image, band: Union[int, None] = None
+) -> Union[tuple[tuple[int, ...], ...], tuple[float, ...]]:
+    try:
+        return image.get_flattened_data(band=band)
+    except AttributeError:
+        # For Pillow < 12.1.0
+        return tuple(image.getdata(band=band))
+
+
+class ReaderDummy:
+    def __init__(self, strict=False) -> None:
+        self.strict = strict
+
+    def get_object(self, indirect_reference):
+        class DummyObj:
+            def get_object(self) -> "DummyObj":
+                return self
+
+        return DictionaryObject()
+
+    def get_reference(self, obj):
+        return IndirectObject(idnum=1, generation=1, pdf=self)

@@ -1,16 +1,11 @@
 """Test the pypdf.generic._data_structures module."""
-from pathlib import Path
-
 from pypdf import PdfReader
 from pypdf.generic import DictionaryObject
-
-TESTS_ROOT = Path(__file__).parent.parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCES_ROOT = PROJECT_ROOT / "resources"
+from tests import RESOURCE_ROOT
 
 
 def test_dictionary_object__get_next_object_position():
-    reader = PdfReader(RESOURCES_ROOT / "crazyones.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
 
     # reader.xref = {0: {7: 15, 9: 10245, 12: 939, 14: 2999, 16: 4982, 18: 9949, 22: 11160}}
     assert DictionaryObject._get_next_object_position(

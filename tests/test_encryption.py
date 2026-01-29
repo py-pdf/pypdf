@@ -1,6 +1,5 @@
 """Test the pypdf._encryption module."""
 import secrets
-from pathlib import Path
 
 import pytest
 
@@ -10,14 +9,11 @@ from pypdf._crypt_providers import crypt_provider
 from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
 from pypdf._encryption import AlgV5, CryptAES, CryptRC4
 from pypdf.errors import DependencyError, PdfReadError
+from tests import RESOURCE_ROOT, SAMPLE_ROOT
 
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
 USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
 HAS_AES = USE_CRYPTOGRAPHY or USE_PYCRYPTODOME
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.mark.parametrize(

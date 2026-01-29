@@ -6,7 +6,6 @@ import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 
@@ -47,11 +46,8 @@ from pypdf.generic._image_inline import (
     extract_inline__run_length_decode,
 )
 
-from . import ReaderDummy, get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT, get_data_from_url
+from .utils import ReaderDummy
 
 
 class ChildDummy(DictionaryObject):

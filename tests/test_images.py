@@ -19,12 +19,8 @@ from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import ContentStream, NameObject, NullObject
 
-from . import get_data_from_url, get_image_data
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
+from .utils import get_image_data
 
 
 def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:

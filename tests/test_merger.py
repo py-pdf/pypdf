@@ -1,5 +1,4 @@
 """Test merging PDF functionality."""
-import sys
 from io import BytesIO
 from pathlib import Path
 
@@ -9,14 +8,8 @@ import pypdf
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import ArrayObject, Destination, DictionaryObject, Fit, NameObject, NullObject
 
-from . import get_data_from_url
+from . import RESOURCE_ROOT, get_data_from_url
 from .test_encryption import HAS_AES
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
-sys.path.append(str(PROJECT_ROOT))
 
 
 def merger_operate(merger):
