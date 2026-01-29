@@ -512,35 +512,35 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         stream.write(b">>")
 
     @classmethod
-    def _get_next_obj_position(
-            cls, p: int, p1: int, remaining_generations: list[int], pdf: PdfReaderProtocol
+    def _get_next_object_position(
+            cls, position_before: int, position_end: int, generations: list[int], pdf: PdfReaderProtocol
     ) -> int:
-        out = p1
-        for generation in remaining_generations:
-            loc = pdf.xref[generation]
-            try:
-                values = [x for x in loc.values() if p < x <= p1]
-                if values:
-                    out = min(out, *values)
-            except ValueError:
-                pass
+        out = position_end
+        for generation in generations:
+            location = pdf.xref[generation]
+            values = [x for x in location.values() if position_before < x <= position_end]
+            if values:
+                out = min(out, *values)
         return out
 
     @classmethod
     def _read_unsized_from_stream(
             cls, stream: StreamType, pdf: PdfReaderProtocol
     ) -> bytes:
-        # we are just pointing at beginning of the stream
-        eon = cls._get_next_obj_position(stream.tell(), 2 ** 32, list(pdf.xref), pdf) - 1
-        curr = stream.tell()
-        rw = stream.read(eon - stream.tell())
-        p = rw.find(b"endstream")
-        if p < 0:
+        object_position = cls._get_next_object_position(
+            position_before=stream.tell(), position_end=2 ** 32, generations=list(pdf.xref), pdf=pdf
+        ) - 1
+        current_position = stream.tell()
+        # Read until the next object position.
+        read_value = stream.read(object_position - stream.tell())
+        endstream_position = read_value.find(b"endstream")
+        if endstream_position < 0:
             raise PdfReadError(
-                f"Unable to find 'endstream' marker for obj starting at {curr}."
+                f"Unable to find 'endstream' marker for obj starting at {current_position}."
             )
-        stream.seek(curr + p + 9)
-        return rw[: p - 1]
+        # 9 = len(b"endstream")
+        stream.seek(current_position + endstream_position + 9)
+        return read_value[: endstream_position - 1]
 
     @staticmethod
     def read_from_stream(
