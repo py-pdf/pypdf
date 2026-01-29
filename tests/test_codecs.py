@@ -1,6 +1,5 @@
 """Test LZW-related code."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 
@@ -8,11 +7,7 @@ from pypdf import PdfReader
 from pypdf._codecs._codecs import LzwCodec
 from pypdf.errors import LimitReachedError
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT, get_data_from_url
 
 test_cases = [
     pytest.param(b"", id="Empty input"),

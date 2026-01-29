@@ -5,7 +5,6 @@ They don't mock/patch anything, they cover typical user needs.
 """
 
 import binascii
-import sys
 from io import BytesIO
 from pathlib import Path
 from re import findall
@@ -26,14 +25,8 @@ from pypdf.generic import (
     read_object,
 )
 
-from . import PILContext, get_data_from_url, get_image_data, normalize_warnings
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
-
-sys.path.append(str(PROJECT_ROOT))
+from . import PROJECT_ROOT, RESOURCE_ROOT, SAMPLE_ROOT, PILContext, get_data_from_url, normalize_warnings
+from .utils import get_image_data
 
 
 def test_basic_features(tmp_path):

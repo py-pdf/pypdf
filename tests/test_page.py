@@ -32,14 +32,10 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_data_from_url, normalize_warnings
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, normalize_warnings
 from .test_images import image_similarity
 from .utils import extract_cell_text, extract_table, extract_text_and_rectangles
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 

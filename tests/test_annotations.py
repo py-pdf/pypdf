@@ -22,11 +22,7 @@ from pypdf.annotations import (
 from pypdf.errors import PdfReadError
 from pypdf.generic import ArrayObject, FloatObject, NumberObject
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT, get_data_from_url
 
 
 def test_ellipse(pdf_file_path):

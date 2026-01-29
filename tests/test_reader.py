@@ -32,13 +32,9 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_data_from_url, normalize_warnings
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, normalize_warnings
 
 HAS_AES = crypt_provider[0] in ["pycryptodome", "cryptography"]
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 NestedList = Union[int, None, list["NestedList"]]

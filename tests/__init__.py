@@ -4,10 +4,8 @@ import ssl
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 from urllib.error import HTTPError
-
-from PIL import Image
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -16,7 +14,10 @@ else:
 
 import yaml
 
-from pypdf.generic import DictionaryObject, IndirectObject
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
+SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 def _get_data_from_url(url: str) -> bytes:
@@ -98,21 +99,6 @@ def normalize_warnings(caplog_text: str) -> list[str]:
     return [_strip_position(line) for line in caplog_text.strip().split("\n")]
 
 
-class ReaderDummy:
-    def __init__(self, strict=False) -> None:
-        self.strict = strict
-
-    def get_object(self, indirect_reference):
-        class DummyObj:
-            def get_object(self) -> "DummyObj":
-                return self
-
-        return DictionaryObject()
-
-    def get_reference(self, obj):
-        return IndirectObject(idnum=1, generation=1, pdf=self)
-
-
 def is_sublist(child_list, parent_list):
     """
     Check if child_list is a sublist of parent_list, with respect to
@@ -171,13 +157,3 @@ class PILContext:
             # Error.
             return None
         return True
-
-
-def get_image_data(
-        image: Image.Image, band: Union[int, None] = None
-) -> Union[tuple[tuple[int, ...], ...], tuple[float, ...]]:
-    try:
-        return image.get_flattened_data(band=band)
-    except AttributeError:
-        # For Pillow < 12.1.0
-        return tuple(image.getdata(band=band))

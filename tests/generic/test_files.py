@@ -3,7 +3,6 @@ import datetime
 import shutil
 import subprocess
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 
@@ -22,11 +21,7 @@ from pypdf.generic import (
     TextStringObject,
     create_string_object,
 )
-from tests import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+from tests import SAMPLE_ROOT, get_data_from_url
 
 PDFATTACH_BINARY = shutil.which("pdfattach")
 

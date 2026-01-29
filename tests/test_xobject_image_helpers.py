@@ -1,6 +1,5 @@
 """Test the pypdf._xobj_image_helpers module."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -11,11 +10,8 @@ from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
 
-from . import get_data_from_url, get_image_data
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT, get_data_from_url
+from .utils import get_image_data
 
 
 @pytest.mark.enable_socket

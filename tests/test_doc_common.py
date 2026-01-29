@@ -21,18 +21,15 @@ from pypdf.generic import (
     TextStringObject,
     ViewerPreferences,
 )
-from tests import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
-RESOURCES_ROOT = PROJECT_ROOT / "resources"
+from tests import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 PDFATTACH_BINARY = shutil.which("pdfattach")
 
 
 @pytest.mark.skipif(PDFATTACH_BINARY is None, reason="Requires poppler-utils")
 def test_attachments(tmpdir):
+    tmpdir = Path(tmpdir)
+
     # No attachments.
     clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
     with PdfReader(clean_path) as pdf:
@@ -42,9 +39,9 @@ def test_attachments(tmpdir):
     # UF = name.
     attached_path = tmpdir / "attached.pdf"
     file_path = tmpdir / "test.txt"
-    file_path.write_binary(b"Hello World\n")
+    file_path.write_bytes(b"Hello World\n")
     subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path])  # noqa: S603
-    with PdfReader(str(attached_path)) as pdf:
+    with PdfReader(attached_path) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
@@ -52,8 +49,8 @@ def test_attachments(tmpdir):
 
     # UF != name.
     different_path = tmpdir / "different.pdf"
-    different_path.write_binary(re.sub(rb" /UF [^/]+ /", b" /UF(my-file.txt) /", attached_path.read_binary()))
-    with PdfReader(str(different_path)) as pdf:
+    different_path.write_bytes(re.sub(rb" /UF [^/]+ /", b" /UF(my-file.txt) /", attached_path.read_bytes()))
+    with PdfReader(different_path) as pdf:
         assert pdf._list_attachments() == ["test.txt", "my-file.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
         assert pdf._get_attachments("my-file.txt") == {"my-file.txt": b"Hello World\n"}
@@ -62,8 +59,8 @@ def test_attachments(tmpdir):
 
     # Only name.
     no_f_path = tmpdir / "no-f.pdf"
-    no_f_path.write_binary(re.sub(rb" /UF [^/]+ /", b" /", attached_path.read_binary()))
-    with PdfReader(str(no_f_path)) as pdf:
+    no_f_path.write_bytes(re.sub(rb" /UF [^/]+ /", b" /", attached_path.read_bytes()))
+    with PdfReader(no_f_path) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
@@ -71,8 +68,8 @@ def test_attachments(tmpdir):
 
     # UF and F.
     uf_f_path = tmpdir / "uf-f.pdf"
-    uf_f_path.write_binary(attached_path.read_binary().replace(b" /UF ", b"/F(file.txt) /UF "))
-    with PdfReader(str(uf_f_path)) as pdf:
+    uf_f_path.write_bytes(attached_path.read_bytes().replace(b" /UF ", b"/F(file.txt) /UF "))
+    with PdfReader(uf_f_path) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
@@ -80,8 +77,8 @@ def test_attachments(tmpdir):
 
     # Only F.
     only_f_path = tmpdir / "f.pdf"
-    only_f_path.write_binary(attached_path.read_binary().replace(b" /UF ", b" /F "))
-    with PdfReader(str(only_f_path)) as pdf:
+    only_f_path.write_bytes(attached_path.read_bytes().replace(b" /UF ", b" /F "))
+    with PdfReader(only_f_path) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
@@ -180,7 +177,7 @@ def test_byte_encoded_named_destinations():
 
 
 def test_viewer_preferences__indirect_reference():
-    input_path = RESOURCES_ROOT / "git.pdf"
+    input_path = RESOURCE_ROOT / "git.pdf"
     reader = PdfReader(input_path)
     assert (0, 24) not in reader.resolved_objects
     viewer_preferences = reader.viewer_preferences
@@ -461,7 +458,7 @@ def test_outline__issue3462():
 
 
 def test_flatten__cyclic_references():
-    path = RESOURCES_ROOT / "crazyones.pdf"
+    path = RESOURCE_ROOT / "crazyones.pdf"
 
     reader = PdfReader(path)
     assert len(reader.pages) == 1

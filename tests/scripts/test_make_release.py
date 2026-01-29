@@ -7,7 +7,7 @@ import pytest
 
 DATA_PATH = Path(__file__).parent.resolve() / "data"
 
-# line starting with \ and ending with " have been observed on windows
+# line starting with \ and ending with " have been observed on Windows
 GIT_LOG__VERSION_4_0_1 = """
 b7bfd0d7eddfd0865a94cc9e7027df6596242cf7:::BUG: Use NumberObject for /Border elements of annotations (#2451):::rsinger417
 8cacb0fc8fee9920b0515d1289e6ee8191eb3f21:::DOC: Document easier way to update metadata (#2454):::Stefan

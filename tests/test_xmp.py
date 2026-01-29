@@ -1,7 +1,6 @@
 """Test the pypdf.xmp module."""
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 
@@ -12,12 +11,7 @@ from pypdf.errors import PdfReadError, XmpDocumentError
 from pypdf.generic import NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 
 @pytest.mark.samples

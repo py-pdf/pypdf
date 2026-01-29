@@ -40,9 +40,10 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import PILContext, get_data_from_url, get_image_data
+from . import RESOURCE_ROOT, PILContext, get_data_from_url
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
+from .utils import get_image_data
 
 filter_inputs = (
     string.ascii_letters,
@@ -55,10 +56,6 @@ filter_inputs = (
     string.printable,
     string.whitespace,  # Add more
 )
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
