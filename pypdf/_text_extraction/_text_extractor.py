@@ -297,7 +297,6 @@ class TextExtraction:
                 encoding=dict.fromkeys(range(256), "�"),
                 font_descriptor=font_descriptor,
                 character_map={},
-                character_widths=font_descriptor.character_widths
             )
 
         self._space_width = self.font.space_width / 2  # Actually the width of _half_ a space...

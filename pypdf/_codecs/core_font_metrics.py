@@ -14,25 +14,28 @@
 # -----------------------------------------------------------------------------------------------
 
 
-from pypdf._font import FontDescriptor
+from pypdf._font import CoreFontMetrics, FontDescriptor
 
-CORE_FONT_METRICS: dict[str, FontDescriptor] = {
+CORE_FONT_METRICS: dict[str, CoreFontMetrics] = {
     # Generated from Courier.afm
     # Copyright (c) 1989, 1990, 1991, 1992, 1993, 1997 Adobe Systems Incorporated.  All Rights
     # Reserved.
-    "Courier": FontDescriptor(
-        name="Courier",
-        family="Courier",
-        weight="Medium",
-        ascent=629,
-        descent=-157,
-        cap_height=562,
-        x_height=426,
-        italic_angle=0,
-        flags=33,
-        bbox=(-23.0, -250.0, 715.0, 805.0),
+    "Courier": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Courier",
+            family="Courier",
+            weight="Medium",
+            ascent=629,
+            descent=-157,
+            cap_height=562,
+            x_height=426,
+            italic_angle=0,
+            flags=33,
+            bbox=(-23.0, -250.0, 715.0, 805.0),
+        ),
         character_widths={
             " ": 600,
+            "default": 600,
             "!": 600,
             '"': 600,
             "#": 600,
@@ -351,19 +354,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     ),
     # Generated from Courier-Bold.afm
     # Copyright (c) 1989, 1990, 1991, 1993, 1997 Adobe Systems Incorporated.  All Rights Reserved.
-    "Courier-Bold": FontDescriptor(
-        name="Courier-Bold",
-        family="Courier",
-        weight="Bold",
-        ascent=629,
-        descent=-157,
-        cap_height=562,
-        x_height=439,
-        italic_angle=0,
-        flags=33,
-        bbox=(-113.0, -250.0, 749.0, 801.0),
+    "Courier-Bold": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Courier-Bold",
+            family="Courier",
+            weight="Bold",
+            ascent=629,
+            descent=-157,
+            cap_height=562,
+            x_height=439,
+            italic_angle=0,
+            flags=33,
+            bbox=(-113.0, -250.0, 749.0, 801.0),
+        ),
         character_widths={
             " ": 600,
+            "default": 600,
             "!": 600,
             '"': 600,
             "#": 600,
@@ -682,19 +688,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     ),
     # Generated from Courier-BoldOblique.afm
     # Copyright (c) 1989, 1990, 1991, 1993, 1997 Adobe Systems Incorporated.  All Rights Reserved.
-    "Courier-BoldOblique": FontDescriptor(
-        name="Courier-BoldOblique",
-        family="Courier",
-        weight="Bold",
-        ascent=629,
-        descent=-157,
-        cap_height=562,
-        x_height=439,
-        italic_angle=-12,
-        flags=97,
-        bbox=(-57.0, -250.0, 869.0, 801.0),
+    "Courier-BoldOblique": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Courier-BoldOblique",
+            family="Courier",
+            weight="Bold",
+            ascent=629,
+            descent=-157,
+            cap_height=562,
+            x_height=439,
+            italic_angle=-12,
+            flags=97,
+            bbox=(-57.0, -250.0, 869.0, 801.0),
+        ),
         character_widths={
             " ": 600,
+            "default": 600,
             "!": 600,
             '"': 600,
             "#": 600,
@@ -1014,19 +1023,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Courier-Oblique.afm
     # Copyright (c) 1989, 1990, 1991, 1992, 1993, 1997 Adobe Systems Incorporated.  All Rights
     # Reserved.
-    "Courier-Oblique": FontDescriptor(
-        name="Courier-Oblique",
-        family="Courier",
-        weight="Medium",
-        ascent=629,
-        descent=-157,
-        cap_height=562,
-        x_height=426,
-        italic_angle=-12,
-        flags=97,
-        bbox=(-27.0, -250.0, 849.0, 805.0),
+    "Courier-Oblique": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Courier-Oblique",
+            family="Courier",
+            weight="Medium",
+            ascent=629,
+            descent=-157,
+            cap_height=562,
+            x_height=426,
+            italic_angle=-12,
+            flags=97,
+            bbox=(-27.0, -250.0, 849.0, 805.0),
+        ),
         character_widths={
             " ": 600,
+            "default": 600,
             "!": 600,
             '"': 600,
             "#": 600,
@@ -1346,19 +1358,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Helvetica.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1997 Adobe Systems Incorporated.  All Rights Reserved.
     # Helvetica is a trademark of Linotype-Hell AG and/or its subsidiaries.
-    "Helvetica": FontDescriptor(
-        name="Helvetica",
-        family="Helvetica",
-        weight="Medium",
-        ascent=718,
-        descent=-207,
-        cap_height=718,
-        x_height=523,
-        italic_angle=0,
-        flags=32,
-        bbox=(-166.0, -225.0, 1000.0, 931.0),
+    "Helvetica": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Helvetica",
+            family="Helvetica",
+            weight="Medium",
+            ascent=718,
+            descent=-207,
+            cap_height=718,
+            x_height=523,
+            italic_angle=0,
+            flags=32,
+            bbox=(-166.0, -225.0, 1000.0, 931.0),
+        ),
         character_widths={
             " ": 278,
+            "default": 556,
             "!": 278,
             '"': 355,
             "#": 556,
@@ -1678,19 +1693,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Helvetica-Bold.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1997 Adobe Systems Incorporated.  All Rights Reserved.
     # Helvetica is a trademark of Linotype-Hell AG and/or its subsidiaries.
-    "Helvetica-Bold": FontDescriptor(
-        name="Helvetica-Bold",
-        family="Helvetica",
-        weight="Bold",
-        ascent=718,
-        descent=-207,
-        cap_height=718,
-        x_height=532,
-        italic_angle=0,
-        flags=32,
-        bbox=(-170.0, -228.0, 1003.0, 962.0),
+    "Helvetica-Bold": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Helvetica-Bold",
+            family="Helvetica",
+            weight="Bold",
+            ascent=718,
+            descent=-207,
+            cap_height=718,
+            x_height=532,
+            italic_angle=0,
+            flags=32,
+            bbox=(-170.0, -228.0, 1003.0, 962.0),
+        ),
         character_widths={
             " ": 278,
+            "default": 556,
             "!": 333,
             '"': 474,
             "#": 556,
@@ -2010,19 +2028,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Helvetica-BoldOblique.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1997 Adobe Systems Incorporated.  All Rights Reserved.
     # Helvetica is a trademark of Linotype-Hell AG and/or its subsidiaries.
-    "Helvetica-BoldOblique": FontDescriptor(
-        name="Helvetica-BoldOblique",
-        family="Helvetica",
-        weight="Bold",
-        ascent=718,
-        descent=-207,
-        cap_height=718,
-        x_height=532,
-        italic_angle=-12,
-        flags=96,
-        bbox=(-174.0, -228.0, 1114.0, 962.0),
+    "Helvetica-BoldOblique": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Helvetica-BoldOblique",
+            family="Helvetica",
+            weight="Bold",
+            ascent=718,
+            descent=-207,
+            cap_height=718,
+            x_height=532,
+            italic_angle=-12,
+            flags=96,
+            bbox=(-174.0, -228.0, 1114.0, 962.0),
+        ),
         character_widths={
             " ": 278,
+            "default": 556,
             "!": 333,
             '"': 474,
             "#": 556,
@@ -2342,19 +2363,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Helvetica-Oblique.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1997 Adobe Systems Incorporated.  All Rights Reserved.
     # Helvetica is a trademark of Linotype-Hell AG and/or its subsidiaries.
-    "Helvetica-Oblique": FontDescriptor(
-        name="Helvetica-Oblique",
-        family="Helvetica",
-        weight="Medium",
-        ascent=718,
-        descent=-207,
-        cap_height=718,
-        x_height=523,
-        italic_angle=-12,
-        flags=96,
-        bbox=(-170.0, -225.0, 1116.0, 931.0),
+    "Helvetica-Oblique": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Helvetica-Oblique",
+            family="Helvetica",
+            weight="Medium",
+            ascent=718,
+            descent=-207,
+            cap_height=718,
+            x_height=523,
+            italic_angle=-12,
+            flags=96,
+            bbox=(-170.0, -225.0, 1116.0, 931.0),
+        ),
         character_widths={
             " ": 278,
+            "default": 556,
             "!": 278,
             '"': 355,
             "#": 556,
@@ -2673,19 +2697,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     ),
     # Generated from Symbol.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1997 Adobe Systems Incorporated. All rights reserved.
-    "Symbol": FontDescriptor(
-        name="Symbol",
-        family="Symbol",
-        weight="Medium",
-        ascent=0.0,
-        descent=0.0,
-        cap_height=0.0,
-        x_height=0.0,
-        italic_angle=0,
-        flags=4,
-        bbox=(-180.0, -293.0, 1090.0, 1010.0),
+    "Symbol": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Symbol",
+            family="Symbol",
+            weight="Medium",
+            ascent=0.0,
+            descent=0.0,
+            cap_height=0.0,
+            x_height=0.0,
+            italic_angle=0,
+            flags=4,
+            bbox=(-180.0, -293.0, 1090.0, 1010.0),
+        ),
         character_widths={
             " ": 250,
+            "default": 500,
             "!": 333,
             "\u2200": 713,
             "#": 500,
@@ -2880,19 +2907,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Times-Bold.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1993, 1997 Adobe Systems Incorporated.  All Rights
     # Reserved.  Times is a trademark of Linotype-Hell AG and/or its subsidiaries.
-    "Times-Bold": FontDescriptor(
-        name="Times-Bold",
-        family="Times",
-        weight="Bold",
-        ascent=683,
-        descent=-217,
-        cap_height=676,
-        x_height=461,
-        italic_angle=0,
-        flags=34,
-        bbox=(-168.0, -218.0, 1000.0, 935.0),
+    "Times-Bold": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Times-Bold",
+            family="Times",
+            weight="Bold",
+            ascent=683,
+            descent=-217,
+            cap_height=676,
+            x_height=461,
+            italic_angle=0,
+            flags=34,
+            bbox=(-168.0, -218.0, 1000.0, 935.0),
+        ),
         character_widths={
             " ": 250,
+            "default": 500,
             "!": 333,
             '"': 555,
             "#": 500,
@@ -3212,19 +3242,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Times-BoldItalic.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1993, 1997 Adobe Systems Incorporated.  All Rights
     # Reserved.  Times is a trademark of Linotype-Hell AG and/or its subsidiaries.
-    "Times-BoldItalic": FontDescriptor(
-        name="Times-BoldItalic",
-        family="Times",
-        weight="Bold",
-        ascent=683,
-        descent=-217,
-        cap_height=669,
-        x_height=462,
-        italic_angle=-15,
-        flags=98,
-        bbox=(-200.0, -218.0, 996.0, 921.0),
+    "Times-BoldItalic": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Times-BoldItalic",
+            family="Times",
+            weight="Bold",
+            ascent=683,
+            descent=-217,
+            cap_height=669,
+            x_height=462,
+            italic_angle=-15,
+            flags=98,
+            bbox=(-200.0, -218.0, 996.0, 921.0),
+        ),
         character_widths={
             " ": 250,
+            "default": 500,
             "!": 389,
             '"': 555,
             "#": 500,
@@ -3544,19 +3577,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Times-Italic.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1993, 1997 Adobe Systems Incorporated.  All Rights
     # Reserved.  Times is a trademark of Linotype-Hell AG and/or its subsidiaries.
-    "Times-Italic": FontDescriptor(
-        name="Times-Italic",
-        family="Times",
-        weight="Medium",
-        ascent=683,
-        descent=-217,
-        cap_height=653,
-        x_height=441,
-        italic_angle=-15.5,
-        flags=98,
-        bbox=(-169.0, -217.0, 1010.0, 883.0),
+    "Times-Italic": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Times-Italic",
+            family="Times",
+            weight="Medium",
+            ascent=683,
+            descent=-217,
+            cap_height=653,
+            x_height=441,
+            italic_angle=-15.5,
+            flags=98,
+            bbox=(-169.0, -217.0, 1010.0, 883.0),
+        ),
         character_widths={
             " ": 250,
+            "default": 500,
             "!": 333,
             '"': 420,
             "#": 500,
@@ -3876,19 +3912,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from Times-Roman.afm
     # Copyright (c) 1985, 1987, 1989, 1990, 1993, 1997 Adobe Systems Incorporated.  All Rights
     # Reserved.  Times is a trademark of Linotype-Hell AG and/or its subsidiaries.
-    "Times-Roman": FontDescriptor(
-        name="Times-Roman",
-        family="Times",
-        weight="Roman",
-        ascent=683,
-        descent=-217,
-        cap_height=662,
-        x_height=450,
-        italic_angle=0,
-        flags=34,
-        bbox=(-168.0, -218.0, 1000.0, 898.0),
+    "Times-Roman": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="Times-Roman",
+            family="Times",
+            weight="Roman",
+            ascent=683,
+            descent=-217,
+            cap_height=662,
+            x_height=450,
+            italic_angle=0,
+            flags=34,
+            bbox=(-168.0, -218.0, 1000.0, 898.0),
+        ),
         character_widths={
             " ": 250,
+            "default": 500,
             "!": 333,
             '"': 408,
             "#": 500,
@@ -4208,19 +4247,22 @@ CORE_FONT_METRICS: dict[str, FontDescriptor] = {
     # Generated from ZapfDingbats.afm
     # Copyright (c) 1985, 1987, 1988, 1989, 1997 Adobe Systems Incorporated. All Rights Reserved.
     # ITC Zapf Dingbats is a registered trademark of International Typeface Corporation.
-    "ZapfDingbats": FontDescriptor(
-        name="ZapfDingbats",
-        family="ZapfDingbats",
-        weight="Medium",
-        ascent=0.0,
-        descent=0.0,
-        cap_height=0.0,
-        x_height=0.0,
-        italic_angle=0,
-        flags=4,
-        bbox=(-1.0, -143.0, 981.0, 820.0),
+    "ZapfDingbats": CoreFontMetrics(
+        font_descriptor=FontDescriptor(
+            name="ZapfDingbats",
+            family="ZapfDingbats",
+            weight="Medium",
+            ascent=0.0,
+            descent=0.0,
+            cap_height=0.0,
+            x_height=0.0,
+            italic_angle=0,
+            flags=4,
+            bbox=(-1.0, -143.0, 981.0, 820.0),
+        ),
         character_widths={
             " ": 790,
+            "default": 1580,
             "\x01": 974,
             "\x02": 961,
             "\xca": 974,

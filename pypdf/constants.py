@@ -794,3 +794,21 @@ class BorderStyles:
     INSET = "/I"
     SOLID = "/S"
     UNDERLINED = "/U"
+
+
+class FontFlags(IntFlag):
+    """
+    A class defining font flags in PDF document font descriptor resources.
+
+    Defined in table 121 of the PDF 2.0 reference.
+    """
+
+    FIXED_PITCH = 1 << 0
+    SERIF = 1 << 1
+    SYMBOLIC = 1 << 2
+    SCRIPT = 1 << 3
+    NONSYMBOLIC = 1 << 5
+    ITALIC = 1 << 6
+    ALL_CAP = 1 << 16
+    SMALL_CAP = 1 << 17
+    FORCE_BOLD = 1 << 18
