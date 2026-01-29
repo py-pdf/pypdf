@@ -93,9 +93,8 @@ class Parser:
                 italic_angle = cast(float, value)
                 if value != "0":
                     flags |= FontFlags.ITALIC
-            if key == "IsFixedPitch":
-                if value.lower() == "true":
-                    flags |= FontFlags.FIXED_PITCH
+            if key == "IsFixedPitch" and value.lower() == "true":
+                flags |= FontFlags.FIXED_PITCH
             if key == "FontBBox":
                 bbox = tuple(map(float, value.split(" ")[:4]))  # type: ignore
             if key == "EncodingScheme":
