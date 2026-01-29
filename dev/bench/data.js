@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769600985418,
+  "lastUpdate": 1769685890318,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -88313,6 +88313,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002343172978275767",
             "extra": "mean: 675.7757436000077 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8f1857de57c4cae41c97427ba70d214086f2b8bb",
+          "message": "MAINT: Reduce maximum code complexity to 30 (#3620)\n\nCloses #3372.\n\nAdditionally improves readability and avoids unnecessary exception handling, as well as some side effects due to shadowing variable names in the affected methods which were refactored.",
+          "timestamp": "2026-01-29T12:22:02+01:00",
+          "tree_id": "cb8f09175fb3e93fc9f347782ad1fb5cd8472580",
+          "url": "https://github.com/py-pdf/pypdf/commit/8f1857de57c4cae41c97427ba70d214086f2b8bb"
+        },
+        "date": 1769685885614,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0932103771158066,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00526084511037438",
+            "extra": "mean: 323.2887123999717 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.055213645502963,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004358626470172751",
+            "extra": "mean: 62.28506341179074 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2740764270802947,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0784637844727534",
+            "extra": "mean: 3.648617324199995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.0474436322949,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012402928083159865",
+            "extra": "mean: 58.65982147056858 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08973399188164045,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05570502609311978",
+            "extra": "mean: 11.144048972200016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4793353686791144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006646168212755523",
+            "extra": "mean: 675.9792411999797 msec\nrounds: 5"
           }
         ]
       }
