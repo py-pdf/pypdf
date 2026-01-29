@@ -47,7 +47,7 @@ class Parser:
         post = "\n# " + "-" * width + "\n\n"
         return pre + title + "\n#\n# " + "\n# ".join(textwrap.wrap(text=text, width=width)) + post
 
-    def _handle_font(self, file_name: str, font_data: str) -> list[str]:
+    def _handle_font(self, file_name: str, font_data: str) -> list[str]:  # noqa: C901
         # AFM specification: https://adobe-type-tools.github.io/font-tech-notes/pdfs/5004.AFM_Spec.pdf
         copyrights: list[str] = []
         name: str = ""
