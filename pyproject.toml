@@ -47,7 +47,6 @@ full = [
     "Pillow>=8.0.0"
 ]
 dev = [
-    "black",
     "flit",
     "pip-tools",
     "pre-commit",
@@ -100,7 +99,7 @@ line_length = 79
 indent = '    '
 multi_line_output = 3
 include_trailing_comma = true
-known_third_party = ["pytest", "setuptools"]
+known_third_party = ["pytest"]
 
 [tool.coverage.run]
 source = ["pypdf"]
