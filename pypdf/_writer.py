@@ -902,12 +902,14 @@ class PdfWriter(PdfDocCommon):
             ap_stream_res = cast(DictionaryObject, appearance_stream_obj["/Resources"])
             ap_stream_font_dict = cast(DictionaryObject, ap_stream_res.get("/Font", DictionaryObject()))
             if "/Font" not in pg_res:
-                pg_res[NameObject("/Font")] = DictionaryObject()
-            pg_font_res = cast(DictionaryObject, pg_res["/Font"])
+                font_dict_ref = self._add_object(DictionaryObject())
+                pg_res[NameObject("/Font")] = font_dict_ref
+            pg_font_res = cast(DictionaryObject, pg_res["/Font"].get_object())
             # Merge fonts from the appearance stream into the page's font resources
-            for font_name, font_ref in ap_stream_font_dict.items():
+            for font_name, font_res in ap_stream_font_dict.items():
                 if font_name not in pg_font_res:
-                    pg_font_res[font_name] = font_ref
+                    font_res_ref = self._add_object(font_res)
+                    pg_font_res[font_name] = font_res_ref
         # Always add the resolved stream object to the writer to get a new IndirectObject.
         # This ensures we have a valid IndirectObject managed by *this* writer.
         xobject_ref = self._add_object(appearance_stream_obj)

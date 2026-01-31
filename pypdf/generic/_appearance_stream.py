@@ -343,7 +343,6 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         # If a font resource was added, get the font character map
         if font_resource:
-            font_resource = cast(DictionaryObject, font_resource.get_object())
             font = Font.from_font_resource(font_resource)
         else:
             logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
@@ -494,8 +493,6 @@ class TextStreamAppearance(BaseStreamAppearance):
         )
         acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject()).get_object()
         font_resource = acro_form_font_resources.get(font_name, None)
-        if not is_null_or_none(font_resource):
-            font_resource = cast(DictionaryObject, font_resource.get_object())
 
         # Retrieve formatting information
         is_comb = False
