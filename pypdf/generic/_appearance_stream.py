@@ -493,8 +493,22 @@ class TextStreamAppearance(BaseStreamAppearance):
         )
         acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject()).get_object()
         font_resource = acro_form_font_resources.get(font_name, None)
+        if not is_null_or_none(font_resource):
+            font = Font.from_font_resource(font_resource)
+        # Normally, we should have found a font resource by now. However, when a user has provided a specific
+        # font name, we may not have found the associated font resource among the AcroForm resources.
+        elif not font_resource and user_font_name.removeprefix("/") in CORE_FONT_METRICS:
+            font = Font(
+                name=user_font_name.removeprefix("/"),
+                character_map={},
+                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
+                sub_type="Type1",
+                font_descriptor=CORE_FONT_METRICS[user_font_name.removeprefix("/")].font_descriptor,
+                character_widths=CORE_FONT_METRICS[user_font_name.removeprefix("/")].character_widths
+            )
+            font_resource = font.as_font_resource()
         # Default to Helvetica if we haven't found a font resource by now.
-        if is_null_or_none(font_resource):
+        else:
             logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
             font_name = "/Helv"
             font_resource = DictionaryObject({
