@@ -347,13 +347,6 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:
             logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
             font_name = "/Helv"
-            font_resource = DictionaryObject({
-                NameObject("/Subtype"): NameObject("/Type1"),
-                NameObject("/Name"): NameObject("/Helv"),
-                NameObject("/Type"): NameObject("/Font"),
-                NameObject("/BaseFont"): NameObject("/Helvetica"),
-                NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
-            })
             font = Font(
                 name="Helvetica",
                 character_map={},
@@ -362,6 +355,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 font_descriptor=CORE_FONT_METRICS["Helvetica"].font_descriptor,
                 character_widths=CORE_FONT_METRICS["Helvetica"].character_widths
             )
+            font_resource = font.as_font_resource()
 
         font_glyph_byte_map: dict[str, bytes]
         if isinstance(font.encoding, str):
@@ -511,13 +505,15 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:
             logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
             font_name = "/Helv"
-            font_resource = DictionaryObject({
-                NameObject("/Subtype"): NameObject("/Type1"),
-                NameObject("/Name"): NameObject("/Helv"),
-                NameObject("/Type"): NameObject("/Font"),
-                NameObject("/BaseFont"): NameObject("/Helvetica"),
-                NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
-            })
+            font = Font(
+                name="Helvetica",
+                character_map={},
+                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
+                sub_type="Type1",
+                font_descriptor=CORE_FONT_METRICS["Helvetica"].font_descriptor,
+                character_widths=CORE_FONT_METRICS["Helvetica"].character_widths
+            )
+            font_resource = font.as_font_resource()
 
         # Retrieve formatting information
         is_comb = False
