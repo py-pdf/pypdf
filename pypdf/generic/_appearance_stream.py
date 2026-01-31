@@ -357,6 +357,30 @@ class TextStreamAppearance(BaseStreamAppearance):
             )
             font_resource = font.as_font_resource()
 
+        # Check whether the font resource is able to encode the text value.
+        encodable = True
+        try:
+            if isinstance(font.encoding, str):
+                text.encode(font.encoding, "surrogatepass")
+            else:
+                supported_chars = set(font.encoding.values())
+                if any(char not in supported_chars for char in text):
+                    encodable = False
+            # We should add a final check against the character_map (CMap) of the font,
+            # but we don't appear to have PDF forms with such fonts, so we skip this for
+            # now.
+
+        except UnicodeEncodeError:
+            encodable = False
+
+        if not encodable:
+            logger_warning(
+                f"Text string '{text}' contains characters not supported by font encoding. "
+                "This may result in text corruption. "
+                "Consider calling writer.update_page_form_field_values with auto_regenerate=True.",
+                __name__
+            )
+
         font_glyph_byte_map: dict[str, bytes]
         if isinstance(font.encoding, str):
             font_glyph_byte_map = {
