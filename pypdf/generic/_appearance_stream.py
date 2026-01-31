@@ -493,6 +493,17 @@ class TextStreamAppearance(BaseStreamAppearance):
         )
         acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject()).get_object()
         font_resource = acro_form_font_resources.get(font_name, None)
+        # Default to Helvetica if we haven't found a font resource by now.
+        if is_null_or_none(font_resource):
+            logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+            font_name = "/Helv"
+            font_resource = DictionaryObject({
+                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/Name"): NameObject("/Helv"),
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/BaseFont"): NameObject("/Helvetica"),
+                NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+            })
 
         # Retrieve formatting information
         is_comb = False
