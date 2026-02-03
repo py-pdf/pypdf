@@ -2413,7 +2413,7 @@ def test_selfont():
 
 
 @pytest.mark.enable_socket
-def test_no_resource_for_14_std_fonts(caplog):
+def test_no_resource_for_14_std_fonts():
     """Cf #2670"""
     url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
     name = "iss2670.pdf"
@@ -2425,7 +2425,7 @@ def test_no_resource_for_14_std_fonts(caplog):
             writer.update_page_form_field_values(
                 p, {a["/T"]: "Brooks"}, auto_regenerate=False
             )
-    assert "Font dictionary for /Helvetica not found; defaulting to Helvetica." in caplog.text
+            assert "/Helvetica" in a["/AP"]["/N"]["/Resources"]["/Font"]
 
 
 @pytest.mark.enable_socket
