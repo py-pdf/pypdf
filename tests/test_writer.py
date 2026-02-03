@@ -1575,7 +1575,7 @@ def test_update_form_fields(caplog, tmp_path):
         {"Text1": "!مرحبا بالعالم", "Text2": "ligne1\nligne2\nligne3"},
         auto_regenerate=False,
     )
-    assert b"/Helv " in writer.pages[1]["/Annots"][1]["/AP"]["/N"].get_data()
+    assert b"/Helvetica " in writer.pages[1]["/Annots"][1]["/AP"]["/N"].get_data()
     assert "Text string '!مرحبا بالعالم' contains characters not supported by font encoding." in caplog.text
     writer.update_page_form_field_values(
         None,
@@ -2437,7 +2437,7 @@ def test_field_box_upside_down():
     writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
     assert writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data() == (
         b"q\n/Tx BMC \nq\n2 1 102.29520000000001 9.835000000000036 re\n"
-        b"W\nBT\n/Helv 8.0 Tf 0 g\n2 3.0455000000000183 Td\n(0) Tj\nET\n"
+        b"W\nBT\n/Arial 8.0 Tf 0 g\n2 3.0455000000000183 Td\n(0) Tj\nET\n"
         b"Q\nEMC\nQ\n"
     )
     box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]

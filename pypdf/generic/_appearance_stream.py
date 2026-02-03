@@ -418,7 +418,6 @@ class TextStreamAppearance(BaseStreamAppearance):
     @staticmethod
     def _find_annotation_font_resource(
             font_name: str,
-            user_font_name: str,
             annotation: DictionaryObject,
             acro_form: DictionaryObject
         ) -> tuple[str, DictionaryObject]:
@@ -426,42 +425,32 @@ class TextStreamAppearance(BaseStreamAppearance):
         # the AcroForm resources dictionary
         acro_form_resources: Any = cast(
             DictionaryObject,
-            cast(
-                DictionaryObject,
-                annotation.get_inherited(
-                    "/DR",
-                    acro_form.get("/DR", DictionaryObject()),
-                ),
-            ).get_object(),
+            annotation.get_inherited(
+                "/DR",
+                acro_form.get("/DR", DictionaryObject()),
+            ),
         )
-        acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject()).get_object()
+        acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject())
         font_resource = acro_form_font_resources.get(font_name, None)
-        if is_null_or_none(font_resource) and user_font_name.removeprefix("/") in CORE_FONT_METRICS:
-            # Normally, we should have found a font resource by now. However, when a user has provided a specific
-            # font name, we may not have found the associated font resource among the AcroForm resources.
+        # Normally, we should have found a font resource by now. However, when a user has provided a specific
+        # font name, we may not have found the associated font resource among the AcroForm resources. Also, in
+        # case of the 14 Adobe Core fonts, we may be expected to construct a font resource ourselves.
+        if is_null_or_none(font_resource):
+            if font_name.removeprefix("/") not in CORE_FONT_METRICS:
+                # Default to Helvetica if we haven't found a font resource and cannot construct one ourselves.
+                logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+                font_name = "/Helvetica"
             font_resource = Font(
-                name=user_font_name.removeprefix("/"),
+                name=font_name.removeprefix("/"),
                 character_map={},
                 encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
                 sub_type="Type1",
-                font_descriptor=CORE_FONT_METRICS[user_font_name.removeprefix("/")].font_descriptor,
-                character_widths=CORE_FONT_METRICS[user_font_name.removeprefix("/")].character_widths
-            ).as_font_resource()
-        else:
-            # Default to Helvetica if we haven't found a font resource by now.
-            logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
-            font_name = "/Helv"
-            font_resource = Font(
-                name="Helvetica",
-                character_map={},
-                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
-                sub_type="Type1",
-                font_descriptor=CORE_FONT_METRICS["Helvetica"].font_descriptor,
-                character_widths=CORE_FONT_METRICS["Helvetica"].character_widths
-            ).as_font_resource()
-        # Add the font resource to the annotation / AcroForm resources if necessary
-        if font_name not in acro_form_font_resources:
-            acro_form_font_resources[NameObject(font_name)] = font_resource
+                font_descriptor=CORE_FONT_METRICS[font_name.removeprefix("/")].font_descriptor,
+                character_widths=CORE_FONT_METRICS[font_name.removeprefix("/")].character_widths
+                ).as_font_resource()
+            # Add the font resource to the annotation / AcroForm resources if necessary
+            if font_name not in acro_form_font_resources:
+                acro_form_font_resources[NameObject(font_name)] = font_resource
 
         return font_name, font_resource
 
@@ -547,7 +536,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         if user_font_size > 0:
             font_size = user_font_size
 
-        font_name, font_resource = cls._find_annotation_font_resource(font_name, user_font_name, annotation, acro_form)
+        font_name, font_resource = cls._find_annotation_font_resource(font_name, annotation, acro_form)
 
         # Retrieve formatting information
         is_comb = False
