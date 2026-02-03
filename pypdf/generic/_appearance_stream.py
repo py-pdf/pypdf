@@ -448,9 +448,6 @@ class TextStreamAppearance(BaseStreamAppearance):
                 font_descriptor=CORE_FONT_METRICS[font_name.removeprefix("/")].font_descriptor,
                 character_widths=CORE_FONT_METRICS[font_name.removeprefix("/")].character_widths
                 ).as_font_resource()
-            # Add the font resource to the annotation / AcroForm resources if necessary
-            if font_name not in acro_form_font_resources:
-                acro_form_font_resources[NameObject(font_name)] = font_resource
 
         return font_name, font_resource
 
