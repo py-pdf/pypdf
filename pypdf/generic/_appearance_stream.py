@@ -539,7 +539,16 @@ class TextStreamAppearance(BaseStreamAppearance):
             for key, value in (
                 cast(DictionaryObject, annotation[AnnotationDictionaryAttributes.AP]).get("/N", {}).items()
             ):
-                if key not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
+                if key in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
+                    continue
+                # Don't overwrite font resources added by TextAppearanceStream.__init__
+                if key == "/Resources":
+                    if "/Font" not in value:
+                        value.get_object()[NameObject("/Font")] = DictionaryObject()
+                    value["/Font"].get_object()[NameObject(font_name)] = getattr(
+                        font_resource, "indirect_reference", font_resource
+                    )
+                else:
                     new_appearance_stream[key] = value
 
         return new_appearance_stream
