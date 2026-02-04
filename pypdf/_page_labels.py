@@ -146,7 +146,7 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
         i += 2
     m = {
         None: lambda _: "",
-        "/D": lambda n: str(n),
+        "/D": str,
         "/R": number2uppercase_roman_numeral,
         "/r": number2lowercase_roman_numeral,
         "/A": number2uppercase_letter,

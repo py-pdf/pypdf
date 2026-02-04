@@ -18,8 +18,8 @@ repos:
     -   id: check-added-large-files
         args: ['--maxkb=1000']
 
--   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.14.14
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
     hooks:
     -   id: ruff-check
         args: ['--fix']
