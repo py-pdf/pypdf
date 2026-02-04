@@ -135,6 +135,9 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 120
+exclude = [
+    "sample-files/",
+]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -217,7 +220,6 @@ max-complexity = 30  # Recommended: 10
 "json_consistency.py" = ["T201"]
 "make_release.py" = ["S603", "S607", "T201"]
 "pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff
-"sample-files/*" = ["D100", "INP001"]
 "tests/*" = ["ANN001", "ANN201", "B017", "B018", "D103", "D104", "S105", "S106"]
 "tests/test_workflows.py" =  ["T201"]
 

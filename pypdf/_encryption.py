@@ -834,7 +834,7 @@ class Encryption:
         self.StmF = StmF
         self.StrF = StrF
         self.EFF = EFF
-        self.values: EncryptionValues = values if values else EncryptionValues()
+        self.values: EncryptionValues = values or EncryptionValues()
 
         self._password_type = PasswordType.NOT_DECRYPTED
         self._key: Optional[bytes] = None

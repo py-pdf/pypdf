@@ -308,7 +308,7 @@ def _handle_jpx(
     mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
         mode = cast(mode_str_type, img1.mode)
-        invert_color = mode in ("CMYK",)
+        invert_color = mode == "CMYK"
     if img1.mode == "RGBA" and mode == "RGB":
         mode = "RGBA"
     # we need to convert to the good mode
@@ -476,7 +476,7 @@ def _xobj_to_image(
     # Get filters
     filters = x_object.get(StreamAttributes.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
-    decode_parms = x_object.get(StreamAttributes.DECODE_PARMS, None)
+    decode_parms = x_object.get(StreamAttributes.DECODE_PARMS)
     if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
     else:
