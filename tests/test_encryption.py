@@ -130,6 +130,23 @@ def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
     assert len(ipdf.pages) == 1
 
 
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_aesv2_without_length_in_encrypt_dict():
+    """
+    AESV2-encrypted PDF without /Length in encrypt dict decrypts correctly.
+
+    Some PDFs omit /Length in the main encrypt dict (defaulting to 40 bits),
+    but AESV2 requires 128 bits. The key length should be read from the
+    crypt filter dict instead.
+    """
+    inputfile = RESOURCE_ROOT / "encryption" / "r4-aes-v2-no-key-length.pdf"
+    reader = PdfReader(inputfile)
+    assert reader.is_encrypted
+    result = reader.decrypt("")
+    assert result in (PasswordType.USER_PASSWORD, PasswordType.OWNER_PASSWORD)
+    assert len(reader.pages) == 1
+
+
 @pytest.mark.parametrize(
     ("pdffile", "password"),
     [
