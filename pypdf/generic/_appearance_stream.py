@@ -347,13 +347,14 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:
             logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
             font_name = "/Helv"
+            core_font_metrics = CORE_FONT_METRICS["Helvetica"]
             font = Font(
                 name="Helvetica",
                 character_map={},
                 encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
                 sub_type="Type1",
-                font_descriptor=CORE_FONT_METRICS["Helvetica"].font_descriptor,
-                character_widths=CORE_FONT_METRICS["Helvetica"].character_widths
+                font_descriptor=core_font_metrics.font_descriptor,
+                character_widths=core_font_metrics.character_widths
             )
             font_resource = font.as_font_resource()
 
@@ -432,6 +433,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         )
         acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject())
         font_resource = acro_form_font_resources.get(font_name, None)
+
         # Normally, we should have found a font resource by now. However, when a user has provided a specific
         # font name, we may not have found the associated font resource among the AcroForm resources. Also, in
         # case of the 14 Adobe Core fonts, we may be expected to construct a font resource ourselves.
@@ -440,14 +442,15 @@ class TextStreamAppearance(BaseStreamAppearance):
                 # Default to Helvetica if we haven't found a font resource and cannot construct one ourselves.
                 logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
                 font_name = "/Helvetica"
+            core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
             font_resource = Font(
                 name=font_name.removeprefix("/"),
                 character_map={},
                 encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
                 sub_type="Type1",
-                font_descriptor=CORE_FONT_METRICS[font_name.removeprefix("/")].font_descriptor,
-                character_widths=CORE_FONT_METRICS[font_name.removeprefix("/")].character_widths
-                ).as_font_resource()
+                font_descriptor=core_font_metrics.font_descriptor,
+                character_widths=core_font_metrics.character_widths
+            ).as_font_resource()
 
         return font_name, font_resource
 
