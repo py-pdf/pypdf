@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770373219800,
+  "lastUpdate": 1770373242450,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -90823,6 +90823,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003467648334144919",
             "extra": "mean: 730.0745431999985 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cf33a60c5a9f72a6bf22cf48f1b4b209348435b2",
+          "message": "ENH: Add ability to add font resources for 14 Adobe Core fonts in text widget annotations (#3624)\n\nWe used to overwrite a text appearance stream's resource dictionary\nwhen we initiated it from an annotation. This would then overwrite\na font resource if we had previously added it. Make sure that we\nmerge our new font resource into the annotation's resources instead.",
+          "timestamp": "2026-02-06T11:17:35+01:00",
+          "tree_id": "4893da189e0dd8b0bb990e1bd8a223d85efc41a6",
+          "url": "https://github.com/py-pdf/pypdf/commit/cf33a60c5a9f72a6bf22cf48f1b4b209348435b2"
+        },
+        "date": 1770373238069,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.188503996504279,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017635183585299884",
+            "extra": "mean: 75.8236112499991 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.92072821743517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01270605009197054",
+            "extra": "mean: 55.8013038235296 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1741347482673374,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021467488171447655",
+            "extra": "mean: 851.6910018000004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5182451862105579,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06575560127412468",
+            "extra": "mean: 1.929588593599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1817240048064832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10635012300926723",
+            "extra": "mean: 5.5028503309999905 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.208482908360608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04398573614139789",
+            "extra": "mean: 827.483775799999 msec\nrounds: 5"
           }
         ]
       }
