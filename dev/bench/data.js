@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770200847197,
+  "lastUpdate": 1770372817031,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -88643,6 +88643,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0029689243027768287",
             "extra": "mean: 669.5599405999985 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wooky@iwooky.me",
+            "name": "Dmitry K",
+            "username": "dmitry-kostin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3b94ce841051d4bbd97a8cb736db1dc1f54b0457",
+          "message": "ROB: Fix AESV2 decryption when /Length missing in encrypt dict (#3629)\n\nFixes #3628",
+          "timestamp": "2026-02-06T11:10:49+01:00",
+          "tree_id": "68e9503d5f222e9098a2bdd1d44eb6143424ea74",
+          "url": "https://github.com/py-pdf/pypdf/commit/3b94ce841051d4bbd97a8cb736db1dc1f54b0457"
+        },
+        "date": 1770372812028,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0300965668686595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004169136192144651",
+            "extra": "mean: 330.02248539999925 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.785849310328391,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002054347140971322",
+            "extra": "mean: 63.34787443750134 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27835104811705713,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023485502862723082",
+            "extra": "mean: 3.5925857178 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.539760178178394,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009101613279118812",
+            "extra": "mean: 57.01332229411678 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08997331775923233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03658072734293216",
+            "extra": "mean: 11.114406191799992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4950562936162572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030256857421468125",
+            "extra": "mean: 668.8711350000005 msec\nrounds: 5"
           }
         ]
       }
