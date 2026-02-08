@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770373242450,
+  "lastUpdate": 1770562070557,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -88775,6 +88775,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0037636797916605295",
             "extra": "mean: 670.2888385999984 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "219153ef0228059d0d9abd9ed0bb7883e2ee58b0",
+          "message": "REL: 6.7.0\n\n## What's new\n\n### Deprecations (DEP)\n- Deprecate support for abbreviations in decode_stream_data (#3617) by @stefan6419846\n\n### New Features (ENH)\n- Add ability to add font resources for 14 Adobe Core fonts in text widget annotations (#3624) by @PJBrs\n\n### Bug Fixes (BUG)\n- Avoid invalid load for ICCBased FlateDecode images in mode 1 (#3619) by @stefan6419846\n\n### Robustness (ROB)\n- Fix AESV2 decryption when /Length missing in encrypt dict (#3629) by @dmitry-kostin\n- Fix merging when annotations point to NullObject (#3613) by @stefan6419846\n- Check for `self._info` being None in `compress_identical_objects` (#3612) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.6.2...6.7.0)",
+          "timestamp": "2026-02-08T15:44:58+01:00",
+          "tree_id": "0ab836cc34582bcd8642b8fddb6da2367d07cf98",
+          "url": "https://github.com/py-pdf/pypdf/commit/219153ef0228059d0d9abd9ed0bb7883e2ee58b0"
+        },
+        "date": 1770562062787,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.119059937492618,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004146633567674633",
+            "extra": "mean: 320.60942080000245 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.079330331000467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001974073012416925",
+            "extra": "mean: 62.19164476470951 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28413542089031146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010501118469859728",
+            "extra": "mean: 3.5194485673999907 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.39534672387736,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012365089742583139",
+            "extra": "mean: 57.48663799999864 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08962470600760358,
+            "unit": "iter/sec",
+            "range": "stddev: 0.058612075183843204",
+            "extra": "mean: 11.157637715600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4954423078776409,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016790701812861594",
+            "extra": "mean: 668.6984811999992 msec\nrounds: 5"
           }
         ]
       }
