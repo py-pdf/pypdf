@@ -1,4 +1,5 @@
 import sys
+import uuid
 from abc import ABC
 from typing import Any, Optional, Union
 
@@ -44,12 +45,46 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
     Args:
         title_bar: Text to be displayed in the title bar of the annotation;
             by convention this is the name of the author
+        in_reply_to: Reference to the annotation that this annotation is
+            "in reply to" (PDF 1.5). Must be a registered annotation object
+            (i.e. one that was already added via ``writer.add_annotation()``).
+        reply_type: The relationship between this annotation and the one
+            specified by ``in_reply_to``. Either ``"R"`` (a reply, default)
+            or ``"Group"`` (grouped with the parent annotation). Only
+            meaningful when ``in_reply_to`` is set.
+        annotation_name: A text string uniquely identifying this annotation
+            among all annotations on its page (the ``/NM`` entry).
+            Auto-generated (UUID) when ``in_reply_to`` is set and no name
+            is provided.
 
     """
 
-    def __init__(self, *, title_bar: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        *,
+        title_bar: Optional[str] = None,
+        in_reply_to: Optional[DictionaryObject] = None,
+        reply_type: str = "R",
+        annotation_name: Optional[str] = None,
+    ) -> None:
         if title_bar is not None:
             self[NameObject("/T")] = TextStringObject(title_bar)
+        if in_reply_to is not None:
+            try:
+                self[NameObject("/IRT")] = in_reply_to.indirect_reference
+            except AttributeError:
+                from .._utils import logger_warning  # noqa: PLC0415
+
+                logger_warning(
+                    "Unregistered in_reply_to object: No /IRT field set",
+                    __name__,
+                )
+            else:
+                self[NameObject("/RT")] = NameObject(f"/{reply_type}")
+                if annotation_name is None:
+                    annotation_name = str(uuid.uuid4())
+        if annotation_name is not None:
+            self[NameObject("/NM")] = TextStringObject(annotation_name)
 
 
 class Text(MarkupAnnotation):

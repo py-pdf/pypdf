@@ -371,6 +371,125 @@ def test_popup(caplog):
     Path(target).unlink()  # comment this out for manual inspection
 
 
+def test_text_in_reply_to(pdf_file_path):
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act: Create a parent annotation and a reply
+    parent = Text(
+        text="Parent comment",
+        rect=(50, 550, 200, 650),
+        open=True,
+    )
+    parent_ref = writer.add_annotation(0, parent)
+
+    reply = Text(
+        text="Reply to parent",
+        rect=(50, 550, 200, 650),
+        in_reply_to=parent_ref,
+    )
+    writer.add_annotation(0, reply)
+
+    # Assert: Verify /IRT, /RT, and /NM are set on the reply
+    assert "/IRT" in reply
+    assert reply["/IRT"].get_object() is parent_ref
+    assert reply["/RT"] == "/R"
+    assert "/NM" in reply  # Auto-generated UUID
+
+    # Assert: /NM should not be set on the parent (not requested)
+    assert "/NM" not in parent_ref
+
+    # Assert: The PDF can be written and re-read
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
+
+    reader2 = PdfReader(pdf_file_path)
+    annots = reader2.pages[0]["/Annots"]
+    assert len(annots) == 2
+
+    reply_obj = annots[1].get_object()
+    assert "/IRT" in reply_obj
+    assert reply_obj["/RT"] == "/R"
+    assert "/NM" in reply_obj
+
+
+def test_text_in_reply_to_group_type(pdf_file_path):
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act: Create grouped annotations
+    parent = Text(
+        text="Parent",
+        rect=(50, 550, 200, 650),
+    )
+    parent_ref = writer.add_annotation(0, parent)
+
+    grouped = Text(
+        text="Grouped with parent",
+        rect=(50, 550, 200, 650),
+        in_reply_to=parent_ref,
+        reply_type="Group",
+    )
+    writer.add_annotation(0, grouped)
+
+    # Assert
+    assert grouped["/RT"] == "/Group"
+    assert "/IRT" in grouped
+
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
+
+
+def test_annotation_name():
+    # Test explicit annotation_name without in_reply_to
+    annot = Text(
+        text="Named annotation",
+        rect=(50, 550, 200, 650),
+        annotation_name="my-unique-name",
+    )
+    assert annot["/NM"] == "my-unique-name"
+
+
+def test_in_reply_to_custom_name():
+    # Test explicit annotation_name with in_reply_to
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+
+    parent = Text(text="Parent", rect=(0, 0, 100, 100))
+    parent_ref = writer.add_annotation(0, parent)
+
+    reply = Text(
+        text="Reply",
+        rect=(0, 0, 100, 100),
+        in_reply_to=parent_ref,
+        annotation_name="custom-reply-name",
+    )
+    writer.add_annotation(0, reply)
+
+    assert reply["/NM"] == "custom-reply-name"
+    assert "/IRT" in reply
+
+
+def test_in_reply_to_unregistered(caplog):
+    # Test that an unregistered parent produces a warning, not a crash
+    unregistered = Text(text="Not added to writer", rect=(0, 0, 100, 100))
+    reply = Text(
+        text="Reply",
+        rect=(0, 0, 100, 100),
+        in_reply_to=unregistered,
+    )
+    assert "Unregistered in_reply_to object" in caplog.text
+    assert "/IRT" not in reply
+
+
 @pytest.mark.enable_socket
 def test_outline_action_without_d_lenient():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
