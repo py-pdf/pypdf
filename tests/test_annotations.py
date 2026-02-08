@@ -393,7 +393,7 @@ def test_text_in_reply_to():
     # Assert: Verify /IRT and /NM are set on the reply
     assert "/IRT" in reply
     assert reply["/IRT"].get_object() is parent_ref
-    assert "/RT" not in reply  # "R" is the default per spec, not written
+    assert reply["/RT"] == "/R"
     assert "/NM" in reply  # Auto-generated UUID
 
     # Assert: /NM should not be set on the parent (not requested)

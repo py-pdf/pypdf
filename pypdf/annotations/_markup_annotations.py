@@ -53,9 +53,7 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
         reply_type: The relationship between this annotation and the one
             specified by ``in_reply_to``. Either ``"R"`` (a reply, default)
             or ``"Group"`` (grouped with the parent annotation). Only
-            meaningful when ``in_reply_to`` is set. Per the PDF spec,
-            ``/RT`` defaults to ``/R``, so it is only written when set to
-            ``"Group"``.
+            meaningful when ``in_reply_to`` is set.
         annotation_name: A text string uniquely identifying this annotation
             among all annotations on its page (the ``/NM`` entry).
             Auto-generated (UUID) when ``in_reply_to`` is set and no name
@@ -85,8 +83,7 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
                     )
                 ref = indirect_ref
             self[NameObject("/IRT")] = ref
-            if reply_type != "R":
-                self[NameObject("/RT")] = NameObject(f"/{reply_type}")
+            self[NameObject("/RT")] = NameObject(f"/{reply_type}")
             if annotation_name is None:
                 annotation_name = str(uuid.uuid4())
         if annotation_name is not None:
