@@ -371,13 +371,9 @@ def test_popup(caplog):
     Path(target).unlink()  # comment this out for manual inspection
 
 
-def test_text_in_reply_to(pdf_file_path):
+def test_text_in_reply_to():
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    writer = PdfWriter()
-    writer.add_page(page)
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
 
     # Act: Create a parent annotation and a reply
     parent = Text(
@@ -394,36 +390,31 @@ def test_text_in_reply_to(pdf_file_path):
     )
     writer.add_annotation(0, reply)
 
-    # Assert: Verify /IRT, /RT, and /NM are set on the reply
+    # Assert: Verify /IRT and /NM are set on the reply
     assert "/IRT" in reply
     assert reply["/IRT"].get_object() is parent_ref
-    assert reply["/RT"] == "/R"
+    assert "/RT" not in reply  # "R" is the default per spec, not written
     assert "/NM" in reply  # Auto-generated UUID
 
     # Assert: /NM should not be set on the parent (not requested)
     assert "/NM" not in parent_ref
 
     # Assert: The PDF can be written and re-read
-    with open(pdf_file_path, "wb") as fp:
-        writer.write(fp)
+    buf = BytesIO()
+    writer.write(buf)
 
-    reader2 = PdfReader(pdf_file_path)
+    reader2 = PdfReader(buf)
     annots = reader2.pages[0]["/Annots"]
     assert len(annots) == 2
 
     reply_obj = annots[1].get_object()
     assert "/IRT" in reply_obj
-    assert reply_obj["/RT"] == "/R"
     assert "/NM" in reply_obj
 
 
-def test_text_in_reply_to_group_type(pdf_file_path):
+def test_text_in_reply_to_group_type():
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    writer = PdfWriter()
-    writer.add_page(page)
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
 
     # Act: Create grouped annotations
     parent = Text(
@@ -444,8 +435,8 @@ def test_text_in_reply_to_group_type(pdf_file_path):
     assert grouped["/RT"] == "/Group"
     assert "/IRT" in grouped
 
-    with open(pdf_file_path, "wb") as fp:
-        writer.write(fp)
+    buf = BytesIO()
+    writer.write(buf)
 
 
 def test_annotation_name():
@@ -478,24 +469,14 @@ def test_in_reply_to_custom_name():
     assert "/IRT" in reply
 
 
-def test_in_reply_to_unregistered(caplog):
-    # Test that an unregistered parent produces a warning, not a crash
+def test_in_reply_to_unregistered():
+    # Test that an unregistered parent raises ValueError
     unregistered = Text(text="Not added to writer", rect=(0, 0, 100, 100))
-    reply = Text(
-        text="Reply",
-        rect=(0, 0, 100, 100),
-        in_reply_to=unregistered,
-    )
-    assert "Unregistered in_reply_to object" in caplog.text
-    assert "/IRT" not in reply
-
-
-def test_in_reply_to_invalid_reply_type():
-    with pytest.raises(ValueError, match="reply_type must be 'R' or 'Group'"):
+    with pytest.raises(ValueError, match="in_reply_to must be a registered annotation"):
         Text(
-            text="Bad reply type",
+            text="Reply",
             rect=(0, 0, 100, 100),
-            reply_type="Invalid",
+            in_reply_to=unregistered,
         )
 
 

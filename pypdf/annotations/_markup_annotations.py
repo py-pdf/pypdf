@@ -1,13 +1,14 @@
 import sys
 import uuid
 from abc import ABC
-from typing import Any, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from ..constants import AnnotationFlag
 from ..generic import ArrayObject, DictionaryObject
 from ..generic._base import (
     BooleanObject,
     FloatObject,
+    IndirectObject,
     NameObject,
     NumberObject,
     TextStringObject,
@@ -45,13 +46,16 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
     Args:
         title_bar: Text to be displayed in the title bar of the annotation;
             by convention this is the name of the author
-        in_reply_to: Reference to the annotation that this annotation is
-            "in reply to" (PDF 1.5). Must be a registered annotation object
-            (i.e. one that was already added via ``writer.add_annotation()``).
+        in_reply_to: The annotation that this annotation is "in reply to"
+            (PDF 1.5). Can be either an annotation ``DictionaryObject``
+            (must have been added via ``writer.add_annotation()`` first) or
+            an ``IndirectObject`` referencing the target annotation directly.
         reply_type: The relationship between this annotation and the one
             specified by ``in_reply_to``. Either ``"R"`` (a reply, default)
             or ``"Group"`` (grouped with the parent annotation). Only
-            meaningful when ``in_reply_to`` is set.
+            meaningful when ``in_reply_to`` is set. Per the PDF spec,
+            ``/RT`` defaults to ``/R``, so it is only written when set to
+            ``"Group"``.
         annotation_name: A text string uniquely identifying this annotation
             among all annotations on its page (the ``/NM`` entry).
             Auto-generated (UUID) when ``in_reply_to`` is set and no name
@@ -63,30 +67,27 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
         self,
         *,
         title_bar: Optional[str] = None,
-        in_reply_to: Optional[DictionaryObject] = None,
-        reply_type: str = "R",
+        in_reply_to: Optional[Union[DictionaryObject, IndirectObject]] = None,
+        reply_type: Literal["R", "Group"] = "R",
         annotation_name: Optional[str] = None,
     ) -> None:
         if title_bar is not None:
             self[NameObject("/T")] = TextStringObject(title_bar)
-        if reply_type not in ("R", "Group"):
-            raise ValueError(
-                f"reply_type must be 'R' or 'Group', got {reply_type!r}"
-            )
         if in_reply_to is not None:
-            try:
-                self[NameObject("/IRT")] = in_reply_to.indirect_reference
-            except AttributeError:
-                from .._utils import logger_warning  # noqa: PLC0415
-
-                logger_warning(
-                    "Unregistered in_reply_to object: No /IRT field set",
-                    __name__,
-                )
+            if isinstance(in_reply_to, IndirectObject):
+                ref = in_reply_to
             else:
+                ref = getattr(in_reply_to, "indirect_reference", None)
+                if ref is None:
+                    raise ValueError(
+                        "in_reply_to must be a registered annotation "
+                        "(added via writer.add_annotation() first)"
+                    )
+            self[NameObject("/IRT")] = ref
+            if reply_type != "R":
                 self[NameObject("/RT")] = NameObject(f"/{reply_type}")
-                if annotation_name is None:
-                    annotation_name = str(uuid.uuid4())
+            if annotation_name is None:
+                annotation_name = str(uuid.uuid4())
         if annotation_name is not None:
             self[NameObject("/NM")] = TextStringObject(annotation_name)
 
