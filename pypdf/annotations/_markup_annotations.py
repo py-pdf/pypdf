@@ -69,6 +69,10 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
     ) -> None:
         if title_bar is not None:
             self[NameObject("/T")] = TextStringObject(title_bar)
+        if reply_type not in ("R", "Group"):
+            raise ValueError(
+                f"reply_type must be 'R' or 'Group', got {reply_type!r}"
+            )
         if in_reply_to is not None:
             try:
                 self[NameObject("/IRT")] = in_reply_to.indirect_reference

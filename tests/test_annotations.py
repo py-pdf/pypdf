@@ -490,6 +490,15 @@ def test_in_reply_to_unregistered(caplog):
     assert "/IRT" not in reply
 
 
+def test_in_reply_to_invalid_reply_type():
+    with pytest.raises(ValueError, match="reply_type must be 'R' or 'Group'"):
+        Text(
+            text="Bad reply type",
+            rect=(0, 0, 100, 100),
+            reply_type="Invalid",
+        )
+
+
 @pytest.mark.enable_socket
 def test_outline_action_without_d_lenient():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
