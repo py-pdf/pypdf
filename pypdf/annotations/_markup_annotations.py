@@ -75,14 +75,15 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
             self[NameObject("/T")] = TextStringObject(title_bar)
         if in_reply_to is not None:
             if isinstance(in_reply_to, IndirectObject):
-                ref = in_reply_to
+                ref: IndirectObject = in_reply_to
             else:
-                ref = getattr(in_reply_to, "indirect_reference", None)
-                if ref is None:
+                indirect_ref = getattr(in_reply_to, "indirect_reference", None)
+                if not isinstance(indirect_ref, IndirectObject):
                     raise ValueError(
                         "in_reply_to must be a registered annotation "
                         "(added via writer.add_annotation() first)"
                     )
+                ref = indirect_ref
             self[NameObject("/IRT")] = ref
             if reply_type != "R":
                 self[NameObject("/RT")] = NameObject(f"/{reply_type}")
