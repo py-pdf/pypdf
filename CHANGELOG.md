@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## Version 6.7.0, 2026-02-08
+
+### Deprecations (DEP)
+- Deprecate support for abbreviations in decode_stream_data (#3617)
+
+### New Features (ENH)
+- Add ability to add font resources for 14 Adobe Core fonts in text widget annotations (#3624)
+
+### Bug Fixes (BUG)
+- Avoid invalid load for ICCBased FlateDecode images in mode 1 (#3619)
+
+### Robustness (ROB)
+- Fix AESV2 decryption when /Length missing in encrypt dict (#3629)
+- Fix merging when annotations point to NullObject (#3613)
+- Check for `self._info` being None in `compress_identical_objects` (#3612)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.6.2...6.7.0)
+
 ## Version 6.6.2, 2026-01-26
 
 ### Security (SEC)
