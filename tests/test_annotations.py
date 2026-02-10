@@ -480,6 +480,39 @@ def test_in_reply_to_unregistered():
         )
 
 
+def test_in_reply_to_indirect_object():
+    # Test passing an IndirectObject directly as in_reply_to
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+
+    parent = Text(text="Parent", rect=(0, 0, 100, 100))
+    parent_ref = writer.add_annotation(0, parent)
+    indirect_ref = parent_ref.indirect_reference
+
+    reply = Text(
+        text="Reply via IndirectObject",
+        rect=(0, 0, 100, 100),
+        in_reply_to=indirect_ref,
+    )
+    writer.add_annotation(0, reply)
+
+    # Assert: /IRT should reference the parent
+    assert "/IRT" in reply
+    assert reply["/RT"] == "/R"
+    assert "/NM" in reply  # Auto-generated UUID
+
+    # Assert: The PDF can be written and re-read
+    buf = BytesIO()
+    writer.write(buf)
+
+    reader = PdfReader(buf)
+    annots = reader.pages[0]["/Annots"]
+    assert len(annots) == 2
+    reply_obj = annots[1].get_object()
+    assert "/IRT" in reply_obj
+    assert "/NM" in reply_obj
+
+
 @pytest.mark.enable_socket
 def test_outline_action_without_d_lenient():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
