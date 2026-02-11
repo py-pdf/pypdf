@@ -2924,6 +2924,7 @@ def test_compress_identical_objects__info_is_none():
     writer.metadata = None
     writer.compress_identical_objects()
 
+
 @pytest.mark.enable_socket
 def test_flatten_form_field_with_signature():
     """
