@@ -26,10 +26,6 @@ mypy-extensions==1.0.0
     # via mypy
 packaging==24.1
     # via pytest
-pillow==10.2.0
-    # via
-    #   -r requirements/ci.in
-    #   fpdf2
 pluggy==1.5.0
     # via pytest
 py-cpuinfo==9.0.0
