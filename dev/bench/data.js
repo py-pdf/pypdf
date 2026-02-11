@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770805541287,
+  "lastUpdate": 1770805577642,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -91219,6 +91219,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04490267275645804",
             "extra": "mean: 806.2439953999842 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "John-Sharp@users.noreply.github.com",
+            "name": "John-Sharp",
+            "username": "John-Sharp"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "75de17fefad74b978899c6c2240239ba77cfa1b0",
+          "message": "BUG: Fix UnboundLocalError when update_page_form_field_values with /Sig (#3634)\n\nCloses #3633.\n\n---------\n\nCo-authored-by: John Sharp <john.sharp@accessia.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-02-11T11:22:58+01:00",
+          "tree_id": "955d7e6440f174972416c0fb820a9debe01f49c6",
+          "url": "https://github.com/py-pdf/pypdf/commit/75de17fefad74b978899c6c2240239ba77cfa1b0"
+        },
+        "date": 1770805568789,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.836690933224848,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01755451548430492",
+            "extra": "mean: 72.27161499999877 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.544227263201673,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013340998642132418",
+            "extra": "mean: 48.67547399999688 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1717039018462003,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030645665372760356",
+            "extra": "mean: 853.457941399995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.524818272352424,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025856754130373232",
+            "extra": "mean: 1.9054214624000054 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18517056473462898,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016790854807154004",
+            "extra": "mean: 5.400426366 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.262298749334121,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040222851338375054",
+            "extra": "mean: 792.2054905999971 msec\nrounds: 5"
           }
         ]
       }
