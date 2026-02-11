@@ -2923,3 +2923,21 @@ def test_compress_identical_objects__info_is_none():
 
     writer.metadata = None
     writer.compress_identical_objects()
+
+
+@pytest.mark.enable_socket
+def test_flatten_form_field_with_signature():
+    """
+    This test is a regression test for issue #3633.
+    Flatten form field with /Sig.
+    """
+    writer = PdfWriter(BytesIO(get_data_from_url(name="issue-3633.pdf")))
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"signature": "test"},
+        flatten=True,
+    )
+    b = BytesIO()
+    writer.write(b)
+
+    _ = PdfReader(b)

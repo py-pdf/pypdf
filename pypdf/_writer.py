@@ -986,6 +986,8 @@ class PdfWriter(PdfDocCommon):
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
+        appearance_stream_obj: Optional[StreamObject] = None
+
         for annotation in page[PG.ANNOTS]:  # type: ignore
             annotation = cast(DictionaryObject, annotation.get_object())
             if annotation.get("/Subtype", "") != "/Widget":
