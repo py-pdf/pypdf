@@ -1515,7 +1515,7 @@ print(pil_not_imported)
 
 @pytest.mark.enable_socket
 def test_replace_contents__null_object_cloning_error():
-    url = "https://albneca.org/wp-content/uploads/2024/05/ML-4.30.24.pdf"
+    url = "https://github.com/user-attachments/files/25240822/ML-4.30.24.pdf"
     name = "issue3632.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     writer = PdfWriter()
