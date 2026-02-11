@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770799415223,
+  "lastUpdate": 1770799436855,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -91087,6 +91087,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03356399360381139",
             "extra": "mean: 811.4592970000103 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "09d3d4571749fdeef3aaa8f9678681aa05e89cc5",
+          "message": "DEV: Bump cryptography from 44.0.2 to 46.0.5 (#3636)\n\n* Bump cryptography from 44.0.2 to 46.0.5 in /requirements\n\nBumps [cryptography](https://github.com/pyca/cryptography) from 44.0.2 to 46.0.5.\n- [Changelog](https://github.com/pyca/cryptography/blob/main/CHANGELOG.rst)\n- [Commits](https://github.com/pyca/cryptography/compare/44.0.2...46.0.5)\n\n---\nupdated-dependencies:\n- dependency-name: cryptography\n  dependency-version: 46.0.5\n  dependency-type: direct:production\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\n\n* Update cffi version to 2.0.0\n\n---------\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-02-11T09:40:56+01:00",
+          "tree_id": "0e8a802de80ec40210db5620b7d7b83fd9ae48a2",
+          "url": "https://github.com/py-pdf/pypdf/commit/09d3d4571749fdeef3aaa8f9678681aa05e89cc5"
+        },
+        "date": 1770799432581,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.709498080009825,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020229836030895194",
+            "extra": "mean: 72.94213064285161 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.34251968507409,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01422139497982961",
+            "extra": "mean: 51.69957256249624 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1494693268293092,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031739516183442444",
+            "extra": "mean: 869.9666677999971 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5557095973297533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03782924611650018",
+            "extra": "mean: 1.799501042999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18845288530606505,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08936724284483802",
+            "extra": "mean: 5.306366089199997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2403193148792282,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04490267275645804",
+            "extra": "mean: 806.2439953999842 msec\nrounds: 5"
           }
         ]
       }
