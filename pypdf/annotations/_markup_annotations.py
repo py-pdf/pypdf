@@ -47,17 +47,16 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
         title_bar: Text to be displayed in the title bar of the annotation;
             by convention this is the name of the author
         in_reply_to: The annotation that this annotation is "in reply to"
-            (PDF 1.5). Can be either an annotation ``DictionaryObject``
-            (must have been added via ``writer.add_annotation()`` first) or
-            an ``IndirectObject`` referencing the target annotation directly.
+            (PDF 1.5). Can be either an annotation (previously added using
+            :meth:`~pypdf.PdfWriter.add_annotation`) or a reference to the
+            target annotation.
         reply_type: The relationship between this annotation and the one
             specified by ``in_reply_to``. Either ``"R"`` (a reply, default)
             or ``"Group"`` (grouped with the parent annotation). Only
             meaningful when ``in_reply_to`` is set.
         annotation_name: A text string uniquely identifying this annotation
-            among all annotations on its page (the ``/NM`` entry).
-            Auto-generated (UUID) when ``in_reply_to`` is set and no name
-            is provided.
+            among all annotations on its page. Automatically generated when
+            ``in_reply_to`` is set and no name is provided.
 
     """
 

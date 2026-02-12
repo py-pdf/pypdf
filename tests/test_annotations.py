@@ -371,11 +371,10 @@ def test_popup(caplog):
     Path(target).unlink()  # comment this out for manual inspection
 
 
-def test_text_in_reply_to():
-    # Arrange
+def test_markup_annotation_in_reply_to():
+    """Test that a reply annotation gets /IRT, /RT, and /NM after a write/read cycle."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
 
-    # Act: Create a parent annotation and a reply
     parent = Text(
         text="Parent comment",
         rect=(50, 550, 200, 650),
@@ -390,16 +389,13 @@ def test_text_in_reply_to():
     )
     writer.add_annotation(0, reply)
 
-    # Assert: Verify /IRT and /NM are set on the reply
     assert "/IRT" in reply
     assert reply["/IRT"].get_object() is parent_ref
     assert reply["/RT"] == "/R"
-    assert "/NM" in reply  # Auto-generated UUID
+    assert "/NM" in reply
 
-    # Assert: /NM should not be set on the parent (not requested)
     assert "/NM" not in parent_ref
 
-    # Assert: The PDF can be written and re-read
     buf = BytesIO()
     writer.write(buf)
 
@@ -408,15 +404,14 @@ def test_text_in_reply_to():
     assert len(annots) == 2
 
     reply_obj = annots[1].get_object()
-    assert "/IRT" in reply_obj
-    assert "/NM" in reply_obj
+    assert reply_obj["/IRT"].get_object()["/Contents"] == "Parent comment"
+    assert reply_obj["/NM"] == reply["/NM"]
 
 
-def test_text_in_reply_to_group_type():
-    # Arrange
+def test_markup_annotation_in_reply_to_group_type():
+    """Test that a grouped annotation sets /RT to /Group."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
 
-    # Act: Create grouped annotations
     parent = Text(
         text="Parent",
         rect=(50, 550, 200, 650),
@@ -431,16 +426,12 @@ def test_text_in_reply_to_group_type():
     )
     writer.add_annotation(0, grouped)
 
-    # Assert
     assert grouped["/RT"] == "/Group"
     assert "/IRT" in grouped
 
-    buf = BytesIO()
-    writer.write(buf)
 
-
-def test_annotation_name():
-    # Test explicit annotation_name without in_reply_to
+def test_markup_annotation_name():
+    """Test explicit annotation_name without in_reply_to."""
     annot = Text(
         text="Named annotation",
         rect=(50, 550, 200, 650),
@@ -449,8 +440,8 @@ def test_annotation_name():
     assert annot["/NM"] == "my-unique-name"
 
 
-def test_in_reply_to_custom_name():
-    # Test explicit annotation_name with in_reply_to
+def test_markup_annotation_in_reply_to_custom_name():
+    """Test explicit annotation_name with in_reply_to."""
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=200)
 
@@ -469,8 +460,8 @@ def test_in_reply_to_custom_name():
     assert "/IRT" in reply
 
 
-def test_in_reply_to_unregistered():
-    # Test that an unregistered parent raises ValueError
+def test_markup_annotation_in_reply_to_unregistered():
+    """Test that an unregistered parent raises ValueError."""
     unregistered = Text(text="Not added to writer", rect=(0, 0, 100, 100))
     with pytest.raises(ValueError, match="in_reply_to must be a registered annotation"):
         Text(
@@ -480,8 +471,8 @@ def test_in_reply_to_unregistered():
         )
 
 
-def test_in_reply_to_indirect_object():
-    # Test passing an IndirectObject directly as in_reply_to
+def test_markup_annotation_in_reply_to_indirect_object():
+    """Test passing an IndirectObject directly as in_reply_to."""
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=200)
 
@@ -496,12 +487,10 @@ def test_in_reply_to_indirect_object():
     )
     writer.add_annotation(0, reply)
 
-    # Assert: /IRT should reference the parent
     assert "/IRT" in reply
     assert reply["/RT"] == "/R"
-    assert "/NM" in reply  # Auto-generated UUID
+    assert "/NM" in reply
 
-    # Assert: The PDF can be written and re-read
     buf = BytesIO()
     writer.write(buf)
 
@@ -509,8 +498,8 @@ def test_in_reply_to_indirect_object():
     annots = reader.pages[0]["/Annots"]
     assert len(annots) == 2
     reply_obj = annots[1].get_object()
-    assert "/IRT" in reply_obj
-    assert "/NM" in reply_obj
+    assert reply_obj["/IRT"].get_object()["/Contents"] == "Parent"
+    assert reply_obj["/NM"] == reply["/NM"]
 
 
 @pytest.mark.enable_socket
