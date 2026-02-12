@@ -1511,3 +1511,24 @@ print(pil_not_imported)
     assert result.returncode == 0
     assert result.stdout.replace(b"\r\n", b"\n") == b"True\n"
     assert result.stderr == b""
+
+
+@pytest.mark.enable_socket
+def test_replace_contents__null_object_cloning_error():
+    url = "https://github.com/user-attachments/files/25240822/ML-4.30.24.pdf"
+    name = "issue3632.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        new_page = writer.add_page(page)
+        new_page.scale_by(1)
+
+    assert isinstance(writer.get_object(50)["/Contents"], ContentStream)
+    assert isinstance(writer.get_object(51), NullObject)
+
+    data = BytesIO()
+    writer.write(data)
+
+    reader = PdfReader(data)
+    assert len(reader.pages) == 10
