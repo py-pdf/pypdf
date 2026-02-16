@@ -4,13 +4,13 @@
 #
 #    pip-compile requirements/ci.in
 #
-cffi==1.17.1
+cffi==2.0.0
     # via cryptography
 coverage[toml]==7.10.7
     # via
     #   -r requirements/ci.in
     #   pytest-cov
-cryptography==44.0.2
+cryptography==46.0.5
     # via -r requirements/ci.in
 exceptiongroup==1.2.2
     # via pytest
@@ -63,7 +63,7 @@ tomli==2.0.2
     #   pytest
 typeguard==4.3.0
     # via -r requirements/ci.in
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
     #   mypy
     #   typeguard

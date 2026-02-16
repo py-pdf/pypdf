@@ -590,14 +590,14 @@ class PdfReader(PdfDocCommon):
             obj.indirect_reference = IndirectObject(idnum, generation, self)
         return obj
 
-    def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
+    def _replace_object(self, indirect_reference: IndirectObject, obj: PdfObject) -> PdfObject:
         # function reserved for future development
-        if indirect.pdf != self:
+        if indirect_reference.pdf != self:
             raise ValueError("Cannot update PdfReader with external object")
-        if (indirect.generation, indirect.idnum) not in self.resolved_objects:
+        if (indirect_reference.generation, indirect_reference.idnum) not in self.resolved_objects:
             raise ValueError("Cannot find referenced object")
-        self.resolved_objects[(indirect.generation, indirect.idnum)] = obj
-        obj.indirect_reference = indirect
+        self.resolved_objects[(indirect_reference.generation, indirect_reference.idnum)] = obj
+        obj.indirect_reference = indirect_reference
         return obj
 
     def read(self, stream: StreamType) -> None:

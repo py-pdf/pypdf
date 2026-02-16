@@ -30,7 +30,7 @@ mypy-extensions==1.0.0
     # via mypy
 packaging==24.1
     # via pytest
-pillow==12.1.0
+pillow==12.1.1
     # via
     #   -r requirements/ci.in
     #   fpdf2
