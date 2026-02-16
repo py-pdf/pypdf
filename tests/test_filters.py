@@ -83,7 +83,7 @@ def test_flatedecode_unsupported_predictor():
     for predictor, s in cartesian_product(predictors, filter_inputs):
         s = s.encode()
         with pytest.raises(PdfReadError):
-            codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
+            codec.decode(codec.encode(s), DictionaryObject({NameObject("/Predictor"): NumberObject(predictor)}))
 
 
 @pytest.mark.parametrize(
@@ -1010,3 +1010,15 @@ def test_deprecate_inline_image_filters():
 
     stream[NameObject("/Filter")] = NameObject("/CCITTFaxDecode")
     assert decode_stream_data(stream).startswith(b"II*")
+
+
+def test_flatedecode__columns_is_zero():
+    codec = FlateDecode()
+    data = b"Hello World!"
+    parameters = DictionaryObject({
+        NameObject("/Predictor"): NumberObject(13),
+        NameObject("/Columns"): NumberObject(0)
+    })
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Expected positive number for /Columns, got 0!$"):
+        codec.decode(codec.encode(data), parameters)

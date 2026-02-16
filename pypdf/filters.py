@@ -66,6 +66,7 @@ from .generic import (
     DictionaryObject,
     IndirectObject,
     NullObject,
+    NumberObject,
     StreamObject,
     is_null_or_none,
 )
@@ -163,45 +164,28 @@ class FlateDecode:
         Decode data which is flate-encoded.
 
         Args:
-          data: flate-encoded data.
-          decode_parms: a dictionary of values, understanding the
-            "/Predictor":<int> key only
+          data: Flate-encoded data.
+          decode_parms: Additional decoding parameters.
 
         Returns:
           The flate-decoded data.
 
         Raises:
-          PdfReadError:
+          PdfReadError: Unsupported parameters have been found.
 
         """
         str_data = decompress(data)
-        predictor = 1
 
-        if decode_parms:
-            try:
-                predictor = decode_parms.get("/Predictor", 1)
-            except (AttributeError, TypeError):  # Type Error is NullObject
-                pass  # Usually an array with a null object was read
+        if isinstance(decode_parms, DictionaryObject):
+            parameters = decode_parms
+        else:
+            parameters = DictionaryObject()
+
+        predictor = parameters.get("/Predictor", 1)
+
         # predictor 1 == no predictor
         if predictor != 1:
-            # /Columns, the number of samples in each row, has a default value of 1;
-            # §7.4.4.3, ISO 32000.
-            DEFAULT_BITS_PER_COMPONENT = 8
-            try:
-                columns = cast(int, decode_parms[LZW.COLUMNS].get_object())  # type: ignore
-            except (TypeError, KeyError):
-                columns = 1
-            try:
-                colors = cast(int, decode_parms[LZW.COLORS].get_object())  # type: ignore
-            except (TypeError, KeyError):
-                colors = 1
-            try:
-                bits_per_component = cast(
-                    int,
-                    decode_parms[LZW.BITS_PER_COMPONENT].get_object(),  # type: ignore
-                )
-            except (TypeError, KeyError):
-                bits_per_component = DEFAULT_BITS_PER_COMPONENT
+            columns, colors, bits_per_component = FlateDecode._get_parameters(parameters)
 
             # PNG predictor can vary by row and so is the lead byte on each row
             rowlength = (
@@ -225,6 +209,20 @@ class FlateDecode:
             else:
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
         return str_data
+
+    @staticmethod
+    def _get_parameters(parameters: DictionaryObject) -> tuple[int, int, int]:
+        # For details, see table 8 of ISO 32000-2:2020.
+        def get(key: str, default: int) -> int:
+            _value = parameters.get(key, NumberObject(default)).get_object()
+            if not isinstance(_value, int) or _value < 1:
+                raise PdfReadError(f"Expected positive number for {key}, got {_value}!")
+            return _value
+
+        columns = get(key=LZW.COLUMNS, default=1)
+        colors = get(key=LZW.COLORS, default=1)
+        bits_per_component = get(key=LZW.BITS_PER_COMPONENT, default=8)
+        return columns, colors, bits_per_component
 
     @staticmethod
     def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
