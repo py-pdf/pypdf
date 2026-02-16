@@ -1007,32 +1007,28 @@ class PageObject(DictionaryObject):
                 "`PdfWriter(clone_from=...)` directly. The existing approach has proved being unreliable."
             )
 
+        writer = self.indirect_reference.pdf
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
-            for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
+            content_array = cast(ArrayObject, self[PG.CONTENTS])
+            for reference in content_array:
                 try:
-                    self.indirect_reference.pdf._objects[
-                        o.indirect_reference.idnum - 1
-                    ] = NullObject()
-                except AttributeError:
+                    writer._replace_object(indirect_reference=reference.indirect_reference, obj=NullObject())
+                except ValueError:
+                    # Occurs when called on PdfReader.
                     pass
 
         if isinstance(content, ArrayObject):
-            content = ArrayObject(self.indirect_reference.pdf._add_object(obj) for obj in content)
+            content = ArrayObject(writer._add_object(obj) for obj in content)
 
         if is_null_or_none(content):
             if PG.CONTENTS not in self:
                 return
-            assert self.indirect_reference is not None
             assert self[PG.CONTENTS].indirect_reference is not None
-            self.indirect_reference.pdf._objects[
-                self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
-            ] = NullObject()
+            writer._replace_object(indirect_reference=self[PG.CONTENTS].indirect_reference, obj=NullObject())
             del self[PG.CONTENTS]
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
             try:
-                self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
-                    content
-                )
+                self[NameObject(PG.CONTENTS)] = writer._add_object(content)
             except AttributeError:
                 # applies at least for page not in writer
                 # as a backup solution, we put content as an object although not in accordance with pdf ref
@@ -1044,9 +1040,7 @@ class PageObject(DictionaryObject):
                 PG.CONTENTS
             ].indirect_reference  # TODO: in the future may require generation management
             try:
-                self.indirect_reference.pdf._objects[
-                    content.indirect_reference.idnum - 1  # type: ignore
-                ] = content
+                writer._replace_object(indirect_reference=content.indirect_reference, obj=content)
             except AttributeError:
                 # applies at least for page not in writer
                 # as a backup solution, we put content as an object although not in accordance with pdf ref
