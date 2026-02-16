@@ -693,10 +693,19 @@ class TreeObject(DictionaryObject):
             return
 
         child_ref = self[NameObject("/First")]
+        last = self[NameObject("/Last")]
         child = child_ref.get_object()
+        visited: set[int] = set()
         while True:
+            child_id = id(child)
+            if child_id in visited:
+                logger_warning(f"Detected cycle in outline structure for {child}", __name__)
+                return
+            visited.add(child_id)
+
             yield child
-            if child == self[NameObject("/Last")]:
+
+            if child == last:
                 return
             child_ref = child.get(NameObject("/Next"))  # type: ignore
             if is_null_or_none(child_ref):
