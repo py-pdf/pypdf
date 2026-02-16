@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770895662185,
+  "lastUpdate": 1771247308877,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -89171,6 +89171,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0035619333864822657",
             "extra": "mean: 673.2348427999966 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9cdcc4c6f4d59736fc35f2d563dab58492843db2",
+          "message": "ROB: Avoid divison by zero when decoding FlateDecode PNG prediction (#3641)\n\nPreviously, calculating `bpp` could raise a ZeroDivisionError due to\ninvalid column values. The validation has been extended in accordance to\nthe PDF specification which requires these values to always be positive.\n\nSome additionally refactoring has been included to simplify the existing\ncode and drop the exception handling where possible when retrieving the\nparameters.",
+          "timestamp": "2026-02-16T14:05:57+01:00",
+          "tree_id": "08cc2c00a0736be7d4690d12b7261c984f5ef12f",
+          "url": "https://github.com/py-pdf/pypdf/commit/9cdcc4c6f4d59736fc35f2d563dab58492843db2"
+        },
+        "date": 1771247304436,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1481386776142424,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007808814269204965",
+            "extra": "mean: 317.64801439999815 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.766057624254485,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025248931623953683",
+            "extra": "mean: 63.427397250001235 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2891773167737286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04580036384705006",
+            "extra": "mean: 3.4580858939999986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.67848790235774,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006635929411925184",
+            "extra": "mean: 56.565923823532 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09129372817230762,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015346260135596035",
+            "extra": "mean: 10.953654977400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4918670692173475,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004141181699999504",
+            "extra": "mean: 670.3010077999863 msec\nrounds: 5"
           }
         ]
       }
