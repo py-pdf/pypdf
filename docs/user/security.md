@@ -34,6 +34,14 @@ Please refer to our [security policy](https://github.com/py-pdf/pypdf/security/p
 
 ## Invalid reports
 
+### Exceptions
+
+Most exceptions raised by our code are considered bugs or robustness issues and can be reported publicly.
+We consider it the task of the library user to catch exceptions which could cause their service to crash, although we try to
+only raise a known set of exception types.
+
+### Cryptographic functions
+
 We receive reports about possibly insecure cryptography from time to time. This includes the following aspects:
 
 * Using the ARC4 cipher
