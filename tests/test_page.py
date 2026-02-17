@@ -844,18 +844,19 @@ def test_merge_page_with_multiple_annotations():
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
+    writer.add_page(page)
 
     annotation_1 = Polygon(
         vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
     )
-    writer.add_annotation(0, annotation_1)
+    writer.add_annotation(page_number=0, annotation=annotation_1)
     annotation_2 = Polygon(
         vertices=[(40, 540), (200, 640), (70, 740), (50, 700)],
     )
-    writer.add_annotation(0, annotation_2)
+    writer.add_annotation(page_number=1, annotation=annotation_2)
 
     page_one = writer.pages[0]
-    page_two = writer.pages[0]
+    page_two = writer.pages[1]
     page_one.merge_page(page_two)
 
 
