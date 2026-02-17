@@ -1,6 +1,6 @@
 """Test the pypdf.generic._data_structures module."""
-from pypdf import PdfReader
-from pypdf.generic import DictionaryObject
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import DictionaryObject, NameObject, TreeObject
 from tests import RESOURCE_ROOT
 
 
@@ -23,3 +23,17 @@ def test_dictionary_object__get_next_object_position():
     assert DictionaryObject._get_next_object_position(
         position_before=10, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 15
+
+
+def test_tree_object__cyclic_reference(caplog):
+    writer = PdfWriter()
+    child1 = writer._add_object(DictionaryObject())
+    child2 = writer._add_object(DictionaryObject({NameObject("/Next"): child1}))
+    child3 = writer._add_object(DictionaryObject({NameObject("/Next"): child2}))
+    child1.get_object()[NameObject("/Next")] = child3
+    tree = TreeObject()
+    tree[NameObject("/First")] = child2
+    tree[NameObject("/Last")] = writer._add_object(DictionaryObject())
+
+    assert list(tree.children()) == [child2.get_object(), child1.get_object(), child3.get_object()]
+    assert "Detected cycle in outline structure for " in caplog.text
