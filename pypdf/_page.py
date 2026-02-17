@@ -58,7 +58,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
-from .actions import JavaScript
+from .actions import Action, JavaScript
 from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
@@ -80,7 +80,6 @@ from .generic import (
     StreamObject,
     is_null_or_none,
 )
-from .types import ActionSubtype
 
 try:
     from PIL.Image import Image
@@ -2153,7 +2152,7 @@ class PageObject(DictionaryObject):
         else:
             self[NameObject("/Annots")] = value
 
-    def add_action(self, trigger: Literal["open", "close"], action: ActionSubtype) -> None:
+    def add_action(self, trigger: Literal["open", "close"], action: Action) -> None:
         """
         Add an action which will launch on the open or close trigger event of this page.
 
@@ -2162,10 +2161,10 @@ class PageObject(DictionaryObject):
             action: An instance of a subclass of Action;
                     JavaScript is currently the only available action type.
 
-        # Example: Display the page number when the page is opened.
-        >>> page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
-        # Example: Display the page number when the page is closed.
-        >>> page.add_action("close", JavaScript('app.alert("This is page " + this.pageNum);'))
+        # Example: Display the page number when the page is opened
+        >>> self.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);")))
+        # Example: Display the page number when the page is closed
+        >>> self.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);")))
         """
         if trigger not in {"open", "close"}:
             raise ValueError("The trigger must be 'open' or 'close'")
@@ -2193,37 +2192,38 @@ class PageObject(DictionaryObject):
             self[NameObject("/AA")] = additional_actions
             return
 
-        # Existing trigger event: find last action in actions chain (which may or may not have a Next key)
+        """
+        The action dictionary’s Next entry allows sequences of actions to be
+        chained together. For example, the effect of clicking a link
+        annotation with the mouse can be to play a sound, jump to a new
+        page, and start up a movie. Note that the Next entry is not
+        restricted to a single action but can contain an array of actions,
+        each of which in turn can have a Next entry of its own. The actions
+        can thus form a tree instead of a simple linked list. Actions within
+        each Next array are executed in order, each followed in turn by any
+        actions specified in its Next entry, and so on recursively. It is
+        recommended that interactive PDF processors attempt to provide
+        reasonable behaviour in anomalous situations. For example,
+        self-referential actions ought not be executed more than once, and
+        actions that close the document or otherwise render the next action
+        impossible ought to terminate the execution sequence. Applications
+        need also provide some mechanism for the user to interrupt and
+        manually terminate a sequence of actions.
+        ISO 32000-2:2020
+        """
         head = current = additional_actions.get(trigger_name)
-        while not is_null_or_none(current.get(NameObject("/Next"))):
-            """
-            The action dictionary’s Next entry allows sequences of actions to be
-            chained together. For example, the effect of clicking a link
-            annotation with the mouse can be to play a sound, jump to a new
-            page, and start up a movie. Note that the Next entry is not
-            restricted to a single action but can contain an array of actions,
-            each of which in turn can have a Next entry of its own. The actions
-            can thus form a tree instead of a simple linked list. Actions within
-            each Next array are executed in order, each followed in turn by any
-            actions specified in its Next entry, and so on recursively. It is
-            recommended that interactive PDF processors attempt to provide
-            reasonable behaviour in anomalous situations. For example,
-            self-referential actions ought not be executed more than once, and
-            actions that close the document or otherwise render the next action
-            impossible ought to terminate the execution sequence. Applications
-            need also provide some mechanism for the user to interrupt and
-            manually terminate a sequence of actions.
-            ISO 32000-2:2020
-            """
-
-            if not isinstance(current.get(NameObject("/Next")), (ArrayObject, DictionaryObject, type(None))):
+        while True:
+            if not isinstance(current, (ArrayObject, DictionaryObject, type(None))):
                 raise TypeError("'Next' must be an ArrayObject, DictionaryObject, or None")
 
-            while isinstance(current, ArrayObject):
-                # We have an array of actions: take the last one
+            if isinstance(current, ArrayObject):
+                # An array of actions: take the last one
                 current = current[-1]
 
-            current = current.get(NameObject("/Next"))
+            if isinstance(current, DictionaryObject):
+                if is_null_or_none(current.get(NameObject("/Next"), None)):
+                    break
+                current = current.get(NameObject("/Next"))
 
         current[NameObject("/Next")] = action
         additional_actions.update({trigger_name: head})
@@ -2237,9 +2237,9 @@ class PageObject(DictionaryObject):
             trigger: "open" or "close" trigger event.
 
         # Example: Display all actions triggered by a page open.
-        >>> page.delete_action("open")
+        >>> self.delete_action("open")
         # Example: Display all actions triggered by a page close.
-        >>> page.delete_action("close")
+        >>> self.delete_action("close")
         """
         if trigger not in {"open", "close"}:
             raise ValueError("The trigger must be 'open' or 'close'")
