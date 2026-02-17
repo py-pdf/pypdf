@@ -19,14 +19,10 @@ from pypdf.annotations import (
     Rectangle,
     Text,
 )
-from pypdf.errors import DeprecationError, PdfReadError
+from pypdf.errors import PdfReadError
 from pypdf.generic import ArrayObject, FloatObject, NumberObject
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT, get_data_from_url
 
 
 def test_ellipse(pdf_file_path):
@@ -38,12 +34,6 @@ def test_ellipse(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.raises(DeprecationError):
-        ellipse_annotation = Ellipse(
-            rect=(50, 550, 500, 650),
-            interiour_color="ff0000",
-        )
-
     ellipse_annotation = Ellipse(
         rect=(50, 550, 500, 650),
         interior_color="ff0000",
@@ -173,7 +163,10 @@ def test_polyline(pdf_file_path):
     writer = PdfWriter()
     writer.add_page(page)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+            ValueError,
+            match=r"A polyline needs at least 1 vertex with two coordinates",
+    ):
         PolyLine(
             vertices=[],
         )
@@ -219,11 +212,6 @@ def test_rectangle(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.raises(DeprecationError):
-        square_annotation = Rectangle(
-            rect=(50, 550, 200, 650), interiour_color="ff0000"
-        )
-
     square_annotation = Rectangle(
         rect=(50, 550, 200, 650), interior_color="ff0000"
     )

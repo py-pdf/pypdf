@@ -7,17 +7,13 @@ from typing import Optional
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+from tests import SAMPLE_ROOT
 
 
 def is_pdfa1b_compliant(src: BytesIO):
     """Check if a PDF is PDF/A-1b compliant."""
 
-    def document_information_has_analoguos_xml(src: BytesIO) -> bool:
+    def document_information_has_analogous_xml(src: BytesIO) -> bool:
         reader = PdfReader(src)
         meta = reader.metadata
         xmp = reader.xmp_metadata
@@ -29,7 +25,7 @@ def is_pdfa1b_compliant(src: BytesIO):
             return meta.title == xmp.dc_title
         return True
 
-    return document_information_has_analoguos_xml(src)
+    return document_information_has_analogous_xml(src)
 
 
 @pytest.mark.samples

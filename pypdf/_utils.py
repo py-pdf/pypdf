@@ -38,14 +38,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import DEFAULT_BUFFER_SIZE
 from os import SEEK_CUR
+from re import Pattern
 from typing import (
     IO,
     Any,
-    Dict,
-    List,
     Optional,
-    Pattern,
-    Tuple,
     Union,
     overload,
 )
@@ -67,10 +64,10 @@ from .errors import (
     PdfStreamError,
 )
 
-TransformationMatrixType: TypeAlias = Tuple[
-    Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
+TransformationMatrixType: TypeAlias = tuple[
+    tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]
 ]
-CompressedTransformationMatrix: TypeAlias = Tuple[
+CompressedTransformationMatrix: TypeAlias = tuple[
     float, float, float, float, float, float
 ]
 
@@ -80,7 +77,7 @@ StrByteType = Union[str, StreamType]
 
 def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     orgtext = text
-    if text is None:
+    if not text:
         return None
     if text[0].isdigit():
         text = "D:" + text
@@ -108,6 +105,31 @@ def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
                 d = d.replace(tzinfo=timezone.utc)
             return d
     raise ValueError(f"Can not convert date: {orgtext}")
+
+
+def format_iso8824_date(dt: datetime) -> str:
+    """
+    Convert a datetime object to PDF date string format.
+
+    Converts datetime to the PDF date format D:YYYYMMDDHHmmSSOHH'mm
+    as specified in the PDF Reference.
+
+    Args:
+        dt: A datetime object to convert.
+
+    Returns:
+        A date string in PDF format.
+    """
+    date_str = dt.strftime("D:%Y%m%d%H%M%S")
+    if dt.tzinfo is not None:
+        offset = dt.utcoffset()
+        assert offset is not None
+        total_seconds = int(offset.total_seconds())
+        hours, remainder = divmod(abs(total_seconds), 3600)
+        minutes = remainder // 60
+        sign = "+" if total_seconds >= 0 else "-"
+        date_str += f"{sign}{hours:02d}'{minutes:02d}'"
+    return date_str
 
 
 def _get_max_pdf_version_header(header1: str, header2: str) -> str:
@@ -436,7 +458,7 @@ def logger_warning(msg: str, src: str) -> None:
 
 
 def rename_kwargs(
-    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
+    func_name: str, kwargs: dict[str, Any], aliases: dict[str, str], fail: bool = False
 ) -> None:
     """
     Helper function to deprecate arguments.
@@ -534,7 +556,7 @@ class classproperty:  # noqa: N801
 
 @dataclass
 class File:
-    from .generic import IndirectObject
+    from .generic import IndirectObject  # noqa: PLC0415
 
     name: str = ""
     """
@@ -564,7 +586,7 @@ class Version:
         self.version_str = version_str
         self.components = self._parse_version(version_str)
 
-    def _parse_version(self, version_str: str) -> List[Tuple[int, str]]:
+    def _parse_version(self, version_str: str) -> list[tuple[int, str]]:
         components = version_str.split(".")
         parsed_components = []
         for component in components:
@@ -583,6 +605,10 @@ class Version:
         if not isinstance(other, Version):
             return False
         return self.components == other.components
+
+    def __hash__(self) -> int:
+        # Convert to tuple as lists cannot be hashed.
+        return hash((self.__class__, tuple(self.components)))
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Version):

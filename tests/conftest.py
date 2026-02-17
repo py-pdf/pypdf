@@ -1,13 +1,8 @@
 """Fixtures that are available automatically for all tests."""
 
 import uuid
-from pathlib import Path
 
 import pytest
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.fixture(scope="session")

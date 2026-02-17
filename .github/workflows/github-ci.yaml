@@ -1,5 +1,5 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# For more information see: https://docs.github.com/en/actions/tutorials/build-and-test-code/python
 
 name: CI
 
@@ -24,13 +24,22 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: 'recursive'
-    - name: Setup Python (3.11+)
-      uses: actions/setup-python@v5
+    - name: Cache Downloaded Files
+      id: cache-downloaded-files-windows
+      uses: actions/cache@v5
       with:
-        python-version: 3.13  # latest stable python
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-${{ github.run_id }}
+        restore-keys:
+          cache-downloaded-files
+        enableCrossOsArchive: true
+    - name: Setup Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
         allow-prereleases: true
     - name: Upgrade pip
       run: |
@@ -49,21 +58,63 @@ jobs:
         python -c "from tests import download_test_pdfs; download_test_pdfs()"
     - name: Test with pytest
       run: |
-        python -m pytest tests --cov=pypdf --cov-append -n auto -vv
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
 
+  test_macos:
+    name: pytest on macOS
+    runs-on: macos-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v6
+      with:
+        submodules: 'recursive'
+    - name: Cache Downloaded Files
+      id: cache-downloaded-files-mac
+      uses: actions/cache@v5
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-${{ github.run_id }}
+        restore-keys:
+          cache-downloaded-files
+    - name: Setup Python (3.11+)
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
+        allow-prereleases: true
+    - name: Upgrade pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install requirements (Python 3.11+)
+      run: |
+        pip install -r requirements/ci-3.11.txt
+    - name: Install cryptography
+      run: |
+        pip install cryptography
+    - name: Install OS dependencies
+      run:
+        brew install ghostscript jbig2dec poppler
+    - name: Install pypdf
+      run: |
+        pip install .
+    - name: Prepare
+      run: |
+        python -c "from tests import download_test_pdfs; download_test_pdfs()"
+    - name: Test with pytest
+      run: |
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
 
   tests:
     name: "pytest on ${{ matrix.python-version }} (crypto-lib: ${{ matrix.use-crypto-lib }})"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-        use-crypto-lib: ["cryptography"]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', 'pypy3.11']
+        use-crypto-lib: ['cryptography']
         include:
-          - python-version: "3.8"
-            use-crypto-lib: "pycryptodome"
-          - python-version: "3.8"
-            use-crypto-lib: "none"
+          - python-version: '3.9'
+            use-crypto-lib: 'pycryptodome'
+          - python-version: '3.9'
+            use-crypto-lib: 'none'
     steps:
     - name: Update APT packages
       run:
@@ -72,25 +123,27 @@ jobs:
       run:
         sudo apt-get install ghostscript jbig2dec poppler-utils
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: 'recursive'
     - name: Cache Downloaded Files
       id: cache-downloaded-files
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files
+        key: cache-downloaded-files-${{ github.run_id }}
+        restore-keys:
+          cache-downloaded-files
     - name: Setup Python
-      uses: actions/setup-python@v5
-      if: matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      uses: actions/setup-python@v6
+      if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
     - name: Setup Python (3.11+)
-      uses: actions/setup-python@v5
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-version == '3.13'
+      uses: actions/setup-python@v6
+      if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -102,11 +155,11 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
-      if: matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
     - name: Install requirements (Python 3.11+)
       run: |
         pip install -r requirements/ci-3.11.txt
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-version == '3.13'
+      if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
     - name: Remove pycryptodome and cryptography
       run: |
         pip uninstall pycryptodome cryptography -y
@@ -124,26 +177,22 @@ jobs:
     - name: Download test files
       run: |
         python -c "from tests import download_test_pdfs; download_test_pdfs()"
-    - name: Setup sitecustomize.py for coverage
-      run: |
-        SITE_PACKAGES="$(python -m site --user-site)"
-        SITECUSTOMIZE_PATH="$SITE_PACKAGES/sitecustomize.py"
-        mkdir -p $SITE_PACKAGES
-        touch $SITECUSTOMIZE_PATH
-        echo "try:" >> $SITECUSTOMIZE_PATH
-        echo "    import coverage" >> $SITECUSTOMIZE_PATH
-        echo "    coverage.process_startup()" >> $SITECUSTOMIZE_PATH
-        echo "except ImportError:" >> $SITECUSTOMIZE_PATH
-        echo "    pass" >> $SITECUSTOMIZE_PATH
     - name: Test with pytest
       run: |
-        python -m pytest tests --cov=pypdf --cov-append -n auto -vv
-      env:
-        COVERAGE_PROCESS_START: 'pyproject.toml'
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+    - name: Test with pytest (PyPy, no coverage)
+      # Coverage on PyPy is skipped because running coverage with PyPy is slow and CPython test already provides
+      # complete coverage data for the same code
+      run: |
+        python -m pytest tests -n auto -vv -p no:benchmark
+      if: ${{ startsWith(matrix.python-version, 'pypy') }}
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
     - name: Upload coverage data
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
       with:
         name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
         path: .coverage.*
@@ -152,16 +201,16 @@ jobs:
 
   codestyle:
     name: Check code style issues
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: 'recursive'
-    - name: Setup Python 3.11
-      uses: actions/setup-python@v5
+    - name: Setup Python
+      uses: actions/setup-python@v6
       with:
-        python-version: "3.11"
+        python-version: '3.x'
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci-3.11.txt'
     - name: Upgrade pip
@@ -180,10 +229,17 @@ jobs:
     - name: Test with mypy
       run : |
         mypy pypdf
-    - name: Test docs build
+    - name: Install docs requirements
       run: |
         pip install -r requirements/docs.txt
-        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder html docs build/sphinx/html
+    - name: Test docs build
+      working-directory: ./docs
+      run: |
+        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback -d _build/doctrees --builder html . _build/html
+    - name: Test docs examples
+      working-directory: ./docs
+      run: |
+        sphinx-build -d _build/doctrees --builder doctest . _build/doctest
     - name: Check with pre-commit
       run: |
         pip install -r requirements/dev.txt
@@ -194,15 +250,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: ${{env.PYTHON_LATEST}}
+          python-version: '3.x'
 
       - run: python -m pip install flit check-wheel-contents
       - run: flit build
       - run: ls -l dist
-      - run: check-wheel-contents dist/*.whl
+
+      - name: Test CHANGELOG.md present in sdist
+        run: tar -tzf dist/*.tar.gz | grep -q 'CHANGELOG.md'
+
+      - name: Test of bdist
+        run: check-wheel-contents dist/*.whl
 
       - name: Test installing package
         run: python -m pip install .
@@ -217,15 +278,14 @@ jobs:
     needs: tests
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          # Use latest Python, so it understands all syntax.
-          python-version: ${{env.PYTHON_LATEST}}
+          python-version: '3.x'
 
       - run: python -m pip install --upgrade coverage[toml]
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           pattern: coverage-data*
           merge-multiple: true

@@ -1,32 +1,23 @@
-"""Test the pypdf._merger module."""
-import sys
+"""Test merging PDF functionality."""
 from io import BytesIO
 from pathlib import Path
 
 import pytest
 
 import pypdf
-from pypdf import PdfMerger, PdfReader, PdfWriter
-from pypdf.errors import DeprecationError
-from pypdf.generic import Destination, Fit
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import ArrayObject, Destination, DictionaryObject, Fit, NameObject, NullObject
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
-sys.path.append(str(PROJECT_ROOT))
+from . import RESOURCE_ROOT, get_data_from_url
+from .test_encryption import HAS_AES
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def merger_operate(merger):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
-    # string path:
     merger.append(pdf_path)
     merger.append(outline)
     merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
@@ -401,11 +392,145 @@ def test_articles_with_writer(caplog):
     assert r.threads[0].get_object()["/F"]["/P"] == r.pages[0]
 
 
-def test_deprecate_pdfmerger():
-    with pytest.raises(DeprecationError), PdfMerger() as merger:
-        merger.append(RESOURCE_ROOT / "crazyones.pdf")
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+@pytest.mark.enable_socket
+def test_null_articles_with_writer():
+    data = get_data_from_url(name="issue-3508.pdf")
+    merger = PdfWriter()
+    merger.append(BytesIO(data))
+    assert len(merger.pages) == 98
 
 
 def test_get_reference():
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
     assert writer.get_reference(writer.pages[0]) == writer.pages[0].indirect_reference
+
+
+@pytest.mark.enable_socket
+def test_direct_link_preserved(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a direct link from p1 to p2
+    merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
+    for p in merger.pages:
+        writer.add_page(p)
+
+    writer.write(pdf_file_path)
+
+    check = PdfReader(pdf_file_path)
+    page3 = check.pages[2]
+    link = page3["/Annots"][0].get_object()
+    assert link["/Subtype"] == "/Link"
+    dest = link["/Dest"][0]  # indirect reference of page referred to
+
+    page4 = check.flattened_pages[3]
+    assert dest == page4.indirect_reference, "Link from page 3 to page 4 is broken"
+
+
+@pytest.mark.enable_socket
+def test_direct_link_preserved_reordering(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a direct link from p1 to p2
+    merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
+    for p in merger.pages:
+        writer.add_page(p)
+
+    # let's insert a page to mess up the page order
+    writer.insert_page(reader.pages[0], 3)
+
+    writer.write(pdf_file_path)
+
+    check = PdfReader(pdf_file_path)
+    page3 = check.pages[2]
+    link = page3["/Annots"][0].get_object()
+    assert link["/Subtype"] == "/Link"
+    dest = link["/Dest"][0]  # indirect reference of page referred to
+
+    page5 = check.flattened_pages[4]  # it moved one out
+    assert dest == page5.indirect_reference, "Link from page 3 to page 5 is broken"
+
+
+@pytest.mark.enable_socket
+def test_direct_link_page_missing(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a direct link from p1 to p2
+    merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
+    writer.add_page(merger.pages[0])
+    # but we're not adding page 2
+
+    writer.write(pdf_file_path)  # verify nothing crashes
+
+
+@pytest.mark.enable_socket
+def test_named_reference_preserved(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a named reference from from p3 to p5
+    merger = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
+    for p in merger.pages:
+        writer.add_page(p)
+
+    writer.write(pdf_file_path)
+
+    check = PdfReader(pdf_file_path)
+    page5 = check.pages[4]
+    page7 = check.flattened_pages[6]
+    for link in page5["/Annots"]:
+        action = link["/A"]
+        assert action.get("/S") == "/GoTo"
+        dest = str(action["/D"])
+        assert dest in check.named_destinations
+        pref = check.named_destinations[dest].page
+
+        assert pref == page7.indirect_reference, "Link from page 5 to page 7 is broken"
+
+
+@pytest.mark.enable_socket
+def test_named_ref_to_page_that_is_gone(pdf_file_path):
+    source = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
+    buf = BytesIO()
+    tmp = PdfWriter()
+    tmp.add_page(source.pages[2])  # we add only the page with the reference
+    tmp.write(buf)
+
+    source = PdfReader(buf)
+
+    writer = PdfWriter()
+    writer.add_page(source.pages[0])  # now references to non-existent page
+    writer.write(pdf_file_path)  # don't crash
+
+
+def test_merge__null_destination():
+    """Tests for issue #3444."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer2 = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    annotation = DictionaryObject()
+    annotation[NameObject("/Subtype")] = NameObject("/Link")
+    a = DictionaryObject()
+    annotation[NameObject("/A")] = a
+    a[NameObject("/S")] = NameObject("/GoTo")
+
+    target = NullObject()
+    a[NameObject("/D")] = writer._add_object(target)
+
+    annots = ArrayObject([annotation])
+    page = writer2.pages[0]
+    page[NameObject("/Annots")] = annots
+
+    data = BytesIO()
+    writer2.write(data)
+    data.seek(0)
+
+    writer.merge(position=1, fileobj=data)
+    assert writer.pages[0].annotations is None

@@ -1,18 +1,15 @@
 """Test the pypdf_cmap module."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import build_char_map
-from pypdf.generic import ArrayObject, IndirectObject, NameObject, NullObject
+from pypdf._cmap import get_encoding, parse_bfchar
+from pypdf._codecs import charset_encoding
+from pypdf._font import Font
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT, get_data_from_url
 
 
 @pytest.mark.enable_socket
@@ -135,7 +132,8 @@ def test_text_extraction_of_specific_pages(
 def test_iss1533():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss1533.pdf")))
     reader.pages[0].extract_text()  # no error
-    assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
+    font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F"])
+    assert font.character_map["\x01"] == "Ü"
 
 
 @pytest.mark.enable_socket
@@ -317,3 +315,23 @@ def test_function_in_font_widths(caplog):
     page = reader.pages[455]
     assert "La vulnérabilité correspond aux conséquences potentielles" in page.extract_text()
     assert "Expected numeric value for width, got {'/Bounds': [0.25, 0.25]," in caplog.text
+
+
+def test_get_encoding__encoding_value_is_none():
+    ft = DictionaryObject()
+    ft[NameObject("/Encoding")] = NullObject()
+    assert get_encoding(ft) == (
+        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        {}
+    )
+
+
+def test_parse_bfchar(caplog):
+    map_dict = {}
+    int_entry = []
+    parse_bfchar(line=b"057e   1337", map_dict=map_dict, int_entry=int_entry)
+    parse_bfchar(line=b"056e   1f310", map_dict=map_dict, int_entry=int_entry)
+
+    assert map_dict == {-1: 2, "ծ": "", "վ": "ጷ"}
+    assert int_entry == [1406, 1390]
+    assert caplog.messages == ["Got invalid hex string: Odd-length string (b'1f310')"]

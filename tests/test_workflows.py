@@ -5,7 +5,6 @@ They don't mock/patch anything, they cover typical user needs.
 """
 
 import binascii
-import sys
 from io import BytesIO
 from pathlib import Path
 from re import findall
@@ -26,14 +25,8 @@ from pypdf.generic import (
     read_object,
 )
 
-from . import PILContext, get_data_from_url, normalize_warnings
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
-
-sys.path.append(str(PROJECT_ROOT))
+from . import PROJECT_ROOT, RESOURCE_ROOT, SAMPLE_ROOT, PILContext, get_data_from_url, normalize_warnings
+from .utils import get_image_data
 
 
 def test_basic_features(tmp_path):
@@ -48,22 +41,24 @@ def test_basic_features(tmp_path):
 
     # add page 2 from input1, but rotated clockwise 90 degrees
     writer.add_page(reader.pages[0].rotate(90))
+    assert writer.pages[0].rotation == 0
+    assert writer.pages[1].rotation == 90
 
-    # add page 3 from input1, but first add a watermark from another PDF:
-    page3 = reader.pages[0]
-    watermark_pdf = pdf_path
-    watermark = PdfReader(watermark_pdf)
-    page3.merge_page(watermark.pages[0])
-    writer.add_page(page3)
-
-    # add page 4 from input1, but crop it to half size:
+    # add page 3 from input1, but crop it to half size:
     page4 = reader.pages[0]
+    page4 = writer.add_page(page4)
     page4.mediabox.upper_right = (
         page4.mediabox.right / 2,
         page4.mediabox.top / 2,
     )
     del page4.mediabox
-    writer.add_page(page4)
+
+    # add page 4 from input1, but first add a watermark from another PDF:
+    page3 = reader.pages[0]
+    page3 = writer.add_page(page3)
+    watermark_pdf = pdf_path
+    watermark = PdfReader(watermark_pdf)
+    page3.merge_page(watermark.pages[0])
 
     # add some Javascript to launch the print window on opening this PDF.
     # the password dialog may prevent the print dialog from being shown,
@@ -250,9 +245,10 @@ def test_rotate_45():
         ),
     ],
 )
-def test_extract_textbench(enable, url, pages, print_result=False):
+def test_extract_textbench(enable, url, pages):
     if not enable:
         return
+    print_result = False
     try:
         reader = PdfReader(BytesIO(get_data_from_url(url, url.split("/")[-1])))
         for page_number in pages:
@@ -266,10 +262,9 @@ def test_extract_textbench(enable, url, pages, print_result=False):
 
 
 def test_transform_compress_identical_objects():
-    reader = PdfReader(RESOURCE_ROOT / "two-different-pages.pdf")
-    writer = PdfWriter()
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "two-different-pages.pdf")
 
-    for page in reader.pages:
+    for page in writer.pages:
         op = Transformation().scale(sx=0.8, sy=0.8)
         page.add_transformation(op)
         writer.add_page(page)
@@ -342,15 +337,13 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
         base_path = BytesIO(get_data_from_url(base_path, name="tika-935981.pdf"))
     else:
         base_path = PROJECT_ROOT / base_path
-    reader = PdfReader(base_path)
-    writer = PdfWriter()
+    writer = PdfWriter(clone_from=base_path)
 
     reader_overlay = PdfReader(PROJECT_ROOT / overlay_path)
     overlay = reader_overlay.pages[0]
 
-    for page in reader.pages:
+    for page in writer.pages:
         page.merge_page(overlay)
-        writer.add_page(page)
     with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
@@ -593,9 +586,9 @@ def test_scale_rectangle_indirect_object():
     url = "https://github.com/user-attachments/files/18381778/tika-999944.pdf"
     name = "tika-999944.pdf"
     data = BytesIO(get_data_from_url(url, name=name))
-    reader = PdfReader(data)
+    writer = PdfWriter(clone_from=data)
 
-    for page in reader.pages:
+    for page in writer.pages:
         page.scale(sx=2, sy=3)
 
 
@@ -770,7 +763,7 @@ def test_image_extraction2(url, name):
             "tika-918137.pdf",
         ),
         (
-            "https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf",
+            "https://github.com/user-attachments/files/22596566/7552c42e9280b4476e59e77acc0bc812.pdf",
             "7552c42e9280b4476e59e77acc0bc812.pdf",
         ),
     ],
@@ -981,12 +974,12 @@ def test_replace_image(tmp_path):
         assert reader2.pages[0].images[0].image.mode == "RGBA"
     # very simple image distance evaluation
     diff = ImageChops.difference(reader2.pages[0].images[0].image, img)
-    d = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
+    d = sum(get_image_data(diff.convert("L"))) / (diff.size[0] * diff.size[1])
     assert d < 1.5
     img = img.convert("RGB")  # quality does not apply to RGBA/JP2
     writer.pages[0].images[0].replace(img, quality=20)
     diff = ImageChops.difference(writer.pages[0].images[0].image, img)
-    d1 = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
+    d1 = sum(get_image_data(diff.convert("L"))) / (diff.size[0] * diff.size[1])
     assert d1 > d
     # extra tests for coverage
     with pytest.raises(TypeError) as exc:
@@ -1001,7 +994,7 @@ def test_replace_image(tmp_path):
         i.replace(reader.pages[0].images[0].image)
     assert exc.value.args[0] == "Cannot update an inline image."
 
-    import pypdf
+    import pypdf  # noqa: PLC0415
 
     try:
         pypdf._page.pil_not_imported = True
@@ -1020,7 +1013,7 @@ def test_inline_images():
     url = "https://github.com/py-pdf/pypdf/assets/4083478/28e8b87c-be2c-40d9-9c86-15c7819021bf"
     name = "inline4.png"
     img_ref = Image.open(BytesIO(get_data_from_url(url, name=name)))
-    assert list(reader.pages[1].images[4].image.getdata()) == list(img_ref.getdata())
+    assert get_image_data(reader.pages[1].images[4].image) == get_image_data(img_ref)
     with pytest.raises(KeyError):
         reader.pages[0].images["~999~"]
     del reader.pages[1]["/Resources"]["/ColorSpace"]["/R124"]
@@ -1121,8 +1114,8 @@ def test_layout_mode_space_vertically():
     ("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)]
 )
 def test_layout_mode_rotations(rotation, strip_rotated):
-    reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
-    rotated_page = reader.pages[0].rotate(rotation)
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(name="iss2138.pdf")))
+    rotated_page = writer.pages[0].rotate(rotation)
     rotated_page.transfer_rotation_to_content()
     expected = ""
     if not strip_rotated:

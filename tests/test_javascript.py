@@ -1,15 +1,10 @@
 """Test topics around the usage of JavaScript in PDF documents."""
-from pathlib import Path
 from typing import Any
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-
-# Configure path environment
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from tests import RESOURCE_ROOT
 
 
 @pytest.fixture

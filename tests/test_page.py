@@ -1,17 +1,23 @@
 """Test the pypdf._page module."""
 import json
 import math
+import os
+import re
+import shutil
+import subprocess
+import sys
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from random import shuffle
-from typing import Any, List, Tuple
+from typing import Any
 from unittest import mock
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
+from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
@@ -26,12 +32,11 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_data_from_url, normalize_warnings
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, normalize_warnings
+from .test_images import image_similarity
+from .utils import extract_cell_text, extract_table, extract_text_and_rectangles
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
 def get_all_sample_files():
@@ -140,13 +145,13 @@ def test_mediabox_expansion_after_rotation(
     The test was validated against pillow (see PR #2282)
     """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=pdf_path)
 
     transformation = Transformation().rotate(angle)
-    for page_box in reader.pages:
+    for page_box in writer.pages:
         page_box.add_transformation(transformation, expand=True)
 
-    mediabox = reader.pages[0].mediabox
+    mediabox = writer.pages[0].mediabox
 
     # Deviation of up to 2 pixels is acceptable
     assert math.isclose(mediabox.width, expected_width, abs_tol=2)
@@ -155,12 +160,12 @@ def test_mediabox_expansion_after_rotation(
 
 def test_transformation_equivalence():
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
-    reader_base = PdfReader(pdf_path)
-    page_base = reader_base.pages[0]
+    writer_base = PdfWriter(clone_from=pdf_path)
+    page_base = writer_base.pages[0]
 
     pdf_path = RESOURCE_ROOT / "box.pdf"
-    reader_add = PdfReader(pdf_path)
-    page_box = reader_add.pages[0]
+    writer_add = PdfWriter(clone_from=pdf_path)
+    page_box = writer_add.pages[0]
 
     op = Transformation().scale(2).rotate(45)
 
@@ -181,7 +186,7 @@ def test_transformation_equivalence():
     assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
     assert page_base1.mediabox == page_base2.mediabox
     assert page_base1.trimbox == page_base2.trimbox
-    assert page_base1[NameObject(PG.ANNOTS)] == page_base2[NameObject(PG.ANNOTS)]
+    assert page_base1.get(NameObject(PG.ANNOTS)) == page_base2.get(NameObject(PG.ANNOTS))
     compare_dict_objects(
         page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
     )
@@ -256,9 +261,9 @@ def compare_dict_objects(d1, d2):
 @pytest.mark.slow
 def test_page_transformations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=pdf_path)
 
-    page: PageObject = reader.pages[0]
+    page: PageObject = writer.pages[0]
     page.merge_rotated_page(page, 90, expand=True)
 
     op = Transformation().rotate(90).scale(1, 1)
@@ -327,8 +332,8 @@ def test_page_properties():
 
 
 def test_page_rotation():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    page = reader.pages[0]
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
     with pytest.raises(ValueError) as exc:
         page.rotate(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
@@ -343,10 +348,10 @@ def test_page_rotation():
     # test transfer_rotate_to_content
     page.rotation -= 90
     page.transfer_rotation_to_content()
-    assert abs(float(page.mediabox.left) - 0) < 0.1
-    assert abs(float(page.mediabox.bottom) - 0) < 0.1
-    assert abs(float(page.mediabox.right) - 792) < 0.1
-    assert abs(float(page.mediabox.top) - 612) < 0.1
+    assert math.isclose(page.mediabox.left, 0, abs_tol=0.1)
+    assert math.isclose(page.mediabox.bottom, 0, abs_tol=0.1)
+    assert math.isclose(page.mediabox.right, 792, abs_tol=0.1)
+    assert math.isclose(page.mediabox.top, 612, abs_tol=0.1)
 
 
 def test_page_indirect_rotation():
@@ -469,183 +474,6 @@ def test_extract_text_visitor_callbacks():
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
     """
-    import logging
-
-    class PositionedText:
-        """
-        Specify a text with coordinates, font-dictionary and font-size.
-
-        The font-dictionary may be None in case of an unknown font.
-        """
-
-        def __init__(self, text, x, y, font_dict, font_size) -> None:
-            # TODO: \0-replace: Encoding issue in some files?
-            self.text = text.replace("\0", "")
-            self.x = x
-            self.y = y
-            self.font_dict = font_dict
-            self.font_size = font_size
-
-        def get_base_font(self) -> str:
-            """
-            Gets the base font of the text.
-
-            Return UNKNOWN in case of an unknown font.
-            """
-            if (self.font_dict is None) or "/BaseFont" not in self.font_dict:
-                return "UNKNOWN"
-            return self.font_dict["/BaseFont"]
-
-    class Rectangle:
-        """Specify a rectangle."""
-
-        def __init__(self, x, y, w, h) -> None:
-            self.x = x.as_numeric()
-            self.y = y.as_numeric()
-            self.w = w.as_numeric()
-            self.h = h.as_numeric()
-
-        def contains(self, x, y) -> bool:
-            return (
-                self.x <= x <= (self.x + self.w)
-                and self.y <= y <= (self.y + self.h)
-            )
-
-    def extract_text_and_rectangles(
-        page: PageObject, rect_filter=None
-    ) -> Tuple[List[PositionedText], List[Rectangle]]:
-        """
-        Extracts texts and rectangles of a page of type pypdf._page.PageObject.
-
-        This function supports simple coordinate transformations only.
-        The optional rect_filter-lambda can be used to filter wanted
-        rectangles.
-        rect_filter has Rectangle as argument and must return a boolean.
-
-        It returns a tuple containing a list of extracted texts and
-        a list of extracted rectangles.
-        """
-        logger = logging.getLogger("extract_text_and_rectangles")
-
-        rectangles = []
-        texts = []
-
-        def print_op_b(op, args, cm_matrix, tm_matrix) -> None:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"before: {op} at {cm_matrix}, {tm_matrix}")
-            if op == b"re":
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug(f"  add rectangle: {args}")
-                w = args[2]
-                h = args[3]
-                r = Rectangle(args[0], args[1], w, h)
-                if (rect_filter is None) or rect_filter(r):
-                    rectangles.append(r)
-
-        def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size) -> None:
-            if text.strip() != "":
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug(f"at {cm_matrix}, {tm_matrix}, font size={font_size}")
-                texts.append(
-                    PositionedText(
-                        text, tm_matrix[4], tm_matrix[5], font_dict, font_size
-                    )
-                )
-
-        visitor_before = print_op_b
-        visitor_text = print_visi
-
-        page.extract_text(
-            visitor_operand_before=visitor_before, visitor_text=visitor_text
-        )
-
-        return (texts, rectangles)
-
-    def extract_table(
-        texts: List[PositionedText], rectangles: List[Rectangle]
-    ) -> List[List[List[PositionedText]]]:
-        """
-        Extracts a table containing text.
-
-        It is expected that each cell is marked by a rectangle-object.
-        It is expected that the page contains one table only.
-        It is expected that the table contains at least 3 columns and 2 rows.
-
-        A list of rows is returned.
-        Each row contains a list of cells.
-        Each cell contains a list of PositionedText-elements.
-        """
-        logger = logging.getLogger("extractTable")
-
-        # Step 1: Count number of x- and y-coordinates of rectangles.
-        # Remove duplicate rectangles. The new list is rectangles_filtered.
-        col2count = {}
-        row2count = {}
-        key2rectangle = {}
-        rectangles_filtered = []
-        for r in rectangles:
-            # Coordinates may be inaccurate, we have to round.
-            # cell: x=72.264, y=386.57, w=93.96, h=46.584
-            # cell: x=72.271, y=386.56, w=93.96, h=46.59
-            key = f"{round(r.x, 0)} {round(r.y, 0)} {round(r.w, 0)} {round(r.h, 0)}"
-            if key in key2rectangle:
-                # Ignore duplicate rectangles
-                continue
-            key2rectangle[key] = r
-            if r.x not in col2count:
-                col2count[r.x] = 0
-            if r.y not in row2count:
-                row2count[r.y] = 0
-            col2count[r.x] += 1
-            row2count[r.y] += 1
-            rectangles_filtered.append(r)
-
-        # Step 2: Look for texts in rectangles.
-        rectangle2texts = {}
-        for text in texts:
-            for r in rectangles_filtered:
-                if r.contains(text.x, text.y):
-                    if r not in rectangle2texts:
-                        rectangle2texts[r] = []
-                    rectangle2texts[r].append(text)
-                    break
-
-        # PDF: y = 0 is expected at the bottom of the page.
-        # So the header-row is expected to have the highest y-value.
-        rectangles.sort(key=lambda r: (-r.y, r.x))
-
-        # Step 3: Build the list of rows containing list of cell-texts.
-        rows = []
-        row_nr = 0
-        col_nr = 0
-        curr_y = None
-        curr_row = None
-        for r in rectangles_filtered:
-            if col2count[r.x] < 3 or row2count[r.y] < 2:
-                # We expect at least 3 columns and 2 rows.
-                continue
-            if curr_y is None or r.y != curr_y:
-                # next row
-                curr_y = r.y
-                col_nr = 0
-                row_nr += 1
-                curr_row = []
-                rows.append(curr_row)
-            col_nr += 1
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"cell: x={r.x}, y={r.y}, w={r.w}, h={r.h}")
-            if r not in rectangle2texts:
-                curr_row.append("")
-                continue
-            cell_texts = list(rectangle2texts[r])
-            curr_row.append(cell_texts)
-
-        return rows
-
-    def extract_cell_text(cell_texts: List[PositionedText]) -> str:
-        """Joins the text-objects of a cell."""
-        return ("".join(t.text for t in cell_texts)).strip()
-
     # Test 1: We test the analysis of page 7 "2.1 LRS model".
     reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
     page_lrs_model = reader.pages[6]
@@ -1003,9 +831,9 @@ def test_read_link_annotation():
 def test_no_resources():
     url = "https://github.com/py-pdf/pypdf/files/9572045/108.pdf"
     name = "108.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    page_one = reader.pages[0]
-    page_two = reader.pages[0]
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    page_one = writer.pages[0]
+    page_two = writer.pages[0]
     page_one.merge_page(page_two)
 
 
@@ -1283,10 +1111,10 @@ def test_merge_with_stream_wrapped_in_save_restore():
     """Test for issue #2587"""
     url = "https://github.com/py-pdf/pypdf/files/14895914/blank_portrait.pdf"
     name = "blank_portrait.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    page_one = reader.pages[0]
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    page_one = writer.pages[0]
     assert page_one.get_contents().get_data() == b"q Q"
-    page_two = reader.pages[0]
+    page_two = writer.pages[0]
     page_one.merge_page(page_two)
     assert b"QQ" not in page_one.get_contents().get_data()
 
@@ -1297,7 +1125,7 @@ def test_compression():
 
     def create_stamp_pdf() -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()
@@ -1505,3 +1333,202 @@ def test_extract_text__none_type():
     page[NameObject("/Resources")] = resources
     with mock.patch.object(none_reference, "get_object", return_value=None):
         assert page.extract_text() == ""
+
+
+@pytest.mark.enable_socket
+def test_scale_by():
+    """Tests for #3487"""
+    url = "https://github.com/user-attachments/files/22685841/input.pdf"
+    name = "issue3487.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+
+    original_box = RectangleObject((0, 0, 595.275604, 841.88974))
+    expected_box = RectangleObject((0.0, 0.0, 297.637802, 420.94487))
+    for page in writer.pages:
+        assert page.artbox == original_box
+        assert page.bleedbox == original_box
+        assert page.cropbox == original_box
+        assert page.mediabox == original_box
+        assert page.trimbox == original_box
+
+        page.scale_by(0.5)
+        assert page.artbox == expected_box
+        assert page.bleedbox == expected_box
+        assert page.cropbox == expected_box
+        assert page.mediabox == expected_box
+        assert page.trimbox == expected_box
+
+
+@pytest.mark.enable_socket
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_box_rendering(tmp_path):
+    """Tests for issue #3487."""
+    url = "https://github.com/user-attachments/files/22685841/input.pdf"
+    name = "issue3487.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+
+    for page in writer.pages:
+        page.scale_by(0.5)
+
+    target_png_path = tmp_path / "target.png"
+    url = "https://github.com/user-attachments/assets/e9c2271c-bfc3-4a6f-8c91-ffefa24502e2"
+    name = "issue3487.png"
+    target_png_path.write_bytes(get_data_from_url(url, name=name))
+
+    pdf_path = tmp_path / "out.pdf"
+    writer.write(pdf_path)
+
+    for box in ["Art", "Bleed", "Crop", "Media", "Trim"]:
+        png_path = tmp_path / f"{box}.png"
+        # False positive: https://github.com/PyCQA/bandit/issues/333
+        subprocess.run(  # noqa: S603
+            [
+                GHOSTSCRIPT_BINARY,
+                f"-dUse{box}Box",
+                "-dFirstPage=1",
+                "-dLastPage=1",
+                "-sDEVICE=pngalpha",
+                "-o",
+                png_path,
+                pdf_path,
+            ]
+        )
+        assert png_path.is_file(), box
+        assert image_similarity(png_path, target_png_path) >= 0.95, box
+
+
+def test_delete_non_existent_annotations():
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    page = writer.pages[0]
+    assert page.annotations is None
+    page.annotations = None
+    assert page.annotations is None
+
+
+def test_replace_contents_on_reader():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    content_stream = ContentStream(stream=None, pdf=reader)
+    content_stream.set_data(b"Test data")
+
+    expected_message = (
+        "Calling `PageObject.replace_contents()` for pages not assigned to a writer is deprecated and "
+        "will be removed in pypdf 7.0.0. Attach the page to the writer first or use `PdfWriter(clone_from=...)` "
+        "directly. The existing approach has proved being unreliable."
+    )
+    with pytest.warns(DeprecationWarning, match=rf"^{re.escape(expected_message)}$"):
+        page.replace_contents(content_stream)
+
+
+@pytest.mark.enable_socket
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_replace_contents_on_reader__indirect_reference():
+    url = "https://github.com/user-attachments/files/24195534/test.pdf"
+    name = "issue3568.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+
+    lhs = reader.get_page(3)
+    writer.add_page(lhs)
+
+    lhs = reader.get_page(1)
+    lhs.merge_page(PageObject.create_blank_page(reader))
+    writer.add_page(lhs)
+
+
+def test_merge_page__coverage():
+    # Test with some otherwise untested cases.
+
+    # Own resources are missing.
+    page = PageObject.create_blank_page(width=10, height=10)
+    del page[PageAttributes.RESOURCES]
+    page.merge_page(PageObject.create_blank_page(width=10, height=10))
+
+    # Other resources are missing.
+    page = PageObject.create_blank_page(width=10, height=10)
+    del page[PageAttributes.RESOURCES]
+    PageObject.create_blank_page(width=10, height=10).merge_page(page)
+
+    # No expansion.
+    page = PageObject.create_blank_page(width=10, height=10)
+    page.merge_page(PageObject.create_blank_page(width=20, height=30))
+    assert page.mediabox == RectangleObject((0.0, 0.0, 10, 10))
+
+    # With expansion.
+    page = PageObject.create_blank_page(width=10, height=10)
+    page.merge_page(PageObject.create_blank_page(width=20, height=5), expand=True)
+    assert page.mediabox == RectangleObject((0.0, 0.0, 20, 10))
+
+    # With transformation.
+    path = RESOURCE_ROOT / "crazyones.pdf"
+    page = PdfWriter(clone_from=path).pages[0]
+    page.indirect_reference = None
+    page2 = PageObject.create_blank_page(width=20, height=5)
+    transformation = Transformation().rotate(90)
+    page2.merge_transformed_page(page, ctm=transformation, expand=True)
+    assert page2.mediabox == RectangleObject((-792, 0.0, 20, 612))
+
+    page2 = PageObject.create_blank_page(width=20, height=5)
+    page2.merge_transformed_page(page, ctm=transformation.ctm, expand=True)
+    assert page2.mediabox == RectangleObject((-792, 0.0, 20, 612))
+
+    # Not over.
+    page = PdfWriter(clone_from=path).pages[0]
+    page.indirect_reference = None
+    page2 = PageObject.create_blank_page(width=20, height=5)
+    page2.merge_page(page, over=False)
+
+
+@pytest.mark.enable_socket
+def test_importing_without_pillow(tmp_path):
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
+
+    source_file = tmp_path / "script.py"
+    source_file.write_text(
+        """
+import sys
+sys.modules["PIL"] = None
+
+from pypdf import PageObject
+from pypdf._page import pil_not_imported
+
+print(pil_not_imported)
+"""
+    )
+
+    try:
+        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
+    except KeyError:
+        env["PYTHONPATH"] = "."
+    result = subprocess.run(  # noqa: S603  # We have the control here.
+        [sys.executable, source_file],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert result.stdout.replace(b"\r\n", b"\n") == b"True\n"
+    assert result.stderr == b""
+
+
+@pytest.mark.enable_socket
+def test_replace_contents__null_object_cloning_error():
+    url = "https://github.com/user-attachments/files/25240822/ML-4.30.24.pdf"
+    name = "issue3632.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        new_page = writer.add_page(page)
+        new_page.scale_by(1)
+
+    assert isinstance(writer.get_object(50)["/Contents"], ContentStream)
+    assert isinstance(writer.get_object(51), NullObject)
+
+    data = BytesIO()
+    writer.write(data)
+
+    reader = PdfReader(data)
+    assert len(reader.pages) == 10
