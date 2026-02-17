@@ -1091,7 +1091,6 @@ class PageObject(DictionaryObject):
             pass
 
         new_resources = DictionaryObject()
-        rename = {}
         original_resources = cast(DictionaryObject, self.get(PG.RESOURCES, DictionaryObject()).get_object())
         page2_resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
         new_annots = ArrayObject()
@@ -1103,7 +1102,7 @@ class PageObject(DictionaryObject):
                     new_annots.extend(annots)
 
         new_resources = DictionaryObject()
-        rename = {}
+        rename: dict[str, Any] = {}
         for res in (
             RES.EXT_G_STATE,
             RES.COLOR_SPACE,
