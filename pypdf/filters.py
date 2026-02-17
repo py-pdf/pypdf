@@ -76,6 +76,9 @@ LZW_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000
 
+# Reuse cached 1-byte values in the fallback loop to avoid per-byte allocations.
+_SINGLE_BYTES = tuple(bytes((i,)) for i in range(256))
+
 
 def _decompress_with_limit(data: bytes) -> bytes:
     decompressor = zlib.decompressobj()
@@ -136,7 +139,7 @@ def decompress(data: bytes) -> bytes:
         data_length = len(data)
         known_errors = set()
         for index in range(data_length):
-            chunk = data[index : index + 1]
+            chunk = _SINGLE_BYTES[data[index]]
             try:
                 decompressed = decompressor.decompress(chunk, max_length=remaining_limit)
                 result_str += decompressed
