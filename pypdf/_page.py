@@ -1074,7 +1074,7 @@ class PageObject(DictionaryObject):
     def _merge_page(
         self,
         page2: "PageObject",
-        page2transformation: Optional[Callable[[Any], ContentStream]] = None,
+        page2_transformation: Optional[Callable[[Any], ContentStream]] = None,
         ctm: Optional[CompressedTransformationMatrix] = None,
         over: bool = True,
         expand: bool = False,
@@ -1085,7 +1085,7 @@ class PageObject(DictionaryObject):
                 self.indirect_reference.pdf, "_add_object"
             ):  # to detect PdfWriter
                 return self._merge_page_writer(
-                    page2, page2transformation, ctm, over, expand
+                    page2, page2_transformation, ctm, over, expand
                 )
         except (AssertionError, AttributeError):
             pass
@@ -1093,7 +1093,7 @@ class PageObject(DictionaryObject):
         new_resources = DictionaryObject()
         rename = {}
         original_resources = cast(DictionaryObject, self.get(PG.RESOURCES, DictionaryObject()).get_object())
-        page2resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
+        page2_resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
         new_annots = ArrayObject()
 
         for page in (self, page2):
@@ -1157,8 +1157,8 @@ class PageObject(DictionaryObject):
             )
             page2_content.operations.insert(1, ([], b"W"))
             page2_content.operations.insert(2, ([], b"n"))
-            if page2transformation is not None:
-                page2_content = page2transformation(page2_content)
+            if page2_transformation is not None:
+                page2_content = page2_transformation(page2_content)
             page2_content = PageObject._content_stream_rename(
                 page2_content, rename, self.pdf
             )
