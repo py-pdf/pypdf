@@ -186,10 +186,10 @@ def test_page_add_action(pdf_file_writer):
                 {
                     "/Type": "/Action",
                     "/Next": {
-                        '/Type': '/Action',
-                        '/Next': NullObject(),
-                        '/S': '/JavaScript',
-                        '/JS': "app.alert('Test of add_action when array of actions is present');"
+                        "/Type": "/Action",
+                        "/Next": NullObject(),
+                        "/S": "/JavaScript",
+                        "/JS": "app.alert('Test of add_action when array of actions is present');"
                     },
                     "/S": "/JavaScript",
                     "/JS": "app.alert('Array of actions element 2';)"
@@ -202,6 +202,7 @@ def test_page_add_action(pdf_file_writer):
     assert page[NameObject("/AA")] == expected
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
+
 
 def test_page_delete_action(pdf_file_writer):
     page = pdf_file_writer.pages[0]
