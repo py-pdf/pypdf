@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771347291705,
+  "lastUpdate": 1771347697140,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -89501,6 +89501,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00476760496159574",
             "extra": "mean: 669.487318399996 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "ad2a45d769d56038af8747195cae097bbdb68eee",
+          "message": "REL: 6.7.1\n\n## What's new\n\n### Security (SEC)\n- Detect cyclic references when accessing TreeObject.children (#3645) by @stefan6419846\n- Limit size of `/ToUnicode` entries (#3646) by @stefan6419846\n- Limit FlateDecode recovery attempts (#3644) by @stefan6419846\n\n### Bug Fixes (BUG)\n- Avoid own object replacement logic in `PageObject.replace_contents` (#3638) by @stefan6419846\n- Fix UnboundLocalError when update_page_form_field_values with /Sig (#3634) by @John-Sharp\n\n### Robustness (ROB)\n- Avoid divison by zero when decoding FlateDecode PNG prediction (#3641) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.0...6.7.1)",
+          "timestamp": "2026-02-17T17:56:08+01:00",
+          "tree_id": "794287bd2ca420b936c22e68a065865000954888",
+          "url": "https://github.com/py-pdf/pypdf/commit/ad2a45d769d56038af8747195cae097bbdb68eee"
+        },
+        "date": 1771347692870,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1244661185687406,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005560446414829705",
+            "extra": "mean: 320.0546787999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.869109742031267,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002582987141235997",
+            "extra": "mean: 63.01550724999893 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29131477845432263,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009257914852139927",
+            "extra": "mean: 3.432712907000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.10176819509839,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005064514254112811",
+            "extra": "mean: 55.24322205555481 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09180540733481243,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021299771458703508",
+            "extra": "mean: 10.892604575600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4937619583449717,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024938256779769713",
+            "extra": "mean: 669.4507075999979 msec\nrounds: 5"
           }
         ]
       }
