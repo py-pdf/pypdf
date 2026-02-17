@@ -150,14 +150,58 @@ def test_page_add_action(pdf_file_writer):
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject(
         [JavaScript("app.alert('Array of actions element 1';)"), JavaScript("app.alert('Array of actions element 2';)")]
     )
-    expected = {'/O': {'/Type': '/Action', '/Next': [{'/Type': '/Action', '/Next': NullObject(), '/S': '/JavaScript',
-                                                  '/JS': "app.alert('Array of actions element 1';)"},
-                                                 {'/Type': '/Action', '/Next': NullObject(), '/S': '/JavaScript',
-                                                  '/JS': "app.alert('Array of actions element 2';)"}],
-                   '/S': '/JavaScript', '/JS': "app.alert('Action to attach an array of actions');"}}
+    expected = {
+        "/O": {
+            "/Type": "/Action",
+            "/Next": [
+                {
+                    "/Type": "/Action",
+                    "/Next": NullObject(),
+                    "/S": "/JavaScript",
+                    "/JS": "app.alert('Array of actions element 1';)"
+                },
+                {
+                    "/Type": "/Action",
+                    "/Next": NullObject(),
+                    "/S": "/JavaScript",
+                    "/JS": "app.alert('Array of actions element 2';)"
+                }
+            ],
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Action to attach an array of actions');"
+        }
+    }
     assert page[NameObject("/AA")] == expected
     page.add_action("open", JavaScript("app.alert('Test of add_action when array of actions is present');"))
-
+    expected = {
+        "/O": {
+            "/Type": "/Action",
+            "/Next": [
+                {
+                    "/Type": "/Action",
+                    "/Next": NullObject(),
+                    "/S": "/JavaScript",
+                    "/JS": "app.alert('Array of actions element 1';)"
+                },
+                {
+                    "/Type": "/Action",
+                    "/Next": {
+                        '/Type': '/Action',
+                        '/Next': NullObject(),
+                        '/S': '/JavaScript',
+                        '/JS': "app.alert('Test of add_action when array of actions is present');"
+                    },
+                    "/S": "/JavaScript",
+                    "/JS": "app.alert('Array of actions element 2';)"
+                }
+            ],
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Action to attach an array of actions');"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("open")
+    assert page.get(NameObject("/AA")) is None
 
 def test_page_delete_action(pdf_file_writer):
     page = pdf_file_writer.pages[0]
