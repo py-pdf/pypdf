@@ -2236,9 +2236,9 @@ class PageObject(DictionaryObject):
         Args:
             trigger: "open" or "close" trigger event.
 
-        # Example: Display all actions triggered by a page open.
+        # Example: Delete all actions triggered by a page open.
         >>> self.delete_action("open")
-        # Example: Display all actions triggered by a page close.
+        # Example: Delete all actions triggered by a page close.
         >>> self.delete_action("close")
         """
         if trigger not in {"open", "close"}:

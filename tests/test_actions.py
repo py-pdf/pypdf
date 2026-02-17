@@ -37,6 +37,12 @@ def test_page_add_action(pdf_file_writer):
     ):
         page.add_action("open", "xyzzy")
 
+    with pytest.raises(
+            ValueError,
+            match = "Currently the only action type supported is JavaScript"
+    ):
+        page.add_action("close", "xyzzy")
+
     # Add open action without pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
