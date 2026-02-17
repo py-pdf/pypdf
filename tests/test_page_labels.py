@@ -1,6 +1,5 @@
 """Test the pypdf._page_labels module."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 
@@ -24,11 +23,7 @@ from pypdf.generic import (
     NumberObject,
 )
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT, get_data_from_url
 
 
 @pytest.mark.parametrize(

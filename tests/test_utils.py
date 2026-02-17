@@ -36,10 +36,6 @@ from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 
 from . import is_sublist
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
 
 @pytest.mark.parametrize(
     ("stream", "expected"),
@@ -236,7 +232,7 @@ def test_deprecation_no_replacement():
 
     with pytest.raises(
         DeprecationError,
-        match="foo is deprecated and was removed in pypdf 4.3.2.",
+        match=r"foo is deprecated and was removed in pypdf 4\.3\.2\.",
     ):
         foo()
 
@@ -334,7 +330,8 @@ def test_file_class():
     """File class can be instantiated and string representation is ok."""
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
-    assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"
+    # hash(b"") varies between CPython and PyPy
+    assert repr(f) == f"File(name=image.png, data: 0 Byte, hash: {hash(b'')})"
 
 
 @pytest.mark.parametrize(
@@ -358,6 +355,18 @@ def test_parse_datetime(text, expected):
     date = parse_iso8824_date(text)
     date_str = (date.isoformat() + date.strftime("%z"))[: len(expected)]
     assert date_str == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("", None),
+        (None, None),
+    ],
+)
+def test_parse_datetime_edge_cases(text, expected):
+    date = parse_iso8824_date(text)
+    assert date == expected
 
 
 def test_parse_datetime_err():

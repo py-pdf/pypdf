@@ -1,5 +1,4 @@
-"""Test the pypdf._merger module."""
-import sys
+"""Test merging PDF functionality."""
 from io import BytesIO
 from pathlib import Path
 
@@ -7,25 +6,18 @@ import pytest
 
 import pypdf
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import Destination, Fit
+from pypdf.generic import ArrayObject, Destination, DictionaryObject, Fit, NameObject, NullObject
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
-sys.path.append(str(PROJECT_ROOT))
+from . import RESOURCE_ROOT, get_data_from_url
+from .test_encryption import HAS_AES
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def merger_operate(merger):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
-    # string path:
     merger.append(pdf_path)
     merger.append(outline)
     merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
@@ -400,6 +392,15 @@ def test_articles_with_writer(caplog):
     assert r.threads[0].get_object()["/F"]["/P"] == r.pages[0]
 
 
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+@pytest.mark.enable_socket
+def test_null_articles_with_writer():
+    data = get_data_from_url(name="issue-3508.pdf")
+    merger = PdfWriter()
+    merger.append(BytesIO(data))
+    assert len(merger.pages) == 98
+
+
 def test_get_reference():
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
     assert writer.get_reference(writer.pages[0]) == writer.pages[0].indirect_reference
@@ -507,3 +508,29 @@ def test_named_ref_to_page_that_is_gone(pdf_file_path):
     writer = PdfWriter()
     writer.add_page(source.pages[0])  # now references to non-existent page
     writer.write(pdf_file_path)  # don't crash
+
+
+def test_merge__null_destination():
+    """Tests for issue #3444."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer2 = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    annotation = DictionaryObject()
+    annotation[NameObject("/Subtype")] = NameObject("/Link")
+    a = DictionaryObject()
+    annotation[NameObject("/A")] = a
+    a[NameObject("/S")] = NameObject("/GoTo")
+
+    target = NullObject()
+    a[NameObject("/D")] = writer._add_object(target)
+
+    annots = ArrayObject([annotation])
+    page = writer2.pages[0]
+    page[NameObject("/Annots")] = annots
+
+    data = BytesIO()
+    writer2.write(data)
+    data.seek(0)
+
+    writer.merge(position=1, fileobj=data)
+    assert writer.pages[0].annotations is None

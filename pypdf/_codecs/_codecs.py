@@ -9,6 +9,7 @@ import io
 from abc import ABC, abstractmethod
 
 from pypdf._utils import logger_warning
+from pypdf.errors import LimitReachedError
 
 
 class Codec(ABC):
@@ -48,6 +49,9 @@ class LzwCodec(Codec):
     EOD_MARKER = 257  # End-of-data marker
     INITIAL_BITS_PER_CODE = 9  # Initial code bit width
     MAX_BITS_PER_CODE = 12  # Maximum code bit width
+
+    def __init__(self, max_output_length: int = 75_000_000) -> None:
+        self.max_output_length = max_output_length
 
     def _initialize_encoding_table(self) -> None:
         """Initialize the encoding table and state to initial conditions."""
@@ -217,6 +221,7 @@ class LzwCodec(Codec):
         self._next_bits = 0
 
         output_stream = io.BytesIO()
+        output_length = 0
 
         self._initialize_decoding_table()
         self._byte_pointer = 0
@@ -234,22 +239,28 @@ class LzwCodec(Codec):
                 code = self._next_code_decode(data)
                 if code == self.EOD_MARKER:
                     break
-                output_stream.write(self.decoding_table[code])
+                output_stream.write(decoded := self.decoding_table[code])
                 old_code = code
             elif code < self._table_index:
-                string = self.decoding_table[code]
-                output_stream.write(string)
+                decoded = self.decoding_table[code]
+                output_stream.write(decoded)
                 if old_code != self.CLEAR_TABLE_MARKER:
-                    self._add_entry_decode(self.decoding_table[old_code], string[0])
+                    self._add_entry_decode(self.decoding_table[old_code], decoded[0])
                 old_code = code
             else:
                 # The code is not in the table and not one of the special codes
-                string = (
+                decoded = (
                     self.decoding_table[old_code] + self.decoding_table[old_code][:1]
                 )
-                output_stream.write(string)
-                self._add_entry_decode(self.decoding_table[old_code], string[0])
+                output_stream.write(decoded)
+                self._add_entry_decode(self.decoding_table[old_code], decoded[0])
                 old_code = code
+
+            output_length += len(decoded)
+            if output_length > self.max_output_length:
+                raise LimitReachedError(
+                    f"Limit reached while decompressing: {output_length} > {self.max_output_length}"
+                )
 
         return output_stream.getvalue()
 

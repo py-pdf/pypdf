@@ -47,7 +47,6 @@ full = [
     "Pillow>=8.0.0"
 ]
 dev = [
-    "black",
     "flit",
     "pip-tools",
     "pre-commit",
@@ -82,7 +81,7 @@ exclude = [
     "sample-files/.pre-commit-config.yaml",
     "tests/pdf_cache/*",
 ]
-include = ["resources/", "tests/"]
+include = ["resources/", "tests/", "CHANGELOG.md"]
 
 [tool.pytest.ini_options]
 addopts = "--disable-socket"
@@ -100,11 +99,15 @@ line_length = 79
 indent = '    '
 multi_line_output = 3
 include_trailing_comma = true
-known_third_party = ["pytest", "setuptools"]
+known_third_party = ["pytest"]
 
 [tool.coverage.run]
 source = ["pypdf"]
 branch = true
+patch = [
+    "subprocess",
+]
+parallel = true
 
 [tool.coverage.report]
 # Regexes for lines to exclude from consideration
@@ -132,6 +135,9 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 120
+exclude = [
+    "sample-files/",
+]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -179,7 +185,6 @@ ignore = [
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
-    "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected
@@ -199,11 +204,10 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
-    "UP038",   # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
 ]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 37  # Recommended: 10
+max-complexity = 30  # Recommended: 10
 
 [tool.ruff.lint.per-file-ignores]
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
@@ -216,7 +220,6 @@ max-complexity = 37  # Recommended: 10
 "json_consistency.py" = ["T201"]
 "make_release.py" = ["S603", "S607", "T201"]
 "pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff
-"sample-files/*" = ["D100", "INP001"]
 "tests/*" = ["ANN001", "ANN201", "B017", "B018", "D103", "D104", "S105", "S106"]
 "tests/test_workflows.py" =  ["T201"]
 

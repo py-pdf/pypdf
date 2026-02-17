@@ -7,6 +7,7 @@ Some parts are still in _page.py. In doubt, they will stay there.
 import math
 from typing import Any, Callable, Optional, Union
 
+from .._font import Font
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 
 CUSTOM_RTL_MIN: int = -1
@@ -91,9 +92,7 @@ def crlf_space_check(
     cmtm_prev: tuple[list[float], list[float]],
     cmtm_matrix: tuple[list[float], list[float]],
     memo_cmtm: tuple[list[float], list[float]],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
+    font_resource: Optional[DictionaryObject],
     orientations: tuple[int, ...],
     output: str,
     font_size: float,
@@ -137,7 +136,7 @@ def crlf_space_check(
                         text + "\n",
                         memo_cm,
                         memo_tm,
-                        cmap[3],
+                        font_resource,
                         font_size,
                     )
                 text = ""
@@ -157,9 +156,7 @@ def get_text_operands(
     operands: list[Union[str, TextStringObject]],
     cm_matrix: list[float],
     tm_matrix: list[float],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
+    font: Font,
     orientations: tuple[int, ...]
 ) -> tuple[str, bool]:
     t: str = ""
@@ -177,20 +174,20 @@ def get_text_operands(
                 if isinstance(operands[0], str)
                 else operands[0]
             )
-            if isinstance(cmap[0], str):
+            if isinstance(font.encoding, str):
                 try:
-                    t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                    t = tt.decode(font.encoding, "surrogatepass")  # apply str encoding
                 except Exception:
                     # the data does not match the expectation,
                     # we use the alternative ;
                     # text extraction may not be good
                     t = tt.decode(
-                        "utf-16-be" if cmap[0] == "charmap" else "charmap",
+                        "utf-16-be" if font.encoding == "charmap" else "charmap",
                         "surrogatepass",
                     )  # apply str encoding
             else:  # apply dict encoding
                 t = "".join(
-                    [cmap[0][x] if x in cmap[0] else bytes((x,)).decode() for x in tt]
+                    [font.encoding[x] if x in font.encoding else bytes((x,)).decode() for x in tt]
                 )
     return (t, is_str_operands)
 
@@ -199,16 +196,16 @@ def get_display_str(
     text: str,
     cm_matrix: list[float],
     tm_matrix: list[float],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
+    font_resource: Optional[DictionaryObject],
+    font: Font,
     text_operands: str,
     font_size: float,
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
-) -> tuple[str, bool]:
+) -> tuple[str, bool, float]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
-    for x in [cmap[1].get(x, x) for x in text_operands]:
+    widths: float = 0.0
+    for x in [font.character_map.get(x, x) for x in text_operands]:
         # x can be a sequence of bytes ; ex: habibi.pdf
         if len(x) == 1:
             xx = ord(x)
@@ -233,15 +230,16 @@ def get_display_str(
             if not rtl_dir:
                 rtl_dir = True
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                    visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                 text = ""
             text = x + text
         else:  # left-to-right
             if rtl_dir:
                 rtl_dir = False
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                    visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                 text = ""
             text = text + x
+        widths += font.space_width if x == " " else font.text_width(x)
         # fmt: on
-    return text, rtl_dir
+    return text, rtl_dir, widths

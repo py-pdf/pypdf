@@ -78,11 +78,11 @@ from ._base import (
 )
 from ._fit import Fit
 from ._image_inline import (
-    extract_inline_A85,
-    extract_inline_AHx,
-    extract_inline_DCT,
+    extract_inline__ascii85_decode,
+    extract_inline__ascii_hex_decode,
+    extract_inline__dct_decode,
+    extract_inline__run_length_decode,
     extract_inline_default,
-    extract_inline_RL,
 )
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
@@ -92,6 +92,7 @@ else:
     from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
+
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
@@ -210,8 +211,8 @@ class ArrayObject(list[Any], PdfObject):
         """Allow to remove items"""
         for x in self._to_lst(lst):
             try:
-                x = self.index(x)
-                del self[x]
+                index = self.index(x)
+                del self[index]
             except ValueError:
                 pass
         return self
@@ -318,11 +319,11 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             ignore_fields:
 
         """
-        # first we remove for the ignore_fields
+        # First we remove the ignore_fields
         # that are for a limited number of levels
-        x = 0
         assert ignore_fields is not None
         ignore_fields = list(ignore_fields)
+        x = 0
         while x < len(ignore_fields):
             if isinstance(ignore_fields[x], int):
                 if cast(int, ignore_fields[x]) <= 0:
@@ -331,7 +332,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     continue
                 ignore_fields[x] -= 1  # type:ignore
             x += 1
-        #  First check if this is a chain list, we need to loop to prevent recur
+        #  Check if this is a chain list, we need to loop to prevent recur
         if any(
             field not in ignore_fields
             and field in src
@@ -354,8 +355,8 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                         and k not in self
                         and isinstance(src.raw_get(k), IndirectObject)
                         and isinstance(src[k], DictionaryObject)
-                        # IF need to go further the idea is to check
-                        # that the types are the same:
+                        # If need to go further the idea is to check
+                        # that the types are the same
                         and (
                             src.get("/Type", None) is None
                             or cast(DictionaryObject, src[k]).get("/Type", None) is None
@@ -374,7 +375,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                                     cur_obj.__class__(), pdf_dest, force_duplicate
                                 ),
                             )
-                            # check to see if we've previously processed our item
+                            # Check to see if we've previously processed our item
                             if clon.indirect_reference is not None:
                                 idnum = clon.indirect_reference.idnum
                                 generation = clon.indirect_reference.generation
@@ -510,41 +511,43 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             stream.write(b"\n")
         stream.write(b">>")
 
+    @classmethod
+    def _get_next_object_position(
+            cls, position_before: int, position_end: int, generations: list[int], pdf: PdfReaderProtocol
+    ) -> int:
+        out = position_end
+        for generation in generations:
+            location = pdf.xref[generation]
+            values = [x for x in location.values() if position_before < x <= position_end]
+            if values:
+                out = min(out, *values)
+        return out
+
+    @classmethod
+    def _read_unsized_from_stream(
+            cls, stream: StreamType, pdf: PdfReaderProtocol
+    ) -> bytes:
+        object_position = cls._get_next_object_position(
+            position_before=stream.tell(), position_end=2 ** 32, generations=list(pdf.xref), pdf=pdf
+        ) - 1
+        current_position = stream.tell()
+        # Read until the next object position.
+        read_value = stream.read(object_position - stream.tell())
+        endstream_position = read_value.find(b"endstream")
+        if endstream_position < 0:
+            raise PdfReadError(
+                f"Unable to find 'endstream' marker for obj starting at {current_position}."
+            )
+        # 9 = len(b"endstream")
+        stream.seek(current_position + endstream_position + 9)
+        return read_value[: endstream_position - 1]
+
     @staticmethod
     def read_from_stream(
         stream: StreamType,
         pdf: Optional[PdfReaderProtocol],
         forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
     ) -> "DictionaryObject":
-        def get_next_obj_pos(
-            p: int, p1: int, rem_gens: list[int], pdf: PdfReaderProtocol
-        ) -> int:
-            out = p1
-            for gen in rem_gens:
-                loc = pdf.xref[gen]
-                try:
-                    values = [x for x in loc.values() if p < x <= p1]
-                    if values:
-                        out = min(out, *values)
-                except ValueError:
-                    pass
-            return out
-
-        def read_unsized_from_stream(
-            stream: StreamType, pdf: PdfReaderProtocol
-        ) -> bytes:
-            # we are just pointing at beginning of the stream
-            eon = get_next_obj_pos(stream.tell(), 2**32, list(pdf.xref), pdf) - 1
-            curr = stream.tell()
-            rw = stream.read(eon - stream.tell())
-            p = rw.find(b"endstream")
-            if p < 0:
-                raise PdfReadError(
-                    f"Unable to find 'endstream' marker for obj starting at {curr}."
-                )
-            stream.seek(curr + p + 9)
-            return rw[: p - 1]
-
         tmp = stream.read(2)
         if tmp != b"<<":
             raise PdfReadError(
@@ -633,7 +636,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             if length is None:  # if the PDF is damaged
                 length = -1
             pstart = stream.tell()
-            if length > 0:
+            if length >= 0:
                 data["__streamdata__"] = stream.read(length)
             else:
                 data["__streamdata__"] = read_until_regex(
@@ -656,7 +659,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 elif pdf is not None and not pdf.strict:
                     stream.seek(pstart, 0)
-                    data["__streamdata__"] = read_unsized_from_stream(stream, pdf)
+                    data["__streamdata__"] = DictionaryObject._read_unsized_from_stream(stream, pdf)
                     pos = stream.tell()
                 else:
                     stream.seek(pos, 0)
@@ -1045,20 +1048,23 @@ class StreamObject(DictionaryObject):
         retval._data = FlateDecode.encode(self._data, level)
         return retval
 
-    def decode_as_image(self) -> Any:
+    def decode_as_image(self, pillow_parameters: Union[dict[str, Any], None] = None) -> Any:
         """
         Try to decode the stream object as an image
+
+        Args:
+            pillow_parameters: parameters provided to Pillow Image.save() method,
+                cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
 
         Returns:
             a PIL image if proper decoding has been found
         Raises:
-            Exception: (any)during decoding to to invalid object or
-                errors during decoding will be reported
+            Exception: Errors during decoding will be reported.
                 It is recommended to catch exceptions to prevent
                 stops in your program.
 
         """
-        from ..filters import _xobj_to_image  # noqa: PLC0415
+        from .._xobj_image_helpers import _xobj_to_image  # noqa: PLC0415
 
         if self.get("/Subtype", "") != "/Image":
             try:
@@ -1066,7 +1072,7 @@ class StreamObject(DictionaryObject):
             except AttributeError:
                 msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
             logger_warning(msg, __name__)
-        extension, byte_stream, img = _xobj_to_image(self)
+        extension, _, img = _xobj_to_image(self, pillow_parameters)
         if extension is None:
             return None  # pragma: no cover
         return img
@@ -1321,13 +1327,13 @@ class ContentStream(DecodedStreamObject):
         if isinstance(filtr, list):
             filtr = filtr[0]  # used forencoding
         if "AHx" in filtr or "ASCIIHexDecode" in filtr:
-            data = extract_inline_AHx(stream)
+            data = extract_inline__ascii_hex_decode(stream)
         elif "A85" in filtr or "ASCII85Decode" in filtr:
-            data = extract_inline_A85(stream)
+            data = extract_inline__ascii85_decode(stream)
         elif "RL" in filtr or "RunLengthDecode" in filtr:
-            data = extract_inline_RL(stream)
+            data = extract_inline__run_length_decode(stream)
         elif "DCT" in filtr or "DCTDecode" in filtr:
-            data = extract_inline_DCT(stream)
+            data = extract_inline__dct_decode(stream)
         elif filtr == "not set":
             cs = settings.get("/CS", "")
             if isinstance(cs, list):
@@ -1600,7 +1606,7 @@ class Destination(TreeObject):
 
     def __init__(
         self,
-        title: str,
+        title: Union[str, bytes],
         page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
         fit: Fit,
     ) -> None:

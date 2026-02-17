@@ -1,8 +1,9 @@
 """Test the pypdf.filters module."""
 import os
-import shutil
 import string
 import subprocess
+import sys
+import zlib
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -12,8 +13,8 @@ from unittest import mock
 import pytest
 from PIL import Image, ImageOps
 
-from pypdf import PdfReader
-from pypdf.errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
+from pypdf import PdfReader, PdfWriter
+from pypdf.errors import DependencyError, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -23,6 +24,8 @@ from pypdf.filters import (
     FlateDecode,
     JBIG2Decode,
     RunLengthDecode,
+    decode_stream_data,
+    decompress,
 )
 from pypdf.generic import (
     ArrayObject,
@@ -34,25 +37,25 @@ from pypdf.generic import (
     NullObject,
     NumberObject,
     StreamObject,
+    TextStringObject,
 )
 
-from . import PILContext, get_data_from_url
+from . import RESOURCE_ROOT, PILContext, get_data_from_url
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
+from .utils import get_image_data
 
 filter_inputs = (
+    string.ascii_letters,
     string.ascii_lowercase,
     string.ascii_uppercase,
-    string.ascii_letters,
     string.digits,
     string.hexdigits,
+    string.octdigits,
     string.punctuation,
-    string.whitespace,  # Add more...
+    string.printable,
+    string.whitespace,  # Add more
 )
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
@@ -70,19 +73,17 @@ def test_flatedecode_unsupported_predictor():
     """
     FlateDecode raises PdfReadError for unsupported predictors.
 
-    Predictors outside the [10, 15] range are not supported.
+    Predictor values outside the ranges [1, 2] and [10, 15] are not supported.
 
-    This test function checks that a PdfReadError is raised when decoding with
-    unsupported predictors. Once this predictor support is updated in the
-    future, this test case may be removed.
+    Checks that a PdfReadError is raised when decoding with unsupported predictors.
     """
     codec = FlateDecode()
-    predictors = (-10, -1, 0, 9, 16, 20, 100)
+    predictors = (-10, -1, 0, 3, 9, 16, 20, 100)
 
     for predictor, s in cartesian_product(predictors, filter_inputs):
         s = s.encode()
         with pytest.raises(PdfReadError):
-            codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
+            codec.decode(codec.encode(s), DictionaryObject({NameObject("/Predictor"): NumberObject(predictor)}))
 
 
 @pytest.mark.parametrize(
@@ -131,11 +132,10 @@ def test_ascii_hex_decode_method(data, expected):
     assert ASCIIHexDecode.decode(data) == expected
 
 
-def test_ascii_hex_decode_missing_eod():
-    """ASCIIHexDecode.decode() raises error when no EOD character is present."""
-    # with pytest.raises(PdfStreamError) as exc:
+def test_ascii_hex_decode_missing_eod(caplog):
+    """ASCIIHexDecode.decode() logs warning when no EOD character is present."""
     ASCIIHexDecode.decode("")
-    # assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
+    assert "missing EOD in ASCIIHexDecode, check if output is OK" in caplog.text
 
 
 @pytest.mark.enable_socket
@@ -192,7 +192,7 @@ def test_ascii85decode_five_zero_bytes():
 def test_ccitparameters():
     with pytest.raises(
         DeprecationError,
-        match="CCITParameters is deprecated and was removed in pypdf 6.0.0. Use CCITTParameters instead",
+        match=r"CCITParameters is deprecated and was removed in pypdf 6\.0\.0\. Use CCITTParameters instead",
     ):
         CCITParameters()
 
@@ -237,8 +237,7 @@ def test_ccitt_fax_decode():
         {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
     )
 
-    # This was just the result pypdf 1.27.9 returned.
-    # It would be awesome if we could check if that is actually correct.
+    # This is the header of an empty TIFF image.
     assert CCITTFaxDecode.decode(data, parameters) == (
         b"II*\x00\x08\x00\x00\x00\x08\x00\x00\x01\x04\x00\x01\x00\x00\x00\x11\x00"
         b"\x00\x00\x01\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x01"
@@ -307,7 +306,7 @@ for page in reader.pages:
     except KeyError:
         env["PYTHONPATH"] = "."
     result = subprocess.run(  # noqa: S603  # We have the control here.
-        [shutil.which("python"), source_file],
+        [sys.executable, source_file],
         capture_output=True,
         env=env,
     )
@@ -365,7 +364,7 @@ def test_png_transparency_reverse():
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".jp2" in data.name
-    assert list(img.getdata()) == list(refimg.getdata())
+    assert get_image_data(img) == get_image_data(refimg)
 
 
 @pytest.mark.enable_socket
@@ -376,11 +375,11 @@ def test_iss1787():
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
-    assert list(img.getdata()) == list(refimg.getdata())
+    assert get_image_data(img) == get_image_data(refimg)
     obj = data.indirect_reference.get_object()
     obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
     obj.decoded_self = None
-    with pytest.raises(expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"):
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unsupported PNG filter 244$"):
         _ = reader.pages[0].images[0]
 
 
@@ -392,7 +391,7 @@ def test_tiff_predictor():
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
-    assert list(img.getdata()) == list(refimg.getdata())
+    assert get_image_data(img) == get_image_data(refimg)
 
 
 @pytest.mark.enable_socket
@@ -649,6 +648,13 @@ def test_ascii85decode__non_recoverable(caplog):
     assert caplog.text == ""
 
 
+def test_ascii85decode__ignore_whitespaces(caplog):
+    """Whitespace characters must be silently ignored"""
+    data = b"Cqa;:3k~\n>"
+    result = ASCII85Decode.decode(data)
+    assert result == b"l\xbe`\x8d:"
+
+
 @pytest.mark.enable_socket
 def test_ccitt_fax_decode__black_is_1():
     url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
@@ -658,8 +664,8 @@ def test_ccitt_fax_decode__black_is_1():
 
     actual_image = reader.pages[0].images[0].image
     expected_image_inverted = other_reader.pages[0].images[0].image
-    expected_pixels = list(ImageOps.invert(expected_image_inverted).getdata())
-    actual_pixels = list(actual_image.getdata())
+    expected_pixels = get_image_data(ImageOps.invert(expected_image_inverted))
+    actual_pixels = get_image_data(actual_image)
     assert expected_pixels == actual_pixels
 
     # AttributeError: 'NullObject' object has no attribute 'get'
@@ -675,12 +681,15 @@ def test_ccitt_fax_decode__black_is_1():
 def test_flate_decode__image_is_none_due_to_size_limit(caplog):
     url = "https://github.com/user-attachments/files/19464256/file.pdf"
     name = "issue3220.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    images = reader.pages[0].images
-    assert len(images) == 1
-    image = images[0]
-    assert image.name == "Im0.png"
-    assert image.image is None
+
+    with mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", 0):
+        reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+        images = reader.pages[0].images
+        assert len(images) == 1
+        image = images[0]
+        assert image.name == "Im0.png"
+        assert image.image is None
+
     assert (
         "Failed loading image: Image size (180000000 pixels) exceeds limit of "
         "178956970 pixels, could be decompression bomb DOS attack."
@@ -707,7 +716,7 @@ def test_flate_decode__not_rectangular(caplog):
 
 def test_jbig2decode__binary_errors():
     with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
-            pytest.raises(DependencyError, match="jbig2dec binary is not available."):
+            pytest.raises(DependencyError, match=r"jbig2dec binary is not available\."):
         JBIG2Decode.decode(b"dummy")
 
     result = subprocess.CompletedProcess(
@@ -720,7 +729,20 @@ def test_jbig2decode__binary_errors():
     )
     with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
             mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
-            pytest.raises(DependencyError, match="jbig2dec>=0.15 is required."):
+            pytest.raises(DependencyError, match=r"jbig2dec>=0.19 is required\."):
+        JBIG2Decode.decode(b"dummy")
+
+    result = subprocess.CompletedProcess(
+        args=["dummy"], returncode=0, stdout=b"",
+        stderr=(
+            b"jbig2dec: unrecognized option '-M'\n"
+            b"Usage: jbig2dec [options] <file.jbig2>\n"
+            b"   or  jbig2dec [options] <global_stream> <page_stream>\n"
+        )
+    )
+    with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
+            mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
+            pytest.raises(DependencyError, match=r"jbig2dec>=0.19 is required\."):
         JBIG2Decode.decode(b"dummy")
 
 
@@ -737,7 +759,7 @@ def test_jbig2decode__edge_cases(caplog):
     content_stream = ContentStream(stream=None, pdf=None)
     content_stream.set_data(jbig2_globals)
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": content_stream}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == (255 if x < 3 else 0), (x, y)
@@ -745,7 +767,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # No decode_params. Completely white image.
     result = JBIG2Decode.decode(image_data)
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
@@ -757,7 +779,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # JBIG2Globals is NULL. Completely white image.
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": NullObject()}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
@@ -769,7 +791,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # JBIG2Globals is DictionaryObject. Completely white image.
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": DictionaryObject()}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
@@ -780,7 +802,7 @@ def test_jbig2decode__edge_cases(caplog):
     caplog.clear()
 
     # Invalid input.
-    with pytest.raises(PdfStreamError, match="Unable to decode JBIG2 data. Exit code: 1"):
+    with pytest.raises(PdfStreamError, match=r"Unable to decode JBIG2 data\. Exit code: 1"):
         JBIG2Decode.decode(b"aaaaaa")
     assert caplog.messages == [
         "jbig2dec FATAL ERROR page has no image, cannot be completed",
@@ -832,16 +854,171 @@ def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
 
 
 @pytest.mark.enable_socket
-def test_rle_decode_exception_with_corrupted_stream():
+def test_rle_decode_exception_with_corrupted_stream(caplog):
     """
     Additional Test to #3355
 
-    This test must raise the EOD exception during RLE decoding and ensures
+    This test must report the EOD warning during RLE decoding and ensures
     that we do not fail during code coverage analyses in the git PR pipeline.
     """
     data = get_data_from_url(
         url="https://github.com/user-attachments/files/21052626/rle_stream_with_error.txt",
         name="rle_stream_with_error.txt"
     )
-    with pytest.raises(PdfStreamError, match="Early EOD in RunLengthDecode"):
-        RunLengthDecode.decode(data)
+    decoded = RunLengthDecode.decode(data)
+    assert decoded.startswith(b"\x01\x01\x01\x01\x01\x01\x01\x02\x02\x02\x02\x02\x02\x02\x03\x03")
+    assert decoded.endswith(b"\x87\x83\x83\x83\x83\x83\x83\x83]]]]]]]RRRRRRRX\xa5")
+    assert len(decoded) == 1048576
+    assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
+
+
+def test_decompress():
+    data = string.printable.encode("utf-8") + string.printable[::-1].encode("utf-8")
+    compressed = FlateDecode.encode(data)
+
+    # # Decompress regularly.
+    decompressed = decompress(compressed)
+    assert decompressed == data
+
+    # # Decompress byte-wise.
+    with mock.patch("pypdf.filters._decompress_with_limit", side_effect=zlib.error):
+        decompressed = decompress(compressed)
+        assert decompressed == data
+
+    # Decompress byte-wise with very low output limit.
+    with mock.patch("pypdf.filters._decompress_with_limit", side_effect=zlib.error), \
+            mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", len(compressed) - 13), \
+            pytest.raises(
+                LimitReachedError, match=r"^Limit reached while decompressing\. 12 bytes remaining\."
+            ):
+        decompress(compressed)
+
+
+def test_decompress__logging_on_invalid_data(caplog):
+    """We do not like suddenly getting empty outputs for non-empty inputs without a warning."""
+    codec = FlateDecode()
+    encoded = codec.encode(b"My test string")
+    assert len(encoded) > 5
+    assert codec.decode(encoded[5:]) == b""
+    assert caplog.messages == ["Error -3 while decompressing data: incorrect header check"]
+
+
+def test_ccittfaxdecode__ccf_inline():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "jpeg.pdf")
+    page = writer.pages[0]
+    writer.remove_images()
+
+    image_data = (
+        b"\nBI\n  /W 16\n  /H 16\n  /CS /G\n  /BPC 1\n  /F [/CCF]\n"
+        b"  /DP [ << /K -1 /BlackIs1 false /Columns 16 /Rows 16 >> ]\nID\n"
+        b"&\xa0\xbf\xcc9\x14|G#\x1f\xff\xf1\xcc9\x18\xfe\xbbX\xfc\x00@\x04"
+        b"\nEI\n"
+    )
+    content_stream = page.get_contents()
+    content_stream.set_data(
+        content_stream.get_data().replace(b"/Im4 Do", b"").replace(b"\nET", image_data)
+    )
+    page.replace_contents(content_stream)
+
+    expected = PdfReader(RESOURCE_ROOT / "imagemagick-CCITTFaxDecode.pdf").pages[0].images[0].image
+    assert get_image_data(expected) == get_image_data(page.images[0].image)
+
+
+def test_dctdecode__dct_inline():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "jpeg.pdf")
+    page = writer.pages[0]
+    writer.remove_images()
+
+    image_data = (
+        b"\nBI\n  /W 16\n  /H 16\n  /CS /G\n  /BPC 8\n  /F [/DCT]\nID\n"
+        b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x01,\x01,\x00\x00\xff\xfe\x00\x13Created with GIMP\xff\xe2"
+        b"\x02\xb0ICC_PROFILE\x00\x01\x01\x00\x00\x02\xa0lcms\x040\x00\x00mntrRGB XYZ \x07\xe6\x00\x04\x00\x0f\x00"
+        b"\t\x00\x1d\x007acspAPPL\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        b"\x00\x00\x00\x00\x00\x00\xf6\xd6\x00\x01\x00\x00\x00\x00\xd3-lcms\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\rdesc\x00\x00\x01 \x00\x00\x00@cprt\x00\x00\x01`"
+        b"\x00\x00\x006wtpt\x00\x00\x01\x98\x00\x00\x00\x14chad\x00\x00\x01\xac\x00\x00\x00,rXYZ\x00\x00\x01\xd8"
+        b"\x00\x00\x00\x14bXYZ\x00\x00\x01\xec\x00\x00\x00\x14gXYZ\x00\x00\x02\x00\x00\x00\x00\x14rTRC\x00\x00"
+        b"\x02\x14\x00\x00\x00 gTRC\x00\x00\x02\x14\x00\x00\x00 bTRC\x00\x00\x02\x14\x00\x00\x00 chrm\x00\x00"
+        b"\x024\x00\x00\x00$dmnd\x00\x00\x02X\x00\x00\x00$dmdd\x00\x00\x02|\x00\x00\x00$mluc\x00\x00\x00\x00"
+        b"\x00\x00\x00\x01\x00\x00\x00\x0cenUS\x00\x00\x00$\x00\x00\x00\x1c\x00G\x00I\x00M\x00P\x00 \x00b\x00"
+        b"u\x00i\x00l\x00t\x00-\x00i\x00n\x00 \x00s\x00R\x00G\x00Bmluc\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00"
+        b"\x00\x0cenUS\x00\x00\x00\x1a\x00\x00\x00\x1c\x00P\x00u\x00b\x00l\x00i\x00c\x00 \x00D\x00o\x00m\x00a"
+        b"\x00i\x00n\x00\x00XYZ \x00\x00\x00\x00\x00\x00\xf6\xd6\x00\x01\x00\x00\x00\x00\xd3-sf32\x00\x00\x00"
+        b"\x00\x00\x01\x0cB\x00\x00\x05\xde\xff\xff\xf3%\x00\x00\x07\x93\x00\x00\xfd\x90\xff\xff\xfb\xa1\xff"
+        b"\xff\xfd\xa2\x00\x00\x03\xdc\x00\x00\xc0nXYZ \x00\x00\x00\x00\x00\x00o\xa0\x00\x008\xf5\x00\x00\x03"
+        b"\x90XYZ \x00\x00\x00\x00\x00\x00$\x9f\x00\x00\x0f\x84\x00\x00\xb6\xc4XYZ \x00\x00\x00\x00\x00\x00b"
+        b"\x97\x00\x00\xb7\x87\x00\x00\x18\xd9para\x00\x00\x00\x00\x00\x03\x00\x00\x00\x02ff\x00\x00\xf2\xa7"
+        b"\x00\x00\rY\x00\x00\x13\xd0\x00\x00\n[chrm\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\xa3\xd7\x00\x00T|"
+        b"\x00\x00L\xcd\x00\x00\x99\x9a\x00\x00&g\x00\x00\x0f\\mluc\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00"
+        b"\x00\x0cenUS\x00\x00\x00\x08\x00\x00\x00\x1c\x00G\x00I\x00M\x00Pmluc\x00\x00\x00\x00\x00\x00\x00"
+        b"\x01\x00\x00\x00\x0cenUS\x00\x00\x00\x08\x00\x00\x00\x1c\x00s\x00R\x00G\x00B\xff\xdb\x00C\x00\x01"
+        b"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+        b"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+        b"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\xff\xc0\x00\x0b\x08\x00\x10\x00\x10"
+        b"\x01\x01\x11\x00\xff\xc4\x00\x17\x00\x00\x03\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        b"\x00\x06\x07\x08\n\xff\xc4\x00\x1d\x10\x00\x03\x00\x03\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00"
+        b"\x00\x00\x05\x06\x07\x01\x04\x08\x02\x03\x13\x15\xff\xda\x00\x08\x01\x01\x00\x00?\x00\xc4D\x0eA"
+        b"\x8e\x91\xa8\xf3\xcf5N\xb5\x7f\x87k\xbc_\x96\xe3\x83]\x9c\\\xff\x00\x19f1^=:A\x98jm.\x03\x9f\x10"
+        b"mW\xc2\xcbYF\xd2T\x06\xef,OXfX`^\x18\x0ez\xb4U \x91\x17\xd4\xf6\xbe\xc2\xb7\x85s:{\xa1\x8f\xec;}"
+        b"\x8f-l/1|\x19\x86|\x14\xc5+j\x8cm\xf0\xde\x10\xba\x7f\xa5=\xe2\x86\xd8\x18\r\xed$o\xab2h\xbc\xad"
+        b"\x8cS\x18\xba\xd8,\xb2\xa3\xbf\xd9\xd8I\x84+\x07\x9d\x1ay\x1cr\xba\x81\nu\x0f\xa7yk\xa0%5\xf2\xf4"
+        b"\xf4\x9e\x8d\xe6\x19\x90+s;P\xfd\xd1\xb3\x8f\xac\xf8\x0e@5\xf5\x8f(i\xc3\x0e\xf3\xd3\xbc\xf5\xa5"
+        b"\xed:\x85<$\xee\xd1@%i\xde\x1ao\xdaF$\t?Vq\xce\x92\xde\xe1\xbd\x14H\x8a'\"\x8d\xbf75\xaef\x90\xc3|"
+        b"\xe8~\x82\x04\xab+3O.\xdeX&\xac\xf2t\x89\xcf\xd3\xfa\x85\xbdFu=\x8e*\xa9\xfb!\x96\xed\xfa\xe3S\xe5A"
+        b"\xf2\xa8\xf5\xe8\xd7\x85\xa5\x05\t\xf8a\xff\x00\xff\xd9"
+        b"\nEI\n"
+    )
+    content_stream = page.get_contents()
+    content_stream.set_data(
+        content_stream.get_data().replace(b"/Im4 Do", b"").replace(b"\nET", image_data)
+    )
+    page.replace_contents(content_stream)
+
+    expected = PdfReader(RESOURCE_ROOT / "imagemagick-images.pdf").pages[3].images[0].image
+    assert get_image_data(expected) == get_image_data(page.images[0].image)
+
+
+def test_deprecate_inline_image_filters():
+    stream = ContentStream(stream=None, pdf=None)
+    stream.set_data(b"&\xa0\xbf\xcc9\x14|G#\x1f\xff\xf1\xcc9\x18\xfe\xbbX\xfc\x00@\x04")
+
+    # The abbreviations do not work here, which is one of the reasons for the deprecation.
+    stream[NameObject("/Width")] = NumberObject(16)
+    stream[NameObject("/Height")] = NumberObject(16)
+    stream[NameObject("/ColorSpace")] = NameObject("/DeviceGray")
+    stream[NameObject("/BitsPerComponent")] = NumberObject(1)
+    stream[NameObject("/Filter")] = NameObject("/CCF")
+    stream[NameObject("/DecodeParams")] = ArrayObject(
+        [
+            DictionaryObject(
+                {
+                    NameObject("/K"): NumberObject(-1),
+                    NameObject("/BlackIs1"): TextStringObject("false"),
+                    NameObject("/Columns"): NumberObject(16),
+                    NameObject("/Rows"): NumberObject(16),
+                }
+            )
+        ]
+    )
+
+    with pytest.warns(
+            expected_warning=DeprecationWarning,
+            match=r"^The filter name /CCF is deprecated and will be removed in pypdf 7\.0\.0\. Use /CCITTFaxDecode instead\.$"  # noqa: E501
+    ):
+        decode_stream_data(stream)
+
+    stream[NameObject("/Filter")] = NameObject("/CCITTFaxDecode")
+    assert decode_stream_data(stream).startswith(b"II*")
+
+
+def test_flatedecode__columns_is_zero():
+    codec = FlateDecode()
+    data = b"Hello World!"
+    parameters = DictionaryObject({
+        NameObject("/Predictor"): NumberObject(13),
+        NameObject("/Columns"): NumberObject(0)
+    })
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Expected positive number for /Columns, got 0!$"):
+        codec.decode(codec.encode(data), parameters)

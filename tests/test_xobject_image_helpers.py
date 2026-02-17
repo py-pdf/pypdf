@@ -1,19 +1,17 @@
 """Test the pypdf._xobj_image_helpers module."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from pypdf import PdfReader
-from pypdf._xobj_image_helpers import _extended_image_frombytes, _handle_flate
+from pypdf._xobj_image_helpers import _extended_image_from_bytes, _handle_flate, _xobj_to_image
+from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, PdfReadError
-from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
+from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT, get_data_from_url
+from .utils import get_image_data
 
 
 @pytest.mark.enable_socket
@@ -29,7 +27,7 @@ def test_get_imagemode_recursion_depth():
     reader = PdfReader(BytesIO(content.replace(source, target)))
     with pytest.raises(
         PdfReadError,
-        match="Color spaces nested too deeply. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH.",
+        match=r"Color spaces nested too deeply\. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH\.",
     ):
         reader.pages[0].images[0]
 
@@ -37,7 +35,7 @@ def test_get_imagemode_recursion_depth():
 def test_handle_flate__image_mode_1(caplog):
     data = b"\x00\xe0\x00"
     lookup = DecodedStreamObject()
-    expected_data = [
+    expected_data = (
         (66, 66, 66),
         (66, 66, 66),
         (66, 66, 66),
@@ -47,7 +45,7 @@ def test_handle_flate__image_mode_1(caplog):
         (66, 66, 66),
         (66, 66, 66),
         (66, 66, 66),
-    ]
+    )
 
     # No trailing data.
     lookup.set_data(b"\x42\x42\x42\x00\x13\x37")
@@ -61,7 +59,7 @@ def test_handle_flate__image_mode_1(caplog):
         colors=2,
         obj_as_text="dummy",
     )
-    assert expected_data == list(result[0].getdata())
+    assert expected_data == get_image_data(result[0])
     assert not caplog.text
 
     # Trailing whitespace.
@@ -76,7 +74,7 @@ def test_handle_flate__image_mode_1(caplog):
         colors=2,
         obj_as_text="dummy",
     )
-    assert expected_data == list(result[0].getdata())
+    assert expected_data == get_image_data(result[0])
     assert not caplog.text
 
     # Trailing non-whitespace character.
@@ -96,7 +94,7 @@ def test_handle_flate__image_mode_1(caplog):
         colors=2,
         obj_as_text="dummy",
     )
-    assert expected_data == list(result[0].getdata())
+    assert expected_data == get_image_data(result[0])
     assert "Too many lookup values: Expected 6, got 7." in caplog.text
 
     # Not enough lookup data.
@@ -104,7 +102,7 @@ def test_handle_flate__image_mode_1(caplog):
     # here, but received a custom padding of `0`.
     lookup.set_data(b"\x42\x42\x42\x00\x13")
     caplog.clear()
-    expected_short_data = [entry if entry[0] == 66 else (0, 19, 0) for entry in expected_data]
+    expected_short_data = tuple([entry if entry[0] == 66 else (0, 19, 0) for entry in expected_data])
     result = _handle_flate(
         size=(3, 3),
         data=data,
@@ -120,7 +118,7 @@ def test_handle_flate__image_mode_1(caplog):
         colors=2,
         obj_as_text="dummy",
     )
-    assert expected_short_data == list(result[0].getdata())
+    assert expected_short_data == get_image_data(result[0])
     assert "Not enough lookup values: Expected 6, got 5." in caplog.text
 
 
@@ -129,8 +127,8 @@ def test_extended_image_frombytes_zero_data():
     size = (1, 1)
     data = b""
 
-    with pytest.raises(EmptyImageDataError, match="Data is 0 bytes, cannot process an image from empty data."):
-        _extended_image_frombytes(mode, size, data)
+    with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
+        _extended_image_from_bytes(mode, size, data)
 
 
 def test_handle_flate__autodesk_indexed():
@@ -160,3 +158,76 @@ def test_get_mode_and_invert_color():
     page = reader.pages[12]
     for _name, image in page.images.items():  # noqa: PERF102
         image.image.load()
+
+
+@pytest.mark.enable_socket
+def test_get_imagemode__empty_array():
+    url = "https://github.com/user-attachments/files/23050451/poc.pdf"
+    name = "issue3499.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
+        page.images[0].image.load()
+
+
+def test_p_image_with_alpha_mask():
+    # Generate the base image. Use TIFF as this is easy to do on the fly.
+    image = Image.new(mode="P", size=(10, 10), color=0)
+    image_data = BytesIO()
+    image.save(image_data, format="tiff")
+
+    # Set the common values.
+    x_object = StreamObject()
+    mask_object = StreamObject()
+    for obj in [x_object, mask_object]:
+        obj[NameObject(ImageAttributes.WIDTH)] = NumberObject(image.width)
+        obj[NameObject(ImageAttributes.HEIGHT)] = NumberObject(image.height)
+        obj[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.CCITT_FAX_DECODE)
+
+    # Set the basic image data.
+    x_object.set_data(image_data.getvalue())
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("palette")
+
+    # Generate the mask image. Will be a diagonal white stripe.
+    image = Image.new(mode="1", size=(image.width, image.height))
+    [image.putpixel((i, i), 1) for i in range(10)]
+    image_data = BytesIO()
+    image.save(image_data, format="tiff")
+
+    # Set the mask data.
+    mask_object.set_data(image_data.getvalue())
+    mask_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("1bit")
+
+    # Add the mask to the image.
+    x_object[NameObject("/SMask")] = mask_object
+
+    # Generate the output image and make sure that the diagonal stripe is present.
+    extension, data, image = _xobj_to_image(x_object)
+    assert extension == ".png"
+    assert data.startswith(b"\x89PNG")
+    for i in range(10):
+        for j in range(10):
+            assert image.getpixel((i, j)) == (0, 0, 0, 255 * (i == j))
+
+
+@pytest.mark.enable_socket
+def test_handle_flate__icc_based__image_mode_1():
+    url = "https://github.com/user-attachments/files/23756943/pypdf_bug_3534_iccbased.pdf"
+    name = "issue3534.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    image = page.images[0].image
+    assert image is not None
+    image.load()
+    assert image.size == (64, 64)
+    assert image.mode == "1"
+
+    for y in range(64):
+        for x in range(64):
+            # Determine which chess square this pixel belongs to
+            square_x = x // 8
+            square_y = y // 8
+            is_black_square = (square_x + square_y) % 2 == 1
+            assert image.getpixel((x, y)) == 255 * int(not is_black_square)

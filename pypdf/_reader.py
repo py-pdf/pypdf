@@ -29,6 +29,7 @@
 
 import os
 import re
+import sys
 from collections.abc import Iterable
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
@@ -42,9 +43,15 @@ from typing import (
     cast,
 )
 
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._utils import (
+    WHITESPACES_AS_BYTES,
     StrByteType,
     StreamType,
     logger_warning,
@@ -58,6 +65,7 @@ from .constants import TrailerKeys as TK
 from .errors import (
     EmptyFileError,
     FileNotDecryptedError,
+    LimitReachedError,
     PdfReadError,
     PdfStreamError,
     WrongPasswordError,
@@ -101,6 +109,9 @@ class PdfReader(PdfDocCommon):
         password: Decrypt PDF file at initialization. If the
             password is None, the file will not be decrypted.
             Defaults to ``None``.
+        root_object_recovery_limit: The maximum number of objects to query
+            for recovering the Root object in non-strict mode. To disable
+            this security measure, pass ``None``.
 
     """
 
@@ -109,6 +120,8 @@ class PdfReader(PdfDocCommon):
         stream: Union[StrByteType, Path],
         strict: bool = False,
         password: Union[None, str, bytes] = None,
+        *,
+        root_object_recovery_limit: Optional[int] = 10_000,
     ) -> None:
         self.strict = strict
         self.flattened_pages: Optional[list[PageObject]] = None
@@ -122,6 +135,11 @@ class PdfReader(PdfDocCommon):
         self.xref_free_entry: dict[int, dict[Any, Any]] = {}
         self.xref_objStm: dict[int, tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
+
+        # Security parameters.
+        self._root_object_recovery_limit = (
+            root_object_recovery_limit if isinstance(root_object_recovery_limit, int) else sys.maxsize
+        )
 
         # Map page indirect_reference number to page number
         self._page_id2num: Optional[dict[Any, Any]] = None
@@ -173,7 +191,7 @@ class PdfReader(PdfDocCommon):
             raise WrongPasswordError("Wrong password")
         self._override_encryption = False
 
-    def __enter__(self) -> "PdfReader":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(
@@ -214,15 +232,17 @@ class PdfReader(PdfDocCommon):
             logger_warning("Invalid Root object in trailer", __name__)
         if self._validated_root is None:
             logger_warning('Searching object with "/Catalog" key', __name__)
-            nb = cast(int, self.trailer.get("/Size", 0))
-            for i in range(nb):
+            number_of_objects = cast(int, self.trailer.get("/Size", 0))
+            for i in range(number_of_objects):
+                if i >= self._root_object_recovery_limit:
+                    raise LimitReachedError("Maximum Root object recovery limit reached.")
                 try:
-                    o = self.get_object(i + 1)
+                    obj = self.get_object(i + 1)
                 except Exception:  # to be sure to capture all errors
-                    o = None
-                if isinstance(o, DictionaryObject) and o.get("/Type") == "/Catalog":
-                    self._validated_root = o
-                    logger_warning(f"Root found at {o.indirect_reference!r}", __name__)
+                    obj = None
+                if isinstance(obj, DictionaryObject) and obj.get("/Type") == "/Catalog":
+                    self._validated_root = obj
+                    logger_warning(f"Root found at {obj.indirect_reference!r}", __name__)
                     break
         if self._validated_root is None:
             if not is_null_or_none(root) and "/Pages" in cast(DictionaryObject, cast(PdfObject, root).get_object()):
@@ -570,14 +590,14 @@ class PdfReader(PdfDocCommon):
             obj.indirect_reference = IndirectObject(idnum, generation, self)
         return obj
 
-    def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
+    def _replace_object(self, indirect_reference: IndirectObject, obj: PdfObject) -> PdfObject:
         # function reserved for future development
-        if indirect.pdf != self:
+        if indirect_reference.pdf != self:
             raise ValueError("Cannot update PdfReader with external object")
-        if (indirect.generation, indirect.idnum) not in self.resolved_objects:
+        if (indirect_reference.generation, indirect_reference.idnum) not in self.resolved_objects:
             raise ValueError("Cannot find referenced object")
-        self.resolved_objects[(indirect.generation, indirect.idnum)] = obj
-        obj.indirect_reference = indirect
+        self.resolved_objects[(indirect_reference.generation, indirect_reference.idnum)] = obj
+        obj.indirect_reference = indirect_reference
         return obj
 
     def read(self, stream: StreamType) -> None:
@@ -803,6 +823,7 @@ class PdfReader(PdfDocCommon):
                         )
                         generation = 65535
                         offset = -1
+                        entry_type_b = b"f"
                     else:
                         logger_warning(
                             f"entry {num} in Xref table invalid but object found",
@@ -971,14 +992,20 @@ class PdfReader(PdfDocCommon):
         if cast(str, xrefstream["/Type"]) != "/XRef":
             raise PdfReadError(f"Unexpected type {xrefstream['/Type']!r}")
         self.cache_indirect_object(generation, idnum, xrefstream)
-        stream_data = BytesIO(xrefstream.get_data())
+
         # Index pairs specify the subsections in the dictionary.
         # If none, create one subsection that spans everything.
-        idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
+        if "/Size" not in xrefstream:
+            # According to table 17 of the PDF 2.0 specification, this key is required.
+            raise PdfReadError(f"Size missing from XRef stream {xrefstream!r}!")
+        idx_pairs = xrefstream.get("/Index", [0, xrefstream["/Size"]])
+
         entry_sizes = cast(dict[Any, Any], xrefstream.get("/W"))
         assert len(entry_sizes) >= 3
         if self.strict and len(entry_sizes) > 3:
             raise PdfReadError(f"Too many entry sizes: {entry_sizes}")
+
+        stream_data = BytesIO(xrefstream.get_data())
 
         def get_entry(i: int) -> Union[int, tuple[int, ...]]:
             # Reads the correct number of bytes for each entry. See the
@@ -1036,58 +1063,118 @@ class PdfReader(PdfDocCommon):
                 return 3
         return 0
 
+    @classmethod
+    def _find_pdf_objects(cls, data: bytes) -> Iterable[tuple[int, int, int]]:
+        index = 0
+        ord_0 = ord("0")
+        ord_9 = ord("9")
+        while True:
+            index = data.find(b" obj", index)
+            if index == -1:
+                return
+
+            index_before_space = index - 1
+
+            # Skip whitespace backwards
+            while index_before_space >= 0 and data[index_before_space] in WHITESPACES_AS_BYTES:
+                index_before_space -= 1
+
+            # Read generation number
+            generation_end = index_before_space + 1
+            while index_before_space >= 0 and ord_0 <= data[index_before_space] <= ord_9:
+                index_before_space -= 1
+            generation_start = index_before_space + 1
+
+            # Skip whitespace
+            while index_before_space >= 0 and data[index_before_space] in WHITESPACES_AS_BYTES:
+                index_before_space -= 1
+
+            # Read object number
+            object_end = index_before_space + 1
+            while index_before_space >= 0 and ord_0 <= data[index_before_space] <= ord_9:
+                index_before_space -= 1
+            object_start = index_before_space + 1
+
+            # Validate
+            if object_start < object_end and generation_start < generation_end:
+                object_number = int(data[object_start:object_end])
+                generation_number = int(data[generation_start:generation_end])
+
+                yield object_number, generation_number, object_start
+
+            index += 4  # len(b" obj")
+
+    @classmethod
+    def _find_pdf_trailers(cls, data: bytes) -> Iterable[int]:
+        index = 0
+        data_length = len(data)
+        while True:
+            index = data.find(b"trailer", index)
+            if index == -1:
+                return
+
+            index_after_trailer = index + 7  # len(b"trailer")
+
+            # Skip whitespace
+            while index_after_trailer < data_length and data[index_after_trailer] in WHITESPACES_AS_BYTES:
+                index_after_trailer += 1
+
+            # Must be dictionary start
+            if index_after_trailer + 1 < data_length and data[index_after_trailer:index_after_trailer+2] == b"<<":
+                yield index_after_trailer  # offset of '<<'
+
+            index += 7  # len(b"trailer")
+
     def _rebuild_xref_table(self, stream: StreamType) -> None:
         self.xref = {}
         stream.seek(0, 0)
-        f_ = stream.read(-1)
+        stream_data = stream.read(-1)
 
-        for m in re.finditer(rb"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj", f_):
-            idnum = int(m.group(1))
-            generation = int(m.group(2))
-            if generation not in self.xref:
-                self.xref[generation] = {}
-            self.xref[generation][idnum] = m.start(1)
+        for object_number, generation_number, object_start in self._find_pdf_objects(stream_data):
+            if generation_number not in self.xref:
+                self.xref[generation_number] = {}
+            self.xref[generation_number][object_number] = object_start
 
         logger_warning("parsing for Object Streams", __name__)
-        for g in self.xref:
-            for i in self.xref[g]:
+        for generation_number in self.xref:
+            for object_number in self.xref[generation_number]:
                 # get_object in manual
-                stream.seek(self.xref[g][i], 0)
+                stream.seek(self.xref[generation_number][object_number], 0)
                 try:
                     _ = self.read_object_header(stream)
-                    o = cast(StreamObject, read_object(stream, self))
-                    if o.get("/Type", "") != "/ObjStm":
+                    obj = cast(StreamObject, read_object(stream, self))
+                    if obj.get("/Type", "") != "/ObjStm":
                         continue
-                    strm = BytesIO(o.get_data())
-                    cpt = 0
+                    object_stream = BytesIO(obj.get_data())
+                    actual_count = 0
                     while True:
-                        s = read_until_whitespace(strm)
-                        if not s.isdigit():
+                        current = read_until_whitespace(object_stream)
+                        if not current.isdigit():
                             break
-                        _i = int(s)
-                        skip_over_whitespace(strm)
-                        strm.seek(-1, 1)
-                        s = read_until_whitespace(strm)
-                        if not s.isdigit():  # pragma: no cover
+                        inner_object_number = int(current)
+                        skip_over_whitespace(object_stream)
+                        object_stream.seek(-1, 1)
+                        current = read_until_whitespace(object_stream)
+                        if not current.isdigit():  # pragma: no cover
                             break  # pragma: no cover
-                        _o = int(s)
-                        self.xref_objStm[_i] = (i, _o)
-                        cpt += 1
-                    if cpt != o.get("/N"):  # pragma: no cover
+                        inner_generation_number = int(current)
+                        self.xref_objStm[inner_object_number] = (object_number, inner_generation_number)
+                        actual_count += 1
+                    if actual_count != obj.get("/N"):  # pragma: no cover
                         logger_warning(  # pragma: no cover
-                            f"found {cpt} objects within Object({i},{g})"
-                            f" whereas {o.get('/N')} expected",
+                            f"found {actual_count} objects within Object({object_number},{generation_number})"
+                            f" whereas {obj.get('/N')} expected",
                             __name__,
                         )
                 except Exception:  # could be multiple causes
                     pass
 
         stream.seek(0, 0)
-        for m in re.finditer(rb"[\r\n \t][ \t]*trailer[\r\n \t]*(<<)", f_):
-            stream.seek(m.start(1), 0)
+        for position in self._find_pdf_trailers(stream_data):
+            stream.seek(position, 0)
             new_trailer = cast(dict[Any, Any], read_object(stream, self))
             # Here, we are parsing the file from start to end, the new data have to erase the existing.
-            for key, value in list(new_trailer.items()):
+            for key, value in new_trailer.items():
                 self.trailer[key] = value
 
     def _read_xref_subsections(

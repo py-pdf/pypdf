@@ -762,3 +762,53 @@ _INLINE_IMAGE_KEY_MAPPING = {
     "/Interpolate": "/Interpolate",
     "/ImageMask": "/ImageMask",
 }
+
+
+class AFRelationship:
+    """
+    Associated file relationship types, defining the relationship between
+    the PDF component and the associated file.
+
+    Defined in table 43 of the PDF 2.0 reference.
+    """
+
+    SOURCE = "/Source"  # Original content source
+    DATA = "/Data"  # Base data for visual presentation
+    ALTERNATIVE = "/Alternative"  # Alternative content representation
+    SUPPLEMENT = "/Supplement"  # Supplemental representation of original source/data
+    ENCRYPTED_PAYLOAD = "/EncryptedPayload"  # Encrypted payload document
+    FORM_DATA = "/FormData"  # Data associated with AcroForm of this PDF
+    SCHEMA = "/Schema"  # Schema definition for associated object
+    UNSPECIFIED = "/Unspecified"  # Not known or cannot be described with values
+
+
+class BorderStyles:
+    """
+    A class defining border styles used in PDF documents.
+
+    Defined in table 168 of the PDF 2.0 reference.
+    """
+
+    BEVELED = "/B"
+    DASHED = "/D"
+    INSET = "/I"
+    SOLID = "/S"
+    UNDERLINED = "/U"
+
+
+class FontFlags(IntFlag):
+    """
+    A class defining font flags in PDF document font descriptor resources.
+
+    Defined in table 121 of the PDF 2.0 reference.
+    """
+
+    FIXED_PITCH = 1 << 0
+    SERIF = 1 << 1
+    SYMBOLIC = 1 << 2
+    SCRIPT = 1 << 3
+    NONSYMBOLIC = 1 << 5
+    ITALIC = 1 << 6
+    ALL_CAP = 1 << 16
+    SMALL_CAP = 1 << 17
+    FORCE_BOLD = 1 << 18

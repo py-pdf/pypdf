@@ -58,7 +58,7 @@ a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Optional, cast
 
 from ._protocols import PdfCommonDocProtocol
@@ -144,9 +144,9 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
         if nums[i + 2] > index:
             break
         i += 2
-    m = {
+    m: dict[Optional[str], Callable[[int], str]] = {
         None: lambda _: "",
-        "/D": lambda n: str(n),
+        "/D": str,
         "/R": number2uppercase_roman_numeral,
         "/r": number2lowercase_roman_numeral,
         "/A": number2uppercase_letter,
@@ -157,7 +157,8 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
         return str(index + 1)  # Fallback
     start = value.get("/St", 1)
     prefix = value.get("/P", "")
-    return prefix + m[value.get("/S")](index - start_index + start)
+    mapping_function = m[value.get("/S")]
+    return prefix + mapping_function(index - start_index + start)
 
 
 def index2label(reader: PdfCommonDocProtocol, index: int) -> str:

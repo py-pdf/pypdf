@@ -5,7 +5,6 @@ The results are on https://py-pdf.github.io/pypdf/dev/bench/
 Please keep in mind that the variance is high.
 """
 from io import BytesIO
-from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pytest
@@ -14,12 +13,7 @@ import pypdf
 from pypdf import PageObject, PdfReader, PdfWriter, Transformation
 from pypdf.generic import Destination, read_string_from_stream
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 
 def page_ops(pdf_path, password):
@@ -32,7 +26,7 @@ def page_ops(pdf_path, password):
         reader.decrypt(password)
 
     page = reader.pages[0]
-    writer.add_page(page)
+    page = writer.add_page(page)
 
     op = Transformation().rotate(90).scale(1.2)
     page.add_transformation(op)
@@ -106,7 +100,7 @@ def merge():
         # Check if outline is correct
         reader = PdfReader(write_path)
         assert [
-            el.title for el in reader._get_outline() if isinstance(el, Destination)
+            el.title for el in reader.outline if isinstance(el, Destination)
         ] == [
             "Foo",
             "Bar",

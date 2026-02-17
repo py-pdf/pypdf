@@ -834,7 +834,7 @@ class Encryption:
         self.StmF = StmF
         self.StrF = StrF
         self.EFF = EFF
-        self.values: EncryptionValues = values if values else EncryptionValues()
+        self.values: EncryptionValues = values or EncryptionValues()
 
         self._password_type = PasswordType.NOT_DECRYPTED
         self._key: Optional[bytes] = None
@@ -1126,6 +1126,10 @@ class Encryption:
         alg_rev = cast(int, encryption_entry["/R"])
         perm_flags = cast(int, encryption_entry["/P"])
         key_bits = encryption_entry.get("/Length", 40)
+        if alg_ver == 4 and stm_filter == "/AESV2":
+            cf_dict = cast(DictionaryObject, filters[encryption_entry["/StmF"]])  # type: ignore[index]
+            # CF /Length is in bytes (default 16 for AES-128), convert to bits
+            key_bits = cast(int, cf_dict.get("/Length", 16)) * 8
         encrypt_metadata = encryption_entry.get("/EncryptMetadata")
         encrypt_metadata = (
             encrypt_metadata.value if encrypt_metadata is not None else True

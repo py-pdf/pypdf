@@ -14,6 +14,7 @@ import datetime
 import os
 import shutil
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
@@ -53,6 +54,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
+    "sphinx.ext.doctest",
     # External
     "myst_parser",
 ]
@@ -132,3 +134,93 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = False  # Explicitly prefer Google style docstring
 napoleon_use_param = True  # for type hint support
 napoleon_use_rtype = False  # False, so the return type is inline with the description.
+
+# -- Options for Doctest  ------------------------------------------------------
+
+# Most of doc examples use hardcoded input and output file names.
+# To execute these examples real files need to be read and written.
+#
+# By default, documentation examples run with the working directory set to where
+# "sphinx-build" command was invoked. To avoid relative paths in docs and to
+# allow to run "sphinx-build" command from any directory, we modify the current
+# working directory in each tested file. Tests are executed against our
+# temporary directory where we have copied all nessesary resources.
+#
+# Each doc page that requires file operations must use "testsetup" directive
+# to call "pypdf_test_setup" function to prepare the test environment for that
+# page.
+#
+# def pypdf_test_setup(group: str, resources: dict[str, str] = {}) -> None
+#
+# Args:
+#   group: A unique name for group of tests. Typically we group tests by doc page.
+#       For each doc page we create a test folder under
+#       "_build/doctest/pypdf_test/<group>". This allows to avoid file name conflicts
+#       between different doc pages.
+#   resources: A dictionary of source files to copy into the test folder.
+#       Key is the destination file name (relative to the test folder).
+#       Value is the source file path (relative to the root folder).
+#
+# Examples:
+#   ```{testsetup}
+#   pypdf_test_setup("user/add-javascript", {
+#       "example.pdf": "../resources/example.pdf",
+#   })
+#   ```
+
+pypdf_test_src_root_dir = os.path.abspath(".")
+pypdf_test_dst_root_dir = os.path.abspath("_build/doctest/pypdf_test")
+if Path(pypdf_test_dst_root_dir).exists():
+   shutil.rmtree(pypdf_test_dst_root_dir)
+Path(pypdf_test_dst_root_dir).mkdir(parents=True)
+
+doctest_global_setup = f"""
+def pypdf_test_global_setup():
+    import os
+    import shutil
+    from pathlib import Path
+
+    src_root_dir = {pypdf_test_src_root_dir.__repr__()}
+    dst_root_dir = {pypdf_test_dst_root_dir.__repr__()}
+
+    global pypdf_test_orig_dir
+    pypdf_test_orig_dir = os.getcwd()
+    os.chdir(dst_root_dir)
+
+    global pypdf_test_setup
+    def pypdf_test_setup(group: str, resources: dict[str, str] = {{}}) -> None:
+        dst_dir = os.path.join(dst_root_dir, group)
+        Path(dst_dir).mkdir(parents=True)
+        os.chdir(dst_dir)
+
+        for (dst_path, src_path) in resources.items():
+            src = os.path.normpath(os.path.join(src_root_dir, src_path))
+            dst = os.path.join(dst_dir, dst_path)
+
+            shutil.copyfile(src, dst)
+
+pypdf_test_global_setup()
+"""
+
+doctest_global_cleanup = f"""
+def pypdf_test_global_cleanup():
+    import os
+
+    dst_root_dir = {pypdf_test_dst_root_dir.__repr__()}
+
+    os.chdir(pypdf_test_orig_dir)
+
+    has_files = False
+    for name in os.listdir(dst_root_dir):
+        file_name = os.path.join(dst_root_dir, name)
+        if os.path.isfile(file_name):
+            if not has_files:
+                print("Docs page was not configured propery for running code examples")
+                print("Please use 'pypdf_test_setup' function in 'testsetup' directive")
+                print("Deleting unexpected file(s) in " + dst_root_dir)
+                has_files = True
+            print(f"- {{name}}")
+            os.remove(file_name)  # Avoid side effects on other tests
+
+pypdf_test_global_cleanup()
+"""

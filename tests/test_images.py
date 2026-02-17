@@ -15,15 +15,12 @@ import pytest
 from PIL import Image, ImageChops, ImageDraw
 
 from pypdf import PageObject, PdfReader, PdfWriter
+from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import ContentStream, NameObject, NullObject
 
-from . import get_data_from_url
-
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
+from .utils import get_image_data
 
 
 def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
@@ -37,6 +34,12 @@ def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
                 img.copy()
             )  # Opened image should be copied to avoid issues with file closing
     return img
+
+
+def image_size(image: Image.Image):
+    buffer = BytesIO()
+    image.save(buffer, format=image.format)
+    return buffer.tell()
 
 
 def image_similarity(
@@ -64,7 +67,7 @@ def image_similarity(
 
     # Calculate the Mean Squared Error (MSE)
     diff = ImageChops.difference(image1, image2)
-    pixels = list(diff.getdata())
+    pixels = get_image_data(diff)
 
     if isinstance(pixels[0], tuple):
         mse = sum(sum((c / 255.0) ** 2 for c in p) for p in pixels) / (
@@ -474,6 +477,18 @@ def test_extract_image_from_object(caplog):
     assert "does not seem to be an Image" in caplog.text
 
 
+def test_extract_jpeg_with_explicit_quality():
+    reader = PdfReader(RESOURCE_ROOT / "side-by-side-subfig.pdf")
+    page = reader.pages[0]
+    x_object = page["/Resources"]["/XObject"]["/Im1"]
+    assert x_object["/Filter"] == "/DCTDecode"
+    image = x_object.decode_as_image()
+    assert isinstance(image, Image.Image)
+    assert image.format == "JPEG"
+    small_image = x_object.decode_as_image(pillow_parameters={"quality": 75})
+    assert image_size(small_image) < image_size(image)
+
+
 @pytest.mark.enable_socket
 def test_4bits_images(caplog):
     url = "https://github.com/user-attachments/files/16624406/tt.pdf"
@@ -580,6 +595,32 @@ def test_jbig2decode__jbig2globals():
 
     # Wrong image: 0.9618265964800714
     assert image_similarity(image.image, img) >= 0.999
+
+
+@pytest.mark.enable_socket
+@pytest.mark.skipif(condition=not JBIG2Decode._is_binary_compatible(), reason="Requires recent jbig2dec")
+def test_jbig2decode__memory_limit():
+    url = "https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf"
+    name = "jbig2.pdf"
+    error_messages = [
+        # Version 0.20
+        (
+            r"^Memory limit reached while reading JBIG2 data:\n"
+            r"jbig2dec FATAL ERROR memory: limit reached: limit: 5000000 \(4 Mbyte\) used: 4329386 \(4 Mbyte\) allocation: 4263106 \(4 Mbyte\)\n"  # noqa: E501
+            r"jbig2dec FATAL ERROR failed to allocate image data buffer \(stride=643, height=6630\)"
+        ),
+        # Version 0.19
+        (
+            r"^Memory limit reached while reading JBIG2 data:\n"
+            r"jbig2dec FATAL ERROR failed to allocate image data buffer \(stride=643, height=6630\)"
+        ),
+    ]
+
+    with mock.patch("pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH", 5_000_000):
+        reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+        page = reader.pages[0]
+        with pytest.raises(expected_exception=LimitReachedError, match=rf"({'|'.join(error_messages)})"):
+            _ = next(iter(page.images))
 
 
 @pytest.mark.enable_socket

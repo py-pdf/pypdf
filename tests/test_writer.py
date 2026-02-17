@@ -20,7 +20,7 @@ from pypdf import (
     Transformation,
 )
 from pypdf.annotations import Link
-from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -38,13 +38,9 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_data_from_url, is_sublist
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, is_sublist
 from .test_images import image_similarity
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
@@ -601,7 +597,7 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
-    # Test the owner password (stbytesr):
+    # Test the owner password (bytes):
     reader = PdfReader(pdf_file_path, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
@@ -688,7 +684,6 @@ def test_add_named_destination(pdf_file_path):
     assert root[4] == "A named dest3"
 
     # test get_object
-
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
     with pytest.raises(ValueError) as exc:
         writer.get_object(reader.pages[0].indirect_reference)
@@ -1511,7 +1506,7 @@ def test_named_dest_page_number():
     assert len(writer.root_object["/Names"]["/Dests"]["/Names"]) == 6
 
 
-def test_update_form_fields(tmp_path):
+def test_update_form_fields(caplog, tmp_path):
     write_data_here = tmp_path / "out.pdf"
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
     writer.update_page_form_field_values(
@@ -1577,10 +1572,11 @@ def test_update_form_fields(tmp_path):
     del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DR"]["/Font"]
     writer.update_page_form_field_values(
         [writer.pages[0], writer.pages[1]],
-        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        {"Text1": "!مرحبا بالعالم", "Text2": "ligne1\nligne2\nligne3"},
         auto_regenerate=False,
     )
-    assert b"/Helv " in writer.pages[1]["/Annots"][1]["/AP"]["/N"].get_data()
+    assert b"/Helvetica " in writer.pages[1]["/Annots"][1]["/AP"]["/N"].get_data()
+    assert "Text string '!مرحبا بالعالم' contains characters not supported by font encoding." in caplog.text
     writer.update_page_form_field_values(
         None,
         {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
@@ -1651,7 +1647,7 @@ def test_merge_content_stream_to_page():
 
 
 @pytest.mark.enable_socket
-def test_update_form_fields2():
+def test_update_form_fields2(caplog):
     my_files = {
         "test1": {
             "name": "Test1 Form",
@@ -1684,7 +1680,7 @@ def test_update_form_fields2():
                     "Initial": "JSS",
                     # "p2 I DO NOT Agree": "null",
                     "p2 Last Name": "Smith",
-                    "p3 First Name": "John",
+                    "p3 First Name": "شهرزاد",
                     "p3 Middle Name": "R",
                     "p3 MM": "01",
                     "p3 DD": "25",
@@ -1723,12 +1719,13 @@ def test_update_form_fields2():
         "test2.Initial": "JSS",
         "test2.p2 I DO NOT Agree": None,
         "test2.p2 Last Name": "Smith",
-        "test2.p3 First Name": "John",
+        "test2.p3 First Name": "شهرزاد",
         "test2.p3 Middle Name": "R",
         "test2.p3 MM": "01",
         "test2.p3 DD": "25",
         "test2.p3 YY": "21",
     }
+    assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
 
 @pytest.mark.enable_socket
@@ -1805,8 +1802,8 @@ def test_watermark_rendering(tmp_path):
     name = "srcwatermark.pdf"
     page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
     writer = PdfWriter()
+    page = writer.add_page(page)
     page.merge_page(watermark, over=False)
-    writer.add_page(page)
 
     target_png_path = tmp_path / "target.png"
     url = "https://github.com/py-pdf/pypdf/assets/96178532/d5c72d0e-7047-4504-bbf6-bc591c80d7c0"
@@ -1847,8 +1844,8 @@ def test_watermarking_reportlab_rendering(tmp_path):
     watermark = PdfReader(watermark_path).pages[0]
 
     writer = PdfWriter()
+    base_page = writer.add_page(base_page)
     base_page.merge_page(watermark)
-    writer.add_page(base_page)
 
     target_png_path = RESOURCE_ROOT / "test_watermarking_reportlab_rendering.png"
     pdf_path = tmp_path / "out.pdf"
@@ -1885,7 +1882,7 @@ def test_da_missing_in_annot():
     ff = reader.get_fields()
     # check for autosize processing
     assert (
-        b"0 Tf"
+        b" 0 Tf"
         not in ff["PCN-1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
     )
     f2 = writer.get_object(ff["PCN-2"].indirect_reference.idnum)
@@ -2407,7 +2404,7 @@ def test_selfont():
         b"Text_1" in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
     )
     assert (
-        b"/F3 12 Tf"
+        b"/F3 12.0 Tf"
         in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
     )
     assert (
@@ -2416,7 +2413,7 @@ def test_selfont():
 
 
 @pytest.mark.enable_socket
-def test_no_ressource_for_14_std_fonts(caplog):
+def test_no_resource_for_14_std_fonts():
     """Cf #2670"""
     url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
     name = "iss2670.pdf"
@@ -2428,7 +2425,7 @@ def test_no_ressource_for_14_std_fonts(caplog):
             writer.update_page_form_field_values(
                 p, {a["/T"]: "Brooks"}, auto_regenerate=False
             )
-    assert "Font dictionary for /Helvetica not found." in caplog.text
+            assert "/Helvetica" in a["/AP"]["/N"]["/Resources"]["/Font"]
 
 
 @pytest.mark.enable_socket
@@ -2439,8 +2436,8 @@ def test_field_box_upside_down():
     writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
     writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
     assert writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data() == (
-        b"q\n/Tx BMC \nq\n1 1 105.29520000000001 10.835000000000036 re\n"
-        b"W\nBT\n/Arial 8.0 Tf 0 g\n2 2.8350000000000364 Td\n(0) Tj\nET\n"
+        b"q\n/Tx BMC \nq\n2 1 102.29520000000001 9.835000000000036 re\n"
+        b"W\nBT\n/Arial 8.0 Tf 0 g\n2 3.0455000000000183 Td\n(0) Tj\nET\n"
         b"Q\nEMC\nQ\n"
     )
     box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
@@ -2671,13 +2668,13 @@ def test_deprecate_with_as():
     with PdfWriter() as writer:
         with pytest.raises(
                 expected_exception=DeprecationError,
-                match="with_as_usage is deprecated and was removed in pypdf 5.0"
+                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
         ):
             _ = writer.with_as_usage
 
         with pytest.raises(
                 expected_exception=DeprecationError,
-                match="with_as_usage is deprecated and was removed in pypdf 5.0"
+                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
         ):
             writer.with_as_usage = False  # old code allowed setting this, so...
 
@@ -2852,3 +2849,95 @@ def test_unterminated_object__with_incremental_writer():
     writer.write(fi)
     b = fi.getvalue()
     assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1240\n%%EOF\n"
+
+
+def test_wrong_size_in_incremental_pdf(caplog):
+    source_data = RESOURCE_ROOT.joinpath("crazyones.pdf").read_bytes()
+    writer = PdfWriter(BytesIO(source_data), incremental=True)
+    writer._add_object(DictionaryObject())
+
+    incremental_data = BytesIO()
+    writer.write(incremental_data)
+    modified_data = incremental_data.getvalue().replace(b"/Size 25", b"/Size 2")
+
+    writer = PdfWriter(BytesIO(modified_data), incremental=False)
+    assert "Object count 19 exceeds defined trailer size 2" in caplog.text
+    assert len(writer._objects) == 20
+
+    caplog.clear()
+    writer = PdfWriter(incremental=False, strict=True)
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Object count 19 exceeds defined trailer size 2$"):
+        writer.clone_reader_document_root(reader=PdfReader(BytesIO(modified_data)))
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Got index error while flattening\.$"):
+        PdfWriter(BytesIO(modified_data), incremental=True)
+
+
+@pytest.mark.enable_socket
+def test_flatten_form_field_without_font_in_resources():
+    """
+    This test is a regression test for issue #3553.
+    Flatten form field with /Resources lacking /Font.
+    """
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-3553.pdf")))
+    writer = PdfWriter()
+    writer.append(reader)
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Unique reference numberRow1": "test"},
+        flatten=True,
+    )
+    b = BytesIO()
+    writer.write(b)
+
+    reader = PdfReader(b)
+    form_text_fields = reader.get_form_text_fields()
+    assert form_text_fields["Unique reference numberRow1"] == "test"
+
+
+def test_merge_with_null_acroform_does_not_raise_typeerror():
+    """
+    Source PDFs may contain '/AcroForm null'.
+
+    Test for issue #3598.
+    """
+    src_writer = PdfWriter()
+    src_writer.add_blank_page(72, 72)
+    src_writer.root_object[NameObject("/AcroForm")] = NullObject()
+
+    src_bytes = BytesIO()
+    src_writer.write(src_bytes)
+    src_bytes.seek(0)
+
+    source = PdfReader(src_bytes)
+
+    target = PdfWriter()
+    target.merge(0, source)
+
+    assert "/AcroForm" not in target.root_object
+
+
+def test_compress_identical_objects__info_is_none():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.compress_identical_objects()
+
+    writer.metadata = None
+    writer.compress_identical_objects()
+
+
+@pytest.mark.enable_socket
+def test_flatten_form_field_with_signature():
+    """
+    This test is a regression test for issue #3633.
+    Flatten form field with /Sig.
+    """
+    writer = PdfWriter(BytesIO(get_data_from_url(name="issue-3633.pdf")))
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"signature": "test"},
+        flatten=True,
+    )
+    b = BytesIO()
+    writer.write(b)
+
+    _ = PdfReader(b)

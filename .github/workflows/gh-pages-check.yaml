@@ -1,0 +1,29 @@
+name: 'GitHub Pages Check'
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 6 * * 1
+
+jobs:
+  url-check:
+    name: GitHub Pages check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitHub Pages
+        uses: actions/checkout@v6
+        with:
+          ref: 'gh-pages'
+          path: 'gh-pages'
+      - name: Checkout main (tools)
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          path: main
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Check GitHub Pages
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE"
+          python main/.github/scripts/check_gh_pages_updates.py

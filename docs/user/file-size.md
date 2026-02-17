@@ -27,16 +27,20 @@ reduction (from 5.7 MB to 0.8 MB) within a real PDF.
 
 ## Removing Images
 
+```{testsetup}
+pypdf_test_setup("user/file-size", {
+    "example.pdf": "../resources/example.pdf",
+})
+```
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
 
 writer.remove_images()
 
-with open("out.pdf", "wb") as f:
-    writer.write(f)
+writer.write("out-no-images.pdf")
 ```
 
 ## Reducing Image Quality
@@ -45,7 +49,7 @@ If we reduce the quality of the images within the PDF, we can **sometimes**
 reduce the file size of the PDF overall. That depends on how well the reduced
 quality image can be compressed.
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -54,8 +58,7 @@ for page in writer.pages:
     for img in page.images:
         img.replace(img.image, quality=80)
 
-with open("out.pdf", "wb") as f:
-    writer.write(f)
+writer.write("out-low-quality.pdf")
 ```
 
 ## Lossless Compression
@@ -67,7 +70,7 @@ the same.
 Deflate compression can be applied to a page via
 {meth}`page.compress_content_streams <pypdf._page.PageObject.compress_content_streams>`:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -75,8 +78,7 @@ writer = PdfWriter(clone_from="example.pdf")
 for page in writer.pages:
     page.compress_content_streams()  # This is CPU intensive!
 
-with open("out.pdf", "wb") as f:
-    writer.write(f)
+writer.write("out-lossless.pdf")
 ```
 
 `page.compress_content_streams` uses [`zlib.compress`](https://docs.python.org/3/library/zlib.html#zlib.compress)
