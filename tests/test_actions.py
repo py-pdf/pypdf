@@ -145,14 +145,18 @@ def test_page_add_action(pdf_file_writer):
 
     # Add open action when an additional-actions key exists and its value is an array
     page[NameObject("/AA")] = DictionaryObject()
-    page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
-    assert NameObject("/Next") in page[NameObject("/AA")][NameObject("/O")]
-    #page.add_action("open", JavaScript("app.alert('Open 1');"))
-    #expected = {"/O": {"/Type": "/Action", "/Next": NullObject(), "/S": "/JavaScript", "/JS": "app.alert('Open 1');"}}
-    #assert page[NameObject("/AA")] == expected
-    #page.delete_action("open")
-    #page.delete_action("close")  # Error!!!
-    #assert page.get(NameObject("/AA")) is None
+    # The trigger events take dictionary values, not arrays, so first add an action on which to attach the array
+    page.add_action("open", JavaScript("app.alert('Action to attach an array of actions');"))
+    page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject(
+        [JavaScript("app.alert('Array of actions element 1';)"), JavaScript("app.alert('Array of actions element 2';)")]
+    )
+    expected = {'/O': {'/Type': '/Action', '/Next': [{'/Type': '/Action', '/Next': NullObject(), '/S': '/JavaScript',
+                                                  '/JS': "app.alert('Array of actions element 1';)"},
+                                                 {'/Type': '/Action', '/Next': NullObject(), '/S': '/JavaScript',
+                                                  '/JS': "app.alert('Array of actions element 2';)"}],
+                   '/S': '/JavaScript', '/JS': "app.alert('Action to attach an array of actions');"}}
+    assert page[NameObject("/AA")] == expected
+    page.add_action("open", JavaScript("app.alert('Test of add_action when array of actions is present');"))
 
 
 def test_page_delete_action(pdf_file_writer):
