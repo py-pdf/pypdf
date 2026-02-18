@@ -130,7 +130,7 @@ def test_page_add_action(pdf_file_writer):
         TypeError,
         match = "'Next' must be an ArrayObject, DictionaryObject, or None",
     ):
-        page.add_action("xyzzy", JavaScript('app.alert("This is page " + this.pageNum);'))
+        page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
 
     # Add a close action without pre-existing action dictionary
     page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
