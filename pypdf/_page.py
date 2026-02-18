@@ -2158,7 +2158,7 @@ class PageObject(DictionaryObject):
 
         Args:
             trigger: "open" or "close" trigger event.
-            action: An instance of a subclass of Action;
+            action: An :py:class:`~pypdf.actions.Action` object;
                     JavaScript is currently the only available action type.
 
         # Example: Display the page number when the page is opened
