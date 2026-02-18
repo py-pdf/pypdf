@@ -495,6 +495,17 @@ class PageObject(DictionaryObject):
 
     original_page: "PageObject"  # very local use in writer when appending
 
+    def __new__(cls, *args: Any, **kwargs: Any) -> "PageObject":
+        # __new__ used here to make sure instance.pdf attribute
+        # is set. related to #3467.
+        instance = super().__new__(cls, *args, **kwargs)
+
+        instance.pdf = None
+        instance.inline_images = None
+        instance.indirect_reference = None
+
+        return instance
+
     def __init__(
         self,
         pdf: Optional[PdfCommonDocProtocol] = None,
