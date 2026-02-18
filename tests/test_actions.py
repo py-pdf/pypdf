@@ -120,7 +120,7 @@ def test_page_add_action(pdf_file_writer):
         }
     }
     assert page[NameObject("/AA")] == expected
-    page.delete_action("open")
+    page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
     # Add an open action with a pre-existing open action which has an invalid Next entry
