@@ -1,11 +1,11 @@
-"""Test the pypdf._xobj_image_helpers module."""
+"""Test the pypdf._image_xobject module."""
 from io import BytesIO
 
 import pytest
 from PIL import Image
 
 from pypdf import PdfReader
-from pypdf._xobj_image_helpers import _extended_image_from_bytes, _handle_flate, _xobj_to_image
+from pypdf._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
