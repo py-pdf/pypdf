@@ -376,7 +376,6 @@ class ImageFile:
         # to prevent circular import
         from ._image_xobject import _xobj_to_image  # noqa: PLC0415
         from ._reader import PdfReader  # noqa: PLC0415
-
         from .generic import DictionaryObject, PdfObject  # noqa: PLC0415
 
         if self.indirect_reference is None:
