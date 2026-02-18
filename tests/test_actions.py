@@ -125,7 +125,7 @@ def test_page_add_action(pdf_file_writer):
 
     # Add an open action with a pre-existing open action which has an invalid Next entry
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
-    page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = "xyzzy"
+    page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = NameObject("/xyzzy")
     with pytest.raises(
         TypeError,
         match = "'Next' must be an ArrayObject, DictionaryObject, or None",
