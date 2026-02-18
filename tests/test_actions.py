@@ -43,7 +43,7 @@ def test_page_add_action(pdf_file_writer):
     ):
         page.add_action("close", "xyzzy")
 
-    # Add open action without pre-existing action dictionary
+    # Add an open action without pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/O": {
@@ -57,7 +57,7 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
-    # Add close action without pre-existing action dictionary
+    # Add a close action without pre-existing action dictionary
     page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/C": {
@@ -71,7 +71,7 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
-    # Add open and close actions without pre-existing action dictionary
+    # Add an open and close actions without pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('Page opened');"))
     page.add_action("close", JavaScript("app.alert('Page closed');"))
     expected = {
@@ -93,7 +93,60 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
-    # Add open action when an additional-actions key exists, but is an empty dictionary
+    # Add an open action with a null object as the AA entry
+    page[NameObject("/AA")] = NullObject()
+    page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    expected = {
+        "/O": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('This is page ' + this.pageNum);"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("open")
+    assert page.get(NameObject("/AA")) is None
+
+    # Add a close action with a null object as the AA entry
+    page[NameObject("/AA")] = NullObject()
+    page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    expected = {
+        "/C": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('This is page ' + this.pageNum);"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("open")
+    assert page.get(NameObject("/AA")) is None
+
+    # Add an open action with a pre-existing open action which has an invalid Next entry
+    page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = "xyzzy"
+    with pytest.raises(
+        TypeError,
+        match = "'Next' must be an ArrayObject, DictionaryObject, or None",
+    ):
+        page.add_action("xyzzy", JavaScript('app.alert("This is page " + this.pageNum);'))
+
+    # Add a close action without pre-existing action dictionary
+    page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    expected = {
+        "/C": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('This is page ' + this.pageNum);"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("close")
+    assert page.get(NameObject("/AA")) is None
+
+    # Add an open action when an additional-actions key exists, but is an empty dictionary
     page[NameObject("/AA")] = DictionaryObject()
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
@@ -149,7 +202,7 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
-    # Add open action when an additional-actions key exists and its value is an array
+    # Add an open action when an additional-actions key exists and its value is an array
     page[NameObject("/AA")] = DictionaryObject()
     # The trigger events take dictionary values, not arrays, so first add an action on which to attach the array
     page.add_action("open", JavaScript("app.alert('Action to attach an array of actions');"))
@@ -225,6 +278,12 @@ def test_page_delete_action(pdf_file_writer):
     ):
         page.delete_action("open")
 
+    with pytest.raises(
+        ValueError,
+        match = "An additional-actions dictionary is absent; nothing to delete",
+    ):
+        page.delete_action("close")
+
     page.add_action("open", JavaScript("app.alert('Page opened');"))
     page.add_action("close", JavaScript("app.alert('Page closed');"))
     expected = {
@@ -251,6 +310,9 @@ def test_page_delete_action(pdf_file_writer):
             "/JS": "app.alert('Page closed');"
         }
     }
+    assert page[NameObject("/AA")] == expected
+    # Redundantly delete again, for coverage
+    page.delete_action("open")
     assert page[NameObject("/AA")] == expected
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
