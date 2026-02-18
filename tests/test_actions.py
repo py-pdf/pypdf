@@ -146,6 +146,7 @@ def test_page_add_action(pdf_file_writer):
                 "/Next": NullObject(),
                 "/S": "/JavaScript",
                 "/JS": "app.alert('This is page ' + this.pageNum);"
+            },
             "/S": "/JavaScript",
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
@@ -153,11 +154,6 @@ def test_page_add_action(pdf_file_writer):
     assert page[NameObject("/AA")] == expected
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
-
-
-
-
-
 
     # Add a close action without a pre-existing action dictionary
     page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
