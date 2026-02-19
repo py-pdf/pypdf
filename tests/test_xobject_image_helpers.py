@@ -231,3 +231,26 @@ def test_handle_flate__icc_based__image_mode_1():
             square_y = y // 8
             is_black_square = (square_x + square_y) % 2 == 1
             assert image.getpixel((x, y)) == 255 * int(not is_black_square)
+
+
+def test_handle_jpx__explicit_decode():
+    stream = StreamObject()
+    stream[NameObject("/BitsPerComponent")] = NumberObject(8)
+    stream[NameObject("/ColorSpace")] = NameObject("/DeviceCMYK")
+    stream[NameObject("/Decode")] = ArrayObject([1, 0, 1, 0, 1, 0, 1, 0])
+    stream[NameObject("/Filter")] = NameObject("/JPXDecode")
+    stream[NameObject("/Height")] = NumberObject(16)
+    stream[NameObject("/Width")] = NumberObject(16)
+
+    image = Image.new(mode="CMYK", size=(16, 16))
+    [image.putpixel((i, i), 255) for i in range(16)]
+    image_data = BytesIO()
+    image.save(image_data, format="JPEG2000")
+    stream.set_data(image_data.getvalue())
+    image.save(image_data, format="JPEG2000")
+
+    result = _xobj_to_image(x_object=stream)[2]
+    for y in range(16):
+        for x in range(16):
+            assert result.getpixel((x, y)) == (255 * (x != y), 255, 255, 255), (x, y)
+            assert image.getpixel((x, y)) == (255 * (x == y), 0, 0, 0), (x, y)
