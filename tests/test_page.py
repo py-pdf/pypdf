@@ -1532,3 +1532,22 @@ def test_replace_contents__null_object_cloning_error():
 
     reader = PdfReader(data)
     assert len(reader.pages) == 10
+
+
+def test_get_rectangle__size_handling(caplog):
+    """
+    See issue #2991 and related ones. We would previously generate invalid page boxes when they
+    were part of the `/Pages` instead of the `/Page` due to re-using the same target object,
+    while appending to the existing "full" object. To keep compatibility with our old code,
+    allow these boxes to have more than four entries.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    assert page.mediabox == RectangleObject((0, 0, 612, 792))
+    assert caplog.messages == []
+
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    page[NameObject("/MediaBox")] = ArrayObject([0, 0, 13, 37, 0, 0, 13, 37])
+    assert page.mediabox == RectangleObject((0, 0, 13, 37))
+    assert "Expected four values, got 8: [0, 0, 13, 37, 0, 0, 13, 37]\n" in caplog.text
