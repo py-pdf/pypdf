@@ -5,6 +5,7 @@ import pytest
 from PIL import Image
 
 from pypdf import PdfReader
+from pypdf._utils import Version
 from pypdf._xobj_image_helpers import _extended_image_from_bytes, _handle_flate, _xobj_to_image
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, PdfReadError
@@ -233,6 +234,10 @@ def test_handle_flate__icc_based__image_mode_1():
             assert image.getpixel((x, y)) == 255 * int(not is_black_square)
 
 
+@pytest.mark.skipif(
+    condition=Version(Image.__version__) < Version("12.1.0"),
+    reason="Unsuitable Pillow version."
+)
 def test_handle_jpx__explicit_decode():
     stream = StreamObject()
     stream[NameObject("/BitsPerComponent")] = NumberObject(8)
