@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771500081486,
+  "lastUpdate": 1771508462057,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -89699,6 +89699,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007402770831775363",
             "extra": "mean: 671.5603372000032 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "46705137f1eb10181841b4f490994571151ae826",
+          "message": "BUG: Fix wrong LUT size error (#3651)\n\nRunning the image extraction on an image with DeviceCMYK and JPXDecode\nusing a custom /Decode entry would previously fail when applying the LUT\nto the image in `_apply_decode`. This was due to converting the image to\nRGB, but the custom LUT having a size of 8 entries.\n\nFor my specific (non-disclosable) example everything works correctly\nnow, while all existing tests still pass. Honestly, I am not sure\nwhether all cases are handled correctly now, but at least the error is\ngone ...",
+          "timestamp": "2026-02-19T14:38:27+01:00",
+          "tree_id": "20eba1b1380fecb2fced394c52c0f95435e16c95",
+          "url": "https://github.com/py-pdf/pypdf/commit/46705137f1eb10181841b4f490994571151ae826"
+        },
+        "date": 1771508457712,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.109631033434038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004376808905338534",
+            "extra": "mean: 321.5815604000056 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.901103100490433,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024184607531063254",
+            "extra": "mean: 62.88871870588383 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2906275146892638,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01243058228574945",
+            "extra": "mean: 3.4408304426000087 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.129402878789243,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006148802311061856",
+            "extra": "mean: 55.159014705882264 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09089516251945146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007663377853646834",
+            "extra": "mean: 11.001685593399992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4991887071348482,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036245258733791914",
+            "extra": "mean: 667.0274364000079 msec\nrounds: 5"
           }
         ]
       }
