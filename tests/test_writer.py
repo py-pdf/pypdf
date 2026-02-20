@@ -299,9 +299,13 @@ def test_insert_blank_page():
     assert page.mediabox.width == 50
     assert page.mediabox.height == 60
 
-    #old_page_count = len(writer.pages)
+    #old_page = writer.pages[0]
+    #page = writer.insert_blank_page(width=42, height=None, index=len(writer.pages))
+    #assert page.mediabox.width == 42
+    #assert page.mediabox.height == old_page.mediabox.height
+
     old_page = writer.pages[0]
-    page = writer.insert_blank_page(width=None, height=42, index=0)
+    page = writer.insert_blank_page(width=None, height=42, index=len(writer.pages))
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == 42
 
