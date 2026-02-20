@@ -1,14 +1,21 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from io import BytesIO
 from typing import Any, Union, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, StreamObject
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject, StreamObject
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
 from .constants import FontFlags
 from .errors import PdfReadError
+
+try:
+    from fontTools.ttLib import TTFont
+    HAS_FONTTOOLS = True
+except ImportError:
+    HAS_FONTTOOLS = False
 
 
 @dataclass(frozen=True)
@@ -314,6 +321,91 @@ class Font:
             character_widths=character_widths,
             space_width=space_width,
             interpretable=interpretable
+        )
+
+    @classmethod
+    def from_truetype_font_file(cls, font_file: BytesIO) -> "Font":
+        with TTFont(font_file) as tt_font_object:
+            header = tt_font_object["head"]
+            names = tt_font_object["name"]
+            postscript_info = tt_font_object["post"]
+            horizontal_header = tt_font_object["hhea"]
+            os_2 = tt_font_object["OS/2"]
+            metrics = tt_font_object["hmtx"].metrics
+
+            # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
+            units_per_em = header.unitsPerEm
+            scale_factor = 1000.0 / units_per_em
+
+            # Get the font descriptor
+            font_descriptor_kwargs: dict[Any, Any] = {}
+            font_descriptor_kwargs["name"] = names.getDebugName(6) or names.getDebugName(1)  # PostScript name
+            font_descriptor_kwargs["family"] = names.getDebugName(16) or names.getDebugName(1)  # Prefer typographic
+            font_descriptor_kwargs["weight"] = names.getDebugName(17) or names.getDebugName(2)  # names
+            font_descriptor_kwargs["ascent"] = int(round(horizontal_header.ascent * scale_factor, 0))
+            font_descriptor_kwargs["descent"] = int(round(horizontal_header.descent * scale_factor, 0))
+            font_descriptor_kwargs["cap_height"] = int(round(os_2.sCapHeight * scale_factor, 0))
+            font_descriptor_kwargs["x_height"] = int(round(os_2.sxHeight  * scale_factor, 0))
+
+            # Get the font flags
+            flags: int = 0
+            italic_angle = postscript_info.italicAngle
+            if italic_angle != 0.0:
+                flags |= FontFlags.ITALIC
+            if postscript_info.isFixedPitch > 0:
+                flags |= FontFlags.FIXED_PITCH
+
+            # See Chapter 6 of the TrueType reference manual for the definition of the OS/2 table:
+            # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
+            family_class = os_2.sFamilyClass >> 8
+            if 2 <= family_class <= 9 and family_class != 6:
+                flags |= FontFlags.SERIF
+            if family_class == 10:
+                flags |= FontFlags.SCRIPT
+            if family_class == 12:
+                flags |= FontFlags.SYMBOLIC
+            else:
+                flags |= FontFlags.NONSYMBOLIC
+            font_descriptor_kwargs["flags"] = flags
+
+            font_descriptor_kwargs["bbox"] = (
+                round(header.xMin * scale_factor, 0),
+                round(header.yMin * scale_factor, 0),
+                round(header.xMax * scale_factor, 0),
+                round(header.yMax * scale_factor, 0)
+            )
+
+            font_file_data = StreamObject()
+            font_file_raw_bytes = font_file.getvalue()
+            font_file_data.set_data(font_file_raw_bytes)
+            font_file_data.update({NameObject("/Length1"): NumberObject(len(font_file_raw_bytes))})
+            font_descriptor_kwargs["font_file"] = font_file_data
+
+            font_descriptor = FontDescriptor(**font_descriptor_kwargs)
+            character_map = {chr(key): value for key, value in tt_font_object.getBestCmap().items()}
+            encoding = "utf_16_be"  # Assume unicode
+
+            character_widths: dict[str, int] = {}
+            for character, glyph in character_map.items():
+                character_widths[character] = int(round(metrics[glyph][0] * scale_factor, 0))
+            cls._add_default_width(character_widths, flags)
+
+            space_width = character_widths.get(" ", 0)
+            if space_width == 0:
+                if (font_descriptor.flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
+                    space_width = character_widths["default"]
+                else:
+                    space_width = character_widths["default"] // 2
+
+        return cls(
+            name=font_descriptor.name,
+            sub_type="TrueType",
+            encoding=encoding,
+            font_descriptor=font_descriptor,
+            character_map=character_map,
+            character_widths=character_widths,
+            space_width=space_width,
+            interpretable=True
         )
 
     def as_font_resource(self) -> DictionaryObject:
