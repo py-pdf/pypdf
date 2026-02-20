@@ -699,10 +699,8 @@ class PdfWriter(PdfDocCommon):
         If no page size is specified for a dimension, use the size of the last page.
 
         Args:
-            width: The width of the new page expressed in default user
-                space units.
-            height: The height of the new page expressed in default
-                user space units.
+            width: The width of the new page in default user space units.
+            height: The height of the new page in default user space units.
             index: Position to add the page.
 
         Returns:
