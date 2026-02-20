@@ -234,6 +234,10 @@ def writer_operate(writer: PdfWriter) -> None:
     writer.page_mode = NameObject("/UseOC")
     assert writer._get_page_mode() == "/UseOC"
     writer.insert_blank_page(width=100, height=100)
+    page = writer.insert_blank_page(width=100)
+    assert page.mediabox.height == 100
+    page = writer.insert_blank_page(height=100)
+    assert page.mediabox.width == 100
     writer.insert_blank_page()  # without parameters
 
     writer.remove_images()
@@ -249,6 +253,61 @@ def writer_operate(writer: PdfWriter) -> None:
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
         assert k in objects_hash, f"Missing {v}"
+
+
+def test_insert_blank_page():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=10, index=0)
+    assert page.mediabox.width == 10
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=20, index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == 20
+
+    page = writer.insert_blank_page(width=30, height=40, index=0)
+    assert page.mediabox.width == 30
+    assert page.mediabox.height == 40
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-10, index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=-20, index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-30, height=-40, index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page_count = len(writer.pages)
+    old_page = writer.pages[old_page_count - 1]
+    page = writer.insert_blank_page(width=50, height=60, index=len(writer.pages))
+    assert len(writer.pages) == old_page_count + 1
+    assert page.mediabox.width == 50
+    assert page.mediabox.height == 60
+
+    #old_page = writer.pages[0]
+    #page = writer.insert_blank_page(width=42, height=None, index=len(writer.pages))
+    #assert page.mediabox.width == 42
+    #assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=None, height=42, index=len(writer.pages))
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == 42
 
 
 @pytest.mark.parametrize(

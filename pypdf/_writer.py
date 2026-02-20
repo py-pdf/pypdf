@@ -699,10 +699,8 @@ class PdfWriter(PdfDocCommon):
         If no page size is specified for a dimension, use the size of the last page.
 
         Args:
-            width: The width of the new page expressed in default user
-                space units.
-            height: The height of the new page expressed in default
-                user space units.
+            width: The width of the new page in default user space units.
+            height: The height of the new page in default user space units.
             index: Position to add the page.
 
         Returns:
@@ -713,10 +711,12 @@ class PdfWriter(PdfDocCommon):
                 and previous page does not exist.
 
         """
-        if width is None or (height is None and index < self.get_num_pages()):
-            oldpage = self.pages[index]
-            width = oldpage.mediabox.width
-            height = oldpage.mediabox.height
+        if (width is None or width <= 0) and index < self.get_num_pages():
+            old_page = self.pages[index]
+            width = old_page.mediabox.width
+        if (height is None or height <= 0) and index < self.get_num_pages():
+            old_page = self.pages[index]
+            height = old_page.mediabox.height
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page
