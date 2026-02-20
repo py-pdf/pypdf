@@ -3,6 +3,14 @@
 pypdf is a library and hence its users are developers. This document is not for
 the users, but for people who want to work on pypdf itself.
 
+```{note}
+Our CI (continuous integration) validates that relevant standards are met with your contribution.
+Especially for regular contributors or larger changes, it is highly recommended that you set up your own development environment
+to already cover the most important aspects locally. This greatly helps us to reduce the noise compared to when you open an untested
+PR early and use our CI to do your debugging and improvements from there. The maintainers usually receive a notification on every push
+to a branch where a corresponding PR is open, possibly hiding important notifications.
+```
+
 ## Installing Requirements
 
 ```
