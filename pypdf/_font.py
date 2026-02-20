@@ -3,7 +3,15 @@ from dataclasses import dataclass, field
 from io import BytesIO
 from typing import Any, Union, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject, StreamObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    FloatObject,
+    NameObject,
+    NumberObject,
+    StreamObject,
+    TextStringObject,
+)
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
@@ -410,16 +418,51 @@ class Font:
         )
 
     def as_font_resource(self) -> DictionaryObject:
-        # For now, this returns a font resource that only works with the 14 Adobe Core fonts.
-        return (
-            DictionaryObject({
-                NameObject("/Subtype"): NameObject("/Type1"),
-                NameObject("/Name"): NameObject(f"/{self.name}"),
+        # If we have an embedded Truetype font, we assume that we need to produce a Type 2 CID font resource.
+        if self.font_descriptor.font_file and self.sub_type == "TrueType":
+            # Create the descendant font, using Identity mapping
+            cid_font = DictionaryObject({
                 NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/CIDFontType2"),
                 NameObject("/BaseFont"): NameObject(f"/{self.name}"),
-                NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+                NameObject("/CIDSystemInfo"): DictionaryObject({
+                    NameObject("/Registry"): TextStringObject("Adobe"),  # Should be something read from font file
+                    NameObject("/Ordering"): TextStringObject("Identity"),
+                    NameObject("/Supplement"): NumberObject(0)
+                }),
+                # "/FontDescriptor" should be an IndirectObject. We don't add it here.
             })
-        )
+
+            # Build the widths (/W) array. This can have to formats:
+            # [first_cid [w1 w2 w3]] or [first last width]
+            # Here we choose the first format and simply provide one array with one width for every cid.
+            widths_list = []
+            for char, width in self.character_widths.items():
+                if char != "default":
+                    cid = ord(char)
+                    widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+
+            cid_font[NameObject("/W")] = ArrayObject(widths_list)
+            cid_font[NameObject("/DW")] = NumberObject(self.character_widths.get("default", 1000))
+            cid_font[NameObject("/CIDToGIDMap")] = NameObject("/Identity")
+
+            # Create the Type 0 font object)
+            return DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/Type0"),
+                NameObject("/BaseFont"): NameObject(f"/{self.name}"),
+                NameObject("/Encoding"): NameObject("/Identity-H"),
+                NameObject("/DescendantFonts"): ArrayObject([cid_font]),
+            })
+
+        # Fallback: Return a font resource for the 14 Adobe Core fonts.
+        return DictionaryObject({
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/Name"): NameObject(f"/{self.name}"),
+            NameObject("/BaseFont"): NameObject(f"/{self.name}"),
+            NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+        })
 
     def text_width(self, text: str = "") -> float:
         """Sum of character widths specified in PDF font for the supplied text."""
