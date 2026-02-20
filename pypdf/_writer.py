@@ -1618,7 +1618,7 @@ class PdfWriter(PdfDocCommon):
                     if v in crossref:
                         obj[k] = crossref[v]
                 else:
-                    """the filtering on DictionaryObject and ArrayObject only
+                    """The filtering on DictionaryObject and ArrayObject only
                     will be performed within replace_in_obj"""
                     replace_in_obj(v, crossref)
 
@@ -1649,18 +1649,19 @@ class PdfWriter(PdfDocCommon):
             if isinstance(obj, (DictionaryObject, ArrayObject)):
                 replace_in_obj(obj, cnv_rev)
 
-        # remove orphans (if applicable)
-        unreferenced[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
+        if remove_unreferenced:
+            unreferenced[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
 
-        if not is_null_or_none(self._info):
-            unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+            if not is_null_or_none(self._info):
+                unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore
 
-        try:
-            unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
-        except AttributeError:
-            pass
-        for i in compress(range(len(self._objects)), unreferenced):
-            self._objects[i] = None
+            try:
+                unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
+            except AttributeError:
+                pass
+
+            for i in compress(range(len(self._objects)), unreferenced):
+                self._objects[i] = None
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
