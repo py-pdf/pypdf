@@ -1,11 +1,12 @@
 import re
 from dataclasses import dataclass
 from enum import IntEnum
+from io import BytesIO
 from typing import Any, Optional, Union, cast
 
 from .._codecs import fill_from_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
-from .._font import Font
+from .._font import HAS_FONTTOOLS, Font
 from .._utils import logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes
 from ..generic import (
@@ -374,6 +375,16 @@ class TextStreamAppearance(BaseStreamAppearance):
         except UnicodeEncodeError:
             encodable = False
 
+        if not encodable and font.font_descriptor.font_file and HAS_FONTTOOLS and font.sub_type == "TrueType":
+            # If we have a font file, we can try to produce a new font resource with an encoding
+            # that does include the necessary characters.
+            font = font.from_truetype_font_file(BytesIO(font.font_descriptor.font_file.get_data()))
+            font_resource = font.as_font_resource()
+            font_name = f"/{font.name}"
+            supported_chars = set(font.character_map.keys())
+            if all(char in supported_chars for char in text):
+                encodable = True
+
         if not encodable:
             logger_warning(
                 f"Text string '{text}' contains characters not supported by font encoding. "
@@ -384,9 +395,9 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         font_glyph_byte_map: dict[str, bytes]
         if isinstance(font.encoding, str):
-            font_glyph_byte_map = {
-                v: k.encode(font.encoding) for k, v in font.character_map.items()
-            }
+            font_glyph_byte_map = {}
+            for key, value in font.character_map.items():
+                font_glyph_byte_map[value] = key.encode(font.encoding)
         else:
             font_glyph_byte_map = {v: bytes((k,)) for k, v in font.encoding.items()}
             font_encoding_rev = {v: bytes((k,)) for k, v in font.encoding.items()}
