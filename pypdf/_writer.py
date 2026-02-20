@@ -63,6 +63,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
+    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
 )
