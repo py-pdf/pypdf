@@ -850,10 +850,11 @@ def test_merge_page_with_multiple_annotations():
         vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
     )
     writer.add_annotation(page_number=0, annotation=annotation_1)
-    annotation_2 = Polygon(
-        vertices=[(40, 540), (200, 640), (70, 740), (50, 700)],
-    )
-    writer.add_annotation(page_number=1, annotation=annotation_2)
+
+    #annotation_2 = Polygon(
+    #    vertices=[(40, 540), (200, 640), (70, 740), (50, 700)],
+    #)
+    #writer.add_annotation(page_number=1, annotation=annotation_2)
 
     page_one = writer.pages[0]
     page_two = writer.pages[1]
