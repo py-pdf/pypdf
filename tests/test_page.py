@@ -838,7 +838,7 @@ def test_no_resources():
     page_one.merge_page(page_two)
 
 
-def test_merge_page_with_multiple_annotations():
+def test_merge_page_with_annotations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
@@ -851,15 +851,12 @@ def test_merge_page_with_multiple_annotations():
     )
     writer.add_annotation(page_number=0, annotation=annotation_1)
 
-    #annotation_2 = Polygon(
-    #    vertices=[(40, 540), (200, 640), (70, 740), (50, 700)],
-    #)
-    #writer.add_annotation(page_number=1, annotation=annotation_2)
-
     page_one = writer.pages[0]
     page_two = writer.pages[1]
     page_one.merge_page(page_two)
 
+    page_two[NameObject("/Annots")] = TextStringObject("For coverage, when Annots is not an array")
+    page_one.merge_page(page_two)
 
 def test_merge_page_reproducible_with_proc_set():
     page1 = PageObject.create_blank_page(width=100, height=100)
