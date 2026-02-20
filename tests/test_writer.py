@@ -2931,10 +2931,18 @@ def test_merge_with_null_acroform_does_not_raise_typeerror():
 
 def test_compress_identical_objects__info_is_none():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
-    writer.compress_identical_objects()
+    with pytest.warns(
+            expected_warning=DeprecationWarning,
+            match=r"remove_orphans is deprecated and will be removed in pypdf 6.0.0. Use remove_unreferenced instead."
+    ):
+        writer.compress_identical_objects()
 
     writer.metadata = None
-    writer.compress_identical_objects()
+    with pytest.warns(
+            expected_warning=DeprecationWarning,
+            match=r"remove_orphans is deprecated and will be removed in pypdf 6.0.0. Use remove_unreferenced instead."
+    ):
+        writer.compress_identical_objects()
 
 
 @pytest.mark.enable_socket
