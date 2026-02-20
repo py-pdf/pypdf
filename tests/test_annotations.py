@@ -371,6 +371,137 @@ def test_popup(caplog):
     Path(target).unlink()  # comment this out for manual inspection
 
 
+def test_markup_annotation_in_reply_to():
+    """Test that a reply annotation gets /IRT, /RT, and /NM after a write/read cycle."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    parent = Text(
+        text="Parent comment",
+        rect=(50, 550, 200, 650),
+        open=True,
+    )
+    parent_ref = writer.add_annotation(0, parent)
+
+    reply = Text(
+        text="Reply to parent",
+        rect=(50, 550, 200, 650),
+        in_reply_to=parent_ref,
+    )
+    writer.add_annotation(0, reply)
+
+    assert "/IRT" in reply
+    assert reply["/IRT"].get_object() is parent_ref
+    assert reply["/RT"] == "/R"
+    assert "/NM" in reply
+
+    assert "/NM" not in parent_ref
+
+    buf = BytesIO()
+    writer.write(buf)
+
+    reader2 = PdfReader(buf)
+    annots = reader2.pages[0]["/Annots"]
+    assert len(annots) == 2
+
+    reply_obj = annots[1].get_object()
+    assert reply_obj["/IRT"].get_object()["/Contents"] == "Parent comment"
+    assert reply_obj["/NM"] == reply["/NM"]
+
+
+def test_markup_annotation_in_reply_to_group_type():
+    """Test that a grouped annotation sets /RT to /Group."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    parent = Text(
+        text="Parent",
+        rect=(50, 550, 200, 650),
+    )
+    parent_ref = writer.add_annotation(0, parent)
+
+    grouped = Text(
+        text="Grouped with parent",
+        rect=(50, 550, 200, 650),
+        in_reply_to=parent_ref,
+        reply_type="Group",
+    )
+    writer.add_annotation(0, grouped)
+
+    assert grouped["/RT"] == "/Group"
+    assert "/IRT" in grouped
+
+
+def test_markup_annotation_name():
+    """Test explicit annotation_name without in_reply_to."""
+    annot = Text(
+        text="Named annotation",
+        rect=(50, 550, 200, 650),
+        annotation_name="my-unique-name",
+    )
+    assert annot["/NM"] == "my-unique-name"
+
+
+def test_markup_annotation_in_reply_to_custom_name():
+    """Test explicit annotation_name with in_reply_to."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+
+    parent = Text(text="Parent", rect=(0, 0, 100, 100))
+    parent_ref = writer.add_annotation(0, parent)
+
+    reply = Text(
+        text="Reply",
+        rect=(0, 0, 100, 100),
+        in_reply_to=parent_ref,
+        annotation_name="custom-reply-name",
+    )
+    writer.add_annotation(0, reply)
+
+    assert reply["/NM"] == "custom-reply-name"
+    assert "/IRT" in reply
+
+
+def test_markup_annotation_in_reply_to_unregistered():
+    """Test that an unregistered parent raises ValueError."""
+    unregistered = Text(text="Not added to writer", rect=(0, 0, 100, 100))
+    with pytest.raises(ValueError, match="in_reply_to must be a registered annotation"):
+        Text(
+            text="Reply",
+            rect=(0, 0, 100, 100),
+            in_reply_to=unregistered,
+        )
+
+
+def test_markup_annotation_in_reply_to_indirect_object():
+    """Test passing an IndirectObject directly as in_reply_to."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+
+    parent = Text(text="Parent", rect=(0, 0, 100, 100))
+    parent_ref = writer.add_annotation(0, parent)
+    indirect_ref = parent_ref.indirect_reference
+
+    reply = Text(
+        text="Reply via IndirectObject",
+        rect=(0, 0, 100, 100),
+        in_reply_to=indirect_ref,
+    )
+    writer.add_annotation(0, reply)
+
+    assert "/IRT" in reply
+    assert reply["/RT"] == "/R"
+    assert "/NM" in reply
+
+    buf = BytesIO()
+    writer.write(buf)
+
+    reader = PdfReader(buf)
+    annots = reader.pages[0]["/Annots"]
+    assert len(annots) == 2
+    reply_obj = annots[1].get_object()
+    assert reply_obj["/IRT"].get_object()["/Contents"] == "Parent"
+    assert reply_obj["/NM"] == reply["/NM"]
+
+
 @pytest.mark.enable_socket
 def test_outline_action_without_d_lenient():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
