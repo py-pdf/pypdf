@@ -267,7 +267,12 @@ def test_transform_compress_identical_objects():
     for page in writer.pages:
         op = Transformation().scale(sx=0.8, sy=0.8)
         page.add_transformation(op)
-    writer.compress_identical_objects()
+        writer.add_page(page)
+    with pytest.warns(
+        DeprecationWarning,
+        match="remove_orphans is deprecated and will be removed in pypdf 6.0.0. Use remove_unreferenced instead.",
+    ):
+        writer.compress_identical_objects()
     bytes_out = BytesIO()
     writer.write(bytes_out)
     result_reader = PdfReader(bytes_out)

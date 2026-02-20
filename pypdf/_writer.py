@@ -63,6 +63,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
+    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
 )
@@ -1580,17 +1581,26 @@ class PdfWriter(PdfDocCommon):
         self,
         remove_identicals: bool = True,
         remove_orphans: bool = True,
+        remove_unreferenced: bool = True
     ) -> None:
         """
-        Parse the PDF file and merge objects that have the same hash.
+        Parse the PDF file objects that have the same hash.
         This will make objects common to multiple pages.
         Recommended to be used just before writing output.
 
         Args:
             remove_identicals: Remove identical objects.
-            remove_orphans: Remove unreferenced objects.
+            remove_orphans: Remove unreferenced objects, deprecated use remove_unreferenced.
+            remove_unreferenced: Remove unreferenced objects.
 
         """
+        deprecate_with_replacement(
+            old_name="remove_orphans",
+            new_name="remove_unreferenced",
+            removed_in="6.0.0",
+        )
+        if not remove_orphans:
+            remove_unreferenced = remove_orphans
 
         def replace_in_obj(
             obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
@@ -1604,17 +1614,17 @@ class PdfWriter(PdfDocCommon):
             assert isinstance(obj, (DictionaryObject, ArrayObject))
             for k, v in key_val:
                 if isinstance(v, IndirectObject):
-                    orphans[v.idnum - 1] = False
+                    unreferenced[v.idnum - 1] = False
                     if v in crossref:
                         obj[k] = crossref[v]
                 else:
-                    """the filtering on DictionaryObject and ArrayObject only
+                    """The filtering on DictionaryObject and ArrayObject only
                     will be performed within replace_in_obj"""
                     replace_in_obj(v, crossref)
 
-        # _idnum_hash :dict[hash]=(1st_ind_obj,[other_indir_objs,...])
+        # _idnum_hash: dict[hash] = (1st_ind_obj, [2nd_ind_obj,...])
         self._idnum_hash = {}
-        orphans = [True] * len(self._objects)
+        unreferenced = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
             if is_null_or_none(obj):
@@ -1639,18 +1649,19 @@ class PdfWriter(PdfDocCommon):
             if isinstance(obj, (DictionaryObject, ArrayObject)):
                 replace_in_obj(obj, cnv_rev)
 
-        # remove orphans (if applicable)
-        orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
+        if remove_unreferenced:
+            unreferenced[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
 
-        if not is_null_or_none(self._info):
-            orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+            if not is_null_or_none(self._info):
+                unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore
 
-        try:
-            orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
-        except AttributeError:
-            pass
-        for i in compress(range(len(self._objects)), orphans):
-            self._objects[i] = None
+            try:
+                unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
+            except AttributeError:
+                pass
+
+            for i in compress(range(len(self._objects)), unreferenced):
+                self._objects[i] = None
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
