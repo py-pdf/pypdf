@@ -1650,16 +1650,16 @@ class PdfWriter(PdfDocCommon):
                 replace_in_obj(obj, cnv_rev)
 
         # remove orphans (if applicable)
-        orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
+        unreferenced[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
 
         if not is_null_or_none(self._info):
-            orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+            unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore
 
         try:
-            orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
+            unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
         except AttributeError:
             pass
-        for i in compress(range(len(self._objects)), orphans):
+        for i in compress(range(len(self._objects)), unreferenced):
             self._objects[i] = None
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
