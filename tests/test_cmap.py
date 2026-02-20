@@ -4,10 +4,11 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import get_encoding, parse_bfchar
+from pypdf._cmap import get_encoding, parse_bfchar, parse_bfrange
 from pypdf._codecs import charset_encoding
 from pypdf._font import Font
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject
+from pypdf.errors import LimitReachedError
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject, StreamObject
 
 from . import RESOURCE_ROOT, get_data_from_url
 
@@ -335,3 +336,89 @@ def test_parse_bfchar(caplog):
     assert map_dict == {-1: 2, "ծ": "", "վ": "ጷ"}
     assert int_entry == [1406, 1390]
     assert caplog.messages == ["Got invalid hex string: Odd-length string (b'1f310')"]
+
+
+def test_parse_bfrange__iteration_limit():
+    writer = PdfWriter()
+
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<00000000> <001FFFFF> <00000000>\n"
+        b"endbfrange\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+
+    # Case without list, exceeding list directly.
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 2097152 > 100000\.$"
+    ):
+        _ = page.extract_text()
+
+    # Use a pre-filled dummy list to simulate multiple calls where the upper bound does
+    # not overflow, but the overall size does. Case without list.
+    int_entry = [0] * 99_999
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 165535 > 100000\.$"
+    ):
+        _ = parse_bfrange(line=b"0000 FFFF 0000", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
+    assert map_dict == {-1: 2}
+
+    # Exceeding from previous call.
+    int_entry.append(1)
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
+    ):
+        _ = parse_bfrange(line=b"00000000 00000000 00000000", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
+    assert map_dict == {-1: 4}
+
+    # multiline_rg
+    int_entry = [0] * 99_995
+    map_dict = {-1: 1}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
+    ):
+        _ = parse_bfrange(
+            line=b"0020  0021  0022  0023  0024  0025  0026  2019",
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=(32, 251)
+        )
+    assert map_dict == {-1: 1, " ": " ", "!": "!", '"': '"', "#": "#", "$": "$"}
+
+    # No multiline_rg, but list.
+    int_entry = [0] * 99_995
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
+    ):
+        _ = parse_bfrange(
+            line=b"01 8A [ FFFD FFFD FFFD FFFF FFAB AAAA BBBB",
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {-1: 1, "\x01": "�", "\x02": "�", "\x03": "�", "\x04": "\uffff", "\x05": "ﾫ"}
+
+
+def test_parse_bfchar__iteration_limit():
+    int_entry = [0] * 99_995
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100002 > 100000\.$"
+    ):
+        parse_bfchar(
+            line=b"0003   0020   0008   0025   0009   0026   000A   0027   000B   0028   000C   0029   000D   002A",
+            map_dict=map_dict, int_entry=int_entry,
+        )
+    assert map_dict == {}

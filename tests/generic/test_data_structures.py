@@ -1,7 +1,11 @@
 """Test the pypdf.generic._data_structures module."""
-from pypdf import PdfReader
-from pypdf.generic import DictionaryObject
-from tests import RESOURCE_ROOT
+from io import BytesIO
+
+import pytest
+
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import DictionaryObject, NameObject, RectangleObject, TreeObject
+from tests import RESOURCE_ROOT, get_data_from_url
 
 
 def test_dictionary_object__get_next_object_position():
@@ -23,3 +27,30 @@ def test_dictionary_object__get_next_object_position():
     assert DictionaryObject._get_next_object_position(
         position_before=10, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 15
+
+
+def test_tree_object__cyclic_reference(caplog):
+    writer = PdfWriter()
+    child1 = writer._add_object(DictionaryObject())
+    child2 = writer._add_object(DictionaryObject({NameObject("/Next"): child1}))
+    child3 = writer._add_object(DictionaryObject({NameObject("/Next"): child2}))
+    child1.get_object()[NameObject("/Next")] = child3
+    tree = TreeObject()
+    tree[NameObject("/First")] = child2
+    tree[NameObject("/Last")] = writer._add_object(DictionaryObject())
+
+    assert list(tree.children()) == [child2.get_object(), child1.get_object(), child3.get_object()]
+    assert "Detected cycle in outline structure for " in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_array_object__clone_same_object_multiple_times(caplog):
+    url = "https://github.com/user-attachments/files/25412858/Draft_OSMF_financial_statement_2013.pdf"
+    name = "issue2991.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+
+    writer = PdfWriter()
+    for page in reader.pages:
+        page2 = writer.add_page(page)
+        assert page2.mediabox == RectangleObject((0, 0, 595, 841))
+    assert caplog.messages == []
