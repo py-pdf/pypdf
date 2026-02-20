@@ -851,6 +851,11 @@ def test_merge_page_with_annotations():
     )
     writer.add_annotation(page_number=0, annotation=annotation_1)
 
+    annotation_2 = Polygon(
+        vertices=[(55, 555), (205, 655), (75, 755), (55, 705)],
+    )
+    writer.add_annotation(page_number=1, annotation=annotation_2)
+
     page_one = writer.pages[0]
     page_two = writer.pages[1]
     page_one.merge_page(page_two)

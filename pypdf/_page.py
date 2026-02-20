@@ -1094,18 +1094,10 @@ class PageObject(DictionaryObject):
         except (AssertionError, AttributeError):
             pass
 
-        new_resources = DictionaryObject()
         original_resources = cast(DictionaryObject, self.get(PG.RESOURCES, DictionaryObject()).get_object())
         page2_resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
-        new_annots = ArrayObject()
-
-        for page in (self, page2):
-            if PG.ANNOTS in page:
-                annots = page[PG.ANNOTS]
-                if isinstance(annots, ArrayObject):
-                    new_annots.extend(annots)
-
         new_resources = DictionaryObject()
+
         rename: dict[str, Any] = {}
         for res in (
             RES.EXT_G_STATE,
@@ -1185,6 +1177,7 @@ class PageObject(DictionaryObject):
                 if isinstance(annots, ArrayObject):
                     new_annots.extend(annots)
         self[NameObject(PG.ANNOTS)] = new_annots
+
         return None
 
     def _merge_page_writer(
