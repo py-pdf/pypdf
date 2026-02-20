@@ -92,7 +92,7 @@ MERGE_CROP_BOX = "cropbox"  # pypdf <= 3.4.0 used "trimbox"
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
+    retval: Union[None, RectangleObject, ArrayObject, IndirectObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
@@ -102,7 +102,11 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
                 break
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
-    retval = RectangleObject(retval)  # type: ignore
+    if isinstance(retval, ArrayObject) and (length := len(retval)) > 4:
+        logger_warning(f"Expected four values, got {length}: {retval}", __name__)
+        retval = RectangleObject(tuple(retval[:4]))
+    else:
+        retval = RectangleObject(retval)  # type: ignore
     _set_rectangle(self, name, retval)
     return retval
 

@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## Version 6.7.1, 2026-02-17
+
+### Security (SEC)
+- Detect cyclic references when accessing TreeObject.children (#3645)
+- Limit size of `/ToUnicode` entries (#3646)
+- Limit FlateDecode recovery attempts (#3644)
+
+### Bug Fixes (BUG)
+- Avoid own object replacement logic in `PageObject.replace_contents` (#3638)
+- Fix UnboundLocalError when update_page_form_field_values with /Sig (#3634)
+
+### Robustness (ROB)
+- Avoid divison by zero when decoding FlateDecode PNG prediction (#3641)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.0...6.7.1)
+
 ## Version 6.7.0, 2026-02-08
 
 ### Deprecations (DEP)

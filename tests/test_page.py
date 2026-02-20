@@ -215,7 +215,7 @@ def test_transformation_equivalence2():
     writer.pages[0].merge_transformed_page(
         reader_base.pages[0], Transformation(), True, True
     )
-    # No special assert: Visual check the page has been increased and all is visible (box+graph)
+    # No special assert: Visual check the page has been increased and all is visible (box + graph)
 
     writer = PdfWriter()
     writer.append(reader_add)
@@ -226,7 +226,7 @@ def test_transformation_equivalence2():
         False,
         False,
     )
-    # No special assert: Visual check the page has been increased and all is visible (box+graph)
+    # No special assert: Visual check the page has been increased and all is visible (box + graph)
 
     pdf_path = RESOURCE_ROOT / "commented-xmp.pdf"
     reader_comments = PdfReader(pdf_path)
@@ -1555,3 +1555,22 @@ def test_replace_contents__null_object_cloning_error():
 
     reader = PdfReader(data)
     assert len(reader.pages) == 10
+
+
+def test_get_rectangle__size_handling(caplog):
+    """
+    See issue #2991 and related ones. We would previously generate invalid page boxes when they
+    were part of the `/Pages` instead of the `/Page` due to re-using the same target object,
+    while appending to the existing "full" object. To keep compatibility with our old code,
+    allow these boxes to have more than four entries.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    assert page.mediabox == RectangleObject((0, 0, 612, 792))
+    assert caplog.messages == []
+
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    page[NameObject("/MediaBox")] = ArrayObject([0, 0, 13, 37, 0, 0, 13, 37])
+    assert page.mediabox == RectangleObject((0, 0, 13, 37))
+    assert "Expected four values, got 8: [0, 0, 13, 37, 0, 0, 13, 37]\n" in caplog.text
