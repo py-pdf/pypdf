@@ -37,6 +37,18 @@ def test_font_descriptor():
     assert my_font.font_descriptor.italic_angle == 0
     assert my_font.font_descriptor.flags == 33
     assert my_font.font_descriptor.bbox == (-113.0, -250.0, 749.0, 801.0)
+    font_descriptor_resource = my_font.font_descriptor.as_font_descriptor_resource()
+    assert font_descriptor_resource == {
+        "/Type": "/FontDescriptor",
+        "/FontName": "/Courier-Bold",
+        "/Flags": 33,
+        "/FontBBox": [-113, -250, 749, 801],
+        "/ItalicAngle": 0.0,
+        "/Ascent": 629,
+        "/Descent": -157,
+        "/CapHeight": 562,
+        "/XHeight": 439
+    }
 
 
 def test_font_file():
