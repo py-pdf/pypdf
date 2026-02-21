@@ -49,6 +49,25 @@ class FontDescriptor:
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
     font_file: Union[StreamObject, None] = None
 
+    def as_font_descriptor_resource(self) -> DictionaryObject:
+        font_descriptor_resource = DictionaryObject({
+            NameObject("/Type"): NameObject("/FontDescriptor"),
+            NameObject("/FontName"): NameObject(f"/{self.name}"),
+            NameObject("/Flags"): NumberObject(self.flags),
+            NameObject("/FontBBox"): ArrayObject([FloatObject(n) for n in self.bbox]),
+            NameObject("/ItalicAngle"): FloatObject(self.italic_angle),
+            NameObject("/Ascent"): FloatObject(self.ascent),
+            NameObject("/Descent"): FloatObject(self.descent),
+            NameObject("/CapHeight"): FloatObject(self.cap_height),
+            NameObject("/XHeight"): FloatObject(self.x_height),
+        })
+
+        if self.font_file:
+            # Add the stream. For now, we assume a TrueType font (FontFile2)
+            font_descriptor_resource [NameObject("/FontFile2")] = self.font_file
+
+        return font_descriptor_resource
+
 
 @dataclass(frozen=True)
 class CoreFontMetrics:
