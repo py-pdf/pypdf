@@ -1730,14 +1730,20 @@ def test_update_form_fields2(caplog):
 
 
 @pytest.mark.enable_socket
-def test_update_form_fields3():
+def test_update_form_fields3(caplog):
     if HAS_FONTTOOLS:
+        pua_string = ""
+        for code in range(0xE000, 0xE010):
+            char = chr(code)
+            pua_string += char
+
         url = "https://github.com/user-attachments/files/21073581/CERERE.INMATRICULARE.form.pdf"
         name = "iss3361.pdf"
         writer = PdfWriter()
         writer.append(BytesIO(get_data_from_url(url, name=name)))
         data = {
             "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+            "localitatea": pua_string,
             "strada": "Căpitan Nicolae Licăreț",
             "adresa_judet": "Конференция",
         }
@@ -1754,6 +1760,7 @@ def test_update_form_fields3():
         found_hex = re.findall(r"<(.*?)>", apstream_object.decode())
         expected_hex = data["adresa_judet"].encode("utf-16-be").hex()
         assert expected_hex in found_hex
+        assert f"Text string '{pua_string}' contains characters not supported by font encoding." in caplog.text
 
 
 @pytest.mark.enable_socket
