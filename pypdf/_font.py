@@ -202,6 +202,17 @@ class Font:
         current_widths["default"] = sum(valid_widths) // len(valid_widths) if valid_widths else 500
 
     @staticmethod
+    def _add_space_width(character_widths: dict[str, int], flags: int) -> int:
+        space_width = character_widths.get(" ", 0)
+        if space_width != 0:
+            return space_width
+
+        if (flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
+            return character_widths["default"]
+
+        return character_widths["default"] // 2
+
+    @staticmethod
     def _parse_font_descriptor(font_descriptor_obj: DictionaryObject) -> dict[str, Any]:
         font_descriptor_kwargs: dict[Any, Any] = {}
         for source_key, target_key in [
@@ -305,12 +316,8 @@ class Font:
 
         if character_widths.get("default", 0) == 0:
             cls._add_default_width(character_widths, font_descriptor.flags)
-        space_width = character_widths.get(" ", 0)
-        if space_width == 0:
-            if (font_descriptor.flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
-                space_width = character_widths["default"]
-            else:
-                space_width = character_widths["default"] // 2
+
+        space_width = cls._add_space_width(character_widths, font_descriptor.flags)
 
         return cls(
             name=name,
@@ -389,13 +396,7 @@ class Font:
             for character, glyph in character_map.items():
                 character_widths[character] = int(round(metrics[glyph][0] * scale_factor, 0))
             cls._add_default_width(character_widths, flags)
-
-            space_width = character_widths.get(" ", 0)
-            if space_width == 0:
-                if (font_descriptor.flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
-                    space_width = character_widths["default"]
-                else:
-                    space_width = character_widths["default"] // 2
+            space_width = cls._add_space_width(character_widths, flags)
 
         return cls(
             name=font_descriptor.name,
