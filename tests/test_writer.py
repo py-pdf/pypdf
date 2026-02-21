@@ -19,6 +19,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
+from pypdf._font import HAS_FONTTOOLS
 from pypdf.annotations import Link
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -1726,6 +1727,33 @@ def test_update_form_fields2(caplog):
         "test2.p3 YY": "21",
     }
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_update_form_fields3():
+    if HAS_FONTTOOLS:
+        url = "https://github.com/user-attachments/files/21073581/CERERE.INMATRICULARE.form.pdf"
+        name = "iss3361.pdf"
+        writer = PdfWriter()
+        writer.append(BytesIO(get_data_from_url(url, name=name)))
+        data = {
+            "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+            "strada": "Căpitan Nicolae Licăreț",
+            "adresa_judet": "Конференция",
+        }
+        writer.update_page_form_field_values(writer.pages[0], data, auto_regenerate=False)
+        apstream_object = (writer.pages[0]["/Annots"][0]["/AP"]["/N"].get_data())
+        found_hex = "".join(re.findall(r"<(.*?)>", apstream_object.decode()))
+        expected_hex = data["subsemnatul"].encode("utf-16-be").hex()
+        assert expected_hex in found_hex
+        apstream_object = (writer.pages[0]["/Annots"][7]["/AP"]["/N"].get_data())
+        found_hex = re.findall(r"<(.*?)>", apstream_object.decode())
+        expected_hex = data["strada"].encode("utf-16-be").hex()
+        assert expected_hex in found_hex
+        apstream_object = (writer.pages[0]["/Annots"][9]["/AP"]["/N"].get_data())
+        found_hex = re.findall(r"<(.*?)>", apstream_object.decode())
+        expected_hex = data["adresa_judet"].encode("utf-16-be").hex()
+        assert expected_hex in found_hex
 
 
 @pytest.mark.enable_socket
