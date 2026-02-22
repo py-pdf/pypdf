@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771760100316,
+  "lastUpdate": 1771760126370,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -93331,6 +93331,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0012981544197166917",
             "extra": "mean: 783.1931740000073 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "4f1260f1d0c0c7c307f03e88257f8eeb229d5954",
+          "message": "REL: 6.7.2\n\n## What's new\n\n### Security (SEC)\n- Prevent infinite loop from circular xref /Prev references (#3655) by @rampageservices\n\n### Bug Fixes (BUG)\n- Fix wrong LUT size error (#3651) by @stefan6419846\n- Fix handling of page boxes defined on `/Pages` (#3650) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.1...6.7.2)",
+          "timestamp": "2026-02-22T12:32:13+01:00",
+          "tree_id": "08672991d4efbf78dd997e52b5ff54053920a0b5",
+          "url": "https://github.com/py-pdf/pypdf/commit/4f1260f1d0c0c7c307f03e88257f8eeb229d5954"
+        },
+        "date": 1771760121587,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.07389710784944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01721091486745912",
+            "extra": "mean: 71.05352499999944 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.19714412438892,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014712833477172678",
+            "extra": "mean: 58.14918993333341 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.152563930640279,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034175889652458144",
+            "extra": "mean: 867.6308301999995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5473666430167895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03498211532375134",
+            "extra": "mean: 1.8269290114 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.19093378608294032,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013801299402061254",
+            "extra": "mean: 5.237417748399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2585062405335008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03788843357921298",
+            "extra": "mean: 794.5928019999997 msec\nrounds: 5"
           }
         ]
       }
