@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771759376810,
+  "lastUpdate": 1771759415031,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -93067,6 +93067,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04493494226752025",
             "extra": "mean: 801.6545155999893 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "20424586+rampageservices@users.noreply.github.com",
+            "name": "Jose Angel Torres",
+            "username": "rampageservices"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f0a462d36971cf077d74492a348d0d06fd60ea4d",
+          "message": "SEC: Prevent infinite loop from circular xref /Prev references (#3655)\n\nMalformed PDFs can contain circular /Prev references in the xref\nchain (e.g., xref A -> /Prev -> xref B -> /Prev -> xref A).\nThis causes _read_xref_tables_and_trailers() to loop forever,\nspamming \"Overwriting cache for N M\" warnings on every iteration\nas the same objects are re-parsed and re-cached indefinitely.\n\nFix: Track visited xref offsets in a set. If a startxref value\nhas already been visited, log a warning and break the loop.\n\nCloses #3654.",
+          "timestamp": "2026-02-22T12:20:17+01:00",
+          "tree_id": "d4ed899e1abf38552589e2f248c2caa97d12ec7c",
+          "url": "https://github.com/py-pdf/pypdf/commit/f0a462d36971cf077d74492a348d0d06fd60ea4d"
+        },
+        "date": 1771759410452,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.299415970382645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014721526879020692",
+            "extra": "mean: 69.93292607692709 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.2014484568144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01149506679834935",
+            "extra": "mean: 58.134639214283574 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1356833604820584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02347664233078617",
+            "extra": "mean: 880.5271211999923 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4651902802846244,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06661469530788632",
+            "extra": "mean: 2.1496579837999947 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18418680669132306,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10230319162704248",
+            "extra": "mean: 5.429270521399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.245859910340854,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0392741505019435",
+            "extra": "mean: 802.6584624000066 msec\nrounds: 5"
           }
         ]
       }
