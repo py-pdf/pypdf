@@ -545,6 +545,7 @@ class Font:
                     NameObject("/Ordering"): TextStringObject("Identity"),
                     NameObject("/Supplement"): NumberObject(0)
                 }),
+                NameObject("/FontDescriptor"): self.font_descriptor.as_font_descriptor_resource()
             })
 
             # Build the widths (/W) array. This can have two formats:
