@@ -11,7 +11,7 @@ A `pypdf` release contains the following artifacts:
 ## Who does it?
 
 `pypdf` should typically only be released by one of the core maintainers / the
-core maintainer. At the moment, this is either stefan6419846 or pubpub-zz and Martin Thoma.
+core maintainer. At the moment, this usually is stefan6419846.
 
 Any owner of the py-pdf organization also has the technical permissions to
 release.
@@ -28,8 +28,10 @@ The release contains the following steps:
    This also prepares the release commit message.
 2. Create a release commit: `git commit -eF RELEASE_COMMIT_MSG.md`.
 3. Push commit: `git push`.
-4. CI now builds a source and a wheels package which it pushes to PyPI. It also
-   creates the corresponding tag and a GitHub release.
+4. Create the tag: `git tag -s 6.7.1 -eF RELEASE_COMMIT_MSG.md`.
+5. Push the tag: `git push origin 6.7.1`.
+6. CI now builds a source and a wheels package which it pushes to PyPI. It also
+   creates the corresponding GitHub release.
 
 ![](../_static/releasing.drawio.png)
 
@@ -47,8 +49,10 @@ The release contains the following steps:
 4. Wait for the approval of another eligible maintainer.
 5. Merge the pull request with the name being the PR title and the body being
    the content of `RELEASE_COMMIT_MSG.md`.
-6. CI now builds a source and a wheels package which it pushes to PyPI. It also
-   creates the corresponding tag and a GitHub release.
+6. Create the tag: `git tag -s 6.7.1 -eF RELEASE_COMMIT_MSG.md`.
+7. Push the tag: `git push origin 6.7.1`.
+8. CI now builds a source and a wheels package which it pushes to PyPI. It also
+   creates the corresponding GitHub release.
 
 ### The Release Tag
 
