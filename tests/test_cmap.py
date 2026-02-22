@@ -8,7 +8,15 @@ from pypdf._cmap import get_encoding, parse_bfchar, parse_bfrange
 from pypdf._codecs import charset_encoding
 from pypdf._font import Font
 from pypdf.errors import LimitReachedError
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject, StreamObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    EncodedStreamObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    StreamObject,
+)
 
 from . import RESOURCE_ROOT, get_data_from_url
 
@@ -135,6 +143,8 @@ def test_iss1533():
     reader.pages[0].extract_text()  # no error
     font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F"])
     assert font.character_map["\x01"] == "Ü"
+    assert isinstance(font.font_descriptor.font_file, EncodedStreamObject)
+    assert font.font_descriptor.font_file["/Subtype"] == "/CIDFontType0C"
 
 
 @pytest.mark.enable_socket

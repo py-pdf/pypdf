@@ -928,6 +928,22 @@ class PdfWriter(PdfDocCommon):
         xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
         self._merge_content_stream_to_page(page, xobject_drawing_commands)
 
+    def _make_font_descriptors_indirect(self, appearance_stream_object: StreamObject) -> None:
+        font_resources = cast(DictionaryObject, cast(DictionaryObject, appearance_stream_object["/Resources"])["/Font"])
+        for font_resource in font_resources:
+            font_resource_object = cast(DictionaryObject, font_resources[font_resource])
+            if "/DescendantFonts" in font_resource_object:
+                descendant_fonts = cast(ArrayObject, font_resource_object["/DescendantFonts"])
+                font_resource_dict = cast(DictionaryObject, descendant_fonts[0])
+            else:
+               font_resource_dict = font_resource_object
+            if "/FontDescriptor" in font_resource_dict and not isinstance(
+                font_resource_dict.raw_get("/FontDescriptor"), IndirectObject
+            ):
+                font_resource_dict[NameObject("/FontDescriptor")] = self._add_object(
+                    font_resource_dict["/FontDescriptor"]
+                )
+
     FFBITS_NUL = FA.FfBits(0)
 
     def update_page_form_field_values(
@@ -1068,6 +1084,10 @@ class PdfWriter(PdfDocCommon):
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
+
+                # Make font resources and font descriptors indirect objects
+                if appearance_stream_obj and "/Font" in cast(DictionaryObject, appearance_stream_obj["/Resources"]):
+                    self._make_font_descriptors_indirect(appearance_stream_obj)
                 if flatten and appearance_stream_obj is not None:
                     self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
 
