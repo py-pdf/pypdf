@@ -449,7 +449,8 @@ class Font:
                     NameObject("/Ordering"): TextStringObject("Identity"),
                     NameObject("/Supplement"): NumberObject(0)
                 }),
-                # "/FontDescriptor" should be an IndirectObject. We don't add it here.
+                # "/FontDescriptor" should be an IndirectObject.
+                NameObject("/FontDescriptor"): self.font_descriptor.as_font_descriptor_resource()
             })
 
             # Build the widths (/W) array. This can have to formats:
