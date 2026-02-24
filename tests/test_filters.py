@@ -408,13 +408,10 @@ def test_rgba():
 
 
 @pytest.mark.enable_socket
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 def test_cmyk():
     """Decode CMYK"""
     # JPEG compression
-    try:
-        from Crypto.Cipher import AES  # noqa: F401, PLC0415
-    except ImportError:
-        return  # the file is encrypted
     reader = PdfReader(BytesIO(get_data_from_url(name="Vitocal.pdf")))
     refimg = BytesIO(get_data_from_url(name="VitocalImage.png"))
     data = reader.pages[1].images[0]

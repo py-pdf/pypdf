@@ -207,14 +207,14 @@ def test_transformation_equivalence2():
     writer.pages[0].merge_transformed_page(
         reader_add.pages[0], Transformation().scale(2).translate(100, 100), True, False
     )
-    # No special assert: the test should be visual in a viewer; 2 box with a arrow rotated  and translated
+    # No special assert: the test should be visual in a viewer; 2 box with a arrow rotated and translated
 
     writer = PdfWriter()
     writer.append(reader_add)
     writer.pages[0].merge_transformed_page(
         reader_base.pages[0], Transformation(), True, True
     )
-    # No special assert: Visual check the page has been  increased and all is visible (box+graph)
+    # No special assert: Visual check the page has been increased and all is visible (box + graph)
 
     writer = PdfWriter()
     writer.append(reader_add)
@@ -225,7 +225,7 @@ def test_transformation_equivalence2():
         False,
         False,
     )
-    # No special assert: Visual check the page has been  increased and all is visible (box+graph)
+    # No special assert: Visual check the page has been increased and all is visible (box + graph)
 
     pdf_path = RESOURCE_ROOT / "commented-xmp.pdf"
     reader_comments = PdfReader(pdf_path)
@@ -430,7 +430,7 @@ def test_iss_1142():
         (
             "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf",
             "tika-964029.pdf",
-        ),  # no_ressources
+        ),  # no_resources
         (
             # https://www.itu.int/rec/T-REC-X.25-199610-I/en
             "https://github.com/py-pdf/pypdf/files/12423313/T-REC-X.25-199610-I.PDF-E.pdf",
@@ -707,7 +707,7 @@ def test_annotation_getter():
 
 
 def test_annotation_setter(pdf_file_path):
-    # Arange
+    # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
@@ -1532,3 +1532,22 @@ def test_replace_contents__null_object_cloning_error():
 
     reader = PdfReader(data)
     assert len(reader.pages) == 10
+
+
+def test_get_rectangle__size_handling(caplog):
+    """
+    See issue #2991 and related ones. We would previously generate invalid page boxes when they
+    were part of the `/Pages` instead of the `/Page` due to re-using the same target object,
+    while appending to the existing "full" object. To keep compatibility with our old code,
+    allow these boxes to have more than four entries.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    assert page.mediabox == RectangleObject((0, 0, 612, 792))
+    assert caplog.messages == []
+
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    page[NameObject("/MediaBox")] = ArrayObject([0, 0, 13, 37, 0, 0, 13, 37])
+    assert page.mediabox == RectangleObject((0, 0, 13, 37))
+    assert "Expected four values, got 8: [0, 0, 13, 37, 0, 0, 13, 37]\n" in caplog.text

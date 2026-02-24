@@ -126,7 +126,7 @@ class ArrayObject(list[Any], PdfObject):
             pass
         arr = cast(
             "ArrayObject",
-            self._reference_clone(ArrayObject(), pdf_dest, force_duplicate),
+            self._reference_clone(ArrayObject(), pdf_dest, force_duplicate=True),
         )
         for data in self:
             if isinstance(data, StreamObject):

@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Version 6.7.2, 2026-02-22
+
+### Security (SEC)
+- Prevent infinite loop from circular xref /Prev references (#3655)
+
+### Bug Fixes (BUG)
+- Fix wrong LUT size error (#3651)
+- Fix handling of page boxes defined on `/Pages` (#3650)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.1...6.7.2)
+
 ## Version 6.7.1, 2026-02-17
 
 ### Security (SEC)
