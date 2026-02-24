@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771953732614,
+  "lastUpdate": 1771953761106,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -93595,6 +93595,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03633625839129445",
             "extra": "mean: 819.7103040000002 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "05e6d3c03deaec6b16b53825465537ac9e7a1a14",
+          "message": "REL: 6.7.3\n\n## What's new\n\n### Security (SEC)\n- Use zlib decompression limit when retrieving XFA data (#3658) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.2...6.7.3)",
+          "timestamp": "2026-02-24T18:18:35+01:00",
+          "tree_id": "7641194c950718fb1dfc3228c39e941cca7b2201",
+          "url": "https://github.com/py-pdf/pypdf/commit/05e6d3c03deaec6b16b53825465537ac9e7a1a14"
+        },
+        "date": 1771953756367,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.397780104706206,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017810462853339957",
+            "extra": "mean: 74.63923069230944 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.93419586610938,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014072667582736677",
+            "extra": "mean: 52.81449537500116 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1691198232704865,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02472090509100938",
+            "extra": "mean: 855.3443198000082 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.49981275594694063,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037764730445786335",
+            "extra": "mean: 2.0007492567999976 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18783163143608209,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09537437981219167",
+            "extra": "mean: 5.323916916199994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2296246903565908,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03343419138016549",
+            "extra": "mean: 813.2562787999973 msec\nrounds: 5"
           }
         ]
       }
