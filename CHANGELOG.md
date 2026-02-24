@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.7.3, 2026-02-24
+
+### Security (SEC)
+- Use zlib decompression limit when retrieving XFA data (#3658)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.2...6.7.3)
+
 ## Version 6.7.2, 2026-02-22
 
 ### Security (SEC)
