@@ -134,9 +134,9 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
-    # Add an open action with a pre-existing open action which has a Next key with a None value
+    # Add an open action with a pre-existing open action which has a Next key with a NullObject value
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
-    page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = None
+    page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = NullObject()
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/O": {
