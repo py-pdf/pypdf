@@ -712,11 +712,14 @@ class PdfWriter(PdfDocCommon):
 
         """
         if (width is None or width <= 0) and index < self.get_num_pages():
-            old_page = self.pages[index]
-            width = old_page.mediabox.width
+            width = self.pages[index].mediabox.width
         if (height is None or height <= 0) and index < self.get_num_pages():
-            old_page = self.pages[index]
-            height = old_page.mediabox.height
+            height = self.pages[index].mediabox.height
+
+        if index == self.get_num_pages():
+            width = self.pages[index - 1].mediabox.width if width is None or width <= 0 else width
+            height = self.pages[index - 1].mediabox.height if height is None or height <= 0 else height
+
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page
