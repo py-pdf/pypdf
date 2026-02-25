@@ -16,7 +16,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 @pytest.fixture
 def pdf_file_writer():
-    reader = PdfReader(RESOURCE_ROOT / "issue-604.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     writer = PdfWriter()
     writer.append_pages_from_reader(reader)
     return writer
@@ -43,7 +43,7 @@ def test_page_add_action(pdf_file_writer):
     ):
         page.add_action("close", "xyzzy")
 
-    # Add an open action without pre-existing action dictionary
+    # Add an open action without a pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/O": {
@@ -57,7 +57,7 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
-    # Add a close action without pre-existing action dictionary
+    # Add a close action without a pre-existing action dictionary
     page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/C": {
@@ -71,7 +71,7 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
-    # Add an open and close actions without pre-existing action dictionary
+    # Add an open and close actions without a pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('Page opened');"))
     page.add_action("close", JavaScript("app.alert('Page closed');"))
     expected = {
@@ -184,7 +184,7 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
-    # Add two open actions without pre-existing action dictionary
+    # Add two open actions without a pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('Page opened 1');"))
     page.add_action("open", JavaScript("app.alert('Page opened 2');"))
     expected = {
@@ -204,7 +204,7 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
-    # Add two close actions without pre-existing action dictionary
+    # Add two close actions without a pre-existing action dictionary
     page.add_action("close", JavaScript("app.alert('Page closed 1');"))
     page.add_action("close", JavaScript("app.alert('Page closed 2');"))
     expected = {
