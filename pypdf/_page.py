@@ -2217,7 +2217,7 @@ class PageObject(DictionaryObject):
         """
         head = current = additional_actions.get(trigger_name)
         while True:
-            if not isinstance(current, (ArrayObject, DictionaryObject, type(None))):
+            if not isinstance(current, (ArrayObject, DictionaryObject, NullObject)):
                 raise TypeError("'Next' must be an ArrayObject, DictionaryObject, or None")
 
             if isinstance(current, ArrayObject):
