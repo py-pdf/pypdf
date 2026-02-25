@@ -27,6 +27,11 @@ def test_extract_links(caplog):
     assert caplog.messages == []
 
     # Only old annotations.
+    page1[NameObject("/Annots")] = NullObject()
+    assert extract_links(page1, page2) == []
+    assert caplog.messages == []
+    caplog.clear()
+
     page1[NameObject("/Annots")] = ArrayObject([NullObject()])
     assert extract_links(page1, page2) == []
     assert caplog.messages == ["Annotation sizes differ: [] vs. [NullObject]"]
@@ -35,10 +40,16 @@ def test_extract_links(caplog):
     # Both old and new annotations.
     page2[NameObject("/Annots")] = ArrayObject([NullObject()])
     assert extract_links(page1, page2) == []
-    assert caplog.messages == []
+    assert caplog.messages == []  # Same size.
+    caplog.clear()
+
+    page2[NameObject("/Annots")] = NullObject()
+    assert extract_links(page1, page2) == []
+    assert caplog.messages == ["Annotation sizes differ: [] vs. [NullObject]"]
     caplog.clear()
 
     # Only new annotations.
     del page1[NameObject("/Annots")]
+    page2[NameObject("/Annots")] = ArrayObject([NullObject()])
     assert extract_links(page1, page2) == []
     assert caplog.messages == ["Annotation sizes differ: [NullObject] vs. []"]
