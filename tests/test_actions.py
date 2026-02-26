@@ -71,7 +71,7 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
-    # Add an open and close actions without a pre-existing action dictionary
+    # Add an open and close action without a pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('Page opened');"))
     page.add_action("close", JavaScript("app.alert('Page closed');"))
     expected = {
@@ -123,12 +123,23 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
+    # Add an open action with a non-dictionary object as the entry in the trigger
+    # TODO: change description
+    with pytest.raises(
+            ValueError,
+            match = "Although actions can be part of an array, "
+                    "actions that are values in the additional-actions dictionary must be a dictionaries"
+    ):
+        page[NameObject("/AA")] = DictionaryObject()
+        page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")
+        page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
+
     # Add an open action with a pre-existing open action which has an invalid Next entry
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = NameObject("/xyzzy")
     with pytest.raises(
         TypeError,
-        match = "'Next' must be an ArrayObject, DictionaryObject, or None",
+        match = "Must be either a single action dictionary or an array of action dictionaries",
     ):
         page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action("open")

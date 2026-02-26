@@ -2188,10 +2188,10 @@ class PageObject(DictionaryObject):
         if not isinstance(self[NameObject("/AA")], DictionaryObject):
             self[NameObject("/AA")] = DictionaryObject()
 
+        # This cast is confusing, it is not needed?
         additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
 
-        if trigger_name not in additional_actions:
-            # Trigger event not present
+        if trigger_name not in additional_actions or is_null_or_none(additional_actions[trigger_name]):
             additional_actions.update({trigger_name: action})
             self[NameObject("/AA")] = additional_actions
             return
@@ -2216,18 +2216,25 @@ class PageObject(DictionaryObject):
         ISO 32000-2:2020
         """
         head = current = additional_actions.get(trigger_name)
+        if not isinstance(head, DictionaryObject):
+            raise TypeError(
+                "Although actions can be part of an array, "
+                "actions that are values in the additional-actions dictionary must be a dictionaries"
+            )
+
         while True:
-            if not isinstance(current, (ArrayObject, DictionaryObject, NullObject)):
-                raise TypeError("'Next' must be an ArrayObject, DictionaryObject, or None")
-
             if isinstance(current, ArrayObject):
-                # An array of actions: take the last one
+                if is_null_or_none(current[-1]):
+                    break
                 current = current[-1]
-
-            if isinstance(current, DictionaryObject):
+            elif isinstance(current, DictionaryObject):
                 if is_null_or_none(current.get(NameObject("/Next"), None)):
                     break
                 current = current.get(NameObject("/Next"))
+            else:
+                raise TypeError(
+                    "Must be either a single action dictionary or an array of action dictionaries"
+                )
 
         current[NameObject("/Next")] = action
         additional_actions.update({trigger_name: head})
