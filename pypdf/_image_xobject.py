@@ -300,7 +300,7 @@ def _handle_jpx(
     colors: int,
 ) -> tuple[Image.Image, str, str, bool]:
     """
-    Process image encoded in flateEncode
+    Process image encoded as JPX/JPEG2000
     Returns img, image_format, extension, inversion
     """
     extension = ".jp2"  # mime_type: "image/x-jp2"
@@ -322,9 +322,8 @@ def _handle_jpx(
     else:  # pragma: no cover
         img = img1.convert(mode)
     # CMYK conversion
-    # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
-    # not implemented for the moment as I need to get properly the ICC
-    if img.mode == "CMYK":
+    # https://stackverflow.com/questions/38855022/
+    if img.mode == "CMYK" and color_space == "/ICCBased":
         img = img.convert("RGB")
     image_format = "JPEG2000"
     return img, image_format, extension, invert_color
@@ -339,15 +338,18 @@ def _apply_decode(
 ) -> Image.Image:
     # CMYK image and other color spaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
-    decode = x_object_obj.get(
-        IA.DECODE,
-        ([1.0, 0.0] * len(img.getbands()))
-        if (
-            (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
-            or (invert_color and img.mode == "L")
-        )
-        else None,
-    )
+    if IA.DECODE in x_object_obj:
+        decode = x_object_obj[IA.DECODE]
+        # if invert_color and lfilters == FT.DCT_DECODE:
+        #     decode = list(reversed(decode))
+    elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
+        decode = [1.0, 0.0] if not invert_color else [0.0, 1.0]
+        decode = decode * len(img.getbands())
+    elif (img.mode == "CMYK" and lfilters == FT.DCT_DECODE) or (invert_color and img.mode == "L"):
+        decode = [1.0, 0.0] * len(img.getbands())
+    else:
+        decode = None
+
     if (
         isinstance(color_space, ArrayObject)
         and color_space[0].get_object() == "/Indexed"
