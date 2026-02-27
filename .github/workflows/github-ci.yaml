@@ -191,7 +191,7 @@ jobs:
       run: mv .coverage ".coverage.$RANDOM"
       if: ${{ !startsWith(matrix.python-version, 'pypy') }}
     - name: Upload coverage data
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       if: ${{ !startsWith(matrix.python-version, 'pypy') }}
       with:
         name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
