@@ -11,8 +11,8 @@ from pypdf.errors import EmptyImageDataError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
 from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image
 
-from . import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
+from . import RESOURCE_ROOT, get_data_from_url
 
 
 @pytest.mark.enable_socket
