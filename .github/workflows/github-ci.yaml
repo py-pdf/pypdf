@@ -32,9 +32,17 @@ jobs:
       uses: actions/cache@v5
       with:
         path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files-${{ github.run_id }}
-        restore-keys:
-          cache-downloaded-files
+        key: cache-downloaded-files-main-${{ github.run_id }}
+        restore-keys: |
+          cache-downloaded-files-main-
+        enableCrossOsArchive: true
+    - name: Restore Downloaded Files
+      uses: actions/cache/restore@v5
+      if: github.ref != 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-
+        restore-keys: cache-downloaded-files-main-
         enableCrossOsArchive: true
     - name: Setup Python
       uses: actions/setup-python@v6
@@ -73,9 +81,16 @@ jobs:
       uses: actions/cache@v5
       with:
         path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files-${{ github.run_id }}
-        restore-keys:
-          cache-downloaded-files
+        key: cache-downloaded-files-main-${{ github.run_id }}
+        restore-keys: |
+          cache-downloaded-files-main-
+    - name: Restore Downloaded Files
+      uses: actions/cache/restore@v5
+      if: github.ref != 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-
+        restore-keys: cache-downloaded-files-main-
     - name: Setup Python (3.11+)
       uses: actions/setup-python@v6
       with:
@@ -131,9 +146,16 @@ jobs:
       uses: actions/cache@v5
       with:
         path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files-${{ github.run_id }}
-        restore-keys:
-          cache-downloaded-files
+        key: cache-downloaded-files-main-${{ github.run_id }}
+        restore-keys: |
+          cache-downloaded-files-main-
+    - name: Restore Downloaded Files
+      uses: actions/cache/restore@v5
+      if: github.ref != 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-
+        restore-keys: cache-downloaded-files-main-
     - name: Setup Python
       uses: actions/setup-python@v6
       if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
