@@ -73,6 +73,7 @@ from .generic import (
 
 JBIG2_MAX_OUTPUT_LENGTH = 75_000_000
 LZW_MAX_OUTPUT_LENGTH = 75_000_000
+RUN_LENGTH_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000
 
@@ -408,8 +409,10 @@ class RunLengthDecode:
         """
         lst = []
         index = 0
+        data_length = len(data)
+        total_length = 0
         while True:
-            if index >= len(data):
+            if index >= data_length:
                 logger_warning(
                     "missing EOD in RunLengthDecode, check if output is OK", __name__
                 )
@@ -417,7 +420,6 @@ class RunLengthDecode:
             length = data[index]
             index += 1
             if length == 128:
-                data_length = len(data)
                 if index < data_length:
                     # We should first check, if we have an inner stream from a multi-encoded
                     # stream with a faulty trailing newline that we can decode properly.
@@ -442,6 +444,9 @@ class RunLengthDecode:
                 length = 257 - length
                 lst.append(bytes((data[index],)) * length)
                 index += 1
+            total_length += length
+            if total_length > RUN_LENGTH_MAX_OUTPUT_LENGTH:
+                raise LimitReachedError("Limit reached while decompressing.")
         return b"".join(lst)
 
 

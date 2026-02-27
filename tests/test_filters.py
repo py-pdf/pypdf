@@ -1026,3 +1026,20 @@ def test_flatedecode__columns_is_zero():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Expected positive number for /Columns, got 0!$"):
         codec.decode(codec.encode(data), parameters)
+
+
+def test_runlengthdecode__decode_limit():
+    uncompressed_size = 76 * 1024 * 1024  # 76 MB target
+    runs = uncompressed_size // 128
+    encoded = (b"\x81A" * runs) + b"\x80"
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Limit reached while decompressing\.$"):
+        RunLengthDecode.decode(encoded)
+
+    uncompressed_size = 5 * 1024
+    runs = uncompressed_size // 128
+    encoded = (b"\x81A" * runs) + b"\x80"
+
+    # Use a very low limit for this exact comparison, otherwise *pytest* takes ages to render a failure diff.
+    with mock.patch("pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH", uncompressed_size):
+        assert RunLengthDecode.decode(encoded) == b"A" * uncompressed_size

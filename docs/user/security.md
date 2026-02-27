@@ -13,6 +13,7 @@ aware of the possible side effects, you can modify the following constants which
 
 * `pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH` for the *FlateDecode* filter (zlib compression)
 * `pypdf.filters.LZW_MAX_OUTPUT_LENGTH` for the *LZWDecode* filter (LZW compression)
+* `pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH` for the *RunLengthDecode* filter (run-length compression)
 
 For JBIG2 images, there is a similar parameter to limit the memory usage during decoding: `pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH`
 It defaults to 75 MB as well.
