@@ -285,7 +285,7 @@ jobs:
 
       - run: python -m pip install --upgrade coverage[toml]
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: coverage-data*
           merge-multiple: true
