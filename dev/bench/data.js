@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772189136700,
+  "lastUpdate": 1772189161956,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -94255,6 +94255,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04742088623478868",
             "extra": "mean: 795.5125997999971 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "1650bc31e807d8091464c228b7eabd6fef4c6c2a",
+          "message": "REL: 6.7.4\n\n## What's new\n\n### Security (SEC)\n- Allow limiting output length for RunLengthDecode filter (#3664) by @stefan6419846\n\n### Robustness (ROB)\n- Deal with invalid annotations in extract_links (#3659) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.3...6.7.4)",
+          "timestamp": "2026-02-27T11:42:50+01:00",
+          "tree_id": "1681c99b845a6fe7ec6abc5e80433fbb49b87340",
+          "url": "https://github.com/py-pdf/pypdf/commit/1650bc31e807d8091464c228b7eabd6fef4c6c2a"
+        },
+        "date": 1772189157584,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.758297131584014,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01814262076765599",
+            "extra": "mean: 72.68341353846516 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.090120108423935,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016973414437142235",
+            "extra": "mean: 58.51333950000078 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1508274785727655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02420064732541381",
+            "extra": "mean: 868.9399745999992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5405966807753038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026823178642257025",
+            "extra": "mean: 1.8498078799999973 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.20183878459880059,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03718325357202883",
+            "extra": "mean: 4.9544491757999936 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2743484345785785,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03472758411009675",
+            "extra": "mean: 784.7147396000025 msec\nrounds: 5"
           }
         ]
       }
