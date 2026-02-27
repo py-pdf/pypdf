@@ -4,7 +4,6 @@ import sys
 from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
 
-from ._utils import check_if_whitespace_only, logger_warning
 from ..constants import ColorSpaces, StreamAttributes
 from ..constants import FilterTypes as FT
 from ..constants import ImageAttributes as IA
@@ -17,6 +16,7 @@ from ..generic import (
     TextStringObject,
     is_null_or_none,
 )
+from .._utils import check_if_whitespace_only, logger_warning
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeAlias
