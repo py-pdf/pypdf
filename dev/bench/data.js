@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772192286759,
+  "lastUpdate": 1772192322857,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -94387,6 +94387,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03472758411009675",
             "extra": "mean: 784.7147396000025 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1aef6fbbf4f138e40e9b68e11089393ea5b64421",
+          "message": "DEV: Update cache key handling in CI (#3665)\n\n* Do not write cache on PRs.\n* Use a more dynamic cache instead of the outdated fixed `cache-downloaded-files`.",
+          "timestamp": "2026-02-27T12:35:30+01:00",
+          "tree_id": "606efeb9812492180e54e7aa451a5a852072c707",
+          "url": "https://github.com/py-pdf/pypdf/commit/1aef6fbbf4f138e40e9b68e11089393ea5b64421"
+        },
+        "date": 1772192317376,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.595090387021164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018304159165407757",
+            "extra": "mean: 73.55596553846165 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.641087674359607,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007374949124267394",
+            "extra": "mean: 53.64493839999891 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1838579336081467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021497723503609706",
+            "extra": "mean: 844.6959484000018 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5089632449777094,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024128349232222075",
+            "extra": "mean: 1.9647784194000024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18057093329173188,
+            "unit": "iter/sec",
+            "range": "stddev: 0.27610030827412624",
+            "extra": "mean: 5.537989873400011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1448441796858162,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1635097262569692",
+            "extra": "mean: 873.4813153999994 msec\nrounds: 5"
           }
         ]
       }
