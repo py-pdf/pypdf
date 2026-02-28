@@ -2466,11 +2466,7 @@ def test_compress_identical_objects():
     name = "iss2794.pdf"
     in_bytes = BytesIO(get_data_from_url(url, name=name))
     writer = PdfWriter(in_bytes)
-    with pytest.warns(
-        DeprecationWarning,
-        match="remove_orphans is deprecated and will be removed in pypdf 6.0.0. Use remove_unreferenced instead.",
-    ):
-        writer.compress_identical_objects(remove_orphans=False)
+    writer.compress_identical_objects(remove_orphans=False)
     out1 = BytesIO()
     writer.write(out1)
     assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
@@ -2480,11 +2476,7 @@ def test_compress_identical_objects():
     out2 = BytesIO()
     writer.write(out2)
     assert len(out1.getvalue()) - 100 < len(out2.getvalue())
-    with pytest.warns(
-        DeprecationWarning,
-        match="remove_orphans is deprecated and will be removed in pypdf 6.0.0. Use remove_unreferenced instead.",
-    ):
-        writer.compress_identical_objects(remove_identicals=False)
+    writer.compress_identical_objects(remove_identicals=False)
     out3 = BytesIO()
     writer.write(out3)
     assert len(out2.getvalue()) > len(out3.getvalue())
@@ -2773,11 +2765,7 @@ def test_compress_identical_objects__after_remove_images():
     """Test for #3237"""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
     writer.remove_images()
-    with pytest.warns(
-        DeprecationWarning,
-        match="remove_orphans is deprecated and will be removed in pypdf 6.0.0. Use remove_unreferenced instead.",
-    ):
-        writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
+    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
 
 
 def test_merge__process_named_dests__no_dests_in_source_file():
@@ -2931,18 +2919,10 @@ def test_merge_with_null_acroform_does_not_raise_typeerror():
 
 def test_compress_identical_objects__info_is_none():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
-    with pytest.warns(
-            expected_warning=DeprecationWarning,
-            match=r"remove_orphans is deprecated and will be removed in pypdf 6.0.0. Use remove_unreferenced instead."
-    ):
-        writer.compress_identical_objects()
+    writer.compress_identical_objects()
 
     writer.metadata = None
-    with pytest.warns(
-            expected_warning=DeprecationWarning,
-            match=r"remove_orphans is deprecated and will be removed in pypdf 6.0.0. Use remove_unreferenced instead."
-    ):
-        writer.compress_identical_objects()
+    writer.compress_identical_objects()
 
 
 @pytest.mark.enable_socket
