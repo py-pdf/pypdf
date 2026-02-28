@@ -63,7 +63,6 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
-    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
 )
@@ -1577,37 +1576,36 @@ class PdfWriter(PdfDocCommon):
             self._info = DictionaryObject()
         self._info.update(args)
 
-    _UNSET = object()  
+    _UNSET = object()
 
     def compress_identical_objects(
         self,
-        remove_identicals_old: Any = _UNSET,  
-        remove_orphans: Any = _UNSET,  
+        remove_identicals_old: Any = _UNSET,
+        remove_orphans: Any = _UNSET,
         *,  
-        remove_identicals: bool = True,  
-        remove_unreferenced: bool = True,  
-    ) -> None:  
+        remove_identicals: bool = True,
+        remove_unreferenced: bool = True,
+    ) -> None:
         """
         Parse the PDF file objects that have the same hash.
         This will make objects common to multiple pages.
         Recommended to be used just before writing output.
 
         Args:
-            remove_identicals_old: 
-            remove_orphans: 
-            remove_identicals: Remove identical objects.
+            remove_identicals_old: Positional arguement, used while remove_orphans is still being deprecated.
             remove_orphans: Remove unreferenced objects; deprecated use remove_unreferenced.
+            remove_identicals: Remove identical objects.
             remove_unreferenced: Remove unreferenced objects.
 
         """
-        if remove_identicals_old != _UNSET:  
-            # Deprecate indicating keyword-only is supported.  
-            assert isinstance(remove_identicals_old, bool)  # Check type!  
-            remove_identicals = remove_identicals_old  
-        if remove_orphans != _UNSET:  
-            # Deprecate with new name and keyword-only.  
-            assert isinstance(remove_orphans, bool)  # Check type!  
-            remove_unreferenced = remove_orphans  
+        if remove_identicals_old != self._UNSET:
+            # Deprecate indicating keyword-only is supported.
+            assert isinstance(remove_identicals_old, bool)  # Check type!
+            remove_identicals = remove_identicals_old
+        if remove_orphans != self._UNSET:
+            # Deprecate with new name and keyword-only.
+            assert isinstance(remove_orphans, bool)  # Check type!
+            remove_unreferenced = remove_orphans
 
         def replace_in_obj(
             obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
