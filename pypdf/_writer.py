@@ -1582,7 +1582,7 @@ class PdfWriter(PdfDocCommon):
         self,
         remove_identicals_old: Any = _UNSET,
         remove_orphans: Any = _UNSET,
-        *,  
+        *,
         remove_identicals: bool = True,
         remove_unreferenced: bool = True,
     ) -> None:
