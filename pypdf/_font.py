@@ -445,14 +445,42 @@ class Font:
             # [first_cid [w1 w2 w3]] or [first last width]
             # Here we choose the first format and simply provide one array with one width for every cid.
             widths_list = []
-            for char, width in self.character_widths.items():
-                if char != "default":
-                    cid = ord(char)
-                    widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+            unicode_map = []
+            # In the loop, char is the decoded GID string (the reverse unicode hack)
+            # and character_map[char] is the actual character.
+            for gid_str, actual_char in self.character_map.items():
+                cid = ord(gid_str)
+                width = self.character_widths.get(gid_str, 1000)
+                widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+
+                # Store mapping: <CID_HEX> <UNICODE_HEX>
+                cid_hex = f"{cid:04X}"
+                uni_hex = f"{ord(actual_char):04X}"
+                unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
 
             cid_font[NameObject("/W")] = ArrayObject(widths_list)
             cid_font[NameObject("/DW")] = NumberObject(self.character_widths.get("default", 1000))
             cid_font[NameObject("/CIDToGIDMap")] = NameObject("/Identity")
+
+            # Create the /ToUnicode CMap Stream
+            cmap_body = (
+                "/CIDInit /ProcSet findresource begin\n"
+                "12 dict begin\n"
+                "begincmap\n"
+                "/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n"
+                "/CMapName /Adobe-Identity-UCS def\n"
+                "/CMapType 2 def\n"
+                "1 begincodespacerange <0000> <FFFF> endcodespacerange\n"
+                f"{len(unicode_map)} beginbfchar\n"
+                + "\n".join(unicode_map) + "\n"
+                "endbfchar\n"
+                "endcmap\n"
+                "CMapName currentdict /CMap defineresource pop\n"
+                "end end"
+            )
+
+            to_unicode_stream = StreamObject()
+            to_unicode_stream.set_data(cmap_body.encode("ascii"))
 
             # Create the Type 0 font object)
             return DictionaryObject({
@@ -461,6 +489,7 @@ class Font:
                 NameObject("/BaseFont"): NameObject(f"/{self.name}"),
                 NameObject("/Encoding"): NameObject("/Identity-H"),
                 NameObject("/DescendantFonts"): ArrayObject([cid_font]),
+                NameObject("/ToUnicode"): to_unicode_stream,
             })
 
         # Fallback: Return a font resource for the 14 Adobe Core fonts.
