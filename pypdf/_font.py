@@ -400,8 +400,17 @@ class Font:
             encoding = "utf_16_be"  # Assume unicode
 
             character_widths: dict[str, int] = {}
+            character_map: dict[str, str] = {}
+
             for character_code, glyph in tt_font_object.getBestCmap().items():
-                character_widths[chr(character_code)] = int(round(metrics[glyph][0] * scale_factor, 0))
+                char = chr(character_code)
+                gid = tt_font_object.getGlyphID(glyph)
+                # The following is to comply with how font_glyph_byte_map works in pypdf/generic/_appearance_stream.py
+                gid_bytes = gid.to_bytes(2, "big")
+                gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
+                character_map[gid_key_string] = char
+                character_widths[gid_key_string] = int(round(metrics[glyph][0] * scale_factor, 0))
+
             cls._add_default_width(character_widths, flags)
             space_width = cls._add_space_width(character_widths, flags)
 
@@ -410,6 +419,7 @@ class Font:
             sub_type="TrueType",
             encoding=encoding,
             font_descriptor=font_descriptor,
+            character_map=character_map,
             character_widths=character_widths,
             space_width=space_width,
             interpretable=True
