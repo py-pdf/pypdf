@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772442301928,
+  "lastUpdate": 1772442357661,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -90623,6 +90623,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002240934543660348",
             "extra": "mean: 668.7570997999956 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "7c2bcddd8e3c64903e23398d12b60ef432ff4531",
+          "message": "REL: 6.7.5\n\n## What's new\n\n### Security (SEC)\n- Improve the performance of the ASCIIHexDecode filter (#3666) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.4...6.7.5)",
+          "timestamp": "2026-03-02T10:02:48+01:00",
+          "tree_id": "984a3f2246f06f0cd455d5961a478bf90bd968f5",
+          "url": "https://github.com/py-pdf/pypdf/commit/7c2bcddd8e3c64903e23398d12b60ef432ff4531"
+        },
+        "date": 1772442352476,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.118927382109852,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0056638087749428",
+            "extra": "mean: 320.62304679999727 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.935358939321505,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011627874337662953",
+            "extra": "mean: 66.9552036923077 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28910682496714224,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022676845549446847",
+            "extra": "mean: 3.458929065799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.196566977242764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000689856943581865",
+            "extra": "mean: 54.95542105555589 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09038337021717709,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04119412208857749",
+            "extra": "mean: 11.063982208199988 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4985183106493962,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013648176067208322",
+            "extra": "mean: 667.3258463999957 msec\nrounds: 5"
           }
         ]
       }
