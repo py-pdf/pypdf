@@ -1026,3 +1026,9 @@ def test_flatedecode__columns_is_zero():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Expected positive number for /Columns, got 0!$"):
         codec.decode(codec.encode(data), parameters)
+
+
+@pytest.mark.timeout(10)
+def test_asciihexdecode__speed():
+    encoded = (b"41" * 1_200_000) + b">"
+    ASCIIHexDecode.decode(encoded)
