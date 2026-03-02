@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## Version 6.7.4, 2026-02-27
+
+### Security (SEC)
+- Allow limiting output length for RunLengthDecode filter (#3664)
+
+### Robustness (ROB)
+- Deal with invalid annotations in extract_links (#3659)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.3...6.7.4)
+
 ## Version 6.7.3, 2026-02-24
 
 ### Security (SEC)
