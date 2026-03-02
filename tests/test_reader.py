@@ -562,6 +562,42 @@ def test_read_prev_0_trailer():
     assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
 
 
+def test_circular_xref_prev_reference(caplog):
+    """Circular /Prev in trailer should be detected, not loop forever (#3654)."""
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << /Prev %d /Root 5 0 R /Size 6 >>\n"
+        b"startxref %d\n"
+        b"%%%%EOF"
+    )
+    xref_offset = pdf_data.find(b"xref") - 1
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj"),
+        pdf_data.find(b"2 0 obj"),
+        pdf_data.find(b"3 0 obj"),
+        pdf_data.find(b"4 0 obj"),
+        pdf_data.find(b"5 0 obj"),
+        xref_offset,  # /Prev points to same xref = circular
+        xref_offset,  # startxref
+    )
+    PdfReader(io.BytesIO(pdf_data))
+    assert "Circular xref chain detected" in caplog.text
+
+
 def test_read_missing_startxref():
     pdf_data = (
         b"%%PDF-1.7\n"
