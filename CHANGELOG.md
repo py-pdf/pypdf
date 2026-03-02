@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.7.5, 2026-03-02
+
+### Security (SEC)
+- Improve the performance of the ASCIIHexDecode filter (#3666)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.4...6.7.5)
+
 ## Version 6.7.4, 2026-02-27
 
 ### Security (SEC)

@@ -1043,3 +1043,9 @@ def test_runlengthdecode__decode_limit():
     # Use a very low limit for this exact comparison, otherwise *pytest* takes ages to render a failure diff.
     with mock.patch("pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH", uncompressed_size):
         assert RunLengthDecode.decode(encoded) == b"A" * uncompressed_size
+
+
+@pytest.mark.timeout(10)
+def test_asciihexdecode__speed():
+    encoded = (b"41" * 1_200_000) + b">"
+    ASCIIHexDecode.decode(encoded)
