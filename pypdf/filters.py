@@ -35,6 +35,7 @@ used for the names of filters in an inline image object.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import binascii
 import math
 import os
 import shutil
@@ -343,34 +344,26 @@ class ASCIIHexDecode:
         """
         if isinstance(data, str):
             data = data.encode()
-        retval = b""
-        hex_pair = b""
-        index = 0
-        while True:
-            if index >= len(data):
-                logger_warning(
-                    "missing EOD in ASCIIHexDecode, check if output is OK", __name__
-                )
-                break  # Reached end of string without an EOD
-            char = data[index : index + 1]
-            if char == b">":
-                break
-            if char.isspace():
-                index += 1
-                continue
-            hex_pair += char
-            if len(hex_pair) == 2:
-                retval += bytes((int(hex_pair, base=16),))
-                hex_pair = b""
-            index += 1
-        # If the filter encounters the EOD marker after reading
-        # an odd number of hexadecimal digits,
-        # it shall behave as if a 0 (zero) followed the last digit.
-        # For every even number of hexadecimal digits, hex_pair is reset to b"".
-        if hex_pair != b"":
-            hex_pair += b"0"
-            retval += bytes((int(hex_pair, base=16),))
-        return retval
+
+        # Stop at EOD
+        eod = data.find(b">")
+        if eod == -1:
+            logger_warning(
+                "missing EOD in ASCIIHexDecode, check if output is OK",
+                __name__,
+            )
+            hex_data = data
+        else:
+            hex_data = data[:eod]
+
+        # Remove whitespace
+        hex_data = b"".join(hex_data.split())
+
+        # Pad if odd length
+        if len(hex_data) % 2 == 1:
+            hex_data += b"0"
+
+        return binascii.unhexlify(hex_data)
 
 
 class RunLengthDecode:
