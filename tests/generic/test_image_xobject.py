@@ -1,4 +1,4 @@
-"""Test the pypdf._image_xobject module."""
+"""Test the pypdf.generic._image_xobject module."""
 from io import BytesIO
 
 import pytest
