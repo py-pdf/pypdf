@@ -1108,7 +1108,7 @@ class PageObject(DictionaryObject):
             RES.FONT,
             RES.PROPERTIES,
         ):
-            new, new_rename = self._merge_resources(
+            new, new_resource_name = self._merge_resources(
                 original_resources, page2_resources, res
             )
             if new:
