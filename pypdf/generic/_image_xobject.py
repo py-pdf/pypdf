@@ -4,12 +4,12 @@ import sys
 from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
 
-from ._utils import check_if_whitespace_only, logger_warning
-from .constants import ColorSpaces, StreamAttributes
-from .constants import FilterTypes as FT
-from .constants import ImageAttributes as IA
-from .errors import EmptyImageDataError, PdfReadError
-from .generic import (
+from .._utils import check_if_whitespace_only, logger_warning
+from ..constants import ColorSpaces, StreamAttributes
+from ..constants import FilterTypes as FT
+from ..constants import ImageAttributes as IA
+from ..errors import EmptyImageDataError, PdfReadError
+from ..generic import (
     ArrayObject,
     DecodedStreamObject,
     EncodedStreamObject,
