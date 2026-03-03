@@ -52,11 +52,13 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
             target annotation.
         reply_type: The relationship between this annotation and the one
             specified by ``in_reply_to``. Either ``"R"`` (a reply, default)
-            or ``"Group"`` (grouped with the parent annotation). Only
-            meaningful when ``in_reply_to`` is set.
+            or ``"Group"`` (grouped with the parent annotation). Raises
+            ``ValueError`` if a non-default value is provided without
+            ``in_reply_to``.
         annotation_name: A text string uniquely identifying this annotation
             among all annotations on its page. Automatically generated when
-            ``in_reply_to`` is set and no name is provided.
+            ``in_reply_to`` is set and no name is provided. Raises
+            ``ValueError`` if provided without ``in_reply_to``.
 
     """
 
@@ -70,6 +72,14 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
     ) -> None:
         if title_bar is not None:
             self[NameObject("/T")] = TextStringObject(title_bar)
+        if annotation_name is not None and in_reply_to is None:
+            raise ValueError(
+                "annotation_name is only supported when in_reply_to is set"
+            )
+        if reply_type != "R" and in_reply_to is None:
+            raise ValueError(
+                "reply_type is only meaningful when in_reply_to is set"
+            )
         if in_reply_to is not None:
             if isinstance(in_reply_to, IndirectObject):
                 ref: IndirectObject = in_reply_to
@@ -85,7 +95,6 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
             self[NameObject("/RT")] = NameObject(f"/{reply_type}")
             if annotation_name is None:
                 annotation_name = str(uuid.uuid4())
-        if annotation_name is not None:
             self[NameObject("/NM")] = TextStringObject(annotation_name)
 
 

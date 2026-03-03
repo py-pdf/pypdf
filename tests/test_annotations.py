@@ -428,16 +428,27 @@ def test_markup_annotation_in_reply_to_group_type():
 
     assert grouped["/RT"] == "/Group"
     assert "/IRT" in grouped
+    assert "/NM" in grouped
 
 
-def test_markup_annotation_name():
-    """Test explicit annotation_name without in_reply_to."""
-    annot = Text(
-        text="Named annotation",
-        rect=(50, 550, 200, 650),
-        annotation_name="my-unique-name",
-    )
-    assert annot["/NM"] == "my-unique-name"
+def test_markup_annotation_name_without_reply():
+    """Test that annotation_name without in_reply_to raises ValueError."""
+    with pytest.raises(ValueError, match="annotation_name is only supported when in_reply_to is set"):
+        Text(
+            text="Named but not a reply",
+            rect=(50, 550, 200, 650),
+            annotation_name="my-unique-name",
+        )
+
+
+def test_markup_annotation_reply_type_without_reply():
+    """Test that non-default reply_type without in_reply_to raises ValueError."""
+    with pytest.raises(ValueError, match="reply_type is only meaningful when in_reply_to is set"):
+        Text(
+            text="Grouped but not a reply",
+            rect=(50, 550, 200, 650),
+            reply_type="Group",
+        )
 
 
 def test_markup_annotation_in_reply_to_custom_name():
