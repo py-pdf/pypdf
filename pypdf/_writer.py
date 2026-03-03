@@ -63,6 +63,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
+    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
 )
@@ -1599,11 +1600,11 @@ class PdfWriter(PdfDocCommon):
 
         """
         if remove_identicals_old != self._UNSET:
-            # Deprecate indicating keyword-only is supported.
+            deprecate_with_replacement(remove_identicals_old, remove_identicals, "7.0.0")
             assert isinstance(remove_identicals_old, bool)  # Check type!
             remove_identicals = remove_identicals_old
         if remove_orphans != self._UNSET:
-            # Deprecate with new name and keyword-only.
+            deprecate_with_replacement(remove_orphans, remove_unreferenced, "7.0.0")
             assert isinstance(remove_orphans, bool)  # Check type!
             remove_unreferenced = remove_orphans
 
