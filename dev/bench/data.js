@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772532947892,
+  "lastUpdate": 1772533023807,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -94783,6 +94783,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03759387409894605",
             "extra": "mean: 809.6081029999937 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d0fa2fc0b6e54d9d6f61ffa52d057c8b5ff032f",
+          "message": "MAINT: Move and rename _xobj_image_helpers.py (#3661)\n\nMove from top level to more appropriate generic folder. Also rename,\nto remove the redundant \"helpers\".",
+          "timestamp": "2026-03-03T11:13:11+01:00",
+          "tree_id": "d630e717d2a595eb6a835bdee1200745a13e0498",
+          "url": "https://github.com/py-pdf/pypdf/commit/6d0fa2fc0b6e54d9d6f61ffa52d057c8b5ff032f"
+        },
+        "date": 1772533018530,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.271225246866596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029963873441571396",
+            "extra": "mean: 81.4914550000087 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.603382872843532,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02356084094041847",
+            "extra": "mean: 60.22869000001189 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0197572074953123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04206713692817964",
+            "extra": "mean: 980.6255770000007 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3784248164994936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12049849020882147",
+            "extra": "mean: 2.642532826600018 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1347316570057193,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2797131251235609",
+            "extra": "mean: 7.422160628200027 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1212526482095915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05967342698795439",
+            "extra": "mean: 891.859654999962 msec\nrounds: 5"
           }
         ]
       }
