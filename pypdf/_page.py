@@ -1113,7 +1113,7 @@ class PageObject(DictionaryObject):
             )
             if new:
                 new_resources[NameObject(res)] = new
-                rename.update(new_rename)
+                rename.update(new_resource_name)
 
         # Combine /ProcSet sets, making sure there is a consistent order
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
@@ -1167,8 +1167,8 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
-        self[NameObject(PG.RESOURCES)] = new_resources
         self.replace_contents(ContentStream(new_content_array, self.pdf))
+        self[NameObject(PG.RESOURCES)] = new_resources
 
         new_annots = ArrayObject()
         for page in (self, page2):
