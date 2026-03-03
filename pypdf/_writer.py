@@ -713,10 +713,11 @@ class PdfWriter(PdfDocCommon):
         """
         num_pages = self.get_num_pages()
         if index < num_pages:
+            mediabox = self.pages[index].mediabox
             if (width is None or width <= 0):
-                width = self.pages[index].mediabox.width
+                width = mediabox.width
             if (height is None or height <= 0):
-                height = self.pages[index].mediabox.height
+                height = mediabox.height
 
         if index == num_pages:
             mediabox = self.pages[index - 1].mediabox
