@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772533023807,
+  "lastUpdate": 1772615398465,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -90755,6 +90755,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022308394942017187",
             "extra": "mean: 667.5179535999973 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ede6db99d007f27540e62867c762746df7a6ed0e",
+          "message": "DOC: Document how to disable jbig2dec calls",
+          "timestamp": "2026-03-04T10:07:18+01:00",
+          "tree_id": "49cb7fa76e14bc72aafc00de1e8832cc4482eb2e",
+          "url": "https://github.com/py-pdf/pypdf/commit/ede6db99d007f27540e62867c762746df7a6ed0e"
+        },
+        "date": 1772615393249,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1183909057023778,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0077252717323986414",
+            "extra": "mean: 320.67820560000087 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.80879312145941,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035331371856636004",
+            "extra": "mean: 63.255935625001314 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29506838417442827,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009234519102530463",
+            "extra": "mean: 3.3890448914000046 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.25472476823485,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006049288632183231",
+            "extra": "mean: 54.78033838889237 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08854944397927411,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0522541492132419",
+            "extra": "mean: 11.293125682799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5006361035874969,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012285031151965892",
+            "extra": "mean: 666.3840738000033 msec\nrounds: 5"
           }
         ]
       }
