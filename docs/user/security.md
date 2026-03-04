@@ -21,6 +21,8 @@ It defaults to 75 MB as well.
 For the *FlateDecode* filter, the number of bytes to attempt recovery with can be set by `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH`.
 It defaults to 5 MB due to the much more complex recovery approach.
 
+For the *JBIG2Decode* filter, calling the external *jbig2dec* tool can be disabled by setting `pypdf.filters.JBIG2DEC_BINARY = None`.
+
 ### Reading
 
 *pypdf* currently employs the following reading limits on *PdfReader* instances:
