@@ -2829,6 +2829,14 @@ def test_insert_filtered_annotations__annotations_are_no_list(caplog):
     font_file2 = reader.get_object(36).indirect_reference
     assert caplog.messages == [
         (
+            f"Expected annotation arrays: {{'/FontFile2': {font_file2!r}, "
+            "'/Descent': -269, '/CapHeight': 714, '/FontWeight': "
+            "300, '/FontName': '/JQJGLF+OpenSans-Light', '/ItalicAngle': 0, '/StemV': "
+            "48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
+            "'/FontFamily': 'Open Sans Light', '/Flags': 32, '/XHeight': 531, "
+            "'/Ascent': 1048, '/FontStretch': '/Normal'} []. Ignoring annotations."
+        ),
+        (
             f"Expected list of annotations, got {{'/FontFile2': {font_file2!r}, "
             "'/Descent': -269, '/CapHeight': 714, '/FontWeight': 300, '/FontName': '/JQJGLF+OpenSans-Light', "
             "'/ItalicAngle': 0, '/StemV': 48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "

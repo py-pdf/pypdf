@@ -6,6 +6,7 @@ from typing import Any, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
+from .errors import LimitReachedError
 from .generic import (
     DecodedStreamObject,
     DictionaryObject,
@@ -217,6 +218,15 @@ def process_cm_line(
     return process_rg, process_char, multiline_rg
 
 
+# Usual values should be up to 65_536.
+MAPPING_DICTIONARY_SIZE_LIMIT = 100_000
+
+
+def _check_mapping_size(size: int) -> None:
+    if size > MAPPING_DICTIONARY_SIZE_LIMIT:
+        raise LimitReachedError(f"Maximum /ToUnicode size limit reached: {size} > {MAPPING_DICTIONARY_SIZE_LIMIT}.")
+
+
 def parse_bfrange(
     line: bytes,
     map_dict: dict[Any, Any],
@@ -225,6 +235,8 @@ def parse_bfrange(
 ) -> Union[None, tuple[int, int]]:
     lst = [x for x in line.split(b" ") if x]
     closure_found = False
+    entry_count = len(int_entry)
+    _check_mapping_size(entry_count)
     if multiline_rg is not None:
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
@@ -233,6 +245,8 @@ def parse_bfrange(
             if sq == b"]":
                 closure_found = True
                 break
+            entry_count += 1
+            _check_mapping_size(entry_count)
             map_dict[
                 unhexlify(fmt % a).decode(
                     "charmap" if map_dict[-1] == 1 else "utf-16-be",
@@ -252,6 +266,8 @@ def parse_bfrange(
                 if sq == b"]":
                     closure_found = True
                     break
+                entry_count += 1
+                _check_mapping_size(entry_count)
                 map_dict[
                     unhexlify(fmt % a).decode(
                         "charmap" if map_dict[-1] == 1 else "utf-16-be",
@@ -264,6 +280,8 @@ def parse_bfrange(
             c = int(lst[2], 16)
             fmt2 = b"%%0%dX" % max(4, len(lst[2]))
             closure_found = True
+            range_size = max(0, b - a + 1)
+            _check_mapping_size(entry_count + range_size)  # This can be checked beforehand.
             while a <= b:
                 map_dict[
                     unhexlify(fmt % a).decode(
@@ -279,6 +297,8 @@ def parse_bfrange(
 
 def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) -> None:
     lst = [x for x in line.split(b" ") if x]
+    new_count = len(lst) // 2
+    _check_mapping_size(len(int_entry) + new_count)  # This can be checked beforehand.
     map_dict[-1] = len(lst[0]) // 2
     while len(lst) > 1:
         map_to = ""

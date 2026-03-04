@@ -1,5 +1,56 @@
 # CHANGELOG
 
+## Version 6.7.5, 2026-03-02
+
+### Security (SEC)
+- Improve the performance of the ASCIIHexDecode filter (#3666)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.4...6.7.5)
+
+## Version 6.7.4, 2026-02-27
+
+### Security (SEC)
+- Allow limiting output length for RunLengthDecode filter (#3664)
+
+### Robustness (ROB)
+- Deal with invalid annotations in extract_links (#3659)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.3...6.7.4)
+
+## Version 6.7.3, 2026-02-24
+
+### Security (SEC)
+- Use zlib decompression limit when retrieving XFA data (#3658)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.2...6.7.3)
+
+## Version 6.7.2, 2026-02-22
+
+### Security (SEC)
+- Prevent infinite loop from circular xref /Prev references (#3655)
+
+### Bug Fixes (BUG)
+- Fix wrong LUT size error (#3651)
+- Fix handling of page boxes defined on `/Pages` (#3650)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.1...6.7.2)
+
+## Version 6.7.1, 2026-02-17
+
+### Security (SEC)
+- Detect cyclic references when accessing TreeObject.children (#3645)
+- Limit size of `/ToUnicode` entries (#3646)
+- Limit FlateDecode recovery attempts (#3644)
+
+### Bug Fixes (BUG)
+- Avoid own object replacement logic in `PageObject.replace_contents` (#3638)
+- Fix UnboundLocalError when update_page_form_field_values with /Sig (#3634)
+
+### Robustness (ROB)
+- Avoid divison by zero when decoding FlateDecode PNG prediction (#3641)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.0...6.7.1)
+
 ## Version 6.7.0, 2026-02-08
 
 ### Deprecations (DEP)

@@ -13,9 +13,15 @@ aware of the possible side effects, you can modify the following constants which
 
 * `pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH` for the *FlateDecode* filter (zlib compression)
 * `pypdf.filters.LZW_MAX_OUTPUT_LENGTH` for the *LZWDecode* filter (LZW compression)
+* `pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH` for the *RunLengthDecode* filter (run-length compression)
 
 For JBIG2 images, there is a similar parameter to limit the memory usage during decoding: `pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH`
 It defaults to 75 MB as well.
+
+For the *FlateDecode* filter, the number of bytes to attempt recovery with can be set by `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH`.
+It defaults to 5 MB due to the much more complex recovery approach.
+
+For the *JBIG2Decode* filter, calling the external *jbig2dec* tool can be disabled by setting `pypdf.filters.JBIG2DEC_BINARY = None`.
 
 ### Reading
 
@@ -33,6 +39,14 @@ is to initialize it from the reader, id est something like
 Please refer to our [security policy](https://github.com/py-pdf/pypdf/security/policy).
 
 ## Invalid reports
+
+### Exceptions
+
+Most exceptions raised by our code are considered bugs or robustness issues and can be reported publicly.
+We consider it the task of the library user to catch exceptions which could cause their service to crash, although we try to
+only raise a known set of exception types.
+
+### Cryptographic functions
 
 We receive reports about possibly insecure cryptography from time to time. This includes the following aspects:
 
