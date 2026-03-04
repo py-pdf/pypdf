@@ -1,4 +1,7 @@
 """Test the pypdf.generic._appearance_stream module."""
+import os
+import subprocess
+import sys
 
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 
@@ -98,3 +101,35 @@ Option D
         layout=layout, text=text, font_size=font_size, is_multiline=is_multiline
     )
     assert b"OneWord" in appearance_stream.get_data()
+
+
+def test_appearance_stream_no_arabic_reshaper(tmp_path):
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
+
+    source_file = tmp_path / "script.py"
+    source_file.write_text(
+        """
+import sys
+from io import BytesIO
+
+import pytest
+
+sys.modules["arabic_reshaper"] = None
+from pypdf.generic._appearance_stream import TextStreamAppearance, HAS_RTL_SUPPORT
+
+assert HAS_RTL_SUPPORT is False
+"""
+    )
+
+    try:
+        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
+    except KeyError:
+        env["PYTHONPATH"] = "."
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, source_file],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert result.stdout == b""
