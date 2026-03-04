@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772615419683,
+  "lastUpdate": 1772617212873,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -90821,6 +90821,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0012285031151965892",
             "extra": "mean: 666.3840738000033 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "costajohnt@gmail.com",
+            "name": "John Costa",
+            "username": "costajohnt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0e9792df262f782884ea5e1b75ea1138655a1fe7",
+          "message": "ENH: Add /IRT (in-reply-to) support for markup annotations (#3631)\n\nAdd first-class support for annotation replies (PDF 1.5) by extending\nMarkupAnnotation with three new parameters:\n\n- in_reply_to: reference to the parent annotation, sets /IRT\n- reply_type: \"R\" (reply, default) or \"Group\", sets /RT\n- annotation_name: sets /NM for annotation threading (auto-generated\n  UUID when in_reply_to is set)\n\nCloses #2065.",
+          "timestamp": "2026-03-04T10:37:40+01:00",
+          "tree_id": "f49e72154f4efb39f6777f928ec0a60f85b04e1a",
+          "url": "https://github.com/py-pdf/pypdf/commit/0e9792df262f782884ea5e1b75ea1138655a1fe7"
+        },
+        "date": 1772617208436,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1540483675537505,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005171428481472731",
+            "extra": "mean: 317.0528424000011 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.871783831353332,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037185340337266446",
+            "extra": "mean: 63.0048903529411 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2951761811052875,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013254796036887454",
+            "extra": "mean: 3.3878072283999985 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.024945298596904,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005523591213145995",
+            "extra": "mean: 55.47867044444467 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09158477584154477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02666592458921241",
+            "extra": "mean: 10.918845308200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4994059124365817,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003553241536880192",
+            "extra": "mean: 666.9308102000002 msec\nrounds: 5"
           }
         ]
       }
