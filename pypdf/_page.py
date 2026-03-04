@@ -1083,6 +1083,9 @@ class PageObject(DictionaryObject):
         over: bool = True,
         expand: bool = False,
     ) -> None:
+        # First we work on merging the resource dictionaries. This allows us
+        # to find out what symbols in the content streams we might need to
+        # rename.
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
             if hasattr(
@@ -1097,6 +1100,14 @@ class PageObject(DictionaryObject):
         original_resources = cast(DictionaryObject, self.get(PG.RESOURCES, DictionaryObject()).get_object())
         page2_resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
         new_resources = DictionaryObject()
+
+        new_annots = ArrayObject()
+        for page in (self, page2):
+            if PG.ANNOTS in page:
+                annots = page[PG.ANNOTS]
+                if isinstance(annots, ArrayObject):
+                    new_annots.extend(annots)
+        self[NameObject(PG.ANNOTS)] = new_annots
 
         rename: dict[str, Any] = {}
         for res in (
@@ -1169,14 +1180,6 @@ class PageObject(DictionaryObject):
 
         self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
-
-        new_annots = ArrayObject()
-        for page in (self, page2):
-            if PG.ANNOTS in page:
-                annots = page[PG.ANNOTS]
-                if isinstance(annots, ArrayObject):
-                    new_annots.extend(annots)
-        self[NameObject(PG.ANNOTS)] = new_annots
 
         return None
 
