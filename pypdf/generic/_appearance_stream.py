@@ -404,11 +404,11 @@ class TextStreamAppearance(BaseStreamAppearance):
                 text=text,
             )
 
-        font_glyph_byte_map: dict[str, bytes]
+        font_glyph_byte_map: dict[str, bytes] = {}
         if isinstance(font.encoding, str):
-            font_glyph_byte_map = {
-                v: k.encode(font.encoding) for k, v in font.character_map.items()
-            }
+            font.character_map.pop(-1, None)  # Remove -1 key that does not map a character
+            for k, v in font.character_map.items():
+                font_glyph_byte_map[v] = k.encode(font.encoding)
         else:
             font_glyph_byte_map = {v: bytes((k,)) for k, v in font.encoding.items()}
             font_encoding_rev = {v: bytes((k,)) for k, v in font.encoding.items()}
