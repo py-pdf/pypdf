@@ -450,13 +450,16 @@ class Font:
             # and character_map[char] is the actual character.
             for gid_str, actual_char in self.character_map.items():
                 cid = ord(gid_str)
+                cid_hex = f"{cid:04X}"
+                uni_point = ord(actual_char)
+                if uni_point > 0xFFFF:
+                    uni_hex = f"{uni_point:08X}"
+                else:
+                    uni_hex = f"{uni_point:04X}"
+                unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
+
                 width = self.character_widths.get(gid_str, 1000)
                 widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
-
-                # Store mapping: <CID_HEX> <UNICODE_HEX>
-                cid_hex = f"{cid:04X}"
-                uni_hex = f"{ord(actual_char):04X}"
-                unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
 
             cid_font[NameObject("/W")] = ArrayObject(widths_list)
             cid_font[NameObject("/DW")] = NumberObject(self.character_widths.get("default", 1000))
