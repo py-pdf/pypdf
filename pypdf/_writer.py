@@ -56,6 +56,7 @@ else:
 
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
+from ._font import Font
 from ._page import PageObject, Transformation
 from ._page_labels import nums_clear_range, nums_insert, nums_next
 from ._reader import PdfReader
@@ -993,6 +994,17 @@ class PdfWriter(PdfDocCommon):
                 appearance_stream_font_resources[font_name] = getattr(
                     existing_font, "indirect_reference", existing_font
                 )
+
+    def add_font(
+        self,
+        font_file: Path,
+        font_resource_name: str,
+        parent_resource: DictionaryObject) -> None:
+        with open(font_file, "rb") as font_file_handle:
+            font_file_bytes = BytesIO(font_file_handle.read())
+            font_obj = Font.from_truetype_font_file(font_file_bytes)
+            font_dict = font_obj.as_font_resource()
+            self._add_font_resource(parent_resource, font_dict, NameObject(font_resource_name))
 
     FFBITS_NUL = FA.FfBits(0)
 
