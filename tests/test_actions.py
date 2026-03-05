@@ -126,7 +126,7 @@ def test_page_add_action(pdf_file_writer):
     # Add an open action with a non-dictionary object as the entry in the trigger
     # TODO: change description
     with pytest.raises(
-            ValueError,
+            TypeError,
             match = "Although actions can be part of an array, "
                     "actions that are values in the additional-actions dictionary must be a dictionaries"
     ):
