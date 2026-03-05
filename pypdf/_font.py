@@ -342,11 +342,20 @@ class Font:
     def from_truetype_font_file(cls, font_file: BytesIO) -> "Font":
         with TTFont(font_file) as tt_font_object:
             header = tt_font_object["head"]
-            names = tt_font_object["name"]
-            postscript_info = tt_font_object["post"]
+            try:
+                postscript_info = tt_font_object["post"]
+                have_postscript_info = True
+            except KeyError:
+                have_postscript_info = False
             horizontal_header = tt_font_object["hhea"]
-            os_2 = tt_font_object["OS/2"]
             metrics = tt_font_object["hmtx"].metrics
+            try:
+                os_2 = tt_font_object["OS/2"]
+                have_os_2 = True
+                panose = os_2.panose
+                family_class = os_2.sFamilyClass >> 8
+            except KeyError:
+                have_os_2 = False
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
             units_per_em = header.unitsPerEm
@@ -354,30 +363,49 @@ class Font:
 
             # Get the font descriptor
             font_descriptor_kwargs: dict[Any, Any] = {}
-            font_descriptor_kwargs["name"] = names.getBestFullName()
-            font_descriptor_kwargs["family"] = names.getBestFamilyName()
-            font_descriptor_kwargs["weight"] = names.getBestSubFamilyName()
+            try:
+                names = tt_font_object["name"]
+                font_descriptor_kwargs["name"] = names.getBestFullName()
+                font_descriptor_kwargs["family"] = names.getBestFamilyName()
+                font_descriptor_kwargs["weight"] = names.getBestSubFamilyName()
+            except KeyError:
+                pass
             font_descriptor_kwargs["ascent"] = int(round(horizontal_header.ascent * scale_factor, 0))
             font_descriptor_kwargs["descent"] = int(round(horizontal_header.descent * scale_factor, 0))
-            font_descriptor_kwargs["cap_height"] = int(round(os_2.sCapHeight * scale_factor, 0))
-            font_descriptor_kwargs["x_height"] = int(round(os_2.sxHeight  * scale_factor, 0))
+            if have_os_2:
+                try:
+                    font_descriptor_kwargs["cap_height"] = int(round(os_2.sCapHeight * scale_factor, 0))
+                    font_descriptor_kwargs["x_height"] = int(round(os_2.sxHeight * scale_factor, 0))
+                except AttributeError:
+                    pass
 
             # Get the font flags
-            flags: int = 0
-            italic_angle = postscript_info.italicAngle
-            if italic_angle != 0.0:
-                flags |= FontFlags.ITALIC
-            if postscript_info.isFixedPitch > 0:
-                flags |= FontFlags.FIXED_PITCH
-
             # See Chapter 6 of the TrueType reference manual for the definition of the OS/2 table:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
-            family_class = os_2.sFamilyClass >> 8
-            if 2 <= family_class <= 9 and family_class != 6:
-                flags |= FontFlags.SERIF
-            if family_class == 10:
+            flags: int = 0
+            test_match = False
+            # ITALIC
+            if header.macStyle & 0x02 or (have_os_2 and os_2.fsSelection & 0x01):
+                flags |= FontFlags.ITALIC
+            if have_postscript_info:
+                italic_angle = postscript_info.italicAngle
+                if italic_angle != 0.0:
+                    flags |= FontFlags.ITALIC
+
+            # FIXED_PITCH
+            if (have_os_2 and panose.bProportion == 9) or (have_postscript_info and postscript_info.isFixedPitch > 0):
+                flags |= FontFlags.FIXED_PITCH
+
+            # SCRIPT
+            if have_os_2 and (family_class == 10 or panose.bFamilyType == 3):
                 flags |= FontFlags.SCRIPT
-            if family_class == 12:
+
+            # SERIF
+            if have_os_2 and (2 <= panose.bSerifStyle <= 10 or 1 <= family_class <= 5 or family_class == 7):
+                flags |= FontFlags.SERIF
+
+            # SYMBOLIC
+            if have_os_2 and (family_class == 12 or panose.bFamilyType in {4, 5}):
                 flags |= FontFlags.SYMBOLIC
             else:
                 flags |= FontFlags.NONSYMBOLIC
@@ -402,14 +430,17 @@ class Font:
             character_widths: dict[str, int] = {}
             character_map: dict[str, str] = {}
 
-            for character_code, glyph in tt_font_object.getBestCmap().items():
-                char = chr(character_code)
-                gid = tt_font_object.getGlyphID(glyph)
-                # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
-                gid_bytes = gid.to_bytes(2, "big")
-                gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
-                character_map[gid_key_string] = char
-                character_widths[gid_key_string] = int(round(metrics[glyph][0] * scale_factor, 0))
+            try:
+                for character_code, glyph in tt_font_object.getBestCmap().items():
+                    char = chr(character_code)
+                    gid = tt_font_object.getGlyphID(glyph)
+                    # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
+                    gid_bytes = gid.to_bytes(2, "big")
+                    gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
+                    character_map[gid_key_string] = char
+                    character_widths[gid_key_string] = int(round(metrics[glyph][0] * scale_factor, 0))
+            except (AttributeError, KeyError):
+                pass
 
             cls._add_default_width(character_widths, flags)
             space_width = cls._add_space_width(character_widths, flags)
