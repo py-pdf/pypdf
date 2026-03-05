@@ -392,7 +392,7 @@ class Font:
             # See Chapter 6 of the TrueType reference manual for the definition of the OS/2 table:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
             family_class = os_2.sFamilyClass >> 8
-            if 2 <= family_class <= 9 and family_class != 6:
+            if 1 <= family_class <= 7 and family_class != 6:
                 flags |= FontFlags.SERIF
             if family_class == 10:
                 flags |= FontFlags.SCRIPT
