@@ -2199,7 +2199,7 @@ class PageObject(DictionaryObject):
             return
 
         """
-        The action dictionary’s Next entry allows sequences of actions to be
+        The action dictionary's Next entry allows sequences of actions to be
         chained together. For example, the effect of clicking a link
         annotation with the mouse can be to play a sound, jump to a new
         page, and start up a movie. Note that the Next entry is not
@@ -2220,8 +2220,7 @@ class PageObject(DictionaryObject):
         head = current = additional_actions.get(trigger_name)
         if not isinstance(head, DictionaryObject):
             raise TypeError(
-                "Although actions can be part of an array, "
-                "actions that are values in the additional-actions dictionary must be a dictionaries"
+                "The Entries in a page object's additional-actions dictionary must be dictionaries"
             )
 
         while True:
