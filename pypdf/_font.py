@@ -18,6 +18,17 @@ except ImportError:
     HAS_FONTTOOLS = False
 
 
+# Some constants from truetype font tables that we use:
+HEADER_MACSTYLE_ITALIC = 0x02
+OS2_FSSELECTION_ITALIC = 0x01
+OS2_PANOSE_BFAMILYTYPE_SCRIPT = 3
+OS2_PANOSE_BFAMILYTYPE_DECORATIVE = 4
+OS2_PANOSE_BFAMILYTYPE_PICTORIAL = 5
+OS2_PANOSE_BPROPORTION_MONOSPACED = 9
+OS2_SFAMILYSCLASS_SCRIPTS = 10
+OS2_SFAMILYSCLASS_SYMBOLIC = 12
+
+
 @dataclass(frozen=True)
 class FontDescriptor:
     """
@@ -335,12 +346,23 @@ class Font:
         if not HAS_FONTTOOLS:
             raise ImportError("The 'fontTools' library is required to use 'from_truetype_font_file'")
         with TTFont(font_file) as tt_font_object:
+            # See Chapter 6 of the TrueType reference manual for the definition of the head, OS/2 and post tables:
+            # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6head.html
+            # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
+            # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6post.html
             header = tt_font_object["head"]
-            names = tt_font_object["name"]
-            postscript_info = tt_font_object["post"]
             horizontal_header = tt_font_object["hhea"]
-            os_2 = tt_font_object["OS/2"]
             metrics = tt_font_object["hmtx"].metrics
+
+            # Collect additional font tables to derive font information
+            postscript = tt_font_object.get("post", None)
+
+            os2 = tt_font_object.get("OS/2", None)
+            if os2:
+                panose = os2.panose
+                # sFamilyClass is a two-byte field. The high byte describes the family class, whereas the low
+                # byte only describes the subclass. We only need the high byte, hence the bit shift below:
+                family_class = os2.sFamilyClass >> 8
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
             units_per_em = header.unitsPerEm
@@ -348,30 +370,55 @@ class Font:
 
             # Get the font descriptor
             font_descriptor_kwargs: dict[Any, Any] = {}
-            font_descriptor_kwargs["name"] = names.getBestFullName()
-            font_descriptor_kwargs["family"] = names.getBestFamilyName()
-            font_descriptor_kwargs["weight"] = names.getBestSubFamilyName()
+            names = tt_font_object.get("name", None)
+            if names:
+                font_descriptor_kwargs["name"] = names.getBestFullName()
+                font_descriptor_kwargs["family"] = names.getBestFamilyName()
+                font_descriptor_kwargs["weight"] = names.getBestSubFamilyName()
             font_descriptor_kwargs["ascent"] = int(round(horizontal_header.ascent * scale_factor, 0))
             font_descriptor_kwargs["descent"] = int(round(horizontal_header.descent * scale_factor, 0))
-            font_descriptor_kwargs["cap_height"] = int(round(os_2.sCapHeight * scale_factor, 0))
-            font_descriptor_kwargs["x_height"] = int(round(os_2.sxHeight  * scale_factor, 0))
+            if os2:
+                try:
+                    font_descriptor_kwargs["cap_height"] = int(round(os2.sCapHeight * scale_factor, 0))
+                    font_descriptor_kwargs["x_height"] = int(round(os2.sxHeight * scale_factor, 0))
+                except AttributeError:
+                    pass
 
             # Get the font flags
             flags: int = 0
-            italic_angle = postscript_info.italicAngle
-            if italic_angle != 0.0:
+            # ITALIC
+            if header.macStyle & HEADER_MACSTYLE_ITALIC or (os2 and os2.fsSelection & OS2_FSSELECTION_ITALIC):
                 flags |= FontFlags.ITALIC
-            if postscript_info.isFixedPitch > 0:
+            if postscript:
+                italic_angle = postscript.italicAngle
+                if italic_angle != 0.0:
+                    flags |= FontFlags.ITALIC
+
+            # FIXED_PITCH
+            if (
+                (os2 and panose.bProportion == OS2_PANOSE_BPROPORTION_MONOSPACED) or
+                (postscript and postscript.isFixedPitch > 0)  # Actually 1, but originally (older versions of the TTF
+            ):                                                # specification) any non-zero value signified monospace.
                 flags |= FontFlags.FIXED_PITCH
 
-            # See Chapter 6 of the TrueType reference manual for the definition of the OS/2 table:
-            # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
-            family_class = os_2.sFamilyClass >> 8
-            if 2 <= family_class <= 9 and family_class != 6:
-                flags |= FontFlags.SERIF
-            if family_class == 10:
+            # SCRIPT
+            if os2 and (
+                family_class == OS2_SFAMILYSCLASS_SCRIPTS or panose.bFamilyType == OS2_PANOSE_BFAMILYTYPE_SCRIPT
+            ):
                 flags |= FontFlags.SCRIPT
-            if family_class == 12:
+
+            # SERIF
+            if os2 and (
+                2 <= panose.bSerifStyle <= 10  #
+                or 1 <= family_class <= 5 or family_class == 7  # 6 is reserved, all 8 and above are not serif
+            ):
+                flags |= FontFlags.SERIF
+
+            # SYMBOLIC
+            if os2 and (
+                family_class == OS2_SFAMILYSCLASS_SYMBOLIC or
+                panose.bFamilyType in {OS2_PANOSE_BFAMILYTYPE_DECORATIVE, OS2_PANOSE_BFAMILYTYPE_PICTORIAL}
+            ):
                 flags |= FontFlags.SYMBOLIC
             else:
                 flags |= FontFlags.NONSYMBOLIC
