@@ -123,16 +123,16 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
-    # Add an open action with a non-dictionary object as the entry in the trigger
-    # TODO: change description
+    # Add an open action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             TypeError,
-            match = "Although actions can be part of an array, "
-                    "actions that are values in the additional-actions dictionary must be a dictionaries"
+            match = "The Entries in a page object's additional-actions dictionary must be dictionaries"
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")
         page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
+    page.delete_action("open")
+    assert page.get(NameObject("/AA")) is None
 
     # Add an open action with a pre-existing open action which has an invalid Next entry
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
