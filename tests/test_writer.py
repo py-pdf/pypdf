@@ -291,6 +291,12 @@ def test_insert_blank_page():
     assert page.mediabox.width == 50
     assert page.mediabox.height == 60
 
+    with pytest.raises(
+        IndexError,
+        match="Index should be between zero and the number of existing pages",
+    ):
+        page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) + 1)
+
     old_page_count = len(writer.pages)
     old_page = writer.pages[0]
     page = writer.insert_blank_page(width=-10, index=0)
@@ -318,6 +324,12 @@ def test_insert_blank_page():
     assert len(writer.pages) == old_page_count + 1
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
+
+    with pytest.raises(
+        IndexError,
+        match="Index should be between zero and the number of existing pages",
+    ):
+        page = writer.insert_blank_page(width=-70, height=-80, index=len(writer.pages) + 1)
 
 
 @pytest.mark.parametrize(

@@ -709,7 +709,7 @@ class PdfWriter(PdfDocCommon):
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
                 and previous page does not exist.
-
+            IndexError: Index is outside of [0, self.get_num_pages()]
         """
         num_pages = self.get_num_pages()
         if index <= num_pages:
@@ -720,6 +720,8 @@ class PdfWriter(PdfDocCommon):
                 width = mediabox.width
             if height is None or height <= 0:
                 height = mediabox.height
+        else:
+            raise IndexError("Index should be between zero and the number of existing pages")
 
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
