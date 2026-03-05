@@ -2226,8 +2226,6 @@ class PageObject(DictionaryObject):
 
         while True:
             if isinstance(current, ArrayObject):
-                if is_null_or_none(current[-1]):
-                    break
                 current = current[-1]
             elif isinstance(current, DictionaryObject):
                 if is_null_or_none(current.get(NameObject("/Next"), None)):
