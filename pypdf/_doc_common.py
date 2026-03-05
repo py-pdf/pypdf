@@ -29,7 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import struct
-import zlib
 from abc import abstractmethod
 from collections.abc import Generator, Iterable, Iterator, Mapping
 from datetime import datetime
@@ -61,6 +60,7 @@ from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .errors import PdfReadError, PyPdfError
+from .filters import _decompress_with_limit
 from .generic import (
     ArrayObject,
     BooleanObject,
@@ -1324,7 +1324,6 @@ class PdfDocCommon:
 
     @property
     def xfa(self) -> Optional[dict[str, Any]]:
-        tree: Optional[TreeObject] = None
         retval: dict[str, Any] = {}
         catalog = self.root_object
 
@@ -1342,7 +1341,7 @@ class PdfDocCommon:
                 if isinstance(f, IndirectObject):
                     field = cast(Optional[EncodedStreamObject], f.get_object())
                     if field:
-                        es = zlib.decompress(field._data)
+                        es = _decompress_with_limit(field._data)
                         retval[tag] = es
         return retval
 

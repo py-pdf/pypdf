@@ -30,7 +30,8 @@
 
 from typing import TYPE_CHECKING, Optional, Union, cast
 
-from . import ArrayObject, DictionaryObject, IndirectObject, PdfObject, TextStringObject
+from .._utils import logger_warning
+from . import ArrayObject, DictionaryObject, IndirectObject, PdfObject, TextStringObject, is_null_or_none
 
 if TYPE_CHECKING:
     from .._page import PageObject
@@ -79,8 +80,23 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
     """Extracts links from two pages on the assumption that the two pages are
     the same. Produces one list of (new link, old link) tuples.
     """
-    new_links = [_build_link(link, new_page) for link in new_page.get("/Annots", [])]
-    old_links = [_build_link(link, old_page) for link in old_page.get("/Annots", [])]
+    new_annotations = new_page.get("/Annots", ArrayObject()).get_object()
+    old_annotations = old_page.get("/Annots", ArrayObject()).get_object()
+    if is_null_or_none(new_annotations):
+        new_annotations = ArrayObject()
+    if is_null_or_none(old_annotations):
+        old_annotations = ArrayObject()
+    if not isinstance(new_annotations, ArrayObject) or not isinstance(old_annotations, ArrayObject):
+        logger_warning(
+            f"Expected annotation arrays: {old_annotations} {new_annotations}. Ignoring annotations.",
+            __name__
+        )
+        return []
+    if len(new_annotations) != len(old_annotations):
+        logger_warning(f"Annotation sizes differ: {old_annotations} vs. {new_annotations}", __name__)
+
+    new_links = [_build_link(link, new_page) for link in new_annotations]
+    old_links = [_build_link(link, old_page) for link in old_annotations]
 
     return [
         (new_link, old_link) for (new_link, old_link)
@@ -110,7 +126,7 @@ def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional
     return None  # Nothing to do here
 
 
-def _create_link(reference: PdfObject, source_pdf: "PdfReader")-> Optional[ReferenceLink]:
+def _create_link(reference: PdfObject, source_pdf: "PdfReader") -> Optional[ReferenceLink]:
     if isinstance(reference, TextStringObject):
         return NamedReferenceLink(reference, source_pdf)
     if isinstance(reference, ArrayObject):

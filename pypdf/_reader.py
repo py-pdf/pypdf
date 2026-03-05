@@ -871,7 +871,16 @@ class PdfReader(PdfDocCommon):
         self.xref_free_entry = {}
         self.xref_objStm = {}
         self.trailer = DictionaryObject()
+        visited_xref_offsets: set[int] = set()
         while startxref is not None:
+            # Detect circular /Prev references in the xref chain
+            if startxref in visited_xref_offsets:
+                logger_warning(
+                    f"Circular xref chain detected at offset {startxref}, stopping",
+                    __name__,
+                )
+                break
+            visited_xref_offsets.add(startxref)
             # load the xref table
             stream.seek(startxref, 0)
             x = stream.read(1)
