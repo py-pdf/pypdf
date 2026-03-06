@@ -219,7 +219,7 @@ jobs:
       # Coverage on PyPy is skipped because running coverage with PyPy is slow and CPython test already provides
       # complete coverage data for the same code
       run: |
-        python -m pytest tests -n auto -vv -p no:benchmark -o faulthandler_timeout=60
+        python -m pytest tests -n auto -vv -p no:benchmark -o faulthandler_timeout=60 --max-worker-restart=1
       if: ${{ startsWith(matrix.python-version, 'pypy') }}
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
