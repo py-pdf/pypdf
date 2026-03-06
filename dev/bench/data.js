@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772723868553,
+  "lastUpdate": 1772791013283,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -90953,6 +90953,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002488385492031788",
             "extra": "mean: 671.8371724000008 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "43add641726c2819a465cd0d5c05818aa697f81e",
+          "message": "DEV: Timeout PyPy tests after one minute\n\nSet faulthandler timeout for PyPy tests. Hopefully avoids long runtimes and provides more context where the tests get stuck there.",
+          "timestamp": "2026-03-06T10:54:14+01:00",
+          "tree_id": "4e572c345c89f0fb71759582ae1e19c1672b230d",
+          "url": "https://github.com/py-pdf/pypdf/commit/43add641726c2819a465cd0d5c05818aa697f81e"
+        },
+        "date": 1772791008080,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1462349226916655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004065060097182115",
+            "extra": "mean: 317.84021999999936 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.59334502231197,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004504044440090067",
+            "extra": "mean: 64.12992200000289 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29163371647495484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012844697888705068",
+            "extra": "mean: 3.4289588052000113 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.198667224851686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019197076297639913",
+            "extra": "mean: 54.94907883333471 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0894918171287077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043699399015974215",
+            "extra": "mean: 11.174206000999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4949697801007895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002867279055871634",
+            "extra": "mean: 668.9098424000122 msec\nrounds: 5"
           }
         ]
       }
