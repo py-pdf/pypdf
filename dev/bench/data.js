@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772791043581,
+  "lastUpdate": 1772791710224,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -91019,6 +91019,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002867279055871634",
             "extra": "mean: 668.9098424000122 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "071118b08286bed057bb1608cc507d76722cc6f9",
+          "message": "MAINT: Remove excessive logging in extract_links while not clear (#3670)\n\nRelates to #3667.\n\nIt currently is unclear how to correctly handle the links in this case,\nas `zip()` in strict mode would raise due to the current mismatches\nwhich seem to occur for legitimate files. In most of the cases, there\nwill be no new annotations and thus always an empty list as the return\nvalue.",
+          "timestamp": "2026-03-06T11:05:49+01:00",
+          "tree_id": "edea69550e3378c35d91c4b6ee76e62ed2a26b2a",
+          "url": "https://github.com/py-pdf/pypdf/commit/071118b08286bed057bb1608cc507d76722cc6f9"
+        },
+        "date": 1772791705692,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0732585026808854,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007060162410437332",
+            "extra": "mean: 325.3875321999999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.564132750239578,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00438134668467313",
+            "extra": "mean: 64.25028724999837 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2834277133797067,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023453867573547",
+            "extra": "mean: 3.528236487799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.614130570659352,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007407196134116308",
+            "extra": "mean: 56.77260061111077 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09120151960581925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020029530606678846",
+            "extra": "mean: 10.964729582599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4954525920168618,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011341909753177816",
+            "extra": "mean: 668.6938826000073 msec\nrounds: 5"
           }
         ]
       }
