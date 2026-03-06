@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772795165828,
+  "lastUpdate": 1772795196973,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -95575,6 +95575,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004228488656076491",
             "extra": "mean: 755.8127718000037 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b9f66ab4338ce14e5f07a73f51f09ed08fa1fe7a",
+          "message": "DEV: Change to `loadfile` strategy for PyPy in CI (#3671)\n\nIt seems like the `loadfile` strategy to not use multiple workers for a test file seems to be more reliable than the tests on the current *main* branch. Let's hope that this finally brings us closer to CI not being unreliable with PyPy any more.",
+          "timestamp": "2026-03-06T12:03:35+01:00",
+          "tree_id": "405ccb9a04c522e8c8b3eb70f33e96d5ee74ee3a",
+          "url": "https://github.com/py-pdf/pypdf/commit/b9f66ab4338ce14e5f07a73f51f09ed08fa1fe7a"
+        },
+        "date": 1772795190688,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.395644079071523,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018947545205169194",
+            "extra": "mean: 87.75282845456124 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 24.465329419202323,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0057430262460282135",
+            "extra": "mean: 40.87416861900584 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1141508448998623,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039969999817960476",
+            "extra": "mean: 897.5445331999708 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4060806354189508,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05142141999294687",
+            "extra": "mean: 2.4625650985999528 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.2118905554928013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05011696401015599",
+            "extra": "mean: 4.719417520399929 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3464440301138965,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030965439119217393",
+            "extra": "mean: 742.6970432000871 msec\nrounds: 5"
           }
         ]
       }
