@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader
-from pypdf._font import Font
+from pypdf._font import Font, HAS_FONTTOOLS
 from pypdf.errors import PdfReadError
 from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
 
@@ -78,14 +78,15 @@ def test_font_file():
 
 
 def test_font_from_font_file():
-    reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
-    font_resources = reader.pages[0]["/Resources"]["/Font"]
-    for font_resource in font_resources:
-        font_data = font_resources[font_resource]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
-        font = Font.from_truetype_font_file(BytesIO(font_data))
-        if font_resource == "/F1":
-            assert font.font_descriptor.flags == 96
-        if font_resource == "/F2":
-            assert font.font_descriptor.flags == 32
-        if font_resource == "/F3":
-            assert font.font_descriptor.flags == 33
+    if HAS_FONTTOOLS:
+        reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
+        font_resources = reader.pages[0]["/Resources"]["/Font"]
+        for font_resource in font_resources:
+            font_data = font_resources[font_resource]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+            font = Font.from_truetype_font_file(BytesIO(font_data))
+            if font_resource == "/F1":
+                assert font.font_descriptor.flags == 96
+            if font_resource == "/F2":
+                assert font.font_descriptor.flags == 32
+            if font_resource == "/F3":
+                assert font.font_descriptor.flags == 33
