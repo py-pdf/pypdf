@@ -383,7 +383,6 @@ class Font:
             # See Chapter 6 of the TrueType reference manual for the definition of the OS/2 table:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
             flags: int = 0
-            test_match = False
             # ITALIC
             if header.macStyle & 0x02 or (have_os_2 and os_2.fsSelection & 0x01):
                 flags |= FontFlags.ITALIC
