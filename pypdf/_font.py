@@ -364,8 +364,10 @@ class Font:
             names = tt_font_object["name"]
             postscript_info = tt_font_object["post"]
             horizontal_header = tt_font_object["hhea"]
-            os_2 = tt_font_object["OS/2"]
             metrics = tt_font_object["hmtx"].metrics
+            os_2 = tt_font_object["OS/2"]
+            panose = os_2.panose
+            family_class = os_2.sFamilyClass >> 8
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
             units_per_em = header.unitsPerEm
@@ -383,20 +385,43 @@ class Font:
 
             # Get the font flags
             flags: int = 0
-            italic_angle = postscript_info.italicAngle
-            if italic_angle != 0.0:
-                flags |= FontFlags.ITALIC
-            if postscript_info.isFixedPitch > 0:
-                flags |= FontFlags.FIXED_PITCH
 
             # See Chapter 6 of the TrueType reference manual for the definition of the OS/2 table:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
-            family_class = os_2.sFamilyClass >> 8
+
+            # ITALIC
+            if header.macStyle & 0x02:
+                flags |= FontFlags.ITALIC
+            if os_2.fsSelection & 0x01:
+                flags |= FontFlags.ITALIC
+            italic_angle = postscript_info.italicAngle
+            if italic_angle != 0.0:
+                flags |= FontFlags.ITALIC
+
+            # FIXED_PITCH
+            if panose.bProportion == 9:
+                flags |= FontFlags.FIXED_PITCH
+            if postscript_info.isFixedPitch > 0:
+                flags |= FontFlags.FIXED_PITCH
+
+            # SERIF
+            if 2 <= panose.bSerifStyle <= 10:
+                flags |= FontFlags.SERIF
             if 1 <= family_class <= 7 and family_class != 6:
                 flags |= FontFlags.SERIF
+
+            # SCRIPT
             if family_class == 10:
                 flags |= FontFlags.SCRIPT
-            if family_class == 12:
+            if panose.bFamilyType ==3:
+                flags |= FontFlags.SCRIPT
+
+            # SYMBOLIC
+            for table in tt_font_object["cmap"].tables:
+                if table.platformID == 3 and table.platEncID == 0:
+                    flags |= FontFlags.SYMBOLIC
+
+            if family_class == 12 or panose.bFamilyType in {4, 5}:
                 flags |= FontFlags.SYMBOLIC
             else:
                 flags |= FontFlags.NONSYMBOLIC
