@@ -92,8 +92,9 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
             __name__
         )
         return []
-    if len(new_annotations) != len(old_annotations):
-        logger_warning(f"Annotation sizes differ: {old_annotations} vs. {new_annotations}", __name__)
+    # TODO: Investigate in https://github.com/py-pdf/pypdf/issues/3667
+    # if len(new_annotations) != len(old_annotations):
+    #     logger_warning(f"Annotation sizes differ: {old_annotations} vs. {new_annotations}", __name__)
 
     new_links = [_build_link(link, new_page) for link in new_annotations]
     old_links = [_build_link(link, old_page) for link in old_annotations]
