@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader
-from pypdf._font import Font, HAS_FONTTOOLS
+from pypdf._font import HAS_FONTTOOLS, Font
 from pypdf.errors import PdfReadError
 from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
 
