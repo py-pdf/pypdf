@@ -492,11 +492,11 @@ class Font:
                     uni_hex = f"{uni_point:04X}"
                 unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
 
-                width = self.character_widths.get(gid_str, 1000)
+                width = self.character_widths.get(gid_str, self.character_widths["default"])
                 widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
 
             cid_font[NameObject("/W")] = ArrayObject(widths_list)
-            cid_font[NameObject("/DW")] = NumberObject(self.character_widths.get("default", 1000))
+            cid_font[NameObject("/DW")] = NumberObject(self.character_widths["default"])
             cid_font[NameObject("/CIDToGIDMap")] = NameObject("/Identity")
 
             # Create the /ToUnicode CMap Stream
