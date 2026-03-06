@@ -384,10 +384,9 @@ class Font:
             font_descriptor_kwargs["x_height"] = int(round(os_2.sxHeight  * scale_factor, 0))
 
             # Get the font flags
-            flags: int = 0
-
             # See Chapter 6 of the TrueType reference manual for the definition of the OS/2 table:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
+            flags: int = 0
 
             # ITALIC
             if header.macStyle & 0x02:
@@ -410,18 +409,8 @@ class Font:
             if 1 <= family_class <= 7 and family_class != 6:
                 flags |= FontFlags.SERIF
 
-            # SCRIPT
-            if family_class == 10:
-                flags |= FontFlags.SCRIPT
-            if panose.bFamilyType ==3:
-                flags |= FontFlags.SCRIPT
-
             # SYMBOLIC
-            for table in tt_font_object["cmap"].tables:
-                if table.platformID == 3 and table.platEncID == 0:
-                    flags |= FontFlags.SYMBOLIC
-
-            if family_class == 12 or panose.bFamilyType in {4, 5}:
+            if family_class == 12 or panose.bFamilyType == 5:
                 flags |= FontFlags.SYMBOLIC
             else:
                 flags |= FontFlags.NONSYMBOLIC
