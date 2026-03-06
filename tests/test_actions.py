@@ -22,7 +22,7 @@ def pdf_file_writer():
     return writer
 
 
-def test_page_add_action(pdf_file_writer):
+def test_page_add_action(pdf_file_writer, caplog):
     page = pdf_file_writer.pages[0]
 
     with pytest.raises(
@@ -234,6 +234,14 @@ def test_page_add_action(pdf_file_writer):
     }
     assert page[NameObject("/AA")] == expected
     page.delete_action("close")
+    assert page.get(NameObject("/AA")) is None
+
+    # Add two identical open actions without a pre-existing action dictionary
+    action = JavaScript("app.alert('Page opened');")
+    page.add_action("open", action)
+    page.add_action("open", action)
+    assert caplog.messages[0].startswith("Detected cycle in the action tree")
+    page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
     # Add an open action when an additional-actions key exists and its value is an array

@@ -2223,10 +2223,16 @@ class PageObject(DictionaryObject):
                 "The Entries in a page object's additional-actions dictionary must be dictionaries"
             )
 
+        visited = set()
         while True:
             if isinstance(current, ArrayObject):
                 current = current[-1]
             elif isinstance(current, DictionaryObject):
+                node_id = id(current)
+                if node_id in visited:
+                    logger_warning(f"Detected cycle in the action tree for {current}", __name__)
+                    break
+                visited.add(node_id)
                 if is_null_or_none(current.get(NameObject("/Next"), None)):
                     break
                 current = current.get(NameObject("/Next"))
