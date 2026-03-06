@@ -1,16 +1,14 @@
 """Test font-related functionality."""
-from pathlib import Path
+from io import BytesIO
 
 import pytest
 
 from pypdf import PdfReader
-from pypdf._font import Font
+from pypdf._font import HAS_FONTTOOLS, Font
 from pypdf.errors import PdfReadError
 from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT
 
 
 def test_font_descriptor():
@@ -62,3 +60,22 @@ def test_font_file():
     font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F1"])
     assert type(font.font_descriptor.font_file) is EncodedStreamObject
     assert len(font.font_descriptor.font_file.get_data()) == 2168
+
+
+def test_font_from_font_file():
+    if HAS_FONTTOOLS:
+        reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
+        font_resources = reader.pages[0]["/Resources"]["/Font"]
+        for font_resource in font_resources:
+            font_data = font_resources[font_resource]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+            font = Font.from_truetype_font_file(BytesIO(font_data))
+            if font_resource == "/F1":
+                assert font.font_descriptor.flags == 96
+                assert len(font.character_map) == 979
+            if font_resource == "/F2":
+                assert font.font_descriptor.flags == 32
+            if font_resource == "/F3":
+                assert font.font_descriptor.flags == 33
+            if font_resource == "/F4":
+                assert len(font.character_map) == 1026
+                assert len(font.character_widths) == 1027
