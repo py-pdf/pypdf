@@ -4,6 +4,7 @@ import shutil
 import subprocess
 from io import BytesIO
 
+import py
 import pytest
 
 from pypdf import PdfReader, PdfWriter
@@ -27,7 +28,8 @@ PDFATTACH_BINARY = shutil.which("pdfattach")
 
 
 @pytest.mark.skipif(PDFATTACH_BINARY is None, reason="Requires poppler-utils")
-def test_embedded_file__basic(tmpdir):
+def test_embedded_file__basic(tmpdir: py.path.LocalPath) -> None:
+    assert PDFATTACH_BINARY is not None
     clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
     attached_path = tmpdir / "attached.pdf"
     file_path = tmpdir / "test.txt"
@@ -49,7 +51,7 @@ def test_embedded_file__basic(tmpdir):
         assert repr(attachment) == "<EmbeddedFile name='test.txt'>"
 
 
-def test_embedded_file__artificial():
+def test_embedded_file__artificial() -> None:
     # No alternative name.
     pdf_object = DictionaryObject(answer=42)
     attachment = EmbeddedFile(name="dummy", pdf_object=pdf_object)
@@ -80,7 +82,7 @@ def test_embedded_file__artificial():
 
 
 @pytest.mark.enable_socket
-def test_embedded_file__kids():
+def test_embedded_file__kids() -> None:
     # Generated using the instructions available from
     # https://medium.com/@pymupdf/zugferd-and-ghostscript-how-to-create-industry-standard-and-compliant-pdf-e-invoices-83c9fde31ee5
     # Notes:
@@ -119,7 +121,7 @@ def test_embedded_file__kids():
 
 
 @pytest.mark.enable_socket
-def test_embedded_file__ensure_params__existing_params():
+def test_embedded_file__ensure_params__existing_params() -> None:
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
     name = "embedded_files_kids.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -145,7 +147,7 @@ def test_embedded_file__ensure_params__existing_params():
     assert params_dict2[NameObject("/TestParam")] == TextStringObject("test_value")
 
 
-def test_embedded_file__name_is_read_only():
+def test_embedded_file__name_is_read_only() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -155,7 +157,7 @@ def test_embedded_file__name_is_read_only():
         embedded_file.name = "new_name.txt"
 
 
-def test_embedded_file__alternative_name_setter():
+def test_embedded_file__alternative_name_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -174,7 +176,7 @@ def test_embedded_file__alternative_name_setter():
     assert embedded_file.alternative_name == "PDF String"
 
 
-def test_embedded_file__alternative_name__uf_key_only():
+def test_embedded_file__alternative_name__uf_key_only() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -193,7 +195,7 @@ def test_embedded_file__alternative_name__uf_key_only():
     assert embedded_file.pdf_object[NameObject("/F")] == create_string_object("new_uf")
 
 
-def test_embedded_file__alternative_name__f_key_only():
+def test_embedded_file__alternative_name__f_key_only() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -213,7 +215,7 @@ def test_embedded_file__alternative_name__f_key_only():
     assert embedded_file.pdf_object[NameObject("/UF")] == create_string_object("new_f")
 
 
-def test_embedded_file__alternative_name__both_f_and_uf():
+def test_embedded_file__alternative_name__both_f_and_uf() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -231,7 +233,7 @@ def test_embedded_file__alternative_name__both_f_and_uf():
     assert embedded_file.alternative_name is None
 
 
-def test_embedded_file__description_setter():
+def test_embedded_file__description_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -246,7 +248,7 @@ def test_embedded_file__description_setter():
     assert embedded_file.description == "PDF Description"
 
 
-def test_embedded_file__subtype_setter():
+def test_embedded_file__subtype_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -261,7 +263,7 @@ def test_embedded_file__subtype_setter():
     assert embedded_file.subtype == "/application#2Fjson"
 
 
-def test_embedded_file__content_setter():
+def test_embedded_file__content_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
     assert embedded_file.content == b"content"
@@ -273,7 +275,7 @@ def test_embedded_file__content_setter():
     assert embedded_file.content == b"Lorem ipsum dolor sit amet"
 
 
-def test_embedded_file__size_setter():
+def test_embedded_file__size_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -288,7 +290,7 @@ def test_embedded_file__size_setter():
     assert embedded_file.size == 2048
 
 
-def test_embedded_file__size_getter():
+def test_embedded_file__size_getter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -300,7 +302,7 @@ def test_embedded_file__size_getter():
     assert retrieved_size == 4096
 
 
-def test_embedded_file__creation_date_setter():
+def test_embedded_file__creation_date_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -312,7 +314,7 @@ def test_embedded_file__creation_date_setter():
     assert embedded_file._ensure_params[NameObject("/CreationDate")] == NullObject()
 
 
-def test_embedded_file__modification_date_setter():
+def test_embedded_file__modification_date_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -324,7 +326,7 @@ def test_embedded_file__modification_date_setter():
     assert embedded_file._ensure_params[NameObject("/ModDate")] == NullObject()
 
 
-def test_embedded_file__checksum_setter():
+def test_embedded_file__checksum_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -340,7 +342,7 @@ def test_embedded_file__checksum_setter():
     assert embedded_file.checksum == b"pdf_checksum"
 
 
-def test_embedded_file__associated_file_relationship_setter():
+def test_embedded_file__associated_file_relationship_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -348,7 +350,7 @@ def test_embedded_file__associated_file_relationship_setter():
     assert embedded_file.associated_file_relationship == "/Data"
 
 
-def test_embedded_file__setters_integration():
+def test_embedded_file__setters_integration() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
 
@@ -374,7 +376,7 @@ def test_embedded_file__setters_integration():
     assert "test.txt" in reader.attachments
 
 
-def test_embedded_file__null_object_handling():
+def test_embedded_file__null_object_handling() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
@@ -397,13 +399,13 @@ def test_embedded_file__null_object_handling():
     assert embedded_file.checksum is None
 
 
-def test_embedded_file__delete_without_parent():
+def test_embedded_file__delete_without_parent() -> None:
     attachment = EmbeddedFile(name="test.txt", pdf_object=DictionaryObject())
     with pytest.raises(PyPdfError, match=r"^Parent required to delete file from document\.$"):
         attachment.delete()
 
 
-def test_embedded_file__delete_known():
+def test_embedded_file__delete_known() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     attachment = writer.add_attachment("test.txt", b"content")
@@ -424,7 +426,7 @@ def test_embedded_file__delete_known():
         attachment.delete()
 
 
-def test_embedded_file__delete__no_indirect_reference():
+def test_embedded_file__delete__no_indirect_reference() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
 
@@ -441,7 +443,7 @@ def test_embedded_file__delete__no_indirect_reference():
 
 
 @pytest.mark.enable_socket
-def test_embedded_file__create__kids_based_name_tree():
+def test_embedded_file__create__kids_based_name_tree() -> None:
     """Test for issue #3473."""
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
     name = "embedded_files_kids.pdf"
@@ -476,7 +478,7 @@ def test_embedded_file__create__kids_based_name_tree():
     ]
 
 
-def test_embedded_file__create__neither_kids_nor_names():
+def test_embedded_file__create__neither_kids_nor_names() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
 
@@ -488,7 +490,7 @@ def test_embedded_file__create__neither_kids_nor_names():
         writer.add_attachment("test2.txt", b"content2")
 
 
-def test_embedded_file__get_insertion_index():
+def test_embedded_file__get_insertion_index() -> None:
     # Empty list.
     assert EmbeddedFile._get_insertion_index(ArrayObject(), "test.txt") == 0
 
@@ -549,7 +551,7 @@ def test_embedded_file__get_insertion_index():
     ) == 2
 
 
-def test_embedded_file__order():
+def test_embedded_file__order() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
 
