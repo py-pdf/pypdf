@@ -838,6 +838,7 @@ class Encryption:
 
         self._password_type = PasswordType.NOT_DECRYPTED
         self._key: Optional[bytes] = None
+        self.perms_valid: bool = True
 
     def is_decrypted(self) -> bool:
         return self._password_type != PasswordType.NOT_DECRYPTED
@@ -1010,7 +1011,8 @@ class Encryption:
             return b"", PasswordType.NOT_DECRYPTED
 
         # verify Perms
-        if not AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata):
+        self.perms_valid = AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata)
+        if not self.perms_valid:
             logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
 
