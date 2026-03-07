@@ -381,3 +381,49 @@ def test_encrypt_stream_dictionary(pdf_file_path):
     decrypted_image_obj = reader.get_object(page.images["/I"].indirect_reference)
 
     assert decrypted_image_obj["/ColorSpace"][3] == original_image_obj["/ColorSpace"][3]
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_perms_valid_true_for_valid_r6():
+    """perms_valid is True when /Perms integrity check passes."""
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
+    reader.decrypt("usersecret")
+    assert reader._encryption.perms_valid is True
+
+
+def test_perms_valid_true_for_v4():
+    """perms_valid defaults to True for V4 encryption (no /Perms field)."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    writer.encrypt(user_password="user", owner_password="owner", algorithm="RC4-128")
+    from io import BytesIO
+
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    reader.decrypt("user")
+    assert reader._encryption.perms_valid is True
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_perms_valid_false_when_tampered():
+    """perms_valid is False when /Perms has been tampered with."""
+    from io import BytesIO
+
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    writer.encrypt(user_password="user", owner_password="owner", algorithm="AES-256")
+    output = BytesIO()
+    writer.write(output)
+
+    # Tamper with /Perms by modifying the raw bytes
+    data = bytearray(output.getvalue())
+    perms_marker = b"/Perms "
+    idx = data.find(perms_marker)
+    assert idx != -1, "/Perms not found in PDF"
+    # Find the hex string value after /Perms and corrupt a byte
+    start = data.index(b"<", idx)
+    data[start + 2] ^= 0xFF  # flip bits in the first byte of the hex string
+    tampered = BytesIO(bytes(data))
+
+    reader = PdfReader(tampered)
+    reader.decrypt("user")
+    assert reader._encryption.perms_valid is False
