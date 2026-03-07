@@ -1306,7 +1306,17 @@ class PdfDocCommon:
 
     @property
     def user_access_permissions(self) -> Optional[UserAccessPermissions]:
-        """Get the user access permissions for encrypted documents. Returns None if not encrypted."""
+        """
+        Get the user access permissions for encrypted documents.
+        Returns None if not encrypted.
+
+        .. warning::
+
+            For AES-256 encrypted documents (R=5/R=6), the returned
+            permissions are derived from the ``/P`` field, which is
+            only trustworthy if the ``/Perms`` integrity check passed.
+            Check ``reader._encryption.perms_valid`` to verify.
+        """
         if self._encryption is None:
             return None
         return UserAccessPermissions(self._encryption.P)
