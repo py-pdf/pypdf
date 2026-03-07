@@ -1,5 +1,6 @@
 """Test the pypdf._encryption module."""
 import secrets
+from io import BytesIO
 
 import pytest
 
@@ -395,8 +396,6 @@ def test_perms_valid_true_for_v4():
     """perms_valid defaults to True for V4 encryption (no /Perms field)."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
     writer.encrypt(user_password="user", owner_password="owner", algorithm="RC4-128")
-    from io import BytesIO
-
     output = BytesIO()
     writer.write(output)
     reader = PdfReader(output)
@@ -407,8 +406,6 @@ def test_perms_valid_true_for_v4():
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 def test_perms_valid_false_when_tampered():
     """perms_valid is False when /Perms has been tampered with."""
-    from io import BytesIO
-
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
     writer.encrypt(user_password="user", owner_password="owner", algorithm="AES-256")
     output = BytesIO()
