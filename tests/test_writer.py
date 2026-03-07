@@ -19,7 +19,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
-from pypdf._font import HAS_FONTTOOLS
+from pypdf._font import HAS_FONTTOOLS, Font
 from pypdf.annotations import Link
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -3061,3 +3061,30 @@ def test_flatten_form_field_with_signature():
     writer.write(b)
 
     _ = PdfReader(b)
+
+
+def test_writer_add_font(tmp_path, caplog):
+    if HAS_FONTTOOLS:
+        src = RESOURCE_ROOT / "fontsampler.pdf"
+
+        reader = PdfReader(src)
+        font_resource = reader.pages[0]["/Resources"]["/Font"]["/F7"]
+        font_file_data = font_resource["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+        with open(tmp_path / "Kalam-Regular.ttf", "wb") as fp:
+            fp.write(font_file_data)
+
+        writer = PdfWriter()
+        writer.add_blank_page(width=612, height=792)
+        writer.pages[0]["/Resources"][NameObject("/Font")] = DictionaryObject()
+        page_font_resources = writer.pages[0]["/Resources"]["/Font"]
+        writer.add_font(f"{tmp_path}/Kalam-Regular.ttf", "/F1", page_font_resources)
+        assert "/F1" in page_font_resources
+        assert isinstance(page_font_resources.raw_get("/F1"), IndirectObject)
+        assert isinstance(page_font_resources["/F1"]["/DescendantFonts"][0].raw_get("/FontDescriptor"), IndirectObject)
+        assert isinstance(
+            page_font_resources["/F1"]["/DescendantFonts"][0]["/FontDescriptor"].raw_get("/FontFile2"),
+            IndirectObject
+        )
+        my_font = Font.from_font_resource(writer.pages[0]["/Resources"]["/Font"]["/F1"])
+        assert my_font.name == "Kalam"
+        assert my_font.font_descriptor.font_file["/Length1"] == len(font_file_data)
