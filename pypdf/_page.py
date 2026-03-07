@@ -44,6 +44,8 @@ from typing import (
     overload,
 )
 
+import fontTools
+
 from ._font import Font
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
@@ -1711,6 +1713,12 @@ class PageObject(DictionaryObject):
                     font_resource_object = cast(DictionaryObject, font_resources_dict[font_resource].get_object())
                     font_resources[font_resource] = font_resource_object
                     fonts[font_resource] = Font.from_font_resource(font_resource_object)
+                    if fonts[font_resource].font_descriptor.font_file and fonts[font_resource].sub_type == "TrueType":
+                        try:
+                            fonts[font_resource] = Font.from_truetype_font_file(BytesIO(fonts[font_resource].font_descriptor.font_file.get_data()))
+                        except (AttributeError, AssertionError) as error:
+                            print ("NOT using our font file", error)
+
                     # Override space width, if applicable
                     if fonts[font_resource].character_widths.get(" ", 0) == 0:
                         fonts[font_resource].space_width = space_width
@@ -1846,6 +1854,12 @@ class PageObject(DictionaryObject):
             if "/Font" in resources_dict and self.pdf is not None:
                 for font_name in resources_dict["/Font"]:
                     fonts[font_name] = Font.from_font_resource(resources_dict["/Font"][font_name])
+                    if fonts[font_name].font_descriptor.font_file and fonts[font_name].sub_type == "TrueType":
+                        try:
+                            fonts[font_name] = Font.from_truetype_font_file(BytesIO(fonts[font_name].font_descriptor.font_file.get_data()))
+                        except fontTools.ttLib.TTLibError as error:
+                            print ("Not a TrueType or OpenType font (not enough data)", error)
+
             try:
                 objr = objr["/Parent"].get_object()
             except KeyError:
