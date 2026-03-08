@@ -21,6 +21,7 @@ from pypdf._utils import (
     deprecate_with_replacement,
     deprecation_no_replacement,
     format_iso8824_date,
+    logger_error,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -235,6 +236,17 @@ def test_deprecation_no_replacement():
         match=r"foo is deprecated and was removed in pypdf 4\.3\.2\.",
     ):
         foo()
+
+
+def test_logger_error(caplog):
+    enc:str = "utf-16-Blahh"
+    message:str = "Advanced encoding %(encoding)s not implemented yet"
+    logger_error(message, __name__,encoding=enc)
+    assert "Advanced encoding utf-16-Blahh not implemented yet" in caplog.text
+    encoding:dict[Any,Any] = {"key": "value"}
+    message =  "Advanced encoding %(encoding)s not implemented yet"
+    logger_error(message,__name__, encoding=encoding)
+    assert "Advanced encoding {'key': 'value'} not implemented yet" in caplog.text
 
 
 def test_rename_kwargs():
