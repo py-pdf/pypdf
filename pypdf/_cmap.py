@@ -91,8 +91,8 @@ def _parse_encoding(
             encoding = charset_encoding[cast(str, enc["/BaseEncoding"])].copy()
         except Exception:
             logger_error(
-                 "Advanced encoding %(encoding)s not implemented yet",
-                __name__,encoding=encoding
+                "Advanced encoding %(encoding)s not implemented yet",
+                __name__, encoding=encoding
             )
             encoding = charset_encoding["/StandardEncoding"].copy()
     else:
