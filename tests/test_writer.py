@@ -312,19 +312,29 @@ def test_insert_blank_page():
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
 
+    page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) // 2)
+    assert len(writer.pages) == old_page_count + 10
+    assert page.mediabox.width == 70
+    assert page.mediabox.height == 80
+
+    page = writer.insert_blank_page(width=70, height=80, index=-len(writer.pages) // 2)
+    assert len(writer.pages) == old_page_count + 11
+    assert page.mediabox.width == 70
+    assert page.mediabox.height == 80
+
     num_pages = len(writer.pages)
 
     with pytest.raises(
         IndexError,
         match=re.escape(f"Index should be in range [-{num_pages}, {num_pages}]"),
     ):
-        page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) + 1)
+        page = writer.insert_blank_page(width=90, height=100, index=len(writer.pages) + 1)
 
     with pytest.raises(
         IndexError,
         match=re.escape(f"Index should be in range [-{num_pages}, {num_pages}]"),
     ):
-        page = writer.insert_blank_page(width=-70, height=-80, index=-len(writer.pages) - 1)
+        page = writer.insert_blank_page(width=-90, height=-100, index=-len(writer.pages) - 1)
 
 
 @pytest.mark.parametrize(
