@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 6.8.0, 2026-03-09
+
+### Security (SEC)
+- Limit allowed `/Length` value of stream  (#3675)
+
+### New Features (ENH)
+- Add /IRT (in-reply-to) support for markup annotations (#3631)
+
+### Documentation (DOC)
+- Avoid using `PageObject.replace_contents` on PdfReader (#3669)
+- Document how to disable jbig2dec calls
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.5...6.8.0)
+
 ## Version 6.7.5, 2026-03-02
 
 ### Security (SEC)
