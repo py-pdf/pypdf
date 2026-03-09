@@ -56,3 +56,15 @@ We receive reports about possibly insecure cryptography from time to time. This 
 
 These are requirements of the PDF standard, which we need to achieve the greatest compatibility with.
 Although some of them might be deprecated in PDF 2.0, the PDF 2.0 adoption rate is very low and legacy documents need to be supported.
+
+### XML parsing
+
+We use `xml.minidom` for parsing XMP information. Given recent Python versions built against recent Expat versions, the usual attacks
+(exponential entity expansion and external entity expansion) should not be possible. We have corresponding tests in place to ensure
+this for the platforms our tests run against.
+
+For some details, see [the official documentation](https://docs.python.org/3/library/xml.html#xml-security) and the
+[README for defusedxml](https://github.com/tiran/defusedxml/blob/main/README.md#python-xml-libraries).
+
+Please note that automated scanners tend to still flag any direct imports of XML modules from the Python standard library as unsafe.
+There have been discussions about this being outdated already, but they are still being flagged.
