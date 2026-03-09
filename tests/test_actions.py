@@ -8,10 +8,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject
 
-# Configure path environment
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
+from . import RESOURCE_ROOT
 
 
 @pytest.fixture
