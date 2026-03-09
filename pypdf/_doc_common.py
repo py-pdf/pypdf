@@ -1315,11 +1315,31 @@ class PdfDocCommon:
             For AES-256 encrypted documents (R=5/R=6), the returned
             permissions are derived from the ``/P`` field, which is
             only trustworthy if the ``/Perms`` integrity check passed.
-            Check ``reader._encryption.perms_valid`` to verify.
+            Check :attr:`permissions_valid` to verify.
         """
         if self._encryption is None:
             return None
         return UserAccessPermissions(self._encryption.P)
+
+    @property
+    def permissions_valid(self) -> Optional[bool]:
+        """
+        Whether the ``/Perms`` integrity check passed for this document.
+
+        For AES-256 encrypted documents (R=5/R=6), the ``/Perms`` field
+        is an encrypted copy of the permissions that can be verified
+        independently. Returns ``False`` if this check fails (the ``/P``
+        permissions may have been tampered with).
+
+        Returns ``None`` if the document is not encrypted or has not yet
+        been decrypted via :meth:`decrypt()<pypdf.PdfReader.decrypt>`.
+        Returns ``True`` for non-AES-256 encryption (no ``/Perms`` to check).
+        """
+        if self._encryption is None:
+            return None
+        if not self._encryption.is_decrypted():
+            return None
+        return self._encryption.perms_valid
 
     @property
     @abstractmethod
