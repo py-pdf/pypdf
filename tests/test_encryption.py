@@ -384,41 +384,41 @@ def test_encrypt_stream_dictionary(pdf_file_path):
     assert decrypted_image_obj["/ColorSpace"][3] == original_image_obj["/ColorSpace"][3]
 
 
-def test_permissions_valid_none_for_unencrypted():
-    """permissions_valid is None for unencrypted documents."""
+def test_are_permissions_valid_none_for_unencrypted():
+    """are_permissions_valid is None for unencrypted documents."""
     reader = PdfReader(RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
-    assert reader.permissions_valid is None
+    assert reader.are_permissions_valid is None
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_permissions_valid_none_before_decrypt():
-    """permissions_valid is None for encrypted documents before decrypt()."""
+def test_are_permissions_valid_none_before_decrypt():
+    """are_permissions_valid is None for encrypted documents before decrypt()."""
     reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-both-passwords.pdf")
-    assert reader.permissions_valid is None
+    assert reader.are_permissions_valid is None
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 def test_perms_valid_true_for_valid_r6():
-    """permissions_valid is True when /Perms integrity check passes."""
+    """are_permissions_valid is True when /Perms integrity check passes."""
     reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
     reader.decrypt("usersecret")
-    assert reader.permissions_valid is True
+    assert reader.are_permissions_valid is True
 
 
 def test_perms_valid_true_for_v4():
-    """permissions_valid defaults to True for V4 encryption (no /Perms field)."""
+    """are_permissions_valid defaults to True for V4 encryption (no /Perms field)."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
     writer.encrypt(user_password="user", owner_password="owner", algorithm="RC4-128")
     output = BytesIO()
     writer.write(output)
     reader = PdfReader(output)
     reader.decrypt("user")
-    assert reader.permissions_valid is True
+    assert reader.are_permissions_valid is True
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 def test_perms_valid_false_when_tampered():
-    """permissions_valid is False when /Perms has been tampered with."""
+    """are_permissions_valid is False when /Perms has been tampered with."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
     writer.encrypt(user_password="user", owner_password="owner", algorithm="AES-256")
     output = BytesIO()
@@ -436,4 +436,4 @@ def test_perms_valid_false_when_tampered():
 
     reader = PdfReader(tampered)
     reader.decrypt("user")
-    assert reader.permissions_valid is False
+    assert reader.are_permissions_valid is False

@@ -1315,14 +1315,14 @@ class PdfDocCommon:
             For AES-256 encrypted documents (R=5/R=6), the returned
             permissions are derived from the ``/P`` field, which is
             only trustworthy if the ``/Perms`` integrity check passed.
-            Check :attr:`permissions_valid` to verify.
+            Check :attr:`are_permissions_valid` to verify.
         """
         if self._encryption is None:
             return None
         return UserAccessPermissions(self._encryption.P)
 
     @property
-    def permissions_valid(self) -> Optional[bool]:
+    def are_permissions_valid(self) -> Optional[bool]:
         """
         Whether the ``/Perms`` integrity check passed for this document.
 
