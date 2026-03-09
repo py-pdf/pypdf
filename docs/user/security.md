@@ -18,6 +18,9 @@ aware of the possible side effects, you can modify the following constants which
 For JBIG2 images, there is a similar parameter to limit the memory usage during decoding: `pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH`
 It defaults to 75 MB as well.
 
+For all streams, the maximum allowed value for the `/Length` field is limited to `pypdf.filters.MAX_DECLARED_STREAM_LENGTH`, which
+defaults to 75 MB as well.
+
 For the *FlateDecode* filter, the number of bytes to attempt recovery with can be set by `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH`.
 It defaults to 5 MB due to the much more complex recovery approach.
 
