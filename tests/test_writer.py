@@ -259,63 +259,56 @@ def test_insert_blank_page():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
 
     old_page_count = len(writer.pages)
+
     old_page = writer.pages[0]
     page = writer.insert_blank_page(index=0)
     assert len(writer.pages) == old_page_count + 1
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
 
-    old_page_count = len(writer.pages)
     old_page = writer.pages[0]
     page = writer.insert_blank_page(width=10, index=0)
-    assert len(writer.pages) == old_page_count + 1
+    assert len(writer.pages) == old_page_count + 2
     assert page.mediabox.width == 10
     assert page.mediabox.height == old_page.mediabox.height
 
-    old_page_count = len(writer.pages)
     old_page = writer.pages[0]
     page = writer.insert_blank_page(width=-10, index=0)
-    assert len(writer.pages) == old_page_count + 1
+    assert len(writer.pages) == old_page_count + 3
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
 
-    old_page_count = len(writer.pages)
     old_page = writer.pages[0]
     page = writer.insert_blank_page(height=20, index=0)
-    assert len(writer.pages) == old_page_count + 1
+    assert len(writer.pages) == old_page_count + 4
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == 20
 
-    old_page_count = len(writer.pages)
     old_page = writer.pages[0]
     page = writer.insert_blank_page(height=-20, index=0)
-    assert len(writer.pages) == old_page_count + 1
+    assert len(writer.pages) == old_page_count + 5
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
 
-    old_page_count = len(writer.pages)
     page = writer.insert_blank_page(width=30, height=40, index=0)
-    assert len(writer.pages) == old_page_count + 1
+    assert len(writer.pages) == old_page_count + 6
     assert page.mediabox.width == 30
     assert page.mediabox.height == 40
 
-    old_page_count = len(writer.pages)
     old_page = writer.pages[0]
     page = writer.insert_blank_page(width=-30, height=-40, index=0)
-    assert len(writer.pages) == old_page_count + 1
+    assert len(writer.pages) == old_page_count + 7
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
 
-    old_page_count = len(writer.pages)
     page = writer.insert_blank_page(width=50, height=60, index=len(writer.pages))
-    assert len(writer.pages) == old_page_count + 1
+    assert len(writer.pages) == old_page_count + 8
     assert page.mediabox.width == 50
     assert page.mediabox.height == 60
 
-    old_page_count = len(writer.pages)
     old_page = writer.pages[0]
     page = writer.insert_blank_page(width=-50, height=-60, index=-len(writer.pages))
-    assert len(writer.pages) == old_page_count + 1
+    assert len(writer.pages) == old_page_count + 8
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
 
