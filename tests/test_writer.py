@@ -274,35 +274,17 @@ def test_insert_blank_page():
 
     old_page_count = len(writer.pages)
     old_page = writer.pages[0]
-    page = writer.insert_blank_page(height=20, index=0)
-    assert len(writer.pages) == old_page_count + 1
-    assert page.mediabox.width == old_page.mediabox.width
-    assert page.mediabox.height == 20
-
-    old_page_count = len(writer.pages)
-    page = writer.insert_blank_page(width=30, height=40, index=0)
-    assert len(writer.pages) == old_page_count + 1
-    assert page.mediabox.width == 30
-    assert page.mediabox.height == 40
-
-    old_page_count = len(writer.pages)
-    page = writer.insert_blank_page(width=50, height=60, index=len(writer.pages))
-    assert len(writer.pages) == old_page_count + 1
-    assert page.mediabox.width == 50
-    assert page.mediabox.height == 60
-
-    with pytest.raises(
-        IndexError,
-        match=r"Index should be in [-num_pages, num_pages]",
-    ):
-        page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) + 1)
-
-    old_page_count = len(writer.pages)
-    old_page = writer.pages[0]
     page = writer.insert_blank_page(width=-10, index=0)
     assert len(writer.pages) == old_page_count + 1
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
+
+    old_page_count = len(writer.pages)
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=20, index=0)
+    assert len(writer.pages) == old_page_count + 1
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == 20
 
     old_page_count = len(writer.pages)
     old_page = writer.pages[0]
@@ -312,11 +294,23 @@ def test_insert_blank_page():
     assert page.mediabox.height == old_page.mediabox.height
 
     old_page_count = len(writer.pages)
+    page = writer.insert_blank_page(width=30, height=40, index=0)
+    assert len(writer.pages) == old_page_count + 1
+    assert page.mediabox.width == 30
+    assert page.mediabox.height == 40
+
+    old_page_count = len(writer.pages)
     old_page = writer.pages[0]
     page = writer.insert_blank_page(width=-30, height=-40, index=0)
     assert len(writer.pages) == old_page_count + 1
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
+
+    old_page_count = len(writer.pages)
+    page = writer.insert_blank_page(width=50, height=60, index=len(writer.pages))
+    assert len(writer.pages) == old_page_count + 1
+    assert page.mediabox.width == 50
+    assert page.mediabox.height == 60
 
     old_page_count = len(writer.pages)
     old_page = writer.pages[len(writer.pages) - 1]
@@ -327,9 +321,15 @@ def test_insert_blank_page():
 
     with pytest.raises(
         IndexError,
-        match=r"Index should be in [-num_pages, num_pages]",
+        match="Index should be in \[-num_pages, num_pages\]",
     ):
-        page = writer.insert_blank_page(width=-70, height=-80, index=len(writer.pages) + 1)
+        page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) + 1)
+
+    with pytest.raises(
+        IndexError,
+        match="Index should be in \[-num_pages, num_pages\]",
+    ):
+        page = writer.insert_blank_page(width=-70, height=-80, index=-len(writer.pages) - 1)
 
 
 @pytest.mark.parametrize(
