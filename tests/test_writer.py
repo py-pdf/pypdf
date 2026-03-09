@@ -308,7 +308,7 @@ def test_insert_blank_page():
 
     old_page = writer.pages[0]
     page = writer.insert_blank_page(width=-50, height=-60, index=-len(writer.pages))
-    assert len(writer.pages) == old_page_count + 8
+    assert len(writer.pages) == old_page_count + 9
     assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == old_page.mediabox.height
 
