@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773063195098,
+  "lastUpdate": 1773063447028,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -91283,6 +91283,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008391102171468382",
             "extra": "mean: 660.00675680001 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "a869eceb57e1f98d118e8b73c6169bdc519cbc57",
+          "message": "REL: 6.8.0\n\n## What's new\n\n### Security (SEC)\n- Limit allowed `/Length` value of stream  (#3675) by @stefan6419846\n\n### New Features (ENH)\n- Add /IRT (in-reply-to) support for markup annotations (#3631) by @costajohnt\n\n### Documentation (DOC)\n- Avoid using `PageObject.replace_contents` on PdfReader (#3669) by @stefan6419846\n- Document how to disable jbig2dec calls by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.5...6.8.0)",
+          "timestamp": "2026-03-09T14:34:34+01:00",
+          "tree_id": "538d34352484ea4c77f09470feb964d9b57c3618",
+          "url": "https://github.com/py-pdf/pypdf/commit/a869eceb57e1f98d118e8b73c6169bdc519cbc57"
+        },
+        "date": 1773063442163,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0962841895957367,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005334451847309619",
+            "extra": "mean: 322.9677700000025 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.363419007222065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004857706880309784",
+            "extra": "mean: 65.08967824999878 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2866684426728425,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013642272750566516",
+            "extra": "mean: 3.488350481400005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.262350554505527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00046544310693294704",
+            "extra": "mean: 54.75746383333381 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09144888691731798,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05492439609692901",
+            "extra": "mean: 10.935070220199986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.493684058826507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005438802946203973",
+            "extra": "mean: 669.4856211999991 msec\nrounds: 5"
           }
         ]
       }
