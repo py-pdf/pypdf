@@ -66,7 +66,7 @@ def test_array_object__clone_same_object_multiple_times(caplog):
 @pytest.mark.enable_socket
 def test_dictionary_object__read_from_stream__limit():
     name = "read_from_stream__length_2gb.pdf"
-    url = ""
+    url = "https://github.com/user-attachments/files/25842437/read_from_stream__length_2gb.pdf"
 
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[0]
@@ -85,7 +85,7 @@ def _prepare_test_dictionary_object__read_from_stream__no_limit(
     env["COVERAGE_PROCESS_START"] = "pyproject.toml"
 
     name = "read_from_stream__length_2gb.pdf"
-    url = ""
+    url = "https://github.com/user-attachments/files/25842437/read_from_stream__length_2gb.pdf"
     data = get_data_from_url(url=url, name=name)
     pdf_path = path / name
     pdf_path.write_bytes(data)
