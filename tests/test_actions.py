@@ -1,7 +1,4 @@
 """Test the pypdf.actions submodule."""
-
-from pathlib import Path
-
 import pytest
 
 from pypdf import PdfReader, PdfWriter
