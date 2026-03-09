@@ -709,7 +709,7 @@ class PdfWriter(PdfDocCommon):
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
                 and previous page does not exist.
-            IndexError: Index is outside of [0, self.get_num_pages()]
+            IndexError: Index is outside of [-self.get_num_pages(), self.get_num_pages()]
         """
         num_pages = self.get_num_pages()
         if abs(index) <= num_pages:
