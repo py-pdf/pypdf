@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773054772249,
+  "lastUpdate": 1773054801267,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -95707,6 +95707,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030965439119217393",
             "extra": "mean: 742.6970432000871 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5dae0e28bec83a5c9a3df2ace26dc77c633b4f72",
+          "message": "MAINT: Document and test XMP security (#3674)",
+          "timestamp": "2026-03-09T12:10:16+01:00",
+          "tree_id": "646ee5a8dc371ad0e66a566880d5ad9afd7a5629",
+          "url": "https://github.com/py-pdf/pypdf/commit/5dae0e28bec83a5c9a3df2ace26dc77c633b4f72"
+        },
+        "date": 1773054796318,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.552382945254662,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015956948198644696",
+            "extra": "mean: 73.78776146154783 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.96650076064334,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013032740135000437",
+            "extra": "mean: 58.93967260000181 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1671984358155314,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02717100960988435",
+            "extra": "mean: 856.7523475999963 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5323191373928835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038121509044183065",
+            "extra": "mean: 1.8785723258000018 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18819721035657552,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0250152577457213",
+            "extra": "mean: 5.313575042399987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2517100010871889,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03832294276607674",
+            "extra": "mean: 798.9070944000105 msec\nrounds: 5"
           }
         ]
       }
