@@ -321,13 +321,13 @@ def test_insert_blank_page():
 
     with pytest.raises(
         IndexError,
-        match="Index should be in \[-num_pages, num_pages\]",
+        match=r"Index should be in \[-num_pages, num_pages\]",
     ):
         page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) + 1)
 
     with pytest.raises(
         IndexError,
-        match="Index should be in \[-num_pages, num_pages\]",
+        match=r"Index should be in \[-num_pages, num_pages\]",
     ):
         page = writer.insert_blank_page(width=-70, height=-80, index=-len(writer.pages) - 1)
 
