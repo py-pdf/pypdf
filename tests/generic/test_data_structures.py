@@ -1,6 +1,5 @@
 """Test the pypdf.generic._data_structures module."""
 import os
-import resource
 import subprocess
 import sys
 from io import BytesIO
@@ -13,6 +12,11 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.errors import LimitReachedError
 from pypdf.generic import DictionaryObject, NameObject, RectangleObject, TreeObject
 from tests import RESOURCE_ROOT, get_data_from_url
+
+try:
+    import resource
+except ImportError:
+    resource = None
 
 
 def test_dictionary_object__get_next_object_position():
@@ -105,6 +109,8 @@ def _prepare_test_dictionary_object__read_from_stream__no_limit(
 
 
 @pytest.mark.enable_socket
+@pytest.mark.skipif(condition=resource is None, reason="Does not have 'resource' module.")
+@pytest.mark.skipif(sys.platform == "darwin", reason="RLIMIT_AS is unreliable.")
 def test_dictionary_object__read_from_stream__no_limit(tmp_path):
     pdf_path_str, env, limit_virtual_memory = _prepare_test_dictionary_object__read_from_stream__no_limit(tmp_path)
 
@@ -135,6 +141,8 @@ with open({pdf_path_str!r}, mode="rb") as fd:
 
 
 @pytest.mark.enable_socket
+@pytest.mark.skipif(condition=resource is None, reason="Does not have 'resource' module.")
+@pytest.mark.skipif(sys.platform == "darwin", reason="RLIMIT_AS is unreliable.")
 def test_dictionary_object__read_from_stream__no_limit__path(tmp_path):
     pdf_path_str, env, limit_virtual_memory = _prepare_test_dictionary_object__read_from_stream__no_limit(tmp_path)
 
