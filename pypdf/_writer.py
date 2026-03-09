@@ -712,7 +712,7 @@ class PdfWriter(PdfDocCommon):
             IndexError: Index is outside of [0, self.get_num_pages()]
         """
         num_pages = self.get_num_pages()
-        if index <= num_pages:
+        if abs(index) <= num_pages:
             # Use the chosen index, but do not exceed the available pages
             fixed_index = min(index, num_pages - 1)
             mediabox = self.pages[fixed_index].mediabox
@@ -721,7 +721,7 @@ class PdfWriter(PdfDocCommon):
             if height is None or height <= 0:
                 height = mediabox.height
         else:
-            raise IndexError("Index should be between zero and the number of existing pages")
+            raise IndexError("Index should be within zero and the number of existing pages")
 
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
