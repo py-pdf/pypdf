@@ -721,7 +721,7 @@ class PdfWriter(PdfDocCommon):
             if height is None or height <= 0:
                 height = mediabox.height
         else:
-            raise IndexError("Index should be within zero and the number of existing pages")
+            raise IndexError("Index should be in [-num_pages, num_pages]"
 
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)

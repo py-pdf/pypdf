@@ -293,7 +293,7 @@ def test_insert_blank_page():
 
     with pytest.raises(
         IndexError,
-        match="Index should be between zero and the number of existing pages",
+        match="Index should be in [-num_pages, num_pages]",
     ):
         page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) + 1)
 
