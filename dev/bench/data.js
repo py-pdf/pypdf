@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773063487495,
+  "lastUpdate": 1773138049072,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -91349,6 +91349,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005438802946203973",
             "extra": "mean: 669.4856211999991 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2cfcd7ea9d175f1bbd243043a432a6b9470baa37",
+          "message": "BUG: Avoid accessing invalid page when inserting blank page under some conditions (#3529)\n\nwidth and height are now treated symmetrically, and updated only if they\nare not provided.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-03-10T11:18:14+01:00",
+          "tree_id": "43354a6ae8fa71b82e04a1e3d61b98db1d8049f5",
+          "url": "https://github.com/py-pdf/pypdf/commit/2cfcd7ea9d175f1bbd243043a432a6b9470baa37"
+        },
+        "date": 1773138044282,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1122659363370064,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004903778176366003",
+            "extra": "mean: 321.3093034000025 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.72532887282135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004116567761525684",
+            "extra": "mean: 63.59167481249539 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28792285808259577,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02664841411849157",
+            "extra": "mean: 3.473152519599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.01742775337832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015441718001123984",
+            "extra": "mean: 55.50181822222081 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09152600954721173,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030471666149434935",
+            "extra": "mean: 10.925855993800008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4959963996249643,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0039485054363031956",
+            "extra": "mean: 668.4508065999978 msec\nrounds: 5"
           }
         ]
       }
