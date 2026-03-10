@@ -1088,20 +1088,19 @@ class PageObject(DictionaryObject):
         # rename.
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
-            if hasattr(
-                self.indirect_reference.pdf, "_add_object"
-            ):  # to detect PdfWriter
+            if hasattr(self.indirect_reference.pdf, "_add_object"):  # to detect PdfWriter
                 return self._merge_page_writer(
                     page2, page2_transformation, ctm, over, expand
                 )
         except (AssertionError, AttributeError):
             pass
 
+        new_resources = DictionaryObject()
+        rename: dict[str, Any] = {}
         original_resources = cast(DictionaryObject, self.get(PG.RESOURCES, DictionaryObject()).get_object())
         page2_resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
-        new_resources = DictionaryObject()
-
         new_annots = ArrayObject()
+
         for page in (self, page2):
             if PG.ANNOTS in page:
                 annots = page[PG.ANNOTS]
@@ -1109,7 +1108,6 @@ class PageObject(DictionaryObject):
                     new_annots.extend(annots)
         self[NameObject(PG.ANNOTS)] = new_annots
 
-        rename: dict[str, Any] = {}
         for res in (
             RES.EXT_G_STATE,
             RES.COLOR_SPACE,
