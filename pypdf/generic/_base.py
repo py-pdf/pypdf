@@ -29,7 +29,6 @@ import codecs
 import hashlib
 import re
 import sys
-from binascii import unhexlify
 from collections.abc import Sequence
 from math import log10
 from struct import iter_unpack
@@ -840,16 +839,16 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 f"Incorrect first char in NameObject, should start with '/': ({self})",
                 "5.0.0",
             )
+        parts = [out]
         for c in self[1:]:
             if c > "~":
-                for x in c.encode("utf-8"):
-                    out += f"#{x:02X}".encode()
+                parts.extend(f"#{x:02X}".encode() for x in c.encode("utf-8"))
             else:
                 try:
-                    out += self.renumber_table[c]
+                    parts.append(self.renumber_table[c])
                 except KeyError:
-                    out += c.encode("utf-8")
-        return out
+                    parts.append(c.encode("utf-8"))
+        return b"".join(parts)
 
     def _sanitize(self) -> "NameObject":
         """
@@ -873,16 +872,21 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
     @staticmethod
     def unnumber(sin: bytes) -> bytes:
-        i = sin.find(b"#", 0)
-        while i >= 0:
-            try:
-                sin = sin[:i] + unhexlify(sin[i + 1 : i + 3]) + sin[i + 3 :]
-                i = sin.find(b"#", i + 1)
-            except ValueError:
-                # if the 2 characters after # can not be converted to hex
-                # we change nothing and carry on
-                i = i + 1
-        return sin
+        result = bytearray()
+        i = 0
+        while i < len(sin):
+            if sin[i:i + 1] == b"#":
+                try:
+                    result.append(int(sin[i + 1 : i + 3], 16))
+                    i += 3
+                    continue
+                except (ValueError, IndexError):
+                    # if the 2 characters after # can not be converted to hex
+                    # we change nothing and carry on
+                    pass
+            result.append(sin[i])
+            i += 1
+        return bytes(result)
 
     CHARSETS = ("utf-8", "gbk", "latin1")
 

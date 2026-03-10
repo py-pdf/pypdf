@@ -254,18 +254,27 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
         The read bytes.
 
     """
-    name = b""
+    parts: list[bytes] = []
+    total_len = 0
+    tail = b""
     while True:
         tok = stream.read(16)
         if not tok:
-            return name
-        m = regex.search(name + tok)
+            return b"".join(parts)
+        # Search overlap of previous tail + new chunk to catch
+        # multi-byte regex matches spanning chunk boundaries.
+        buf = tail + tok
+        m = regex.search(buf)
         if m is not None:
-            stream.seek(m.start() - (len(name) + len(tok)), 1)
-            name = (name + tok)[: m.start()]
-            break
-        name += tok
-    return name
+            overlap = len(tail)
+            actual_start = total_len - overlap + m.start()
+            stream.seek(actual_start - total_len - len(tok), 1)
+            parts.append(tok)
+            return b"".join(parts)[:actual_start]
+        parts.append(tok)
+        total_len += len(tok)
+        tail = tok[-16:]
+    return b"".join(parts)
 
 
 def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
