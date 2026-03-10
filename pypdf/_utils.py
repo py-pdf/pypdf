@@ -257,8 +257,9 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
     parts: list[bytes] = []
     total_len = 0
     tail = b""
+    chunk_size = 16
     while True:
-        tok = stream.read(16)
+        tok = stream.read(chunk_size)
         if not tok:
             return b"".join(parts)
         # Search overlap of previous tail + new chunk to catch
@@ -274,6 +275,8 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
         parts.append(tok)
         total_len += len(tok)
         tail = tok[-16:]
+        if chunk_size < 8192:
+            chunk_size <<= 1
     return b"".join(parts)
 
 
