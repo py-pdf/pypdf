@@ -1,4 +1,5 @@
 """Test the pypdf._encryption module."""
+
 import secrets
 from io import BytesIO
 
@@ -292,9 +293,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
         assert exc.value.args[0] == _DEPENDENCY_ERROR_STR
         return
 
-    writer.encrypt(
-        user_password=user_password, owner_password=owner_password, algorithm=alg
-    )
+    writer.encrypt(user_password=user_password, owner_password=owner_password, algorithm=alg)
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
@@ -398,14 +397,14 @@ def test_are_permissions_valid_none_before_decrypt():
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_perms_valid_true_for_valid_r6():
+def test_are_permissions_valid_true_for_valid_r6():
     """are_permissions_valid is True when /Perms integrity check passes."""
     reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
     reader.decrypt("usersecret")
     assert reader.are_permissions_valid is True
 
 
-def test_perms_valid_true_for_v4():
+def test_are_permissions_valid_true_for_v4():
     """are_permissions_valid defaults to True for V4 encryption (no /Perms field)."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
     writer.encrypt(user_password="user", owner_password="owner", algorithm="RC4-128")
@@ -417,7 +416,7 @@ def test_perms_valid_true_for_v4():
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_perms_valid_false_when_tampered():
+def test_are_permissions_valid_false_when_tampered():
     """are_permissions_valid is False when /Perms has been tampered with."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
     writer.encrypt(user_password="user", owner_password="owner", algorithm="AES-256")
