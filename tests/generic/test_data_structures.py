@@ -4,7 +4,16 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import DictionaryObject, NameObject, RectangleObject, TreeObject
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DictionaryObject,
+    NameObject,
+    NullObject,
+    RectangleObject,
+    StreamObject,
+    TreeObject,
+)
 from tests import RESOURCE_ROOT, get_data_from_url
 
 
@@ -54,3 +63,47 @@ def test_array_object__clone_same_object_multiple_times(caplog):
         page2 = writer.add_page(page)
         assert page2.mediabox == RectangleObject((0, 0, 595, 841))
     assert caplog.messages == []
+
+
+def test_array_object__clone_same_stream_multiple_times():
+    writer = PdfWriter()
+
+    # Unique streams.
+    stream1 = StreamObject()
+    stream1.set_data(b"Hello World!")
+    stream2 = StreamObject()
+    stream2.set_data(b"Lorem ipsum!")
+
+    # Shared streams.
+    shared_streams = [StreamObject() for _ in range(3)]
+    [shared_stream.set_data(f"Shared stream {index}".encode()) for index, shared_stream in enumerate(shared_streams)]
+
+    # Add to writer.
+    writer._add_object(stream1)
+    writer._add_object(stream2)
+    shared_references = [writer._add_object(shared_stream) for shared_stream in shared_streams]
+
+    # Arrays.
+    array1 = ArrayObject([stream1.indirect_reference, *shared_references])
+    array2 = ArrayObject([stream2.indirect_reference, *shared_references])
+
+    # Cloned.
+    cloned1 = array1.clone(pdf_dest=writer)
+    cloned2 = array2.clone(pdf_dest=writer)
+
+    # Nullify one shared object.
+    writer._replace_object(shared_references[1].indirect_reference, NullObject())
+
+    # The first entry is always different. The remaining shared entries should be dedicated copies.
+    assert cloned1[1:] != cloned2[1:]
+
+    assert ContentStream(stream=array1, pdf=None).get_data() == b"Hello World!\nShared stream 0\nShared stream 2\n"
+    assert ContentStream(stream=array2, pdf=None).get_data() == b"Lorem ipsum!\nShared stream 0\nShared stream 2\n"
+    assert (
+        ContentStream(stream=cloned1, pdf=None).get_data() ==
+        b"Hello World!\nShared stream 0\nShared stream 1\nShared stream 2\n"
+    )
+    assert (
+        ContentStream(stream=cloned2, pdf=None).get_data() ==
+        b"Lorem ipsum!\nShared stream 0\nShared stream 1\nShared stream 2\n"
+    )

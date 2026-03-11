@@ -136,6 +136,13 @@ class ArrayObject(list[Any], PdfObject):
                     force_duplicate,
                 )
                 arr.append(dup.indirect_reference)
+            elif isinstance(data, IndirectObject) and isinstance(resolved := data.get_object(), StreamObject):
+                dup = data._reference_clone(
+                    resolved.clone(pdf_dest, force_duplicate=True, ignore_fields=ignore_fields),
+                    pdf_dest,
+                    force_duplicate,
+                )
+                arr.append(dup.indirect_reference)
             elif hasattr(data, "clone"):
                 arr.append(data.clone(pdf_dest, force_duplicate, ignore_fields))
             else:
