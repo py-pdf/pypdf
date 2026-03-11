@@ -120,7 +120,7 @@ def test_page_add_action(pdf_file_writer, caplog):
     # Add an open action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             TypeError,
-            match = "The Entries in a page object's additional-actions dictionary must be dictionaries"
+            match = "The entries in a page object's additional-actions dictionary must be dictionaries"
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")
