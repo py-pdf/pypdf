@@ -168,6 +168,26 @@ def test_read_until_regex_match_spanning_later_boundary():
     assert stream.tell() == 47
 
 
+def test_read_until_regex_tail_overlap_is_fixed():
+    """Tail overlap is 16 bytes regardless of chunk size growth.
+
+    Chunk reads: 16, 32, 64 -> total 112. Place a 16-byte pattern starting
+    one byte before the 64-byte chunk boundary (at offset 47) so it spans
+    into the third chunk. This only works if the tail kept from chunk 2
+    covers at least 16 bytes.
+    """
+    pattern = b"ABCDEFGHIJKLMNOP"  # 16 bytes
+    assert len(pattern) == 16
+    # Chunk 1: 16 bytes, chunk 2: 32 bytes -> boundary at offset 48.
+    # Pattern starts at 47, spanning bytes 47-62.
+    payload = b"x" * 47
+    data = payload + pattern + b"rest"
+    stream = io.BytesIO(data)
+    result = read_until_regex(stream, re.compile(re.escape(pattern)))
+    assert result == payload
+    assert stream.tell() == 47
+
+
 @pytest.mark.parametrize(
     ("a", "b", "expected"),
     [
