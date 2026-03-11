@@ -2216,18 +2216,18 @@ class PageObject(DictionaryObject):
         head = current = additional_actions.get(trigger_name)
         if not isinstance(head, DictionaryObject):
             raise TypeError(
-                "The Entries in a page object's additional-actions dictionary must be dictionaries"
+                "The entries in a page object's additional-actions dictionary must be dictionaries"
             )
 
         visited = set()
         while True:
             if isinstance(current, ArrayObject):
-                current = current[-1]
                 _id = id(current)
                 if _id in visited:
                     logger_warning(f"Detected cycle in the action tree for {current}", __name__)
                     break
                 visited.add(_id)
+                current = current[-1]
             elif isinstance(current, DictionaryObject):
                 _id = id(current)
                 if _id in visited:
