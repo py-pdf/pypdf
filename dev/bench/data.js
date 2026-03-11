@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773223347731,
+  "lastUpdate": 1773223368818,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -96235,6 +96235,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035991833135661254",
             "extra": "mean: 787.4540025999977 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wooky@iwooky.me",
+            "name": "Dmitry K",
+            "username": "dmitry-kostin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cf2e5187b0fccd8a26f7b8fb1a140f42847b53d4",
+          "message": "PI: Batch-parse all objects in ObjStm on first access (#3677)\n\nOn first access to any object in a compressed object stream,\nparse and cache ALL objects in that stream in one pass.\nThis avoids O(N²) behavior when many objects from the same\nstream are resolved individually during add_page().\n\nPDFs produced by DMS tools like PDFKit.NET DMV10 pack ~2000\nobjects into a single ObjStm. The previous code scanned the\nfull header for each lookup, resulting in ~77M function calls\nand 5s+ parse times for a 370KB invoice. With batch parsing,\nthe same file completes in ~0.08s (61x speedup).",
+          "timestamp": "2026-03-11T10:59:45+01:00",
+          "tree_id": "ae9c16ddb0287b5fe8bfb885a1d9fb54d3fb6c23",
+          "url": "https://github.com/py-pdf/pypdf/commit/cf2e5187b0fccd8a26f7b8fb1a140f42847b53d4"
+        },
+        "date": 1773223359798,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.139962102874906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014779824417274151",
+            "extra": "mean: 89.76691219999111 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.752563128465678,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005165989800394296",
+            "extra": "mean: 38.8310862499992 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1119251346997954,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0412392911368621",
+            "extra": "mean: 899.3411236000043 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4035538702005214,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09556643004920898",
+            "extra": "mean: 2.4779839170000058 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.20759100039732117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1366004086080696",
+            "extra": "mean: 4.817164511400006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.365730220135143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024888324862086596",
+            "extra": "mean: 732.2090302000106 msec\nrounds: 5"
           }
         ]
       }
