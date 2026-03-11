@@ -274,6 +274,8 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
             return b"".join(parts)[:actual_start]
         parts.append(tok)
         total_len += len(tok)
+        # Fixed overlap: 16 bytes is sufficient for the short
+        # delimiter patterns used in PDF parsing.
         tail = tok[-16:]
         if chunk_size < 8192:
             chunk_size <<= 1

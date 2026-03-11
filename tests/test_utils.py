@@ -137,7 +137,7 @@ def test_read_until_regex_multi_byte_spanning_boundary():
 
 
 def test_read_until_regex_no_match_exhausted():
-    """No match — stream is fully consumed and all data returned."""
+    """No match - stream is fully consumed and all data returned."""
     data = b"0123456789" * 10
     stream = io.BytesIO(data)
     result = read_until_regex(stream, re.compile(b"ZZZ"))
