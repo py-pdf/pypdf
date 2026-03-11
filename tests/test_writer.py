@@ -2466,7 +2466,7 @@ def test_compress_identical_objects():
     name = "iss2794.pdf"
     in_bytes = BytesIO(get_data_from_url(url, name=name))
     writer = PdfWriter(in_bytes)
-    writer.compress_identical_objects(remove_orphans=False)
+    writer.compress_identical_objects(remove_unreferenced=False)
     out1 = BytesIO()
     writer.write(out1)
     assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
@@ -2796,7 +2796,7 @@ def test_compress_identical_objects__after_remove_images():
     """Test for #3237"""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
     writer.remove_images()
-    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
+    writer.compress_identical_objects(remove_identicals=True, remove_unreferenced=True)
 
 
 def test_merge__process_named_dests__no_dests_in_source_file():
