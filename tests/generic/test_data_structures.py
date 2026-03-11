@@ -9,6 +9,7 @@ from typing import Callable
 import pytest
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.errors import LimitReachedError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -19,7 +20,6 @@ from pypdf.generic import (
     StreamObject,
     TreeObject,
 )
-from pypdf.errors import LimitReachedError
 from tests import RESOURCE_ROOT, get_data_from_url
 
 try:
