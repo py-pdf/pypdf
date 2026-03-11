@@ -2227,12 +2227,17 @@ class PageObject(DictionaryObject):
         while True:
             if isinstance(current, ArrayObject):
                 current = current[-1]
-            elif isinstance(current, DictionaryObject):
-                node_id = id(current)
-                if node_id in visited:
+                _id = id(current)
+                if _id in visited:
                     logger_warning(f"Detected cycle in the action tree for {current}", __name__)
                     break
-                visited.add(node_id)
+                visited.add(_id)
+            elif isinstance(current, DictionaryObject):
+                _id = id(current)
+                if _id in visited:
+                    logger_warning(f"Detected cycle in the action tree for {current}", __name__)
+                    break
+                visited.add(_id)
                 if is_null_or_none(current.get(NameObject("/Next"), None)):
                     break
                 current = current.get(NameObject("/Next"))
