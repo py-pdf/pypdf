@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773308709835,
+  "lastUpdate": 1773308742340,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -96499,6 +96499,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0012436442217841274",
             "extra": "mean: 731.3377769999988 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "costajohnt@gmail.com",
+            "name": "John Costa",
+            "username": "costajohnt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a3451e8f30454cc5500e03d81f6827351499af8a",
+          "message": "ENH: Expose /Perms verification result on Encryption object (#3672)\n\nAdd `perms_valid` attribute to the `Encryption` class that stores the\nresult of `AlgV5.verify_perms()`. This allows callers to detect when the\n`/Perms` integrity check fails for AES-256 encrypted documents (R5/R6),\nindicating that the `/P` permissions field may have been tampered with.\n\nPreviously, a failed `/Perms` check only logged a warning with no\nprogrammatic way to detect it.\n\nCloses #3657.",
+          "timestamp": "2026-03-12T10:42:36+01:00",
+          "tree_id": "1c88a51d7e98ce3f921ff98a6b3c43489cfc7783",
+          "url": "https://github.com/py-pdf/pypdf/commit/a3451e8f30454cc5500e03d81f6827351499af8a"
+        },
+        "date": 1773308737694,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.339105060344497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018130580141268057",
+            "extra": "mean: 74.9675480833325 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.82238817722851,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015073287276233381",
+            "extra": "mean: 56.10920321428584 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1059505793238662,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02551800379677208",
+            "extra": "mean: 904.1995353999994 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4834499606148988,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06683881365608403",
+            "extra": "mean: 2.068466400799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18709194126928444,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1058976270698757",
+            "extra": "mean: 5.344965652799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2512891362531051,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035435605372047645",
+            "extra": "mean: 799.1758028000049 msec\nrounds: 5"
           }
         ]
       }
