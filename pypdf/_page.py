@@ -58,6 +58,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
+from .actions import Action, JavaScript
 from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
@@ -2152,6 +2153,126 @@ class PageObject(DictionaryObject):
             del self[NameObject("/Annots")]
         else:
             self[NameObject("/Annots")] = value
+
+    def add_action(self, trigger: Literal["open", "close"], action: Action) -> None:
+        """
+        Add an action which will launch on the open or close trigger event of this page.
+
+        Args:
+            trigger: "open" or "close" trigger event.
+            action: An :py:class:`~pypdf.actions.Action` object;
+                    JavaScript is currently the only available action type.
+
+        # Example: Display the page number when the page is opened
+        >>> self.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);")))
+        # Example: Display the page number when the page is closed
+        >>> self.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);")))
+        """
+        if trigger not in {"open", "close"}:
+            raise ValueError("The trigger must be 'open' or 'close'")
+
+        trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
+
+        if not isinstance(action, JavaScript):
+            raise ValueError("Currently the only action type supported is JavaScript")
+
+        if NameObject("/AA") not in self:
+            # Additional actions key not present
+            self[NameObject("/AA")] = DictionaryObject(
+                {trigger_name: action}
+            )
+            return
+
+        if not isinstance(self[NameObject("/AA")], DictionaryObject):
+            self[NameObject("/AA")] = DictionaryObject()
+
+        # This cast is confusing, it is not needed?
+        additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
+
+        if trigger_name not in additional_actions or is_null_or_none(additional_actions[trigger_name]):
+            additional_actions.update({trigger_name: action})
+            self[NameObject("/AA")] = additional_actions
+            return
+
+        """
+        The action dictionary's Next entry allows sequences of actions to be
+        chained together. For example, the effect of clicking a link
+        annotation with the mouse can be to play a sound, jump to a new
+        page, and start up a movie. Note that the Next entry is not
+        restricted to a single action but can contain an array of actions,
+        each of which in turn can have a Next entry of its own. The actions
+        can thus form a tree instead of a simple linked list. Actions within
+        each Next array are executed in order, each followed in turn by any
+        actions specified in its Next entry, and so on recursively. It is
+        recommended that interactive PDF processors attempt to provide
+        reasonable behaviour in anomalous situations. For example,
+        self-referential actions ought not be executed more than once, and
+        actions that close the document or otherwise render the next action
+        impossible ought to terminate the execution sequence. Applications
+        need also provide some mechanism for the user to interrupt and
+        manually terminate a sequence of actions.
+        ISO 32000-2:2020
+        """
+        head = current = additional_actions.get(trigger_name)
+        if not isinstance(head, DictionaryObject):
+            raise TypeError(
+                "The entries in a page object's additional-actions dictionary must be dictionaries"
+            )
+
+        visited = set()
+        while True:
+            if isinstance(current, ArrayObject):
+                _id = id(current)
+                if _id in visited:
+                    logger_warning(f"Detected cycle in the action tree for {current}", __name__)
+                    break
+                visited.add(_id)
+                current = current[-1]
+            elif isinstance(current, DictionaryObject):
+                _id = id(current)
+                if _id in visited:
+                    logger_warning(f"Detected cycle in the action tree for {current}", __name__)
+                    break
+                visited.add(_id)
+                if is_null_or_none(current.get(NameObject("/Next"), None)):
+                    break
+                current = current.get(NameObject("/Next"))
+            else:
+                raise TypeError(
+                    "Must be either a single action dictionary or an array of action dictionaries"
+                )
+
+        current[NameObject("/Next")] = action
+        additional_actions.update({trigger_name: head})
+        self[NameObject("/AA")] = additional_actions
+
+    def delete_action(self, trigger: Literal["open", "close"]) -> None:
+        """
+        Delete an action associated with an open or close trigger event of this page.
+
+        Args:
+            trigger: "open" or "close" trigger event.
+
+        # Example: Delete all actions triggered by a page open.
+        >>> self.delete_action("open")
+        # Example: Delete all actions triggered by a page close.
+        >>> self.delete_action("close")
+        """
+        if trigger not in {"open", "close"}:
+            raise ValueError("The trigger must be 'open' or 'close'")
+
+        trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
+
+        if NameObject("/AA") not in self:
+            raise ValueError("An additional-actions dictionary is absent; nothing to delete")
+
+        additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
+
+        if trigger_name in additional_actions:
+            del additional_actions[trigger_name]
+
+            if not additional_actions:
+                del self[NameObject("/AA")]
 
 
 class _VirtualList(Sequence[PageObject]):
