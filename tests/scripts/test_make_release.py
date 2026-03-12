@@ -32,13 +32,13 @@ VERSION_3_9_PLUS = sys.version_info[:2] >= (3, 9)
         ("# CHANGELOG #", "#"),
     ]
 )
-def test_strip_header(data, expected):
+def test_strip_header(data: str, expected: str) -> None:
     """Removal of the 'CHANGELOG' header."""
     make_release = pytest.importorskip("make_release")
     assert make_release.strip_header(data) == expected
 
 
-def test_get_git_commits_since_tag():
+def test_get_git_commits_since_tag() -> None:
     make_release = pytest.importorskip("make_release")
 
     with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
@@ -84,7 +84,7 @@ def test_get_git_commits_since_tag():
     ]
 
 
-def test_get_formatted_changes():
+def test_get_formatted_changes() -> None:
     make_release = pytest.importorskip("make_release")
 
     with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
@@ -128,7 +128,7 @@ def test_get_formatted_changes():
     )
 
 
-def test_get_formatted_changes__other():
+def test_get_formatted_changes__other() -> None:
     make_release = pytest.importorskip("make_release")
 
     changes = [

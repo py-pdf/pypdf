@@ -19,7 +19,7 @@ except ImportError:
     resource = None
 
 
-def test_dictionary_object__get_next_object_position():
+def test_dictionary_object__get_next_object_position() -> None:
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
 
     # reader.xref = {0: {7: 15, 9: 10245, 12: 939, 14: 2999, 16: 4982, 18: 9949, 22: 11160}}
@@ -40,7 +40,7 @@ def test_dictionary_object__get_next_object_position():
     ) == 15
 
 
-def test_tree_object__cyclic_reference(caplog):
+def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None:
     writer = PdfWriter()
     child1 = writer._add_object(DictionaryObject())
     child2 = writer._add_object(DictionaryObject({NameObject("/Next"): child1}))
@@ -55,7 +55,7 @@ def test_tree_object__cyclic_reference(caplog):
 
 
 @pytest.mark.enable_socket
-def test_array_object__clone_same_object_multiple_times(caplog):
+def test_array_object__clone_same_object_multiple_times(caplog: pytest.LogCaptureFixture) -> None:
     url = "https://github.com/user-attachments/files/25412858/Draft_OSMF_financial_statement_2013.pdf"
     name = "issue2991.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))

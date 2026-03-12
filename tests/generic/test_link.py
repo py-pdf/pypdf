@@ -9,7 +9,7 @@ from tests import get_data_from_url
 
 
 @pytest.mark.enable_socket
-def test_extract_links__null_object_in_old_page():
+def test_extract_links__null_object_in_old_page() -> None:
     url = "https://github.com/user-attachments/files/25507697/sample.pdf"
     name = "issue3656.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
@@ -18,7 +18,7 @@ def test_extract_links__null_object_in_old_page():
     writer.append(reader)
 
 
-def test_extract_links(caplog):
+def test_extract_links(caplog: pytest.LogCaptureFixture) -> None:
     page1 = PageObject()
     page2 = PageObject()
 
