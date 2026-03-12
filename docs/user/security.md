@@ -13,12 +13,18 @@ aware of the possible side effects, you can modify the following constants which
 
 * `pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH` for the *FlateDecode* filter (zlib compression)
 * `pypdf.filters.LZW_MAX_OUTPUT_LENGTH` for the *LZWDecode* filter (LZW compression)
+* `pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH` for the *RunLengthDecode* filter (run-length compression)
 
 For JBIG2 images, there is a similar parameter to limit the memory usage during decoding: `pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH`
 It defaults to 75 MB as well.
 
+For all streams, the maximum allowed value for the `/Length` field is limited to `pypdf.filters.MAX_DECLARED_STREAM_LENGTH`, which
+defaults to 75 MB as well.
+
 For the *FlateDecode* filter, the number of bytes to attempt recovery with can be set by `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH`.
 It defaults to 5 MB due to the much more complex recovery approach.
+
+For the *JBIG2Decode* filter, calling the external *jbig2dec* tool can be disabled by setting `pypdf.filters.JBIG2DEC_BINARY = None`.
 
 ### Reading
 
@@ -53,3 +59,15 @@ We receive reports about possibly insecure cryptography from time to time. This 
 
 These are requirements of the PDF standard, which we need to achieve the greatest compatibility with.
 Although some of them might be deprecated in PDF 2.0, the PDF 2.0 adoption rate is very low and legacy documents need to be supported.
+
+### XML parsing
+
+We use `xml.minidom` for parsing XMP information. Given recent Python versions built against recent Expat versions, the usual attacks
+(exponential entity expansion and external entity expansion) should not be possible. We have corresponding tests in place to ensure
+this for the platforms our tests run against.
+
+For some details, see [the official documentation](https://docs.python.org/3/library/xml.html#xml-security) and the
+[README for defusedxml](https://github.com/tiran/defusedxml/blob/main/README.md#python-xml-libraries).
+
+Please note that automated scanners tend to still flag any direct imports of XML modules from the Python standard library as unsafe.
+There have been discussions about this being outdated already, but they are still being flagged.

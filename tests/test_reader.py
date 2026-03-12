@@ -27,6 +27,7 @@ from pypdf.generic import (
     ArrayObject,
     Destination,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     NumberObject,
     TextStringObject,
@@ -2010,3 +2011,51 @@ def test_find_pdf_objects():
 def test_find_pdf_trailers(data: bytes, expected: list[int]):
     result = list(PdfReader._find_pdf_trailers(data))
     assert result == expected
+
+
+def test_objstm_batch_parse_caches_all_objects():
+    """Resolving one ObjStm object should batch-cache all siblings."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    assert len(reader.xref_objStm) > 0
+
+    obj_ids = list(reader.xref_objStm.keys())
+    first_obj = reader.get_object(obj_ids[0])
+    assert first_obj is not None
+
+    for idnum in obj_ids[1:]:
+        cached = reader.cache_get_indirect_object(0, idnum)
+        assert cached is not None, f"Object {idnum} was not batch-cached"
+
+
+def test_objstm_cache_hit_returns_target():
+    """Second call to _get_object_from_stream should return cached objects."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    obj_ids = list(reader.xref_objStm.keys())
+
+    # Trigger batch parse
+    reader.get_object(obj_ids[0])
+
+    # Call again — all objects are already cached
+    second_id = obj_ids[1]
+    ref = IndirectObject(second_id, 0, reader)
+    result = reader._get_object_from_stream(ref)
+    assert result is reader.cache_get_indirect_object(0, second_id)
+
+
+def test_objstm_skips_cache_for_overridden_objects():
+    """Objects removed from xref_objStm should not be cached during batch parse."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    obj_ids = list(reader.xref_objStm.keys())
+    assert len(obj_ids) >= 2
+
+    # Simulate an incremental update overriding one object
+    removed_id = obj_ids[-1]
+    saved_entry = reader.xref_objStm.pop(removed_id)
+    reader.resolved_objects.clear()
+
+    result = reader.get_object(obj_ids[0])
+    assert result is not None
+    assert reader.cache_get_indirect_object(0, removed_id) is None
+    assert reader.cache_get_indirect_object(0, obj_ids[0]) is not None
+
+    reader.xref_objStm[removed_id] = saved_entry

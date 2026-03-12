@@ -34,7 +34,7 @@ def test_extract_links(caplog: pytest.LogCaptureFixture) -> None:
 
     page1[NameObject("/Annots")] = ArrayObject([NullObject()])
     assert extract_links(page1, page2) == []
-    assert caplog.messages == ["Annotation sizes differ: [] vs. [NullObject]"]
+    assert caplog.messages == []
     caplog.clear()
 
     # Both old and new annotations.
@@ -45,11 +45,11 @@ def test_extract_links(caplog: pytest.LogCaptureFixture) -> None:
 
     page2[NameObject("/Annots")] = NullObject()
     assert extract_links(page1, page2) == []
-    assert caplog.messages == ["Annotation sizes differ: [] vs. [NullObject]"]
+    assert caplog.messages == []
     caplog.clear()
 
     # Only new annotations.
     del page1[NameObject("/Annots")]
     page2[NameObject("/Annots")] = ArrayObject([NullObject()])
     assert extract_links(page1, page2) == []
-    assert caplog.messages == ["Annotation sizes differ: [NullObject] vs. []"]
+    assert caplog.messages == []

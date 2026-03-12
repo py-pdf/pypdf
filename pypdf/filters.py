@@ -35,6 +35,7 @@ used for the names of filters in an inline image object.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import binascii
 import math
 import os
 import shutil
@@ -71,8 +72,11 @@ from .generic import (
     is_null_or_none,
 )
 
+MAX_DECLARED_STREAM_LENGTH = 75_000_000
+
 JBIG2_MAX_OUTPUT_LENGTH = 75_000_000
 LZW_MAX_OUTPUT_LENGTH = 75_000_000
+RUN_LENGTH_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000
 
@@ -342,34 +346,26 @@ class ASCIIHexDecode:
         """
         if isinstance(data, str):
             data = data.encode()
-        retval = b""
-        hex_pair = b""
-        index = 0
-        while True:
-            if index >= len(data):
-                logger_warning(
-                    "missing EOD in ASCIIHexDecode, check if output is OK", __name__
-                )
-                break  # Reached end of string without an EOD
-            char = data[index : index + 1]
-            if char == b">":
-                break
-            if char.isspace():
-                index += 1
-                continue
-            hex_pair += char
-            if len(hex_pair) == 2:
-                retval += bytes((int(hex_pair, base=16),))
-                hex_pair = b""
-            index += 1
-        # If the filter encounters the EOD marker after reading
-        # an odd number of hexadecimal digits,
-        # it shall behave as if a 0 (zero) followed the last digit.
-        # For every even number of hexadecimal digits, hex_pair is reset to b"".
-        if hex_pair != b"":
-            hex_pair += b"0"
-            retval += bytes((int(hex_pair, base=16),))
-        return retval
+
+        # Stop at EOD
+        eod = data.find(b">")
+        if eod == -1:
+            logger_warning(
+                "missing EOD in ASCIIHexDecode, check if output is OK",
+                __name__,
+            )
+            hex_data = data
+        else:
+            hex_data = data[:eod]
+
+        # Remove whitespace
+        hex_data = b"".join(hex_data.split())
+
+        # Pad if odd length
+        if len(hex_data) % 2 == 1:
+            hex_data += b"0"
+
+        return binascii.unhexlify(hex_data)
 
 
 class RunLengthDecode:
@@ -408,8 +404,10 @@ class RunLengthDecode:
         """
         lst = []
         index = 0
+        data_length = len(data)
+        total_length = 0
         while True:
-            if index >= len(data):
+            if index >= data_length:
                 logger_warning(
                     "missing EOD in RunLengthDecode, check if output is OK", __name__
                 )
@@ -417,7 +415,6 @@ class RunLengthDecode:
             length = data[index]
             index += 1
             if length == 128:
-                data_length = len(data)
                 if index < data_length:
                     # We should first check, if we have an inner stream from a multi-encoded
                     # stream with a faulty trailing newline that we can decode properly.
@@ -442,6 +439,9 @@ class RunLengthDecode:
                 length = 257 - length
                 lst.append(bytes((data[index],)) * length)
                 index += 1
+            total_length += length
+            if total_length > RUN_LENGTH_MAX_OUTPUT_LENGTH:
+                raise LimitReachedError("Limit reached while decompressing.")
         return b"".join(lst)
 
 
