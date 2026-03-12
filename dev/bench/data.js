@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773223368818,
+  "lastUpdate": 1773308563632,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -91481,6 +91481,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003923982689145548",
             "extra": "mean: 613.5675332000005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wooky@iwooky.me",
+            "name": "Dmitry K",
+            "username": "dmitry-kostin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3a4e913c4cbee207d72fd63d835740ad9825d1bf",
+          "message": "PI: Fix O(n²) performance in NameObject read/write (#3679)\n\nThree functions had quadratic behavior that caused hangs on PDFs with\nextremely long Name objects (e.g. repeatedly mis-encoded UTF-8 names):\n\n- read_until_regex: searched entire accumulated buffer on each 16-byte\n  chunk instead of only the new chunk, and used bytes concatenation\n- NameObject.unnumber: rebuilt entire bytes object on each # replacement\n- NameObject.renumber: used out += concatenation in a loop",
+          "timestamp": "2026-03-12T10:40:06+01:00",
+          "tree_id": "d6ba038ba791cb74e85f02f2f312b78b7ad626d3",
+          "url": "https://github.com/py-pdf/pypdf/commit/3a4e913c4cbee207d72fd63d835740ad9825d1bf"
+        },
+        "date": 1773308558454,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0616119705310787,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005539614290188749",
+            "extra": "mean: 326.6253233999919 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.88517098405172,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004055871945339223",
+            "extra": "mean: 52.95159894736918 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2768643402861804,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006487079281534624",
+            "extra": "mean: 3.6118772065999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.150557348559687,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011727111279823197",
+            "extra": "mean: 55.09472688888827 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09123248101582253,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018877973075152158",
+            "extra": "mean: 10.961008501200018 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5191845611580927,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01056244748377014",
+            "extra": "mean: 658.2478689999903 msec\nrounds: 5"
           }
         ]
       }
