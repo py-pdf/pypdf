@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773308742340,
+  "lastUpdate": 1773320389881,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -91613,6 +91613,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00467707101076335",
             "extra": "mean: 671.4330872000119 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5a9a0da71714c4361b38ebdcaf304291569d7a2f",
+          "message": "BUG: Avoid sharing array-based content streams between pages (#3681)\n\nOtherwise, applying a transformation to one of the pages renders all\npages referencing the shared objects invalid due to\n`PageObject.replace_contents` setting them to a `NullObject` without\nbeing able to reliable check for further usages.\n\nCloses #3680.",
+          "timestamp": "2026-03-12T13:57:05+01:00",
+          "tree_id": "0c04e85764a2c9d0d851da64b07d2d9e9275857d",
+          "url": "https://github.com/py-pdf/pypdf/commit/5a9a0da71714c4361b38ebdcaf304291569d7a2f"
+        },
+        "date": 1773320385029,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.069511905708167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006872698831787157",
+            "extra": "mean: 325.7846949999987 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.844857214156722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038908532673251244",
+            "extra": "mean: 53.06487539999907 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.284164887092207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010151776281053237",
+            "extra": "mean: 3.5190836216000037 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.86069399899608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012380943419623017",
+            "extra": "mean: 55.98886583333259 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09032423483737081,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06265199602139188",
+            "extra": "mean: 11.07122580999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4897891194562745,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010248326969224428",
+            "extra": "mean: 671.2359399999968 msec\nrounds: 5"
           }
         ]
       }
