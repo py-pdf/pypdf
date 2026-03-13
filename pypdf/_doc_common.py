@@ -29,7 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import struct
-import zlib
 from abc import abstractmethod
 from collections.abc import Generator, Iterable, Iterator, Mapping
 from datetime import datetime
@@ -61,6 +60,7 @@ from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .errors import PdfReadError, PyPdfError
+from .filters import _decompress_with_limit
 from .generic import (
     ArrayObject,
     BooleanObject,
@@ -1306,10 +1306,40 @@ class PdfDocCommon:
 
     @property
     def user_access_permissions(self) -> Optional[UserAccessPermissions]:
-        """Get the user access permissions for encrypted documents. Returns None if not encrypted."""
+        """
+        Get the user access permissions for encrypted documents.
+        Returns None if not encrypted.
+
+        .. warning::
+
+            For AES-256 encrypted documents (R=5/R=6), the returned
+            permissions are derived from the ``/P`` field, which is
+            only trustworthy if the ``/Perms`` integrity check passed.
+            Check :attr:`are_permissions_valid` to verify.
+        """
         if self._encryption is None:
             return None
         return UserAccessPermissions(self._encryption.P)
+
+    @property
+    def are_permissions_valid(self) -> Optional[bool]:
+        """
+        Whether the ``/Perms`` integrity check passed for this document.
+
+        For AES-256 encrypted documents (R=5/R=6), the ``/Perms`` field
+        is an encrypted copy of the permissions that can be verified
+        independently. Returns ``False`` if this check fails (the ``/P``
+        permissions may have been tampered with).
+
+        Returns ``None`` if the document is not encrypted or has not yet
+        been decrypted via :meth:`decrypt()<pypdf.PdfReader.decrypt>`.
+        Returns ``True`` for non-AES-256 encryption (no ``/Perms`` to check).
+        """
+        if self._encryption is None:
+            return None
+        if not self._encryption.is_decrypted():
+            return None
+        return self._encryption._are_permissions_valid
 
     @property
     @abstractmethod
@@ -1324,7 +1354,6 @@ class PdfDocCommon:
 
     @property
     def xfa(self) -> Optional[dict[str, Any]]:
-        tree: Optional[TreeObject] = None
         retval: dict[str, Any] = {}
         catalog = self.root_object
 
@@ -1342,7 +1371,7 @@ class PdfDocCommon:
                 if isinstance(f, IndirectObject):
                     field = cast(Optional[EncodedStreamObject], f.get_object())
                     if field:
-                        es = zlib.decompress(field._data)
+                        es = _decompress_with_limit(field._data)
                         retval[tag] = es
         return retval
 

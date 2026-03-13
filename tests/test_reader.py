@@ -27,6 +27,7 @@ from pypdf.generic import (
     ArrayObject,
     Destination,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     NumberObject,
     TextStringObject,
@@ -560,6 +561,42 @@ def test_read_prev_0_trailer():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(pdf_stream, strict=True)
     assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
+
+
+def test_circular_xref_prev_reference(caplog):
+    """Circular /Prev in trailer should be detected, not loop forever (#3654)."""
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << /Prev %d /Root 5 0 R /Size 6 >>\n"
+        b"startxref %d\n"
+        b"%%%%EOF"
+    )
+    xref_offset = pdf_data.find(b"xref") - 1
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj"),
+        pdf_data.find(b"2 0 obj"),
+        pdf_data.find(b"3 0 obj"),
+        pdf_data.find(b"4 0 obj"),
+        pdf_data.find(b"5 0 obj"),
+        xref_offset,  # /Prev points to same xref = circular
+        xref_offset,  # startxref
+    )
+    PdfReader(io.BytesIO(pdf_data))
+    assert "Circular xref chain detected" in caplog.text
 
 
 def test_read_missing_startxref():
@@ -1974,3 +2011,51 @@ def test_find_pdf_objects():
 def test_find_pdf_trailers(data: bytes, expected: list[int]):
     result = list(PdfReader._find_pdf_trailers(data))
     assert result == expected
+
+
+def test_objstm_batch_parse_caches_all_objects():
+    """Resolving one ObjStm object should batch-cache all siblings."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    assert len(reader.xref_objStm) > 0
+
+    obj_ids = list(reader.xref_objStm.keys())
+    first_obj = reader.get_object(obj_ids[0])
+    assert first_obj is not None
+
+    for idnum in obj_ids[1:]:
+        cached = reader.cache_get_indirect_object(0, idnum)
+        assert cached is not None, f"Object {idnum} was not batch-cached"
+
+
+def test_objstm_cache_hit_returns_target():
+    """Second call to _get_object_from_stream should return cached objects."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    obj_ids = list(reader.xref_objStm.keys())
+
+    # Trigger batch parse
+    reader.get_object(obj_ids[0])
+
+    # Call again — all objects are already cached
+    second_id = obj_ids[1]
+    ref = IndirectObject(second_id, 0, reader)
+    result = reader._get_object_from_stream(ref)
+    assert result is reader.cache_get_indirect_object(0, second_id)
+
+
+def test_objstm_skips_cache_for_overridden_objects():
+    """Objects removed from xref_objStm should not be cached during batch parse."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    obj_ids = list(reader.xref_objStm.keys())
+    assert len(obj_ids) >= 2
+
+    # Simulate an incremental update overriding one object
+    removed_id = obj_ids[-1]
+    saved_entry = reader.xref_objStm.pop(removed_id)
+    reader.resolved_objects.clear()
+
+    result = reader.get_object(obj_ids[0])
+    assert result is not None
+    assert reader.cache_get_indirect_object(0, removed_id) is None
+    assert reader.cache_get_indirect_object(0, obj_ids[0]) is not None
+
+    reader.xref_objStm[removed_id] = saved_entry

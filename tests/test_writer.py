@@ -234,6 +234,10 @@ def writer_operate(writer: PdfWriter) -> None:
     writer.page_mode = NameObject("/UseOC")
     assert writer._get_page_mode() == "/UseOC"
     writer.insert_blank_page(width=100, height=100)
+    page = writer.insert_blank_page(width=100)
+    assert page.mediabox.height == 100
+    page = writer.insert_blank_page(height=100)
+    assert page.mediabox.width == 100
     writer.insert_blank_page()  # without parameters
 
     writer.remove_images()
@@ -249,6 +253,88 @@ def writer_operate(writer: PdfWriter) -> None:
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
         assert k in objects_hash, f"Missing {v}"
+
+
+def test_insert_blank_page():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    old_page_count = len(writer.pages)
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(index=0)
+    assert len(writer.pages) == old_page_count + 1
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=10, index=0)
+    assert len(writer.pages) == old_page_count + 2
+    assert page.mediabox.width == 10
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-10, index=0)
+    assert len(writer.pages) == old_page_count + 3
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=20, index=0)
+    assert len(writer.pages) == old_page_count + 4
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == 20
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=-20, index=0)
+    assert len(writer.pages) == old_page_count + 5
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    page = writer.insert_blank_page(width=30, height=40, index=0)
+    assert len(writer.pages) == old_page_count + 6
+    assert page.mediabox.width == 30
+    assert page.mediabox.height == 40
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-30, height=-40, index=0)
+    assert len(writer.pages) == old_page_count + 7
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    page = writer.insert_blank_page(width=50, height=60, index=len(writer.pages))
+    assert len(writer.pages) == old_page_count + 8
+    assert page.mediabox.width == 50
+    assert page.mediabox.height == 60
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-50, height=-60, index=-len(writer.pages))
+    assert len(writer.pages) == old_page_count + 9
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) // 2)
+    assert len(writer.pages) == old_page_count + 10
+    assert page.mediabox.width == 70
+    assert page.mediabox.height == 80
+
+    page = writer.insert_blank_page(width=70, height=80, index=-len(writer.pages) // 2)
+    assert len(writer.pages) == old_page_count + 11
+    assert page.mediabox.width == 70
+    assert page.mediabox.height == 80
+
+    num_pages = len(writer.pages)
+
+    with pytest.raises(
+        IndexError,
+        match=re.escape(f"Index should be in range [-{num_pages}, {num_pages}]"),
+    ):
+        page = writer.insert_blank_page(width=90, height=100, index=len(writer.pages) + 1)
+
+    with pytest.raises(
+        IndexError,
+        match=re.escape(f"Index should be in range [-{num_pages}, {num_pages}]"),
+    ):
+        page = writer.insert_blank_page(width=-90, height=-100, index=-len(writer.pages) - 1)
 
 
 @pytest.mark.parametrize(
@@ -2867,6 +2953,14 @@ def test_insert_filtered_annotations__annotations_are_no_list(caplog):
     writer.append(reader)
     font_file2 = reader.get_object(36).indirect_reference
     assert caplog.messages == [
+        (
+            f"Expected annotation arrays: {{'/FontFile2': {font_file2!r}, "
+            "'/Descent': -269, '/CapHeight': 714, '/FontWeight': "
+            "300, '/FontName': '/JQJGLF+OpenSans-Light', '/ItalicAngle': 0, '/StemV': "
+            "48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
+            "'/FontFamily': 'Open Sans Light', '/Flags': 32, '/XHeight': 531, "
+            "'/Ascent': 1048, '/FontStretch': '/Normal'} []. Ignoring annotations."
+        ),
         (
             f"Expected list of annotations, got {{'/FontFile2': {font_file2!r}, "
             "'/Descent': -269, '/CapHeight': 714, '/FontWeight': 300, '/FontName': '/JQJGLF+OpenSans-Light', "

@@ -1,5 +1,54 @@
 # CHANGELOG
 
+## Version 6.8.0, 2026-03-09
+
+### Security (SEC)
+- Limit allowed `/Length` value of stream  (#3675)
+
+### New Features (ENH)
+- Add /IRT (in-reply-to) support for markup annotations (#3631)
+
+### Documentation (DOC)
+- Avoid using `PageObject.replace_contents` on PdfReader (#3669)
+- Document how to disable jbig2dec calls
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.5...6.8.0)
+
+## Version 6.7.5, 2026-03-02
+
+### Security (SEC)
+- Improve the performance of the ASCIIHexDecode filter (#3666)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.4...6.7.5)
+
+## Version 6.7.4, 2026-02-27
+
+### Security (SEC)
+- Allow limiting output length for RunLengthDecode filter (#3664)
+
+### Robustness (ROB)
+- Deal with invalid annotations in extract_links (#3659)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.3...6.7.4)
+
+## Version 6.7.3, 2026-02-24
+
+### Security (SEC)
+- Use zlib decompression limit when retrieving XFA data (#3658)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.2...6.7.3)
+
+## Version 6.7.2, 2026-02-22
+
+### Security (SEC)
+- Prevent infinite loop from circular xref /Prev references (#3655)
+
+### Bug Fixes (BUG)
+- Fix wrong LUT size error (#3651)
+- Fix handling of page boxes defined on `/Pages` (#3650)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.1...6.7.2)
+
 ## Version 6.7.1, 2026-02-17
 
 ### Security (SEC)
