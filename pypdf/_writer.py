@@ -1595,7 +1595,7 @@ class PdfWriter(PdfDocCommon):
         Args:
             remove_identicals_old: Positional arguement, used while remove_orphans is still being deprecated.
             remove_orphans: Remove unreferenced objects; deprecated use remove_unreferenced.
-            remove_identicals: Remove identical objects.
+            remove_duplicates: Remove identical objects.
             remove_unreferenced: Remove unreferenced objects.
 
         """
@@ -1609,7 +1609,7 @@ class PdfWriter(PdfDocCommon):
             remove_unreferenced = remove_orphans
         if remove_identicals is not None:  # type: ignore
             deprecate_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
-            remove_duplicates = remove_identicals  # type: ignore 
+            remove_duplicates = remove_identicals  # type: ignore
 
         def replace_in_obj(
             obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
