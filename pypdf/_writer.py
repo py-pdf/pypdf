@@ -1584,7 +1584,7 @@ class PdfWriter(PdfDocCommon):
         remove_identicals_old: Any = _UNSET,
         remove_orphans: Any = _UNSET,
         *,
-        remove_identicals: bool = True,
+        remove_duplicates: bool = True,
         remove_unreferenced: bool = True,
     ) -> None:
         """
@@ -1600,13 +1600,16 @@ class PdfWriter(PdfDocCommon):
 
         """
         if remove_identicals_old != self._UNSET:
-            deprecate_with_replacement("remove_identicals_old", "remove_identicals", "7.0.0")
+            deprecate_with_replacement("remove_identicals_old", "remove_duplicates", "7.0.0")
             assert isinstance(remove_identicals_old, bool)
-            remove_identicals = remove_identicals_old
+            remove_duplicates = remove_identicals_old
         if remove_orphans != self._UNSET:
             deprecate_with_replacement("remove_orphans", "remove_unreferenced", "7.0.0")
             assert isinstance(remove_orphans, bool)
             remove_unreferenced = remove_orphans
+        if remove_identicals is not None:  # type: ignore
+            deprecate_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
+            remove_duplicates = remove_identicals  # type: ignore 
 
         def replace_in_obj(
             obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
@@ -1638,7 +1641,7 @@ class PdfWriter(PdfDocCommon):
             assert obj is not None, "mypy"  # mypy: TypeGuard of `is_null_or_none` does not help here.
             assert isinstance(obj.indirect_reference, IndirectObject)
             h = obj.hash_value()
-            if remove_identicals and h in self._idnum_hash:
+            if remove_duplicates and h in self._idnum_hash:
                 self._idnum_hash[h][1].append(obj.indirect_reference)
                 self._objects[idx] = None
             else:
