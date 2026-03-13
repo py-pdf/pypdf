@@ -2882,7 +2882,7 @@ def test_compress_identical_objects__after_remove_images():
     """Test for #3237"""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
     writer.remove_images()
-    writer.compress_identical_objects(remove_identicals=True, remove_unreferenced=True)
+    writer.compress_identical_objects(remove_duplicates=True, remove_unreferenced=True)
 
 
 def test_merge__process_named_dests__no_dests_in_source_file():
