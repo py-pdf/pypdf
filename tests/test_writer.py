@@ -2591,20 +2591,12 @@ def test_compress_identical_objects__coverage():
     assert len(out1.getvalue()) - 100 < len(out2.getvalue())
     with pytest.warns(
         DeprecationWarning,
-        match="remove_identicals_old is deprecated and will be removed in pypdf 7.0.0. Use remove_duplicates instead.",
-    ):
-        writer.compress_identical_objects(remove_identicals_old=True)
-    out3 = BytesIO()
-    writer.write(out3)
-    assert len(out2.getvalue()) > len(out3.getvalue())
-    with pytest.warns(
-        DeprecationWarning,
         match="remove_identicals is deprecated and will be removed in pypdf 7.0.0. Use remove_duplicates instead.",
     ):
         writer.compress_identical_objects(remove_identicals=True)
-    out4 = BytesIO()
-    writer.write(out4)
-    assert len(out3.getvalue()) > len(out4.getvalue())
+    out3 = BytesIO()
+    writer.write(out3)
+    assert len(out2.getvalue()) > len(out3.getvalue())
 
 
 def test_set_need_appearances_writer():

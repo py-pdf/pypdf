@@ -1587,7 +1587,7 @@ class PdfWriter(PdfDocCommon):
 
     def compress_identical_objects(
         self,
-        remove_identicals_old: Any = _UNSET,
+        remove_identicals: Any = _UNSET,
         remove_orphans: Any = _UNSET,
         *,
         remove_duplicates: bool = True,
@@ -1599,23 +1599,20 @@ class PdfWriter(PdfDocCommon):
         Recommended to be used just before writing output.
 
         Args:
-            remove_identicals_old: Positional arguement, used while remove_orphans is still being deprecated.
-            remove_orphans: Remove unreferenced objects; deprecated use remove_unreferenced.
-            remove_duplicates: Remove identical objects.
+            remove_identicals: Positional arguement, used while remove_identicals is still being deprecated.
+            remove_orphans: Positional arguement, used while remove_orphans is still being deprecated.
+            remove_duplicates: Remove duplicate objects.
             remove_unreferenced: Remove unreferenced objects.
 
         """
-        if remove_identicals_old != self._UNSET:
-            deprecate_with_replacement("remove_identicals_old", "remove_duplicates", "7.0.0")
-            assert isinstance(remove_identicals_old, bool)
-            remove_duplicates = remove_identicals_old
+        if remove_identicals != self._UNSET:
+            deprecate_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
+            assert isinstance(remove_identicals, bool)
+            remove_duplicates = remove_identicals
         if remove_orphans != self._UNSET:
             deprecate_with_replacement("remove_orphans", "remove_unreferenced", "7.0.0")
             assert isinstance(remove_orphans, bool)
             remove_unreferenced = remove_orphans
-        if remove_identicals is not None:  # type: ignore
-            deprecate_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
-            remove_duplicates = remove_identicals  # type: ignore
 
         def replace_in_obj(
             obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
