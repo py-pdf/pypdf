@@ -2552,7 +2552,7 @@ def test_compress_identical_objects():
     name = "iss2794.pdf"
     in_bytes = BytesIO(get_data_from_url(url, name=name))
     writer = PdfWriter(in_bytes)
-    writer.compress_identical_objects(remove_orphans=False)
+    writer.compress_identical_objects(remove_unreferenced=False)
     out1 = BytesIO()
     writer.write(out1)
     assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
@@ -2562,7 +2562,38 @@ def test_compress_identical_objects():
     out2 = BytesIO()
     writer.write(out2)
     assert len(out1.getvalue()) - 100 < len(out2.getvalue())
-    writer.compress_identical_objects(remove_identicals=False)
+    writer.compress_identical_objects(remove_duplicates=False)
+    out3 = BytesIO()
+    writer.write(out3)
+    assert len(out2.getvalue()) > len(out3.getvalue())
+
+
+@pytest.mark.enable_socket
+def test_compress_identical_objects__coverage():
+    """Cf #2728 and #2794"""
+    url = "https://github.com/user-attachments/files/16575458/tt2.pdf"
+    name = "iss2794.pdf"
+    in_bytes = BytesIO(get_data_from_url(url, name=name))
+    writer = PdfWriter(in_bytes)
+    with pytest.warns(
+        DeprecationWarning,
+        match="remove_orphans is deprecated and will be removed in pypdf 7.0.0. Use remove_unreferenced instead.",
+    ):
+        writer.compress_identical_objects(remove_orphans=True)
+    out1 = BytesIO()
+    writer.write(out1)
+    assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
+    writer.remove_page(
+        1
+    )  # page0 contains fields which keep reference to the deleted page
+    out2 = BytesIO()
+    writer.write(out2)
+    assert len(out1.getvalue()) - 100 < len(out2.getvalue())
+    with pytest.warns(
+        DeprecationWarning,
+        match="remove_identicals is deprecated and will be removed in pypdf 7.0.0. Use remove_duplicates instead.",
+    ):
+        writer.compress_identical_objects(remove_identicals=True)
     out3 = BytesIO()
     writer.write(out3)
     assert len(out2.getvalue()) > len(out3.getvalue())
@@ -2851,7 +2882,7 @@ def test_compress_identical_objects__after_remove_images():
     """Test for #3237"""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
     writer.remove_images()
-    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
+    writer.compress_identical_objects(remove_duplicates=True, remove_unreferenced=True)
 
 
 def test_merge__process_named_dests__no_dests_in_source_file():
