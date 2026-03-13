@@ -84,7 +84,7 @@ def _parse_encoding(
             else:
                 raise Exception("not found")
         except Exception:
-            logger_error("Advanced encoding %(encoding)s not implemented yet", __name__, encoding=enc)
+            logger_error("Advanced encoding %(encoding)s not implemented yet", source=__name__, encoding=enc)
             encoding = enc
     elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
         try:
@@ -92,7 +92,7 @@ def _parse_encoding(
         except Exception:
             logger_error(
                 "Advanced encoding %(encoding)s not implemented yet",
-                __name__, encoding=encoding
+                source=__name__, encoding=encoding
             )
             encoding = charset_encoding["/StandardEncoding"].copy()
     else:

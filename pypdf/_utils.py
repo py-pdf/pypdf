@@ -440,7 +440,7 @@ def deprecation_no_replacement(name: str, removed_in: str) -> None:
     deprecation(f"{name} is deprecated and was removed in pypdf {removed_in}.")
 
 
-def logger_error(message: str, source: str, **values: Any) -> None:
+def logger_error(message: str, *, source: str, **values: Any) -> None:
     """
     Use this instead of logger.error directly.
 
