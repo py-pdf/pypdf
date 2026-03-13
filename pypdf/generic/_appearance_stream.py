@@ -513,9 +513,6 @@ class TextStreamAppearance(BaseStreamAppearance):
             text = field.get("/V", "")
             selection = []
 
-        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
-        text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
-
         # Derive font name, size and color from the default appearance. Also set
         # user-provided font name and font size in the default appearance, if given.
         # For a font name, this presumes that we can find an associated font resource
@@ -537,6 +534,14 @@ class TextStreamAppearance(BaseStreamAppearance):
             font_size = user_font_size
 
         font_name, font_resource, font = cls._find_annotation_font_resource(font_name, annotation, acro_form, text)
+
+        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
+        # We escape parentheses when we do not need to hex-encode strings. If we have a font resource with a
+        # "/ToUnicode" map, then font.character_map stores the length of the font encoding in bytes. If encoding
+        # equals "charmap" or is a dict, we also know that the encoding length is one byte.
+        map_min_1 = font.character_map.get(-1, None)
+        if map_min_1 == 1 or isinstance(font.encoding, dict) or font.encoding == "charmap":
+            text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
 
         # Retrieve formatting information
         is_comb = False
