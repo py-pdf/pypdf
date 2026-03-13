@@ -559,3 +559,20 @@ class Font:
         return sum(
             [self.character_widths.get(char, self.character_widths["default"]) for char in text], 0.0
         )
+
+    def can_encode(self, text: str) -> bool:
+        """Check whether the font is able to encode a text string."""
+        try:
+            if self.character_map:
+                supported_chars = set(self.character_map.values())
+                return all(char in supported_chars for char in text)
+            if isinstance(self.encoding, str):
+                text.encode(self.encoding, "surrogatepass")
+            else:
+                supported_chars = set(self.encoding.values())
+                return all(char in supported_chars for char in text)
+
+        except UnicodeEncodeError:
+            return False
+
+        return True
