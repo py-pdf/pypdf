@@ -527,19 +527,20 @@ class TextStreamAppearance(BaseStreamAppearance):
         # font) operator along with its two operands, font and size" (Section 12.7.4.3
         # "Variable text" of the PDF 2.0 specification).
         font_properties = [prop for prop in re.split(r"\s", default_appearance) if prop]
-        font_name = font_properties.pop(font_properties.index("Tf") - 2)
+        da_font_name = font_properties.pop(font_properties.index("Tf") - 2)
         font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
         font_properties.remove("Tf")
         font_color = " ".join(font_properties)
         # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name
+        else:
+            font_name = da_font_name
         # Determine the font size to use, prioritizing the user's input
         if user_font_size > 0:
             font_size = user_font_size
 
         font_name, font_resource, font = cls._find_annotation_font_resource(font_name, annotation, acro_form, text)
-
         # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
         # We escape parentheses when we do not need to hex-encode strings. If we have a font resource with a
         # "/ToUnicode" map, then font.character_map stores the length of the font encoding in bytes. If encoding
@@ -547,6 +548,10 @@ class TextStreamAppearance(BaseStreamAppearance):
         map_min_1 = font.character_map.get(-1, None)
         if map_min_1 == 1 or isinstance(font.encoding, dict) or font.encoding == "charmap":
             text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
+
+        # Change the /DA information if we changed the font name
+        if font_name != da_font_name:
+            annotation[NameObject("/DA")] = TextStringObject(default_appearance.replace(da_font_name, font_name))
 
         # Retrieve formatting information
         is_comb = False
