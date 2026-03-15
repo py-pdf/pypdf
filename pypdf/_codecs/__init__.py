@@ -30,10 +30,6 @@ _win_encoding = fill_from_encoding("cp1252")
 _mac_encoding = fill_from_encoding("mac_roman")
 
 
-_win_encoding_rev: dict[str, int] = rev_encoding(_win_encoding)
-_mac_encoding_rev: dict[str, int] = rev_encoding(_mac_encoding)
-_symbol_encoding_rev: dict[str, int] = rev_encoding(_symbol_encoding)
-_zapfding_encoding_rev: dict[str, int] = rev_encoding(_zapfding_encoding)
 _pdfdoc_encoding_rev: dict[str, int] = rev_encoding(_pdfdoc_encoding)
 
 
