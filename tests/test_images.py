@@ -227,6 +227,14 @@ def test_image_extraction(src, page_index, image_key, expected):
     assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
 
 
+def test_get_inline_image_without_xobject_resources():
+    page = PageObject(None, None)
+    inline_image = mock.sentinel.inline_image
+
+    with mock.patch.object(page, "_get_inline_images", return_value={"~0~": inline_image}):
+        assert page._get_image("~0~") is inline_image
+
+
 @pytest.mark.enable_socket
 @pytest.mark.timeout(30)
 def test_loop_in_image_keys():
