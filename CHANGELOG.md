@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## Version 6.9.0, 2026-03-15
+
+### New Features (ENH)
+- Expose /Perms verification result on Encryption object (#3672)
+
+### Performance Improvements (PI)
+- Fix O(n²) performance in NameObject read/write (#3679)
+- Batch-parse all objects in ObjStm on first access (#3677)
+
+### Bug Fixes (BUG)
+- Avoid sharing array-based content streams between pages (#3681)
+- Avoid accessing invalid page when inserting blank page under some conditions (#3529)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.8.0...6.9.0)
+
 ## Version 6.8.0, 2026-03-09
 
 ### Security (SEC)
