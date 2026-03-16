@@ -335,11 +335,11 @@ def test_deprecation_no_replacement():
 
 def test_logger_error(caplog):
     enc = NameObject("/Invalid")
-    message:str = "Advanced encoding %(encoding)s not implemented yet"
+    message = "Advanced encoding %(encoding)s not implemented yet"
     logger_error(message, source=__name__, encoding=enc)
     assert "Advanced encoding /Invalid not implemented yet" in caplog.text
-    encoding  = DictionaryObject({NameObject("/key"): TextStringObject("value")})
-    message =  "Advanced encoding %(encoding)s not implemented yet"
+    encoding = DictionaryObject({NameObject("/key"): TextStringObject("value")})
+    message = "Advanced encoding %(encoding)s not implemented yet"
     logger_error(message, source=__name__, encoding=encoding)
     assert "Advanced encoding {'/key': 'value'} not implemented yet" in caplog.text
 
