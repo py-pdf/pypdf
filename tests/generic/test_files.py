@@ -4,8 +4,8 @@ import shutil
 import subprocess
 from io import BytesIO
 
-from py import path
 import pytest
+from py import path
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import AFRelationship
@@ -83,7 +83,7 @@ def test_embedded_file__artificial() -> None:
     assert isinstance(ef, DictionaryObject)
     f = ef[NameObject("/F")]
     assert isinstance(f, DictionaryObject)
-    f[NameObject("/Params")] = params 
+    f[NameObject("/Params")] = params
     assert attachment.checksum == b"\x8d\xdd\x8b\xe4\xb1y\xa5)\xaf\xa5\xf2\xff\xaeK\x98X"
 
 
@@ -131,7 +131,7 @@ def test_embedded_file__kids() -> None:
     assert isinstance(obj, DictionaryObject)
 
     del obj[NameObject("/Names")]
-    
+
     attachments = list(EmbeddedFile._load(reader.root_object))
     assert attachments == []
 
@@ -514,7 +514,7 @@ def test_embedded_file__create__neither_kids_nor_names() -> None:
     assert isinstance(names, DictionaryObject)
     files = names["/EmbeddedFiles"]
     assert isinstance(files, DictionaryObject)
-    
+
     del files["/Names"]
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Got neither Names nor Kids in embedded files tree\.$"):
@@ -600,7 +600,7 @@ def test_embedded_file__order() -> None:
     assert isinstance(names, DictionaryObject)
     files = names["/EmbeddedFiles"]
     assert isinstance(files, DictionaryObject)
-    assert files["/Names"] == [ 
+    assert files["/Names"] == [
         "abc.txt", attachment2.pdf_object.indirect_reference,
         "test.txt", attachment1.pdf_object.indirect_reference,
         "test.txt", attachment4.pdf_object.indirect_reference,
