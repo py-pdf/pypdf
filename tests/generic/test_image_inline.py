@@ -74,7 +74,8 @@ def test_extract_inline_dct__early_end_of_file() -> None:
     page = reader.pages[0]
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream$"):
-        page.images[0].image.load()
+        if page.images[0].image is not None:
+            page.images[0].image.load()
 
 
 @pytest.mark.enable_socket
@@ -85,4 +86,5 @@ def test_extract_inline_dct__multiple_eod() -> None:
 
     for page in reader.pages:
         for image in page.images:
-            _ = image.image.load()
+            if image.image is not None:
+                _ = image.image.load()
