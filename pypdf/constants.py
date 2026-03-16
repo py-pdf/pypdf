@@ -536,6 +536,14 @@ class CheckboxRadioButtonAttributes:
         }
 
 
+class FieldFlag(IntFlag):
+    """Table 8.70 Field flags common to all field types."""
+
+    READ_ONLY = 1
+    REQUIRED = 2
+    NO_EXPORT = 4
+
+
 class DocumentInformationAttributes:
     """Table 10.2 Entries in the document information dictionary."""
 
