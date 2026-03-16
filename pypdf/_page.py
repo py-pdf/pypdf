@@ -649,11 +649,11 @@ class PageObject(DictionaryObject):
             if id[0] == "~" and id[-1] == "~":
                 if self.inline_images is None:
                     self.inline_images = self._get_inline_images()
-                if self.inline_images is None:  # pragma: no cover
+                if self.inline_images is None:
                     raise KeyError("No inline image can be found")
                 return self.inline_images[id]
 
-            if xobjs is None:  # pragma: no cover
+            if xobjs is None:
                 raise KeyError(f"Cannot access image object {id} without XObject resources")
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
