@@ -21,6 +21,9 @@ It defaults to 75 MB as well.
 For all streams, the maximum allowed value for the `/Length` field is limited to `pypdf.filters.MAX_DECLARED_STREAM_LENGTH`, which
 defaults to 75 MB as well.
 
+For all array-based streams, the maximum allowed output length is limited to `pypdf.filters.MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH`,
+which defaults to 75 MB as well.
+
 For the *FlateDecode* filter, the number of bytes to attempt recovery with can be set by `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH`.
 It defaults to 5 MB due to the much more complex recovery approach.
 
