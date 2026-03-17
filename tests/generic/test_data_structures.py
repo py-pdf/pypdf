@@ -225,3 +225,46 @@ print(reader.pages[0].extract_text())
     assert result.returncode == 0
     assert result.stdout.replace("\r", "") == "Hello from pypdf\n"
     assert result.stderr == ""
+
+
+def _get_array_based_buffer(stream_count: int, chunk_bytes: int) -> BytesIO:
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=10, height=10)
+
+    streams = [ContentStream(stream=None, pdf=writer) for _ in range(stream_count)]
+    chunk = b"q\n" + (b"A" * chunk_bytes) + b"\nQ\n"
+    [stream.set_data(chunk) for stream in streams]
+    contents = ArrayObject([writer._add_object(stream) for stream in streams])
+    page[NameObject("/Contents")] = contents
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.flush()
+    return buffer
+
+
+@pytest.mark.timeout(10)
+def test_content_stream__array_based__performance():
+    buffer = _get_array_based_buffer(stream_count=10_000, chunk_bytes=7000)
+    reader = PdfReader(buffer)
+    _ = reader.pages[0].get_contents()
+
+
+def test_content_stream__array_based__length():
+    buffer = _get_array_based_buffer(stream_count=11_000, chunk_bytes=1)
+    reader = PdfReader(buffer)
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Array\-based stream has 11000 > 10000 elements\.$"
+    ):
+        _ = reader.pages[0].get_contents()
+
+
+@pytest.mark.timeout(10)
+def test_content_stream__array_based__output_length():
+    buffer = _get_array_based_buffer(stream_count=10_000, chunk_bytes=8192)
+    reader = PdfReader(buffer)
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Array\-based stream has at least 75003501 > 75000000 output bytes\.$"
+    ):
+        _ = reader.pages[0].get_contents()
