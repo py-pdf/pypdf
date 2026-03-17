@@ -1,4 +1,5 @@
 """Test the pypdf.generic._image_inline module."""
+
 from io import BytesIO
 
 import pytest
@@ -73,7 +74,9 @@ def test_extract_inline_dct__early_end_of_file() -> None:
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[0]
 
-    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream$"):
+    with pytest.raises(
+        expected_exception=PdfReadError, match=r"^Unexpected end of stream$"
+    ):
         if page.images[0].image is not None:
             page.images[0].image.load()
 

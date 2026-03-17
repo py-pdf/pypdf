@@ -1,4 +1,5 @@
 """Test the pypdf.generic._files module."""
+
 import datetime
 import shutil
 import subprocess
@@ -30,11 +31,17 @@ PDFATTACH_BINARY = shutil.which("pdfattach")
 @pytest.mark.skipif(PDFATTACH_BINARY is None, reason="Requires poppler-utils")
 def test_embedded_file__basic(tmpdir: path.LocalPath) -> None:
     assert PDFATTACH_BINARY is not None
-    clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
+    clean_path = (
+        SAMPLE_ROOT
+        / "002-trivial-libre-office-writer"
+        / "002-trivial-libre-office-writer.pdf"
+    )
     attached_path = tmpdir / "attached.pdf"
     file_path = tmpdir / "test.txt"
     file_path.write_binary(b"Hello World\n")
-    subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path])  # noqa: S603
+    subprocess.run(
+        [PDFATTACH_BINARY, clean_path, file_path, attached_path]
+    )  # noqa: S603
     with PdfReader(str(attached_path)) as reader:
         attachment = next(iter(EmbeddedFile._load(reader.root_object)))
 
@@ -65,7 +72,9 @@ def test_embedded_file__artificial() -> None:
     pdf_object = DictionaryObject()
     pdf_object[NameObject("/EF")] = DictionaryObject()
     attachment = EmbeddedFile(name="dummy", pdf_object=pdf_object)
-    with pytest.raises(PdfReadError, match=r"No /\(U\)F key found in file dictionary: {}"):
+    with pytest.raises(
+        PdfReadError, match=r"No /\(U\)F key found in file dictionary: {}"
+    ):
         _ = attachment._embedded_file
 
     # Missing /Params key.
@@ -78,13 +87,17 @@ def test_embedded_file__artificial() -> None:
     # An actual checksum is set.
     # Generated using `hashlib.md5(b"Hello World!\n").digest()`
     params = DictionaryObject()
-    params[NameObject("/CheckSum")] = ByteStringObject(b"\x8d\xdd\x8b\xe4\xb1y\xa5)\xaf\xa5\xf2\xff\xaeK\x98X")
+    params[NameObject("/CheckSum")] = ByteStringObject(
+        b"\x8d\xdd\x8b\xe4\xb1y\xa5)\xaf\xa5\xf2\xff\xaeK\x98X"
+    )
     ef = pdf_object[NameObject("/EF")]
     assert isinstance(ef, DictionaryObject)
     f = ef[NameObject("/F")]
     assert isinstance(f, DictionaryObject)
     f[NameObject("/Params")] = params
-    assert attachment.checksum == b"\x8d\xdd\x8b\xe4\xb1y\xa5)\xaf\xa5\xf2\xff\xaeK\x98X"
+    assert (
+        attachment.checksum == b"\x8d\xdd\x8b\xe4\xb1y\xa5)\xaf\xa5\xf2\xff\xaeK\x98X"
+    )
 
 
 @pytest.mark.enable_socket
@@ -107,8 +120,12 @@ def test_embedded_file__kids() -> None:
     assert attachment.description == "ZUGFeRD electronic invoice"
     assert attachment.associated_file_relationship == AFRelationship.ALTERNATIVE
     assert attachment.subtype == "/text/xml"
-    assert attachment.content.startswith(b"Hello World!\n\nLorem ipsum dolor sit amet, ")
-    assert attachment.content.endswith(b"\ntakimata sanctus est Lorem ipsum dolor sit amet.\n")
+    assert attachment.content.startswith(
+        b"Hello World!\n\nLorem ipsum dolor sit amet, "
+    )
+    assert attachment.content.endswith(
+        b"\ntakimata sanctus est Lorem ipsum dolor sit amet.\n"
+    )
     assert attachment.size == 606
     assert attachment.creation_date is None
     assert attachment.modification_date == datetime.datetime(
@@ -170,7 +187,7 @@ def test_embedded_file__name_is_read_only() -> None:
     assert embedded_file.name == "test.txt"
 
     with pytest.raises(AttributeError):
-        embedded_file.name = "new_name.txt" # type: ignore[misc]
+        embedded_file.name = "new_name.txt"  # type: ignore[misc]
 
 
 def test_embedded_file__alternative_name_setter() -> None:
@@ -239,8 +256,12 @@ def test_embedded_file__alternative_name__both_f_and_uf() -> None:
     embedded_file.pdf_object[NameObject("/UF")] = create_string_object("original_uf")
 
     embedded_file.alternative_name = TextStringObject("new_name")
-    assert embedded_file.pdf_object[NameObject("/F")] == create_string_object("new_name")
-    assert embedded_file.pdf_object[NameObject("/UF")] == create_string_object("new_name")
+    assert embedded_file.pdf_object[NameObject("/F")] == create_string_object(
+        "new_name"
+    )
+    assert embedded_file.pdf_object[NameObject("/UF")] == create_string_object(
+        "new_name"
+    )
     assert embedded_file.alternative_name == "new_name"
 
     embedded_file.alternative_name = None
@@ -417,7 +438,9 @@ def test_embedded_file__null_object_handling() -> None:
 
 def test_embedded_file__delete_without_parent() -> None:
     attachment = EmbeddedFile(name="test.txt", pdf_object=DictionaryObject())
-    with pytest.raises(PyPdfError, match=r"^Parent required to delete file from document\.$"):
+    with pytest.raises(
+        PyPdfError, match=r"^Parent required to delete file from document\.$"
+    ):
         attachment.delete()
 
 
@@ -484,7 +507,7 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
                 b"imata sanctus est Lorem ipsum dolor sit amet.\n"
             )
         ],
-        "test.pdf": [b"content"]
+        "test.pdf": [b"content"],
     }
 
     attachments = list(writer.attachment_list)
@@ -499,8 +522,10 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     result = embedded["/Names"]
 
     assert result == [
-        "factur-x.xml", attachments[0].pdf_object.indirect_reference,
-        "test.pdf", attachments[1].pdf_object.indirect_reference,
+        "factur-x.xml",
+        attachments[0].pdf_object.indirect_reference,
+        "test.pdf",
+        attachments[1].pdf_object.indirect_reference,
     ]
 
 
@@ -517,7 +542,10 @@ def test_embedded_file__create__neither_kids_nor_names() -> None:
 
     del files["/Names"]
 
-    with pytest.raises(expected_exception=PdfReadError, match=r"^Got neither Names nor Kids in embedded files tree\.$"):
+    with pytest.raises(
+        expected_exception=PdfReadError,
+        match=r"^Got neither Names nor Kids in embedded files tree\.$",
+    ):
         writer.add_attachment("test2.txt", b"content2")
 
 
@@ -526,60 +554,112 @@ def test_embedded_file__get_insertion_index() -> None:
     assert EmbeddedFile._get_insertion_index(ArrayObject(), "test.txt") == 0
 
     # One mismatching entry.
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("dummy.txt"), NullObject()]),
-        "test.txt"
-    ) == 2
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("xxx.txt"), NullObject()]),
-        "test.txt"
-    ) == 0
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject([TextStringObject("dummy.txt"), NullObject()]), "test.txt"
+        )
+        == 2
+    )
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject([TextStringObject("xxx.txt"), NullObject()]), "test.txt"
+        )
+        == 0
+    )
 
     # Multiple entries.
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("dummy.txt"), NullObject(), TextStringObject("xxx.txt"), NullObject()]),
-        "test.txt"
-    ) == 2
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("xxx.txt"), NullObject(), TextStringObject("yyy.txt"), NullObject()]),
-        "test.txt"
-    ) == 0
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("aaa.txt"), NullObject(), TextStringObject("bbb.txt"), NullObject()]),
-        "test.txt"
-    ) == 4
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([
-            TextStringObject("aaa.txt"), NullObject(),
-            TextStringObject("test.txt"), NullObject(),
-            TextStringObject("zzz.txt"), NullObject()
-        ]),
-        "test.txt"
-    ) == 4
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject(
+                [
+                    TextStringObject("dummy.txt"),
+                    NullObject(),
+                    TextStringObject("xxx.txt"),
+                    NullObject(),
+                ]
+            ),
+            "test.txt",
+        )
+        == 2
+    )
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject(
+                [
+                    TextStringObject("xxx.txt"),
+                    NullObject(),
+                    TextStringObject("yyy.txt"),
+                    NullObject(),
+                ]
+            ),
+            "test.txt",
+        )
+        == 0
+    )
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject(
+                [
+                    TextStringObject("aaa.txt"),
+                    NullObject(),
+                    TextStringObject("bbb.txt"),
+                    NullObject(),
+                ]
+            ),
+            "test.txt",
+        )
+        == 4
+    )
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject(
+                [
+                    TextStringObject("aaa.txt"),
+                    NullObject(),
+                    TextStringObject("test.txt"),
+                    NullObject(),
+                    TextStringObject("zzz.txt"),
+                    NullObject(),
+                ]
+            ),
+            "test.txt",
+        )
+        == 4
+    )
 
     # Length.
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("a"), NullObject()]),
-        "aa"
-    ) == 2
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("a"), NullObject()]),
-        "a"
-    ) == 2
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("aaa"), NullObject()]),
-        "aa"
-    ) == 0
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject([TextStringObject("a"), NullObject()]), "aa"
+        )
+        == 2
+    )
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject([TextStringObject("a"), NullObject()]), "a"
+        )
+        == 2
+    )
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject([TextStringObject("aaa"), NullObject()]), "aa"
+        )
+        == 0
+    )
 
     # Special characters.
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("café"), NullObject()]),
-        "cafe"
-    ) == 0
-    assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("Tun"), NullObject()]),
-        "Tür"
-    ) == 2
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject([TextStringObject("café"), NullObject()]), "cafe"
+        )
+        == 0
+    )
+    assert (
+        EmbeddedFile._get_insertion_index(
+            ArrayObject([TextStringObject("Tun"), NullObject()]), "Tür"
+        )
+        == 2
+    )
 
 
 def test_embedded_file__order() -> None:
@@ -594,15 +674,19 @@ def test_embedded_file__order() -> None:
     assert dict(writer.attachments) == {
         "abc.txt": [b"content"],
         "test.txt": [b"content", b"content2"],
-        "xyz.txt": [b"content"]
+        "xyz.txt": [b"content"],
     }
     names = writer.root_object["/Names"]
     assert isinstance(names, DictionaryObject)
     files = names["/EmbeddedFiles"]
     assert isinstance(files, DictionaryObject)
     assert files["/Names"] == [
-        "abc.txt", attachment2.pdf_object.indirect_reference,
-        "test.txt", attachment1.pdf_object.indirect_reference,
-        "test.txt", attachment4.pdf_object.indirect_reference,
-        "xyz.txt", attachment3.pdf_object.indirect_reference,
+        "abc.txt",
+        attachment2.pdf_object.indirect_reference,
+        "test.txt",
+        attachment1.pdf_object.indirect_reference,
+        "test.txt",
+        attachment4.pdf_object.indirect_reference,
+        "xyz.txt",
+        attachment3.pdf_object.indirect_reference,
     ]
