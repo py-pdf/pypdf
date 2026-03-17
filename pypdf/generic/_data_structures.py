@@ -1210,6 +1210,8 @@ class ContentStream(DecodedStreamObject):
                             )
                         data += new_data
                     if len(data) == 0 or data[-1] != b"\n":
+                        # There should be no direct need to check for a change of one byte.
+                        length += 1
                         data += b"\n"
                 super().set_data(bytes(data))
             else:
