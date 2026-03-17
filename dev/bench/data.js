@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773744364152,
+  "lastUpdate": 1773754535628,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -92009,6 +92009,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002486742952594824",
             "extra": "mean: 669.0002838000055 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dertte28@gmail.com",
+            "name": "Yuki9814",
+            "username": "Yuki9814"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "04b0a38f56ade7ba8ab9ed2f2b83e86794a036d5",
+          "message": "ROB: Resolve UnboundLocalError for xobjs in _get_image (#3684)\n\nThe xobjs variable was used outside the try-except block that defined it.\nIf a KeyError was caught and the id started/ended with '~' (inline images),\nthe code would continue but xobjs would remain undefined, causing\nUnboundLocalError when trying to access non-inline images.\n\nInitialize xobjs to None and check before using it.\n\n---------\n\nCo-authored-by: Yuki9814 <Yuki9814@users.noreply.github.com>\nCo-authored-by: Yuki9814 <222397878+Yuki9814@users.noreply.github.com>",
+          "timestamp": "2026-03-17T14:32:56+01:00",
+          "tree_id": "75b431fa157c9c15c530be2783ece119a40eb118",
+          "url": "https://github.com/py-pdf/pypdf/commit/04b0a38f56ade7ba8ab9ed2f2b83e86794a036d5"
+        },
+        "date": 1773754526836,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.025553034894036,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006396180465652619",
+            "extra": "mean: 330.51808660000006 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.311771179400942,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0047546083975188525",
+            "extra": "mean: 54.609681947364436 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2801449833234027,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018299429262230223",
+            "extra": "mean: 3.569580251399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.95582687031671,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005065294356165833",
+            "extra": "mean: 55.692227777776615 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09130932622207259,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03365975342872732",
+            "extra": "mean: 10.951783803200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4951311513062957,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019252574955924621",
+            "extra": "mean: 668.8376462000008 msec\nrounds: 5"
           }
         ]
       }
