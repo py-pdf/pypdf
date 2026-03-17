@@ -642,9 +642,11 @@ class PageObject(DictionaryObject):
             xobjs = cast(
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
-        except KeyError:
+        except KeyError as exc:
             if not (id[0] == "~" and id[-1] == "~"):
-                raise
+                raise KeyError(
+                    f"Cannot access image object {id} without XObject resources"
+                ) from exc
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
                 if self.inline_images is None:
@@ -653,8 +655,7 @@ class PageObject(DictionaryObject):
                     raise KeyError("No inline image can be found")
                 return self.inline_images[id]
 
-            if xobjs is None:
-                raise KeyError(f"Cannot access image object {id} without XObject resources")
+            assert xobjs is not None
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
@@ -665,8 +666,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=xobjs[id].indirect_reference,
             )
         # in a subobject
-        if xobjs is None:  # pragma: no cover
-            raise KeyError(f"Cannot access image object {id} without XObject resources")
+        assert xobjs is not None
         ids = id[1:]
         return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 

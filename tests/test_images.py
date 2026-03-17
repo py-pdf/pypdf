@@ -235,6 +235,24 @@ def test_get_inline_image_without_xobject_resources():
         assert page._get_image("~0~") is inline_image
 
 
+def test_get_inline_image_without_xobject_resources_raises_when_missing():
+    page = PageObject(None, None)
+
+    with mock.patch.object(page, "_get_inline_images", return_value=None):
+        with pytest.raises(KeyError, match="No inline image can be found"):
+            page._get_image("~0~")
+
+
+def test_get_xobject_image_without_xobject_resources_raises():
+    page = PageObject(None, None)
+
+    with pytest.raises(
+        KeyError,
+        match="Cannot access image object /Im0 without XObject resources",
+    ):
+        page._get_image("/Im0")
+
+
 @pytest.mark.enable_socket
 @pytest.mark.timeout(30)
 def test_loop_in_image_keys():
