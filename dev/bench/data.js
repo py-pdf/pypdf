@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773744069599,
+  "lastUpdate": 1773744086900,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -97159,6 +97159,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.037394910157682044",
             "extra": "mean: 806.2684622000006 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0b5d05de59a055c132b435ee2375bc32ff04d48e",
+          "message": "SEC: Improve performance and limit length of array-based content streams (#3686)",
+          "timestamp": "2026-03-17T11:38:28+01:00",
+          "tree_id": "e59ac828509cd868cd367dcae2aecdd8cf0113ed",
+          "url": "https://github.com/py-pdf/pypdf/commit/0b5d05de59a055c132b435ee2375bc32ff04d48e"
+        },
+        "date": 1773744080571,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.793612686259493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014626015199762619",
+            "extra": "mean: 72.49732341666733 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.49322706735682,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011513640818687339",
+            "extra": "mean: 44.457827105264265 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.350983946520401,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03127491967212825",
+            "extra": "mean: 740.2012455999966 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.42550545370531406,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13784487357647868",
+            "extra": "mean: 2.3501461410000046 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.2216329680782941,
+            "unit": "iter/sec",
+            "range": "stddev: 0.20169069140811569",
+            "extra": "mean: 4.511964120999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3652563783442664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001384920639974112",
+            "extra": "mean: 732.463159200006 msec\nrounds: 5"
           }
         ]
       }
