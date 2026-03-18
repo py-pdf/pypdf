@@ -154,9 +154,9 @@ class PILContext:
 
     def __exit__(
         self,
-        type_: type[BaseException] | None,
-        value: BaseException | None,
-        traceback: TracebackType | None
+        type_: Optional[type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType]
     ) -> Optional[bool]:
         from PIL import ImageFile  # noqa: PLC0415
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images

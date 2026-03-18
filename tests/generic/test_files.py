@@ -546,25 +546,25 @@ def test_embedded_file__get_insertion_index() -> None:
 
     # Multiple entries.
     assert EmbeddedFile._get_insertion_index(
-        ArrayObject(TextStringObject("dummy.txt"),NullObject(), TextStringObject("xxx.txt"), NullObject()),
+        ArrayObject([TextStringObject("dummy.txt"), NullObject(), TextStringObject("xxx.txt"), NullObject()]),
         "test.txt"
     ) == 2
     assert EmbeddedFile._get_insertion_index(
-        ArrayObject(TextStringObject("xxx.txt"), NullObject(), TextStringObject("yyy.txt"), NullObject()),
+        ArrayObject([TextStringObject("xxx.txt"), NullObject(), TextStringObject("yyy.txt"), NullObject()]),
         "test.txt"
     ) == 0
-    assert EmbeddedFile._get_insertion_index(ArrayObject(TextStringObject("aaa.txt"),
-        NullObject(), TextStringObject("bbb.txt"), NullObject()),
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("aaa.txt"), NullObject(), TextStringObject("bbb.txt"), NullObject()]),
         "test.txt",
     ) == 4
     assert EmbeddedFile._get_insertion_index(
-            ArrayObject([
-                TextStringObject("aaa.txt"), NullObject(),
-                TextStringObject("test.txt"), NullObject(),
-                TextStringObject("zzz.txt"), NullObject(),
-            ]),
-            "test.txt",
-        ) == 4
+        ArrayObject([
+            TextStringObject("aaa.txt"), NullObject(),
+            TextStringObject("test.txt"), NullObject(),
+            TextStringObject("zzz.txt"), NullObject(),
+        ]),
+        "test.txt",
+    ) == 4
 
     # Length.
     assert EmbeddedFile._get_insertion_index(
