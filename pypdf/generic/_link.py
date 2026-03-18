@@ -99,17 +99,16 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
     # if len(new_annotations) != len(old_annotations):
     #     logger_warning(f"Annotation sizes differ: {old_annotations} vs. {new_annotations}", __name__)
 
-    new_links: list[ReferenceLink] = []
-    for annotation in new_annotations:
-        link = _build_link(annotation, new_page)
-        if link is not None:
-            new_links.append(link)
-
-    old_links: list[ReferenceLink] = []
-    for annotation in old_annotations:
-        link = _build_link(annotation, old_page)
-        if link is not None:
-            old_links.append(link)
+    new_links = [
+        link
+        for annotation in new_annotations
+        if (link := _build_link(annotation, new_page)) is not None
+    ]
+    old_links = [
+        link
+        for annotation in old_annotations
+        if (link := _build_link(annotation, old_page)) is not None
+    ]
 
     return list(zip(new_links, old_links))
 
