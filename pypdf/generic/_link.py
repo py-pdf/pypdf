@@ -79,6 +79,9 @@ ReferenceLink = Union[NamedReferenceLink, DirectReferenceLink]
 def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[ReferenceLink, ReferenceLink]]:
     """Extracts links from two pages on the assumption that the two pages are
     the same. Produces one list of (new link, old link) tuples.
+
+    Non-link annotations are ignored before pairing to avoid dropping valid
+    links when one page includes additional non-link annotation entries.
     """
     new_annotations = new_page.get("/Annots", ArrayObject()).get_object()
     old_annotations = old_page.get("/Annots", ArrayObject()).get_object()
@@ -96,14 +99,19 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
     # if len(new_annotations) != len(old_annotations):
     #     logger_warning(f"Annotation sizes differ: {old_annotations} vs. {new_annotations}", __name__)
 
-    new_links = [_build_link(link, new_page) for link in new_annotations]
-    old_links = [_build_link(link, old_page) for link in old_annotations]
+    new_links: list[ReferenceLink] = []
+    for annotation in new_annotations:
+        link = _build_link(annotation, new_page)
+        if link is not None:
+            new_links.append(link)
 
-    return [
-        (new_link, old_link) for (new_link, old_link)
-        in zip(new_links, old_links)
-        if new_link and old_link
-    ]
+    old_links: list[ReferenceLink] = []
+    for annotation in old_annotations:
+        link = _build_link(annotation, old_page)
+        if link is not None:
+            old_links.append(link)
+
+    return list(zip(new_links, old_links))
 
 
 def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional[ReferenceLink]:
