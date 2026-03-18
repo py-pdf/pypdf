@@ -60,6 +60,8 @@ pytest-xdist==3.6.1
     # via -r requirements/ci.in
 pyyaml==6.0.2
     # via -r requirements/ci.in
+ruff==0.15.6
+    # via -r requirements/ci.in
 typeguard==4.3.0
     # via -r requirements/ci.in
 typing-extensions==4.12.2

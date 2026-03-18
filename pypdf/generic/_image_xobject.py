@@ -181,7 +181,7 @@ def _handle_flate(
     size: tuple[int, int],
     data: bytes,
     mode: mode_str_type,
-    color_space: str | ArrayObject,
+    color_space: Union[str, ArrayObject],
     colors: int,
     obj_as_text: str,
 ) -> tuple[Image.Image, str, str, bool]:
