@@ -247,7 +247,7 @@ def get_formatted_changes(git_tag: str) -> tuple[str, str]:
         output_with_user += tmp
         for commit in grouped[prefix]:
             output += f"- {commit.message}\n"
-            output_with_user += f"- {commit.message} by @{commit.author}\n"
+            output_with_user += f"- {commit.message} by @{commit.author_login}\n"
         del grouped[prefix]
 
     if grouped:
@@ -257,7 +257,7 @@ def get_formatted_changes(git_tag: str) -> tuple[str, str]:
             for commit in commits:
                 output += f"- {prefix}: {commit.message}\n"
                 output_with_user += (
-                    f"- {prefix}: {commit.message} by @{commit.author}\n"
+                    f"- {prefix}: {commit.message} by @{commit.author_login}\n"
                 )
 
     return output, output_with_user
