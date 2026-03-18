@@ -68,8 +68,7 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
         cache_dir = Path("tests", "pdf_cache").resolve()
     else:
         cache_dir = Path(__file__).parent / "pdf_cache"
-    if not cache_dir.exists():
-        cache_dir.mkdir()
+    cache_dir.mkdir(exist_ok=True)
     cache_path = cache_dir / name
 
     if url is None and not cache_path.exists():
