@@ -1,12 +1,16 @@
 """Utility functions and classes for testing."""
-
 import logging
-from typing import Any, Callable, Optional, Union, cast
+from typing import Callable, Optional, Union, cast
 
 from PIL import Image
 
 from pypdf import PageObject
-from pypdf.generic import DictionaryObject, IndirectObject, PdfObject
+from pypdf.generic import (
+    DictionaryObject,
+    FloatObject,
+    IndirectObject,
+    PdfObject,
+)
 
 
 class PositionedText:
@@ -16,14 +20,7 @@ class PositionedText:
     The font-dictionary may be None in case of an unknown font.
     """
 
-    def __init__(
-        self,
-        text: str,
-        x: float,
-        y: float,
-        font_dict: Optional[DictionaryObject],
-        font_size: float,
-    ) -> None:
+    def __init__(self, text: str, x: float, y: float, font_dict: Optional[DictionaryObject], font_size: float) -> None:
         # TODO: \0-replace: Encoding issue in some files?
         self.text = text.replace("\0", "")
         self.x = x
@@ -45,18 +42,21 @@ class PositionedText:
 class Rectangle:
     """Specify a rectangle."""
 
-    def __init__(self, x: Any, y: Any, w: Any, h: Any) -> None:
+    def __init__(self, x: FloatObject, y: FloatObject, w: FloatObject, h: FloatObject) -> None:
         self.x = x.as_numeric()
         self.y = y.as_numeric()
         self.w = w.as_numeric()
         self.h = h.as_numeric()
 
     def contains(self, x: float, y: float) -> bool:
-        return self.x <= x <= (self.x + self.w) and self.y <= y <= (self.y + self.h)
+        return (
+                self.x <= x <= (self.x + self.w)
+                and self.y <= y <= (self.y + self.h)
+        )
 
 
 def extract_text_and_rectangles(
-    page: PageObject, rect_filter: Optional[Callable[[Rectangle], bool]] = None
+        page: PageObject, rect_filter: Optional[Callable[[Rectangle], bool]] = None
 ) -> tuple[list[PositionedText], list[Rectangle]]:
     """
     Extracts texts and rectangles of a page of type pypdf._page.PageObject.
@@ -74,11 +74,9 @@ def extract_text_and_rectangles(
     rectangles = []
     texts = []
 
-    def print_op_b(
-        op: bytes, args: list[float], cm_matrix: list[float], tm_matrix: list[float]
-    ) -> None:
+    def print_op_b(op: bytes, args: list[FloatObject], cm_matrix: list[float], tm_matrix: list[float]) -> None:
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"before: {op!r} at {cm_matrix!r}, {tm_matrix!r}")
+            logger.debug("before: %s at %s, %s", op, cm_matrix, tm_matrix)
         if op == b"re":
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"  add rectangle: {args}")
@@ -89,11 +87,9 @@ def extract_text_and_rectangles(
                 rectangles.append(r)
 
     def print_visi(
-        text: str,
-        cm_matrix: list[float],
-        tm_matrix: list[float],
-        font_dict: Optional[DictionaryObject],
-        font_size: float,
+        text: str, cm_matrix: list[float],
+        tm_matrix: list[float], font_dict: Optional[DictionaryObject],
+        font_size: float
     ) -> None:
         if text.strip() != "":
             if logger.isEnabledFor(logging.DEBUG):
@@ -105,13 +101,15 @@ def extract_text_and_rectangles(
     visitor_before = print_op_b
     visitor_text = print_visi
 
-    page.extract_text(visitor_operand_before=visitor_before, visitor_text=visitor_text)
+    page.extract_text(
+        visitor_operand_before=visitor_before, visitor_text=visitor_text
+    )
 
     return texts, rectangles
 
 
 def extract_table(
-    texts: list[PositionedText], rectangles: list[Rectangle]
+        texts: list[PositionedText], rectangles: list[Rectangle]
 ) -> list[list[str | list[PositionedText]]]:
     """
     Extracts a table containing text.
@@ -198,7 +196,7 @@ def extract_cell_text(cell_texts: list[PositionedText]) -> str:
 
 
 def get_image_data(
-    image: Image.Image, band: Union[int, None] = None
+        image: Image.Image, band: Union[int, None] = None
 ) -> Union[tuple[tuple[int, ...], ...], tuple[float, ...]]:
     try:
         return image.get_flattened_data(band=band)

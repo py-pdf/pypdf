@@ -262,7 +262,6 @@ jobs:
         ruff check .
     - name: Test with mypy
       run : |
-        mypy --install-types
         mypy pypdf tests/generic tests/scripts
     - name: Install docs requirements
       run: |

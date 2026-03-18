@@ -1,5 +1,4 @@
 """Test the pypdf.generic._base module."""
-
 from io import BytesIO
 
 import pytest
@@ -14,7 +13,7 @@ from tests import get_data_from_url
     [
         (b"<00FE00FF>", "\xfe\xff"),
         (b"<00FE00FF00D6>", "\xfe\xff\xd6"),
-    ],
+    ]
 )
 def test_text_string_object__looks_like_bom(source: bytes, expected: str) -> None:
     stream = BytesIO(source)
@@ -31,9 +30,7 @@ def test_text_string_object__wrongly_detected_bom() -> None:
 
     writer = PdfWriter()
     for page in reader.pages:
-        writer_page = writer.add_blank_page(
-            reader_page.mediabox.width, reader_page.mediabox.height
-        )
+        writer_page = writer.add_blank_page(reader_page.mediabox.width, reader_page.mediabox.height)
         writer_page.merge_page(page)
 
         assert writer_page.extract_text() == (

@@ -1,5 +1,4 @@
 """Test the pypdf.generic._link module."""
-
 from io import BytesIO
 
 import pytest

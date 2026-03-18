@@ -1,5 +1,4 @@
 """Test the pypdf.generic._image_xobject module."""
-
 from io import BytesIO
 
 import pytest
@@ -115,9 +114,7 @@ def test_handle_flate__image_mode_1(caplog: pytest.LogCaptureFixture) -> None:
     # here, but received a custom padding of `0`.
     lookup.set_data(b"\x42\x42\x42\x00\x13")
     caplog.clear()
-    expected_short_data = tuple(
-        [entry if entry[0] == 66 else (0, 19, 0) for entry in expected_data]
-    )
+    expected_short_data = tuple([entry if entry[0] == 66 else (0, 19, 0) for entry in expected_data])
     result = _handle_flate(
         size=(3, 3),
         data=data,
@@ -142,10 +139,7 @@ def test_extended_image_frombytes_zero_data() -> None:
     size = (1, 1)
     data = b""
 
-    with pytest.raises(
-        EmptyImageDataError,
-        match=r"Data is 0 bytes, cannot process an image from empty data\.",
-    ):
+    with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
         _extended_image_from_bytes(mode, size, data)
 
 
@@ -163,8 +157,8 @@ def test_handle_flate__autodesk_indexed() -> None:
     reader = PdfReader(BytesIO(data))
     page = reader.pages[0]
     with pytest.raises(
-        PdfReadError,
-        match=r"^Expected color space with 4 values, got 3: \['/Indexed', '/DeviceRGB', '\\x00\\x80\\x00\\x80\\x80耀",  # noqa: E501
+            PdfReadError,
+            match=r"^Expected color space with 4 values, got 3: \['/Indexed', '/DeviceRGB', '\\x00\\x80\\x00\\x80\\x80耀"  # noqa: E501
     ):
         for name, _image in page.images.items():  # noqa: PERF102
             if isinstance(name, str):
@@ -189,9 +183,7 @@ def test_get_imagemode__empty_array() -> None:
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[0]
 
-    with pytest.raises(
-        expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"
-    ):
+    with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
         if page.images[0].image is not None:
             page.images[0].image.load()
 
@@ -208,9 +200,7 @@ def test_p_image_with_alpha_mask() -> None:
     for obj in [x_object, mask_object]:
         obj[NameObject(ImageAttributes.WIDTH)] = NumberObject(image.width)
         obj[NameObject(ImageAttributes.HEIGHT)] = NumberObject(image.height)
-        obj[NameObject(StreamAttributes.FILTER)] = NameObject(
-            FilterTypes.CCITT_FAX_DECODE
-        )
+        obj[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.CCITT_FAX_DECODE)
 
     # Set the basic image data.
     x_object.set_data(image_data.getvalue())
@@ -241,9 +231,7 @@ def test_p_image_with_alpha_mask() -> None:
 
 @pytest.mark.enable_socket
 def test_handle_flate__icc_based__image_mode_1() -> None:
-    url = (
-        "https://github.com/user-attachments/files/23756943/pypdf_bug_3534_iccbased.pdf"
-    )
+    url = "https://github.com/user-attachments/files/23756943/pypdf_bug_3534_iccbased.pdf"
     name = "issue3534.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[0]
@@ -265,7 +253,7 @@ def test_handle_flate__icc_based__image_mode_1() -> None:
 
 @pytest.mark.skipif(
     condition=Version(Image.__version__) < Version("12.1.0"),
-    reason="Unsuitable Pillow version.",
+    reason="Unsuitable Pillow version."
 )
 def test_handle_jpx__explicit_decode() -> None:
     stream = StreamObject()

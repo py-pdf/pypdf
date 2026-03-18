@@ -198,12 +198,12 @@ def get_formatted_changes(git_tag: str) -> tuple[str, str]:
     commits = get_git_commits_since_tag(git_tag)
 
     # Group by prefix
-    grouped = {}
+    grouped: dict[str, list[Change]] = {}
     for commit in commits:
         if commit.prefix not in grouped:
             grouped[commit.prefix] = []
         grouped[commit.prefix].append(
-            {"msg": commit.message, "author": commit.author_login}
+            commit
         )
 
     # Order prefixes
@@ -246,8 +246,8 @@ def get_formatted_changes(git_tag: str) -> tuple[str, str]:
         output += tmp
         output_with_user += tmp
         for commit in grouped[prefix]:
-            output += f"- {commit['msg']}\n"
-            output_with_user += f"- {commit['msg']} by @{commit['author']}\n"
+            output += f"- {commit.message}\n"
+            output_with_user += f"- {commit.message} by @{commit.author}\n"
         del grouped[prefix]
 
     if grouped:
@@ -255,9 +255,9 @@ def get_formatted_changes(git_tag: str) -> tuple[str, str]:
         output_with_user += "\n### Other\n"
         for prefix, commits in grouped.items():
             for commit in commits:
-                output += f"- {prefix}: {commit['msg']}\n"
+                output += f"- {prefix}: {commit.message}\n"
                 output_with_user += (
-                    f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
+                    f"- {prefix}: {commit.message} by @{commit.author}\n"
                 )
 
     return output, output_with_user
