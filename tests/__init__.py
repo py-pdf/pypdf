@@ -3,6 +3,7 @@ import os
 import ssl
 import sys
 import urllib.request
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 from urllib.error import HTTPError
@@ -37,6 +38,12 @@ def _get_data_from_url(url: str) -> bytes:
     raise ValueError(f"Unknown error handling {url}")
 
 
+@lru_cache(maxsize=1)
+def _example_file_urls() -> dict[str, str]:
+    items = read_yaml_to_list_of_dicts(Path(__file__).parent / "example_files.yaml")
+    return {item["local_filename"]: item["url"] for item in items}
+
+
 # TODO: Make keyword-only and drop name being optional.
 def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> bytes:
     """
@@ -64,6 +71,9 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
     if not cache_dir.exists():
         cache_dir.mkdir()
     cache_path = cache_dir / name
+
+    if url is None and not cache_path.exists():
+        url = _example_file_urls().get(name)
 
     if url is not None:
         if url.startswith("file://"):
@@ -134,7 +144,8 @@ def download_test_pdfs():
             executor.submit(get_data_from_url, pdf["url"], name=pdf["local_filename"])
             for pdf in pdfs
         ]
-        concurrent.futures.wait(futures)
+        for future in concurrent.futures.as_completed(futures):
+            future.result()
 
 
 class PILContext:
