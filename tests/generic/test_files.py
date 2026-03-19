@@ -1,5 +1,4 @@
 """Test the pypdf.generic._files module."""
-
 import datetime
 import shutil
 import subprocess
@@ -509,7 +508,7 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
         "factur-x.xml",
         attachments[0].pdf_object.indirect_reference,
         "test.pdf",
-        attachments[1].pdf_object.indirect_reference,
+        attachments[1].pdf_object.indirect_reference
     ]
 
 
@@ -555,15 +554,15 @@ def test_embedded_file__get_insertion_index() -> None:
     ) == 0
     assert EmbeddedFile._get_insertion_index(
         ArrayObject([TextStringObject("aaa.txt"), NullObject(), TextStringObject("bbb.txt"), NullObject()]),
-        "test.txt",
+        "test.txt"
     ) == 4
     assert EmbeddedFile._get_insertion_index(
         ArrayObject([
             TextStringObject("aaa.txt"), NullObject(),
             TextStringObject("test.txt"), NullObject(),
-            TextStringObject("zzz.txt"), NullObject(),
+            TextStringObject("zzz.txt"), NullObject()
         ]),
-        "test.txt",
+        "test.txt"
     ) == 4
 
     # Length.
@@ -582,11 +581,12 @@ def test_embedded_file__get_insertion_index() -> None:
 
     # Special characters.
     assert EmbeddedFile._get_insertion_index(
-            ArrayObject([TextStringObject("café"), NullObject()]),
-            "cafe"
+        ArrayObject([TextStringObject("café"), NullObject()]),
+        "cafe"
     ) == 0
     assert EmbeddedFile._get_insertion_index(
-        ArrayObject([TextStringObject("Tun"), NullObject()]), "Tür"
+        ArrayObject([TextStringObject("Tun"), NullObject()]),
+        "Tür"
     ) == 2
 
 
@@ -602,7 +602,7 @@ def test_embedded_file__order() -> None:
     assert dict(writer.attachments) == {
         "abc.txt": [b"content"],
         "test.txt": [b"content", b"content2"],
-        "xyz.txt": [b"content"],
+        "xyz.txt": [b"content"]
     }
     names = writer.root_object["/Names"]
     assert isinstance(names, DictionaryObject)
@@ -612,5 +612,5 @@ def test_embedded_file__order() -> None:
         "abc.txt", attachment2.pdf_object.indirect_reference,
         "test.txt", attachment1.pdf_object.indirect_reference,
         "test.txt", attachment4.pdf_object.indirect_reference,
-        "xyz.txt", attachment3.pdf_object.indirect_reference
+        "xyz.txt", attachment3.pdf_object.indirect_reference,
     ]

@@ -4,4 +4,3 @@ pre-commit
 pytest-cov
 flit
 wheel
-types-PyYAML

@@ -110,7 +110,7 @@ def extract_text_and_rectangles(
 
 def extract_table(
         texts: list[PositionedText], rectangles: list[Rectangle]
-) -> list[list[str | list[PositionedText]]]:
+) -> list[list[Union[str, list[PositionedText]]]]:
     """
     Extracts a table containing text.
 
@@ -166,7 +166,7 @@ def extract_table(
     row_nr = 0
     col_nr = 0
     curr_y = None
-    curr_row: list[str | list[PositionedText]] = []
+    curr_row: list[Union[str, list[PositionedText]]] = []
     for r in rectangles_filtered:
         if col2count[r.x] < 3 or row2count[r.y] < 2:
             # We expect at least 3 columns and 2 rows.

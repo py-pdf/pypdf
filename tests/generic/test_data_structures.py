@@ -33,19 +33,19 @@ def test_dictionary_object__get_next_object_position() -> None:
 
     # reader.xref = {0: {7: 15, 9: 10245, 12: 939, 14: 2999, 16: 4982, 18: 9949, 22: 11160}}
     assert DictionaryObject._get_next_object_position(
-            position_before=12345, position_end=999999, generations=list(reader.xref), pdf=reader,
+            position_before=12345, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 999999  # No value after 12345 in dictionary
     assert DictionaryObject._get_next_object_position(
-        position_before=11111, position_end=999999, generations=list(reader.xref), pdf=reader,
+        position_before=11111, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 11160  # First value after 11111 in dictionary.
     assert DictionaryObject._get_next_object_position(
-        position_before=42, position_end=999999, generations=list(reader.xref), pdf=reader,
+        position_before=42, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 939 # First value after 42 in dictionary.
 
     # New generation.
     reader.xref[1] = {7: 42, 24: 15000}
     assert DictionaryObject._get_next_object_position(
-        position_before=10, position_end=999999, generations=list(reader.xref), pdf=reader,
+        position_before=10, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 15
 
 
@@ -132,13 +132,13 @@ def test_dictionary_object__read_from_stream__limit() -> None:
 
     with pytest.raises(
             expected_exception=LimitReachedError,
-            match=r"^Declared stream length of 2147483647 exceeds maximum allowed length\.$",
+            match=r"^Declared stream length of 2147483647 exceeds maximum allowed length\.$"
     ):
         page.extract_text()
 
 
 def _prepare_test_dictionary_object__read_from_stream__no_limit(
-        path: Path,
+        path: Path
 ) -> tuple[str, dict[str, str], Callable[[], None]]:
     env = os.environ.copy()
     env["COVERAGE_PROCESS_START"] = "pyproject.toml"
@@ -267,6 +267,6 @@ def test_content_stream__array_based__output_length() -> None:
     reader = PdfReader(buffer)
     with pytest.raises(
             expected_exception=LimitReachedError,
-            match=r"^Array\-based stream has at least 75003501 > 75000000 output bytes\.$",
+            match=r"^Array\-based stream has at least 75003501 > 75000000 output bytes\.$"
     ):
         _ = reader.pages[0].get_contents()
