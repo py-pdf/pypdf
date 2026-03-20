@@ -87,3 +87,36 @@ def test_extract_links_ignores_non_link_annotation_offsets():
     assert len(links) == 1
     assert isinstance(links[0][0], DirectReferenceLink)
     assert isinstance(links[0][1], DirectReferenceLink)
+
+
+def test_extract_links_ignores_uri_annotation_offsets(caplog):
+    old_page = PageObject()
+    new_page = PageObject()
+
+    goto_link = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/Dest"): ArrayObject([NumberObject(7)]),
+        }
+    )
+    uri_link = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/A"): DictionaryObject(
+                {
+                    NameObject("/S"): NameObject("/URI"),
+                    NameObject("/URI"): NameObject("https://example.com"),
+                }
+            ),
+        }
+    )
+
+    old_page[NameObject("/Annots")] = ArrayObject([goto_link])
+    new_page[NameObject("/Annots")] = ArrayObject([uri_link, goto_link])
+
+    links = extract_links(new_page, old_page)
+
+    assert len(links) == 1
+    assert isinstance(links[0][0], DirectReferenceLink)
+    assert isinstance(links[0][1], DirectReferenceLink)
+    assert caplog.messages == []
