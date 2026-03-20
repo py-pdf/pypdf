@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.9.1, 2026-03-17
+
+### Security (SEC)
+- Improve performance and limit length of array-based content streams (#3686)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.0...6.9.1)
+
 ## Version 6.9.0, 2026-03-15
 
 ### New Features (ENH)
