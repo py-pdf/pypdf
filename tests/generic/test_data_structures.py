@@ -33,14 +33,14 @@ def test_dictionary_object__get_next_object_position() -> None:
 
     # reader.xref = {0: {7: 15, 9: 10245, 12: 939, 14: 2999, 16: 4982, 18: 9949, 22: 11160}}
     assert DictionaryObject._get_next_object_position(
-            position_before=12345, position_end=999999, generations=list(reader.xref), pdf=reader
+        position_before=12345, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 999999  # No value after 12345 in dictionary
     assert DictionaryObject._get_next_object_position(
         position_before=11111, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 11160  # First value after 11111 in dictionary.
     assert DictionaryObject._get_next_object_position(
         position_before=42, position_end=999999, generations=list(reader.xref), pdf=reader
-    ) == 939 # First value after 42 in dictionary.
+    ) == 939  # First value after 42 in dictionary.
 
     # New generation.
     reader.xref[1] = {7: 42, 24: 15000}
@@ -196,9 +196,7 @@ with open({pdf_path_str!r}, mode="rb") as fd:
 
 
 @pytest.mark.enable_socket
-@pytest.mark.skipif(
-    condition=resource is None, reason="Does not have 'resource' module."
-)
+@pytest.mark.skipif(condition=resource is None, reason="Does not have 'resource' module.")
 @pytest.mark.skipif(sys.platform == "darwin", reason="RLIMIT_AS is unreliable.")
 def test_dictionary_object__read_from_stream__no_limit__path(tmp_path: Path) -> None:
     pdf_path_str, env, limit_virtual_memory = _prepare_test_dictionary_object__read_from_stream__no_limit(tmp_path)
@@ -256,7 +254,7 @@ def test_content_stream__array_based__length() -> None:
     buffer = _get_array_based_buffer(stream_count=11_000, chunk_bytes=1)
     reader = PdfReader(buffer)
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Array\-based stream has 11000 > 10000 elements\.$"
+            expected_exception=LimitReachedError, match=r"^Array\-based stream has 11000 > 10000 elements\.$"
     ):
         _ = reader.pages[0].get_contents()
 

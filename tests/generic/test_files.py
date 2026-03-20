@@ -81,16 +81,14 @@ def test_embedded_file__artificial() -> None:
     params[NameObject("/CheckSum")] = ByteStringObject(b"\x8d\xdd\x8b\xe4\xb1y\xa5)\xaf\xa5\xf2\xff\xaeK\x98X")
     pdf_object[NameObject("/EF")] = DictionaryObject(
         {
-        NameObject("/F"): DictionaryObject(
-            {
-                NameObject("/Params"): params
-            }
-        )
+            NameObject("/F"): DictionaryObject(
+                {
+                    NameObject("/Params"): params
+                }
+            )
         }
     )
-    assert (
-        attachment.checksum == b"\x8d\xdd\x8b\xe4\xb1y\xa5)\xaf\xa5\xf2\xff\xaeK\x98X"
-    )
+    assert attachment.checksum == b"\x8d\xdd\x8b\xe4\xb1y\xa5)\xaf\xa5\xf2\xff\xaeK\x98X"
 
 
 @pytest.mark.enable_socket

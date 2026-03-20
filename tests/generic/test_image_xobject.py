@@ -138,8 +138,8 @@ def test_handle_flate__autodesk_indexed() -> None:
     for name, image in page.images.items():
         if isinstance(name, str):
             assert name.startswith("/")
-        if image.image is not None:
-            image.image.load()
+        assert image.image is not None
+        image.image.load()
 
     data = RESOURCE_ROOT.joinpath("AutoCad_Diagram.pdf").read_bytes()
     data = data.replace(b"/DeviceRGB\x00255", b"/DeviceRGB")
@@ -161,8 +161,8 @@ def test_get_mode_and_invert_color() -> None:
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[12]
     for _name, image in page.images.items():  # noqa: PERF102
-        if image.image is not None:
-            image.image.load()
+        assert image.image is not None
+        image.image.load()
 
 
 @pytest.mark.enable_socket
@@ -173,8 +173,9 @@ def test_get_imagemode__empty_array() -> None:
     page = reader.pages[0]
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
-        if page.images[0].image is not None:
-            page.images[0].image.load()
+        images = page.images[0].image
+        assert images is not None
+        images.load()
 
 
 def test_p_image_with_alpha_mask() -> None:
