@@ -27,7 +27,7 @@
 
 import logging
 from io import BytesIO
-from typing import IO
+from typing import IO, cast
 
 from .._utils import (
     WHITESPACES,
@@ -169,7 +169,7 @@ def extract_inline__dct_decode(stream: StreamType) -> bytes:
         _result = stream.read(length)
         if _result is None or len(_result) != length:
             raise PdfReadError("Unexpected end of stream")
-        return _result
+        return cast(bytes, _result)
 
     data_out: bytes = b""
     # Read Blocks of data (ID/Size/data) up to ID=FF/D9

@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import secrets
+from typing import cast
 
 from Crypto import __version__
 from Crypto.Cipher import AES, ARC4
@@ -41,10 +42,10 @@ class CryptRC4(CryptBase):
         self.key = key
 
     def encrypt(self, data: bytes) -> bytes:
-        return ARC4.ARC4Cipher(self.key).encrypt(data)
+        return cast(bytes, ARC4.ARC4Cipher(self.key).encrypt(data))
 
     def decrypt(self, data: bytes) -> bytes:
-        return ARC4.ARC4Cipher(self.key).decrypt(data)
+        return cast(bytes, ARC4.ARC4Cipher(self.key).decrypt(data))
 
 
 class CryptAES(CryptBase):
@@ -55,7 +56,7 @@ class CryptAES(CryptBase):
         iv = secrets.token_bytes(16)
         data = pad(data, 16)
         aes = AES.new(self.key, AES.MODE_CBC, iv)
-        return iv + aes.encrypt(data)
+        return iv + cast(bytes, aes.encrypt(data))
 
     def decrypt(self, data: bytes) -> bytes:
         iv = data[:16]
@@ -69,29 +70,29 @@ class CryptAES(CryptBase):
             data = pad(data, 16)
 
         aes = AES.new(self.key, AES.MODE_CBC, iv)
-        d = aes.decrypt(data)
+        d = cast(bytes, aes.decrypt(data))
         return d[: -d[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
-    return ARC4.ARC4Cipher(key).encrypt(data)
+    return cast(bytes, ARC4.ARC4Cipher(key).encrypt(data))
 
 
 def rc4_decrypt(key: bytes, data: bytes) -> bytes:
-    return ARC4.ARC4Cipher(key).decrypt(data)
+    return cast(bytes, ARC4.ARC4Cipher(key).decrypt(data))
 
 
 def aes_ecb_encrypt(key: bytes, data: bytes) -> bytes:
-    return AES.new(key, AES.MODE_ECB).encrypt(data)
+    return cast(bytes, AES.new(key, AES.MODE_ECB).encrypt(data))
 
 
 def aes_ecb_decrypt(key: bytes, data: bytes) -> bytes:
-    return AES.new(key, AES.MODE_ECB).decrypt(data)
+    return cast(bytes, AES.new(key, AES.MODE_ECB).decrypt(data))
 
 
 def aes_cbc_encrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
-    return AES.new(key, AES.MODE_CBC, iv).encrypt(data)
+    return cast(bytes, AES.new(key, AES.MODE_CBC, iv).encrypt(data))
 
 
 def aes_cbc_decrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
-    return AES.new(key, AES.MODE_CBC, iv).decrypt(data)
+    return cast(bytes, AES.new(key, AES.MODE_CBC, iv).decrypt(data))

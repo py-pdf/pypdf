@@ -154,14 +154,14 @@ class PdfObject(PdfObjectProtocol):
         """
         try:
             if not force_duplicate and clone.indirect_reference.pdf == pdf_dest:
-                return clone
+                return cast(PdfObjectProtocol, clone)
         except Exception:
             pass
         # if hasattr(clone, "indirect_reference"):
         try:
             ind = self.indirect_reference
         except AttributeError:
-            return clone
+            return cast(PdfObjectProtocol, clone)
         if (
             pdf_dest.incremental
             and ind is not None
@@ -191,7 +191,7 @@ class PdfObject(PdfObjectProtocol):
             pdf_dest._objects.append(clone)
             i = len(pdf_dest._objects)
         clone.indirect_reference = IndirectObject(i, 0, pdf_dest)
-        return clone
+        return cast(PdfObjectProtocol, clone)
 
     def get_object(self) -> Optional["PdfObject"]:
         """Resolve indirect references."""
@@ -279,9 +279,9 @@ class BooleanObject(PdfObject):
 
     def __eq__(self, o: object, /) -> bool:
         if isinstance(o, BooleanObject):
-            return self.value == o.value
+            return cast(bool, self.value == o.value)
         if isinstance(o, bool):
-            return self.value == o
+            return cast(bool, self.value == o)
         return False
 
     def __hash__(self) -> int:
@@ -372,14 +372,14 @@ class IndirectObject(PdfObject):
             )
         assert dup is not None, "mypy"
         assert dup.indirect_reference is not None, "mypy"
-        return dup.indirect_reference
+        return cast("IndirectObject", dup.indirect_reference)
 
     @property
     def indirect_reference(self) -> "IndirectObject":  # type: ignore[override]
         return self
 
     def get_object(self) -> Optional["PdfObject"]:
-        return self.pdf.get_object(self)
+        return cast(Optional["PdfObject"], self.pdf.get_object(self))
 
     def __deepcopy__(self, memo: Any) -> "IndirectObject":
         return IndirectObject(self.idnum, self.generation, self.pdf)
@@ -517,7 +517,7 @@ class FloatObject(float, PdfObject):
         return hash((self.__class__, self.as_numeric))
 
     def myrepr(self) -> str:
-        if self == 0:
+        if self == 0:  # type: ignore[comparison-overlap]
             return "0.0"
         nb = FLOAT_WRITE_PRECISION - int(log10(abs(self)))
         return f"{self:.{max(1, nb)}f}".rstrip("0").rstrip(".")

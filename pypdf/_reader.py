@@ -979,7 +979,7 @@ class PdfReader(PdfDocCommon):
                 )
             stream.seek(p, 0)
         if "/Prev" in new_trailer:
-            return new_trailer["/Prev"]
+            return cast(int, new_trailer["/Prev"])
         return None
 
     def _read_xref_other_error(

@@ -209,11 +209,11 @@ class FlateDecode:
             if predictor == 2:
                 rowlength -= 1  # remove the predictor byte
                 bpp = rowlength // columns
-                str_data = bytearray(str_data)
-                for i in range(len(str_data)):
+                mut_data = bytearray(str_data)
+                for i in range(len(mut_data)):
                     if i % rowlength >= bpp:
-                        str_data[i] = (str_data[i] + str_data[i - bpp]) % 256
-                str_data = bytes(str_data)
+                        mut_data[i] = (mut_data[i] + mut_data[i - bpp]) % 256
+                str_data = bytes(mut_data)
             # PNG prediction:
             elif 10 <= predictor <= 15:
                 str_data = FlateDecode._decode_png_prediction(
