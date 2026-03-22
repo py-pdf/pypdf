@@ -241,6 +241,5 @@ wrap-descriptions = 0
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
-check_untyped_defs = true
 show_error_codes = true
 exclude = ['venv', '.venv', 'tests', 'make_release.py']
