@@ -9,7 +9,7 @@ from pypdf.generic._image_inline import is_followed_by_binary_data
 from tests import get_data_from_url
 
 
-def test_is_followed_by_binary_data():
+def test_is_followed_by_binary_data() -> None:
     # Empty/too short stream.
     stream = BytesIO()
     assert not is_followed_by_binary_data(stream)
@@ -67,22 +67,27 @@ def test_is_followed_by_binary_data():
 
 
 @pytest.mark.enable_socket
-def test_extract_inline_dct__early_end_of_file():
+def test_extract_inline_dct__early_end_of_file() -> None:
     url = "https://github.com/user-attachments/files/23056988/inline_dct__early_eof.pdf"
     name = "inline_dct__early_eof.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[0]
 
-    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream$"):
-        page.images[0].image.load()
+    with pytest.raises(
+        expected_exception=PdfReadError, match=r"^Unexpected end of stream$"
+    ):
+        image = page.images[0].image
+        assert image is not None
+        image.load()
 
 
 @pytest.mark.enable_socket
-def test_extract_inline_dct__multiple_eod():
+def test_extract_inline_dct__multiple_eod() -> None:
     url = "https://github.com/user-attachments/files/23900687/cedolini_esempio-1.pdf"
     name = "issue3517.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
     for page in reader.pages:
         for image in page.images:
+            assert image.image is not None
             _ = image.image.load()
