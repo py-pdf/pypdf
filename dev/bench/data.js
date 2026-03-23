@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774257947060,
+  "lastUpdate": 1774277439254,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -92141,6 +92141,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022386879569249933",
             "extra": "mean: 610.375599200006 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "02b1345f77fdbc006faccc301507df4fb1855413",
+          "message": "SEC: Avoid infinite loop in read_from_stream for broken files (#3693)\n\nThis only affects the non-strict mode and is triggered for errors which\nshould always trigger a hard error, id est recursion and filter limit\nerrors.",
+          "timestamp": "2026-03-23T15:48:00+01:00",
+          "tree_id": "967b555d24f1055ce46b50b070783e124fdad01b",
+          "url": "https://github.com/py-pdf/pypdf/commit/02b1345f77fdbc006faccc301507df4fb1855413"
+        },
+        "date": 1774277433820,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0224039610649482,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006459308246721454",
+            "extra": "mean: 330.8624567999999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.948699493772573,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005114217997140366",
+            "extra": "mean: 55.71434300000159 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27192373338342796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043358634501447835",
+            "extra": "mean: 3.677501730200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.14942269060842,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006781299521425193",
+            "extra": "mean: 55.09817127778168 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09108052400280063,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016463178298751848",
+            "extra": "mean: 10.9792956392 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4922090261107694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00274678490516863",
+            "extra": "mean: 670.1474006000069 msec\nrounds: 5"
           }
         ]
       }
