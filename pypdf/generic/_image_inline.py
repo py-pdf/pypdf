@@ -57,7 +57,7 @@ def extract_inline__ascii_hex_decode(stream: StreamType) -> bytes:
     Extract HexEncoded stream from inline image.
     The stream will be moved onto the EI.
     """
-    data_out: bytes = b""
+    data_out = bytearray()
     # Read data until delimiter > and EI as backup.
     while True:
         data_buffered = read_non_whitespace(stream) + stream.read(BUFFER_SIZE)
@@ -87,7 +87,7 @@ def extract_inline__ascii_hex_decode(stream: StreamType) -> bytes:
 
     if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found")
-    return data_out
+    return bytes(data_out)
 
 
 def extract_inline__ascii85_decode(stream: StreamType) -> bytes:
@@ -95,7 +95,7 @@ def extract_inline__ascii85_decode(stream: StreamType) -> bytes:
     Extract A85 stream from inline image.
     The stream will be moved onto the EI.
     """
-    data_out: bytes = b""
+    data_out = bytearray()
     # Read data until delimiter ~>
     while True:
         data_buffered = read_non_whitespace(stream) + stream.read(BUFFER_SIZE)
@@ -116,7 +116,7 @@ def extract_inline__ascii85_decode(stream: StreamType) -> bytes:
 
     if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found")
-    return data_out
+    return bytes(data_out)
 
 
 def extract_inline__run_length_decode(stream: StreamType) -> bytes:
@@ -124,7 +124,7 @@ def extract_inline__run_length_decode(stream: StreamType) -> bytes:
     Extract RL (RunLengthDecode) stream from inline image.
     The stream will be moved onto the EI.
     """
-    data_out: bytes = b""
+    data_out = bytearray()
     # Read data until delimiter 128
     while True:
         data_buffered = stream.read(BUFFER_SIZE)
@@ -155,7 +155,7 @@ def extract_inline__run_length_decode(stream: StreamType) -> bytes:
 
     if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found")
-    return data_out
+    return bytes(data_out)
 
 
 def extract_inline__dct_decode(stream: StreamType) -> bytes:
@@ -171,7 +171,7 @@ def extract_inline__dct_decode(stream: StreamType) -> bytes:
             raise PdfReadError("Unexpected end of stream")
         return _result
 
-    data_out: bytes = b""
+    data_out = bytearray()
     # Read Blocks of data (ID/Size/data) up to ID=FF/D9
     # https://www.digicamsoft.com/itu/itu-t81-36.html
     not_first = False
@@ -202,7 +202,7 @@ def extract_inline__dct_decode(stream: StreamType) -> bytes:
 
     if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found")
-    return data_out
+    return bytes(data_out)
 
 
 def extract_inline_default(stream: StreamType) -> bytes:
