@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774277518927,
+  "lastUpdate": 1774277562962,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -97819,6 +97819,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03192059738588196",
             "extra": "mean: 808.8798741999938 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "da867f4961e4ac5ac9d751cba3131c5a1a8777f3",
+          "message": "REL: 6.9.2\n\n## What's new\n\n### Security (SEC)\n- Avoid infinite loop in read_from_stream for broken files (#3693) by @stefan6419846\n\n### Robustness (ROB)\n- Resolve UnboundLocalError for xobjs in _get_image (#3684) by @Yuki9814\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.1...6.9.2)",
+          "timestamp": "2026-03-23T15:49:17+01:00",
+          "tree_id": "f671b11635d2d816d7cdb0fe3091f0dbd9c6fa66",
+          "url": "https://github.com/py-pdf/pypdf/commit/da867f4961e4ac5ac9d751cba3131c5a1a8777f3"
+        },
+        "date": 1774277557893,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.014051328705404,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01725514754668737",
+            "extra": "mean: 71.35695285714202 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.99783368502252,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011715678436151252",
+            "extra": "mean: 58.831026266667166 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1021004145341766,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02609833965980733",
+            "extra": "mean: 907.3583375999988 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4766188391878856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021942616241653674",
+            "extra": "mean: 2.0981126170000066 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18558834072422303,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10006154659427048",
+            "extra": "mean: 5.3882695222 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2245452208343184,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03919886500197037",
+            "extra": "mean: 816.629703000001 msec\nrounds: 5"
           }
         ]
       }
