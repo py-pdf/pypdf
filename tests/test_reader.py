@@ -1888,7 +1888,9 @@ def test_infinite_loop_for_length_value():
 
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
-    with pytest.raises(PdfReadError, match=r"^Detected loop with self reference for IndirectObject\(165, 0, \d+\)\.$"):
+    with pytest.raises(
+            LimitReachedError, match=r"^Detected loop with self reference for IndirectObject\(165, 0, \d+\)\.$"
+    ):
         writer.add_page(reader.pages[0])
 
 
