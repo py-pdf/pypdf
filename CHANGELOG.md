@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## Version 6.9.2, 2026-03-23
+
+### Security (SEC)
+- Avoid infinite loop in read_from_stream for broken files (#3693)
+
+### Robustness (ROB)
+- Resolve UnboundLocalError for xobjs in _get_image (#3684)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.1...6.9.2)
+
 ## Version 6.9.1, 2026-03-17
 
 ### Security (SEC)
