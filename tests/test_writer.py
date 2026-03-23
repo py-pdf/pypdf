@@ -19,6 +19,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
+from pypdf._font import HAS_FONTTOOLS, Font
 from pypdf.annotations import Link
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -1815,6 +1816,31 @@ def test_update_form_fields2(caplog):
 
 
 @pytest.mark.enable_socket
+def test_update_form_fields3(caplog):
+    if HAS_FONTTOOLS:
+        url = "https://github.com/user-attachments/files/21073581/CERERE.INMATRICULARE.form.pdf"
+        name = "iss3361.pdf"
+        writer = PdfWriter()
+        output = BytesIO()
+        writer.append(BytesIO(get_data_from_url(url, name=name)))
+        data = {
+            "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+            "localitatea": "شهرزاد",
+            "strada": "Căpitan Nicolae Licăreț",
+            "adresa_judet": "Конференция",
+        }
+        writer.update_page_form_field_values(writer.pages[0], data, auto_regenerate=False, flatten=True)
+        writer.write(output)
+        output.seek(0)
+        reader = PdfReader(output)
+        extracted_text = reader.pages[0].extract_text()
+        for expected_value in data.values():
+            if expected_value != "شهرزاد":
+                assert expected_value in extracted_text
+        assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+
+
+@pytest.mark.enable_socket
 def test_iss1862():
     # The file here has "/B" entry to define the font in a object below the page
     # The excluded field shall be considered only at first level (page) and not
@@ -3035,3 +3061,30 @@ def test_flatten_form_field_with_signature():
     writer.write(b)
 
     _ = PdfReader(b)
+
+
+def test_writer_add_font(tmp_path, caplog):
+    if HAS_FONTTOOLS:
+        src = RESOURCE_ROOT / "fontsampler.pdf"
+
+        reader = PdfReader(src)
+        font_resource = reader.pages[0]["/Resources"]["/Font"]["/F7"]
+        font_file_data = font_resource["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+        with open(tmp_path / "Kalam-Regular.ttf", "wb") as fp:
+            fp.write(font_file_data)
+
+        writer = PdfWriter()
+        writer.add_blank_page(width=612, height=792)
+        writer.pages[0]["/Resources"][NameObject("/Font")] = DictionaryObject()
+        page_font_resources = writer.pages[0]["/Resources"]["/Font"]
+        writer.add_font(f"{tmp_path}/Kalam-Regular.ttf", "/F1", page_font_resources)
+        assert "/F1" in page_font_resources
+        assert isinstance(page_font_resources.raw_get("/F1"), IndirectObject)
+        assert isinstance(page_font_resources["/F1"]["/DescendantFonts"][0].raw_get("/FontDescriptor"), IndirectObject)
+        assert isinstance(
+            page_font_resources["/F1"]["/DescendantFonts"][0]["/FontDescriptor"].raw_get("/FontFile2"),
+            IndirectObject
+        )
+        my_font = Font.from_font_resource(writer.pages[0]["/Resources"]["/Font"]["/F1"])
+        assert my_font.name == "Kalam"
+        assert my_font.font_descriptor.font_file["/Length1"] == len(font_file_data)

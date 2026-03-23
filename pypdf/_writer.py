@@ -56,6 +56,7 @@ else:
 
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
+from ._font import Font
 from ._page import PageObject, Transformation
 from ._page_labels import nums_clear_range, nums_insert, nums_next
 from ._reader import PdfReader
@@ -904,18 +905,7 @@ class PdfWriter(PdfDocCommon):
         # only deals with font resources, but can easily be adapted to also
         # include other resources.
         pg_res = cast(DictionaryObject, page[PG.RESOURCES])
-        if "/Resources" in appearance_stream_obj:
-            ap_stream_res = cast(DictionaryObject, appearance_stream_obj["/Resources"])
-            ap_stream_font_dict = cast(DictionaryObject, ap_stream_res.get("/Font", DictionaryObject()))
-            if "/Font" not in pg_res:
-                font_dict_ref = self._add_object(DictionaryObject())
-                pg_res[NameObject("/Font")] = font_dict_ref
-            pg_font_res = cast(DictionaryObject, pg_res["/Font"].get_object())
-            # Merge fonts from the appearance stream into the page's font resources
-            for font_name, font_res in ap_stream_font_dict.items():
-                if font_name not in pg_font_res:
-                    font_res_ref = self._add_object(font_res)
-                    pg_font_res[font_name] = font_res_ref
+        self._sync_resources(appearance_stream_obj, pg_res)
         # Always add the resolved stream object to the writer to get a new IndirectObject.
         # This ensures we have a valid IndirectObject managed by *this* writer.
         xobject_ref = self._add_object(appearance_stream_obj)
@@ -933,6 +923,88 @@ class PdfWriter(PdfDocCommon):
         xobject_cm = Transformation().translate(x_offset, y_offset)
         xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
         self._merge_content_stream_to_page(page, xobject_drawing_commands)
+
+    def _add_font_resource(
+            self,
+            target_resource_dict: DictionaryObject,
+            font_resource: DictionaryObject,
+            font_resource_name: NameObject
+        ) -> IndirectObject:
+        # See if we can add the font to the page font resources
+        if "/ToUnicode" in font_resource and not isinstance(font_resource.raw_get("/ToUnicode"), IndirectObject):
+                to_unicode_ref = self._add_object(font_resource["/ToUnicode"])
+                font_resource[NameObject("/ToUnicode")] = to_unicode_ref
+
+        if "/DescendantFonts" in font_resource:
+            descendant_fonts = cast(ArrayObject, font_resource["/DescendantFonts"])
+            font_resource_dict = cast(DictionaryObject, descendant_fonts[0])
+        else:
+            font_resource_dict = font_resource
+
+        if "/FontDescriptor" in font_resource_dict:
+            font_descriptor_obj = cast(DictionaryObject, font_resource_dict["/FontDescriptor"])
+            for key in ["/FontFile", "/FontFile2", "/FontFile3"]:
+                if key in font_descriptor_obj:
+                    font_file_ref = self._add_object(font_descriptor_obj[key])
+                    font_descriptor_obj[NameObject(key)] = font_file_ref
+            if not isinstance(
+                font_resource_dict.raw_get("/FontDescriptor"), IndirectObject
+            ):
+                font_resource_dict[NameObject("/FontDescriptor")] = self._add_object(
+                    font_resource_dict["/FontDescriptor"]
+                )
+        font_resource_ref = self._add_object(font_resource)
+        target_resource_dict[font_resource_name] = font_resource_ref
+        return font_resource_ref
+
+    def _sync_resources(
+        self,
+        appearance_stream_obj: StreamObject,
+        target_resource_dict: DictionaryObject
+    ) -> None:
+        """
+        Unified helper to sync fonts from an AP stream to a target
+        resource dictionary (e.g., AcroForm /DR or Page /Resources).
+        """
+        appearance_stream_resources = cast(
+            DictionaryObject,
+            appearance_stream_obj.get("/Resources", DictionaryObject())
+        )
+        appearance_stream_font_resources = cast(
+            DictionaryObject,
+            appearance_stream_resources.get("/Font", DictionaryObject()).get_object()
+        )
+        if not appearance_stream_font_resources:
+            return
+
+        if "/Font" not in target_resource_dict:
+            target_resource_dict[NameObject("/Font")] = DictionaryObject()
+        target_fonts = cast(DictionaryObject, target_resource_dict["/Font"].get_object())
+
+        for font_name, font_res in appearance_stream_font_resources.items():
+            if font_name not in target_fonts:
+                font_res_ref = self._add_font_resource(
+                    target_fonts,
+                    cast(DictionaryObject, font_res),
+                    font_name
+                )
+                appearance_stream_font_resources[font_name] = font_res_ref
+            else:
+                existing_font = target_fonts[font_name]
+                appearance_stream_font_resources[font_name] = getattr(
+                    existing_font, "indirect_reference", existing_font
+                )
+
+    def add_font(
+        self,
+        font_file: Path,
+        font_resource_name: str,
+        parent_resource: DictionaryObject) -> None:
+        with open(font_file, "rb") as font_file_handle:
+            font_file_bytes = BytesIO(font_file_handle.read())
+            font_obj = Font.from_truetype_font_file(font_file_bytes)
+            font_dict = font_obj.as_font_resource()
+            self._add_font_resource(parent_resource, font_dict, NameObject(font_resource_name))
 
     FFBITS_NUL = FA.FfBits(0)
 
@@ -1074,8 +1146,15 @@ class PdfWriter(PdfDocCommon):
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
-                if flatten and appearance_stream_obj is not None:
-                    self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
+
+                # Make font resources and font descriptors indirect objects
+                if appearance_stream_obj:
+                    if flatten:
+                        self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
+                    else:
+                        if "/DR" not in acro_form:
+                            acro_form[NameObject("/DR")] = DictionaryObject()
+                        self._sync_resources(appearance_stream_obj, cast(DictionaryObject, acro_form["/DR"]))
 
     def reattach_fields(
         self, page: Optional[PageObject] = None

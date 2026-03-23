@@ -1,11 +1,12 @@
 import re
 from dataclasses import dataclass
 from enum import IntEnum
+from io import BytesIO
 from typing import Any, Optional, Union, cast
 
 from .._codecs import fill_from_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
-from .._font import Font
+from .._font import HAS_FONTTOOLS, Font
 from .._utils import logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes
 from ..generic import (
@@ -15,7 +16,7 @@ from ..generic import (
     NumberObject,
     RectangleObject,
 )
-from ..generic._base import ByteStringObject, TextStringObject, is_null_or_none
+from ..generic._base import ByteStringObject, TextStringObject
 
 DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
@@ -307,8 +308,9 @@ class TextStreamAppearance(BaseStreamAppearance):
         layout: Optional[BaseStreamConfig] = None,
         text: str = "",
         selection: Optional[list[str]] = None,
+        font: Optional[Font] = None,
         font_resource: Optional[DictionaryObject] = None,
-        font_name: str = "/Helv",
+        font_name: str = "/Helv",  # The name of the font resource to use
         font_size: float = 0.0,
         font_color: str = "0 g",
         is_multiline: bool = False,
@@ -342,9 +344,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         super().__init__(layout)
 
         # If a font resource was added, get the font character map
-        if font_resource:
+        if font_resource and not font:
             font = Font.from_font_resource(font_resource)
-        else:
+        elif font and not font_resource:
+            font_resource = font.as_font_resource()
+        if not (font and font_resource):
             logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
             font_name = "/Helv"
             core_font_metrics = CORE_FONT_METRICS["Helvetica"]
@@ -358,35 +362,14 @@ class TextStreamAppearance(BaseStreamAppearance):
             )
             font_resource = font.as_font_resource()
 
-        # Check whether the font resource is able to encode the text value.
-        encodable = True
-        try:
-            if isinstance(font.encoding, str):
-                text.encode(font.encoding, "surrogatepass")
-            else:
-                supported_chars = set(font.encoding.values())
-                if any(char not in supported_chars for char in text):
-                    encodable = False
-            # We should add a final check against the character_map (CMap) of the font,
-            # but we don't appear to have PDF forms with such fonts, so we skip this for
-            # now.
-
-        except UnicodeEncodeError:
-            encodable = False
-
-        if not encodable:
-            logger_warning(
-                f"Text string '{text}' contains characters not supported by font encoding. "
-                "This may result in text corruption. "
-                "Consider calling writer.update_page_form_field_values with auto_regenerate=True.",
-                __name__
-            )
-
-        font_glyph_byte_map: dict[str, bytes]
+        font_glyph_byte_map: dict[str, bytes] = {}
         if isinstance(font.encoding, str):
-            font_glyph_byte_map = {
-                v: k.encode(font.encoding) for k, v in font.character_map.items()
-            }
+            try:  # Remove -1 key that does not map a character
+                del font.character_map[-1]
+            except KeyError:
+                pass
+            for k, v in font.character_map.items():
+                font_glyph_byte_map[v] = k.encode(font.encoding)
         else:
             font_glyph_byte_map = {v: bytes((k,)) for k, v in font.encoding.items()}
             font_encoding_rev = {v: bytes((k,)) for k, v in font.encoding.items()}
@@ -420,8 +403,9 @@ class TextStreamAppearance(BaseStreamAppearance):
     def _find_annotation_font_resource(
             font_name: str,
             annotation: DictionaryObject,
-            acro_form: DictionaryObject
-        ) -> tuple[str, DictionaryObject]:
+            acro_form: DictionaryObject,
+            text: str
+        ) -> tuple[str, DictionaryObject, Font]:
         # Try to find a resource dictionary for the font by examining the annotation and, if that fails,
         # the AcroForm resources dictionary
         acro_form_resources: Any = cast(
@@ -433,26 +417,47 @@ class TextStreamAppearance(BaseStreamAppearance):
         )
         acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject())
         font_resource = acro_form_font_resources.get(font_name, None)
-
-        # Normally, we should have found a font resource by now. However, when a user has provided a specific
-        # font name, we may not have found the associated font resource among the AcroForm resources. Also, in
-        # case of the 14 Adobe Core fonts, we may be expected to construct a font resource ourselves.
-        if is_null_or_none(font_resource):
+        if font_resource:
+            font = Font.from_font_resource(font_resource)
+        else:
+            # Normally, we should have found a font resource by now. However, when a user has provided a specific
+            # font name, we may not have found the associated font resource among the AcroForm resources. Also, in
+            # case of the 14 Adobe Core fonts, we may be expected to construct a font resource ourselves.
             if font_name.removeprefix("/") not in CORE_FONT_METRICS:
                 # Default to Helvetica if we haven't found a font resource and cannot construct one ourselves.
                 logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
                 font_name = "/Helvetica"
             core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
-            font_resource = Font(
+            font = Font(
                 name=font_name.removeprefix("/"),
                 character_map={},
                 encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
                 sub_type="Type1",
                 font_descriptor=core_font_metrics.font_descriptor,
                 character_widths=core_font_metrics.character_widths
-            ).as_font_resource()
+            )
+            font_resource = font.as_font_resource()
 
-        return font_name, font_resource
+        # If we have found a font resource, it still might not be able to encode the text value we received
+        encodable = font.can_encode(text)
+
+        if not encodable and font.font_descriptor.font_file and HAS_FONTTOOLS and font.sub_type == "TrueType":
+            # If we have a font file, we can try to produce a new font resource with an encoding
+            # that does include the necessary characters.
+            font = font.from_truetype_font_file(BytesIO(font.font_descriptor.font_file.get_data()))
+            font_resource = font.as_font_resource()
+            font_name = "/PYPDF1"  # This means we most probably do not clash with an existing font name
+            encodable = font.can_encode(text)
+
+        if not encodable:
+            logger_warning(
+                f"Text string '{text}' contains characters not supported by font encoding. "
+                "This may result in text corruption. "
+                "Consider calling writer.update_page_form_field_values with auto_regenerate=True.",
+                __name__
+            )
+
+        return font_name, font_resource, font
 
     @classmethod
     def from_text_annotation(
@@ -513,9 +518,6 @@ class TextStreamAppearance(BaseStreamAppearance):
             text = field.get("/V", "")
             selection = []
 
-        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
-        text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
-
         # Derive font name, size and color from the default appearance. Also set
         # user-provided font name and font size in the default appearance, if given.
         # For a font name, this presumes that we can find an associated font resource
@@ -525,18 +527,31 @@ class TextStreamAppearance(BaseStreamAppearance):
         # font) operator along with its two operands, font and size" (Section 12.7.4.3
         # "Variable text" of the PDF 2.0 specification).
         font_properties = [prop for prop in re.split(r"\s", default_appearance) if prop]
-        font_name = font_properties.pop(font_properties.index("Tf") - 2)
+        da_font_name = font_properties.pop(font_properties.index("Tf") - 2)
         font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
         font_properties.remove("Tf")
         font_color = " ".join(font_properties)
         # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name
+        else:
+            font_name = da_font_name
         # Determine the font size to use, prioritizing the user's input
         if user_font_size > 0:
             font_size = user_font_size
 
-        font_name, font_resource = cls._find_annotation_font_resource(font_name, annotation, acro_form)
+        font_name, font_resource, font = cls._find_annotation_font_resource(font_name, annotation, acro_form, text)
+        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
+        # We escape parentheses when we do not need to hex-encode strings. If we have a font resource with a
+        # "/ToUnicode" map, then font.character_map stores the length of the font encoding in bytes. If encoding
+        # equals "charmap" or is a dict, we also know that the encoding length is one byte.
+        map_min_1 = font.character_map.get(-1, None)
+        if map_min_1 == 1 or isinstance(font.encoding, dict) or font.encoding == "charmap":
+            text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
+
+        # Change the /DA information if we changed the font name
+        if font_name != da_font_name:
+            annotation[NameObject("/DA")] = TextStringObject(default_appearance.replace(da_font_name, font_name))
 
         # Retrieve formatting information
         is_comb = False
@@ -560,6 +575,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             layout,
             text,
             selection,
+            font,
             font_resource,
             font_name=font_name,
             font_size=font_size,
