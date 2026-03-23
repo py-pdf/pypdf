@@ -267,6 +267,7 @@ def test_transform_compress_identical_objects():
     for page in writer.pages:
         op = Transformation().scale(sx=0.8, sy=0.8)
         page.add_transformation(op)
+        writer.add_page(page)
     writer.compress_identical_objects()
     bytes_out = BytesIO()
     writer.write(bytes_out)
