@@ -501,7 +501,7 @@ class PdfReader(PdfDocCommon):
 
             current_object = (indirect_reference.idnum, indirect_reference.generation)
             if current_object in self._known_objects:
-                raise PdfReadError(f"Detected loop with self reference for {indirect_reference!r}.")
+                raise LimitReachedError(f"Detected loop with self reference for {indirect_reference!r}.")
             self._known_objects.add(current_object)
             retval = read_object(self.stream, self)  # type: ignore
             self._known_objects.remove(current_object)
