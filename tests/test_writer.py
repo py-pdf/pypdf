@@ -2568,6 +2568,25 @@ def test_compress_identical_objects():
     assert len(out2.getvalue()) > len(out3.getvalue())
 
 
+def test_compress_identical_objects_remove_orphans_parameter():
+    """Cf #3306 - remove_orphans parameter was ignored."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    # Add an orphan object (not referenced by anything)
+    from pypdf.generic import DictionaryObject, NameObject
+
+    orphan = DictionaryObject({NameObject("/Type"): NameObject("/Test")})
+    writer._add_object(orphan)
+    num_objects_before = len(writer._objects)
+    # With remove_orphans=False, orphan objects should be kept
+    writer.compress_identical_objects(remove_orphans=False)
+    num_objects_no_remove = sum(1 for o in writer._objects if o is not None)
+    # With remove_orphans=True, orphan objects should be removed
+    writer.compress_identical_objects(remove_orphans=True)
+    num_objects_with_remove = sum(1 for o in writer._objects if o is not None)
+    assert num_objects_no_remove > num_objects_with_remove
+
+
 def test_set_need_appearances_writer():
     """Minimal test for coverage"""
     writer = PdfWriter()
