@@ -17,6 +17,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
+from pypdf.annotations import Polygon
 from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
@@ -834,6 +835,27 @@ def test_no_resources():
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     page_one = writer.pages[0]
     page_two = writer.pages[0]
+    page_one.merge_page(page_two)
+
+
+def test_merge_page_with_annotations():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+    writer.add_page(page)
+
+    annotation_1 = Polygon(
+        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    )
+    writer.add_annotation(page_number=0, annotation=annotation_1)
+
+    page_one = writer.pages[0]
+    page_two = writer.pages[1]
+    page_one.merge_page(page_two)
+
+    page_two[NameObject("/Annots")] = TextStringObject("For coverage, when Annots is not an array")
     page_one.merge_page(page_two)
 
 
