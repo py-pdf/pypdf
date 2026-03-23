@@ -4,7 +4,7 @@ from collections import ChainMap, Counter
 from collections import ChainMap as ChainMapType
 from collections import Counter as CounterType
 from collections.abc import MutableMapping
-from typing import Any, Union
+from typing import Any, Union, cast
 
 from ..._font import Font
 from ...errors import PdfReadError
@@ -150,7 +150,7 @@ class TextStateManager:
         """Standard a/b/c/d/e/f matrix params + 'is_text' and 'is_render' keys"""
         result: Any = TextStateManager.raw_transform(_a, _b, _c, _d, _e, _f)
         result.update({"is_text": is_text, "is_render": is_render})
-        return result
+        return cast(TextStateManagerDictType, result)
 
     def reset_tm(self) -> TextStateManagerChainMapType:
         """Clear all transforms from chainmap having is_text==True or is_render==True"""

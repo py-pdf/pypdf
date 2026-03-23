@@ -50,11 +50,13 @@ class CryptRC4(CryptBase):
 
     def encrypt(self, data: bytes) -> bytes:
         encryptor = self.cipher.encryptor()
-        return encryptor.update(data) + encryptor.finalize()
+        result: bytes = encryptor.update(data) + encryptor.finalize()
+        return result
 
     def decrypt(self, data: bytes) -> bytes:
         decryptor = self.cipher.decryptor()
-        return decryptor.update(data) + decryptor.finalize()
+        result: bytes = decryptor.update(data) + decryptor.finalize()
+        return result
 
 
 class CryptAES(CryptBase):
@@ -68,7 +70,8 @@ class CryptAES(CryptBase):
 
         cipher = Cipher(self.alg, CBC(iv))
         encryptor = cipher.encryptor()
-        return iv + encryptor.update(data) + encryptor.finalize()
+        result: bytes = iv + encryptor.update(data) + encryptor.finalize()
+        return result
 
     def decrypt(self, data: bytes) -> bytes:
         iv = data[:16]
@@ -84,35 +87,41 @@ class CryptAES(CryptBase):
 
         cipher = Cipher(self.alg, CBC(iv))
         decryptor = cipher.decryptor()
-        d = decryptor.update(data) + decryptor.finalize()
+        d: bytes = decryptor.update(data) + decryptor.finalize()
         return d[: -d[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
     encryptor = Cipher(ARC4(key), mode=None).encryptor()
-    return encryptor.update(data) + encryptor.finalize()
+    result: bytes = encryptor.update(data) + encryptor.finalize()
+    return result
 
 
 def rc4_decrypt(key: bytes, data: bytes) -> bytes:
     decryptor = Cipher(ARC4(key), mode=None).decryptor()
-    return decryptor.update(data) + decryptor.finalize()
+    result: bytes = decryptor.update(data) + decryptor.finalize()
+    return result
 
 
 def aes_ecb_encrypt(key: bytes, data: bytes) -> bytes:
     encryptor = Cipher(AES(key), mode=ECB()).encryptor()
-    return encryptor.update(data) + encryptor.finalize()
+    result: bytes = encryptor.update(data) + encryptor.finalize()
+    return result
 
 
 def aes_ecb_decrypt(key: bytes, data: bytes) -> bytes:
     decryptor = Cipher(AES(key), mode=ECB()).decryptor()
-    return decryptor.update(data) + decryptor.finalize()
+    result: bytes = decryptor.update(data) + decryptor.finalize()
+    return result
 
 
 def aes_cbc_encrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
     encryptor = Cipher(AES(key), mode=CBC(iv)).encryptor()
-    return encryptor.update(data) + encryptor.finalize()
+    result: bytes = encryptor.update(data) + encryptor.finalize()
+    return result
 
 
 def aes_cbc_decrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
     decryptor = Cipher(AES(key), mode=CBC(iv)).decryptor()
-    return decryptor.update(data) + decryptor.finalize()
+    result: bytes = decryptor.update(data) + decryptor.finalize()
+    return result

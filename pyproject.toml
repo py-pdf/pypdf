@@ -239,13 +239,7 @@ wrap-summaries = 0
 wrap-descriptions = 0
 
 [tool.mypy]
-show_error_codes = true
+strict = true
 ignore_missing_imports = true
-check_untyped_defs = true
-disallow_any_generics = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_unused_configs = true
+show_error_codes = true
 exclude = ['venv', '.venv', 'tests', 'make_release.py']

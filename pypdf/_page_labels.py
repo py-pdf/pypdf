@@ -158,7 +158,7 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     start = value.get("/St", 1)
     prefix = value.get("/P", "")
     mapping_function = m[value.get("/S")]
-    return prefix + mapping_function(index - start_index + start)
+    return cast(str, prefix + mapping_function(index - start_index + start))
 
 
 def index2label(reader: PdfCommonDocProtocol, index: int) -> str:

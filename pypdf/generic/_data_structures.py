@@ -178,7 +178,7 @@ class ArrayObject(list[Any], PdfObject):
             lst = [ByteStringObject(lst)]
         else:  # for numbers,...
             lst = [lst]
-        return lst
+        return cast(list[Any], lst)
 
     def __add__(self, lst: Any) -> "ArrayObject":
         """
@@ -476,7 +476,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         return dict.setdefault(self, key, value)
 
     def __getitem__(self, key: Any) -> PdfObject:
-        return dict.__getitem__(self, key).get_object()
+        return cast(PdfObject, dict.__getitem__(self, key).get_object())
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformationProtocol]:
@@ -547,7 +547,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             )
         # 9 = len(b"endstream")
         stream.seek(current_position + endstream_position + 9)
-        return read_value[: endstream_position - 1]
+        return cast(bytes, read_value[: endstream_position - 1])
 
     @staticmethod
     def read_from_stream(
@@ -779,7 +779,7 @@ class TreeObject(DictionaryObject):
                 del child_obj["/Next"]
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
-            return child
+            return cast(IndirectObject, child)
         prev = cast("DictionaryObject", self["/Last"])
 
         while prev.indirect_reference != before:
@@ -793,7 +793,7 @@ class TreeObject(DictionaryObject):
                     del child_obj["/Next"]
                 self[NameObject("/Last")] = child
                 inc_parent_counter(self, child_obj.get("/Count", 1))
-                return child
+                return cast(IndirectObject, child)
         try:  # insert as first or in the middle
             assert isinstance(prev["/Prev"], DictionaryObject)
             prev["/Prev"][NameObject("/Next")] = child
@@ -804,7 +804,7 @@ class TreeObject(DictionaryObject):
         prev[NameObject("/Prev")] = child
         child_obj[NameObject("/Parent")] = self.indirect_reference
         inc_parent_counter(self, child_obj.get("/Count", 1))
-        return child
+        return cast(IndirectObject, child)
 
     def _remove_node_from_tree(
         self, prev: Any, prev_ref: Any, cur: Any, last: Any
@@ -1209,7 +1209,7 @@ class ContentStream(DecodedStreamObject):
                                 f"{MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH} output bytes."
                             )
                         data += new_data
-                    if len(data) == 0 or data[-1] != b"\n":
+                    if len(data) == 0 or data[-1:] != b"\n":
                         # There should be no direct need to check for a change of one byte.
                         length += 1
                         data += b"\n"
@@ -1773,9 +1773,9 @@ class Destination(TreeObject):
     @property
     def color(self) -> Optional["ArrayObject"]:
         """Read-only property accessing the color in (R, G, B) with values 0.0-1.0."""
-        return self.get(
+        return cast(Optional["ArrayObject"], self.get(
             "/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)])
-        )
+        ))
 
     @property
     def font_format(self) -> Optional[OutlineFontFlag]:
@@ -1784,7 +1784,7 @@ class Destination(TreeObject):
 
         1=italic, 2=bold, 3=both
         """
-        return self.get("/F", 0)
+        return cast(Optional[OutlineFontFlag], self.get("/F", 0))
 
     @property
     def outline_count(self) -> Optional[int]:

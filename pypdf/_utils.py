@@ -44,6 +44,7 @@ from typing import (
     Any,
     Optional,
     Union,
+    cast,
     overload,
 )
 
@@ -195,7 +196,7 @@ def read_non_whitespace(stream: StreamType) -> bytes:
     tok = stream.read(1)
     while tok in WHITESPACES:
         tok = stream.read(1)
-    return tok
+    return cast(bytes, tok)
 
 
 def skip_over_whitespace(stream: StreamType) -> bool:
@@ -304,7 +305,7 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     read = stream.read(to_read)
     # Seek to the start of the block we read after reading it.
     stream.seek(-to_read, SEEK_CUR)
-    return read
+    return cast(bytes, read)
 
 
 def read_previous_line(stream: StreamType) -> bytes:

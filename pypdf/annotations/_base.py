@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import cast
 
 from ..constants import AnnotationFlag
 from ..generic import NameObject, NumberObject
@@ -19,7 +20,7 @@ class AnnotationDictionary(DictionaryObject, ABC):
 
     @property
     def flags(self) -> AnnotationFlag:
-        return self.get(NameObject("/F"), AnnotationFlag(0))
+        return cast(AnnotationFlag, self.get(NameObject("/F"), AnnotationFlag(0)))
 
     @flags.setter
     def flags(self, value: AnnotationFlag) -> None:

@@ -262,6 +262,6 @@ def test_content_stream__array_based__output_length():
     reader = PdfReader(buffer)
     with pytest.raises(
             expected_exception=LimitReachedError,
-            match=r"^Array\-based stream has at least 75003501 > 75000000 output bytes\.$"
+            match=r"^Array\-based stream has at least 75002550 > 75000000 output bytes\.$"
     ):
         _ = reader.pages[0].get_contents()

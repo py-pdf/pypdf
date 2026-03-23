@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Union, cast
 
 from ._base import FloatObject, NumberObject
 from ._data_structures import ArrayObject
@@ -28,7 +28,7 @@ class RectangleObject(ArrayObject):
     def _ensure_is_number(self, value: Any) -> Union[FloatObject, NumberObject]:
         if not isinstance(value, (FloatObject, NumberObject)):
             value = FloatObject(value)
-        return value
+        return cast(Union[FloatObject, NumberObject], value)
 
     def scale(self, sx: float, sy: float) -> "RectangleObject":
         return RectangleObject(
@@ -45,7 +45,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def left(self) -> FloatObject:
-        return self[0]
+        return cast(FloatObject, self[0])
 
     @left.setter
     def left(self, f: float) -> None:
@@ -53,7 +53,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def bottom(self) -> FloatObject:
-        return self[1]
+        return cast(FloatObject, self[1])
 
     @bottom.setter
     def bottom(self, f: float) -> None:
@@ -61,7 +61,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def right(self) -> FloatObject:
-        return self[2]
+        return cast(FloatObject, self[2])
 
     @right.setter
     def right(self, f: float) -> None:
@@ -69,7 +69,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def top(self) -> FloatObject:
-        return self[3]
+        return cast(FloatObject, self[3])
 
     @top.setter
     def top(self, f: float) -> None:
