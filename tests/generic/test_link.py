@@ -63,7 +63,7 @@ def test_extract_links(caplog: pytest.LogCaptureFixture) -> None:
     assert caplog.messages == []
 
 
-def test_extract_links_ignores_non_link_annotation_offsets():
+def test_extract_links_ignores_non_link_annotation_offsets() -> None:
     old_page = PageObject()
     new_page = PageObject()
 
@@ -89,7 +89,7 @@ def test_extract_links_ignores_non_link_annotation_offsets():
     assert isinstance(links[0][1], DirectReferenceLink)
 
 
-def test_extract_links_ignores_uri_annotation_offsets(caplog):
+def test_extract_links_ignores_uri_annotation_offsets(caplog: pytest.LogCaptureFixture) -> None:
     old_page = PageObject()
     new_page = PageObject()
 

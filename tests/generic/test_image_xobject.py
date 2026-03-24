@@ -173,9 +173,9 @@ def test_get_imagemode__empty_array() -> None:
     page = reader.pages[0]
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
-        images = page.images[0].image
-        assert images is not None
-        images.load()
+        image = page.images[0].image
+        assert image is not None
+        image.load()
 
 
 def test_p_image_with_alpha_mask() -> None:

@@ -271,7 +271,7 @@ def test_content_stream__array_based__output_length() -> None:
 
 
 @pytest.mark.timeout(5)
-def test_dictionary_object__read_from_stream__infinite_loop(caplog):
+def test_dictionary_object__read_from_stream__infinite_loop(caplog: pytest.LogCaptureFixture) -> None:
     data = b"""1 0 obj
 <<
 <</Length 1 0 R>>

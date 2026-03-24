@@ -5,7 +5,7 @@ import sys
 import urllib.request
 from pathlib import Path
 from types import TracebackType
-from typing import Optional
+from typing import Callable, Optional, cast
 from urllib.error import HTTPError
 
 if sys.version_info >= (3, 11):
@@ -22,7 +22,10 @@ SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 def _get_data_from_url(url: str) -> bytes:
-    ssl._create_default_https_context = ssl._create_unverified_context
+    ssl._create_default_https_context = cast(
+    Callable[..., ssl.SSLContext],
+    ssl._create_unverified_context,
+    )
     attempts = 0
     while attempts < 3:
         try:
