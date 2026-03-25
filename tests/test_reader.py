@@ -2066,7 +2066,7 @@ def test_objstm_skips_cache_for_overridden_objects():
 def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
     """Decompressing a non-authoritative stream must not cache stale object copies."""
 
-    def _write_obj(buf: io.BytesIO, objnum: int, data: str | bytes) -> int:
+    def _write_obj(buf: io.BytesIO, objnum: int, data: Union[str, bytes]) -> int:
         offset = buf.tell()
         buf.write(f"{objnum} 0 obj\n".encode())
         buf.write(data if isinstance(data, bytes) else data.encode())
