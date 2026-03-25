@@ -1,6 +1,8 @@
 """Test the pypdf._encryption module."""
+import hashlib
 import secrets
 from io import BytesIO
+from typing import NoReturn
 
 import pytest
 
@@ -437,3 +439,22 @@ def test_are_permissions_valid_false_when_tampered():
     reader = PdfReader(tampered)
     reader.decrypt("user")
     assert reader.are_permissions_valid is False
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_aes256_decrypt_does_not_call_md5(monkeypatch):
+    """AES-256 decryption must not call hashlib.md5().
+
+    On FIPS-enabled systems hashlib.md5() raises an error, so reading an AES-256
+    PDF must succeed even when MD5 is blocked.
+    """
+    def _fips_md5(*args: object, **kwargs: object) -> NoReturn:
+        raise ValueError("[digital envelope routines] unsupported: md5 blocked by FIPS")
+
+    monkeypatch.setattr(hashlib, "md5", _fips_md5)
+
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-empty-password.pdf")
+    result = reader.decrypt("")
+    assert result != PasswordType.NOT_DECRYPTED
+    assert len(reader.pages) > 0
+    reader.pages[0].extract_text()
