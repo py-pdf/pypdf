@@ -2569,7 +2569,7 @@ def test_compress_identical_objects():
 
 
 @pytest.mark.enable_socket
-def test_compress_identical_objects__coverage():
+def test_compress_identical_objects__deprecation():
     """Cf #2728 and #2794"""
     url = "https://github.com/user-attachments/files/16575458/tt2.pdf"
     name = "iss2794.pdf"
@@ -2597,6 +2597,21 @@ def test_compress_identical_objects__coverage():
     out3 = BytesIO()
     writer.write(out3)
     assert len(out2.getvalue()) > len(out3.getvalue())
+
+
+@pytest.mark.enable_socket
+def test_remove_orphans():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer._add_object(DictionaryObject({}))
+    dictionary_object = DictionaryObject({NameObject("/Testing"): NameObject("/UniqueNameForTesting")})
+    reference = writer._add_object(dictionary_object)
+
+    writer.compress_identical_objects(remove_orphans=False)
+    assert writer.get_object(reference) == dictionary_object
+
+    writer.compress_identical_objects(remove_orphans=True)
+    with pytest.raises(AssertionError):
+        writer.get_object(reference)
 
 
 def test_set_need_appearances_writer():
