@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774451733817,
+  "lastUpdate": 1774451773501,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -98083,6 +98083,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032551589612312574",
             "extra": "mean: 810.0851863999992 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ibaranau@redhat.com",
+            "name": "Ignas Baranauskas",
+            "username": "Ygnas"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "88eb5be238566e92ed856a6e65bf716244703ea8",
+          "message": "ENH: Skip MD5 key derivation for AES-256 encrypted PDFs (#3694)\n\nFor V>=5 PDFs, the encryption key is used directly without\nMD5. MD5 computation in _make_crypt_filter() only runs for V<=4,\nallowing AES-256 encrypted PDFs to be read on FIPS-enabled systems where\nhashlib.md5() is blocked.\n\nRC4 and AES-128 encrypted PDFs will still correctly fail on FIPS\nsystems, as their key requires MD5.",
+          "timestamp": "2026-03-25T16:13:06+01:00",
+          "tree_id": "eac92d87ba0c770727e478f37d43c301c2475892",
+          "url": "https://github.com/py-pdf/pypdf/commit/88eb5be238566e92ed856a6e65bf716244703ea8"
+        },
+        "date": 1774451768012,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.477657177954589,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017831013978447302",
+            "extra": "mean: 74.19687166666478 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.83224157971542,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015668519680029903",
+            "extra": "mean: 59.40979371429072 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1506728852542838,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023632906846090204",
+            "extra": "mean: 869.0567169999952 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5739353898952161,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03832987310599031",
+            "extra": "mean: 1.7423564004000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1880219388831205,
+            "unit": "iter/sec",
+            "range": "stddev: 0.062099623117491114",
+            "extra": "mean: 5.318528284199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2338351658295255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03536546986057049",
+            "extra": "mean: 810.4810331999943 msec\nrounds: 5"
           }
         ]
       }
