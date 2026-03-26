@@ -2568,8 +2568,7 @@ def test_compress_identical_objects():
     assert len(out2.getvalue()) > len(out3.getvalue())
 
 
-@pytest.mark.enable_socket
-def test_compress_identical_objects__extra():
+def test_compress_identical_objects__remove_unreferenced():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer._add_object(DictionaryObject({}))
     dictionary_object = DictionaryObject({NameObject("/Testing"): NameObject("/UniqueNameForTesting")})
@@ -2585,7 +2584,6 @@ def test_compress_identical_objects__extra():
 
 @pytest.mark.enable_socket
 def test_compress_identical_objects__deprecation():
-    """Cf #2728 and #2794"""
     url = "https://github.com/user-attachments/files/16575458/tt2.pdf"
     name = "iss2794.pdf"
     in_bytes = BytesIO(get_data_from_url(url, name=name))
