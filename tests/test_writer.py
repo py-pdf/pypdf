@@ -2590,8 +2590,10 @@ def test_compress_identical_objects__deprecation():
     writer = PdfWriter(in_bytes)
     with pytest.warns(
         DeprecationWarning,
-        match=r"^remove_orphans is deprecated and will be removed in pypdf 7\.0\.0\. "
-        r"Use remove_unreferenced instead\.$",
+        match=(
+            r"^remove_orphans is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"Use remove_unreferenced instead\.$"
+        ),
     ):
         writer.compress_identical_objects(remove_orphans=True)
     out1 = BytesIO()
@@ -2605,7 +2607,10 @@ def test_compress_identical_objects__deprecation():
     assert len(out1.getvalue()) - 100 < len(out2.getvalue())
     with pytest.warns(
         DeprecationWarning,
-        match="remove_identicals is deprecated and will be removed in pypdf 7.0.0. Use remove_duplicates instead.",
+        match=(
+            r"^remove_identicals is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"Use remove_duplicates instead\.$"
+        ),
     ):
         writer.compress_identical_objects(remove_identicals=True)
     out3 = BytesIO()
