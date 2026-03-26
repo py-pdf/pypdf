@@ -32,12 +32,7 @@ import struct
 from abc import abstractmethod
 from collections.abc import Generator, Iterable, Iterator, Mapping
 from datetime import datetime
-from typing import (
-    Any,
-    Optional,
-    Union,
-    cast,
-)
+from typing import Any, Optional, TypeVar, Union, cast
 
 from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
@@ -94,11 +89,9 @@ def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
     d = d[-8:]
     return struct.unpack(">q", d)[0]
 
-from typing import Type, TypeVar, Any
-
 T = TypeVar("T")
 
-def cast_or_default(typ: Type[T], value: Any, default: T) -> T:
+def cast_or_default(typ: type[T], value: Any, default: T) -> T:
     return value if isinstance(value, typ) else default
 
 
