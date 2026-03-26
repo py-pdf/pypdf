@@ -352,11 +352,32 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_aes_decrypt_corrupted_data():
-    """Just for robustness"""
+def test_aes_decrypt__empty_data_section():
     aes = CryptAES(secrets.token_bytes(16))
-    for num in [0, 17, 32]:
-        aes.decrypt(secrets.token_bytes(num))
+    for i in range(17):
+        assert aes.decrypt(b"A" * i) == b""
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_aes_decrypt__wrong_padding():
+    # Use fixed values for reliability in testing these.
+    # Depending on the input and values chosen during encryption, some cases might
+    # not raise the desired exception, but this is out of our control.
+    aes = CryptAES(b"\xe8\xcd\xaeAG\xc8cMnLI\xaah\x97\x90@")
+    original = b"\x9b\x9b%\x1a\ro\xf0\x17eI\xdc\x93\xbfp@\x05"
+    encrypted = (
+        b"L\x1f\xecj%\x00\x8dC\xb3%\xfc\x94\xf0\x14\x02\xcd\xa5\x06\x97\x86\x1e^\xfaSN"
+        b"\x1b\xe1C\xce6V\x9a\x8f\xc7\xd3;Z\xe4Zi \x81\x978ms\xd5\xde"
+    )
+
+    assert aes.decrypt(encrypted) == original
+    for i in range(256):
+        broken = encrypted[:-1] + bytes([i])
+        if broken == encrypted:
+            # We will at some point in time generate the original valid encrypted bytes.
+            continue
+        with pytest.raises(ValueError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
+            aes.decrypt(broken)
 
 
 @pytest.mark.samples
