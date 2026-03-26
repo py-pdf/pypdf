@@ -94,6 +94,13 @@ def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
     d = d[-8:]
     return struct.unpack(">q", d)[0]
 
+from typing import Type, TypeVar, Any
+
+T = TypeVar("T")
+
+def cast_or_default(typ: Type[T], value: Any, default: T) -> T:
+    return value if isinstance(value, typ) else default
+
 
 class DocumentInformation(DictionaryObject):
     """
@@ -468,7 +475,7 @@ class PdfDocCommon:
             if CA.DESTS in catalog:
                 tree = cast(TreeObject, catalog[CA.DESTS])
             elif CA.NAMES in catalog:
-                names = cast(DictionaryObject, catalog[CA.NAMES])
+                names = cast_or_default(DictionaryObject, catalog.get(CA.NAMES), default={})
                 if CA.DESTS in names:
                     tree = cast(TreeObject, names[CA.DESTS])
 
