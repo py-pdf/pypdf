@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774512262687,
+  "lastUpdate": 1774531238576,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -92471,6 +92471,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002909404581287348",
             "extra": "mean: 674.0032970000016 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "018a52e7cd55095dd8f0c84b6e46f11918eec9af",
+          "message": "BUG: Correctly verify AES padding during decryption (#3699)\n\nAdditionally removes the handling for incorrectly padded inputs - these\nfiles are most likely not valid and it would be unexpected to let them\npass without further notice.",
+          "timestamp": "2026-03-26T14:18:04+01:00",
+          "tree_id": "15b1ff62535c294f909707e40ab2b81b8cc99e8e",
+          "url": "https://github.com/py-pdf/pypdf/commit/018a52e7cd55095dd8f0c84b6e46f11918eec9af"
+        },
+        "date": 1774531233633,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0317258486423895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006638163619226518",
+            "extra": "mean: 329.8451277999959 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.17600219158958,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005204575839478254",
+            "extra": "mean: 55.01759900000019 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2775242850144127,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03581936537835663",
+            "extra": "mean: 3.6032882670000106 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.960745551307102,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007951016403189827",
+            "extra": "mean: 55.67697605555269 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09054517394047511,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04696575623624811",
+            "extra": "mean: 11.0442109334 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4854722071875588,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003948126412119244",
+            "extra": "mean: 673.1866104000005 msec\nrounds: 5"
           }
         ]
       }
