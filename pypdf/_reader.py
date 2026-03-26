@@ -408,10 +408,11 @@ class PdfReader(PdfDocCommon):
                     )  # pragma: no cover
                 obj = NullObject()  # pragma: no cover
 
-            # Only cache if this object is still registered in xref_objStm.
+            # Only cache if this stream is the authoritative source for the object.
             # Incremental updates may override objects originally in the stream;
             # caching those stale versions would shadow the newer xref entry.
-            if obj_num in self.xref_objStm:
+            authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
+            if authoritative_stm == stmnum:
                 self.cache_indirect_object(0, obj_num, obj)  # type: ignore[arg-type]
 
             if obj_num == indirect_reference.idnum:
