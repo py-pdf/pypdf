@@ -1594,13 +1594,13 @@ class PdfWriter(PdfDocCommon):
         remove_unreferenced: bool = True,
     ) -> None:
         """
-        Parse the PDF file objects that have the same hash.
+        Parse the PDF file and merge objects that have the same hash.
         This will make objects common to multiple pages.
         Recommended to be used just before writing output.
 
         Args:
-            remove_identicals: Positional arguement, used while remove_identicals is still being deprecated.
-            remove_orphans: Positional arguement, used while remove_orphans is still being deprecated.
+            remove_identicals: Deprecated.
+            remove_orphans: Deprecated.
             remove_duplicates: Remove duplicate objects.
             remove_unreferenced: Remove unreferenced objects.
 
