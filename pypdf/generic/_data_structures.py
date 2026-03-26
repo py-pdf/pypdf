@@ -594,6 +594,8 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 tok = read_non_whitespace(stream)
                 stream.seek(-1, 1)
                 value = read_object(stream, pdf, forced_encoding)
+            except (RecursionError, LimitReachedError) as exc:
+                raise PdfReadError(exc.__repr__())
             except Exception as exc:
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(exc.__repr__())

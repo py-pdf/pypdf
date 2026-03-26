@@ -9,7 +9,7 @@ from typing import Callable
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import LimitReachedError
+from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -265,3 +265,22 @@ def test_content_stream__array_based__output_length():
             match=r"^Array\-based stream has at least 75003501 > 75000000 output bytes\.$"
     ):
         _ = reader.pages[0].get_contents()
+
+
+@pytest.mark.timeout(5)
+def test_dictionary_object__read_from_stream__infinite_loop(caplog):
+    data = b"""1 0 obj
+<<
+<</Length 1 0 R>>
+stream
+trailer
+<< /Size 1 >>
+startxref
+0
+%%EOF
+"""
+    buffer = BytesIO(data)
+
+    reader = PdfReader(buffer, strict=False)
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Cannot find Root object in pdf$"):
+        assert len(reader.pages) == 0
