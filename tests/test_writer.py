@@ -3041,6 +3041,6 @@ def test_no_names_should_not_explode():
     writer = PdfWriter()
     for page in reader.pages:
         writer.add_page(page)
+    reader.close()
     with NamedTemporaryFile() as output_file:
         writer.write(output_file)
-    reader.close()
