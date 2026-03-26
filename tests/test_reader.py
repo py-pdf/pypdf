@@ -2124,7 +2124,7 @@ def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
         (2, 4, 0),              # obj 5: in objstm 4, index 0
         (2, 7, 0),              # obj 6: in objstm 7, index 0 (authoritative)
         (1, offsets[7], 0),     # obj 7: new objstm
-        (1, xref_offset, 0),   # obj 8: this xref stream
+        (1, xref_offset, 0),    # obj 8: this xref stream
     ]
     stream_data = bytearray()
     for typ, f1, f2 in raw_entries:
@@ -2142,7 +2142,7 @@ def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
 
     reader = PdfReader(BytesIO(buf.getvalue()))
 
-    # Resolve AcroForm — this decompresses stream 4, which contains
+    # Resolve AcroForm - this decompresses stream 4, which contains
     # the stale copy of obj 6 (without /V).
     acroform = reader.trailer["/Root"].get_object()["/AcroForm"].get_object()
     assert "/Fields" in acroform
