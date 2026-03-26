@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774451773501,
+  "lastUpdate": 1774512238598,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -92405,6 +92405,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018621937171716227",
             "extra": "mean: 632.4707730000057 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrew.stahlman@gmail.com",
+            "name": "Andrew Stahlman",
+            "username": "astahlman"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4d8ebcec00d883eed81cd0aa88965217060d4eef",
+          "message": "BUG: Fix stale object cache from non-authoritative object streams (#3698)\n\nThe batch-parse optimization (added in #3677) caches every object\nfound when decompressing an object stream. The guard intended to\nskip overridden objects checked `obj_num in self.xref_objStm`, but\nthis passes for any compressed object — not just ones that belong\nto the current stream.\n\nIn incrementally-updated PDFs, the same object can appear in\nmultiple object streams across revisions (per the PDF 1.7 spec,\n§7.5.6). The xref designates one stream as authoritative.\nDecompressing a stale stream (e.g. to read a co-located AcroForm\ndict) would cache the old version of the object, shadowing the\ncurrent one.\n\nFix: only cache when `xref_objStm` points the object at the stream\nbeing decompressed.\n\nCloses #3697.\n\n---------\n\nCo-authored-by: Claude Opus 4.6 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-03-26T09:01:15+01:00",
+          "tree_id": "e2cdbeaf39179b335b3181000e0baef1de518345",
+          "url": "https://github.com/py-pdf/pypdf/commit/4d8ebcec00d883eed81cd0aa88965217060d4eef"
+        },
+        "date": 1774512233241,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.056831273649883,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005883232038659445",
+            "extra": "mean: 327.1361454000015 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.59341819565862,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004263305842311659",
+            "extra": "mean: 53.78247235000018 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2821826883429306,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022528319872313914",
+            "extra": "mean: 3.5438035049999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.210642428123258,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005792435437965187",
+            "extra": "mean: 54.91294466666751 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09073243760638831,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07178151728733136",
+            "extra": "mean: 11.021416666200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4836722675556848,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002909404581287348",
+            "extra": "mean: 674.0032970000016 msec\nrounds: 5"
           }
         ]
       }
