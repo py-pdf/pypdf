@@ -4,7 +4,6 @@ import sys
 import time
 from io import BytesIO
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Union
 
 import pytest
@@ -370,15 +369,6 @@ def test_issue297(caplog):
         "parsing for Object Streams",
     ]
     reader.pages[0]
-
-def test_no_names_should_not_explode():
-    reader = PdfReader(RESOURCE_ROOT / "names-none.pdf")
-    writer = PdfWriter()
-    for page in reader.pages:
-        writer.add_page(page)
-    reader.close()
-    with NamedTemporaryFile() as output_file:
-        writer.write(output_file)
 
 
 @pytest.mark.parametrize(

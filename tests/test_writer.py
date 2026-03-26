@@ -3035,3 +3035,12 @@ def test_flatten_form_field_with_signature():
     writer.write(b)
 
     _ = PdfReader(b)
+
+def test_no_names_should_not_explode():
+    reader = PdfReader(RESOURCE_ROOT / "names-none.pdf")
+    writer = PdfWriter()
+    for page in reader.pages:
+        writer.add_page(page)
+    reader.close()
+    with NamedTemporaryFile() as output_file:
+        writer.write(output_file)
