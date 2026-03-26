@@ -352,6 +352,13 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_aes_decrypt__empty_data_section():
+    aes = CryptAES(secrets.token_bytes(16))
+    for i in range(17):
+        assert aes.decrypt(b"A" * i) == b""
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 def test_aes_decrypt__wrong_padding():
     # Use fixed values for reliability in testing these.
     # Depending on the input and values chosen during encryption, some cases might
