@@ -136,8 +136,8 @@ def test_handle_flate__autodesk_indexed() -> None:
     reader = PdfReader(RESOURCE_ROOT / "AutoCad_Diagram.pdf")
     page = reader.pages[0]
     for name, image in page.images.items():
-        if isinstance(name, str):
-            assert name.startswith("/")
+        assert isinstance(name, str)
+        assert name.startswith("/")
         assert image.image is not None
         image.image.load()
 

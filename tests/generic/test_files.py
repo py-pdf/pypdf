@@ -501,7 +501,6 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     assert isinstance(embedded, DictionaryObject)
 
     result = embedded["/Names"]
-
     assert result == [
         "factur-x.xml",
         attachments[0].pdf_object.indirect_reference,

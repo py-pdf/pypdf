@@ -23,8 +23,8 @@ SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 def _get_data_from_url(url: str) -> bytes:
     ssl._create_default_https_context = cast(
-    Callable[..., ssl.SSLContext],
-    ssl._create_unverified_context,
+        Callable[..., ssl.SSLContext],
+        ssl._create_unverified_context,
     )
     attempts = 0
     while attempts < 3:
