@@ -2578,7 +2578,10 @@ def test_compress_identical_objects__remove_unreferenced():
     assert writer.get_object(reference) == dictionary_object
 
     writer.compress_identical_objects(remove_unreferenced=True)
-    with pytest.raises(AssertionError):
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=rf"^Object IndirectObject\({reference.idnum}, 0, \d+\) not found!$"
+    ):
         writer.get_object(reference)
 
 
