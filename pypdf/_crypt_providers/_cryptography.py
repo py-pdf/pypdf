@@ -28,8 +28,8 @@
 import secrets
 
 from cryptography import __version__
-from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
+from cryptography.hazmat.primitives.padding import PKCS7
 
 try:
     # 43.0.0 - https://cryptography.io/en/latest/changelog/#v43-0-0
@@ -63,12 +63,12 @@ class CryptAES(CryptBase):
 
     def encrypt(self, data: bytes) -> bytes:
         iv = secrets.token_bytes(16)
-        pad = padding.PKCS7(128).padder()
-        data = pad.update(data) + pad.finalize()
+        padder = PKCS7(128).padder()
+        padded_data = padder.update(data) + padder.finalize()
 
         cipher = Cipher(self.alg, CBC(iv))
         encryptor = cipher.encryptor()
-        return iv + encryptor.update(data) + encryptor.finalize()
+        return iv + encryptor.update(padded_data) + encryptor.finalize()
 
     def decrypt(self, data: bytes) -> bytes:
         iv = data[:16]
@@ -77,15 +77,12 @@ class CryptAES(CryptBase):
         if not data:
             return data
 
-        # just for robustness, it does not happen under normal circumstances
-        if len(data) % 16 != 0:
-            pad = padding.PKCS7(128).padder()
-            data = pad.update(data) + pad.finalize()
-
         cipher = Cipher(self.alg, CBC(iv))
         decryptor = cipher.decryptor()
-        d = decryptor.update(data) + decryptor.finalize()
-        return d[: -d[-1]]
+        padded_data = decryptor.update(data) + decryptor.finalize()
+
+        unpadder = PKCS7(128).unpadder()
+        return unpadder.update(padded_data) + unpadder.finalize()
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:

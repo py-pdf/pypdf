@@ -2061,3 +2061,92 @@ def test_objstm_skips_cache_for_overridden_objects():
     assert reader.cache_get_indirect_object(0, obj_ids[0]) is not None
 
     reader.xref_objStm[removed_id] = saved_entry
+
+
+def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
+    """Decompressing a non-authoritative stream must not cache stale object copies."""
+
+    def _write_obj(buf: io.BytesIO, objnum: int, data: Union[str, bytes]) -> int:
+        offset = buf.tell()
+        buf.write(f"{objnum} 0 obj\n".encode())
+        buf.write(data if isinstance(data, bytes) else data.encode())
+        buf.write(b"\nendobj\n")
+        return offset
+
+    def _write_objstm(buf: io.BytesIO, objnum: int, obj_contents: list[tuple[int, bytes]]) -> int:
+        header_parts, data_parts, cur = [], [], 0
+        for oid, content in obj_contents:
+            header_parts.append(f"{oid} {cur}")
+            data_parts.append(content)
+            cur += len(content) + 1
+        header = " ".join(header_parts) + " "
+        data = b" ".join(data_parts)
+        stream = header.encode() + data
+        offset = buf.tell()
+        buf.write(f"{objnum} 0 obj\n".encode())
+        buf.write(
+            f"<< /Type /ObjStm /N {len(obj_contents)} "
+            f"/First {len(header)} /Length {len(stream)} >>\n".encode()
+        )
+        buf.write(b"stream\n")
+        buf.write(stream)
+        buf.write(b"\nendstream\nendobj\n")
+        return offset
+
+    buf = io.BytesIO()
+    buf.write(b"%PDF-1.5\n")
+
+    offsets = {}
+    offsets[1] = _write_obj(buf, 1, "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R >>")
+    offsets[2] = _write_obj(buf, 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    offsets[3] = _write_obj(
+        buf, 3,
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Annots [6 0 R] >>",
+    )
+    # Old object stream: AcroForm (obj 5) + field without /V (obj 6)
+    offsets[4] = _write_objstm(buf, 4, [
+        (5, b"<< /Fields [6 0 R] >>"),
+        (6, b"<< /Type /Annot /Subtype /Widget /FT /Tx /T (amount) >>"),
+    ])
+    # New object stream: field with /V (obj 6, updated)
+    offsets[7] = _write_objstm(buf, 7, [
+        (6, b"<< /Type /Annot /Subtype /Widget /FT /Tx /T (amount) /V (42) >>"),
+    ])
+
+    # Cross-reference stream
+    xref_offset = buf.tell()
+    raw_entries = [
+        (0, 0, 65535),          # obj 0: free
+        (1, offsets[1], 0),     # obj 1: catalog
+        (1, offsets[2], 0),     # obj 2: pages
+        (1, offsets[3], 0),     # obj 3: page
+        (1, offsets[4], 0),     # obj 4: old objstm
+        (2, 4, 0),              # obj 5: in objstm 4, index 0
+        (2, 7, 0),              # obj 6: in objstm 7, index 0 (authoritative)
+        (1, offsets[7], 0),     # obj 7: new objstm
+        (1, xref_offset, 0),    # obj 8: this xref stream
+    ]
+    stream_data = bytearray()
+    for typ, f1, f2 in raw_entries:
+        stream_data.append(typ)
+        stream_data.extend(f1.to_bytes(4, "big"))
+        stream_data.extend(f2.to_bytes(2, "big"))
+    buf.write(
+        f"8 0 obj\n<< /Type /XRef /Size 9 /W [1 4 2] "
+        f"/Root 1 0 R /Length {len(stream_data)} /Index [0 9] >>".encode()
+    )
+    buf.write(b"\nstream\n")
+    buf.write(bytes(stream_data))
+    buf.write(b"\nendstream\nendobj\n")
+    buf.write(f"startxref\n{xref_offset}\n%%EOF\n".encode())
+
+    reader = PdfReader(BytesIO(buf.getvalue()))
+
+    # Resolve AcroForm - this decompresses stream 4, which contains
+    # the stale copy of obj 6 (without /V).
+    acroform = reader.trailer["/Root"].get_object()["/AcroForm"].get_object()
+    assert "/Fields" in acroform
+
+    # obj 6 must reflect the authoritative version from stream 7.
+    field = reader.get_object(6)
+    assert field["/V"] == "42"
