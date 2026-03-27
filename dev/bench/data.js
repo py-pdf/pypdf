@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774531266219,
+  "lastUpdate": 1774608754972,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -92537,6 +92537,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003948126412119244",
             "extra": "mean: 673.1866104000005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6f10e02df617d22fb35faa33ac7e8b95e510d733",
+          "message": "BUG: Use remove_orphans in compress_identical_objects (#3310)\n\nPdfWriter.compress_identical_objects ignored remove_orphans. Correct for this.\n\nAlso deprecate_with_replacement remove_orphans to remove_unreferenced and remove_identicals to remove_duplicates. This makes the naming more obvious.\n\nCloses #3306.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-03-27T11:49:56+01:00",
+          "tree_id": "846fb594d85ae37e51c0e2aab38d69987b2a3084",
+          "url": "https://github.com/py-pdf/pypdf/commit/6f10e02df617d22fb35faa33ac7e8b95e510d733"
+        },
+        "date": 1774608749520,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0328405031811707,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005807496175823869",
+            "extra": "mean: 329.7239004000019 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.69069212978747,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038959973824032176",
+            "extra": "mean: 50.7854164500003 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2784394165641812,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005854894828574759",
+            "extra": "mean: 3.5914455371999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.949971777258767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003919205956883484",
+            "extra": "mean: 55.710394000001884 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0905339300329396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0266035949378513",
+            "extra": "mean: 11.0455825748 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4874421854575293,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029884857792004072",
+            "extra": "mean: 672.2950376000028 msec\nrounds: 5"
           }
         ]
       }
