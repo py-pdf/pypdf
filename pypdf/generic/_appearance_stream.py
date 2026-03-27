@@ -344,7 +344,13 @@ class TextStreamAppearance(BaseStreamAppearance):
         """
         super().__init__(layout)
 
-        if not font:
+        # If a font resource was added, get the font character map
+        if font_resource and not font:
+            font = Font.from_font_resource(font_resource)
+        elif font and not font_resource:
+            font_resource = font.as_font_resource()
+        if not (font and font_resource):
+            logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
             font_name = "/Helv"
             core_font_metrics = CORE_FONT_METRICS["Helvetica"]
             font = Font(
