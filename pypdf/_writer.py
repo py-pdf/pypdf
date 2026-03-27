@@ -464,7 +464,8 @@ class PdfWriter(PdfDocCommon):
             raise ValueError("PDF must be self")
         else:
             obj = self._objects[indirect_reference.idnum - 1]
-        assert obj is not None, "mypy"
+        if obj is None:
+            raise PdfReadError(f"Object {indirect_reference!r} not found!")
         return obj
 
     def _replace_object(
