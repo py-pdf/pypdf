@@ -416,7 +416,7 @@ def test_iss_1142():
         # iss 1134:
         (
             "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF",
-            "iss_1134.pdf",
+            "iss1134.pdf",
         ),
         # iss 1:
         (
