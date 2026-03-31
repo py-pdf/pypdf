@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774934773888,
+  "lastUpdate": 1774934805371,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -99271,6 +99271,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04246773590078",
             "extra": "mean: 861.9793446000074 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f3f501b0ce2796388547b451bd6c45103aaf85c0",
+          "message": "DEV: Update pygments version to 2.20.0 (#3707)",
+          "timestamp": "2026-03-31T07:23:44+02:00",
+          "tree_id": "07bb0c573d595860f72f31ba7e1068c6f6392800",
+          "url": "https://github.com/py-pdf/pypdf/commit/f3f501b0ce2796388547b451bd6c45103aaf85c0"
+        },
+        "date": 1774934800600,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.97186534377303,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017519722157849308",
+            "extra": "mean: 71.5724046428546 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.995906510854738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006454943377174983",
+            "extra": "mean: 43.48600041176767 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1552119925310964,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015603234989712937",
+            "extra": "mean: 865.6419830000004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5221035124689737,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021101236983024886",
+            "extra": "mean: 1.915329003000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18246633212117894,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1182813670128574",
+            "extra": "mean: 5.480463099000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1647888759255494,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04339700268227263",
+            "extra": "mean: 858.5246826000059 msec\nrounds: 5"
           }
         ]
       }
