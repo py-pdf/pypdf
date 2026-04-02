@@ -25,7 +25,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import secrets
+import warnings
 
 from cryptography import __version__
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
@@ -43,12 +45,33 @@ from pypdf._crypt_providers._base import CryptBase
 
 crypt_provider = ("cryptography", __version__)
 
+_ALLOW_INSECURE_RC4_ENV = "PYPDF_ALLOW_INSECURE_RC4"
+
+
+def _allow_insecure_rc4() -> bool:
+    value = os.environ.get(_ALLOW_INSECURE_RC4_ENV, "")
+    return value.lower() in {"1", "true", "yes"}
+
+
+def _ensure_rc4_write_allowed() -> None:
+    if not _allow_insecure_rc4():
+        raise ValueError(
+            "RC4 encryption is disabled by default because it is insecure. "
+            f"Set {_ALLOW_INSECURE_RC4_ENV}=1 to enable it explicitly."
+        )
+    warnings.warn(
+        "RC4 encryption is insecure and should only be used for legacy compatibility.",
+        UserWarning,
+        stacklevel=2,
+    )
+
 
 class CryptRC4(CryptBase):
     def __init__(self, key: bytes) -> None:
         self.cipher = Cipher(ARC4(key), mode=None)
 
     def encrypt(self, data: bytes) -> bytes:
+        _ensure_rc4_write_allowed()
         encryptor = self.cipher.encryptor()
         return encryptor.update(data) + encryptor.finalize()
 
