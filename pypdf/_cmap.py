@@ -39,7 +39,7 @@ _predefined_cmap: dict[str, str] = {
 
 
 def get_encoding(
-    ft: DictionaryObject
+    ft: DictionaryObject,
 ) -> tuple[Union[str, dict[int, str]], dict[Any, Any]]:
     encoding = _parse_encoding(ft)
     map_dict, int_entry = _parse_to_unicode(ft)
@@ -56,9 +56,7 @@ def get_encoding(
     return encoding, map_dict
 
 
-def _parse_encoding(
-    ft: DictionaryObject
-) -> Union[str, dict[int, str]]:
+def _parse_encoding(ft: DictionaryObject) -> Union[str, dict[int, str]]:
     encoding: Union[str, list[str], dict[int, str]] = []
     if "/Encoding" not in ft:
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
@@ -84,7 +82,11 @@ def _parse_encoding(
             else:
                 raise Exception("not found")
         except Exception:
-            logger_error("Advanced encoding %(encoding)s not implemented yet", source=__name__, encoding=enc)
+            logger_error(
+                "Advanced encoding %(encoding)s not implemented yet",
+                source=__name__,
+                encoding=enc,
+            )
             encoding = enc
     elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
         try:
@@ -92,7 +94,8 @@ def _parse_encoding(
         except Exception:
             logger_error(
                 "Advanced encoding %(encoding)s not implemented yet",
-                source=__name__, encoding=encoding
+                source=__name__,
+                encoding=encoding,
             )
             encoding = charset_encoding["/StandardEncoding"].copy()
     else:
@@ -115,9 +118,7 @@ def _parse_encoding(
     return encoding
 
 
-def _parse_to_unicode(
-    ft: DictionaryObject
-) -> tuple[dict[Any, Any], list[int]]:
+def _parse_to_unicode(ft: DictionaryObject) -> tuple[dict[Any, Any], list[int]]:
     # will store all translation code
     # and map_dict[-1] we will have the number of bytes to convert
     map_dict: dict[Any, Any] = {}
@@ -131,9 +132,9 @@ def _parse_to_unicode(
         return {}, []
     process_rg: bool = False
     process_char: bool = False
-    multiline_rg: Union[
-        None, tuple[int, int]
-    ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
+    multiline_rg: Union[None, tuple[int, int]] = (
+        None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
+    )
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
@@ -212,7 +213,12 @@ def process_cm_line(
         try:
             multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
         except binascii.Error as error:
-            logger_warning(f"Skipping broken line {line!r}: {error}", __name__)
+            logger_warning(
+                "Skipping broken line %(line)r: %(error)s",
+                source=__name__,
+                line=line,
+                error=error,
+            )
     elif process_char:
         parse_bfchar(line, map_dict, int_entry)
     return process_rg, process_char, multiline_rg
@@ -224,7 +230,9 @@ MAPPING_DICTIONARY_SIZE_LIMIT = 100_000
 
 def _check_mapping_size(size: int) -> None:
     if size > MAPPING_DICTIONARY_SIZE_LIMIT:
-        raise LimitReachedError(f"Maximum /ToUnicode size limit reached: {size} > {MAPPING_DICTIONARY_SIZE_LIMIT}.")
+        raise LimitReachedError(
+            f"Maximum /ToUnicode size limit reached: {size} > {MAPPING_DICTIONARY_SIZE_LIMIT}."
+        )
 
 
 def parse_bfrange(
@@ -281,7 +289,9 @@ def parse_bfrange(
             fmt2 = b"%%0%dX" % max(4, len(lst[2]))
             closure_found = True
             range_size = max(0, b - a + 1)
-            _check_mapping_size(entry_count + range_size)  # This can be checked beforehand.
+            _check_mapping_size(
+                entry_count + range_size
+            )  # This can be checked beforehand.
             while a <= b:
                 map_dict[
                     unhexlify(fmt % a).decode(
@@ -309,7 +319,12 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
                     "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
                 )  # join is here as some cases where the code was split
             except BinasciiError as exception:
-                logger_warning(f"Got invalid hex string: {exception!s} ({lst[1]!r})", __name__)
+                logger_warning(
+                    "Got invalid hex string: %(exception)s %(item)r",
+                    source=__name__,
+                    exception=exception,
+                    item=lst[1],
+                )
         map_dict[
             unhexlify(lst[0]).decode(
                 "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"

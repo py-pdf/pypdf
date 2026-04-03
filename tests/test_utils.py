@@ -1,4 +1,5 @@
 """Test the pypdf._utils module."""
+
 import functools
 import io
 import re
@@ -9,7 +10,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import pytest
-
+import logging
 import pypdf._utils
 from pypdf._utils import (
     File,
@@ -22,6 +23,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     format_iso8824_date,
     logger_error,
+    logger_warning,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -210,8 +212,8 @@ def test_mark_location():
 
 def test_deprecate_no_replacement():
     with pytest.warns(
-            expected_warning=DeprecationWarning,
-            match="foo is deprecated and will be removed in pypdf 3.0.0."
+        expected_warning=DeprecationWarning,
+        match="foo is deprecated and will be removed in pypdf 3.0.0.",
     ):
         pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")
 
@@ -344,6 +346,15 @@ def test_logger_error(caplog):
     assert "Advanced encoding {'/key': 'value'} not implemented yet" in caplog.text
 
 
+def test_logger_warning(caplog):
+    caplog.set_level(logging.WARNING)
+    message = "Skipping broken line %(line)r :%(error)s"
+    line = "some line broken"
+    error = ""
+    logger_warning(message, source=__name__, line=line, error=error)
+    assert "Skipping broken line some line broken: error" in caplog.text
+
+
 def test_rename_kwargs():
     def deprecation_bookmark_nofail(**aliases: str) -> Callable:
         """
@@ -384,7 +395,8 @@ def test_rename_kwargs():
 
 def test_rename_kwargs__stacklevel(tmp_path: Path) -> None:
     script = tmp_path / "script.py"
-    script.write_text("""
+    script.write_text(
+        """
 import functools
 import warnings
 
@@ -407,9 +419,12 @@ def foo(old_param: int = 1, baz: int = 2, new_param: int = 1) -> None:
 
 warnings.simplefilter("always")
 foo(old_param=12)
-    """)
+    """
+    )
 
-    result = subprocess.run([sys.executable, script], capture_output=True, text=True)  # noqa: S603
+    result = subprocess.run(
+        [sys.executable, script], capture_output=True, text=True
+    )  # noqa: S603
     assert result.returncode == 0
     assert result.stderr == (
         f"{script}:23: DeprecationWarning: old_param is deprecated as an argument. "
@@ -493,11 +508,15 @@ def test_format_iso8824_date():
     result = format_iso8824_date(dt_utc)
     assert result == "D:20210318120756+00'00'"
 
-    dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
+    dt_positive = datetime(
+        2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30))
+    )
     result = format_iso8824_date(dt_positive)
     assert result == "D:20210318120756+02'30'"
 
-    dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
+    dt_negative = datetime(
+        2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30))
+    )
     result = format_iso8824_date(dt_negative)
     assert result == "D:20210318120756-05'30'"
 
@@ -513,12 +532,16 @@ def test_format_iso8824_date_roundtrip():
     parsed = parse_iso8824_date(formatted)
     assert parsed == dt_utc
 
-    dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
+    dt_positive = datetime(
+        2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30))
+    )
     formatted = format_iso8824_date(dt_positive)
     parsed = parse_iso8824_date(formatted)
     assert parsed == dt_positive
 
-    dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
+    dt_negative = datetime(
+        2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30))
+    )
     formatted = format_iso8824_date(dt_negative)
     parsed = parse_iso8824_date(formatted)
     assert parsed == dt_negative
