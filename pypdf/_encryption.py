@@ -125,7 +125,7 @@ class AlgV4:
         rev: int,
         key_size: int,
         o_entry: bytes,
-        P: int,
+        p: int,
         id1_entry: bytes,
         metadata_encrypted: bool,
     ) -> bytes:
@@ -178,7 +178,7 @@ class AlgV4:
             rev: The encryption revision (see PDF standard)
             key_size: The size of the key in bytes
             o_entry: The owner entry
-            P: A set of flags specifying which operations shall be permitted
+            p: A set of flags specifying which operations shall be permitted
                 when the document is opened with user access. If bit 2 is set to 1,
                 all other bits are ignored and all operations are permitted.
                 If bit 2 is set to 0, permission for operations are based on the
@@ -193,7 +193,7 @@ class AlgV4:
         a = _padding(password)
         u_hash = hashlib.md5(a)
         u_hash.update(o_entry)
-        u_hash.update(struct.pack("<I", P))
+        u_hash.update(struct.pack("<I", p))
         u_hash.update(id1_entry)
         if rev >= 4 and not metadata_encrypted:
             u_hash.update(b"\xff\xff\xff\xff")
@@ -344,7 +344,7 @@ class AlgV4:
         key_size: int,
         o_entry: bytes,
         u_entry: bytes,
-        P: int,
+        p: int,
         id1_entry: bytes,
         metadata_encrypted: bool,
     ) -> bytes:
@@ -373,7 +373,7 @@ class AlgV4:
             key_size: The size of the key in bytes
             o_entry: The owner entry
             u_entry: The user entry
-            P: A set of flags specifying which operations shall be permitted
+            p: A set of flags specifying which operations shall be permitted
                 when the document is opened with user access. If bit 2 is set to 1,
                 all other bits are ignored and all operations are permitted.
                 If bit 2 is set to 0, permission for operations are based on the
@@ -386,7 +386,7 @@ class AlgV4:
 
         """
         key = AlgV4.compute_key(
-            user_password, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
+            user_password, rev, key_size, o_entry, p, id1_entry, metadata_encrypted
         )
         u_value = AlgV4.compute_U_value(key, rev, id1_entry)
         if rev >= 3:
@@ -403,7 +403,7 @@ class AlgV4:
         key_size: int,
         o_entry: bytes,
         u_entry: bytes,
-        P: int,
+        p: int,
         id1_entry: bytes,
         metadata_encrypted: bool,
     ) -> bytes:
@@ -436,7 +436,7 @@ class AlgV4:
             key_size: The size of the key in bytes
             o_entry: The owner entry
             u_entry: The user entry
-            P: A set of flags specifying which operations shall be permitted
+            p: A set of flags specifying which operations shall be permitted
                 when the document is opened with user access. If bit 2 is set to 1,
                 all other bits are ignored and all operations are permitted.
                 If bit 2 is set to 0, permission for operations are based on the
@@ -463,7 +463,7 @@ class AlgV4:
             key_size,
             o_entry,
             u_entry,
-            P,
+            p,
             id1_entry,
             metadata_encrypted,
         )
@@ -472,7 +472,7 @@ class AlgV4:
 class AlgV5:
     @staticmethod
     def verify_owner_password(
-        R: int, password: bytes, o_value: bytes, oe_value: bytes, u_value: bytes
+        r: int, password: bytes, o_value: bytes, oe_value: bytes, u_value: bytes
     ) -> bytes:
         """
         Algorithm 3.2a Computing an encryption key.
@@ -517,7 +517,7 @@ class AlgV5:
            They should match the value in the P key.
 
         Args:
-            R: A number specifying which revision of the standard security
+            r: A number specifying which revision of the standard security
                 handler shall be used to interpret this dictionary
             password: The owner password
             o_value: A 32-byte string, based on both the owner and user passwords,
@@ -534,23 +534,23 @@ class AlgV5:
         """
         password = password[:127]
         if (
-            AlgV5.calculate_hash(R, password, o_value[32:40], u_value[:48])
+            AlgV5.calculate_hash(r, password, o_value[32:40], u_value[:48])
             != o_value[:32]
         ):
             return b""
         iv = bytes(0 for _ in range(16))
-        tmp_key = AlgV5.calculate_hash(R, password, o_value[40:48], u_value[:48])
+        tmp_key = AlgV5.calculate_hash(r, password, o_value[40:48], u_value[:48])
         return aes_cbc_decrypt(tmp_key, iv, oe_value)
 
     @staticmethod
     def verify_user_password(
-        R: int, password: bytes, u_value: bytes, ue_value: bytes
+        r: int, password: bytes, u_value: bytes, ue_value: bytes
     ) -> bytes:
         """
         See :func:`verify_owner_password`.
 
         Args:
-            R: A number specifying which revision of the standard security
+            r: A number specifying which revision of the standard security
                 handler shall be used to interpret this dictionary
             password: The user password
             u_value: A 32-byte string, based on the user password, that shall be
@@ -563,17 +563,17 @@ class AlgV5:
 
         """
         password = password[:127]
-        if AlgV5.calculate_hash(R, password, u_value[32:40], b"") != u_value[:32]:
+        if AlgV5.calculate_hash(r, password, u_value[32:40], b"") != u_value[:32]:
             return b""
         iv = bytes(0 for _ in range(16))
-        tmp_key = AlgV5.calculate_hash(R, password, u_value[40:48], b"")
+        tmp_key = AlgV5.calculate_hash(r, password, u_value[40:48], b"")
         return aes_cbc_decrypt(tmp_key, iv, ue_value)
 
     @staticmethod
-    def calculate_hash(R: int, password: bytes, salt: bytes, udata: bytes) -> bytes:
+    def calculate_hash(r: int, password: bytes, salt: bytes, udata: bytes) -> bytes:
         # https://github.com/qpdf/qpdf/blob/main/libqpdf/QPDF_encryption.cc
         k = hashlib.sha256(password + salt + udata).digest()
-        if R < 6:
+        if r < 6:
             return k
         count = 0
         while True:
@@ -619,7 +619,7 @@ class AlgV5:
 
     @staticmethod
     def generate_values(
-        R: int,
+        r: int,
         user_password: bytes,
         owner_password: bytes,
         key: bytes,
@@ -628,8 +628,8 @@ class AlgV5:
     ) -> dict[Any, Any]:
         user_password = user_password[:127]
         owner_password = owner_password[:127]
-        u_value, ue_value = AlgV5.compute_U_value(R, user_password, key)
-        o_value, oe_value = AlgV5.compute_O_value(R, owner_password, key, u_value)
+        u_value, ue_value = AlgV5.compute_U_value(r, user_password, key)
+        o_value, oe_value = AlgV5.compute_O_value(r, owner_password, key, u_value)
         perms = AlgV5.compute_Perms_value(key, p, metadata_encrypted)
         return {
             "/U": u_value,
@@ -640,7 +640,7 @@ class AlgV5:
         }
 
     @staticmethod
-    def compute_U_value(R: int, password: bytes, key: bytes) -> tuple[bytes, bytes]:
+    def compute_U_value(r: int, password: bytes, key: bytes) -> tuple[bytes, bytes]:
         """
         Algorithm 3.8 Computing the encryption dictionary’s U (user password)
         and UE (user encryption key) values.
@@ -658,7 +658,7 @@ class AlgV5:
            as the UE key.
 
         Args:
-            R:
+            r:
             password:
             key:
 
@@ -669,16 +669,16 @@ class AlgV5:
         random_bytes = secrets.token_bytes(16)
         val_salt = random_bytes[:8]
         key_salt = random_bytes[8:]
-        u_value = AlgV5.calculate_hash(R, password, val_salt, b"") + val_salt + key_salt
+        u_value = AlgV5.calculate_hash(r, password, val_salt, b"") + val_salt + key_salt
 
-        tmp_key = AlgV5.calculate_hash(R, password, key_salt, b"")
+        tmp_key = AlgV5.calculate_hash(r, password, key_salt, b"")
         iv = bytes(0 for _ in range(16))
         ue_value = aes_cbc_encrypt(tmp_key, iv, key)
         return u_value, ue_value
 
     @staticmethod
     def compute_O_value(
-        R: int, password: bytes, key: bytes, u_value: bytes
+        r: int, password: bytes, key: bytes, u_value: bytes
     ) -> tuple[bytes, bytes]:
         """
         Algorithm 3.9 Computing the encryption dictionary’s O (owner password)
@@ -700,7 +700,7 @@ class AlgV5:
            The resulting 32-byte string is stored as the OE key.
 
         Args:
-            R:
+            r:
             password:
             key:
             u_value: A 32-byte string, based on the user password, that shall be
@@ -715,9 +715,9 @@ class AlgV5:
         val_salt = random_bytes[:8]
         key_salt = random_bytes[8:]
         o_value = (
-            AlgV5.calculate_hash(R, password, val_salt, u_value) + val_salt + key_salt
+            AlgV5.calculate_hash(r, password, val_salt, u_value) + val_salt + key_salt
         )
-        tmp_key = AlgV5.calculate_hash(R, password, key_salt, u_value[:48])
+        tmp_key = AlgV5.calculate_hash(r, password, key_salt, u_value[:48])
         iv = bytes(0 for _ in range(16))
         oe_value = aes_cbc_encrypt(tmp_key, iv, key)
         return o_value, oe_value
@@ -789,20 +789,20 @@ class Encryption:
     Collects and manages parameters for PDF document encryption and decryption.
 
     Args:
-        V: A code specifying the algorithm to be used in encrypting and
+        v: A code specifying the algorithm to be used in encrypting and
            decrypting the document.
-        R: The revision of the standard security handler.
-        Length: The length of the encryption key in bits.
-        P: A set of flags specifying which operations shall be permitted
+        r: The revision of the standard security handler.
+        length: The length of the encryption key in bits.
+        p: A set of flags specifying which operations shall be permitted
            when the document is opened with user access
         entry: The encryption dictionary object.
-        EncryptMetadata: Whether to encrypt metadata in the document.
+        encrypt_metadata: Whether to encrypt metadata in the document.
         first_id_entry: The first 16 bytes of the file's original ID.
-        StmF: The name of the crypt filter that shall be used by default
+        stm_f: The name of the crypt filter that shall be used by default
               when decrypting streams.
-        StrF: The name of the crypt filter that shall be used when decrypting
+        str_f: The name of the crypt filter that shall be used when decrypting
               all strings in the document.
-        EFF: The name of the crypt filter that shall be used when
+        e_f_f: The name of the crypt filter that shall be used when
              encrypting embedded file streams that do not have their own
              crypt filter specifier.
         values: Additional encryption parameters.
@@ -811,29 +811,29 @@ class Encryption:
 
     def __init__(
         self,
-        V: int,
-        R: int,
-        Length: int,
-        P: int,
+        v: int,
+        r: int,
+        length: int,
+        p: int,
         entry: DictionaryObject,
-        EncryptMetadata: bool,
+        encrypt_metadata: bool,
         first_id_entry: bytes,
-        StmF: str,
-        StrF: str,
-        EFF: str,
+        stm_f: str,
+        str_f: str,
+        e_f_f: str,
         values: Optional[EncryptionValues],
     ) -> None:
         # §7.6.2, entries common to all encryption dictionaries
         # use same name as keys of encryption dictionaries entries
-        self.V = V
-        self.R = R
-        self.Length = Length  # key_size
-        self.P = (P + 0x100000000) % 0x100000000  # maybe P < 0
-        self.EncryptMetadata = EncryptMetadata
+        self.v = v
+        self.r = r
+        self.length = length  # key_size
+        self.p = (p + 0x100000000) % 0x100000000  # maybe P < 0
+        self.encrypt_metadata = encrypt_metadata
         self.id1_entry = first_id_entry
-        self.StmF = StmF
-        self.StrF = StrF
-        self.EFF = EFF
+        self.stm_f = stm_f
+        self.str_f = str_f
+        self.e_f_f = e_f_f
         self.values: EncryptionValues = values or EncryptionValues()
 
         self._password_type = PasswordType.NOT_DECRYPTED
@@ -922,9 +922,9 @@ class Encryption:
         assert self._key
         key = self._key
 
-        # Algorithm 1 (V <= 4): MD5 key derivation. Algorithm 3.1a (V >= 5): key used directly.
-        if self.V <= 4:
-            n = 5 if self.V == 1 else self.Length // 8
+        # Algorithm 1 (v <= 4): MD5 key derivation. Algorithm 3.1a (v >= 5): key used directly.
+        if self.v <= 4:
+            n = 5 if self.v == 1 else self.length // 8
             key_data = key[:n] + pack1 + pack2
             key_hash = hashlib.md5(key_data)
             rc4_key = key_hash.digest()[: min(n + 5, 16)]
@@ -939,9 +939,9 @@ class Encryption:
         # for AES-256
         aes256_key = key
 
-        stm_crypt = self._get_crypt(self.StmF, rc4_key, aes128_key, aes256_key)
-        str_crypt = self._get_crypt(self.StrF, rc4_key, aes128_key, aes256_key)
-        ef_crypt = self._get_crypt(self.EFF, rc4_key, aes128_key, aes256_key)
+        stm_crypt = self._get_crypt(self.stm_f, rc4_key, aes128_key, aes256_key)
+        str_crypt = self._get_crypt(self.str_f, rc4_key, aes128_key, aes256_key)
+        ef_crypt = self._get_crypt(self.e_f_f, rc4_key, aes128_key, aes256_key)
 
         return CryptFilter(stm_crypt, str_crypt, ef_crypt)
 
@@ -971,7 +971,7 @@ class Encryption:
 
     def verify(self, password: Union[bytes, str]) -> PasswordType:
         pwd = self._encode_password(password)
-        key, rc = self.verify_v4(pwd) if self.V <= 4 else self.verify_v5(pwd)
+        key, rc = self.verify_v4(pwd) if self.v <= 4 else self.verify_v5(pwd)
         if rc != PasswordType.NOT_DECRYPTED:
             self._password_type = rc
             self._key = key
@@ -981,25 +981,25 @@ class Encryption:
         # verify owner password first
         key = AlgV4.verify_owner_password(
             password,
-            self.R,
-            self.Length,
+            self.r,
+            self.length,
             self.values.O,
             self.values.U,
-            self.P,
+            self.p,
             self.id1_entry,
-            self.EncryptMetadata,
+            self.encrypt_metadata,
         )
         if key:
             return key, PasswordType.OWNER_PASSWORD
         key = AlgV4.verify_user_password(
             password,
-            self.R,
-            self.Length,
+            self.r,
+            self.length,
             self.values.O,
             self.values.U,
-            self.P,
+            self.p,
             self.id1_entry,
-            self.EncryptMetadata,
+            self.encrypt_metadata,
         )
         if key:
             return key, PasswordType.USER_PASSWORD
@@ -1009,19 +1009,19 @@ class Encryption:
         # TODO: use SASLprep process
         # verify owner password first
         key = AlgV5.verify_owner_password(
-            self.R, password, self.values.O, self.values.OE, self.values.U
+            self.r, password, self.values.O, self.values.OE, self.values.U
         )
         rc = PasswordType.OWNER_PASSWORD
         if not key:
             key = AlgV5.verify_user_password(
-                self.R, password, self.values.U, self.values.UE
+                self.r, password, self.values.U, self.values.UE
             )
             rc = PasswordType.USER_PASSWORD
         if not key:
             return b"", PasswordType.NOT_DECRYPTED
 
         # verify Perms
-        self._are_permissions_valid = AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata)
+        self._are_permissions_valid = AlgV5.verify_perms(key, self.values.Perms, self.p, self.encrypt_metadata)
         if not self._are_permissions_valid:
             logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
@@ -1034,12 +1034,12 @@ class Encryption:
         if owner_pwd is None:
             owner_pwd = user_pwd
 
-        if self.V <= 4:
+        if self.v <= 4:
             self.compute_values_v4(user_pwd, owner_pwd)
         else:
-            self._key = secrets.token_bytes(self.Length // 8)
+            self._key = secrets.token_bytes(self.length // 8)
             values = AlgV5.generate_values(
-                self.R, user_pwd, owner_pwd, self._key, self.P, self.EncryptMetadata
+                self.r, user_pwd, owner_pwd, self._key, self.p, self.encrypt_metadata
             )
             self.values.O = values["/O"]
             self.values.U = values["/U"]
@@ -1048,22 +1048,22 @@ class Encryption:
             self.values.Perms = values["/Perms"]
 
         dict_obj = DictionaryObject()
-        dict_obj[NameObject("/V")] = NumberObject(self.V)
-        dict_obj[NameObject("/R")] = NumberObject(self.R)
-        dict_obj[NameObject("/Length")] = NumberObject(self.Length)
-        dict_obj[NameObject("/P")] = NumberObject(self.P)
+        dict_obj[NameObject("/V")] = NumberObject(self.v)
+        dict_obj[NameObject("/R")] = NumberObject(self.r)
+        dict_obj[NameObject("/Length")] = NumberObject(self.length)
+        dict_obj[NameObject("/P")] = NumberObject(self.p)
         dict_obj[NameObject("/Filter")] = NameObject("/Standard")
         # ignore /EncryptMetadata
 
         dict_obj[NameObject("/O")] = ByteStringObject(self.values.O)
         dict_obj[NameObject("/U")] = ByteStringObject(self.values.U)
 
-        if self.V >= 4:
+        if self.v >= 4:
             # TODO: allow different method
             std_cf = DictionaryObject()
             std_cf[NameObject("/AuthEvent")] = NameObject("/DocOpen")
-            std_cf[NameObject("/CFM")] = NameObject(self.StmF)
-            std_cf[NameObject("/Length")] = NumberObject(self.Length // 8)
+            std_cf[NameObject("/CFM")] = NameObject(self.stm_f)
+            std_cf[NameObject("/Length")] = NumberObject(self.length // 8)
             cf = DictionaryObject()
             cf[NameObject("/StdCF")] = std_cf
             dict_obj[NameObject("/CF")] = cf
@@ -1072,26 +1072,26 @@ class Encryption:
             # ignore EFF
             # dict_obj[NameObject("/EFF")] = NameObject("/StdCF")
 
-        if self.V >= 5:
+        if self.v >= 5:
             dict_obj[NameObject("/OE")] = ByteStringObject(self.values.OE)
             dict_obj[NameObject("/UE")] = ByteStringObject(self.values.UE)
             dict_obj[NameObject("/Perms")] = ByteStringObject(self.values.Perms)
         return dict_obj
 
     def compute_values_v4(self, user_password: bytes, owner_password: bytes) -> None:
-        rc4_key = AlgV4.compute_O_value_key(owner_password, self.R, self.Length)
-        o_value = AlgV4.compute_O_value(rc4_key, user_password, self.R)
+        rc4_key = AlgV4.compute_O_value_key(owner_password, self.r, self.length)
+        o_value = AlgV4.compute_O_value(rc4_key, user_password, self.r)
 
         key = AlgV4.compute_key(
             user_password,
-            self.R,
-            self.Length,
+            self.r,
+            self.length,
             o_value,
-            self.P,
+            self.p,
             self.id1_entry,
-            self.EncryptMetadata,
+            self.encrypt_metadata,
         )
-        u_value = AlgV4.compute_U_value(key, self.R, self.id1_entry)
+        u_value = AlgV4.compute_U_value(key, self.r, self.id1_entry)
 
         self._key = key
         self.values.O = o_value
@@ -1153,16 +1153,16 @@ class Encryption:
         values.UE = encryption_entry.get("/UE", ByteStringObject()).original_bytes
         values.Perms = encryption_entry.get("/Perms", ByteStringObject()).original_bytes
         return Encryption(
-            V=alg_ver,
-            R=alg_rev,
-            Length=key_bits,
-            P=perm_flags,
-            EncryptMetadata=encrypt_metadata,
+            v=alg_ver,
+            r=alg_rev,
+            length=key_bits,
+            p=perm_flags,
+            encrypt_metadata=encrypt_metadata,
             first_id_entry=first_id_entry,
             values=values,
-            StrF=str_filter,
-            StmF=stm_filter,
-            EFF=ef_filter,
+            str_f=str_filter,
+            stm_f=stm_filter,
+            e_f_f=ef_filter,
             entry=encryption_entry,  # Dummy entry for the moment; will get removed
         )
 
@@ -1180,15 +1180,15 @@ class Encryption:
             stm_filter, str_filter, ef_filter = "/AESV3", "/AESV3", "/AESV3"
 
         return Encryption(
-            V=alg_ver,
-            R=alg_rev,
-            Length=key_bits,
-            P=permissions,
-            EncryptMetadata=True,
+            v=alg_ver,
+            r=alg_rev,
+            length=key_bits,
+            p=permissions,
+            encrypt_metadata=True,
             first_id_entry=first_id_entry,
             values=None,
-            StrF=str_filter,
-            StmF=stm_filter,
-            EFF=ef_filter,
+            str_f=str_filter,
+            stm_f=stm_filter,
+            e_f_f=ef_filter,
             entry=DictionaryObject(),  # Dummy entry for the moment; will get removed
         )

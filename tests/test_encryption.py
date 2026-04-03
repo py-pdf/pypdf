@@ -233,7 +233,7 @@ def test_alg_v5_generate_values():
     """
     key = b"0123456789123451"
     values = AlgV5.generate_values(
-        R=5,
+        r=5,
         user_password=b"foo",
         owner_password=b"bar",
         key=key,
