@@ -84,7 +84,7 @@ class ViewerPreferences(DictionaryObject):
         self[NameObject(key)] = NumberObject(v)
 
     @property
-    def PRINT_SCALING(self) -> NameObject:
+    def print_scaling_property(self) -> NameObject:
         return NameObject("/PrintScaling")
 
     def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":  # noqa: PYI034

@@ -205,7 +205,7 @@ class AlgV4:
         return u_hash_digest[:length]
 
     @staticmethod
-    def compute_O_value_key(owner_password: bytes, rev: int, key_size: int) -> bytes:
+    def compute_o_value_key(owner_password: bytes, rev: int, key_size: int) -> bytes:
         """
         Algorithm 3: Computing the encryption dictionary’s O (owner password) value.
 
@@ -256,9 +256,9 @@ class AlgV4:
         return o_hash_digest[: key_size // 8]
 
     @staticmethod
-    def compute_O_value(rc4_key: bytes, user_password: bytes, rev: int) -> bytes:
+    def compute_o_value(rc4_key: bytes, user_password: bytes, rev: int) -> bytes:
         """
-        See :func:`compute_O_value_key`.
+        See :func:`compute_o_value_key`.
 
         Args:
             rc4_key:
@@ -278,7 +278,7 @@ class AlgV4:
         return rc4_enc
 
     @staticmethod
-    def compute_U_value(key: bytes, rev: int, id1_entry: bytes) -> bytes:
+    def compute_u_value(key: bytes, rev: int, id1_entry: bytes) -> bytes:
         """
         Algorithm 4: Computing the encryption dictionary’s U (user password) value.
 
@@ -388,7 +388,7 @@ class AlgV4:
         key = AlgV4.compute_key(
             user_password, rev, key_size, o_entry, p, id1_entry, metadata_encrypted
         )
-        u_value = AlgV4.compute_U_value(key, rev, id1_entry)
+        u_value = AlgV4.compute_u_value(key, rev, id1_entry)
         if rev >= 3:
             u_value = u_value[:16]
             u_entry = u_entry[:16]
@@ -448,7 +448,7 @@ class AlgV4:
             bytes
 
         """
-        rc4_key = AlgV4.compute_O_value_key(owner_password, rev, key_size)
+        rc4_key = AlgV4.compute_o_value_key(owner_password, rev, key_size)
 
         if rev <= 2:
             user_password = rc4_decrypt(rc4_key, o_entry)
@@ -628,9 +628,9 @@ class AlgV5:
     ) -> dict[Any, Any]:
         user_password = user_password[:127]
         owner_password = owner_password[:127]
-        u_value, ue_value = AlgV5.compute_U_value(r, user_password, key)
-        o_value, oe_value = AlgV5.compute_O_value(r, owner_password, key, u_value)
-        perms = AlgV5.compute_Perms_value(key, p, metadata_encrypted)
+        u_value, ue_value = AlgV5.compute_u_value(r, user_password, key)
+        o_value, oe_value = AlgV5.compute_o_value(r, owner_password, key, u_value)
+        perms = AlgV5.compute_perms_value(key, p, metadata_encrypted)
         return {
             "/U": u_value,
             "/UE": ue_value,
@@ -640,7 +640,7 @@ class AlgV5:
         }
 
     @staticmethod
-    def compute_U_value(r: int, password: bytes, key: bytes) -> tuple[bytes, bytes]:
+    def compute_u_value(r: int, password: bytes, key: bytes) -> tuple[bytes, bytes]:
         """
         Algorithm 3.8 Computing the encryption dictionary’s U (user password)
         and UE (user encryption key) values.
@@ -677,7 +677,7 @@ class AlgV5:
         return u_value, ue_value
 
     @staticmethod
-    def compute_O_value(
+    def compute_o_value(
         r: int, password: bytes, key: bytes, u_value: bytes
     ) -> tuple[bytes, bytes]:
         """
@@ -723,7 +723,7 @@ class AlgV5:
         return o_value, oe_value
 
     @staticmethod
-    def compute_Perms_value(key: bytes, p: int, metadata_encrypted: bool) -> bytes:
+    def compute_perms_value(key: bytes, p: int, metadata_encrypted: bool) -> bytes:
         """
         Algorithm 3.10 Computing the encryption dictionary’s Perms
         (permissions) value.
@@ -1079,8 +1079,8 @@ class Encryption:
         return dict_obj
 
     def compute_values_v4(self, user_password: bytes, owner_password: bytes) -> None:
-        rc4_key = AlgV4.compute_O_value_key(owner_password, self.r, self.length)
-        o_value = AlgV4.compute_O_value(rc4_key, user_password, self.r)
+        rc4_key = AlgV4.compute_o_value_key(owner_password, self.r, self.length)
+        o_value = AlgV4.compute_o_value(rc4_key, user_password, self.r)
 
         key = AlgV4.compute_key(
             user_password,
@@ -1091,7 +1091,7 @@ class Encryption:
             self.id1_entry,
             self.encrypt_metadata,
         )
-        u_value = AlgV4.compute_U_value(key, self.r, self.id1_entry)
+        u_value = AlgV4.compute_u_value(key, self.r, self.id1_entry)
 
         self._key = key
         self.values.O = o_value
