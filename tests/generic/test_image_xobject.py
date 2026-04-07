@@ -150,8 +150,8 @@ def test_handle_flate__autodesk_indexed() -> None:
             match=r"^Expected color space with 4 values, got 3: \['/Indexed', '/DeviceRGB', '\\x00\\x80\\x00\\x80\\x80耀"  # noqa: E501
     ):
         for name, _image in page.images.items():  # noqa: PERF102
-            if isinstance(name, str):
-                assert name.startswith("/")
+            assert isinstance(name, str)
+            assert name.startswith("/")
 
 
 @pytest.mark.enable_socket
