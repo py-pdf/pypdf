@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775554355755,
+  "lastUpdate": 1775560922013,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -93065,6 +93065,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0026427591801981647",
             "extra": "mean: 669.7016449999978 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e00505e591860b94d2dd73618a68bb7095b8f661",
+          "message": "DOC: Add AI policy (#3717)\n\nSome parts of this policy have been derived from https://github.com/astral-sh/.github/blob/main/AI_POLICY.md",
+          "timestamp": "2026-04-07T13:19:19+02:00",
+          "tree_id": "3bcbdd133baa3c0a5af19e8f26798a851d4e1974",
+          "url": "https://github.com/py-pdf/pypdf/commit/e00505e591860b94d2dd73618a68bb7095b8f661"
+        },
+        "date": 1775560914583,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.003676337037288,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006686435859145091",
+            "extra": "mean: 332.9253513999987 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.422413288702334,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004461735667338917",
+            "extra": "mean: 51.486907684210486 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.277658773135059,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007919118818480163",
+            "extra": "mean: 3.601542961200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.164197644112953,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00047545183853154086",
+            "extra": "mean: 55.05335383333608 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09159512170534792,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026520557467334813",
+            "extra": "mean: 10.917612001399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5006469227357402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031608505825703732",
+            "extra": "mean: 666.3792693999994 msec\nrounds: 5"
           }
         ]
       }
