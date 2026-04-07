@@ -86,21 +86,25 @@ class CryptAES(CryptBase):
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
+    """RC4 encryption. *Legacy PDF compatibility only – do not use for new cryptographic purposes.*"""
     encryptor = Cipher(ARC4(key), mode=None).encryptor()
     return encryptor.update(data) + encryptor.finalize()
 
 
 def rc4_decrypt(key: bytes, data: bytes) -> bytes:
+    """RC4 decryption. *Legacy PDF compatibility only – do not use for new cryptographic purposes.*"""
     decryptor = Cipher(ARC4(key), mode=None).decryptor()
     return decryptor.update(data) + decryptor.finalize()
 
 
 def aes_ecb_encrypt(key: bytes, data: bytes) -> bytes:
+    """AES-ECB encryption. *Legacy PDF compatibility only – do not use for new cryptographic purposes.*"""
     encryptor = Cipher(AES(key), mode=ECB()).encryptor()
     return encryptor.update(data) + encryptor.finalize()
 
 
 def aes_ecb_decrypt(key: bytes, data: bytes) -> bytes:
+    """AES-ECB decryption. *Legacy PDF compatibility only – do not use for new cryptographic purposes.*"""
     decryptor = Cipher(AES(key), mode=ECB()).decryptor()
     return decryptor.update(data) + decryptor.finalize()
 
