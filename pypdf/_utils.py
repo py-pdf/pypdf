@@ -453,7 +453,7 @@ def logger_warning(message: str, *, source: str, **values: Any) -> None:
     """
     Use this instead of logger.warning directly.
 
-    That allows people to overwrite it more easily.
+    That allows people to overwrite it  easily.
 
     ## Exception, warnings.warn, logger_warning
     - Exceptions should be used if the user should write code that deals with

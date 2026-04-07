@@ -214,7 +214,7 @@ def process_cm_line(
             multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
         except binascii.Error as error:
             logger_warning(
-                "Skipping broken line %(line)r: %(error)s",
+                "Skipping broken line  %(line)r: %(error)s",
                 source=__name__,
                 line=line,
                 error=error,
