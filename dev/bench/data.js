@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774934805371,
+  "lastUpdate": 1775554331471,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -92999,6 +92999,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0039957979863532965",
             "extra": "mean: 667.022932399982 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nikolai.prokoschenko@kurzdigital.com",
+            "name": "Nikolai Prokoschenko",
+            "username": "rassie"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bd95bd8570d5b3a9798157a6b91622fb067a6668",
+          "message": "Fix PdfReadError when xref table contains comments before trailer (#3710)\n\nSome PDF producers (e.g. Vectorizer.AI) insert legal PDF comments\n(% to end of line) between the last xref table entry and the\n`trailer` keyword.  The `_read_standard_xref_table` method did not\nskip comments at this position, causing it to misparse the `%`\ncharacter and ultimately raise `PdfReadError: Could not read Boolean\nobject`.\n\nThe fix adds a loop after reading xref entries that calls\n`skip_over_comment()` to consume any comment lines before checking\nfor the `trailer` tag.  This is consistent with PDF spec §7.2.3\nwhich allows comments anywhere except inside strings or streams.",
+          "timestamp": "2026-04-07T11:29:27+02:00",
+          "tree_id": "fe59a45caf49e7951b6227472f1c5a69acc29287",
+          "url": "https://github.com/py-pdf/pypdf/commit/bd95bd8570d5b3a9798157a6b91622fb067a6668"
+        },
+        "date": 1775554325573,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.051471675568914,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0063639772475073755",
+            "extra": "mean: 327.7107265999973 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.593132061215947,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0040214219266054545",
+            "extra": "mean: 51.03829223809866 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2784887947138556,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03572236117713285",
+            "extra": "mean: 3.5908087469999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.303138110855333,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008402564021351047",
+            "extra": "mean: 54.63543977777855 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09063674171537316,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040837589096903874",
+            "extra": "mean: 11.033053274800006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4932022453073164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026427591801981647",
+            "extra": "mean: 669.7016449999978 msec\nrounds: 5"
           }
         ]
       }
