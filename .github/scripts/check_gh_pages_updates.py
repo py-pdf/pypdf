@@ -14,17 +14,28 @@ JSDELIVR_RE = re.compile(
     r"/(?P<path>[^\"']+))"
 )
 
+NPM_NAME_RE = re.compile(r"^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$")
+
+MAX_JSON_SIZE = 1 * 1024 * 1024  # 1 MB
+MAX_FETCH_SIZE = 10 * 1024 * 1024  # 10 MB
+
 
 def fetch_json(url: str) -> dict:
     """Retrieve JSON data from the given URL."""
     with urllib.request.urlopen(url, timeout=15) as resp:  # noqa: S310  # Controlled input.
-        return json.load(resp)
+        data = resp.read(MAX_JSON_SIZE + 1)
+        if len(data) > MAX_JSON_SIZE:
+            raise ValueError(f"Response exceeds {MAX_JSON_SIZE} bytes")
+        return json.loads(data)
 
 
 def fetch_bytes(url: str) -> bytes:
     """Retrieve bytes data from the given URL."""
     with urllib.request.urlopen(url, timeout=30) as resp:  # noqa: S310  # Controlled input.
-        return resp.read()
+        data = resp.read(MAX_FETCH_SIZE + 1)
+        if len(data) > MAX_FETCH_SIZE:
+            raise ValueError(f"Response exceeds {MAX_FETCH_SIZE} bytes")
+        return data
 
 
 def get_latest_version(pkg: str) -> str:
@@ -60,6 +71,10 @@ def main() -> None:
             pkg = m.group("name")
             current_version = m.group("version")
             full_url = m.group(1)
+
+            if not NPM_NAME_RE.match(pkg):
+                sys.stdout.write(f"  ⚠️  {pkg}: invalid package name, skipping\n")
+                continue
 
             try:
                 latest_version = get_latest_version(pkg)
