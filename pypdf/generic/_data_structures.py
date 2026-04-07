@@ -63,7 +63,7 @@ from ..constants import FilterTypes as FT
 from ..constants import StreamAttributes as SA
 from ..constants import TypArguments as TA
 from ..constants import TypFitArguments as TF
-from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
+from ..errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
 from ._base import (
     BooleanObject,
     ByteStringObject,
@@ -132,6 +132,13 @@ class ArrayObject(list[Any], PdfObject):
             if isinstance(data, StreamObject):
                 dup = data._reference_clone(
                     data.clone(pdf_dest, force_duplicate, ignore_fields),
+                    pdf_dest,
+                    force_duplicate,
+                )
+                arr.append(dup.indirect_reference)
+            elif isinstance(data, IndirectObject) and isinstance(resolved := data.get_object(), StreamObject):
+                dup = data._reference_clone(
+                    resolved.clone(pdf_dest, force_duplicate=True, ignore_fields=ignore_fields),
                     pdf_dest,
                     force_duplicate,
                 )
@@ -587,6 +594,8 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 tok = read_non_whitespace(stream)
                 stream.seek(-1, 1)
                 value = read_object(stream, pdf, forced_encoding)
+            except (RecursionError, LimitReachedError) as exc:
+                raise PdfReadError(exc.__repr__())
             except Exception as exc:
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(exc.__repr__())
@@ -637,6 +646,10 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 length = -1
             pstart = stream.tell()
             if length >= 0:
+                from ..filters import MAX_DECLARED_STREAM_LENGTH  # noqa: PLC0415
+                if length > MAX_DECLARED_STREAM_LENGTH:
+                    raise LimitReachedError(f"Declared stream length of {length} exceeds maximum allowed length.")
+
                 data["__streamdata__"] = stream.read(length)
             else:
                 data["__streamdata__"] = read_until_regex(
@@ -1073,7 +1086,7 @@ class StreamObject(DictionaryObject):
                 stops in your program.
 
         """
-        from .._xobj_image_helpers import _xobj_to_image  # noqa: PLC0415
+        from ._image_xobject import _xobj_to_image  # noqa: PLC0415
 
         if self.get("/Subtype", "") != "/Image":
             try:
@@ -1130,6 +1143,9 @@ class EncodedStreamObject(StreamObject):
             )
 
 
+CONTENT_STREAM_ARRAY_MAX_LENGTH = 10_000
+
+
 class ContentStream(DecodedStreamObject):
     """
     In order to be fast, this data structure can contain either:
@@ -1167,7 +1183,14 @@ class ContentStream(DecodedStreamObject):
         else:
             stream = stream.get_object()
             if isinstance(stream, ArrayObject):
-                data = b""
+                from pypdf.filters import MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH  # noqa: PLC0415
+
+                if (stream_length := len(stream)) > CONTENT_STREAM_ARRAY_MAX_LENGTH:
+                    raise LimitReachedError(
+                        f"Array-based stream has {stream_length} > {CONTENT_STREAM_ARRAY_MAX_LENGTH} elements."
+                    )
+                data = bytearray()
+                length = 0
                 for s in stream:
                     s_resolved = s.get_object()
                     if isinstance(s_resolved, NullObject):
@@ -1180,8 +1203,17 @@ class ContentStream(DecodedStreamObject):
                             __name__
                         )
                     else:
-                        data += s_resolved.get_data()
+                        new_data = s_resolved.get_data()
+                        length += len(new_data)
+                        if length > MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH:
+                            raise LimitReachedError(
+                                f"Array-based stream has at least {length} > "
+                                f"{MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH} output bytes."
+                            )
+                        data += new_data
                     if len(data) == 0 or data[-1] != b"\n":
+                        # There should be no direct need to check for a change of one byte.
+                        length += 1
                         data += b"\n"
                 super().set_data(bytes(data))
             else:

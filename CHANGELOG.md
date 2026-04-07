@@ -1,5 +1,51 @@
 # CHANGELOG
 
+## Version 6.9.2, 2026-03-23
+
+### Security (SEC)
+- Avoid infinite loop in read_from_stream for broken files (#3693)
+
+### Robustness (ROB)
+- Resolve UnboundLocalError for xobjs in _get_image (#3684)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.1...6.9.2)
+
+## Version 6.9.1, 2026-03-17
+
+### Security (SEC)
+- Improve performance and limit length of array-based content streams (#3686)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.0...6.9.1)
+
+## Version 6.9.0, 2026-03-15
+
+### New Features (ENH)
+- Expose /Perms verification result on Encryption object (#3672)
+
+### Performance Improvements (PI)
+- Fix O(n²) performance in NameObject read/write (#3679)
+- Batch-parse all objects in ObjStm on first access (#3677)
+
+### Bug Fixes (BUG)
+- Avoid sharing array-based content streams between pages (#3681)
+- Avoid accessing invalid page when inserting blank page under some conditions (#3529)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.8.0...6.9.0)
+
+## Version 6.8.0, 2026-03-09
+
+### Security (SEC)
+- Limit allowed `/Length` value of stream  (#3675)
+
+### New Features (ENH)
+- Add /IRT (in-reply-to) support for markup annotations (#3631)
+
+### Documentation (DOC)
+- Avoid using `PageObject.replace_contents` on PdfReader (#3669)
+- Document how to disable jbig2dec calls
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.5...6.8.0)
+
 ## Version 6.7.5, 2026-03-02
 
 ### Security (SEC)

@@ -350,12 +350,20 @@ class PdfReader(PdfDocCommon):
     ) -> Union[int, PdfObject, str]:
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        stmnum, idx = self.xref_objStm[indirect_reference.idnum]
+        stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
         obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
+        # Parse ALL objects in this stream in one pass and cache them.
+        # This avoids O(N²) behavior when many objects from the same stream
+        # are resolved individually (each call would re-parse the header).
         stream_data = BytesIO(obj_stm.get_data())
-        for i in range(obj_stm["/N"]):  # type: ignore
+        n = int(obj_stm["/N"])  # type: ignore[call-overload]
+        first_offset = int(obj_stm["/First"])  # type: ignore[call-overload]
+
+        # Phase 1: Read the index (objnum, offset) pairs from the header.
+        obj_index: list[tuple[int, int]] = []
+        for _i in range(n):
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
             objnum = NumberObject.read_from_stream(stream_data)
@@ -364,12 +372,21 @@ class PdfReader(PdfDocCommon):
             offset = NumberObject.read_from_stream(stream_data)
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            if objnum != indirect_reference.idnum:
-                # We're only interested in one object
+            obj_index.append((int(objnum), int(offset)))
+
+        # Phase 2: Parse each object and cache it.
+        target_obj: Union[int, PdfObject, str] = NullObject()
+        found = False
+        for i, (obj_num, obj_offset) in enumerate(obj_index):
+            # Skip objects already in the cache.
+            cached = self.cache_get_indirect_object(0, obj_num)
+            if cached is not None:
+                if obj_num == indirect_reference.idnum:
+                    target_obj = cached
+                    found = True
                 continue
-            if self.strict and idx != i:
-                raise PdfReadError("Object is in wrong index.")
-            stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
+
+            stream_data.seek(first_offset + obj_offset, 0)
 
             # To cope with case where the 'pointer' is on a white space
             read_non_whitespace(stream_data)
@@ -382,24 +399,31 @@ class PdfReader(PdfDocCommon):
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 logger_warning(
                     f"Invalid stream (index {i}) within object "
-                    f"{indirect_reference.idnum} {indirect_reference.generation}: "
-                    f"{exc}",
+                    f"{obj_num} 0: {exc}",
                     __name__,
                 )
-
                 if self.strict:  # pragma: no cover
                     raise PdfReadError(
                         f"Cannot read object stream: {exc}"
                     )  # pragma: no cover
-                # Replace with null. Hopefully it's nothing important.
                 obj = NullObject()  # pragma: no cover
-            return obj
 
-        if self.strict:  # pragma: no cover
+            # Only cache if this stream is the authoritative source for the object.
+            # Incremental updates may override objects originally in the stream;
+            # caching those stale versions would shadow the newer xref entry.
+            authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
+            if authoritative_stm == stmnum:
+                self.cache_indirect_object(0, obj_num, obj)  # type: ignore[arg-type]
+
+            if obj_num == indirect_reference.idnum:
+                target_obj = obj
+                found = True
+
+        if not found and self.strict:  # pragma: no cover
             raise PdfReadError(
                 "This is a fatal error in strict mode."
             )  # pragma: no cover
-        return NullObject()  # pragma: no cover
+        return target_obj
 
     def get_object(
         self, indirect_reference: Union[int, IndirectObject]
@@ -478,7 +502,7 @@ class PdfReader(PdfDocCommon):
 
             current_object = (indirect_reference.idnum, indirect_reference.generation)
             if current_object in self._known_objects:
-                raise PdfReadError(f"Detected loop with self reference for {indirect_reference!r}.")
+                raise LimitReachedError(f"Detected loop with self reference for {indirect_reference!r}.")
             self._known_objects.add(current_object)
             retval = read_object(self.stream, self)  # type: ignore
             self._known_objects.remove(current_object)
@@ -537,9 +561,18 @@ class PdfReader(PdfDocCommon):
                 )
                 if self.strict:
                     raise PdfReadError("Could not find object.")
-        self.cache_indirect_object(
-            indirect_reference.generation, indirect_reference.idnum, retval
-        )
+        # For ObjStm objects, _get_object_from_stream already cached
+        # the result during batch parsing; skip the redundant cache write
+        # to avoid "Overwriting cache" warnings. For non-ObjStm objects
+        # (including encrypted ones that need decrypted values cached),
+        # always write.
+        if not (
+            indirect_reference.generation == 0
+            and indirect_reference.idnum in self.xref_objStm
+        ):
+            self.cache_indirect_object(
+                indirect_reference.generation, indirect_reference.idnum, retval
+            )
         return retval
 
     def read_object_header(self, stream: StreamType) -> tuple[int, int]:
@@ -855,6 +888,15 @@ class PdfReader(PdfDocCommon):
                 cnt += 1
                 num += 1
             read_non_whitespace(stream)
+            stream.seek(-1, 1)
+            # Skip any PDF comments between xref entries and the trailer
+            # keyword. Some PDF producers (e.g. Vectorizer.AI) insert
+            # comments here which are legal per the PDF spec (§7.2.3).
+            while stream.read(1) == b"%":
+                stream.seek(-1, 1)
+                skip_over_comment(stream)
+                read_non_whitespace(stream)
+                stream.seek(-1, 1)
             stream.seek(-1, 1)
             trailer_tag = stream.read(7)
             if trailer_tag != b"trailer":

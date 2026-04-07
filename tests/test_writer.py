@@ -234,6 +234,10 @@ def writer_operate(writer: PdfWriter) -> None:
     writer.page_mode = NameObject("/UseOC")
     assert writer._get_page_mode() == "/UseOC"
     writer.insert_blank_page(width=100, height=100)
+    page = writer.insert_blank_page(width=100)
+    assert page.mediabox.height == 100
+    page = writer.insert_blank_page(height=100)
+    assert page.mediabox.width == 100
     writer.insert_blank_page()  # without parameters
 
     writer.remove_images()
@@ -249,6 +253,88 @@ def writer_operate(writer: PdfWriter) -> None:
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
         assert k in objects_hash, f"Missing {v}"
+
+
+def test_insert_blank_page():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    old_page_count = len(writer.pages)
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(index=0)
+    assert len(writer.pages) == old_page_count + 1
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=10, index=0)
+    assert len(writer.pages) == old_page_count + 2
+    assert page.mediabox.width == 10
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-10, index=0)
+    assert len(writer.pages) == old_page_count + 3
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=20, index=0)
+    assert len(writer.pages) == old_page_count + 4
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == 20
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=-20, index=0)
+    assert len(writer.pages) == old_page_count + 5
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    page = writer.insert_blank_page(width=30, height=40, index=0)
+    assert len(writer.pages) == old_page_count + 6
+    assert page.mediabox.width == 30
+    assert page.mediabox.height == 40
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-30, height=-40, index=0)
+    assert len(writer.pages) == old_page_count + 7
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    page = writer.insert_blank_page(width=50, height=60, index=len(writer.pages))
+    assert len(writer.pages) == old_page_count + 8
+    assert page.mediabox.width == 50
+    assert page.mediabox.height == 60
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-50, height=-60, index=-len(writer.pages))
+    assert len(writer.pages) == old_page_count + 9
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    page = writer.insert_blank_page(width=70, height=80, index=len(writer.pages) // 2)
+    assert len(writer.pages) == old_page_count + 10
+    assert page.mediabox.width == 70
+    assert page.mediabox.height == 80
+
+    page = writer.insert_blank_page(width=70, height=80, index=-len(writer.pages) // 2)
+    assert len(writer.pages) == old_page_count + 11
+    assert page.mediabox.width == 70
+    assert page.mediabox.height == 80
+
+    num_pages = len(writer.pages)
+
+    with pytest.raises(
+        IndexError,
+        match=re.escape(f"Index should be in range [-{num_pages}, {num_pages}]"),
+    ):
+        page = writer.insert_blank_page(width=90, height=100, index=len(writer.pages) + 1)
+
+    with pytest.raises(
+        IndexError,
+        match=re.escape(f"Index should be in range [-{num_pages}, {num_pages}]"),
+    ):
+        page = writer.insert_blank_page(width=-90, height=-100, index=-len(writer.pages) - 1)
 
 
 @pytest.mark.parametrize(
@@ -2466,7 +2552,7 @@ def test_compress_identical_objects():
     name = "iss2794.pdf"
     in_bytes = BytesIO(get_data_from_url(url, name=name))
     writer = PdfWriter(in_bytes)
-    writer.compress_identical_objects(remove_orphans=False)
+    writer.compress_identical_objects(remove_unreferenced=False)
     out1 = BytesIO()
     writer.write(out1)
     assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
@@ -2476,7 +2562,60 @@ def test_compress_identical_objects():
     out2 = BytesIO()
     writer.write(out2)
     assert len(out1.getvalue()) - 100 < len(out2.getvalue())
-    writer.compress_identical_objects(remove_identicals=False)
+    writer.compress_identical_objects(remove_duplicates=False)
+    out3 = BytesIO()
+    writer.write(out3)
+    assert len(out2.getvalue()) > len(out3.getvalue())
+
+
+def test_compress_identical_objects__remove_unreferenced():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer._add_object(DictionaryObject({}))
+    dictionary_object = DictionaryObject({NameObject("/Testing"): NameObject("/UniqueNameForTesting")})
+    reference = writer._add_object(dictionary_object)
+
+    writer.compress_identical_objects(remove_unreferenced=False)
+    assert writer.get_object(reference) == dictionary_object
+
+    writer.compress_identical_objects(remove_unreferenced=True)
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=rf"^Object IndirectObject\({reference.idnum}, 0, \d+\) not found!$"
+    ):
+        writer.get_object(reference)
+
+
+@pytest.mark.enable_socket
+def test_compress_identical_objects__deprecation():
+    url = "https://github.com/user-attachments/files/16575458/tt2.pdf"
+    name = "iss2794.pdf"
+    in_bytes = BytesIO(get_data_from_url(url, name=name))
+    writer = PdfWriter(in_bytes)
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^remove_orphans is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"Use remove_unreferenced instead\.$"
+        ),
+    ):
+        writer.compress_identical_objects(remove_orphans=True)
+    out1 = BytesIO()
+    writer.write(out1)
+    assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
+    writer.remove_page(
+        1
+    )  # page0 contains fields which keep reference to the deleted page
+    out2 = BytesIO()
+    writer.write(out2)
+    assert len(out1.getvalue()) - 100 < len(out2.getvalue())
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^remove_identicals is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"Use remove_duplicates instead\.$"
+        ),
+    ):
+        writer.compress_identical_objects(remove_identicals=True)
     out3 = BytesIO()
     writer.write(out3)
     assert len(out2.getvalue()) > len(out3.getvalue())
@@ -2765,7 +2904,7 @@ def test_compress_identical_objects__after_remove_images():
     """Test for #3237"""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
     writer.remove_images()
-    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
+    writer.compress_identical_objects(remove_duplicates=True, remove_unreferenced=True)
 
 
 def test_merge__process_named_dests__no_dests_in_source_file():

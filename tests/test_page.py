@@ -1546,8 +1546,9 @@ def test_replace_contents__null_object_cloning_error():
         new_page = writer.add_page(page)
         new_page.scale_by(1)
 
-    assert isinstance(writer.get_object(50)["/Contents"], ContentStream)
-    assert isinstance(writer.get_object(51), NullObject)
+    page4_idnum = writer.pages[3].indirect_reference.idnum
+    assert isinstance(writer.get_object(page4_idnum)["/Contents"], ContentStream)
+    assert isinstance(writer.get_object(page4_idnum + 1), NullObject)
 
     data = BytesIO()
     writer.write(data)

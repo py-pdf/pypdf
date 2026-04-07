@@ -30,12 +30,11 @@ writer.add_page(reader.pages[0])
 writer.add_page(reader.pages[1].rotate(90))
 
 # Add page 3 from reader, but crop it to half size.
-page3 = reader.pages[2]
+page3 = writer.add_page(reader.pages[2])
 page3.mediabox.upper_right = (
     page3.mediabox.right / 2,
     page3.mediabox.top / 2,
 )
-writer.add_page(page3)
 
 writer.write("out-all-in-one.pdf")
 ```
@@ -81,11 +80,10 @@ page_base = reader_base.pages[0]
 reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
 
-page_base.merge_page(page_box)
-
 # Write the result back
 writer = PdfWriter()
-writer.add_page(page_base)
+page = writer.add_page(page_base)
+page.merge_page(page_box)
 writer.write("out-plain-merge.pdf")
 ```
 
@@ -103,14 +101,17 @@ page_base = reader_base.pages[0]
 reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
 
-# Apply the transformation
+# Prepare writer
+writer = PdfWriter()
+
+# Add base page.
+writer_page = writer.add_page(page_base)
+
+# Apply the transformation and merge the pages.
 transformation = Transformation().rotate(45)
-page_box.add_transformation(transformation)
-page_base.merge_page(page_box)
+writer_page.merge_transformed_page(page_box, transformation)
 
 # Write the result back
-writer = PdfWriter()
-writer.add_page(page_base)
 writer.write("out-merge-with-rotation.pdf")
 ```
 
@@ -118,8 +119,7 @@ If you add the `expand` parameter:
 
 ```{testcode}
 transformation = Transformation().rotate(45)
-page_box.add_transformation(transformation)
-page_base.merge_page(page_box, expand=True)
+writer_page.merge_transformed_page(page_box, transformation, expand=True)
 ```
 
 you get:
@@ -152,12 +152,14 @@ from pypdf import PdfReader, PdfWriter
 reader = PdfReader("side-by-side-subfig.pdf")
 page = reader.pages[0]
 
+# Add to the writer
+writer = PdfWriter()
+writer_page = writer.add_page(page)
+
 # Scale
-page.scale_by(0.5)
+writer_page.scale_by(0.5)
 
 # Write the result to a file
-writer = PdfWriter()
-writer.add_page(page)
 writer.write("out-scale-all.pdf")
 ```
 
@@ -173,13 +175,15 @@ from pypdf import PdfReader, PdfWriter, Transformation
 reader = PdfReader("side-by-side-subfig.pdf")
 page = reader.pages[0]
 
+# Prepare the writer
+writer = PdfWriter()
+writer_page = writer.add_page(page)
+
 # Scale
 op = Transformation().scale(sx=0.7, sy=0.7)
-page.add_transformation(op)
+writer_page.add_transformation(op)
 
 # Write the result to a file
-writer = PdfWriter()
-writer.add_page(page)
 writer.write("out-scale-content.pdf")
 ```
 
@@ -238,63 +242,20 @@ sourcepage = reader.pages[0]
 writer = PdfWriter()
 destpage = writer.add_blank_page(width=PaperSize.A4.height, height=PaperSize.A4.width)
 
-# Extend source page mediabox
-sourcepage.mediabox = destpage.mediabox
-
 # Copy source page to destination page, several times
 for x in range(4):
     for y in range(4):
         # Translate page
-        sourcepage.add_transformation(
-            Transformation().translate(
-                x * PaperSize.A8.height,
-                y * PaperSize.A8.width,
-            )
+        transformation = Transformation().translate(
+            x * PaperSize.A8.height,
+            y * PaperSize.A8.width,
         )
         # Merge translated page
-        destpage.merge_page(sourcepage)
+        destpage.merge_transformed_page(sourcepage, transformation)
 
 # Write file
 writer.write("out-nup-dest1.pdf")
 ```
-
-And the result is… unexpected.
-
-![](nup-dest1.png)
-
-The problem is that, having run ``add_transformation()`` several times on the *same* source page, those transformations add up: for instance, the sixteen transformations are applied to the last copy of the source page, so most of the business cards are *outside* the destination page.
-
-We need a way to merge a transformed page, *without* modifying the source page. Here comes {func}`~pypdf._page.PageObject.merge_transformed_page`. With this method:
-- we no longer need the media box hack of our first try;
-- transformations are only applied *once*.
-
-```{testcode}
-from pypdf import PaperSize, PdfReader, PdfWriter, Transformation
-
-# Read source file
-reader = PdfReader("nup-source.pdf")
-sourcepage = reader.pages[0]
-
-# Create a destination file, and add a blank page to it
-writer = PdfWriter()
-destpage = writer.add_blank_page(width=PaperSize.A4.height, height=PaperSize.A4.width)
-
-# Copy source page to destination page, several times
-for x in range(4):
-    for y in range(4):
-        destpage.merge_transformed_page(
-            sourcepage,
-            Transformation().translate(
-                x * sourcepage.mediabox.width,
-                y * sourcepage.mediabox.height,
-            ),
-        )
-
-# Write file
-writer.write("out-nup-dest2.pdf")
-```
-
-We get the expected result.
 
 ![](nup-dest2.png)
 

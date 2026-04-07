@@ -1,5 +1,8 @@
 """Test the pypdf._encryption module."""
+import hashlib
 import secrets
+from io import BytesIO
+from typing import NoReturn
 
 import pytest
 
@@ -349,11 +352,32 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_aes_decrypt_corrupted_data():
-    """Just for robustness"""
+def test_aes_decrypt__empty_data_section():
     aes = CryptAES(secrets.token_bytes(16))
-    for num in [0, 17, 32]:
-        aes.decrypt(secrets.token_bytes(num))
+    for i in range(17):
+        assert aes.decrypt(b"A" * i) == b""
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_aes_decrypt__wrong_padding():
+    # Use fixed values for reliability in testing these.
+    # Depending on the input and values chosen during encryption, some cases might
+    # not raise the desired exception, but this is out of our control.
+    aes = CryptAES(b"\xe8\xcd\xaeAG\xc8cMnLI\xaah\x97\x90@")
+    original = b"\x9b\x9b%\x1a\ro\xf0\x17eI\xdc\x93\xbfp@\x05"
+    encrypted = (
+        b"L\x1f\xecj%\x00\x8dC\xb3%\xfc\x94\xf0\x14\x02\xcd\xa5\x06\x97\x86\x1e^\xfaSN"
+        b"\x1b\xe1C\xce6V\x9a\x8f\xc7\xd3;Z\xe4Zi \x81\x978ms\xd5\xde"
+    )
+
+    assert aes.decrypt(encrypted) == original
+    for i in range(256):
+        broken = encrypted[:-1] + bytes([i])
+        if broken == encrypted:
+            # We will at some point in time generate the original valid encrypted bytes.
+            continue
+        with pytest.raises(ValueError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
+            aes.decrypt(broken)
 
 
 @pytest.mark.samples
@@ -381,3 +405,77 @@ def test_encrypt_stream_dictionary(pdf_file_path):
     decrypted_image_obj = reader.get_object(page.images["/I"].indirect_reference)
 
     assert decrypted_image_obj["/ColorSpace"][3] == original_image_obj["/ColorSpace"][3]
+
+
+def test_are_permissions_valid_none_for_unencrypted():
+    """are_permissions_valid is None for unencrypted documents."""
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    assert reader.are_permissions_valid is None
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_are_permissions_valid_none_before_decrypt():
+    """are_permissions_valid is None for encrypted documents before decrypt()."""
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-both-passwords.pdf")
+    assert reader.are_permissions_valid is None
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_are_permissions_valid_true_for_valid_r6():
+    """are_permissions_valid is True when /Perms integrity check passes."""
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
+    reader.decrypt("usersecret")
+    assert reader.are_permissions_valid is True
+
+
+def test_are_permissions_valid_true_for_v4():
+    """are_permissions_valid defaults to True for V4 encryption (no /Perms field)."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    writer.encrypt(user_password="user", owner_password="owner", algorithm="RC4-128")
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    reader.decrypt("user")
+    assert reader.are_permissions_valid is True
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_are_permissions_valid_false_when_tampered():
+    """are_permissions_valid is False when /Perms has been tampered with."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    writer.encrypt(user_password="user", owner_password="owner", algorithm="AES-256")
+    output = BytesIO()
+    writer.write(output)
+
+    # Tamper with /Perms by modifying the raw bytes
+    data = bytearray(output.getvalue())
+    perms_marker = b"/Perms "
+    idx = data.find(perms_marker)
+    assert idx != -1, "/Perms not found in PDF"
+    # Find the hex string value after /Perms and corrupt a byte
+    start = data.index(b"<", idx)
+    data[start + 2] ^= 0xFF  # flip bits in the first byte of the hex string
+    tampered = BytesIO(bytes(data))
+
+    reader = PdfReader(tampered)
+    reader.decrypt("user")
+    assert reader.are_permissions_valid is False
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_aes256_decrypt_does_not_call_md5(monkeypatch):
+    """AES-256 decryption must not call hashlib.md5().
+
+    On FIPS-enabled systems hashlib.md5() raises an error, so reading an AES-256
+    PDF must succeed even when MD5 is blocked.
+    """
+    def _fips_md5(*args: object, **kwargs: object) -> NoReturn:
+        raise ValueError("[digital envelope routines] unsupported: md5 blocked by FIPS")
+
+    monkeypatch.setattr(hashlib, "md5", _fips_md5)
+
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-empty-password.pdf")
+    result = reader.decrypt("")
+    assert result != PasswordType.NOT_DECRYPTED
+    assert len(reader.pages) > 0
+    reader.pages[0].extract_text()

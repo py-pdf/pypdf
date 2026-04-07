@@ -1,11 +1,16 @@
 """Utility functions and classes for testing."""
 import logging
-from typing import Union
+from typing import Callable, Optional, Union, cast
 
 from PIL import Image
 
 from pypdf import PageObject
-from pypdf.generic import DictionaryObject, IndirectObject
+from pypdf.generic import (
+    DictionaryObject,
+    FloatObject,
+    IndirectObject,
+    PdfObject,
+)
 
 
 class PositionedText:
@@ -15,7 +20,7 @@ class PositionedText:
     The font-dictionary may be None in case of an unknown font.
     """
 
-    def __init__(self, text, x, y, font_dict, font_size) -> None:
+    def __init__(self, text: str, x: float, y: float, font_dict: Optional[DictionaryObject], font_size: float) -> None:
         # TODO: \0-replace: Encoding issue in some files?
         self.text = text.replace("\0", "")
         self.x = x
@@ -31,19 +36,19 @@ class PositionedText:
         """
         if (self.font_dict is None) or "/BaseFont" not in self.font_dict:
             return "UNKNOWN"
-        return self.font_dict["/BaseFont"]
+        return cast(str, self.font_dict["/BaseFont"])
 
 
 class Rectangle:
     """Specify a rectangle."""
 
-    def __init__(self, x, y, w, h) -> None:
+    def __init__(self, x: FloatObject, y: FloatObject, w: FloatObject, h: FloatObject) -> None:
         self.x = x.as_numeric()
         self.y = y.as_numeric()
         self.w = w.as_numeric()
         self.h = h.as_numeric()
 
-    def contains(self, x, y) -> bool:
+    def contains(self, x: float, y: float) -> bool:
         return (
                 self.x <= x <= (self.x + self.w)
                 and self.y <= y <= (self.y + self.h)
@@ -51,7 +56,7 @@ class Rectangle:
 
 
 def extract_text_and_rectangles(
-        page: PageObject, rect_filter=None
+        page: PageObject, rect_filter: Optional[Callable[[Rectangle], bool]] = None
 ) -> tuple[list[PositionedText], list[Rectangle]]:
     """
     Extracts texts and rectangles of a page of type pypdf._page.PageObject.
@@ -69,9 +74,9 @@ def extract_text_and_rectangles(
     rectangles = []
     texts = []
 
-    def print_op_b(op, args, cm_matrix, tm_matrix) -> None:
+    def print_op_b(op: bytes, args: list[FloatObject], cm_matrix: list[float], tm_matrix: list[float]) -> None:
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"before: {op} at {cm_matrix}, {tm_matrix}")
+            logger.debug("before: %s at %s, %s", op, cm_matrix, tm_matrix)
         if op == b"re":
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"  add rectangle: {args}")
@@ -81,14 +86,16 @@ def extract_text_and_rectangles(
             if (rect_filter is None) or rect_filter(r):
                 rectangles.append(r)
 
-    def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size) -> None:
+    def print_visi(
+        text: str, cm_matrix: list[float],
+        tm_matrix: list[float], font_dict: Optional[DictionaryObject],
+        font_size: float
+    ) -> None:
         if text.strip() != "":
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"at {cm_matrix}, {tm_matrix}, font size={font_size}")
             texts.append(
-                PositionedText(
-                    text, tm_matrix[4], tm_matrix[5], font_dict, font_size
-                )
+                PositionedText(text, tm_matrix[4], tm_matrix[5], font_dict, font_size)
             )
 
     visitor_before = print_op_b
@@ -103,7 +110,7 @@ def extract_text_and_rectangles(
 
 def extract_table(
         texts: list[PositionedText], rectangles: list[Rectangle]
-) -> list[list[list[PositionedText]]]:
+) -> list[list[Union[str, list[PositionedText]]]]:
     """
     Extracts a table containing text.
 
@@ -141,7 +148,7 @@ def extract_table(
         rectangles_filtered.append(r)
 
     # Step 2: Look for texts in rectangles.
-    rectangle2texts = {}
+    rectangle2texts: dict[Rectangle, list[PositionedText]] = {}
     for text in texts:
         for r in rectangles_filtered:
             if r.contains(text.x, text.y):
@@ -159,7 +166,7 @@ def extract_table(
     row_nr = 0
     col_nr = 0
     curr_y = None
-    curr_row = None
+    curr_row: list[Union[str, list[PositionedText]]] = []
     for r in rectangles_filtered:
         if col2count[r.x] < 3 or row2count[r.y] < 2:
             # We expect at least 3 columns and 2 rows.
@@ -199,15 +206,15 @@ def get_image_data(
 
 
 class ReaderDummy:
-    def __init__(self, strict=False) -> None:
+    def __init__(self, strict: bool = False) -> None:
         self.strict = strict
 
-    def get_object(self, indirect_reference):
+    def get_object(self, indirect_reference: IndirectObject) -> DictionaryObject:
         class DummyObj:
             def get_object(self) -> "DummyObj":
                 return self
 
         return DictionaryObject()
 
-    def get_reference(self, obj):
+    def get_reference(self, obj: PdfObject) -> IndirectObject:
         return IndirectObject(idnum=1, generation=1, pdf=self)

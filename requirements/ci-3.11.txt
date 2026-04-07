@@ -10,7 +10,7 @@ coverage[toml]==7.13.0
     # via
     #   -r requirements/ci.in
     #   pytest-cov
-cryptography==46.0.5
+cryptography==46.0.6
     # via -r requirements/ci.in
 defusedxml==0.7.1
     # via fpdf2
@@ -30,6 +30,8 @@ mypy-extensions==1.0.0
     # via mypy
 packaging==24.1
     # via pytest
+pathspec==1.0.4
+    # via mypy
 pillow==12.1.1
     # via
     #   -r requirements/ci.in
@@ -68,6 +70,8 @@ tomli==2.0.2
     #   mypy
     #   pytest
 typeguard==4.3.0
+    # via -r requirements/ci.in
+types-pyyaml==6.0.12.20250915
     # via -r requirements/ci.in
 typing-extensions==4.12.2
     # via

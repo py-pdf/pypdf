@@ -378,10 +378,8 @@ class ImageFile:
             )
 
         from ._reader import PdfReader  # noqa: PLC0415
-
-        # to prevent circular import
-        from ._xobj_image_helpers import _xobj_to_image  # noqa: PLC0415
         from .generic import DictionaryObject, PdfObject  # noqa: PLC0415
+        from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
 
         if self.indirect_reference is None:
             raise TypeError("Cannot update an inline image.")
@@ -639,22 +637,26 @@ class PageObject(DictionaryObject):
             id = list(id)
         if isinstance(id, list) and len(id) == 1:
             id = id[0]
+        xobjs: Optional[DictionaryObject] = None
         try:
             xobjs = cast(
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
-        except KeyError:
+        except KeyError as exc:
             if not (id[0] == "~" and id[-1] == "~"):
-                raise
+                raise KeyError(
+                    f"Cannot access image object {id} without XObject resources"
+                ) from exc
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
                 if self.inline_images is None:
                     self.inline_images = self._get_inline_images()
-                if self.inline_images is None:  # pragma: no cover
+                if self.inline_images is None:
                     raise KeyError("No inline image can be found")
                 return self.inline_images[id]
 
-            from ._xobj_image_helpers import _xobj_to_image  # noqa: PLC0415
+            assert xobjs is not None
+            from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
             return ImageFile(
@@ -664,6 +666,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=xobjs[id].indirect_reference,
             )
         # in a subobject
+        assert xobjs is not None
         ids = id[1:]
         return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
@@ -758,7 +761,7 @@ class PageObject(DictionaryObject):
                 if k not in init:
                     init[k] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
-            from ._xobj_image_helpers import _xobj_to_image  # noqa: PLC0415
+            from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             extension, byte_stream, img = _xobj_to_image(ii["object"])
             files[f"~{num}~"] = ImageFile(
                 name=f"~{num}~{extension}",

@@ -12,3 +12,4 @@ pytest-cov
 # ruff  # only take this for 3.11
 typeguard
 pyyaml
+types-pyyaml

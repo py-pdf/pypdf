@@ -838,6 +838,7 @@ class Encryption:
 
         self._password_type = PasswordType.NOT_DECRYPTED
         self._key: Optional[bytes] = None
+        self._are_permissions_valid: bool = True
 
     def is_decrypted(self) -> bool:
         return self._password_type != PasswordType.NOT_DECRYPTED
@@ -902,7 +903,11 @@ class Encryption:
            16-byte random number that is stored as the first 16 bytes of the
            encrypted stream or string.
 
-        Algorithm 3.1a Encryption of data using the AES algorithm
+        Algorithm 3.1a: Encryption of data using the AES-256 algorithm.
+
+        Note: Algorithm 3.1a does not use MD5 key derivation, so AES-256
+        encrypted files can be read on FIPS-enabled systems where MD5 is blocked.
+
         1. Use the 32-byte file encryption key for the AES-256 symmetric key
            algorithm, along with the string or stream data to be encrypted.
            Use the AES algorithm in Cipher Block Chaining (CBC) mode, which
@@ -916,14 +921,20 @@ class Encryption:
 
         assert self._key
         key = self._key
-        n = 5 if self.V == 1 else self.Length // 8
-        key_data = key[:n] + pack1 + pack2
-        key_hash = hashlib.md5(key_data)
-        rc4_key = key_hash.digest()[: min(n + 5, 16)]
 
-        # for AES-128
-        key_hash.update(b"sAlT")
-        aes128_key = key_hash.digest()[: min(n + 5, 16)]
+        # Algorithm 1 (V <= 4): MD5 key derivation. Algorithm 3.1a (V >= 5): key used directly.
+        if self.V <= 4:
+            n = 5 if self.V == 1 else self.Length // 8
+            key_data = key[:n] + pack1 + pack2
+            key_hash = hashlib.md5(key_data)
+            rc4_key = key_hash.digest()[: min(n + 5, 16)]
+
+            # for AES-128
+            key_hash.update(b"sAlT")
+            aes128_key = key_hash.digest()[: min(n + 5, 16)]
+        else:
+            rc4_key = b""
+            aes128_key = b""
 
         # for AES-256
         aes256_key = key
@@ -1010,7 +1021,8 @@ class Encryption:
             return b"", PasswordType.NOT_DECRYPTED
 
         # verify Perms
-        if not AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata):
+        self._are_permissions_valid = AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata)
+        if not self._are_permissions_valid:
             logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
 
