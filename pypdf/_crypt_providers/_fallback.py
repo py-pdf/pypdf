@@ -25,8 +25,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
+
 from pypdf._crypt_providers._base import CryptBase
 from pypdf.errors import DependencyError
+
+warnings.warn(
+    "Using fallback cryptography provider. "
+    "Install 'cryptography>=3.1' for improved security.",
+    stacklevel=2,
+)
 
 _DEPENDENCY_ERROR_STR = "cryptography>=3.1 is required for AES algorithm"
 
