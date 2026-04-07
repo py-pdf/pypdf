@@ -76,6 +76,10 @@ def main() -> None:
                 f"@{current_version}/", f"@{latest_version}/"
             )
 
+            if not latest_url.startswith("https://cdn.jsdelivr.net/"):
+                sys.stdout.write(f"  ⚠️  {pkg}: unexpected URL domain, skipping\n")
+                continue
+
             try:
                 latest_bytes = fetch_bytes(latest_url)
                 latest_sri = sri_hash(latest_bytes)
