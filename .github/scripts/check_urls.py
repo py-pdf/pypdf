@@ -4,6 +4,7 @@ import sys
 from collections.abc import Iterator
 from operator import itemgetter
 from pathlib import Path
+from urllib.parse import urlparse
 
 from tests import _get_data_from_url, read_yaml_to_list_of_dicts
 
@@ -19,6 +20,13 @@ URL_PREFIXES_TO_IGNORE = (
 PDF_URLS_WHICH_DO_NOT_LOOK_LIKE_PDFS = {
     "https://github.com/user-attachments/files/18381726/tika-957721.pdf",
 }
+
+ALLOWED_DOMAINS = (
+    "arxiv.org",
+    "corpora.tika.apache.org",
+    "github.com",
+    "raw.githubusercontent.com",
+)
 
 
 def get_urls_from_test_files() -> Iterator[str]:
@@ -46,6 +54,11 @@ def check_url(url: str) -> bool:
     """Check if the given URL appears to still be valid."""
     if url.startswith(URL_PREFIXES_TO_IGNORE):
         return True
+
+    parsed = urlparse(url)
+    if parsed.hostname not in ALLOWED_DOMAINS:
+        sys.stderr.write(f"URL {url} has disallowed domain: {parsed.hostname}\n")
+        return False
 
     try:
         data = _get_data_from_url(url)
