@@ -2150,3 +2150,38 @@ def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
     # obj 6 must reflect the authoritative version from stream 7.
     field = reader.get_object(6)
     assert field["/V"] == "42"
+
+
+def test_xref_table_with_comments_before_trailer():
+    """Comments between xref entries and trailer are legal per PDF spec §7.2.3.
+
+    Some PDF producers (e.g. Vectorizer.AI) insert human-readable comments
+    between the last xref entry and the ``trailer`` keyword.  pypdf must skip
+    these instead of crashing with ``PdfReadError: Could not read Boolean
+    object``.
+    """
+    pdf_data = (
+        b"%%PDF-1.4\n"
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+        b"2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n"
+        b"3 0 obj\n<< /Type /Page /MediaBox [0 0 100 100] /Parent 2 0 R >>\nendobj\n"
+        b"xref\n"
+        b"0 4\n"
+        b"0000000000 65535 f \n"
+        b"%010d 00000 n \n"
+        b"%010d 00000 n \n"
+        b"%010d 00000 n \n"
+        b"%% This is a legal PDF comment\n"
+        b"%% And another one\n"
+        b"trailer\n<< /Size 4 /Root 1 0 R >>\n"
+        b"startxref\n%d\n"
+        b"%%%%EOF\n"
+    )
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"xref") - 1,
+    )
+    reader = PdfReader(BytesIO(pdf_data))
+    assert len(reader.pages) == 1

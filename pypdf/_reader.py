@@ -889,6 +889,15 @@ class PdfReader(PdfDocCommon):
                 num += 1
             read_non_whitespace(stream)
             stream.seek(-1, 1)
+            # Skip any PDF comments between xref entries and the trailer
+            # keyword. Some PDF producers (e.g. Vectorizer.AI) insert
+            # comments here which are legal per the PDF spec (§7.2.3).
+            while stream.read(1) == b"%":
+                stream.seek(-1, 1)
+                skip_over_comment(stream)
+                read_non_whitespace(stream)
+                stream.seek(-1, 1)
+            stream.seek(-1, 1)
             trailer_tag = stream.read(7)
             if trailer_tag != b"trailer":
                 # more xrefs!
