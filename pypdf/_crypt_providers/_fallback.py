@@ -70,14 +70,17 @@ class CryptAES(CryptBase):
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
+    """RC4 encryption. *Legacy PDF compatibility only – do not use for new cryptographic purposes.*"""
     return CryptRC4(key).encrypt(data)
 
 
 def rc4_decrypt(key: bytes, data: bytes) -> bytes:
+    """RC4 decryption. *Legacy PDF compatibility only – do not use for new cryptographic purposes.*"""
     return CryptRC4(key).decrypt(data)
 
 
 def aes_ecb_encrypt(key: bytes, data: bytes) -> bytes:
+    """AES-ECB encryption. *Legacy PDF compatibility only – do not use for new cryptographic purposes.*"""
     raise DependencyError(_DEPENDENCY_ERROR_STR)
 
 
