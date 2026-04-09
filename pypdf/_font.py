@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from io import BytesIO
-from typing import Any, Union, cast
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject, StreamObject
 
@@ -10,6 +10,11 @@ from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
 from .constants import FontFlags
 from .errors import PdfReadError
+
+if TYPE_CHECKING:
+    from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
+    from fontTools.ttLib.tables._p_o_s_t import table__p_o_s_t
+    from fontTools.ttLib.tables.O_S_2f_2 import table_O_S_2f_2
 
 try:
     from fontTools.ttLib import TTFont
@@ -341,6 +346,54 @@ class Font:
             interpretable=interpretable
         )
 
+    @staticmethod
+    def _font_flags_from_truetype_font_tables(
+            header: "table__h_e_a_d",
+            postscript: "table__p_o_s_t",
+            os2: "table_O_S_2f_2"
+        ) -> int:
+        # Get the font flags
+        if os2:
+            panose = os2.panose
+            # sFamilyClass is a two-byte field. The high byte describes the family class, whereas the low
+            # byte only describes the subclass. We only need the high byte, hence the bit shift below:
+            family_class = os2.sFamilyClass >> 8
+        flags: int = 0
+        # ITALIC
+        if header.macStyle & HEADER_MACSTYLE_ITALIC or (os2 and os2.fsSelection & OS2_FSSELECTION_ITALIC):
+            flags |= FontFlags.ITALIC
+        if postscript:
+            italic_angle = postscript.italicAngle
+            if italic_angle != 0.0:
+                flags |= FontFlags.ITALIC
+        # FIXED_PITCH
+        if (
+            (os2 and panose.bProportion == OS2_PANOSE_BPROPORTION_MONOSPACED) or
+            (postscript and postscript.isFixedPitch > 0)  # Actually 1, but originally (older versions of the TTF
+        ):                                                # specification) any non-zero value signified monospace.
+            flags |= FontFlags.FIXED_PITCH
+        # SCRIPT
+        if os2 and (
+            family_class == OS2_SFAMILYSCLASS_SCRIPTS or panose.bFamilyType == OS2_PANOSE_BFAMILYTYPE_SCRIPT
+        ):
+            flags |= FontFlags.SCRIPT
+        # SERIF
+        if os2 and (
+            2 <= panose.bSerifStyle <= 10
+            or 1 <= family_class <= 5 or family_class == 7  # 6 is reserved, all 8 and above are not serif
+        ):
+            flags |= FontFlags.SERIF
+        # SYMBOLIC
+        if os2 and (
+            family_class == OS2_SFAMILYSCLASS_SYMBOLIC or
+            panose.bFamilyType in {OS2_PANOSE_BFAMILYTYPE_DECORATIVE, OS2_PANOSE_BFAMILYTYPE_PICTORIAL}
+        ):
+            flags |= FontFlags.SYMBOLIC
+        else:
+            flags |= FontFlags.NONSYMBOLIC
+
+        return flags
+
     @classmethod
     def from_truetype_font_file(cls, font_file: BytesIO) -> "Font":
         if not HAS_FONTTOOLS:
@@ -356,13 +409,7 @@ class Font:
 
             # Collect additional font tables to derive font information
             postscript = tt_font_object.get("post", None)
-
             os2 = tt_font_object.get("OS/2", None)
-            if os2:
-                panose = os2.panose
-                # sFamilyClass is a two-byte field. The high byte describes the family class, whereas the low
-                # byte only describes the subclass. We only need the high byte, hence the bit shift below:
-                family_class = os2.sFamilyClass >> 8
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
             units_per_em = header.unitsPerEm
@@ -384,45 +431,7 @@ class Font:
                 except AttributeError:
                     pass
 
-            # Get the font flags
-            flags: int = 0
-            # ITALIC
-            if header.macStyle & HEADER_MACSTYLE_ITALIC or (os2 and os2.fsSelection & OS2_FSSELECTION_ITALIC):
-                flags |= FontFlags.ITALIC
-            if postscript:
-                italic_angle = postscript.italicAngle
-                if italic_angle != 0.0:
-                    flags |= FontFlags.ITALIC
-
-            # FIXED_PITCH
-            if (
-                (os2 and panose.bProportion == OS2_PANOSE_BPROPORTION_MONOSPACED) or
-                (postscript and postscript.isFixedPitch > 0)  # Actually 1, but originally (older versions of the TTF
-            ):                                                # specification) any non-zero value signified monospace.
-                flags |= FontFlags.FIXED_PITCH
-
-            # SCRIPT
-            if os2 and (
-                family_class == OS2_SFAMILYSCLASS_SCRIPTS or panose.bFamilyType == OS2_PANOSE_BFAMILYTYPE_SCRIPT
-            ):
-                flags |= FontFlags.SCRIPT
-
-            # SERIF
-            if os2 and (
-                2 <= panose.bSerifStyle <= 10  #
-                or 1 <= family_class <= 5 or family_class == 7  # 6 is reserved, all 8 and above are not serif
-            ):
-                flags |= FontFlags.SERIF
-
-            # SYMBOLIC
-            if os2 and (
-                family_class == OS2_SFAMILYSCLASS_SYMBOLIC or
-                panose.bFamilyType in {OS2_PANOSE_BFAMILYTYPE_DECORATIVE, OS2_PANOSE_BFAMILYTYPE_PICTORIAL}
-            ):
-                flags |= FontFlags.SYMBOLIC
-            else:
-                flags |= FontFlags.NONSYMBOLIC
-            font_descriptor_kwargs["flags"] = flags
+            font_descriptor_kwargs["flags"] = cls._font_flags_from_truetype_font_tables(header, postscript, os2)
 
             font_descriptor_kwargs["bbox"] = (
                 round(header.xMin * scale_factor, 0),
@@ -463,8 +472,8 @@ class Font:
             else:
                 raise PdfReadError("Font file does not have a cmap table")
 
-            cls._add_default_width(character_widths, flags)
-            space_width = cls._add_space_width(character_widths, flags)
+            cls._add_default_width(character_widths, font_descriptor_kwargs["flags"])
+            space_width = cls._add_space_width(character_widths, font_descriptor_kwargs["flags"])
 
         return cls(
             name=font_descriptor.name,
