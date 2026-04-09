@@ -124,7 +124,7 @@ def test_array_object__clone_same_stream_multiple_times() -> None:
     )
 
 
-def test_array_object__to_lst_conversion():
+def test_array_object__to_lst_conversion() -> None:
     arr = ArrayObject()
 
     # str not starting with "/" -> TextStringObject
