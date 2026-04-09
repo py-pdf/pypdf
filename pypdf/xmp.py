@@ -14,6 +14,7 @@ from typing import (
     Optional,
     TypeVar,
     Union,
+    cast,
 )
 from xml.dom.expatbuilder import ExpatBuilderNS
 from xml.dom.minidom import Document
@@ -289,7 +290,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     def _getter_bag(self, namespace: str, name: str) -> Optional[list[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
-            return cached
+            return cast(list[str], cached)
         retval: list[str] = []
         for element in self.get_element("", namespace, name):
             if (bags := _generic_get(element, self, list_type="Bag")) is not None:
@@ -309,7 +310,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     ) -> Optional[list[Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
-            return cached
+            return cast(list[Any], cached)
         retval: list[Any] = []
         for element in self.get_element("", namespace, name):
             if (seqs := _generic_get(element, self, list_type="Seq", converter=converter)) is not None:
@@ -333,7 +334,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     def _get_langalt_values(self, namespace: str, name: str) -> Optional[dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
-            return cached
+            return cast(dict[Any, Any], cached)
         retval: dict[Any, Any] = {}
         for element in self.get_element("", namespace, name):
             alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")

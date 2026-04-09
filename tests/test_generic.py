@@ -10,7 +10,7 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.constants import CheckboxRadioButtonAttributes
+from pypdf.constants import CheckboxRadioButtonAttributes, OutlineFontFlag
 from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
@@ -282,6 +282,14 @@ def test_destination_fit_r():
     assert d.bottom == FloatObject(0)
     assert list(d) == []
     d.empty_tree()
+
+
+def test_destination_color_and_font_format_defaults():
+    d = Destination(NameObject("title"), NullObject(), Fit.fit_rectangle(0, 0, 0, 0))
+    assert isinstance(d.color, ArrayObject)
+    assert d.color == [FloatObject(0), FloatObject(0), FloatObject(0)]
+    assert isinstance(d.font_format, OutlineFontFlag)
+    assert d.font_format == 0
 
 
 def test_destination_fit_v():

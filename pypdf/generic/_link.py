@@ -66,7 +66,7 @@ class DirectReferenceLink:
         self._reference = reference
 
     def find_referenced_page(self) -> IndirectObject:
-        return self._reference[0]
+        return cast(IndirectObject, self._reference[0])
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
         """target_pdf: PdfWriter which the new link went into"""

@@ -206,7 +206,7 @@ class EmbeddedFile:
     @property
     def associated_file_relationship(self) -> str:
         """Retrieve the relationship of the referring document to this embedded file."""
-        return self.pdf_object.get("/AFRelationship", "/Unspecified")
+        return cast(str, self.pdf_object.get("/AFRelationship", "/Unspecified"))
 
     @associated_file_relationship.setter
     def associated_file_relationship(self, value: NameObject) -> None:
@@ -227,7 +227,7 @@ class EmbeddedFile:
     @property
     def _params(self) -> DictionaryObject:
         """Retrieve the file-specific parameters."""
-        return self._embedded_file.get("/Params", DictionaryObject()).get_object()
+        return cast(DictionaryObject, self._embedded_file.get("/Params", DictionaryObject()).get_object())
 
     @cached_property
     def _ensure_params(self) -> DictionaryObject:

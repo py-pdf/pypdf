@@ -27,7 +27,7 @@ class RectangleObject(ArrayObject):
 
     def _ensure_is_number(self, value: Any) -> Union[FloatObject, NumberObject]:
         if not isinstance(value, (FloatObject, NumberObject)):
-            value = FloatObject(value)
+            return FloatObject(value)
         return value
 
     def scale(self, sx: float, sy: float) -> "RectangleObject":
@@ -45,7 +45,8 @@ class RectangleObject(ArrayObject):
 
     @property
     def left(self) -> FloatObject:
-        return self[0]
+        value: FloatObject = self[0]
+        return value
 
     @left.setter
     def left(self, f: float) -> None:
@@ -53,7 +54,8 @@ class RectangleObject(ArrayObject):
 
     @property
     def bottom(self) -> FloatObject:
-        return self[1]
+        value: FloatObject = self[1]
+        return value
 
     @bottom.setter
     def bottom(self, f: float) -> None:
@@ -61,7 +63,8 @@ class RectangleObject(ArrayObject):
 
     @property
     def right(self) -> FloatObject:
-        return self[2]
+        value: FloatObject = self[2]
+        return value
 
     @right.setter
     def right(self, f: float) -> None:
@@ -69,7 +72,8 @@ class RectangleObject(ArrayObject):
 
     @property
     def top(self) -> FloatObject:
-        return self[3]
+        value: FloatObject = self[3]
+        return value
 
     @top.setter
     def top(self, f: float) -> None:
