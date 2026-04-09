@@ -37,4 +37,3 @@ repos:
         files: ^pypdf/.*
         additional_dependencies:
           - cryptography
-          - pycryptodome

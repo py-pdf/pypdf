@@ -501,7 +501,7 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     assert isinstance(embedded, DictionaryObject)
 
     result = embedded["/Names"]
-    assert result == [
+    assert result == [  # type: ignore[comparison-overlap]
         "factur-x.xml",
         attachments[0].pdf_object.indirect_reference,
         "test.pdf",
@@ -605,7 +605,7 @@ def test_embedded_file__order() -> None:
     assert isinstance(names, DictionaryObject)
     files = names["/EmbeddedFiles"]
     assert isinstance(files, DictionaryObject)
-    assert files["/Names"] == [
+    assert files["/Names"] == [  # type: ignore[comparison-overlap]
         "abc.txt", attachment2.pdf_object.indirect_reference,
         "test.txt", attachment1.pdf_object.indirect_reference,
         "test.txt", attachment4.pdf_object.indirect_reference,

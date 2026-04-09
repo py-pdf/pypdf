@@ -242,7 +242,7 @@ def test_handle_flate__icc_based__image_mode_1() -> None:
 
 
 @pytest.mark.skipif(
-    condition=Version(Image.__version__) < Version("12.1.0"),
+    condition=Version(Image.__version__) < Version("12.1.0"),  # type: ignore[attr-defined]
     reason="Unsuitable Pillow version."
 )
 def test_handle_jpx__explicit_decode() -> None:
