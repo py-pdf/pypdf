@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775813737620,
+  "lastUpdate": 1775813765385,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -100459,6 +100459,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03691218474288215",
             "extra": "mean: 820.6349708000062 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "fd0aeca4e94a4791502a9a164742d2be68c7f565",
+          "message": "REL: 6.10.0\n\n## What's new\n\n### Security (SEC)\n- Disallow custom XML entity declarations for XMP metadata (#3724) by @stefan6419846\n\n### New Features (ENH)\n- Skip MD5 key derivation for AES-256 encrypted PDFs (#3694) by @Ygnas\n\n### Bug Fixes (BUG)\n- Use remove_orphans in compress_identical_objects (#3310) by @j-t-1\n- Fix PdfReadError when xref table contains comments before trailer (#3710) by @rassie\n- Correctly verify AES padding during decryption (#3699) by @stefan6419846\n- Fix stale object cache from non-authoritative object streams (#3698) by @astahlman\n- Fix extract_links pairing when annotations include non-links (#3687) by @ReinerBRO\n\n### Documentation (DOC)\n- Add AI policy (#3717) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.2...6.10.0)",
+          "timestamp": "2026-04-10T11:32:43+02:00",
+          "tree_id": "11fdd3e160cdc4511a80e0ac38cc6814449722df",
+          "url": "https://github.com/py-pdf/pypdf/commit/fd0aeca4e94a4791502a9a164742d2be68c7f565"
+        },
+        "date": 1775813760345,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.39340644269832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019894395009410135",
+            "extra": "mean: 74.66360438461642 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.230870994346944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011473694153703373",
+            "extra": "mean: 49.42940915788684 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1318319310223226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027481322329138264",
+            "extra": "mean: 883.5234035999974 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4715764556465908,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026014021171373393",
+            "extra": "mean: 2.120546918799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18035605122161108,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1165733182041585",
+            "extra": "mean: 5.544588014800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2164825477105186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03952461584930233",
+            "extra": "mean: 822.0422083999892 msec\nrounds: 5"
           }
         ]
       }
