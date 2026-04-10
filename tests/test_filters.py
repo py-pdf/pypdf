@@ -877,12 +877,9 @@ def test_rle_decode_exception_with_corrupted_stream(caplog):
     assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
 
 
-# --- BrotliDecode tests ---
-
-
 @pytest.mark.parametrize("s", filter_inputs)
 @pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
-def test_brotli_decode_encode(s: str) -> None:
+def test_brotli_decode_encode(s):
     """BrotliDecode encode() and decode() methods work as expected."""
     s_bytes = s.encode()
     encoded = BrotliDecode.encode(s_bytes)
@@ -890,7 +887,7 @@ def test_brotli_decode_encode(s: str) -> None:
 
 
 @mock.patch("pypdf.filters.brotli", None)
-def test_brotli_missing_installation() -> None:
+def test_brotli_missing_installation():
     """BrotliDecode raises DependencyError when brotli is not installed."""
     with pytest.raises(DependencyError):
         BrotliDecode.decode(b"test data")
@@ -900,7 +897,7 @@ def test_brotli_missing_installation() -> None:
 
 
 @pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
-def test_brotli_decode_output_limit() -> None:
+def test_brotli_decode_output_limit():
     """BrotliDecode raises LimitReachedError when output exceeds limit."""
     large_data = b"A" * 1000
     compressed = BrotliDecode.encode(large_data)
@@ -910,7 +907,7 @@ def test_brotli_decode_output_limit() -> None:
 
 
 @pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
-def test_brotli_decode_stream_data() -> None:
+def test_brotli_decode_stream_data():
     """BrotliDecode works correctly through decode_stream_data."""
     original = b"Hello, Brotli!"
     compressed = BrotliDecode.encode(original)
@@ -921,7 +918,7 @@ def test_brotli_decode_stream_data() -> None:
 
 
 @mock.patch("pypdf.filters.brotli", None)
-def test_brotli_decode_stream_data_missing() -> None:
+def test_brotli_decode_stream_data_missing():
     """decode_stream_data raises DependencyError for BrotliDecode when brotli is missing."""
     stream = DictionaryObject()
     stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
@@ -931,7 +928,7 @@ def test_brotli_decode_stream_data_missing() -> None:
 
 
 @pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
-def test_brotli_pdf_roundtrip() -> None:
+def test_brotli_pdf_roundtrip():
     """A PDF with BrotliDecode-compressed content stream can be read back."""
     original_text = "Hello, Brotli PDF!"
     writer = PdfWriter()

@@ -574,8 +574,14 @@ class BrotliDecode:
         Decompresses data encoded using the Brotli compression method,
         reproducing the original data; §7.4.11, ISO 32000-2:2020.
 
+        Please note that the output length is limited to avoid memory
+        issues. If you need to process larger content streams, consider
+        adapting ``pypdf.filters.BROTLI_MAX_OUTPUT_LENGTH``. In case you
+        are only dealing with trusted inputs and/or want to disable these
+        limits, set the value to ``0``.
+
         Args:
-          data: brotli-compressed data.
+          data: text to decode.
           decode_parms: this filter does not use parameters.
 
         Returns:
@@ -587,12 +593,21 @@ class BrotliDecode:
         """
         if brotli is None:
             raise DependencyError("brotli is required for BrotliDecode. Install it with: pip install pypdf[brotli]")
-        result: bytes = brotli.decompress(data)
-        if BROTLI_MAX_OUTPUT_LENGTH and len(result) > BROTLI_MAX_OUTPUT_LENGTH:
-            raise LimitReachedError(
-                f"Limit reached while decompressing. Output size {len(result)} exceeds {BROTLI_MAX_OUTPUT_LENGTH}."
-            )
-        return result
+        if not BROTLI_MAX_OUTPUT_LENGTH:
+            return bytes(brotli.decompress(data))
+        decompressor = brotli.Decompressor()
+        chunks: list[bytes] = []
+        total_length = 0
+        chunk_size = 65536
+        for i in range(0, len(data), chunk_size):
+            output: bytes = decompressor.process(data[i : i + chunk_size])
+            chunks.append(output)
+            total_length += len(output)
+            if total_length > BROTLI_MAX_OUTPUT_LENGTH:
+                raise LimitReachedError(
+                    f"Limit reached while decompressing. {len(data) - i - chunk_size} bytes remaining."
+                )
+        return b"".join(chunks)
 
     @staticmethod
     def encode(data: bytes, **kwargs: Any) -> bytes:
@@ -601,19 +616,18 @@ class BrotliDecode:
         §7.4.11, ISO 32000-2:2020.
 
         Args:
-          data: data to compress.
+            data: The data to be compressed.
 
         Returns:
-          compressed data.
+            The compressed data.
 
         Raises:
-          DependencyError: If the ``brotli`` package is not installed.
+            DependencyError: If the ``brotli`` package is not installed.
 
         """
         if brotli is None:
             raise DependencyError("brotli is required for BrotliDecode. Install it with: pip install pypdf[brotli]")
-        result: bytes = brotli.compress(data)
-        return result
+        return bytes(brotli.compress(data))
 
 
 @dataclass
