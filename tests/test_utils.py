@@ -7,7 +7,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
-
+import logging
 import pytest
 
 import pypdf._utils
@@ -22,6 +22,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     format_iso8824_date,
     logger_error,
+    logger_warning,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -342,6 +343,14 @@ def test_logger_error(caplog):
     message = "Advanced encoding %(encoding)s not implemented yet"
     logger_error(message, source=__name__, encoding=encoding)
     assert "Advanced encoding {'/key': 'value'} not implemented yet" in caplog.text
+
+def test_logger_warning(caplog):
+    caplog.set_level(logging.WARNING)
+    message = "Skipping broken line %(line)r :%(error)s"
+    line = "Some line broken"
+    error = ""
+    logger_warning(message, source=__name__, line=line, error=error)
+    assert "Skipping broken line some line broken: error" in caplog.text
 
 
 def test_rename_kwargs():
