@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775848269641,
+  "lastUpdate": 1775848301207,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -100723,6 +100723,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.042439499379785306",
             "extra": "mean: 872.5435619999985 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mgorny@gentoo.org",
+            "name": "Michał Górny",
+            "username": "mgorny"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "500d09d92fa80a6f1fcdfa46656893efd05e91ff",
+          "message": "TST: Update `test_embedded_file__basic` to use `tmp_path` fixture (#3726)\n\nReplace the old `tmpdir` fixture with `tmp_path` in\n`test_embedded_file__basic` to fix the test collection error when `py`\nis installed:\n\n```pytb\n____________________________________________ ERROR collecting tests/generic/test_files.py _____________________________________________\n.venv/lib/python3.12/site-packages/py/_vendored_packages/apipkg/__init__.py:150: in __makeattr\n    modpath, attrname = self.__map__[name]\n                        ^^^^^^^^^^^^^^^^^^\nE   KeyError: 'LocalPath'\n\nDuring handling of the above exception, another exception occurred:\ntests/generic/test_files.py:31: in <module>\n    def test_embedded_file__basic(tmpdir: path.LocalPath) -> None:\n                                          ^^^^^^^^^^^^^^\n.venv/lib/python3.12/site-packages/py/_vendored_packages/apipkg/__init__.py:155: in __makeattr\n    raise AttributeError(name)\nE   AttributeError: LocalPath\n```\n\nSigned-off-by: Michał Górny <mgorny@gentoo.org>",
+          "timestamp": "2026-04-10T21:08:31+02:00",
+          "tree_id": "c28287a1ce0fb7ea17517e83a1368661db2186f7",
+          "url": "https://github.com/py-pdf/pypdf/commit/500d09d92fa80a6f1fcdfa46656893efd05e91ff"
+        },
+        "date": 1775848295973,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.543072932570452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018355103702359543",
+            "extra": "mean: 73.8384859166672 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.38449798637168,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013826899384064036",
+            "extra": "mean: 49.05688629999929 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1445828784700849,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02167789486527592",
+            "extra": "mean: 873.6807258000027 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5349985159574513,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06385716096142832",
+            "extra": "mean: 1.8691640634000009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18111294673397127,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019586833293954605",
+            "extra": "mean: 5.521416431200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.170686278293543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04377231041721768",
+            "extra": "mean: 854.1998129999911 msec\nrounds: 5"
           }
         ]
       }
