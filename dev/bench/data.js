@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775808238726,
+  "lastUpdate": 1775812862457,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -93461,6 +93461,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00309481260255332",
             "extra": "mean: 654.1357654000024 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b15a374e5ca648d4878e57c3b2c0551e7f8cc7f8",
+          "message": "SEC: Disallow custom XML entity declarations for XMP metadata (#3724)\n\nWhile *libexpat* already handled the more severe cases, it has still\nbeen possible to cause rather high memory usage. For this reason,\ndisallow entity declarations completely.\n\nI decided against *defusedxml* for now, as I do not see the benefit of\nincluding an untyped external package for something this small,\nespecially considering that the public maintenance status does not look\nvery promising.",
+          "timestamp": "2026-04-10T11:18:26+02:00",
+          "tree_id": "5a7c8deefd247c687897aec475d9357230abd7da",
+          "url": "https://github.com/py-pdf/pypdf/commit/b15a374e5ca648d4878e57c3b2c0551e7f8cc7f8"
+        },
+        "date": 1775812857329,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.107559536838202,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036979477986819236",
+            "extra": "mean: 321.7959263999987 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.704197158102286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023193409814762623",
+            "extra": "mean: 50.75060871428624 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2860257336766808,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02448770549781271",
+            "extra": "mean: 3.4961889168 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.312047756485512,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008019360759883894",
+            "extra": "mean: 57.76324176470549 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08950830212648175,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024116275269247752",
+            "extra": "mean: 11.1721480158 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6396972251325834,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002348656196591954",
+            "extra": "mean: 609.8686907999991 msec\nrounds: 5"
           }
         ]
       }
