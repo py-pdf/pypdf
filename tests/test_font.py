@@ -63,19 +63,23 @@ def test_font_file():
 
 
 def test_font_from_font_file():
-    if HAS_FONTTOOLS:
-        reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
-        font_resources = reader.pages[0]["/Resources"]["/Font"]
-        for font_resource in font_resources:
-            font_data = font_resources[font_resource]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
-            font = Font.from_truetype_font_file(BytesIO(font_data))
-            if font_resource == "/F1":
-                assert font.font_descriptor.flags == 96
-                assert len(font.character_map) == 979
-            if font_resource == "/F2":
-                assert font.font_descriptor.flags == 32
-            if font_resource == "/F3":
-                assert font.font_descriptor.flags == 33
-            if font_resource == "/F4":
-                assert len(font.character_map) == 1026
-                assert len(font.character_widths) == 1027
+    if not HAS_FONTTOOLS:
+        with pytest.raises(ImportError) as excinfo:
+            Font.from_truetype_font_file(BytesIO(b""))
+        assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in str(excinfo.value)
+        return
+    reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
+    font_resources = reader.pages[0]["/Resources"]["/Font"]
+    for font_resource in font_resources:
+        font_data = font_resources[font_resource]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+        font = Font.from_truetype_font_file(BytesIO(font_data))
+        if font_resource == "/F1":
+            assert font.font_descriptor.flags == 96
+            assert len(font.character_map) == 979
+        if font_resource == "/F2":
+            assert font.font_descriptor.flags == 32
+        if font_resource == "/F3":
+            assert font.font_descriptor.flags == 33
+        if font_resource == "/F4":
+            assert len(font.character_map) == 1026
+            assert len(font.character_widths) == 1027
