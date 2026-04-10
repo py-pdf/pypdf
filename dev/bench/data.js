@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775717773104,
+  "lastUpdate": 1775807690540,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -93329,6 +93329,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0013184156974826277",
             "extra": "mean: 648.7132023999948 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1e0e5bec49c9b07cd061cd048fca505af7015c29",
+          "message": "DOC: Include policies about AI and PoCs into security policy",
+          "timestamp": "2026-04-10T09:52:10+02:00",
+          "tree_id": "a45b64db74c2f0b18ae6c5ca4f167f3cc1814671",
+          "url": "https://github.com/py-pdf/pypdf/commit/1e0e5bec49c9b07cd061cd048fca505af7015c29"
+        },
+        "date": 1775807685637,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.149854604979336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003583419440508958",
+            "extra": "mean: 317.47497119999935 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.703573602709945,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026212642763314485",
+            "extra": "mean: 50.75221480952391 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2908430649221693,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021502583283419557",
+            "extra": "mean: 3.438280366999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.236193086684473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011332551878403773",
+            "extra": "mean: 58.01745170588353 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08151852827421277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04727980024627551",
+            "extra": "mean: 12.267149826799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7005005135876947,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006289887950320084",
+            "extra": "mean: 588.0621570000073 msec\nrounds: 5"
           }
         ]
       }
