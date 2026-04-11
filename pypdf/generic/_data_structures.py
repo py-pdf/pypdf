@@ -589,7 +589,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 except PdfReadError as exc:
                     if pdf is not None and pdf.strict:
                         raise
-                    logger_warning(exc.__repr__(), __name__)
+                    logger_warning("%(exception)r",source= __name__,exception=exc)
                     continue
                 tok = read_non_whitespace(stream)
                 stream.seek(-1, 1)
@@ -599,7 +599,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             except Exception as exc:
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(exc.__repr__())
-                logger_warning(exc.__repr__(), __name__)
+                logger_warning("%(exception)s", source=__name__,exception=exc)
                 retval = DictionaryObject()
                 retval.update(data)
                 return retval  # return partial data
@@ -609,12 +609,12 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             else:
                 # multiple definitions of key not permitted
                 msg = (
-                    f"Multiple definitions in dictionary at byte "
-                    f"{hex(stream.tell())} for key {key}"
+                    "Multiple definitions in dictionary at byte "
+                    "%(streamTell)s for key %(key)s"
                 )
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
-                logger_warning(msg, __name__)
+                logger_warning(msg,source =__name__,streamTell=hex(stream.tell()),key=key)
 
         pos = stream.tell()
         s = read_non_whitespace(stream)
@@ -633,7 +633,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 if pdf is not None and pdf.strict:
                     raise PdfStreamError("Stream length not defined")
                 logger_warning(
-                    f"Stream length not defined @pos={stream.tell()}", __name__
+                    "Stream length not defined @pos=%(pos)s",source= __name__,pos=stream.tell()
                 )
                 data[NameObject(SA.LENGTH)] = NumberObject(-1)
             length = data[SA.LENGTH]
@@ -712,7 +712,7 @@ class TreeObject(DictionaryObject):
         while True:
             child_id = id(child)
             if child_id in visited:
-                logger_warning(f"Detected cycle in outline structure for {child}", __name__)
+                logger_warning("Detected cycle in outline structure for %(child)s",source= __name__,child=child)
                 return
             visited.add(child_id)
 
@@ -1089,11 +1089,8 @@ class StreamObject(DictionaryObject):
         from ._image_xobject import _xobj_to_image  # noqa: PLC0415
 
         if self.get("/Subtype", "") != "/Image":
-            try:
-                msg = f"{self.indirect_reference} does not seem to be an Image"  # pragma: no cover
-            except AttributeError:
-                msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
-            logger_warning(msg, __name__)
+            obj=getattr(self,"indirect_reference",repr(self))
+            logger_warning("%(obj)s does not seem to be an Image", source=__name__,obj=obj)
         extension, _, img = _xobj_to_image(self, pillow_parameters)
         if extension is None:
             return None  # pragma: no cover
@@ -1199,8 +1196,8 @@ class ContentStream(DecodedStreamObject):
                         # No need to emit an exception here for now - the PDF structure
                         # seems to already be broken beforehand in these cases.
                         logger_warning(
-                            f"Expected StreamObject, got {type(s_resolved).__name__} instead. Data might be wrong.",
-                            __name__
+                            "Expected StreamObject, got %(actual_type)s instead. Data might be wrong.",
+                            source=__name__,actual_type=type(s_resolved).__name__
                         )
                     else:
                         new_data = s_resolved.get_data()

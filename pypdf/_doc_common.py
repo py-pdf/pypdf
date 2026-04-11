@@ -634,7 +634,7 @@ class PdfDocCommon:
     ) -> None:
         if tree in stack:
             logger_warning(
-                f"{self._get_qualified_field_name(tree)} already parsed", __name__
+                "%(filename)s already parsed",source= __name__,filename=self._get_qualified_field_name(tree)
             )
             return
         stack.append(tree)
@@ -863,7 +863,7 @@ class PdfDocCommon:
         while True:
             node_id = id(node)
             if node_id in visited:
-                logger_warning(f"Detected cycle in outline structure for {node}", __name__)
+                logger_warning("Detected cycle in outline structure for %(node)s",source= __name__,node=node)
                 break
             visited.add(node_id)
 
@@ -966,7 +966,10 @@ class PdfDocCommon:
         try:
             return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
         except PdfReadError:
-            logger_warning(f"Unknown destination: {title!r} {array}", __name__)
+            logger_warning("Unknown destination: %(title)r %(array)s",
+                            source= __name__,
+                            title=title,
+                            array=array)
             if self.strict:
                 raise
             # create a link to first Page
@@ -1022,8 +1025,8 @@ class PdfDocCommon:
             if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
             logger_warning(
-                f"Removed unexpected destination {dest!r} from destination",
-                __name__,
+                "Removed unexpected destination %(dest)r from destination",
+                source=__name__,dest=dest
             )
             outline_item = self._build_destination(title, None)
 
@@ -1242,7 +1245,7 @@ class PdfDocCommon:
         if isinstance(page, IndirectObject):
             p = page.get_object()
             if not isinstance(p, PageObject):
-                logger_warning("IndirectObject is not referencing a page", __name__)
+                logger_warning("IndirectObject is not referencing a page",source= __name__)
                 return
             page = p
 
@@ -1250,10 +1253,10 @@ class PdfDocCommon:
             try:
                 page = self.flattened_pages.index(page)
             except ValueError:
-                logger_warning("Cannot find page in pages", __name__)
+                logger_warning("Cannot find page in pages",source= __name__)
                 return
         if not (0 <= page < len(self.flattened_pages)):
-            logger_warning("Page number is out of range", __name__)
+            logger_warning("Page number is out of range", source=__name__)
             return
 
         ind = self.pages[page].indirect_reference
