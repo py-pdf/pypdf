@@ -381,7 +381,7 @@ def test_aes_decrypt__wrong_padding():
             continue
         with pytest.raises(ValueError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
             aes.decrypt(broken)
-        
+
         # Should not raise
         aes_lenient.decrypt(broken)
 
