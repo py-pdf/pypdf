@@ -822,9 +822,11 @@ class Encryption:
         StrF: str,
         EFF: str,
         values: Optional[EncryptionValues],
+        strict: bool = False,
     ) -> None:
         # §7.6.2, entries common to all encryption dictionaries
         # use same name as keys of encryption dictionaries entries
+        self.strict = strict
         self.V = V
         self.R = R
         self.Length = Length  # key_size
@@ -939,20 +941,20 @@ class Encryption:
         # for AES-256
         aes256_key = key
 
-        stm_crypt = self._get_crypt(self.StmF, rc4_key, aes128_key, aes256_key)
-        str_crypt = self._get_crypt(self.StrF, rc4_key, aes128_key, aes256_key)
-        ef_crypt = self._get_crypt(self.EFF, rc4_key, aes128_key, aes256_key)
+        stm_crypt = self._get_crypt(self.StmF, rc4_key, aes128_key, aes256_key, self.strict)
+        str_crypt = self._get_crypt(self.StrF, rc4_key, aes128_key, aes256_key, self.strict)
+        ef_crypt = self._get_crypt(self.EFF, rc4_key, aes128_key, aes256_key, self.strict)
 
         return CryptFilter(stm_crypt, str_crypt, ef_crypt)
 
     @staticmethod
     def _get_crypt(
-        method: str, rc4_key: bytes, aes128_key: bytes, aes256_key: bytes
+        method: str, rc4_key: bytes, aes128_key: bytes, aes256_key: bytes, strict: bool = False
     ) -> CryptBase:
         if method == "/AESV2":
-            return CryptAES(aes128_key)
+            return CryptAES(aes128_key, strict)
         if method == "/AESV3":
-            return CryptAES(aes256_key)
+            return CryptAES(aes256_key, strict)
         if method == "/Identity":
             return CryptIdentity()
 
@@ -1098,7 +1100,9 @@ class Encryption:
         self.values.U = u_value
 
     @staticmethod
-    def read(encryption_entry: DictionaryObject, first_id_entry: bytes) -> "Encryption":
+    def read(
+        encryption_entry: DictionaryObject, first_id_entry: bytes, strict: bool = False
+    ) -> "Encryption":
         if encryption_entry.get("/Filter") != "/Standard":
             raise NotImplementedError(
                 "only Standard PDF encryption handler is available"
@@ -1164,6 +1168,7 @@ class Encryption:
             StmF=stm_filter,
             EFF=ef_filter,
             entry=encryption_entry,  # Dummy entry for the moment; will get removed
+            strict=strict,
         )
 
     @staticmethod

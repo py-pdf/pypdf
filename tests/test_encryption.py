@@ -363,7 +363,8 @@ def test_aes_decrypt__wrong_padding():
     # Use fixed values for reliability in testing these.
     # Depending on the input and values chosen during encryption, some cases might
     # not raise the desired exception, but this is out of our control.
-    aes = CryptAES(b"\xe8\xcd\xaeAG\xc8cMnLI\xaah\x97\x90@")
+    aes = CryptAES(b"\xe8\xcd\xaeAG\xc8cMnLI\xaah\x97\x90@", strict=True)
+    aes_lenient = CryptAES(b"\xe8\xcd\xaeAG\xc8cMnLI\xaah\x97\x90@", strict=False)
     original = b"\x9b\x9b%\x1a\ro\xf0\x17eI\xdc\x93\xbfp@\x05"
     encrypted = (
         b"L\x1f\xecj%\x00\x8dC\xb3%\xfc\x94\xf0\x14\x02\xcd\xa5\x06\x97\x86\x1e^\xfaSN"
@@ -371,6 +372,8 @@ def test_aes_decrypt__wrong_padding():
     )
 
     assert aes.decrypt(encrypted) == original
+    assert aes_lenient.decrypt(encrypted) == original
+
     for i in range(256):
         broken = encrypted[:-1] + bytes([i])
         if broken == encrypted:
@@ -378,6 +381,9 @@ def test_aes_decrypt__wrong_padding():
             continue
         with pytest.raises(ValueError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
             aes.decrypt(broken)
+        
+        # Should not raise
+        aes_lenient.decrypt(broken)
 
 
 @pytest.mark.samples

@@ -179,7 +179,7 @@ class PdfReader(PdfDocCommon):
         id_entry = self.trailer.get(TK.ID)
         id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
         encrypt_entry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
-        self._encryption = Encryption.read(encrypt_entry, id1_entry)
+        self._encryption = Encryption.read(encrypt_entry, id1_entry, strict=self.strict)
 
         # try empty password if no password provided
         pwd = password if password is not None else b""

@@ -40,6 +40,7 @@ from cryptography.hazmat.primitives.ciphers.base import Cipher
 from cryptography.hazmat.primitives.ciphers.modes import CBC, ECB
 
 from pypdf._crypt_providers._base import CryptBase
+from pypdf._utils import logger_warning
 
 crypt_provider = ("cryptography", __version__)
 
@@ -58,8 +59,9 @@ class CryptRC4(CryptBase):
 
 
 class CryptAES(CryptBase):
-    def __init__(self, key: bytes) -> None:
+    def __init__(self, key: bytes, strict: bool = False) -> None:
         self.alg = AES(key)
+        self.strict = strict
 
     def encrypt(self, data: bytes) -> bytes:
         iv = secrets.token_bytes(16)
@@ -84,7 +86,10 @@ class CryptAES(CryptBase):
 
             unpadder = PKCS7(128).unpadder()
             return unpadder.update(padded_data) + unpadder.finalize()
-        except ValueError:
+        except ValueError as e:
+            if self.strict:
+                raise
+            logger_warning(f"Invalid padding bytes. {e}", __name__)
             if len(data) % 16 != 0:
                 padder = PKCS7(128).padder()
                 data = padder.update(data) + padder.finalize()

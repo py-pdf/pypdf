@@ -32,6 +32,7 @@ from Crypto.Cipher import AES, ARC4
 from Crypto.Util.Padding import pad, unpad
 
 from pypdf._crypt_providers._base import CryptBase
+from pypdf._utils import logger_warning
 
 crypt_provider = ("pycryptodome", __version__)
 
@@ -48,8 +49,9 @@ class CryptRC4(CryptBase):
 
 
 class CryptAES(CryptBase):
-    def __init__(self, key: bytes) -> None:
+    def __init__(self, key: bytes, strict: bool = False) -> None:
         self.key = key
+        self.strict = strict
 
     def encrypt(self, data: bytes) -> bytes:
         iv = secrets.token_bytes(16)
@@ -68,7 +70,10 @@ class CryptAES(CryptBase):
             aes = AES.new(self.key, AES.MODE_CBC, iv)
             padded_data = aes.decrypt(data)
             return unpad(padded_data, 16)
-        except ValueError:
+        except ValueError as e:
+            if self.strict:
+                raise
+            logger_warning(f"Invalid padding bytes. {e}", __name__)
             if len(data) % 16 != 0:
                 data = pad(data, 16)
 
