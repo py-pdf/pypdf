@@ -64,9 +64,17 @@ class CryptAES(CryptBase):
         if not data:
             return data
 
-        aes = AES.new(self.key, AES.MODE_CBC, iv)
-        padded_data = aes.decrypt(data)
-        return unpad(padded_data, 16)
+        try:
+            aes = AES.new(self.key, AES.MODE_CBC, iv)
+            padded_data = aes.decrypt(data)
+            return unpad(padded_data, 16)
+        except ValueError:
+            if len(data) % 16 != 0:
+                data = pad(data, 16)
+
+            aes = AES.new(self.key, AES.MODE_CBC, iv)
+            d = aes.decrypt(data)
+            return d[: -d[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:

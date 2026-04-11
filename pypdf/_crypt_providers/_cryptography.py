@@ -77,12 +77,22 @@ class CryptAES(CryptBase):
         if not data:
             return data
 
-        cipher = Cipher(self.alg, CBC(iv))
-        decryptor = cipher.decryptor()
-        padded_data = decryptor.update(data) + decryptor.finalize()
+        try:
+            cipher = Cipher(self.alg, CBC(iv))
+            decryptor = cipher.decryptor()
+            padded_data = decryptor.update(data) + decryptor.finalize()
 
-        unpadder = PKCS7(128).unpadder()
-        return unpadder.update(padded_data) + unpadder.finalize()
+            unpadder = PKCS7(128).unpadder()
+            return unpadder.update(padded_data) + unpadder.finalize()
+        except ValueError:
+            if len(data) % 16 != 0:
+                padder = PKCS7(128).padder()
+                data = padder.update(data) + padder.finalize()
+
+            cipher = Cipher(self.alg, CBC(iv))
+            decryptor = cipher.decryptor()
+            d = decryptor.update(data) + decryptor.finalize()
+            return d[: -d[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
