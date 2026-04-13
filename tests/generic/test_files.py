@@ -3,9 +3,9 @@ import datetime
 import shutil
 import subprocess
 from io import BytesIO
+from pathlib import Path
 
 import pytest
-from py import path
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import AFRelationship
@@ -28,12 +28,12 @@ PDFATTACH_BINARY = shutil.which("pdfattach")
 
 
 @pytest.mark.skipif(PDFATTACH_BINARY is None, reason="Requires poppler-utils")
-def test_embedded_file__basic(tmpdir: path.LocalPath) -> None:
+def test_embedded_file__basic(tmp_path: Path) -> None:
     assert PDFATTACH_BINARY is not None
     clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
-    attached_path = tmpdir / "attached.pdf"
-    file_path = tmpdir / "test.txt"
-    file_path.write_binary(b"Hello World\n")
+    attached_path = tmp_path / "attached.pdf"
+    file_path = tmp_path / "test.txt"
+    file_path.write_bytes(b"Hello World\n")
     subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path])  # noqa: S603
     with PdfReader(str(attached_path)) as reader:
         attachment = next(iter(EmbeddedFile._load(reader.root_object)))
