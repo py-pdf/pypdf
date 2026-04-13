@@ -515,7 +515,8 @@ class PdfReader(PdfDocCommon):
                 # otherwise, decrypt here...
                 retval = cast(PdfObject, retval)
                 retval = self._encryption.decrypt_object(
-                    retval, indirect_reference.idnum, indirect_reference.generation
+                    retval, indirect_reference.idnum, indirect_reference.generation,
+                    strict=self.strict,
                 )
         else:
             if hasattr(self.stream, "getbuffer"):
@@ -552,7 +553,8 @@ class PdfReader(PdfDocCommon):
                     # otherwise, decrypt here...
                     retval = cast(PdfObject, retval)
                     retval = self._encryption.decrypt_object(
-                        retval, indirect_reference.idnum, indirect_reference.generation
+                        retval, indirect_reference.idnum, indirect_reference.generation,
+                        strict=self.strict,
                     )
             else:
                 logger_warning(
