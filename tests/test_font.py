@@ -68,6 +68,7 @@ def test_font_from_font_file():
             Font.from_truetype_font_file(BytesIO(b""))
         assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in str(excinfo.value)
         return
+    from fontTools.ttLib import TTFont  # noqa: PLC0415
     reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
     font_resources = reader.pages[0]["/Resources"]["/Font"]
     for font_resource in font_resources:
@@ -83,3 +84,16 @@ def test_font_from_font_file():
         if font_resource == "/F4":
             assert len(font.character_map) == 697
             assert len(font.character_widths) == 698
+        if font_resource == "/F6":
+            crippled_font_data = BytesIO()
+            with TTFont(BytesIO(font_data)) as tt_font_object:
+                del tt_font_object["name"]
+                del tt_font_object["OS/2"]
+                del tt_font_object["post"]
+                tt_font_object.save(crippled_font_data)
+                font = Font.from_truetype_font_file(crippled_font_data)
+                crippled_font_data.seek(0)
+                del tt_font_object["cmap"]
+                tt_font_object.save(crippled_font_data)
+                with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
+                    font = Font.from_truetype_font_file(crippled_font_data)
