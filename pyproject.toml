@@ -248,10 +248,6 @@ exclude = ['venv', '.venv']
 
 
 [[tool.mypy.overrides]]
-module = "pypdf._crypt_providers._pycryptodome"
-warn_return_any = false
-
-[[tool.mypy.overrides]]
 module = "tests.*"
 ignore_errors = true
 
