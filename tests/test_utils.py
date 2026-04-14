@@ -346,11 +346,11 @@ def test_logger_error(caplog):
 
 def test_logger_warning(caplog):
     caplog.set_level(logging.WARNING)
-    message = "Skipping broken line %(line)r :%(error)s"
-    line = "Some line broken"
-    error = ""
+    message = "Skipping broken line %(line)s:%(error)s"
+    line = "some line broken"
+    error = "error"
     logger_warning(message, source=__name__, line=line, error=error)
-    assert "Skipping broken line some line broken: error" in caplog.text
+    assert "Skipping broken line some line broken:error" in caplog.text
 
 
 def test_rename_kwargs():
