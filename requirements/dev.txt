@@ -43,7 +43,7 @@ packaging==24.1
     #   build
     #   pytest
     #   wheel
-pillow==12.1.1
+pillow==12.2.0
     # via -r dev.in
 pip-tools==7.4.1
     # via -r dev.in
@@ -57,7 +57,7 @@ pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-pytest==8.3.3
+pytest==9.0.3
     # via pytest-cov
 pytest-cov==5.0.0
     # via -r dev.in
