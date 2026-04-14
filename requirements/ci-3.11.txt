@@ -50,7 +50,7 @@ pytest==9.0.3
     #   pytest-socket
     #   pytest-timeout
     #   pytest-xdist
-pytest-benchmark==4.0.0
+pytest-benchmark==5.2.3
     # via -r requirements/ci.in
 pytest-cov==5.0.0
     # via -r requirements/ci.in
