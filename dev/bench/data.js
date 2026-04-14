@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1776170590543,
+  "lastUpdate": 1776171119855,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -93989,6 +93989,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0036155644600758107",
             "extra": "mean: 609.2119975999935 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "b49e7eb45422c19b68ac59c51b7699409e74d44e",
+          "message": "REL: 6.10.1\n\n## What's new\n\n### Security (SEC)\n- Limit the allowed size of xref and object streams (#3733) by @stefan6419846\n\n### Robustness (ROB)\n- Consider strict mode setting for decryption errors (#3731) by @stefan6419846\n\n### Documentation (DOC)\n- Use new parameter names for compress_identical_objects by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.0...6.10.1)",
+          "timestamp": "2026-04-14T14:49:02+02:00",
+          "tree_id": "10b55324ec7197962938433c760659860c16ea6d",
+          "url": "https://github.com/py-pdf/pypdf/commit/b49e7eb45422c19b68ac59c51b7699409e74d44e"
+        },
+        "date": 1776171113597,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1458796614316915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006381357152232811",
+            "extra": "mean: 317.8761133999956 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.505479727362996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031597997552651326",
+            "extra": "mean: 51.26764447619115 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2935870352075639,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017854709948480308",
+            "extra": "mean: 3.4061449590000024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.711273406768186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00042623991993321383",
+            "extra": "mean: 56.46121411111298 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08828668134520938,
+            "unit": "iter/sec",
+            "range": "stddev: 0.056317796033512287",
+            "extra": "mean: 11.326736771199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6360315531916605,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029305214469803323",
+            "extra": "mean: 611.2351550000028 msec\nrounds: 5"
           }
         ]
       }
