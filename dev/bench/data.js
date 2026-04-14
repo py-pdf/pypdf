@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1776156966070,
+  "lastUpdate": 1776170565759,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -93923,6 +93923,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00214344194904871",
             "extra": "mean: 636.1887773999911 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "62338e9d36419cf193ccec7331784f45df1d70b3",
+          "message": "SEC: Limit the allowed size of xref and object streams (#3733)\n\nThis uses a dynamic approach based upon the actual stream size and\nsupplied width parameters to ensure highest backwards-compatibility.",
+          "timestamp": "2026-04-14T14:40:03+02:00",
+          "tree_id": "85085827e38649878f0c1f8e91b3f06003550a37",
+          "url": "https://github.com/py-pdf/pypdf/commit/62338e9d36419cf193ccec7331784f45df1d70b3"
+        },
+        "date": 1776170556219,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.155121441554976,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006954310380082566",
+            "extra": "mean: 316.94501100000707 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.790523118014484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00235605493016699",
+            "extra": "mean: 50.52923533333699 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2925293944860854,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01584509488440558",
+            "extra": "mean: 3.4184598842000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.803623398971506,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007286333039108816",
+            "extra": "mean: 56.16834155556047 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08944874372095815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02098613269415601",
+            "extra": "mean: 11.179586860599994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6414647182582187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036155644600758107",
+            "extra": "mean: 609.2119975999935 msec\nrounds: 5"
           }
         ]
       }
