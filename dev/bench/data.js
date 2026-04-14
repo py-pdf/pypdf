@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1776170565759,
+  "lastUpdate": 1776170590543,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -101251,6 +101251,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04094687012355232",
             "extra": "mean: 865.7416252000075 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "62338e9d36419cf193ccec7331784f45df1d70b3",
+          "message": "SEC: Limit the allowed size of xref and object streams (#3733)\n\nThis uses a dynamic approach based upon the actual stream size and\nsupplied width parameters to ensure highest backwards-compatibility.",
+          "timestamp": "2026-04-14T14:40:03+02:00",
+          "tree_id": "85085827e38649878f0c1f8e91b3f06003550a37",
+          "url": "https://github.com/py-pdf/pypdf/commit/62338e9d36419cf193ccec7331784f45df1d70b3"
+        },
+        "date": 1776170585220,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.033423752948883,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018534607414737808",
+            "extra": "mean: 71.25844823077242 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.311543614963377,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012159031241948292",
+            "extra": "mean: 51.78249962499937 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1811461622665467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002229793483520594",
+            "extra": "mean: 846.6352699999987 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5398479196282691,
+            "unit": "iter/sec",
+            "range": "stddev: 0.050428553959698315",
+            "extra": "mean: 1.8523735364000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18357180190811542,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05866367914359944",
+            "extra": "mean: 5.4474597384000045 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1519508386751143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04396219399605198",
+            "extra": "mean: 868.0926011999986 msec\nrounds: 5"
           }
         ]
       }
