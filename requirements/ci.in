@@ -4,6 +4,7 @@ fpdf2
 mypy
 pillow
 cryptography
+pycryptodome
 pytest
 pytest-benchmark
 pytest-socket
