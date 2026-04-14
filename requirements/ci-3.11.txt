@@ -32,7 +32,7 @@ packaging==24.1
     # via pytest
 pathspec==1.0.4
     # via mypy
-pillow==12.1.1
+pillow==12.2.0
     # via
     #   -r requirements/ci.in
     #   fpdf2
@@ -42,7 +42,7 @@ py-cpuinfo==9.0.0
     # via pytest-benchmark
 pycparser==2.22
     # via cffi
-pytest==8.3.3
+pytest==9.0.3
     # via
     #   -r requirements/ci.in
     #   pytest-benchmark
