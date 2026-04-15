@@ -17,7 +17,7 @@ aware of the possible side effects, you can modify the following constants:
 * `pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH` for the maximum output length of the *RunLengthDecode* filter (run-length compression)
 * `pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH` for the maximum output length of the *FlateDecode* filter (zlib compression)
 * `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH` for the number of bytes to attempt the recovery with for the *FlateDecode* filter.
-  It defaults to 5 MB due to the much more complex recovery approach. 
+  It defaults to 5 MB due to the much more complex recovery approach.
 
 The following general stream length limits apply, defaulting to 75 MB as well:
 
