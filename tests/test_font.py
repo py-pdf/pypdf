@@ -1,10 +1,12 @@
 """Test font-related functionality."""
 from io import BytesIO
+from unittest import mock
 
 import pytest
+from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader
-from pypdf._font import HAS_FONTTOOLS, Font
+from pypdf._font import Font
 from pypdf.errors import PdfReadError
 from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
 
@@ -63,12 +65,6 @@ def test_font_file():
 
 
 def test_font_from_font_file():
-    if not HAS_FONTTOOLS:
-        with pytest.raises(ImportError) as excinfo:
-            Font.from_truetype_font_file(BytesIO(b""))
-        assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in str(excinfo.value)
-        return
-    from fontTools.ttLib import TTFont  # noqa: PLC0415
     reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
     font_resources = reader.pages[0]["/Resources"]["/Font"]
     for font_resource in font_resources:
@@ -96,4 +92,12 @@ def test_font_from_font_file():
                 del tt_font_object["cmap"]
                 tt_font_object.save(crippled_font_data)
                 with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
-                    font = Font.from_truetype_font_file(crippled_font_data)
+                    Font.from_truetype_font_file(crippled_font_data)
+
+
+def test_font_from_font_file_no_fonttools():
+    with (
+        mock.patch("pypdf._font.HAS_FONTTOOLS", False),
+        pytest.raises(ImportError, match=r"^The 'fontTools' library is required to use 'from_truetype_font_file'$")
+    ):
+        Font.from_truetype_font_file(BytesIO(b""))
