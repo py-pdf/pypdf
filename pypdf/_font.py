@@ -137,38 +137,14 @@ class Font:
         """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
         widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
         first_char = pdf_font_dict.get("/FirstChar", 0)
-        if not isinstance(encoding, str):
-            # This means that encoding is a dict
-            current_widths.update({
-                encoding.get(idx + first_char, chr(idx + first_char)): width
-                for idx, width in enumerate(widths_array)
-            })
-            return
-
-        # We map the character code directly to the character
-        # using the string encoding
         for idx, width in enumerate(widths_array):
-            # Often "idx == 0" will denote the .notdef character, but we add it anyway
-            char_code = idx + first_char  # This is a raw code
-            # Get the "raw" character or byte representation
-            raw_char = bytes([char_code]).decode(encoding, "surrogatepass")
-            # Translate raw_char to the REAL Unicode character using the char_map
-            unicode_char = char_map.get(raw_char)
-            if unicode_char:
-                current_widths[unicode_char] = int(width)
-            else:
-                current_widths[raw_char] = int(width)
+            current_widths[chr(idx + first_char)] = int(width)
 
     @staticmethod
     def _collect_cid_character_widths(
         d_font: DictionaryObject, char_map: dict[Any, Any], current_widths: dict[str, int]
     ) -> None:
         """Parses the /W array from a DescendantFont dictionary and updates character widths."""
-        ord_map = {
-            ord(_target): _surrogate
-            for _target, _surrogate in char_map.items()
-            if isinstance(_target, str)
-        }
         # /W width definitions have two valid formats which can be mixed and matched:
         #   (1) A character start index followed by a list of widths, e.g.
         #       `45 [500 600 700]` applies widths 500, 600, 700 to characters 45-47.
@@ -196,7 +172,7 @@ class Font:
                 start_idx, width_list = w_entry, w_next_entry
                 current_widths.update(
                     {
-                        ord_map[_cidx]: _width
+                        chr(_cidx): _width
                         for _cidx, _width in zip(
                             range(
                                 cast(int, start_idx),
@@ -205,7 +181,6 @@ class Font:
                             ),
                             width_list,
                         )
-                        if _cidx in ord_map
                     }
                 )
                 skip_count = 1
@@ -220,11 +195,10 @@ class Font:
                 )
                 current_widths.update(
                     {
-                        ord_map[_cidx]: const_width
+                        chr(_cidx): const_width
                         for _cidx in range(
                             cast(int, start_idx), cast(int, stop_idx + 1), 1
                         )
-                        if _cidx in ord_map
                     }
                 )
                 skip_count = 2
@@ -340,6 +314,7 @@ class Font:
                     cls._collect_tt_t1_character_widths(
                         pdf_font_dict, character_map, encoding, character_widths
                     )
+
                 elif name in CORE_FONT_METRICS:
                     font_descriptor = CORE_FONT_METRICS[name].font_descriptor
                     character_widths = CORE_FONT_METRICS[name].character_widths
