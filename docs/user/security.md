@@ -6,28 +6,31 @@ We strive to provide a library with secure defaults.
 
 ### Filters
 
-*pypdf* currently employs output size limits for some filters which are known to possibly have large compression ratios.
+*pypdf* currently employs output size limits for some filters which are known to possibly have large compression ratios
+and other related issues.
 
 The usual limit is at 75 MB of uncompressed data during decompression. If this is too low for your use case, and you are
-aware of the possible side effects, you can modify the following constants which define the desired maximal output size in bytes:
+aware of the possible side effects, you can modify the following constants:
 
-* `pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH` for the *FlateDecode* filter (zlib compression)
-* `pypdf.filters.LZW_MAX_OUTPUT_LENGTH` for the *LZWDecode* filter (LZW compression)
-* `pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH` for the *RunLengthDecode* filter (run-length compression)
+* `pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH` for the *JBIG2Decode* filter (JBIG2 images)
+* `pypdf.filters.LZW_MAX_OUTPUT_LENGTH` for the maximum output length of the *LZWDecode* filter (LZW compression)
+* `pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH` for the maximum output length of the *RunLengthDecode* filter (run-length compression)
+* `pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH` for the maximum output length of the *FlateDecode* filter (zlib compression)
+* `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH` for the number of bytes to attempt the recovery with for the *FlateDecode* filter.
+  It defaults to 5 MB due to the much more complex recovery approach. 
 
-For JBIG2 images, there is a similar parameter to limit the memory usage during decoding: `pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH`
-It defaults to 75 MB as well.
+The following general stream length limits apply, defaulting to 75 MB as well:
 
-For all streams, the maximum allowed value for the `/Length` field is limited to `pypdf.filters.MAX_DECLARED_STREAM_LENGTH`, which
-defaults to 75 MB as well.
-
-For all array-based streams, the maximum allowed output length is limited to `pypdf.filters.MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH`,
-which defaults to 75 MB as well.
-
-For the *FlateDecode* filter, the number of bytes to attempt recovery with can be set by `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH`.
-It defaults to 5 MB due to the much more complex recovery approach.
+* `pypdf.filters.MAX_DECLARED_STREAM_LENGTH` for the `/Length` field of streams.
+* `pypdf.filters.MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH` for the maximum allowed output length of array-based streams.
 
 For the *JBIG2Decode* filter, calling the external *jbig2dec* tool can be disabled by setting `pypdf.filters.JBIG2DEC_BINARY = None`.
+
+For the *FlateDecode* filter, the following additional limits apply:
+
+* `pypdf.filters.FLATE_MAX_BUFFER_SIZE` for the maximum buffer size to allocate for images, defaulting to 75 MB
+* `pypdf.filters.FLATE_MAX_COLUMNS` for the maximum number of columns, defaulting to 250 000
+* `pypdf.filters.FLATE_MAX_ROW_LENGTH` for the maximum row length, defaulting to 4 MB
 
 ### Reading
 
