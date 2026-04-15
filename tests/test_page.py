@@ -854,7 +854,8 @@ def test_merge_page_with_annotations():
     page_one = writer.pages[0]
     page_two = writer.pages[1]
     page_one.merge_page(page_two)
-
+   
+    # Assert: You need to inspect the file manually
     page_two[NameObject("/Annots")] = TextStringObject("For coverage, when Annots is not an array")
     page_one.merge_page(page_two)
 
