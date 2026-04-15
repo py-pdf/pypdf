@@ -264,7 +264,7 @@ class Font:
                     font_file = font_descriptor_obj[source_key].get_object()
                     font_descriptor_kwargs["font_file"] = font_file
                 except PdfReadError as e:
-                    logger_warning(f"Failed to get '{source_key}' in {font_descriptor_obj}: {e}", __name__)
+                    logger_warning(f"Failed to get {source_key!r} in {font_descriptor_obj}: {e}", __name__)
         return font_descriptor_kwargs
 
     @classmethod
