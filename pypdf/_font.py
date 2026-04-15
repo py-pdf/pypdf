@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from io import BytesIO
 from typing import TYPE_CHECKING, Any, Union, cast
 
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject, StreamObject
@@ -12,6 +13,8 @@ from .constants import FontFlags
 from .errors import PdfReadError
 
 if TYPE_CHECKING:
+    from io import BytesIO
+
     from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
     from fontTools.ttLib.tables._p_o_s_t import table__p_o_s_t
     from fontTools.ttLib.tables.O_S_2f_2 import table_O_S_2f_2
@@ -268,7 +271,7 @@ class Font:
     def from_font_resource(
         cls,
         pdf_font_dict: DictionaryObject,
-    ) -> "Font":
+    ) -> Font:
         from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
 
         # Can collect base_font, name and encoding directly from font resource
@@ -348,9 +351,9 @@ class Font:
 
     @staticmethod
     def _font_flags_from_truetype_font_tables(
-            header: "table__h_e_a_d",
-            postscript: "table__p_o_s_t",
-            os2: "table_O_S_2f_2"
+            header: table__h_e_a_d,
+            postscript: table__p_o_s_t,
+            os2: table_O_S_2f_2
         ) -> int:
         # Get the font flags
         if os2:
@@ -395,7 +398,7 @@ class Font:
         return flags
 
     @classmethod
-    def from_truetype_font_file(cls, font_file: BytesIO) -> "Font":
+    def from_truetype_font_file(cls, font_file: BytesIO) -> Font:
         if not HAS_FONTTOOLS:
             raise ImportError("The 'fontTools' library is required to use 'from_truetype_font_file'")
         with TTFont(font_file) as tt_font_object:
