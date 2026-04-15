@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject, StreamObject
 
@@ -58,7 +58,7 @@ class FontDescriptor:
     italic_angle: float = 0.0  # Non-italic
     flags: int = 32  # Non-serif, non-symbolic, not fixed width
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
-    font_file: Union[StreamObject, None] = None
+    font_file: StreamObject| None = None
 
 
 @dataclass(frozen=True)
@@ -88,19 +88,19 @@ class Font:
     """
 
     name: str
-    encoding: Union[str, dict[int, str]]
+    encoding: str | dict[int, str]
     character_map: dict[Any, Any] = field(default_factory=dict)
     sub_type: str = "Unknown"
     font_descriptor: FontDescriptor = field(default_factory=FontDescriptor)
     character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
-    space_width: Union[float, int] = 250
+    space_width: float | int = 250
     interpretable: bool = True
 
     @staticmethod
     def _collect_tt_t1_character_widths(
         pdf_font_dict: DictionaryObject,
         char_map: dict[Any, Any],
-        encoding: Union[str, dict[int, str]],
+        encoding: str | dict[int, str],
         current_widths: dict[str, int]
     ) -> None:
         """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
