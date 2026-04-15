@@ -362,6 +362,7 @@ class Font:
             # byte only describes the subclass. We only need the high byte, hence the bit shift below:
             family_class = os2.sFamilyClass >> 8
         flags: int = 0
+
         # ITALIC
         if header.macStyle & HEADER_MACSTYLE_ITALIC or (os2 and os2.fsSelection & OS2_FSSELECTION_ITALIC):
             flags |= FontFlags.ITALIC
@@ -369,23 +370,27 @@ class Font:
             italic_angle = postscript.italicAngle
             if italic_angle != 0.0:
                 flags |= FontFlags.ITALIC
+
         # FIXED_PITCH
         if (
             (os2 and panose.bProportion == OS2_PANOSE_BPROPORTION_MONOSPACED) or
             (postscript and postscript.isFixedPitch > 0)  # Actually 1, but originally (older versions of the TTF
         ):                                                # specification) any non-zero value signified monospace.
             flags |= FontFlags.FIXED_PITCH
+
         # SCRIPT
         if os2 and (
             family_class == OS2_SFAMILYSCLASS_SCRIPTS or panose.bFamilyType == OS2_PANOSE_BFAMILYTYPE_SCRIPT
         ):
             flags |= FontFlags.SCRIPT
+
         # SERIF
         if os2 and (
             2 <= panose.bSerifStyle <= 10
             or 1 <= family_class <= 5 or family_class == 7  # 6 is reserved, all 8 and above are not serif
         ):
             flags |= FontFlags.SERIF
+
         # SYMBOLIC
         if os2 and (
             family_class == OS2_SFAMILYSCLASS_SYMBOLIC or
