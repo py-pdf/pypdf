@@ -7,9 +7,9 @@ from PIL import Image
 from pypdf import PdfReader
 from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
-from pypdf.errors import EmptyImageDataError, PdfReadError
+from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
-from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image
+from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image, bits2byte
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
@@ -267,3 +267,11 @@ def test_handle_jpx__explicit_decode() -> None:
         for x in range(16):
             assert result.getpixel((x, y)) == (255 * (x != y), 255, 255, 255), (x, y)
             assert image.getpixel((x, y)) == (255 * (x == y), 0, 0, 0), (x, y)
+
+
+def test_bits2byte__limit() -> None:
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Requested buffer size 76500000 exceeds limit of 75000000\.$"
+    ):
+        bits2byte(data=b"TEST", size=(9000, 8500), bits=8)
