@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1776270021305,
+  "lastUpdate": 1776270945001,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -94187,6 +94187,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0028667126363942394",
             "extra": "mean: 676.112200600005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "c476b4f293c8ef4cac07dfb755e5582d838fcdc0",
+          "message": "REL: 6.10.2\n\n## What's new\n\n### Security (SEC)\n- Do not rely on possibly invalid /Size for incremental cloning (#3735) by @stefan6419846\n- Introduce limits for FlateDecode parameters and image decoding (#3734) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.1...6.10.2)",
+          "timestamp": "2026-04-15T18:32:41+02:00",
+          "tree_id": "4c0359f27e4b7050f0e799d9a411e0cf2ba9d8cf",
+          "url": "https://github.com/py-pdf/pypdf/commit/c476b4f293c8ef4cac07dfb755e5582d838fcdc0"
+        },
+        "date": 1776270939541,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.065144345889405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005845553107077377",
+            "extra": "mean: 326.2489094000017 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.891094100196753,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002161122630042587",
+            "extra": "mean: 50.273755428571846 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2868342808433585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014793707532900826",
+            "extra": "mean: 3.4863336315999987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.172791554333568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006048922938694031",
+            "extra": "mean: 55.02731911111011 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08578600668604965,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02463175880448795",
+            "extra": "mean: 11.656912807000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.491422359911826,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007723439147880366",
+            "extra": "mean: 670.5008767999971 msec\nrounds: 5"
           }
         ]
       }
