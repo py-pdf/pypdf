@@ -43,6 +43,13 @@ If you want to employ custom limits for the *PdfWriter* as well, the currently p
 is to initialize it from the reader, id est something like
 `PdfWriter(clone_from=PdfReader("file.pdf", root_object_recovery_limit=42))`.
 
+For *PdfWriter* instances, the following limits are employed for incremental reading:
+
+* `incremental_clone_object_count_limit` limits the number of objects to read during cloning. It defaults to
+  500 000. Setting it to `None` will fully disable this limit.
+* `incremental_clone_object_id_limit` limits the maximum object ID to read during cloning. It defaults to
+  1 000 000. Setting it to `None` will fully disable this limit.
+
 ## Reporting possible vulnerabilities
 
 Please refer to our [security policy](https://github.com/py-pdf/pypdf/security/policy).
