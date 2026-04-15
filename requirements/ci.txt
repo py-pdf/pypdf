@@ -16,6 +16,8 @@ exceptiongroup==1.2.2
     # via pytest
 execnet==2.1.1
     # via pytest-xdist
+fonttools==4.60.2
+    # via -r requirements/ci.in
 importlib-metadata==8.5.0
     # via typeguard
 iniconfig==2.0.0
