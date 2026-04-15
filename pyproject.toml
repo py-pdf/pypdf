@@ -41,6 +41,7 @@ Source = "https://github.com/py-pdf/pypdf"
 [project.optional-dependencies]
 crypto = ["cryptography"]
 cryptodome = ["PyCryptodome"]
+fonts = ["fonttools"]
 image = ["Pillow>=8.0.0"]
 full = [
     "cryptography",
