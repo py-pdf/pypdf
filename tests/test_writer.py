@@ -3160,3 +3160,16 @@ def test_collect_incremental_clone_object_ids():
             match=r"^Incremental clone object ID 22 exceeds maximum allowed ID 17\.$"
     ):
         writer._collect_incremental_clone_object_ids(reader)
+
+
+def test_clone_reader_document_root__incremental__unknown_object():
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    data = BytesIO()
+    writer.write(data)
+    data.flush()
+
+    writer = PdfWriter(data, incremental=True)
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    with mock.patch.object(writer, "_collect_incremental_clone_object_ids", return_value=[*list(range(1, 23)), 42]):
+        writer.clone_reader_document_root(reader)
