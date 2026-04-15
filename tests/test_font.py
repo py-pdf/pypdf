@@ -1,10 +1,13 @@
 """Test font-related functionality."""
+import importlib
 from io import BytesIO
+from sys import modules
 from unittest import mock
 
 import pytest
 from fontTools.ttLib import TTFont
 
+import pypdf._font
 from pypdf import PdfReader
 from pypdf._font import Font
 from pypdf.errors import PdfReadError
@@ -97,7 +100,9 @@ def test_font_from_font_file():
 
 def test_font_from_font_file_no_fonttools():
     with (
-        mock.patch("pypdf._font.HAS_FONTTOOLS", False),
+        mock.patch.dict(modules, {"fontTools.ttLib": None}),
         pytest.raises(ImportError, match=r"^The 'fontTools' library is required to use 'from_truetype_font_file'$")
     ):
+        importlib.reload(pypdf._font)
         Font.from_truetype_font_file(BytesIO(b""))
+    importlib.reload(pypdf._font)
