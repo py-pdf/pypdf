@@ -19,6 +19,7 @@ from pypdf.errors import DependencyError, DeprecationError, LimitReachedError, P
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
+    BrotliDecode,
     CCITParameters,
     CCITTFaxDecode,
     CCITTParameters,
@@ -28,6 +29,13 @@ from pypdf.filters import (
     decode_stream_data,
     decompress,
 )
+
+try:
+    import brotli
+
+    HAS_BROTLI = True
+except ImportError:
+    HAS_BROTLI = False
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -868,6 +876,85 @@ def test_rle_decode_exception_with_corrupted_stream(caplog):
     assert decoded.endswith(b"\x87\x83\x83\x83\x83\x83\x83\x83]]]]]]]RRRRRRRX\xa5")
     assert len(decoded) == 1048576
     assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
+
+
+@pytest.mark.parametrize("s", filter_inputs)
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
+def test_brotli_decode_encode(s):
+    """BrotliDecode encode() and decode() methods work as expected."""
+    s_bytes = s.encode()
+    encoded = BrotliDecode.encode(s_bytes)
+    assert BrotliDecode.decode(encoded) == s_bytes
+
+
+@mock.patch("pypdf.filters.brotli", None)
+def test_brotli_missing_installation():
+    """BrotliDecode raises DependencyError when brotli is not installed."""
+    with pytest.raises(DependencyError):
+        BrotliDecode.decode(b"test data")
+
+    with pytest.raises(DependencyError):
+        BrotliDecode.encode(b"test data")
+
+
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
+def test_brotli_decode_output_limit():
+    """BrotliDecode raises LimitReachedError when output exceeds limit."""
+    large_data = b"A" * 1000
+    compressed = BrotliDecode.encode(large_data)
+    with mock.patch("pypdf.filters.BROTLI_MAX_OUTPUT_LENGTH", 100), \
+            pytest.raises(LimitReachedError):
+        BrotliDecode.decode(compressed)
+
+
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
+def test_brotli_decode_stream_data():
+    """BrotliDecode works correctly through decode_stream_data."""
+    original = b"Hello, Brotli!"
+    compressed = BrotliDecode.encode(original)
+    stream = DictionaryObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream._data = compressed  # type: ignore[attr-defined]
+    assert decode_stream_data(stream) == original
+
+
+@mock.patch("pypdf.filters.brotli", None)
+def test_brotli_decode_stream_data_missing():
+    """decode_stream_data raises DependencyError for BrotliDecode when brotli is missing."""
+    stream = DictionaryObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream._data = b"dummy"  # type: ignore[attr-defined]
+    with pytest.raises(DependencyError):
+        decode_stream_data(stream)
+
+
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
+def test_brotli_pdf_roundtrip():
+    """A PDF with BrotliDecode-compressed content stream can be read back."""
+    original_text = "Hello, Brotli PDF!"
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    page = writer.pages[0]
+
+    # Build a minimal content stream with BrotliDecode filter
+    content = f"BT /F1 12 Tf 50 150 Td ({original_text}) Tj ET".encode()
+    compressed = brotli.compress(content)
+
+    stream = StreamObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream._data = compressed
+
+    page[NameObject("/Contents")] = writer._add_object(stream)
+
+    buf = BytesIO()
+    writer.write(buf)
+
+    buf.seek(0)
+    reader = PdfReader(buf)
+    page_content = reader.pages[0].get_contents()
+    assert page_content is not None
+    raw_data = page_content.get_data()
+    assert original_text.encode() in raw_data
 
 
 def test_decompress():
