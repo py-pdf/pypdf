@@ -1233,7 +1233,7 @@ class PageObject(DictionaryObject):
                     arr.append(x)
             arr.sort()
 
-        if PG.ANNOTS in page2:
+        if not is_null_or_none(page2.get(PG.ANNOTS, None)):
             if PG.ANNOTS not in self:
                 self[NameObject(PG.ANNOTS)] = ArrayObject()
             annots = cast(ArrayObject, self[PG.ANNOTS].get_object())
