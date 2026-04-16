@@ -58,7 +58,7 @@ class FontDescriptor:
     italic_angle: float = 0.0  # Non-italic
     flags: int = 32  # Non-serif, non-symbolic, not fixed width
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
-    font_file: StreamObject| None = None
+    font_file: StreamObject | None = None
 
 
 @dataclass(frozen=True)
