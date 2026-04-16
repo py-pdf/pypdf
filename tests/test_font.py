@@ -47,13 +47,13 @@ def test_font_file():
 
     # /FontFile
     font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F2"])
-    assert type(font.font_descriptor.font_file) is EncodedStreamObject
+    assert isinstance(font.font_descriptor.font_file, EncodedStreamObject)
     assert len(font.font_descriptor.font_file.get_data()) == 5116
 
     # /FontFile2
     font_resource = reader.pages[0]["/Resources"]["/Font"]["/F1"]
     font = Font.from_font_resource(font_resource)
-    assert type(font.font_descriptor.font_file) is EncodedStreamObject
+    assert isinstance(font.font_descriptor.font_file, EncodedStreamObject)
     assert len(font.font_descriptor.font_file.get_data()) == 28464
 
     with pytest.raises(PdfReadError, match=r"^More than one /FontFile found in .+$"):
@@ -63,7 +63,7 @@ def test_font_file():
     # /FontFile3
     reader = PdfReader(RESOURCE_ROOT / "attachment.pdf")
     font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F1"])
-    assert type(font.font_descriptor.font_file) is EncodedStreamObject
+    assert isinstance(font.font_descriptor.font_file, EncodedStreamObject)
     assert len(font.font_descriptor.font_file.get_data()) == 2168
 
 
