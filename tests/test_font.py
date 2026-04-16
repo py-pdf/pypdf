@@ -1,13 +1,12 @@
 """Test font-related functionality."""
-import importlib
+import os
+import subprocess
+import sys
 from io import BytesIO
-from sys import modules
-from unittest import mock
 
 import pytest
 from fontTools.ttLib import TTFont
 
-import pypdf._font
 from pypdf import PdfReader
 from pypdf._font import Font
 from pypdf.errors import PdfReadError
@@ -98,11 +97,34 @@ def test_font_from_font_file():
                     Font.from_truetype_font_file(crippled_font_data)
 
 
-def test_font_from_font_file_no_fonttools():
-    with (
-        mock.patch.dict(modules, {"fontTools.ttLib": None}),
-        pytest.raises(ImportError, match=r"^The 'fontTools' library is required to use 'from_truetype_font_file'$")
-    ):
-        importlib.reload(pypdf._font)
-        Font.from_truetype_font_file(BytesIO(b""))
-    importlib.reload(pypdf._font)
+def test_font_from_font_file_no_fonttools(tmp_path):
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
+
+    source_file = tmp_path / "script.py"
+    source_file.write_text(
+        """
+import sys
+from io import BytesIO
+
+import pytest
+
+sys.modules["fontTools.ttLib"] = None
+from pypdf._font import Font
+
+with pytest.raises(ImportError, match=r"^The 'fontTools' library is required to use 'from_truetype_font_file'$"):
+    Font.from_truetype_font_file(BytesIO(b""))
+"""
+    )
+
+    try:
+        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
+    except KeyError:
+        env["PYTHONPATH"] = "."
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, source_file],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert result.stdout == b""
