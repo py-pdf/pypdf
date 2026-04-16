@@ -212,18 +212,35 @@ class Font:
                 )
 
     @staticmethod
-    def _add_default_width(current_widths: dict[str, int], flags: int) -> None:
+    def _get_space_char(
+        encoding: str | dict[int, str],
+        character_map: dict[Any, Any],
+    ) -> str:
+        space_char = " "
+        if isinstance(encoding, dict):
+            for char_code, char_str in encoding.items():
+                if char_str == space_char:
+                    return chr(char_code)
+
+        for glyph_id, char_str in character_map.items():
+            if char_str == space_char:
+                return str(glyph_id)
+
+        return space_char
+
+    @staticmethod
+    def _add_default_width(current_widths: dict[str, int], flags: int, space_char: str) -> None:
         if not current_widths:
             current_widths["default"] = 500
             return
 
-        if " " in current_widths and current_widths[" "] != 0:
+        if space_char in current_widths and current_widths[space_char] != 0:
             # Setting default to once or twice the space width, depending on fixed pitch
             if (flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
-                current_widths["default"] = current_widths[" "]
+                current_widths["default"] = current_widths[space_char]
                 return
 
-            current_widths["default"] = int(2 * current_widths[" "])
+            current_widths["default"] = int(2 * current_widths[space_char])
             return
 
         # Use the average width of existing glyph widths
@@ -231,8 +248,12 @@ class Font:
         current_widths["default"] = sum(valid_widths) // len(valid_widths) if valid_widths else 500
 
     @staticmethod
-    def _add_space_width(character_widths: dict[str, int], flags: int) -> int:
-        space_width = character_widths.get(" ", 0)
+    def _add_space_width(
+        character_widths: dict[str, int],
+        flags: int,
+        space_char: str
+    ) -> int:
+        space_width = character_widths.get(space_char, 0)
         if space_width != 0:
             return space_width
 
@@ -350,10 +371,10 @@ class Font:
         if not font_descriptor:
             font_descriptor = FontDescriptor(name=name)
 
+        space_char = cls._get_space_char(encoding, character_map)
         if character_widths.get("default", 0) == 0:
-            cls._add_default_width(character_widths, font_descriptor.flags)
-
-        space_width = cls._add_space_width(character_widths, font_descriptor.flags)
+            cls._add_default_width(character_widths, font_descriptor.flags, space_char)
+        space_width = cls._add_space_width(character_widths, font_descriptor.flags, space_char)
 
         return cls(
             name=name,
@@ -497,8 +518,11 @@ class Font:
             else:
                 raise PdfReadError("Font file does not have a cmap table")
 
-            cls._add_default_width(character_widths, font_descriptor_kwargs["flags"])
-            space_width = cls._add_space_width(character_widths, font_descriptor_kwargs["flags"])
+            space_char = cls._get_space_char(encoding, character_map)
+            cls._add_default_width(character_widths, font_descriptor_kwargs["flags"], space_char)
+            space_width = cls._add_space_width(
+                character_widths, font_descriptor_kwargs["flags"], space_char
+            )
 
         return cls(
             name=font_descriptor.name,
