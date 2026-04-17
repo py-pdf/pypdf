@@ -15,7 +15,7 @@ class TextStateParams:
     TJ or Tj PDF operation.
 
     Attributes:
-        value (Union[bytes, str]): the raw text to be rendered.
+        value (bytes | str): the raw text to be rendered.
         font (Font): font object
         font_size (int | float): font size
         Tc (float): character spacing. Defaults to 0.0.
@@ -52,26 +52,28 @@ class TextStateParams:
     font_height: float = field(default=0.0, init=False)
     flip_vertical: bool = field(default=False, init=False)
     rotated: bool = field(default=False, init=False)
+    text: str = ""
+    _decoded_value: str = ""
 
     def __post_init__(self) -> None:
         if isinstance(self.value, bytes):
             try:
                 if isinstance(self.font.encoding, str):
-                    self.txt = self.value.decode(self.font.encoding, "surrogatepass")
+                    self._decoded_value = self.value.decode(self.font.encoding, "surrogatepass")
                 else:
-                    self.txt = "".join(
+                    self._decoded_value = "".join(
                         self.font.encoding[x]
                         if x in self.font.encoding
                         else bytes((x,)).decode()
                         for x in self.value
                     )
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                self.txt = self.value.decode("utf-8", "replace")
-            self.txt = "".join(
-                self.font.character_map.get(x, x) for x in self.txt
+            except UnicodeDecodeError:
+                self._decoded_value = self.value.decode("utf-8", "replace")
+            self.text = "".join(
+                self.font.character_map.get(x, x) for x in self._decoded_value
             )
         else:
-            self.txt = self.value
+            self.text = self.value
 
         if orient(self.transform) in (90, 270):
             self.transform = mult(
@@ -87,7 +89,7 @@ class TextStateParams:
         self.displaced_tx = self.displaced_transform()[4]
         self.tx = self.transform[4]
         self.ty = self.render_transform()[5]
-        self.space_tx = round(self.word_tx(" "), 3)
+        self.space_tx = round(self.word_tx(self.font.space_char), 3)
         if self.space_tx < 1e-6:
             # if the " " char is assigned 0 width (e.g. for fine tuned spacing
             # with TJ int operators a la crazyones.pdf), calculate space_tx as
@@ -120,32 +122,37 @@ class TextStateParams:
         return mult(self.font_size_matrix(), self.transform)
 
     def displacement_matrix(
-        self, word: Union[str, None] = None, td_offset: float = 0.0
+        self, word: Union[bytes, str, None] = None, td_offset: float = 0.0
     ) -> list[float]:
         """
         Text displacement matrix
 
         Args:
-            word (str, optional): Defaults to None in which case self.txt displacement is
+            word (bytes | str, optional): Defaults to None in which case self.text displacement is
                 returned.
             td_offset (float, optional): translation applied by TD operator. Defaults to 0.0.
 
         """
-        word = word if word is not None else self.txt
+        word = word if word is not None else self.value
         return [1.0, 0.0, 0.0, 1.0, self.word_tx(word, td_offset), 0.0]
 
-    def word_tx(self, word: str, td_offset: float = 0.0) -> float:
+    def word_tx(self, word: Union[bytes, str], td_offset: float = 0.0) -> float:
         """Horizontal text displacement for any word according this text state"""
         width: float = 0.0
+
+        if isinstance(word, bytes):
+            word = self._decoded_value
+
         for char in word:
-            if char == " ":
+            if char == self.font.space_char:
                 width += self.font.space_width
             else:
                 width += self.font.text_width(char)
+
         return (
             (self.font_size * ((width - td_offset) / 1000.0))
             + self.Tc
-            + word.count(" ") * self.Tw
+            + word.count(self.font.space_char) * self.Tw
         ) * (self.Tz / 100.0)
 
     @staticmethod
