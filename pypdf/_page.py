@@ -1724,7 +1724,7 @@ class PageObject(DictionaryObject):
                     font_resources[font_resource] = font_resource_object
                     fonts[font_resource] = Font.from_font_resource(font_resource_object)
                     # Override space width, if applicable
-                    if fonts[font_resource].character_widths.get(" ", 0) == 0:
+                    if fonts[font_resource].character_widths.get(fonts[font_resource].space_char, 0) == 0:
                         fonts[font_resource].space_width = space_width
                 except (AttributeError, TypeError):
                     pass
