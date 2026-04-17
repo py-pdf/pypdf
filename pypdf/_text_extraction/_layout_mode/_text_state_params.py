@@ -15,7 +15,7 @@ class TextStateParams:
     TJ or Tj PDF operation.
 
     Attributes:
-        txt (str): the text to be rendered.
+        value (Union[bytes, str]): the raw text to be rendered.
         font (Font): font object
         font_size (int | float): font size
         Tc (float): character spacing. Defaults to 0.0.
@@ -34,7 +34,7 @@ class TextStateParams:
 
     """
 
-    txt: str
+    value: Union[bytes, str]
     font: Font
     font_size: Union[int, float]
     Tc: float = 0.0
@@ -54,6 +54,25 @@ class TextStateParams:
     rotated: bool = field(default=False, init=False)
 
     def __post_init__(self) -> None:
+        if isinstance(self.value, bytes):
+            try:
+                if isinstance(self.font.encoding, str):
+                    self.txt = self.value.decode(self.font.encoding, "surrogatepass")
+                else:
+                    self.txt = "".join(
+                        self.font.encoding[x]
+                        if x in self.font.encoding
+                        else bytes((x,)).decode()
+                        for x in self.value
+                    )
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                self.txt = self.value.decode("utf-8", "replace")
+            self.txt = "".join(
+                self.font.character_map.get(x, x) for x in self.txt
+            )
+        else:
+            self.txt = self.value
+
         if orient(self.transform) in (90, 270):
             self.transform = mult(
                 [1.0, -self.transform[1], -self.transform[2], 1.0, 0.0, 0.0],
