@@ -770,7 +770,7 @@ class TreeObject(DictionaryObject):
         if inc_parent_counter is None:
             inc_parent_counter = self.inc_parent_counter_default
         child_obj = child.get_object()
-        assert child.indirect_reference is not None
+        assert child.indirect_reference is not None, "mypy"
         child_reference: IndirectObject = child.indirect_reference
 
         prev: Optional[DictionaryObject]

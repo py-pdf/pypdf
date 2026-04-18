@@ -206,7 +206,10 @@ class EmbeddedFile:
     @property
     def associated_file_relationship(self) -> str:
         """Retrieve the relationship of the referring document to this embedded file."""
-        return cast(str, self.pdf_object.get("/AFRelationship", "/Unspecified"))
+        return cast(
+            NameObject,
+            self.pdf_object.get("/AFRelationship", NameObject("/Unspecified")),
+        )
 
     @associated_file_relationship.setter
     def associated_file_relationship(self, value: NameObject) -> None:

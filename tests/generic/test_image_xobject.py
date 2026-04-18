@@ -2,6 +2,7 @@
 from io import BytesIO
 
 import pytest
+import PIL
 from PIL import Image
 
 from pypdf import PdfReader
@@ -242,7 +243,7 @@ def test_handle_flate__icc_based__image_mode_1() -> None:
 
 
 @pytest.mark.skipif(
-    condition=Version(Image.__version__) < Version("12.1.0"),  # type: ignore[attr-defined]
+    condition=Version(PIL.__version__) < Version("12.1.0"),
     reason="Unsuitable Pillow version."
 )
 def test_handle_jpx__explicit_decode() -> None:
