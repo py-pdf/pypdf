@@ -1,8 +1,8 @@
 """Test the pypdf.generic._image_xobject module."""
 from io import BytesIO
 
-import pytest
 import PIL
+import pytest
 from PIL import Image
 
 from pypdf import PdfReader
