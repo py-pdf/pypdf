@@ -4,6 +4,7 @@ import string
 import subprocess
 import sys
 import zlib
+from copy import deepcopy
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -1017,7 +1018,6 @@ def test_deprecate_inline_image_filters():
 
 
 def test_flatedecode__columns_is_zero():
-    codec = FlateDecode()
     data = b"Hello World!"
     parameters = DictionaryObject({
         NameObject("/Predictor"): NumberObject(13),
@@ -1025,7 +1025,7 @@ def test_flatedecode__columns_is_zero():
     })
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Expected positive number for /Columns, got 0!$"):
-        codec.decode(codec.encode(data), parameters)
+        FlateDecode.decode(FlateDecode.encode(data), parameters)
 
 
 def test_runlengthdecode__decode_limit():
@@ -1049,3 +1049,51 @@ def test_runlengthdecode__decode_limit():
 def test_asciihexdecode__speed():
     encoded = (b"41" * 1_200_000) + b">"
     ASCIIHexDecode.decode(encoded)
+
+
+def test_flatedecode__upper_limits():
+    data = b"Hello World!"
+    default_parameters = DictionaryObject({
+        NameObject("/Predictor"): NumberObject(13),
+        NameObject("/Columns"): NumberObject(200_000),
+        NameObject("/Colors"): NumberObject(8),
+        NameObject("/BitsPerComponent"): NumberObject(16),
+    })
+    encoded = FlateDecode.encode(data)
+
+    # Colors
+    parameters = deepcopy(default_parameters)
+    parameters[NameObject("/Colors")] = NumberObject(128)
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Color value 128 exceeds limit of 16\. Please open an issue if this limits valid use cases\.$"
+    ):
+        FlateDecode.decode(data=encoded, decode_parms=parameters)
+
+    # BitsPerComponent
+    parameters = deepcopy(default_parameters)
+    parameters[NameObject("/BitsPerComponent")] = NumberObject(32)
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^More than 16 bits per component are not allowed: 32$"
+    ):
+        FlateDecode.decode(data=encoded, decode_parms=parameters)
+
+    # Columns
+    parameters = deepcopy(default_parameters)
+    parameters[NameObject("/Columns")] = NumberObject(300_000)
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Number of columns 300000 exceeds defined limit of 250000\.$"
+    ):
+        FlateDecode.decode(data=encoded, decode_parms=parameters)
+
+    # Row length
+    parameters = deepcopy(default_parameters)
+    parameters[NameObject("/Columns")] = NumberObject(130_000)
+    parameters[NameObject("/Colors")] = NumberObject(16)
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Row length of 4160001 exceeds defined limit of 4000000\.$"
+    ):
+        FlateDecode.decode(data=encoded, decode_parms=parameters)

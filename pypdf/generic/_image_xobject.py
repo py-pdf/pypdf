@@ -8,7 +8,7 @@ from .._utils import check_if_whitespace_only, logger_warning
 from ..constants import ColorSpaces, StreamAttributes
 from ..constants import FilterTypes as FT
 from ..constants import ImageAttributes as IA
-from ..errors import EmptyImageDataError, PdfReadError
+from ..errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from ..generic import (
     ArrayObject,
     DecodedStreamObject,
@@ -122,8 +122,14 @@ def _get_image_mode(
 
 
 def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
+    from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
+
+    buffer_size = size[0] * size[1]
+    if buffer_size > FLATE_MAX_BUFFER_SIZE:
+        raise LimitReachedError(f"Requested buffer size {buffer_size} exceeds limit of {FLATE_MAX_BUFFER_SIZE}.")
+
+    byte_buffer = bytearray(buffer_size)
     mask = (1 << bits) - 1
-    byte_buffer = bytearray(size[0] * size[1])
     data_index = 0
     bit = 8 - bits
     for y in range(size[1]):
@@ -181,7 +187,7 @@ def _handle_flate(
     size: tuple[int, int],
     data: bytes,
     mode: mode_str_type,
-    color_space: str,
+    color_space: Union[str, ArrayObject],
     colors: int,
     obj_as_text: str,
 ) -> tuple[Image.Image, str, str, bool]:

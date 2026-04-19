@@ -906,8 +906,11 @@ def test_xmp_information__external_entity_expansion(tmpdir):
   </rdf:RDF>
 </x:xmpmeta>""".encode())
 
-    xmp = XmpInformation(stream)
-    assert xmp.dc_creator == ["abc"]
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'xxe'$"
+    ):
+        XmpInformation(stream)
 
 
 @pytest.mark.timeout(10)
@@ -935,9 +938,28 @@ def test_xmp_information__exponential_entity_expansion():
 
     with pytest.raises(
             expected_exception=PdfReadError,
-            match=(
-                r"^XML in XmpInformation was invalid: limit on input amplification factor "
-                r"\(from DTD and entities\) breached: line 16, column 60$"
-            )
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'lol'$"
+    ):
+        XmpInformation(stream)
+
+
+@pytest.mark.timeout(10)
+def test_xmp_information__quadratic_entity_expansion():
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(f"""<?xml version="1.0"?>
+<!DOCTYPE lolz [
+  <!ENTITY a "{'A' * 10_000}">
+]>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="">
+      <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">{'&a;' * 99}</dc:title>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>""".encode())
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'a'$"
     ):
         XmpInformation(stream)

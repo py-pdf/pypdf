@@ -1,5 +1,46 @@
 # CHANGELOG
 
+## Version 6.10.2, 2026-04-15
+
+### Security (SEC)
+- Do not rely on possibly invalid /Size for incremental cloning (#3735)
+- Introduce limits for FlateDecode parameters and image decoding (#3734)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.1...6.10.2)
+
+## Version 6.10.1, 2026-04-14
+
+### Security (SEC)
+- Limit the allowed size of xref and object streams (#3733)
+
+### Robustness (ROB)
+- Consider strict mode setting for decryption errors (#3731)
+
+### Documentation (DOC)
+- Use new parameter names for compress_identical_objects
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.0...6.10.1)
+
+## Version 6.10.0, 2026-04-10
+
+### Security (SEC)
+- Disallow custom XML entity declarations for XMP metadata (#3724)
+
+### New Features (ENH)
+- Skip MD5 key derivation for AES-256 encrypted PDFs (#3694)
+
+### Bug Fixes (BUG)
+- Use remove_orphans in compress_identical_objects (#3310)
+- Fix PdfReadError when xref table contains comments before trailer (#3710)
+- Correctly verify AES padding during decryption (#3699)
+- Fix stale object cache from non-authoritative object streams (#3698)
+- Fix extract_links pairing when annotations include non-links (#3687)
+
+### Documentation (DOC)
+- Add AI policy (#3717)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.2...6.10.0)
+
 ## Version 6.9.2, 2026-03-23
 
 ### Security (SEC)

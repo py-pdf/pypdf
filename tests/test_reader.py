@@ -1,5 +1,6 @@
 """Test the pypdf._reader module."""
 import io
+import struct
 import sys
 import time
 from io import BytesIO
@@ -23,6 +24,7 @@ from pypdf.errors import (
     PdfStreamError,
     WrongPasswordError,
 )
+from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
     Destination,
@@ -2150,3 +2152,116 @@ def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
     # obj 6 must reflect the authoritative version from stream 7.
     field = reader.get_object(6)
     assert field["/V"] == "42"
+
+
+def test_xref_table_with_comments_before_trailer():
+    """Comments between xref entries and trailer are legal per PDF spec §7.2.3.
+
+    Some PDF producers (e.g. Vectorizer.AI) insert human-readable comments
+    between the last xref entry and the ``trailer`` keyword.  pypdf must skip
+    these instead of crashing with ``PdfReadError: Could not read Boolean
+    object``.
+    """
+    pdf_data = (
+        b"%%PDF-1.4\n"
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+        b"2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n"
+        b"3 0 obj\n<< /Type /Page /MediaBox [0 0 100 100] /Parent 2 0 R >>\nendobj\n"
+        b"xref\n"
+        b"0 4\n"
+        b"0000000000 65535 f \n"
+        b"%010d 00000 n \n"
+        b"%010d 00000 n \n"
+        b"%010d 00000 n \n"
+        b"%% This is a legal PDF comment\n"
+        b"%% And another one\n"
+        b"trailer\n<< /Size 4 /Root 1 0 R >>\n"
+        b"startxref\n%d\n"
+        b"%%%%EOF\n"
+    )
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"xref") - 1,
+    )
+    reader = PdfReader(BytesIO(pdf_data))
+    assert len(reader.pages) == 1
+
+
+@pytest.mark.timeout(10)
+def test_read_pdf15_xref_stream__size_limit(caplog):
+    pdf = b"%PDF-1.7\n"
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+    startxref = len(pdf)
+    encoded = FlateDecode.encode(b"")
+    pdf += (
+        f"3 0 obj\n<< /Type /XRef /Size 50000000 /W [0 0 0] /Root 1 0 R /Filter /FlateDecode /Length {len(encoded)} >>"
+        f"\nstream\n"
+    ).encode()
+    pdf += encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Total XRef entries 50000000 exceed maximum allowed value 1\.$"
+    ):
+        _ = PdfReader(BytesIO(pdf), strict=True)
+    assert caplog.messages == []
+
+    _ = PdfReader(BytesIO(pdf), strict=False)
+    assert caplog.messages == [
+        "Clamping XRef count from 50000000 to 1 to fit stream size.",
+    ]
+
+
+@pytest.mark.timeout(10)
+def test_get_object_from_stream__size_limit(caplog):
+    obj_stm_encoded = FlateDecode.encode(b"4 0\nnull")
+    pdf = b"%PDF-1.7\n"
+    header_length = len(pdf)
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    catalog_length = len(pdf)
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [4 0 R] /Count 1 >>\nendobj\n"
+    pages_length = len(pdf)
+    pdf += (
+        f"3 0 obj\n<< /Type /ObjStm /N 5000000 /First 4 /Filter /FlateDecode /Length {len(obj_stm_encoded)} >>\n"
+        f"stream\n"
+    ).encode()
+    pdf += obj_stm_encoded + b"\nendstream\nendobj\n"
+    xref = bytearray()
+    for xref_type, value, generation in [
+            (0, 0, 0),
+            (1, header_length, 0),
+            (1, catalog_length, 0),
+            (1, pages_length, 0),
+            (2, 3, 0)
+    ]:
+        # xref type: 0 = free object, 1 = in-use object (points to byte offset), 2 = compressed (stored in stream)
+        # value: type 1 = byte offset in the file, type 2 = object stream number
+        # >B = 1 byte (unsigned char) for type and generation
+        # >H = 2 bytes (unsigned short) for value
+        xref += struct.pack(">B", xref_type) + struct.pack(">H", value) + struct.pack(">B", generation)
+    xref_encoded = FlateDecode.encode(bytes(xref))
+    startxref = len(pdf)
+    pdf += (
+        f"5 0 obj\n<< /Type /XRef /Size 6 /W [1 2 1] /Root 1 0 R /Filter /FlateDecode "
+        f"/Length {len(xref_encoded)} >>\nstream\n"
+    ).encode()
+    pdf += xref_encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+
+    with pytest.raises(LimitReachedError, match=r"^Value /N 5000000 for object 3 exceeds maximum allowed value 2\.$"):
+        reader = PdfReader(BytesIO(pdf), strict=True)
+        _ = reader.pages[0]
+    assert caplog.messages == []
+
+    with pytest.raises(PdfReadError, match=r"^Maximum recursion depth reached during page flattening\.$"):
+        reader = PdfReader(BytesIO(pdf), strict=False)
+        _ = reader.pages[0]
+    assert caplog.messages == [
+        "Value /N 5000000 for object 3 exceeds maximum allowed value 2. Limiting to 2.",
+        "NumberObject(b'') invalid; use 0 instead",
+        "NumberObject(b'') invalid; use 0 instead",
+    ]

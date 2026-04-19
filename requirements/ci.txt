@@ -10,12 +10,14 @@ coverage[toml]==7.10.7
     # via
     #   -r requirements/ci.in
     #   pytest-cov
-cryptography==46.0.5
+cryptography==46.0.7
     # via -r requirements/ci.in
 exceptiongroup==1.2.2
     # via pytest
 execnet==2.1.1
     # via pytest-xdist
+fonttools==4.60.2
+    # via -r requirements/ci.in
 importlib-metadata==8.5.0
     # via typeguard
 iniconfig==2.0.0
@@ -62,6 +64,8 @@ tomli==2.0.2
     #   mypy
     #   pytest
 typeguard==4.3.0
+    # via -r requirements/ci.in
+types-pyyaml==6.0.12.20250915
     # via -r requirements/ci.in
 typing-extensions==4.13.2
     # via

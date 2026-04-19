@@ -7,16 +7,16 @@ from PIL import Image
 from pypdf import PdfReader
 from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
-from pypdf.errors import EmptyImageDataError, PdfReadError
+from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
-from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image
+from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image, bits2byte
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
 
 
 @pytest.mark.enable_socket
-def test_get_imagemode_recursion_depth():
+def test_get_imagemode_recursion_depth() -> None:
     """Avoid infinite recursion for nested color spaces."""
     url = "https://github.com/py-pdf/pypdf/files/12814018/out1.pdf"
     name = "issue2240.pdf"
@@ -33,7 +33,7 @@ def test_get_imagemode_recursion_depth():
         reader.pages[0].images[0]
 
 
-def test_handle_flate__image_mode_1(caplog):
+def test_handle_flate__image_mode_1(caplog: pytest.LogCaptureFixture) -> None:
     data = b"\x00\xe0\x00"
     lookup = DecodedStreamObject()
     expected_data = (
@@ -123,7 +123,7 @@ def test_handle_flate__image_mode_1(caplog):
     assert "Not enough lookup values: Expected 6, got 5." in caplog.text
 
 
-def test_extended_image_frombytes_zero_data():
+def test_extended_image_frombytes_zero_data() -> None:
     mode = "RGB"
     size = (1, 1)
     data = b""
@@ -132,11 +132,13 @@ def test_extended_image_frombytes_zero_data():
         _extended_image_from_bytes(mode, size, data)
 
 
-def test_handle_flate__autodesk_indexed():
+def test_handle_flate__autodesk_indexed() -> None:
     reader = PdfReader(RESOURCE_ROOT / "AutoCad_Diagram.pdf")
     page = reader.pages[0]
     for name, image in page.images.items():
+        assert isinstance(name, str)
         assert name.startswith("/")
+        assert image.image is not None
         image.image.load()
 
     data = RESOURCE_ROOT.joinpath("AutoCad_Diagram.pdf").read_bytes()
@@ -148,31 +150,35 @@ def test_handle_flate__autodesk_indexed():
             match=r"^Expected color space with 4 values, got 3: \['/Indexed', '/DeviceRGB', '\\x00\\x80\\x00\\x80\\x80耀"  # noqa: E501
     ):
         for name, _image in page.images.items():  # noqa: PERF102
+            assert isinstance(name, str)
             assert name.startswith("/")
 
 
 @pytest.mark.enable_socket
-def test_get_mode_and_invert_color():
+def test_get_mode_and_invert_color() -> None:
     url = "https://github.com/user-attachments/files/18381726/tika-957721.pdf"
     name = "tika-957721.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[12]
     for _name, image in page.images.items():  # noqa: PERF102
+        assert image.image is not None
         image.image.load()
 
 
 @pytest.mark.enable_socket
-def test_get_imagemode__empty_array():
+def test_get_imagemode__empty_array() -> None:
     url = "https://github.com/user-attachments/files/23050451/poc.pdf"
     name = "issue3499.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[0]
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
-        page.images[0].image.load()
+        image = page.images[0].image
+        assert image is not None
+        image.load()
 
 
-def test_p_image_with_alpha_mask():
+def test_p_image_with_alpha_mask() -> None:
     # Generate the base image. Use TIFF as this is easy to do on the fly.
     image = Image.new(mode="P", size=(10, 10), color=0)
     image_data = BytesIO()
@@ -192,7 +198,8 @@ def test_p_image_with_alpha_mask():
 
     # Generate the mask image. Will be a diagonal white stripe.
     image = Image.new(mode="1", size=(image.width, image.height))
-    [image.putpixel((i, i), 1) for i in range(10)]
+    for i in range(10):
+        image.putpixel((i, i), 1)
     image_data = BytesIO()
     image.save(image_data, format="tiff")
 
@@ -213,7 +220,7 @@ def test_p_image_with_alpha_mask():
 
 
 @pytest.mark.enable_socket
-def test_handle_flate__icc_based__image_mode_1():
+def test_handle_flate__icc_based__image_mode_1() -> None:
     url = "https://github.com/user-attachments/files/23756943/pypdf_bug_3534_iccbased.pdf"
     name = "issue3534.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -238,7 +245,7 @@ def test_handle_flate__icc_based__image_mode_1():
     condition=Version(Image.__version__) < Version("12.1.0"),
     reason="Unsuitable Pillow version."
 )
-def test_handle_jpx__explicit_decode():
+def test_handle_jpx__explicit_decode() -> None:
     stream = StreamObject()
     stream[NameObject("/BitsPerComponent")] = NumberObject(8)
     stream[NameObject("/ColorSpace")] = NameObject("/DeviceCMYK")
@@ -248,7 +255,8 @@ def test_handle_jpx__explicit_decode():
     stream[NameObject("/Width")] = NumberObject(16)
 
     image = Image.new(mode="CMYK", size=(16, 16))
-    [image.putpixel((i, i), 255) for i in range(16)]
+    for i in range(16):
+        image.putpixel((i, i), 255)
     image_data = BytesIO()
     image.save(image_data, format="JPEG2000")
     stream.set_data(image_data.getvalue())
@@ -259,3 +267,11 @@ def test_handle_jpx__explicit_decode():
         for x in range(16):
             assert result.getpixel((x, y)) == (255 * (x != y), 255, 255, 255), (x, y)
             assert image.getpixel((x, y)) == (255 * (x == y), 0, 0, 0), (x, y)
+
+
+def test_bits2byte__limit() -> None:
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Requested buffer size 76500000 exceeds limit of 75000000\.$"
+    ):
+        bits2byte(data=b"TEST", size=(9000, 8500), bits=8)

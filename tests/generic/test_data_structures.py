@@ -25,10 +25,10 @@ from tests import RESOURCE_ROOT, get_data_from_url
 try:
     import resource
 except ImportError:
-    resource = None
+    resource = None  # type: ignore[assignment]
 
 
-def test_dictionary_object__get_next_object_position():
+def test_dictionary_object__get_next_object_position() -> None:
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
 
     # reader.xref = {0: {7: 15, 9: 10245, 12: 939, 14: 2999, 16: 4982, 18: 9949, 22: 11160}}
@@ -49,12 +49,13 @@ def test_dictionary_object__get_next_object_position():
     ) == 15
 
 
-def test_tree_object__cyclic_reference(caplog):
+def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None:
     writer = PdfWriter()
-    child1 = writer._add_object(DictionaryObject())
+    child1_object = DictionaryObject()
+    child1 = writer._add_object(child1_object)
     child2 = writer._add_object(DictionaryObject({NameObject("/Next"): child1}))
     child3 = writer._add_object(DictionaryObject({NameObject("/Next"): child2}))
-    child1.get_object()[NameObject("/Next")] = child3
+    child1_object[NameObject("/Next")] = child3
     tree = TreeObject()
     tree[NameObject("/First")] = child2
     tree[NameObject("/Last")] = writer._add_object(DictionaryObject())
@@ -64,7 +65,7 @@ def test_tree_object__cyclic_reference(caplog):
 
 
 @pytest.mark.enable_socket
-def test_array_object__clone_same_object_multiple_times(caplog):
+def test_array_object__clone_same_object_multiple_times(caplog: pytest.LogCaptureFixture) -> None:
     url = "https://github.com/user-attachments/files/25412858/Draft_OSMF_financial_statement_2013.pdf"
     name = "issue2991.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
@@ -76,7 +77,7 @@ def test_array_object__clone_same_object_multiple_times(caplog):
     assert caplog.messages == []
 
 
-def test_array_object__clone_same_stream_multiple_times():
+def test_array_object__clone_same_stream_multiple_times() -> None:
     writer = PdfWriter()
 
     # Unique streams.
@@ -87,7 +88,8 @@ def test_array_object__clone_same_stream_multiple_times():
 
     # Shared streams.
     shared_streams = [StreamObject() for _ in range(3)]
-    [shared_stream.set_data(f"Shared stream {index}".encode()) for index, shared_stream in enumerate(shared_streams)]
+    for index, shared_stream in enumerate(shared_streams):
+        shared_stream.set_data(f"Shared stream {index}".encode())
 
     # Add to writer.
     writer._add_object(stream1)
@@ -121,7 +123,7 @@ def test_array_object__clone_same_stream_multiple_times():
 
 
 @pytest.mark.enable_socket
-def test_dictionary_object__read_from_stream__limit():
+def test_dictionary_object__read_from_stream__limit() -> None:
     name = "read_from_stream__length_2gb.pdf"
     url = "https://github.com/user-attachments/files/25842437/read_from_stream__length_2gb.pdf"
 
@@ -164,7 +166,7 @@ def _prepare_test_dictionary_object__read_from_stream__no_limit(
 @pytest.mark.enable_socket
 @pytest.mark.skipif(condition=resource is None, reason="Does not have 'resource' module.")
 @pytest.mark.skipif(sys.platform == "darwin", reason="RLIMIT_AS is unreliable.")
-def test_dictionary_object__read_from_stream__no_limit(tmp_path):
+def test_dictionary_object__read_from_stream__no_limit(tmp_path: Path) -> None:
     pdf_path_str, env, limit_virtual_memory = _prepare_test_dictionary_object__read_from_stream__no_limit(tmp_path)
 
     source_file = tmp_path / "script.py"
@@ -196,7 +198,7 @@ with open({pdf_path_str!r}, mode="rb") as fd:
 @pytest.mark.enable_socket
 @pytest.mark.skipif(condition=resource is None, reason="Does not have 'resource' module.")
 @pytest.mark.skipif(sys.platform == "darwin", reason="RLIMIT_AS is unreliable.")
-def test_dictionary_object__read_from_stream__no_limit__path(tmp_path):
+def test_dictionary_object__read_from_stream__no_limit__path(tmp_path: Path) -> None:
     pdf_path_str, env, limit_virtual_memory = _prepare_test_dictionary_object__read_from_stream__no_limit(tmp_path)
 
     source_file = tmp_path / "script.py"
@@ -230,7 +232,8 @@ def _get_array_based_buffer(stream_count: int, chunk_bytes: int) -> BytesIO:
 
     streams = [ContentStream(stream=None, pdf=writer) for _ in range(stream_count)]
     chunk = b"q\n" + (b"A" * chunk_bytes) + b"\nQ\n"
-    [stream.set_data(chunk) for stream in streams]
+    for stream in streams:
+        stream.set_data(chunk)
     contents = ArrayObject([writer._add_object(stream) for stream in streams])
     page[NameObject("/Contents")] = contents
 
@@ -241,13 +244,13 @@ def _get_array_based_buffer(stream_count: int, chunk_bytes: int) -> BytesIO:
 
 
 @pytest.mark.timeout(10)
-def test_content_stream__array_based__performance():
+def test_content_stream__array_based__performance() -> None:
     buffer = _get_array_based_buffer(stream_count=10_000, chunk_bytes=7000)
     reader = PdfReader(buffer)
     _ = reader.pages[0].get_contents()
 
 
-def test_content_stream__array_based__length():
+def test_content_stream__array_based__length() -> None:
     buffer = _get_array_based_buffer(stream_count=11_000, chunk_bytes=1)
     reader = PdfReader(buffer)
     with pytest.raises(
@@ -257,7 +260,7 @@ def test_content_stream__array_based__length():
 
 
 @pytest.mark.timeout(10)
-def test_content_stream__array_based__output_length():
+def test_content_stream__array_based__output_length() -> None:
     buffer = _get_array_based_buffer(stream_count=10_000, chunk_bytes=8192)
     reader = PdfReader(buffer)
     with pytest.raises(
@@ -268,7 +271,7 @@ def test_content_stream__array_based__output_length():
 
 
 @pytest.mark.timeout(5)
-def test_dictionary_object__read_from_stream__infinite_loop(caplog):
+def test_dictionary_object__read_from_stream__infinite_loop(caplog: pytest.LogCaptureFixture) -> None:
     data = b"""1 0 obj
 <<
 <</Length 1 0 R>>

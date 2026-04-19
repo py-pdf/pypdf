@@ -84,7 +84,7 @@ from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
-from .errors import PdfReadError, PyPdfError
+from .errors import LimitReachedError, PdfReadError, PyPdfError
 from .generic import (
     PAGE_FIT,
     ArrayObject,
@@ -178,6 +178,9 @@ class PdfWriter(PdfDocCommon):
         incremental: bool = False,
         full: bool = False,
         strict: bool = False,
+        *,
+        incremental_clone_object_count_limit: Optional[int] = 500_000,
+        incremental_clone_object_id_limit: Optional[int] = 1_000_000,
     ) -> None:
         self.strict = strict
         """
@@ -226,6 +229,16 @@ class PdfWriter(PdfDocCommon):
         "Tracks links in pages added to the writer for resolving later."
         self._merged_in_pages: dict[Optional[IndirectObject], Optional[IndirectObject]] = {}
         "Tracks pages added to the writer and what page they turned into."
+
+        # Security parameters.
+        self._incremental_clone_object_count_limit = (
+            incremental_clone_object_count_limit
+            if isinstance(incremental_clone_object_count_limit, int)
+            else sys.maxsize
+        )
+        self._incremental_clone_object_id_limit = (
+            incremental_clone_object_id_limit if isinstance(incremental_clone_object_id_limit, int) else sys.maxsize
+        )
 
         if self.incremental:
             if isinstance(fileobj, (str, Path)):
@@ -1129,6 +1142,28 @@ class PdfWriter(PdfDocCommon):
                 lst.append(annotation)
         return lst
 
+    def _collect_incremental_clone_object_ids(self, reader: PdfReader) -> list[int]:
+        object_ids: set[int] = set()
+        for xref_entry in reader.xref.values():
+            object_ids.update(filter(None, xref_entry))
+        object_ids.update(filter(None, reader.xref_objStm))
+
+        object_count = len(object_ids)
+        if object_count > self._incremental_clone_object_count_limit:
+            raise LimitReachedError(
+                f"Incremental clone object count {object_count} exceeds "
+                f"maximum allowed count {self._incremental_clone_object_count_limit}."
+            )
+
+        max_object_id = max(object_ids, default=0)
+        if max_object_id > self._incremental_clone_object_id_limit:
+            raise LimitReachedError(
+                f"Incremental clone object ID {max_object_id} exceeds "
+                f"maximum allowed ID {self._incremental_clone_object_id_limit}."
+            )
+
+        return sorted(object_ids)
+
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
         Copy the reader document root to the writer and all sub-elements,
@@ -1141,11 +1176,12 @@ class PdfWriter(PdfDocCommon):
         """
         self._info_obj = None
         if self.incremental:
-            self._objects = [None] * (cast(int, reader.trailer["/Size"]) - 1)
-            for i in range(len(self._objects)):
-                o = reader.get_object(i + 1)
-                if o is not None:
-                    self._objects[i] = o.replicate(self)
+            object_ids = self._collect_incremental_clone_object_ids(reader)
+            self._objects = [None] * (object_ids[-1] if object_ids else 0)
+            for object_id in object_ids:
+                reader_object = reader.get_object(object_id)
+                if reader_object is not None:
+                    self._objects[object_id - 1] = reader_object.replicate(self)
         else:
             self._objects.clear()
         self._root_object = reader.root_object.clone(self)

@@ -91,20 +91,20 @@ class CryptFilter:
             obj = ArrayObject(self.encrypt_object(x) for x in obj)
         return obj
 
-    def decrypt_object(self, obj: PdfObject) -> PdfObject:
+    def decrypt_object(self, obj: PdfObject, *, strict: bool = True) -> PdfObject:
         if isinstance(obj, (ByteStringObject, TextStringObject)):
-            data = self.str_crypt.decrypt(obj.original_bytes)
+            data = self.str_crypt.decrypt(obj.original_bytes, strict=strict)
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
-            obj._data = self.stm_crypt.decrypt(obj._data)
+            obj._data = self.stm_crypt.decrypt(obj._data, strict=strict)
             for key, value in obj.items():  # Dont forget the Stream dict.
-                obj[key] = self.decrypt_object(value)
+                obj[key] = self.decrypt_object(value, strict=strict)
         elif isinstance(obj, DictionaryObject):
             for key, value in obj.items():
-                obj[key] = self.decrypt_object(value)
+                obj[key] = self.decrypt_object(value, strict=strict)
         elif isinstance(obj, ArrayObject):
             for i in range(len(obj)):
-                obj[i] = self.decrypt_object(obj[i])
+                obj[i] = self.decrypt_object(obj[i], strict=strict)
         return obj
 
 
@@ -851,13 +851,13 @@ class Encryption:
         cf = self._make_crypt_filter(idnum, generation)
         return cf.encrypt_object(obj)
 
-    def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
+    def decrypt_object(self, obj: PdfObject, idnum: int, generation: int, *, strict: bool = True) -> PdfObject:
         # skip calculate key
         if not self._is_encryption_object(obj):
             return obj
 
         cf = self._make_crypt_filter(idnum, generation)
-        return cf.decrypt_object(obj)
+        return cf.decrypt_object(obj, strict=strict)
 
     @staticmethod
     def _is_encryption_object(obj: PdfObject) -> bool:
