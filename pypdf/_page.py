@@ -476,6 +476,8 @@ class ImageFile:
         from .generic._data_structures import ContentStream  # noqa: PLC0415
 
         try:
+            if not self.indirect_reference:
+                return False
             page = self.indirect_reference.pdf.pages[page_number]
             raw_contents = page.get(NameObject("/Contents"), None)
 
@@ -507,6 +509,8 @@ class ImageFile:
         from .generic._data_structures import ContentStream  # noqa: PLC0415
 
         try:
+            if not self.indirect_reference:
+                return False
             page = self.indirect_reference.pdf.pages[page_number]
             raw_contents = page.get(NameObject("/Contents"), None)
 
