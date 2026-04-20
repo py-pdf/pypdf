@@ -658,3 +658,27 @@ def test_get_ids_image__resources_is_none():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[2]
     assert list(page.images.items()) == []
+
+
+def test_is_xobject_image_displayed():
+    """Test XObject image display detection with expected results."""
+    reader = PdfReader("local_test/example.pdf")
+    
+    # Based on local_test/example.py analysis:
+    # Page 1: Im8.jp2 displayed, Im20.jp2 not displayed
+    # Page 2: Neither displayed
+    # Page 3: Im20.jp2 displayed, Im8.jp2 not displayed
+    expected_results = [
+        (0, "/Im20", False),
+        (0, "/Im8", True),
+        (1, "/Im20", False),
+        (1, "/Im8", False),
+        (2, "/Im20", True),
+        (2, "/Im8", False),
+    ]
+    
+    for page_num, image_id, expected in expected_results:
+        img = reader.pages[page_num].images[image_id]
+        is_used = img.is_displayed_on_page(page_num)
+        assert isinstance(is_used, bool), f"is_displayed_on_page() must return bool for {image_id}"
+        assert is_used == expected, f"Page {page_num}: {image_id} expected {expected}, got {is_used}"
