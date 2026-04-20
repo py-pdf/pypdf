@@ -476,7 +476,7 @@ class ImageFile:
         from .generic._data_structures import ContentStream  # noqa: PLC0415
 
         try:
-            page = cast("PageObject", self.indirect_reference.pdf.pages[page_number])
+            page = self.indirect_reference.pdf.pages[page_number]
             raw_contents = page.get(NameObject("/Contents"), None)
 
             stream = ContentStream(raw_contents, self.indirect_reference.pdf)
@@ -508,7 +508,7 @@ class ImageFile:
         from .generic._data_structures import ContentStream  # noqa: PLC0415
 
         try:
-            page = cast("PageObject", self.indirect_reference.pdf.pages[page_number])
+            page = self.indirect_reference.pdf.pages[page_number]
             raw_contents = page.get(NameObject("/Contents"), None)
 
             stream = ContentStream(raw_contents, self.indirect_reference.pdf)
