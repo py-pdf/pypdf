@@ -30,7 +30,7 @@
 import math
 from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
@@ -351,6 +351,13 @@ class ImageFile:
     Reference to the object storing the stream.
     """
 
+    _displayed_pages: dict[int, bool] = field(default_factory=dict)
+    """
+    Cached dictionary mapping page numbers to display status.
+    Used for performance optimization when checking multiple pages.
+    True = displayed, False = not displayed.
+    """
+
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the image with a new PIL image.
@@ -413,6 +420,114 @@ class ImageFile:
 
     def __repr__(self) -> str:
         return self.__str__()[:-1] + f", hash: {hash(self.data)})"
+
+    def is_displayed_on_page(self, page_number: int) -> bool:
+        """
+        Check if this image is displayed on the specified page.
+
+        This method determines whether an image is actually rendered on a page
+        (not just referenced in resources). It checks the page's content stream
+        for image operators.
+
+        Args:
+            page_number: The page number to check (0-indexed).
+
+        Returns:
+            True if the image is displayed on the page, False otherwise.
+            Returns cached result for pages already checked for performance.
+
+        Examples:
+            >>> from pypdf import PdfReader
+            >>> reader = PdfReader("example.pdf")
+            >>> image = reader.pages[0].images[0]
+            >>> image.is_displayed_on_page(0)  # Check if displayed on page 0
+            True
+            >>> image.is_displayed_on_page(1)  # Check if displayed on page 1
+            False
+        """
+        # Return cached result if already checked
+        if page_number in self._displayed_pages:
+            return self._displayed_pages[page_number]
+
+        # Check if this is an inline image or XObject image
+        # Inline images have names starting with "~"
+        if self.name.startswith("~"):
+            result = self._check_inline_image_displayed(page_number)
+        else:
+            result = self._check_xobject_image_displayed(page_number)
+
+        # Cache the result
+        self._displayed_pages[page_number] = result
+        return result
+
+    def _check_inline_image_displayed(self, page_number: int) -> bool:
+        """
+        Check if an inline image is displayed on a page.
+
+        Inline images appear in the content stream as "INLINE IMAGE" operators.
+        The image name starts with "~" and is the first operand of the operator.
+
+        Args:
+            page_number: The page number to check.
+
+        Returns:
+            True if the inline image is displayed on the page.
+        """
+        from .generic._data_structures import ContentStream  # noqa: PLC0415
+
+        try:
+            page = cast("PageObject", self.indirect_reference.pdf.pages[page_number])
+            raw_contents = page.get(NameObject("/Contents"), None)
+
+            stream = ContentStream(raw_contents, self.indirect_reference.pdf)
+
+            for operands, operator in stream.operations:
+                if operator == b"INLINE IMAGE":
+                    # First operand is the inline image name
+                    if operands and operands[0] == self.name:
+                        return True
+        except (KeyError, IndexError, AttributeError):
+            pass
+
+        return False
+
+    def _check_xobject_image_displayed(self, page_number: int) -> bool:
+        """
+        Check if an XObject image is displayed on a page.
+
+        XObject images appear in the content stream as "Do" operators.
+        The image name is the first operand of the Do operator.
+        The name may have a leading "/" that needs to be stripped.
+
+        Args:
+            page_number: The page number to check.
+
+        Returns:
+            True if the XObject image is displayed on the page.
+        """
+        from .generic._data_structures import ContentStream  # noqa: PLC0415
+
+        try:
+            page = cast("PageObject", self.indirect_reference.pdf.pages[page_number])
+            raw_contents = page.get(NameObject("/Contents"), None)
+
+            stream = ContentStream(raw_contents, self.indirect_reference.pdf)
+
+            for operands, operator in stream.operations:
+                if operator == b"Do":
+                    # First operand is the XObject name (may have leading /)
+                    if operands:
+                        xobj_name = str(operands[0])
+                        # Compare base names (without extension like .jp2)
+                        img_base = self.name.split(".")[0].lstrip("/")
+                        xobj_base = xobj_name.lstrip("/")
+
+                        if img_base == xobj_base:
+                            return True
+        except (KeyError, IndexError, AttributeError):
+            pass
+
+        return False
 
 
 class VirtualListImages(Sequence[ImageFile]):
