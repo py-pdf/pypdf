@@ -482,10 +482,9 @@ class ImageFile:
             stream = ContentStream(raw_contents, self.indirect_reference.pdf)
 
             for operands, operator in stream.operations:
-                if operator == b"INLINE IMAGE":
-                    # First operand is the inline image name
-                    if operands and operands[0] == self.name:
-                        return True
+                # First operand is the inline image name
+                if operator == b"INLINE IMAGE" and operands and operands[0] == self.name:
+                    return True
         except (KeyError, IndexError, AttributeError):
             pass
 
@@ -514,16 +513,15 @@ class ImageFile:
             stream = ContentStream(raw_contents, self.indirect_reference.pdf)
 
             for operands, operator in stream.operations:
-                if operator == b"Do":
-                    # First operand is the XObject name (may have leading /)
-                    if operands:
-                        xobj_name = str(operands[0])
-                        # Compare base names (without extension like .jp2)
-                        img_base = self.name.split(".")[0].lstrip("/")
-                        xobj_base = xobj_name.lstrip("/")
+                # First operand is the XObject name (may have leading /)
+                if operator == b"Do" and operands:
+                    xobj_name = str(operands[0])
+                    # Compare base names (without extension like .jp2)
+                    img_base = self.name.split(".")[0].lstrip("/")
+                    xobj_base = xobj_name.lstrip("/")
 
-                        if img_base == xobj_base:
-                            return True
+                    if img_base == xobj_base:
+                        return True
         except (KeyError, IndexError, AttributeError):
             pass
 
