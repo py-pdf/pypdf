@@ -435,15 +435,6 @@ class ImageFile:
         Returns:
             True if the image is displayed on the page, False otherwise.
             Returns cached result for pages already checked for performance.
-
-        Examples:
-            >>> from pypdf import PdfReader
-            >>> reader = PdfReader("example.pdf")
-            >>> image = reader.pages[0].images[0]
-            >>> image.is_displayed_on_page(0)  # Check if displayed on page 0
-            True
-            >>> image.is_displayed_on_page(1)  # Check if displayed on page 1
-            False
         """
         # Return cached result if already checked
         if page_number in self._displayed_pages:
