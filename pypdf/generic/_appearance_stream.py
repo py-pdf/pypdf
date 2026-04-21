@@ -4,7 +4,7 @@ from enum import IntEnum
 from typing import Any, Optional, Union, cast
 
 from .._codecs import fill_from_encoding
-from .._codecs.core_font_metrics import CORE_FONT_METRICS
+from .._codecs.core_font_metrics import core_font_metrics
 from .._font import Font
 from .._utils import logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes
@@ -347,14 +347,14 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:
             logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
             font_name = "/Helv"
-            core_font_metrics = CORE_FONT_METRICS["Helvetica"]
+            font_metrics = core_font_metrics["Helvetica"]
             font = Font(
                 name="Helvetica",
                 character_map={},
                 encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
                 sub_type="Type1",
-                font_descriptor=core_font_metrics.font_descriptor,
-                character_widths=core_font_metrics.character_widths
+                font_descriptor=font_metrics.font_descriptor,
+                character_widths=font_metrics.character_widths
             )
             font_resource = font.as_font_resource()
 
@@ -438,18 +438,18 @@ class TextStreamAppearance(BaseStreamAppearance):
         # font name, we may not have found the associated font resource among the AcroForm resources. Also, in
         # case of the 14 Adobe Core fonts, we may be expected to construct a font resource ourselves.
         if is_null_or_none(font_resource):
-            if font_name.removeprefix("/") not in CORE_FONT_METRICS:
+            if font_name.removeprefix("/") not in core_font_metrics:
                 # Default to Helvetica if we haven't found a font resource and cannot construct one ourselves.
                 logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
                 font_name = "/Helvetica"
-            core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
+            core_font = core_font_metrics[font_name.removeprefix("/")]
             font_resource = Font(
                 name=font_name.removeprefix("/"),
                 character_map={},
                 encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
                 sub_type="Type1",
-                font_descriptor=core_font_metrics.font_descriptor,
-                character_widths=core_font_metrics.character_widths
+                font_descriptor=core_font.font_descriptor,
+                character_widths=core_font.character_widths
             ).as_font_resource()
 
         return font_name, font_resource
@@ -503,7 +503,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
         if (
                 field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
-                field_flags & FieldDictionaryAttributes.FfBits.Combo == 0
+                field_flags & FieldDictionaryAttributes.FfBits.COMBO == 0
         ):
             text = "\n".join(annotation.get_inherited(FieldDictionaryAttributes.Opt, []))
             selection = field.get("/V", [])
@@ -541,11 +541,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         # Retrieve formatting information
         is_comb = False
         max_length = None
-        if field_flags & FieldDictionaryAttributes.FfBits.Comb:
+        if field_flags & FieldDictionaryAttributes.FfBits.COMBO:
             is_comb = True
             max_length = annotation.get("/MaxLen")
         is_multiline = False
-        if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
+        if field_flags & FieldDictionaryAttributes.FfBits.MULTI_LINE:
             is_multiline = True
         alignment = field.get("/Q", TextAlignment.LEFT)
         border_width = 1

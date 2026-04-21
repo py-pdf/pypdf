@@ -580,18 +580,18 @@ class JPXDecode:
 class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
-    K: int = 0
+    k: int = 0
     columns: int = 1728
     rows: int = 0
-    EndOfLine: Union[bool, None] = False
-    EncodedByteAlign: Union[bool, None] = False
-    EndOfBlock: Union[bool, None] = True
-    BlackIs1: bool = False
-    DamagedRowsBeforeError: Union[int, None] = 0
+    end_Of_line: Union[bool, None] = False
+    encoded_byte_align: Union[bool, None] = False
+    end_of_block: Union[bool, None] = True
+    black_is_1: bool = False
+    damaged_rows_before_error: Union[int, None] = 0
 
     @property
     def group(self) -> int:
-        if self.K < 0:
+        if self.k < 0:
             # Pure two-dimensional encoding (Group 4)
             CCITTgroup = 4
         else:
@@ -637,18 +637,18 @@ class CCITTFaxDecode:
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
                     if CCITT.K in decode_parm:
-                        ccitt_parameters.K = decode_parm[CCITT.K].get_object()
+                        ccitt_parameters.k = decode_parm[CCITT.K].get_object()
                     if CCITT.COLUMNS in decode_parm:
                         ccitt_parameters.columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.BLACK_IS_1 in decode_parm:
-                        ccitt_parameters.BlackIs1 = decode_parm[CCITT.BLACK_IS_1].get_object().value
+                        ccitt_parameters.black_is_1 = decode_parm[CCITT.BLACK_IS_1].get_object().value
             else:
                 if CCITT.K in parameters_unwrapped:
-                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                    ccitt_parameters.k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
                 if CCITT.COLUMNS in parameters_unwrapped:
                     ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.BLACK_IS_1 in parameters_unwrapped:
-                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore
+                    ccitt_parameters.black_is_1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore
         return ccitt_parameters
 
     @staticmethod
@@ -687,7 +687,7 @@ class CCITTFaxDecode:
             262,    # Thresholding, SHORT, 1, 0 = BlackIs1
             3,
             1,
-            int(params.BlackIs1),
+            int(params.black_is_1),
             273,    # StripOffsets, LONG, 1, length of header
             4,
             1,

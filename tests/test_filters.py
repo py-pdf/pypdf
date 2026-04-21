@@ -200,8 +200,8 @@ def test_ccitparameters():
 
 def test_ccittparameters():
     params = CCITTParameters()
-    assert params.K == 0  # zero is the default according to page 78
-    assert params.BlackIs1 is False
+    assert params.k == 0  # zero is the default according to page 78
+    assert params.black_is_1 is False
     assert params.group == 3
 
 
@@ -217,8 +217,8 @@ def test_ccittparameters():
 )
 def test_ccitt_get_parameters(parameters, expected_k, expected_black_is_1):
     parameters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
-    assert parameters.K == expected_k  # noqa: SIM300
-    assert parameters.BlackIs1 == expected_black_is_1
+    assert parameters.k == expected_k  # noqa: SIM300
+    assert parameters.black_is_1 == expected_black_is_1
 
 
 def test_ccitt_get_parameters__indirect_object():

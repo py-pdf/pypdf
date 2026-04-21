@@ -45,10 +45,10 @@ class Codec(ABC):
 class LzwCodec(Codec):
     """Lempel-Ziv-Welch (LZW) adaptive compression codec."""
 
-    CLEAR_TABLE_MARKER = 256  # Special code to indicate table reset
-    EOD_MARKER = 257  # End-of-data marker
-    INITIAL_BITS_PER_CODE = 9  # Initial code bit width
-    MAX_BITS_PER_CODE = 12  # Maximum code bit width
+    clear_table_marker = 256  # Special code to indicate table reset
+    eod_marker = 257  # End-of-data marker
+    initial_bits_per_code = 9  # Initial code bit width
+    max_bits_per_code = 12  # Maximum code bit width
 
     def __init__(self, max_output_length: int = 75_000_000) -> None:
         self.max_output_length = max_output_length
@@ -56,8 +56,8 @@ class LzwCodec(Codec):
     def _initialize_encoding_table(self) -> None:
         """Initialize the encoding table and state to initial conditions."""
         self.encoding_table: dict[bytes, int] = {bytes([i]): i for i in range(256)}
-        self.next_code = self.EOD_MARKER + 1
-        self.bits_per_code = self.INITIAL_BITS_PER_CODE
+        self.next_code = self.eod_marker + 1
+        self.bits_per_code = self.initial_bits_per_code
         self.max_code_value = (1 << self.bits_per_code) - 1
 
     def _increase_next_code(self) -> None:
@@ -65,7 +65,7 @@ class LzwCodec(Codec):
         self.next_code += 1
         if (
             self.next_code > self.max_code_value
-            and self.bits_per_code < self.MAX_BITS_PER_CODE
+            and self.bits_per_code < self.max_bits_per_code
         ):
             self.bits_per_code += 1
             self.max_code_value = (1 << self.bits_per_code) - 1
@@ -79,7 +79,7 @@ class LzwCodec(Codec):
         result_codes: list[int] = []
 
         # The encoder shall begin by issuing a clear-table code
-        result_codes.append(self.CLEAR_TABLE_MARKER)
+        result_codes.append(self.clear_table_marker)
         self._initialize_encoding_table()
 
         current_sequence = b""
@@ -94,12 +94,12 @@ class LzwCodec(Codec):
                 result_codes.append(self.encoding_table[current_sequence])
 
                 # Add the new sequence to the table if there's room
-                if self.next_code <= (1 << self.MAX_BITS_PER_CODE) - 1:
+                if self.next_code <= (1 << self.max_bits_per_code) - 1:
                     self.encoding_table[next_sequence] = self.next_code
                     self._increase_next_code()
                 else:
                     # If the table is full, emit a clear-table command
-                    result_codes.append(self.CLEAR_TABLE_MARKER)
+                    result_codes.append(self.clear_table_marker)
                     self._initialize_encoding_table()
 
                 # Start new sequence
@@ -108,7 +108,7 @@ class LzwCodec(Codec):
         # Ensure everything actually is encoded
         if current_sequence:
             result_codes.append(self.encoding_table[current_sequence])
-        result_codes.append(self.EOD_MARKER)
+        result_codes.append(self.eod_marker)
 
         return self._pack_codes_into_bytes(result_codes)
 
@@ -133,9 +133,9 @@ class LzwCodec(Codec):
                 bits_in_buffer -= 8
                 output.append((buffer >> bits_in_buffer) & 0xFF)
 
-            if code == self.CLEAR_TABLE_MARKER:
+            if code == self.clear_table_marker:
                 self._initialize_encoding_table()
-            elif code == self.EOD_MARKER:
+            elif code == self.eod_marker:
                 continue
             else:
                 self._increase_next_code()
@@ -147,11 +147,11 @@ class LzwCodec(Codec):
         return bytes(output)
 
     def _initialize_decoding_table(self) -> None:
-        self.max_code_value = (1 << self.MAX_BITS_PER_CODE) - 1
-        self.decoding_table = [bytes([i]) for i in range(self.CLEAR_TABLE_MARKER)] + [
+        self.max_code_value = (1 << self.max_bits_per_code) - 1
+        self.decoding_table = [bytes([i]) for i in range(self.clear_table_marker)] + [
             b""
-        ] * (self.max_code_value - self.CLEAR_TABLE_MARKER + 1)
-        self._table_index = self.EOD_MARKER + 1
+        ] * (self.max_code_value - self.clear_table_marker + 1)
+        self._table_index = self.eod_marker + 1
         self._bits_to_get = 9
 
     def _next_code_decode(self, data: bytes) -> int:
@@ -175,7 +175,7 @@ class LzwCodec(Codec):
 
             return code
         except IndexError:
-            return self.EOD_MARKER
+            return self.eod_marker
 
     # The following method has been converted to Python from PDFsharp:
     # https://github.com/empira/PDFsharp/blob/5fbf6ed14740bc4e16786816882d32e43af3ff5d/src/foundation/src/PDFsharp/src/PdfSharp/Pdf.Filters/LzwDecode.cs
@@ -227,24 +227,24 @@ class LzwCodec(Codec):
         self._byte_pointer = 0
         self._next_data = 0
         self._next_bits = 0
-        old_code = self.CLEAR_TABLE_MARKER
+        old_code = self.clear_table_marker
 
         while True:
             code = self._next_code_decode(data)
-            if code == self.EOD_MARKER:
+            if code == self.eod_marker:
                 break
 
-            if code == self.CLEAR_TABLE_MARKER:
+            if code == self.clear_table_marker:
                 self._initialize_decoding_table()
                 code = self._next_code_decode(data)
-                if code == self.EOD_MARKER:
+                if code == self.eod_marker:
                     break
                 output_stream.write(decoded := self.decoding_table[code])
                 old_code = code
             elif code < self._table_index:
                 decoded = self.decoding_table[code]
                 output_stream.write(decoded)
-                if old_code != self.CLEAR_TABLE_MARKER:
+                if old_code != self.clear_table_marker:
                     self._add_entry_decode(self.decoding_table[old_code], decoded[0])
                 old_code = code
             else:

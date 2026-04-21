@@ -777,11 +777,11 @@ class EncryptAlgorithm(tuple, Enum):  # type: ignore # noqa: SLOT001
 
 
 class EncryptionValues:
-    O: bytes  # noqa: E741
-    U: bytes
-    OE: bytes
-    UE: bytes
-    Perms: bytes
+    o: bytes  # noqa: E741
+    u: bytes
+    oe: bytes
+    ue: bytes
+    perms: bytes
 
 
 class Encryption:
@@ -983,8 +983,8 @@ class Encryption:
             password,
             self.r,
             self.length,
-            self.values.O,
-            self.values.U,
+            self.values.o,
+            self.values.u,
             self.p,
             self.id1_entry,
             self.encrypt_metadata,
@@ -995,8 +995,8 @@ class Encryption:
             password,
             self.r,
             self.length,
-            self.values.O,
-            self.values.U,
+            self.values.o,
+            self.values.u,
             self.p,
             self.id1_entry,
             self.encrypt_metadata,
@@ -1009,19 +1009,19 @@ class Encryption:
         # TODO: use SASLprep process
         # verify owner password first
         key = AlgV5.verify_owner_password(
-            self.r, password, self.values.O, self.values.OE, self.values.U
+            self.r, password, self.values.o, self.values.oe, self.values.u
         )
         rc = PasswordType.OWNER_PASSWORD
         if not key:
             key = AlgV5.verify_user_password(
-                self.r, password, self.values.U, self.values.UE
+                self.r, password, self.values.u, self.values.ue
             )
             rc = PasswordType.USER_PASSWORD
         if not key:
             return b"", PasswordType.NOT_DECRYPTED
 
         # verify Perms
-        self._are_permissions_valid = AlgV5.verify_perms(key, self.values.Perms, self.p, self.encrypt_metadata)
+        self._are_permissions_valid = AlgV5.verify_perms(key, self.values.perms, self.p, self.encrypt_metadata)
         if not self._are_permissions_valid:
             logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
@@ -1041,11 +1041,11 @@ class Encryption:
             values = AlgV5.generate_values(
                 self.r, user_pwd, owner_pwd, self._key, self.p, self.encrypt_metadata
             )
-            self.values.O = values["/O"]
-            self.values.U = values["/U"]
-            self.values.OE = values["/OE"]
-            self.values.UE = values["/UE"]
-            self.values.Perms = values["/Perms"]
+            self.values.o = values["/O"]
+            self.values.u = values["/U"]
+            self.values.oe = values["/OE"]
+            self.values.ue = values["/UE"]
+            self.values.perms = values["/Perms"]
 
         dict_obj = DictionaryObject()
         dict_obj[NameObject("/V")] = NumberObject(self.v)
@@ -1055,8 +1055,8 @@ class Encryption:
         dict_obj[NameObject("/Filter")] = NameObject("/Standard")
         # ignore /EncryptMetadata
 
-        dict_obj[NameObject("/O")] = ByteStringObject(self.values.O)
-        dict_obj[NameObject("/U")] = ByteStringObject(self.values.U)
+        dict_obj[NameObject("/O")] = ByteStringObject(self.values.o)
+        dict_obj[NameObject("/U")] = ByteStringObject(self.values.u)
 
         if self.v >= 4:
             # TODO: allow different method
@@ -1073,9 +1073,9 @@ class Encryption:
             # dict_obj[NameObject("/EFF")] = NameObject("/StdCF")
 
         if self.v >= 5:
-            dict_obj[NameObject("/OE")] = ByteStringObject(self.values.OE)
-            dict_obj[NameObject("/UE")] = ByteStringObject(self.values.UE)
-            dict_obj[NameObject("/Perms")] = ByteStringObject(self.values.Perms)
+            dict_obj[NameObject("/OE")] = ByteStringObject(self.values.oe)
+            dict_obj[NameObject("/UE")] = ByteStringObject(self.values.ue)
+            dict_obj[NameObject("/Perms")] = ByteStringObject(self.values.perms)
         return dict_obj
 
     def compute_values_v4(self, user_password: bytes, owner_password: bytes) -> None:
@@ -1094,8 +1094,8 @@ class Encryption:
         u_value = AlgV4.compute_u_value(key, self.r, self.id1_entry)
 
         self._key = key
-        self.values.O = o_value
-        self.values.U = u_value
+        self.values.o = o_value
+        self.values.u = u_value
 
     @staticmethod
     def read(encryption_entry: DictionaryObject, first_id_entry: bytes) -> "Encryption":
@@ -1147,11 +1147,11 @@ class Encryption:
             encrypt_metadata.value if encrypt_metadata is not None else True
         )
         values = EncryptionValues()
-        values.O = cast(ByteStringObject, encryption_entry["/O"]).original_bytes
-        values.U = cast(ByteStringObject, encryption_entry["/U"]).original_bytes
-        values.OE = encryption_entry.get("/OE", ByteStringObject()).original_bytes
-        values.UE = encryption_entry.get("/UE", ByteStringObject()).original_bytes
-        values.Perms = encryption_entry.get("/Perms", ByteStringObject()).original_bytes
+        values.o = cast(ByteStringObject, encryption_entry["/O"]).original_bytes
+        values.u = cast(ByteStringObject, encryption_entry["/U"]).original_bytes
+        values.oe = encryption_entry.get("/OE", ByteStringObject()).original_bytes
+        values.ue = encryption_entry.get("/UE", ByteStringObject()).original_bytes
+        values.perms = encryption_entry.get("/Perms", ByteStringObject()).original_bytes
         return Encryption(
             v=alg_ver,
             r=alg_rev,

@@ -3388,8 +3388,8 @@ def _create_outline_item(
     if italic or bold:
         format_flag = 0
         if italic:
-            format_flag += OutlineFontFlag.italic
+            format_flag += OutlineFontFlag.ITALIC
         if bold:
-            format_flag += OutlineFontFlag.bold
+            format_flag += OutlineFontFlag.BOLD
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item

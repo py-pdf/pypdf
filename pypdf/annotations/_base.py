@@ -26,4 +26,4 @@ class AnnotationDictionary(DictionaryObject, ABC):
         self[NameObject("/F")] = NumberObject(value)
 
 
-NO_FLAGS = AnnotationFlag(0)
+no_flags = AnnotationFlag(0)

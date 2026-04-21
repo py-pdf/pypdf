@@ -608,7 +608,7 @@ class PdfDocCommon:
             )
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
-        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
+        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.RADIO != 0:
             states: list[str] = []
             retval[key][NameObject("/_States_")] = ArrayObject(states)
             for k in obj.get(FA.Kids, {}):
@@ -618,7 +618,7 @@ class PdfDocCommon:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
             if (
-                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
+                obj.get(FA.Ff, 0) & FA.FfBits.NO_TOGGLE_TO_OFF != 0
                 and "/Off" in retval[key]["/_States_"]
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]

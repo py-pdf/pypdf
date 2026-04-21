@@ -272,7 +272,7 @@ class Font:
         cls,
         pdf_font_dict: DictionaryObject,
     ) -> Font:
-        from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
+        from pypdf._codecs.core_font_metrics import core_font_metrics  # noqa: PLC0415
 
         # Can collect base_font, name and encoding directly from font resource
         name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
@@ -298,9 +298,9 @@ class Font:
                     cls._collect_tt_t1_character_widths(
                         pdf_font_dict, character_map, encoding, character_widths
                     )
-                elif name in CORE_FONT_METRICS:
-                    font_descriptor = CORE_FONT_METRICS[name].font_descriptor
-                    character_widths = CORE_FONT_METRICS[name].character_widths
+                elif name in core_font_metrics:
+                    font_descriptor = core_font_metrics[name].font_descriptor
+                    character_widths = core_font_metrics[name].character_widths
                 if "/FontDescriptor" in pdf_font_dict:
                     font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
                     if "/MissingWidth" in font_descriptor_obj:
