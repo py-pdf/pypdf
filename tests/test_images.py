@@ -660,11 +660,12 @@ def test_get_ids_image__resources_is_none():
     assert list(page.images.items()) == []
 
 
+@pytest.mark.samples
 def test_is_xobject_image_displayed():
-    """Test XObject image display detection with expected results."""
-    reader = PdfReader("local_test/example.pdf")
+    """This test ensures that only actually displayed images are detected by `ImageFile.is_displayed_on_page`"""
+    path = SAMPLE_ROOT / "027-image-references-deduplication/wrong-references.pdf"
+    reader = PdfReader(path)
 
-    # Based on local_test/example.py analysis:
     # Page 1: Im8.jp2 displayed, Im20.jp2 not displayed
     # Page 2: Neither displayed
     # Page 3: Im20.jp2 displayed, Im8.jp2 not displayed
