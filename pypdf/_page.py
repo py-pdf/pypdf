@@ -351,9 +351,10 @@ class ImageFile:
     Reference to the object storing the stream.
     """
 
-    _displayed_pages: dict[int, bool] = field(default_factory=dict)
+    _displayed_pages: list["PageObject"] = field(default_factory=list)
+    _displayed_pages_status: list[bool] = field(default_factory=list)
     """
-    Cached dictionary mapping page numbers to display status.
+    Cached pages and display statuses, with same ordering.
     Used for performance optimization when checking multiple pages.
     True = displayed, False = not displayed.
     """
@@ -421,7 +422,7 @@ class ImageFile:
     def __repr__(self) -> str:
         return self.__str__()[:-1] + f", hash: {hash(self.data)})"
 
-    def is_displayed_on_page(self, page_number: int) -> bool:
+    def is_displayed_on_page(self, page: "PageObject") -> bool:
         """
         Check if this image is displayed on the specified page.
 
@@ -430,28 +431,32 @@ class ImageFile:
         for image operators.
 
         Args:
-            page_number: The page number to check (0-indexed).
+            page: The page object to check.
 
         Returns:
             True if the image is displayed on the page, False otherwise.
             Returns cached result for pages already checked for performance.
         """
         # Return cached result if already checked
-        if page_number in self._displayed_pages:
-            return self._displayed_pages[page_number]
+        try:
+            displayed_page_index = self._displayed_pages.index(page)
+            return self._displayed_pages_status[displayed_page_index]
+        except ValueError:
+            pass
 
         # Check if this is an inline image or XObject image
         # Inline images have names starting with "~"
         if self.name.startswith("~"):
-            result = self._check_inline_image_displayed(page_number)
+            result = self._check_inline_image_displayed(page)
         else:
-            result = self._check_xobject_image_displayed(page_number)
+            result = self._check_xobject_image_displayed(page)
 
         # Cache the result
-        self._displayed_pages[page_number] = result
+        self._displayed_pages.append(page)
+        self._displayed_pages_status.append(result)
         return result
 
-    def _check_inline_image_displayed(self, page_number: int) -> bool:
+    def _check_inline_image_displayed(self, page: "PageObject") -> bool:
         """
         Check if an inline image is displayed on a page.
 
@@ -459,31 +464,18 @@ class ImageFile:
         The image name starts with "~" and is the first operand of the operator.
 
         Args:
-            page_number: The page number to check.
+            page: The page to check.
 
         Returns:
             True if the inline image is displayed on the page.
         """
-        from .generic._data_structures import ContentStream  # noqa: PLC0415
+        image_name = self.name.split(".")[0]
 
-        try:
-            if not self.indirect_reference:
-                return False
-            page = self.indirect_reference.pdf.pages[page_number]
-            raw_contents = page.get(NameObject("/Contents"), None)
-
-            stream = ContentStream(raw_contents, self.indirect_reference.pdf)
-
-            for operands, operator in stream.operations:
-                # First operand is the inline image name
-                if operator == b"INLINE IMAGE" and operands and operands[0] == self.name:
-                    return True
-        except (KeyError, IndexError, AttributeError):
-            pass
-
+        if page.inline_images:
+            return len(list(filter(lambda i: i == image_name, page.inline_images.keys()))) > 0
         return False
 
-    def _check_xobject_image_displayed(self, page_number: int) -> bool:
+    def _check_xobject_image_displayed(self, page: "PageObject") -> bool:
         """
         Check if an XObject image is displayed on a page.
 
@@ -492,7 +484,7 @@ class ImageFile:
         The name may have a leading "/" that needs to be stripped.
 
         Args:
-            page_number: The page number to check.
+            page: The page to check.
 
         Returns:
             True if the XObject image is displayed on the page.
@@ -502,7 +494,7 @@ class ImageFile:
         try:
             if not self.indirect_reference:
                 return False
-            page = self.indirect_reference.pdf.pages[page_number]
+
             raw_contents = page.get(NameObject("/Contents"), None)
 
             stream = ContentStream(raw_contents, self.indirect_reference.pdf)

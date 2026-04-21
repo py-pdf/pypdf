@@ -7,6 +7,7 @@ and/or the actual image data with the expected value.
 
 from io import BytesIO
 from pathlib import Path
+from time import perf_counter
 from typing import Union
 from unittest import mock
 from zipfile import ZipFile
@@ -662,24 +663,61 @@ def test_get_ids_image__resources_is_none():
 
 @pytest.mark.samples
 def test_is_xobject_image_displayed():
-    """This test ensures that only actually displayed images are detected by `ImageFile.is_displayed_on_page`"""
+    """
+    This test ensures that only actually displayed referenced images
+    are detected by `ImageFile.is_displayed_on_page`
+    """
     path = SAMPLE_ROOT / "027-image-references-deduplication/wrong-references.pdf"
     reader = PdfReader(path)
+    pages = reader.pages
+    page_1, page_2, page_3 = pages
 
     # Page 1: Im8.jp2 displayed, Im20.jp2 not displayed
     # Page 2: Neither displayed
     # Page 3: Im20.jp2 displayed, Im8.jp2 not displayed
     expected_results = [
-        (0, "/Im20", False),
-        (0, "/Im8", True),
-        (1, "/Im20", False),
-        (1, "/Im8", False),
-        (2, "/Im20", True),
-        (2, "/Im8", False),
+        (page_1, 0, "/Im20", False),
+        (page_1, 0, "/Im8", True),
+        (page_2, 1, "/Im20", False),
+        (page_2, 1, "/Im8", False),
+        (page_3, 2, "/Im20", True),
+        (page_3, 2, "/Im8", False),
     ]
 
-    for page_num, image_id, expected in expected_results:
-        img = reader.pages[page_num].images[image_id]
-        is_used = img.is_displayed_on_page(page_num)
+    start_no_cache = perf_counter()
+    for page, page_num, image_id, expected in expected_results:
+        img = page.images[image_id]
+        is_used = img.is_displayed_on_page(page)
+        assert isinstance(is_used, bool), f"is_displayed_on_page() must return bool for {image_id}"
+        assert is_used == expected, f"Page {page_num}: {image_id} expected {expected}, got {is_used}"
+    end_no_cache = perf_counter()
+
+    start_cache = perf_counter()
+    for page, page_num, image_id, expected in expected_results:
+        img = page.images[image_id]
+        is_used = img.is_displayed_on_page(page)
+        assert isinstance(is_used, bool), f"is_displayed_on_page() must return bool for {image_id}"
+        assert is_used == expected, f"Page {page_num}: {image_id} expected {expected}, got {is_used}"
+    end_cache = perf_counter()
+
+    # Check caching improves performance by at least 100x
+    assert (end_cache-start_cache) < (end_no_cache-start_no_cache)
+
+@pytest.mark.samples
+def test_is_inline_image_displayed():
+    """This test ensures that displayed inline images are detected by `ImageFile.is_displayed_on_page`"""
+    path = SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf"
+    reader = PdfReader(path)
+    pages = reader.pages
+    page_1 = pages[0]
+
+    # Page 1:
+    expected_results = [
+        (page_1, 0, "~0~", True),
+    ]
+
+    for page, page_num, image_id, expected in expected_results:
+        img = page.images[image_id]
+        is_used = img.is_displayed_on_page(page)
         assert isinstance(is_used, bool), f"is_displayed_on_page() must return bool for {image_id}"
         assert is_used == expected, f"Page {page_num}: {image_id} expected {expected}, got {is_used}"
