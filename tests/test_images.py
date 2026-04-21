@@ -7,7 +7,6 @@ and/or the actual image data with the expected value.
 
 from io import BytesIO
 from pathlib import Path
-from time import perf_counter
 from typing import Union
 from unittest import mock
 from zipfile import ZipFile
@@ -684,24 +683,11 @@ def test_is_xobject_image_displayed():
         (page_3, 2, "/Im8", False),
     ]
 
-    start_no_cache = perf_counter()
     for page, page_num, image_id, expected in expected_results:
         img = page.images[image_id]
         is_used = img.is_displayed_on_page(page)
         assert isinstance(is_used, bool), f"is_displayed_on_page() must return bool for {image_id}"
         assert is_used == expected, f"Page {page_num}: {image_id} expected {expected}, got {is_used}"
-    end_no_cache = perf_counter()
-
-    start_cache = perf_counter()
-    for page, page_num, image_id, expected in expected_results:
-        img = page.images[image_id]
-        is_used = img.is_displayed_on_page(page)
-        assert isinstance(is_used, bool), f"is_displayed_on_page() must return bool for {image_id}"
-        assert is_used == expected, f"Page {page_num}: {image_id} expected {expected}, got {is_used}"
-    end_cache = perf_counter()
-
-    # Check caching improves performance by at least 100x
-    assert (end_cache-start_cache) < (end_no_cache-start_no_cache)
 
 @pytest.mark.samples
 def test_is_inline_image_displayed():

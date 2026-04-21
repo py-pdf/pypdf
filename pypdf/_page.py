@@ -30,7 +30,7 @@
 import math
 from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
@@ -351,14 +351,6 @@ class ImageFile:
     Reference to the object storing the stream.
     """
 
-    _displayed_pages: list["PageObject"] = field(default_factory=list)
-    _displayed_pages_status: list[bool] = field(default_factory=list)
-    """
-    Cached pages and display statuses, with same ordering.
-    Used for performance optimization when checking multiple pages.
-    True = displayed, False = not displayed.
-    """
-
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the image with a new PIL image.
@@ -435,15 +427,7 @@ class ImageFile:
 
         Returns:
             True if the image is displayed on the page, False otherwise.
-            Returns cached result for pages already checked for performance.
         """
-        # Return cached result if already checked
-        try:
-            displayed_page_index = self._displayed_pages.index(page)
-            return self._displayed_pages_status[displayed_page_index]
-        except ValueError:
-            pass
-
         # Check if this is an inline image or XObject image
         # Inline images have names starting with "~"
         if self.name.startswith("~"):
@@ -451,9 +435,6 @@ class ImageFile:
         else:
             result = self._check_xobject_image_displayed(page)
 
-        # Cache the result
-        self._displayed_pages.append(page)
-        self._displayed_pages_status.append(result)
         return result
 
     def _check_inline_image_displayed(self, page: "PageObject") -> bool:
