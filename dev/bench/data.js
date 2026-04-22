@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1776872134403,
+  "lastUpdate": 1776872187935,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -102043,6 +102043,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0438525186346031",
             "extra": "mean: 817.9305161999991 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "costajohnt@gmail.com",
+            "name": "John Costa",
+            "username": "costajohnt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7c8bc13240d91bab5854319293015e967101399c",
+          "message": "DEV: Align mypy Makefile target with strict mode (#3690)\n\nReplace individual mypy flags with `strict = true` in pyproject.toml and\nfix all resulting type errors across the code base.",
+          "timestamp": "2026-04-22T17:32:58+02:00",
+          "tree_id": "256cc6689c44847a7e41bb02640cd25a88211cb6",
+          "url": "https://github.com/py-pdf/pypdf/commit/7c8bc13240d91bab5854319293015e967101399c"
+        },
+        "date": 1776872181897,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.362333631466038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018429413442715037",
+            "extra": "mean: 74.83722735714134 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.667494420988497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013598192390999464",
+            "extra": "mean: 50.845317588235 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.155888806045363,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0065484396130904825",
+            "extra": "mean: 865.1351191999993 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5157357352475068,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006688469974118902",
+            "extra": "mean: 1.9389775259999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1796819272722733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036878132022931685",
+            "extra": "mean: 5.5653899932 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.138652120356683,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04430263326100396",
+            "extra": "mean: 878.2313597999973 msec\nrounds: 5"
           }
         ]
       }
