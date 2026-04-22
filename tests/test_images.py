@@ -229,7 +229,7 @@ def test_image_extraction(src, page_index, image_key, expected):
 
 def test_get_inline_image_without_xobject_resources():
     page = PageObject(None, None)
-    inline_image = object()
+    inline_image = type("Mock", (), {"is_inline": True, "is_displayed": True})()
 
     with mock.patch.object(page, "_get_inline_images", return_value={"~0~": inline_image}):
         assert page._get_image("~0~") is inline_image
@@ -662,48 +662,38 @@ def test_get_ids_image__resources_is_none():
 
 @pytest.mark.samples
 def test_is_xobject_image_displayed():
-    """
-    This test ensures that only actually displayed referenced images
-    are detected by `ImageFile.is_displayed_on_page`
-    """
+    """Test XObject image display detection with expected results."""
     path = SAMPLE_ROOT / "027-image-references-deduplication/wrong-references.pdf"
     reader = PdfReader(path)
-    pages = reader.pages
-    page_1, page_2, page_3 = pages
 
-    # Page 1: Im8.jp2 displayed, Im20.jp2 not displayed
-    # Page 2: Neither displayed
-    # Page 3: Im20.jp2 displayed, Im8.jp2 not displayed
     expected_results = [
-        (page_1, 0, "/Im20", False),
-        (page_1, 0, "/Im8", True),
-        (page_2, 1, "/Im20", False),
-        (page_2, 1, "/Im8", False),
-        (page_3, 2, "/Im20", True),
-        (page_3, 2, "/Im8", False),
+        # Page 1: /Im20 not displayed, /Im8 displayed
+        (0, "/Im20", False),
+        (0, "/Im8", True),
+        # Page 2: Neither displayed
+        (1, "/Im20", False),
+        (1, "/Im8", False),
+        # Page 3: /Im20 displayed, /Im8 not displayed
+        (2, "/Im20", True),
+        (2, "/Im8", False),
     ]
 
-    for page, page_num, image_id, expected in expected_results:
-        img = page.images[image_id]
-        is_used = img.is_displayed_on_page(page)
-        assert isinstance(is_used, bool), f"is_displayed_on_page() must return bool for {image_id}"
-        assert is_used == expected, f"Page {page_num}: {image_id} expected {expected}, got {is_used}"
+    for page_num, image_id, expected in expected_results:
+        img = reader.pages[page_num].images[image_id]
+        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
 
 @pytest.mark.samples
 def test_is_inline_image_displayed():
-    """This test ensures that displayed inline images are detected by `ImageFile.is_displayed_on_page`"""
+    """This test ensures that displayed inline images are detected by `ImageFile.is_displayed`"""
     path = SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf"
     reader = PdfReader(path)
-    pages = reader.pages
-    page_1 = pages[0]
 
     # Page 1:
     expected_results = [
-        (page_1, 0, "~0~", True),
+        (0, "~0~", True),
     ]
 
-    for page, page_num, image_id, expected in expected_results:
+    for page_num, image_id, expected in expected_results:
+        page = reader.pages[page_num]
         img = page.images[image_id]
-        is_used = img.is_displayed_on_page(page)
-        assert isinstance(is_used, bool), f"is_displayed_on_page() must return bool for {image_id}"
-        assert is_used == expected, f"Page {page_num}: {image_id} expected {expected}, got {is_used}"
+        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
