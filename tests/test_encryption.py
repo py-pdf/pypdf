@@ -390,6 +390,22 @@ def test_aes_decrypt__wrong_padding(caplog):
         )
         caplog.clear()
 
+    with pytest.raises(
+            PdfStreamError,
+            match=(
+                r"^(The length of the provided data is not a multiple of the block length\.|"
+                r"Data must be padded to 16 byte boundary in CBC mode)$"
+            )
+    ):
+        aes.decrypt(encrypted[:-2])
+
+    assert aes.decrypt(encrypted[:-2], strict=False) != original
+    assert caplog.messages[0] == "Adding missing padding."
+    assert re.match(
+        r"^Ignoring padding error: (Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$",
+        caplog.messages[1]
+    )
+
 
 @pytest.mark.samples
 def test_encrypt_stream_dictionary(pdf_file_path):
