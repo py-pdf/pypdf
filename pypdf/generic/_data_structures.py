@@ -59,9 +59,9 @@ from ..constants import (
     CheckboxRadioButtonAttributes,
     FieldDictionaryAttributes,
     OutlineFontFlag,
+    StreamAttributes,
 )
 from ..constants import FilterTypes as FT
-from ..constants import StreamAttributes as SA
 from ..constants import TypArguments as TA
 from ..constants import TypFitArguments as TF
 from ..errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
@@ -631,14 +631,14 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             if eol == b"\r" and stream.read(1) != b"\n":
                 stream.seek(-1, 1)
             # this is a stream object, not a dictionary
-            if SA.LENGTH not in data:
+            if StreamAttributes.LENGTH not in data:
                 if pdf is not None and pdf.strict:
                     raise PdfStreamError("Stream length not defined")
                 logger_warning(
                     f"Stream length not defined @pos={stream.tell()}", __name__
                 )
-                data[NameObject(SA.LENGTH)] = NumberObject(-1)
-            length = data[SA.LENGTH]
+                data[NameObject(StreamAttributes.LENGTH)] = NumberObject(-1)
+            length = data[StreamAttributes.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
                 assert pdf is not None, "mypy"
@@ -1018,9 +1018,9 @@ class StreamObject(DictionaryObject):
             deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
-        self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
+        self[NameObject(StreamAttributes.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.write_to_stream(self, stream)
-        del self[SA.LENGTH]
+        del self[StreamAttributes.LENGTH]
         stream.write(b"\nstream\n")
         stream.write(self._data)
         stream.write(b"\nendstream")
@@ -1030,46 +1030,46 @@ class StreamObject(DictionaryObject):
         data: dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
         retval: Union[EncodedStreamObject, DecodedStreamObject]
-        if SA.FILTER in data:
+        if StreamAttributes.FILTER in data:
             retval = EncodedStreamObject()
         else:
             retval = DecodedStreamObject()
         retval._data = data["__streamdata__"]
         del data["__streamdata__"]
-        if SA.LENGTH in data:
-            del data[SA.LENGTH]
+        if StreamAttributes.LENGTH in data:
+            del data[StreamAttributes.LENGTH]
         retval.update(data)
         return retval
 
     def flate_encode(self, level: int = -1) -> "EncodedStreamObject":
         from ..filters import FlateDecode  # noqa: PLC0415
 
-        if SA.FILTER in self:
-            f = self[SA.FILTER]
+        if StreamAttributes.FILTER in self:
+            f = self[StreamAttributes.FILTER]
             if isinstance(f, ArrayObject):
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), *f])
                 try:
                     params = ArrayObject(
-                        [NullObject(), *self.get(SA.DECODE_PARMS, ArrayObject())]
+                        [NullObject(), *self.get(StreamAttributes.DECODE_PARMS, ArrayObject())]
                     )
                 except TypeError:
                     # case of error where the * operator is not working (not an array
                     params = ArrayObject(
-                        [NullObject(), self.get(SA.DECODE_PARMS, ArrayObject())]
+                        [NullObject(), self.get(StreamAttributes.DECODE_PARMS, ArrayObject())]
                     )
             else:
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), f])
                 params = ArrayObject(
-                    [NullObject(), self.get(SA.DECODE_PARMS, NullObject())]
+                    [NullObject(), self.get(StreamAttributes.DECODE_PARMS, NullObject())]
                 )
         else:
             f = NameObject(FT.FLATE_DECODE)
             params = None
         retval = EncodedStreamObject()
         retval.update(self)
-        retval[NameObject(SA.FILTER)] = f
+        retval[NameObject(StreamAttributes.FILTER)] = f
         if params is not None:
-            retval[NameObject(SA.DECODE_PARMS)] = params
+            retval[NameObject(StreamAttributes.DECODE_PARMS)] = params
         retval._data = FlateDecode.encode(self._data, level)
         return retval
 
@@ -1123,7 +1123,7 @@ class EncodedStreamObject(StreamObject):
         decoded = DecodedStreamObject()
         decoded.set_data(decode_stream_data(self))
         for key, value in self.items():
-            if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
+            if key not in (StreamAttributes.LENGTH, StreamAttributes.FILTER, StreamAttributes.DECODE_PARMS):
                 decoded[key] = value
         self.decoded_self = decoded
         return decoded.get_data()
@@ -1132,7 +1132,7 @@ class EncodedStreamObject(StreamObject):
     def set_data(self, data: bytes) -> None:
         from ..filters import FlateDecode  # noqa: PLC0415
 
-        if self.get(SA.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
+        if self.get(StreamAttributes.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
             if not isinstance(data, bytes):
                 raise TypeError("Data must be bytes")
             if self.decoded_self is None:
