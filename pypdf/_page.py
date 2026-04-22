@@ -351,6 +351,18 @@ class ImageFile:
     Reference to the object storing the stream.
     """
 
+    is_inline: bool = False
+    """
+    True if this is an inline image (~0~, ~1~, etc.).
+    """
+
+    is_displayed: bool = False
+    """
+    True if this image is displayed in the page content stream.
+    Some PDFs duplicate image references over all the pages,
+    so this is needed to disambiguate.
+    """
+
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the image with a new PIL image.
@@ -414,67 +426,28 @@ class ImageFile:
     def __repr__(self) -> str:
         return self.__str__()[:-1] + f", hash: {hash(self.data)})"
 
-    def is_displayed_on_page(self, page: "PageObject") -> bool:
+    def _check_displayed(self, page: "PageObject") -> None:
         """
-        Check if this image is displayed on the specified page.
-
-        This method determines whether an image is actually rendered on a page
-        (not just referenced in resources). It checks the page's content stream
-        for image operators.
-
-        Args:
-            page: The page object to check.
-
-        Returns:
-            True if the image is displayed on the page, False otherwise.
-        """
-        # Check if this is an inline image or XObject image
-        # Inline images have names starting with "~"
-        if self.name.startswith("~"):
-            result = self._check_inline_image_displayed(page)
-        else:
-            result = self._check_xobject_image_displayed(page)
-
-        return result
-
-    def _check_inline_image_displayed(self, page: "PageObject") -> bool:
-        """
-        Check if an inline image is displayed on a page.
-
-        Inline images appear in the content stream as "INLINE IMAGE" operators.
-        The image name starts with "~" and is the first operand of the operator.
+        Check if this image is displayed in the page content stream.
 
         Args:
             page: The page to check.
 
-        Returns:
-            True if the inline image is displayed on the page.
+        Sets:
+            is_displayed: True if the image is displayed, False otherwise.
         """
-        image_name = self.name.split(".")[0]
+        # Inline images are always displayed
+        if self.is_inline:
+            self.is_displayed = True
+            return
 
-        if page.inline_images:
-            return len(list(filter(lambda i: i == image_name, page.inline_images.keys()))) > 0
-        return False
-
-    def _check_xobject_image_displayed(self, page: "PageObject") -> bool:
-        """
-        Check if an XObject image is displayed on a page.
-
-        XObject images appear in the content stream as "Do" operators.
-        The image name is the first operand of the Do operator.
-        The name may have a leading "/" that needs to be stripped.
-
-        Args:
-            page: The page to check.
-
-        Returns:
-            True if the XObject image is displayed on the page.
-        """
+        # Check XObject images in content stream
         from .generic._data_structures import ContentStream  # noqa: PLC0415
 
         try:
             if not self.indirect_reference:
-                return False
+                self.is_displayed = False
+                return
 
             raw_contents = page.get(NameObject("/Contents"), None)
 
@@ -489,11 +462,12 @@ class ImageFile:
                     xobj_base = xobj_name.lstrip("/")
 
                     if img_base == xobj_base:
-                        return True
+                        self.is_displayed = True
+                        return
         except (KeyError, IndexError, AttributeError):
             pass
 
-        return False
+        self.is_displayed = False
 
 
 class VirtualListImages(Sequence[ImageFile]):
@@ -734,18 +708,24 @@ class PageObject(DictionaryObject):
                     self.inline_images = self._get_inline_images()
                 if self.inline_images is None:
                     raise KeyError("No inline image can be found")
-                return self.inline_images[id]
+                img = self.inline_images[id]
+                img.is_inline = True
+                img.is_displayed = True
+                return img
 
             assert xobjs is not None
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
-            return ImageFile(
+            img = ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
+            img.is_inline = False
+            img._check_displayed(self)
+            return img
         # in a subobject
         assert xobjs is not None
         ids = id[1:]
