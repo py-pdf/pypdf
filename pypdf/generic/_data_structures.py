@@ -714,7 +714,7 @@ class TreeObject(DictionaryObject):
         while True:
             child_id = id(child)
             if child_id in visited:
-                logger_warning(f"Detected cycle in outline structure for {child}", __name__)
+                logger_warning("Detected cycle in outline structure for %s", __name__, child=child)
                 return
             visited.add(child_id)
 

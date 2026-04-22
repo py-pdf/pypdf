@@ -552,7 +552,7 @@ class NumberObject(int, PdfObject):
         try:
             return int.__new__(cls, int(value))
         except ValueError:
-            logger_warning(f"NumberObject({value}) invalid; use 0 instead", __name__)
+            logger_warning("NumberObject(%s) invalid; use 0 instead", __name__, value=value)
             return int.__new__(cls, 0)
 
     def clone(

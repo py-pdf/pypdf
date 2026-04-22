@@ -260,7 +260,7 @@ def _handle_flate(
             else:
                 img = img.convert(conv)
                 if len(lookup) != (hival + 1) * nb:
-                    logger_warning(f"Invalid Lookup Table in {obj_as_text}", __name__)
+                    logger_warning("Invalid Lookup Table in %s", __name__, obj_as_text=obj_as_text)
                     lookup = None
                 elif mode == "L":
                     # gray lookup does not work: it is converted to a similar RGB lookup
@@ -585,6 +585,6 @@ def _xobj_to_image(
     try:  # temporary try/except until other fixes of images
         img = Image.open(BytesIO(data))
     except Exception as exception:
-        logger_warning(f"Failed loading image: {exception}", __name__)
+        logger_warning("Failed loading image: %s", __name__, exception=exception)
         img = None  # type: ignore[assignment,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
     return extension, data, img

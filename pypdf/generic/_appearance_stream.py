@@ -345,7 +345,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         if font_resource:
             font = Font.from_font_resource(font_resource)
         else:
-            logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+            logger_warning("Font dictionary for %s not found; defaulting to Helvetica.", __name__, font_name=font_name)
             font_name = "/Helv"
             core_font_metrics = CORE_FONT_METRICS["Helvetica"]
             font = Font(
@@ -440,7 +440,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         if is_null_or_none(font_resource):
             if font_name.removeprefix("/") not in CORE_FONT_METRICS:
                 # Default to Helvetica if we haven't found a font resource and cannot construct one ourselves.
-                logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+                logger_warning("Font dictionary for %s not found; defaulting to Helvetica.", __name__, font_name=font_name)
                 font_name = "/Helvetica"
             core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
             font_resource = Font(

@@ -212,7 +212,7 @@ def process_cm_line(
         try:
             multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
         except binascii.Error as error:
-            logger_warning(f"Skipping broken line {line!r}: {error}", __name__)
+            logger_warning("Skipping broken line %s: %s", __name__, error=error)
     elif process_char:
         parse_bfchar(line, map_dict, int_entry)
     return process_rg, process_char, multiline_rg
