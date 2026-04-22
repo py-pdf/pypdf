@@ -2017,6 +2017,14 @@ def test_find_pdf_trailers(data: bytes, expected: list[int]):
     assert result == expected
 
 
+def test_cache_indirect_object_strict_overwrite_error():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf", strict=True)
+    reader.resolved_objects[(99, 12345)] = None
+
+    with pytest.raises(PdfReadError, match=r"^Overwriting cache for 99 12345$"):
+        reader.cache_indirect_object(99, 12345, None)
+
+
 def test_objstm_batch_parse_caches_all_objects():
     """Resolving one ObjStm object should batch-cache all siblings."""
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
