@@ -72,6 +72,7 @@ CompressedTransformationMatrix: TypeAlias = tuple[
 ]
 
 StreamType = IO[Any]
+BinaryStreamType = IO[bytes]
 StrByteType = Union[str, StreamType]
 
 
@@ -181,7 +182,7 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
     return txt
 
 
-def read_non_whitespace(stream: StreamType) -> bytes:
+def read_non_whitespace(stream: BinaryStreamType) -> bytes:
     """
     Find and read the next non-whitespace character (ignores whitespace).
 
@@ -282,7 +283,7 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
     return b"".join(parts)
 
 
-def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
+def read_block_backwards(stream: BinaryStreamType, to_read: int) -> bytes:
     """
     Given a stream at position X, read a block of size to_read ending at position X.
 

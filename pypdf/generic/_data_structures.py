@@ -46,6 +46,7 @@ from typing import (
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationProtocol
 from .._utils import (
     WHITESPACES,
+    BinaryStreamType,
     StreamType,
     deprecation_no_replacement,
     logger_warning,
@@ -58,9 +59,9 @@ from ..constants import (
     CheckboxRadioButtonAttributes,
     FieldDictionaryAttributes,
     OutlineFontFlag,
+    StreamAttributes,
 )
 from ..constants import FilterTypes as FT
-from ..constants import StreamAttributes as SA
 from ..constants import TypArguments as TA
 from ..constants import TypFitArguments as TF
 from ..errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
@@ -165,20 +166,21 @@ class ArrayObject(list[Any], PdfObject):
 
     def _to_lst(self, lst: Any) -> list[Any]:
         # Convert to list, internal
+        result: list[Any]
         if isinstance(lst, (list, tuple, set)):
-            pass
+            result = list(lst)
         elif isinstance(lst, PdfObject):
-            lst = [lst]
+            result = [lst]
         elif isinstance(lst, str):
             if lst[0] == "/":
-                lst = [NameObject(lst)]
+                result = [NameObject(lst)]
             else:
-                lst = [TextStringObject(lst)]
+                result = [TextStringObject(lst)]
         elif isinstance(lst, bytes):
-            lst = [ByteStringObject(lst)]
+            result = [ByteStringObject(lst)]
         else:  # for numbers,...
-            lst = [lst]
-        return lst
+            result = [lst]
+        return result
 
     def __add__(self, lst: Any) -> "ArrayObject":
         """
@@ -476,7 +478,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         return dict.setdefault(self, key, value)
 
     def __getitem__(self, key: Any) -> PdfObject:
-        return dict.__getitem__(self, key).get_object()
+        return cast(PdfObject, dict.__getitem__(self, key).get_object())
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformationProtocol]:
@@ -532,7 +534,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
 
     @classmethod
     def _read_unsized_from_stream(
-            cls, stream: StreamType, pdf: PdfReaderProtocol
+            cls, stream: BinaryStreamType, pdf: PdfReaderProtocol
     ) -> bytes:
         object_position = cls._get_next_object_position(
             position_before=stream.tell(), position_end=2 ** 32, generations=list(pdf.xref), pdf=pdf
@@ -629,14 +631,14 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             if eol == b"\r" and stream.read(1) != b"\n":
                 stream.seek(-1, 1)
             # this is a stream object, not a dictionary
-            if SA.LENGTH not in data:
+            if StreamAttributes.LENGTH not in data:
                 if pdf is not None and pdf.strict:
                     raise PdfStreamError("Stream length not defined")
                 logger_warning(
                     f"Stream length not defined @pos={stream.tell()}", __name__
                 )
-                data[NameObject(SA.LENGTH)] = NumberObject(-1)
-            length = data[SA.LENGTH]
+                data[NameObject(StreamAttributes.LENGTH)] = NumberObject(-1)
+            length = data[StreamAttributes.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
                 assert pdf is not None, "mypy"
@@ -768,45 +770,46 @@ class TreeObject(DictionaryObject):
         if inc_parent_counter is None:
             inc_parent_counter = self.inc_parent_counter_default
         child_obj = child.get_object()
-        child = child.indirect_reference  # get_reference(child_obj)
+        assert child.indirect_reference is not None, "mypy"
+        child_reference: IndirectObject = child.indirect_reference
 
         prev: Optional[DictionaryObject]
         if "/First" not in self:  # no child yet
-            self[NameObject("/First")] = child
+            self[NameObject("/First")] = child_reference
             self[NameObject("/Count")] = NumberObject(0)
-            self[NameObject("/Last")] = child
+            self[NameObject("/Last")] = child_reference
             child_obj[NameObject("/Parent")] = self.indirect_reference
             inc_parent_counter(self, child_obj.get("/Count", 1))
             if "/Next" in child_obj:
                 del child_obj["/Next"]
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
-            return child
+            return child_reference
         prev = cast("DictionaryObject", self["/Last"])
 
         while prev.indirect_reference != before:
             if "/Next" in prev:
                 prev = cast("TreeObject", prev["/Next"])
             else:  # append at the end
-                prev[NameObject("/Next")] = cast("TreeObject", child)
+                prev[NameObject("/Next")] = cast("TreeObject", child_reference)
                 child_obj[NameObject("/Prev")] = prev.indirect_reference
                 child_obj[NameObject("/Parent")] = self.indirect_reference
                 if "/Next" in child_obj:
                     del child_obj["/Next"]
-                self[NameObject("/Last")] = child
+                self[NameObject("/Last")] = child_reference
                 inc_parent_counter(self, child_obj.get("/Count", 1))
-                return child
+                return child_reference
         try:  # insert as first or in the middle
             assert isinstance(prev["/Prev"], DictionaryObject)
-            prev["/Prev"][NameObject("/Next")] = child
+            prev["/Prev"][NameObject("/Next")] = child_reference
             child_obj[NameObject("/Prev")] = prev["/Prev"]
         except Exception:  # it means we are inserting in first position
             del child_obj["/Next"]
         child_obj[NameObject("/Next")] = prev
-        prev[NameObject("/Prev")] = child
+        prev[NameObject("/Prev")] = child_reference
         child_obj[NameObject("/Parent")] = self.indirect_reference
         inc_parent_counter(self, child_obj.get("/Count", 1))
-        return child
+        return child_reference
 
     def _remove_node_from_tree(
         self, prev: Any, prev_ref: Any, cur: Any, last: Any
@@ -1015,9 +1018,9 @@ class StreamObject(DictionaryObject):
             deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
-        self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
+        self[NameObject(StreamAttributes.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.write_to_stream(self, stream)
-        del self[SA.LENGTH]
+        del self[StreamAttributes.LENGTH]
         stream.write(b"\nstream\n")
         stream.write(self._data)
         stream.write(b"\nendstream")
@@ -1027,46 +1030,46 @@ class StreamObject(DictionaryObject):
         data: dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
         retval: Union[EncodedStreamObject, DecodedStreamObject]
-        if SA.FILTER in data:
+        if StreamAttributes.FILTER in data:
             retval = EncodedStreamObject()
         else:
             retval = DecodedStreamObject()
         retval._data = data["__streamdata__"]
         del data["__streamdata__"]
-        if SA.LENGTH in data:
-            del data[SA.LENGTH]
+        if StreamAttributes.LENGTH in data:
+            del data[StreamAttributes.LENGTH]
         retval.update(data)
         return retval
 
     def flate_encode(self, level: int = -1) -> "EncodedStreamObject":
         from ..filters import FlateDecode  # noqa: PLC0415
 
-        if SA.FILTER in self:
-            f = self[SA.FILTER]
+        if StreamAttributes.FILTER in self:
+            f = self[StreamAttributes.FILTER]
             if isinstance(f, ArrayObject):
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), *f])
                 try:
                     params = ArrayObject(
-                        [NullObject(), *self.get(SA.DECODE_PARMS, ArrayObject())]
+                        [NullObject(), *self.get(StreamAttributes.DECODE_PARMS, ArrayObject())]
                     )
                 except TypeError:
                     # case of error where the * operator is not working (not an array
                     params = ArrayObject(
-                        [NullObject(), self.get(SA.DECODE_PARMS, ArrayObject())]
+                        [NullObject(), self.get(StreamAttributes.DECODE_PARMS, ArrayObject())]
                     )
             else:
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), f])
                 params = ArrayObject(
-                    [NullObject(), self.get(SA.DECODE_PARMS, NullObject())]
+                    [NullObject(), self.get(StreamAttributes.DECODE_PARMS, NullObject())]
                 )
         else:
             f = NameObject(FT.FLATE_DECODE)
             params = None
         retval = EncodedStreamObject()
         retval.update(self)
-        retval[NameObject(SA.FILTER)] = f
+        retval[NameObject(StreamAttributes.FILTER)] = f
         if params is not None:
-            retval[NameObject(SA.DECODE_PARMS)] = params
+            retval[NameObject(StreamAttributes.DECODE_PARMS)] = params
         retval._data = FlateDecode.encode(self._data, level)
         return retval
 
@@ -1120,7 +1123,7 @@ class EncodedStreamObject(StreamObject):
         decoded = DecodedStreamObject()
         decoded.set_data(decode_stream_data(self))
         for key, value in self.items():
-            if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
+            if key not in (StreamAttributes.LENGTH, StreamAttributes.FILTER, StreamAttributes.DECODE_PARMS):
                 decoded[key] = value
         self.decoded_self = decoded
         return decoded.get_data()
@@ -1129,7 +1132,7 @@ class EncodedStreamObject(StreamObject):
     def set_data(self, data: bytes) -> None:
         from ..filters import FlateDecode  # noqa: PLC0415
 
-        if self.get(SA.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
+        if self.get(StreamAttributes.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
             if not isinstance(data, bytes):
                 raise TypeError("Data must be bytes")
             if self.decoded_self is None:
@@ -1211,7 +1214,7 @@ class ContentStream(DecodedStreamObject):
                                 f"{MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH} output bytes."
                             )
                         data += new_data
-                    if len(data) == 0 or data[-1] != b"\n":
+                    if len(data) == 0 or data[-1:] != b"\n":
                         # There should be no direct need to check for a change of one byte.
                         length += 1
                         data += b"\n"
@@ -1775,8 +1778,9 @@ class Destination(TreeObject):
     @property
     def color(self) -> Optional["ArrayObject"]:
         """Read-only property accessing the color in (R, G, B) with values 0.0-1.0."""
-        return self.get(
-            "/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)])
+        return cast(
+            "ArrayObject",
+            self.get("/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)])),
         )
 
     @property
@@ -1786,7 +1790,7 @@ class Destination(TreeObject):
 
         1=italic, 2=bold, 3=both
         """
-        return self.get("/F", 0)
+        return OutlineFontFlag(self.get("/F", 0))
 
     @property
     def outline_count(self) -> Optional[int]:

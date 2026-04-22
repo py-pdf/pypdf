@@ -621,7 +621,7 @@ class PageObject(DictionaryObject):
         space unit is 1/72 inch, and a value of 3 means that a user
         space unit is 3/72 inch.
         """
-        return self.get(PG.USER_UNIT, 1)
+        return cast(float, self.get(PG.USER_UNIT, 1))
 
     @staticmethod
     def create_blank_page(
@@ -1028,15 +1028,15 @@ class PageObject(DictionaryObject):
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
         """Add transformation matrix at the beginning of the given contents stream."""
-        contents = ContentStream(contents, pdf)
-        contents.operations.insert(
+        content_stream = ContentStream(contents, pdf)
+        content_stream.operations.insert(
             0,
-            [
+            (
                 [FloatObject(x) for x in ctm],
                 b"cm",
-            ],
+            ),
         )
-        return contents
+        return content_stream
 
     def _get_contents_as_bytes(self) -> Optional[bytes]:
         """
@@ -1708,7 +1708,7 @@ class PageObject(DictionaryObject):
             return None
         try:
             lst = self.indirect_reference.pdf.pages
-            return lst.index(self)
+            return int(lst.index(self))
         except ValueError:
             return None
 

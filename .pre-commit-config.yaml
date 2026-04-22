@@ -35,3 +35,6 @@ repos:
     hooks:
       - id: mypy
         files: ^pypdf/.*
+        additional_dependencies:
+          - cryptography
+          - pycryptodome

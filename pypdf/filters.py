@@ -60,7 +60,7 @@ from .constants import FilterTypeAbbreviations as FTA
 from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
-from .constants import StreamAttributes as SA
+from .constants import StreamAttributes
 from .errors import DependencyError, LimitReachedError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
@@ -216,11 +216,11 @@ class FlateDecode:
             if predictor == 2:
                 row_length -= 1  # remove the predictor byte
                 bpp = row_length // columns
-                str_data = bytearray(str_data)
-                for i in range(len(str_data)):
+                str_data_mut = bytearray(str_data)
+                for i in range(len(str_data_mut)):
                     if i % row_length >= bpp:
-                        str_data[i] = (str_data[i] + str_data[i - bpp]) % 256
-                str_data = bytes(str_data)
+                        str_data_mut[i] = (str_data_mut[i] + str_data_mut[i - bpp]) % 256
+                str_data = bytes(str_data_mut)
             # PNG prediction:
             elif 10 <= predictor <= 15:
                 str_data = FlateDecode._decode_png_prediction(
@@ -806,13 +806,13 @@ def decode_stream_data(stream: StreamObject) -> bytes:
         NotImplementedError: If an unsupported filter type is encountered.
 
     """
-    filters = stream.get(SA.FILTER, ())
+    filters = stream.get(StreamAttributes.FILTER, ())
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
     if not isinstance(filters, ArrayObject):
         # We have a single filter instance
         filters = (filters,)
-    decode_parms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
+    decode_parms = stream.get(StreamAttributes.DECODE_PARMS, ({},) * len(filters))
     if not isinstance(decode_parms, (list, tuple)):
         decode_parms = (decode_parms,)
     data: bytes = stream._data
