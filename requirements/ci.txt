@@ -38,6 +38,8 @@ py-cpuinfo==9.0.0
     # via pytest-benchmark
 pycparser==2.22
     # via cffi
+pycryptodome==3.23.0
+    # via -r requirements/ci.in
 pytest==8.3.3
     # via
     #   -r requirements/ci.in
