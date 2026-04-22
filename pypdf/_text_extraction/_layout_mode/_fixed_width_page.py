@@ -199,8 +199,9 @@ def recurs_to_target_op(
             text_state_mgr.set_state_param(op, operands)
     else:
         logger_warning(
-            f"Unbalanced target operations, expected {end_target!r}.",
-            __name__,
+            "Unbalanced target operations, expected %(end_target)r.",
+            source=__name__,
+            end_target=end_target,
         )
     return bt_groups, tj_ops
 
@@ -290,15 +291,15 @@ def text_show_operations(
     if any(tj.rotated for tj in tj_ops):
         if strip_rotated:
             logger_warning(
-                "Rotated text discovered. Output will be incomplete.", __name__
+                "Rotated text discovered. Output will be incomplete.", source=__name__
             )
         else:
             logger_warning(
-                "Rotated text discovered. Layout will be degraded.", __name__
+                "Rotated text discovered. Layout will be degraded.", source=__name__
             )
     if not all(tj.font.interpretable for tj in tj_ops):
         logger_warning(
-            "PDF contains an uninterpretable font. Output will be incomplete.", __name__
+            "PDF contains an uninterpretable font. Output will be incomplete.", source=__name__
         )
 
     # left align the data, i.e. decrement all tx values by min(tx)

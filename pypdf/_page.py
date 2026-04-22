@@ -103,7 +103,12 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
     if isinstance(retval, ArrayObject) and (length := len(retval)) > 4:
-        logger_warning(f"Expected four values, got {length}: {retval}", __name__)
+        logger_warning(
+            "Expected four values, got %(length)s: %(retval)s",
+            source=__name__,
+            length=length,
+            retval=retval,
+        )
         retval = RectangleObject(tuple(retval[:4]))
     else:
         retval = RectangleObject(retval)  # type: ignore
@@ -1809,8 +1814,10 @@ class PageObject(DictionaryObject):
                             )
                 except Exception as exception:
                     logger_warning(
-                        f"Impossible to decode XFormObject {operands[0]}: {exception}",
-                        __name__,
+                        "Impossible to decode XFormObject %(operand)s: %(exception)s",
+                        source=__name__,
+                        operand=operands[0],
+                        exception=exception,
                     )
                 finally:
                     extractor.text = ""
@@ -2006,8 +2013,9 @@ class PageObject(DictionaryObject):
             ):
                 if locals()[visitor]:
                     logger_warning(
-                        f"Argument {visitor} is ignored in layout mode",
-                        __name__,
+                        "Argument %(visitor)s is ignored in layout mode",
+                        source=__name__,
+                        visitor=visitor,
                     )
             return self._layout_mode_text(
                 space_vertically=kwargs.get("layout_mode_space_vertically", True),
