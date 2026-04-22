@@ -90,7 +90,7 @@ class CryptAES(CryptBase):
         except ValueError as exception:
             if strict:
                 raise PdfStreamError(exception)
-            logger_warning(f"Ignoring padding error: {exception}", src=__name__)
+            logger_warning("Ignoring padding error: %s", __name__, exception=exception)
             return padded_data[: -padded_data[-1]]
 
 

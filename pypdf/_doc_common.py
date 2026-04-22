@@ -863,7 +863,7 @@ class PdfDocCommon:
         while True:
             node_id = id(node)
             if node_id in visited:
-                logger_warning(f"Detected cycle in outline structure for {node}", __name__)
+                logger_warning("Detected cycle in outline structure for %s", __name__, node=node)
                 break
             visited.add(node_id)
 
@@ -966,7 +966,7 @@ class PdfDocCommon:
         try:
             return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
         except PdfReadError:
-            logger_warning(f"Unknown destination: {title!r} {array}", __name__)
+            logger_warning("Unknown destination: %s %s", __name__, array=array)
             if self.strict:
                 raise
             # create a link to first Page

@@ -103,7 +103,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
     if isinstance(retval, ArrayObject) and (length := len(retval)) > 4:
-        logger_warning(f"Expected four values, got {length}: {retval}", __name__)
+        logger_warning("Expected four values, got %s: %s", __name__, length=length, retval=retval)
         retval = RectangleObject(tuple(retval[:4]))
     else:
         retval = RectangleObject(retval)  # type: ignore
