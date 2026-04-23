@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1776873354368,
+  "lastUpdate": 1776931347042,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -94451,6 +94451,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002033609526363085",
             "extra": "mean: 611.4163961999907 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "827bf7f502a98dc604d96843c214990d1316a9c5",
+          "message": "ROB: Allow to fix AES padding length in non-strict mode (#3742)\n\nCloses #3739.",
+          "timestamp": "2026-04-23T09:59:45+02:00",
+          "tree_id": "ce68b8ea361093001c2d4390f1710c4bb0b7bbe4",
+          "url": "https://github.com/py-pdf/pypdf/commit/827bf7f502a98dc604d96843c214990d1316a9c5"
+        },
+        "date": 1776931341290,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9279927509177464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005758738208983598",
+            "extra": "mean: 341.5309001999958 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.72352283816179,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004834468902359644",
+            "extra": "mean: 53.40875264999951 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26656017094523343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01965215669517273",
+            "extra": "mean: 3.7514981944000056 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.262541548537154,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000787468943843578",
+            "extra": "mean: 54.75689116666792 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09064958778529586,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015794228681585958",
+            "extra": "mean: 11.031489766600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4948864766601646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0063968743071344866",
+            "extra": "mean: 668.9471177999906 msec\nrounds: 5"
           }
         ]
       }
