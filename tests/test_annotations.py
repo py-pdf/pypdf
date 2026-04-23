@@ -19,10 +19,24 @@ from pypdf.annotations import (
     Rectangle,
     Text,
 )
+from pypdf.constants import AnnotationFlag
 from pypdf.errors import PdfReadError
-from pypdf.generic import ArrayObject, FloatObject, NumberObject
+from pypdf.generic import ArrayObject, FloatObject, NameObject, NumberObject
 
 from . import RESOURCE_ROOT, get_data_from_url
+
+
+def test_annotation_flags_returns_annotation_flag_type():
+    annot = Text(rect=(0, 0, 100, 100), text="test")
+
+    # Without /F key, should return AnnotationFlag(0)
+    assert isinstance(annot.flags, AnnotationFlag)
+    assert annot.flags == 0
+
+    # With /F key set as a NumberObject (as stored in PDFs)
+    annot[NameObject("/F")] = NumberObject(4)
+    assert isinstance(annot.flags, AnnotationFlag)
+    assert annot.flags == AnnotationFlag.PRINT
 
 
 def test_ellipse(pdf_file_path):

@@ -10,7 +10,7 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.constants import CheckboxRadioButtonAttributes
+from pypdf.constants import CheckboxRadioButtonAttributes, OutlineFontFlag
 from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
@@ -282,6 +282,14 @@ def test_destination_fit_r():
     assert d.bottom == FloatObject(0)
     assert list(d) == []
     d.empty_tree()
+
+
+def test_destination_color_and_font_format_defaults():
+    d = Destination(NameObject("title"), NullObject(), Fit.fit_rectangle(0, 0, 0, 0))
+    assert isinstance(d.color, ArrayObject)
+    assert d.color == [FloatObject(0), FloatObject(0), FloatObject(0)]
+    assert isinstance(d.font_format, OutlineFontFlag)
+    assert d.font_format == 0
 
 
 def test_destination_fit_v():
@@ -650,6 +658,37 @@ def test_remove_child_in_tree():
     tree.remove_child(obj)
     tree.add_child(obj, writer)
     tree.empty_tree()
+
+
+def test_insert_child_before_last_with_multiple_existing():
+    """Cover TreeObject.insert_child try-success path.
+
+    Inserts a child before the existing /Last node when the tree already
+    has multiple children, so the node being inserted before has a /Prev.
+    """
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    child1 = TreeObject()
+    child1[NameObject("/Foo")] = TextStringObject("1")
+    child1_ref = writer._add_object(child1)
+    tree.add_child(child1_ref, writer)
+
+    child2 = TreeObject()
+    child2[NameObject("/Foo")] = TextStringObject("2")
+    child2_ref = writer._add_object(child2)
+    tree.add_child(child2_ref, writer)
+
+    # /Last is now child2, /First is child1, child2 has /Prev pointing at child1.
+    # Inserting before child2_ref hits the try block successfully.
+    new_child = TreeObject()
+    new_child[NameObject("/Foo")] = TextStringObject("new")
+    new_child_ref = writer._add_object(new_child)
+    tree.insert_child(new_child_ref, child2_ref, writer)
+
+    assert tree[NameObject("/Count")] == 3
+    assert len(list(tree.children())) == 3
 
 
 @pytest.mark.enable_socket

@@ -361,6 +361,20 @@ class PdfReader(PdfDocCommon):
         n = int(obj_stm["/N"])  # type: ignore[call-overload]
         first_offset = int(obj_stm["/First"])  # type: ignore[call-overload]
 
+        # ObjStm header format: "objnum offset objnum offset ..."
+        # smallest possible entry: "0 0" = 3 bytes (1 digit + 1 space + 1 digit)
+        # using // 4 would reject a valid 3-byte single entry (3 // 4 = 0)
+        max_n = stream_data.getbuffer().nbytes // 3
+        stream_data.seek(0)
+        if n > max_n:
+            if self.strict:
+                raise LimitReachedError(f"Value /N {n} for object {stmnum} exceeds maximum allowed value {max_n}.")
+            logger_warning(
+                f"Value /N {n} for object {stmnum} exceeds maximum allowed value {max_n}. Limiting to {max_n}.",
+                src=__name__
+            )
+            n = max_n
+
         # Phase 1: Read the index (objnum, offset) pairs from the header.
         obj_index: list[tuple[int, int]] = []
         for _i in range(n):
@@ -716,7 +730,7 @@ class PdfReader(PdfDocCommon):
                     f"PDF starts with '{header_byte.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            logger_warning(f"invalid pdf header: {header_byte}", __name__)
+            logger_warning(f"invalid pdf header: {header_byte!r}", __name__)
         stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
@@ -991,7 +1005,7 @@ class PdfReader(PdfDocCommon):
                 )
             stream.seek(p, 0)
         if "/Prev" in new_trailer:
-            return new_trailer["/Prev"]
+            return cast(int, new_trailer["/Prev"])
         return None
 
     def _read_xref_other_error(
@@ -1035,30 +1049,70 @@ class PdfReader(PdfDocCommon):
                 raise PdfReadError("Cannot rebuild xref")
         raise PdfReadError("Could not find xref table at specified location")
 
+    def _sanitize_pdf15_xref_stream_index_pairs(
+            self, index_pairs: list[int], entry_sizes: list[int], xref_stream: ContentStream
+    ) -> list[int]:
+        # `entry_sizes` holds the byte widths for the entries. Summing determines the total number of bytes per entry.
+        # We expect up to 3 values, clamping to at least 1 avoids ZeroDivisionError in next step.
+        # `min_entry_bytes` will be the smallest plausible size of one xref entry.
+        min_entry_bytes = max(sum(int(entry_sizes[i]) for i in range(min(len(entry_sizes), 3))), 1)
+        # maximum number of entries that could physically fit
+        max_entries = len(xref_stream.get_data()) // min_entry_bytes + 1
+
+        result = []
+        total = 0
+
+        for index, pair_value in enumerate(index_pairs):
+            pair_value_int = int(pair_value)
+
+            # `index_pairs` has the format `[start0, count0, start1, count1, ...]`
+            # Only modify the counts here, but keep the start values.
+            if index % 2 == 1:
+                if total + pair_value_int > max_entries:
+                    if self.strict:
+                        raise LimitReachedError(
+                            f"Total XRef entries {total + pair_value_int} exceed maximum allowed value {max_entries}."
+                        )
+                    new_v = max(0, max_entries - total)
+                    logger_warning(
+                        f"Clamping XRef count from {pair_value_int} to {new_v} to fit stream size.",
+                        src=__name__
+                    )
+                    pair_value_int = new_v
+
+                total += pair_value_int
+
+            result.append(pair_value_int)
+
+        return result
+
     def _read_pdf15_xref_stream(
         self, stream: StreamType
     ) -> Union[ContentStream, EncodedStreamObject, DecodedStreamObject]:
         """Read the cross-reference stream for PDF 1.5+."""
         stream.seek(-1, 1)
-        idnum, generation = self.read_object_header(stream)
-        xrefstream = cast(ContentStream, read_object(stream, self))
-        if cast(str, xrefstream["/Type"]) != "/XRef":
-            raise PdfReadError(f"Unexpected type {xrefstream['/Type']!r}")
-        self.cache_indirect_object(generation, idnum, xrefstream)
+        stream_idnum, stream_generation = self.read_object_header(stream)
+        xref_stream = cast(ContentStream, read_object(stream, self))
+        if cast(str, xref_stream["/Type"]) != "/XRef":
+            raise PdfReadError(f"Unexpected type {xref_stream['/Type']!r}")
+        self.cache_indirect_object(stream_generation, stream_idnum, xref_stream)
 
         # Index pairs specify the subsections in the dictionary.
         # If none, create one subsection that spans everything.
-        if "/Size" not in xrefstream:
+        if "/Size" not in xref_stream:
             # According to table 17 of the PDF 2.0 specification, this key is required.
-            raise PdfReadError(f"Size missing from XRef stream {xrefstream!r}!")
-        idx_pairs = xrefstream.get("/Index", [0, xrefstream["/Size"]])
+            raise PdfReadError(f"Size missing from XRef stream {xref_stream!r}!")
+        index_pairs = xref_stream.get("/Index", [0, xref_stream["/Size"]])
 
-        entry_sizes = cast(dict[Any, Any], xrefstream.get("/W"))
+        entry_sizes = cast(list[int], xref_stream.get("/W"))
         assert len(entry_sizes) >= 3
         if self.strict and len(entry_sizes) > 3:
             raise PdfReadError(f"Too many entry sizes: {entry_sizes}")
+        index_pairs = self._sanitize_pdf15_xref_stream_index_pairs(
+            index_pairs=index_pairs, entry_sizes=entry_sizes, xref_stream=xref_stream
+        )
 
-        stream_data = BytesIO(xrefstream.get_data())
+        stream_data = BytesIO(xref_stream.get_data())
 
         def get_entry(i: int) -> Union[int, tuple[int, ...]]:
             # Reads the correct number of bytes for each entry. See the
@@ -1078,8 +1132,8 @@ class PdfReader(PdfDocCommon):
             return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore
 
         # Iterate through each subsection
-        self._read_xref_subsections(idx_pairs, get_entry, used_before)
-        return xrefstream
+        self._read_xref_subsections(index_pairs, get_entry, used_before)
+        return xref_stream
 
     @staticmethod
     def _get_xref_issues(stream: StreamType, startxref: int) -> int:

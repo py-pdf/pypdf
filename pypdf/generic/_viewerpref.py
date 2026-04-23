@@ -29,6 +29,7 @@
 from typing import (
     Any,
     Optional,
+    cast,
 )
 
 from ._base import BooleanObject, NameObject, NumberObject, is_null_or_none
@@ -160,4 +161,4 @@ class ViewerPreferences(DictionaryObject):
 
         cls.enforce = _add_prop_arr("/Enforce", ArrayObject())
 
-        return DictionaryObject.__new__(cls)
+        return cast("ViewerPreferences", DictionaryObject.__new__(cls))

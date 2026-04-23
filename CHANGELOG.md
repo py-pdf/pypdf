@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## Version 6.10.2, 2026-04-15
+
+### Security (SEC)
+- Do not rely on possibly invalid /Size for incremental cloning (#3735)
+- Introduce limits for FlateDecode parameters and image decoding (#3734)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.1...6.10.2)
+
+## Version 6.10.1, 2026-04-14
+
+### Security (SEC)
+- Limit the allowed size of xref and object streams (#3733)
+
+### Robustness (ROB)
+- Consider strict mode setting for decryption errors (#3731)
+
+### Documentation (DOC)
+- Use new parameter names for compress_identical_objects
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.0...6.10.1)
+
 ## Version 6.10.0, 2026-04-10
 
 ### Security (SEC)
