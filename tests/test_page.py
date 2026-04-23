@@ -855,9 +855,10 @@ def test_merge_page_with_annotations():
     page_two = writer.pages[1]
     page_one.merge_page(page_two)
 
-    # Assert: You need to inspect the file manually
+    count = len(page_one.annotations)
     page_two[NameObject("/Annots")] = TextStringObject("For coverage, when Annots is not an array")
     page_one.merge_page(page_two)
+    assert len(page_one.annotations) == count + 1
 
 
 def test_merge_page_reproducible_with_proc_set():
