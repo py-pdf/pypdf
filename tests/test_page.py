@@ -858,7 +858,7 @@ def test_merge_page_with_annotations():
     )
     writer.add_annotation(page_number=1, annotation=annot1)
     assert len(page0.annotations) == 1
-    assert len(page0.annotations) == 1
+    assert len(page1.annotations) == 1
     page0.merge_page(page1)
     assert len(page0.annotations) == 2
     assert len(page1.annotations) == 1
