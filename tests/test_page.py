@@ -847,14 +847,20 @@ def test_merge_page_with_annotations():
     )
     writer.add_annotation(page_number=0, annotation=annot)
 
-    page_one = writer.pages[0]
-    page_two = writer.pages[1]
-    page_one.merge_page(page_two)
+    page0 = writer.pages[0]
+    page1 = writer.pages[1]
+    assert len(page0.annotations) == 1 
+    assert len(page1.annotations) == 0 
+    page0.merge_page(page1)
+    assert len(page0.annotations) == 1 
+    assert len(page1.annotations) == 1 
 
-    count = len(page_one.annotations)
-    page_two[NameObject("/Annots")] = TextStringObject("For coverage, when Annots is not an array")
-    page_one.merge_page(page_two)
-    assert len(page_one.annotations) == count + 1
+    page1[NameObject("/Annots")] = TextStringObject("For coverage, when Annots is not an array")
+    assert len(page0.annotations) == 1 
+    assert len(page1.annotations) == 2 
+    page0.merge_page(page1)
+    assert len(page0.annotations) == 2 
+    assert len(page1.annotations) == 2 
 
 
 def test_merge_page_reproducible_with_proc_set():
