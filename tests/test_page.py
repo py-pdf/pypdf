@@ -839,17 +839,13 @@ def test_no_resources():
 
 
 def test_merge_page_with_annotations():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    writer = PdfWriter()
-    writer.add_page(page)
-    writer.add_page(page)
+    pdf_path = RESOURCE_ROOT / "two-different-pages.pdf"
+    writer = PdfWriter(clone_from=pdf_path)
 
-    annotation_1 = Polygon(
+    annot = Polygon(
         vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
     )
-    writer.add_annotation(page_number=0, annotation=annotation_1)
+    writer.add_annotation(page_number=0, annotation=annot)
 
     page_one = writer.pages[0]
     page_two = writer.pages[1]
