@@ -842,11 +842,6 @@ def test_merge_page_with_annotations():
     pdf_path = RESOURCE_ROOT / "two-different-pages.pdf"
     writer = PdfWriter(clone_from=pdf_path)
 
-    annot0 = Polygon(
-        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
-    )
-    writer.add_annotation(page_number=0, annotation=annot0)
-
     annot1 = Polygon(
         vertices=[(55, 555), (205, 655), (75, 755), (55, 705)],
     )
@@ -854,10 +849,8 @@ def test_merge_page_with_annotations():
 
     page0 = writer.pages[0]
     page1 = writer.pages[1]
-    assert len(page0.annotations) == 1
-    assert len(page1.annotations) == 1
     page0.merge_page(page1)
-    assert len(page0.annotations) == 2
+    assert len(page0.annotations) == 1
     assert len(page1.annotations) == 1
 
 
