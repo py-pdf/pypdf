@@ -82,8 +82,8 @@ class CryptAES(CryptBase):
 
         if not strict and len(data) % 16 != 0:
             logger_warning("Adding missing padding.", src=__name__)
-            pad = PKCS7(128).padder()
-            data = pad.update(data) + pad.finalize()
+            padder = PKCS7(128).padder()
+            data = padder.update(data) + padder.finalize()
 
         cipher = Cipher(self.alg, CBC(iv))
         decryptor = cipher.decryptor()
