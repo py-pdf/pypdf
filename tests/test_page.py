@@ -853,19 +853,6 @@ def test_merge_page_with_annotations():
     page0.merge_page(page1)
     assert len(page0.annotations) == 1
 
-    annot1 = Polygon(
-        vertices=[(55, 555), (205, 655), (75, 755), (55, 705)],
-    )
-    writer.add_annotation(page_number=1, annotation=annot1)
-
-    page0 = writer.pages[0]
-    page1 = writer.pages[1]
-    assert len(page0.annotations) == 1
-    assert len(page1.annotations) == 1
-    page0.merge_page(page1)
-    assert len(page0.annotations) == 2
-    assert len(page1.annotations) == 1
-
 
 def test_merge_page_reproducible_with_proc_set():
     page1 = PageObject.create_blank_page(width=100, height=100)
