@@ -608,17 +608,17 @@ class PdfDocCommon:
             )
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
-        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
+        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.RADIO != 0:
             states: list[str] = []
             retval[key][NameObject("/_States_")] = ArrayObject(states)
-            for k in obj.get(FA.Kids, {}):
+            for k in obj.get(FA.KIDS, {}):
                 k = k.get_object()
                 for s in list(k["/AP"]["/N"].keys()):
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
             if (
-                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
+                obj.get(FA.Ff, 0) & FA.FfBits.NO_TOGGLE_OFF != 0
                 and "/Off" in retval[key]["/_States_"]
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
@@ -652,7 +652,7 @@ class PdfDocCommon:
 
         for attr in field_attributes_tuple:
             if attr in (
-                FA.Kids,
+                FA.KIDS,
                 FA.AA,
             ):
                 continue
@@ -668,7 +668,7 @@ class PdfDocCommon:
                     }
                     if field[attr] in types:
                         fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
-                elif attr == FA.Parent:
+                elif attr == FA.PARENT:
                     # Let's just write the name of the parent
                     try:
                         name = field[attr][FA.TM]

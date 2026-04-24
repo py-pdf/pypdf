@@ -198,7 +198,7 @@ class PageAttributes:
 class FileSpecificationDictionaryEntries:
     """Table 3.41 Entries in a file specification dictionary."""
 
-    Type = "/Type"
+    TYPE = "/Type"
     FS = "/FS"  # The name of the file system to be used to interpret this file specification
     F = "/F"  # A file specification string of the form described in §3.10.1
     UF = "/UF"  # A Unicode string of the file as described in §3.10.1
@@ -335,10 +335,10 @@ class GoToActionArguments:
 class AnnotationDictionaryAttributes:
     """Table 8.15 Entries common to all annotation dictionaries."""
 
-    Type = "/Type"
-    Subtype = "/Subtype"
-    Rect = "/Rect"
-    Contents = "/Contents"
+    TYPE = "/Type"
+    SUBTYPE = "/Subtype"
+    RECT = "/Rect"
+    CONTENTS = "/Contents"
     P = "/P"
     NM = "/NM"
     M = "/M"
@@ -346,16 +346,16 @@ class AnnotationDictionaryAttributes:
     AP = "/AP"
     AS = "/AS"
     DA = "/DA"
-    Border = "/Border"
+    BORDER = "/Border"
     C = "/C"
-    StructParent = "/StructParent"
+    STRUCT_PARENT = "/StructParent"
     OC = "/OC"
 
 
 class InteractiveFormDictEntries:
-    Fields = "/Fields"
-    NeedAppearances = "/NeedAppearances"
-    SigFlags = "/SigFlags"
+    FIELDS = "/Fields"
+    NEED_APPEARANCES = "/NeedAppearances"
+    SIG_FLAGS = "/SigFlags"
     CO = "/CO"
     DR = "/DR"
     DA = "/DA"
@@ -372,8 +372,8 @@ class FieldDictionaryAttributes:
     """
 
     FT = "/FT"  # name, required for terminal fields
-    Parent = "/Parent"  # dictionary, required for children
-    Kids = "/Kids"  # array, sometimes required
+    PARENT = "/Parent"  # dictionary, required for children
+    KIDS = "/Kids"  # array, sometimes required
     T = "/T"  # text string, optional
     TU = "/TU"  # text string, optional
     TM = "/TM"  # text string, optional
@@ -393,52 +393,52 @@ class FieldDictionaryAttributes:
         * Choice (Ch) (Table 8.79 PDF 1.7 reference)
         """
 
-        ReadOnly = 1 << 0
+        READ_ONLY = 1 << 0
         """common to Tx/Btn/Ch in Table 8.70"""
-        Required = 1 << 1
+        REQUIRED = 1 << 1
         """common to Tx/Btn/Ch in Table 8.70"""
-        NoExport = 1 << 2
+        NO_EXPORT = 1 << 2
         """common to Tx/Btn/Ch in Table 8.70"""
 
-        Multiline = 1 << 12
+        MULTI_LINE = 1 << 12
         """Tx"""
-        Password = 1 << 13
+        PASSWORD = 1 << 13
         """Tx"""
 
-        NoToggleToOff = 1 << 14
+        NO_TOGGLE_OFF = 1 << 14
         """Btn"""
-        Radio = 1 << 15
+        RADIO = 1 << 15
         """Btn"""
-        Pushbutton = 1 << 16
+        PUSH_BUTTON = 1 << 16
         """Btn"""
 
-        Combo = 1 << 17
+        COMBO = 1 << 17
         """Ch"""
-        Edit = 1 << 18
+        EDIT = 1 << 18
         """Ch"""
-        Sort = 1 << 19
+        SORT = 1 << 19
         """Ch"""
 
-        FileSelect = 1 << 20
+        FILE_SELECT = 1 << 20
         """Tx"""
 
-        MultiSelect = 1 << 21
+        MULTI_SELECT = 1 << 21
         """Tx"""
 
-        DoNotSpellCheck = 1 << 22
+        DO_NOT_SPELL_CHECK = 1 << 22
         """Tx/Ch"""
-        DoNotScroll = 1 << 23
+        DO_NOT_SCROLL = 1 << 23
         """Tx"""
-        Comb = 1 << 24
+        COMB = 1 << 24
         """Tx"""
 
-        RadiosInUnison = 1 << 25
+        RADIO_IN_UNISON = 1 << 25
         """Btn"""
 
-        RichText = 1 << 25
+        RICH_TEXT = 1 << 25
         """Tx"""
 
-        CommitOnSelChange = 1 << 26
+        COMMIT_ON_SEL_CHANGE = 1 << 26
         """Ch"""
 
     @classmethod
@@ -459,12 +459,12 @@ class FieldDictionaryAttributes:
             cls.TM,
             cls.T,
             cls.FT,
-            cls.Parent,
+            cls.PARENT,
             cls.TU,
             cls.Ff,
             cls.V,
             cls.DV,
-            cls.Kids,
+            cls.KIDS,
             cls.AA,
         )
 
@@ -485,7 +485,7 @@ class FieldDictionaryAttributes:
         """
         return {
             cls.FT: "Field Type",
-            cls.Parent: "Parent",
+            cls.PARENT: "Parent",
             cls.T: "Field Name",
             cls.TU: "Alternate Field Name",
             cls.TM: "Mapping Name",
@@ -644,8 +644,8 @@ class CatalogDictionary:
 class OutlineFontFlag(IntFlag):
     """A class used as an enumerable flag for formatting an outline font."""
 
-    italic = 1
-    bold = 2
+    ITALIC = 1
+    BOLD = 2
 
 
 class PageLabelStyle:

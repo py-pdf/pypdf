@@ -485,7 +485,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         """
         # Calculate rectangle dimensions
-        _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
+        _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.RECT])
         rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
 
         # Get default appearance dictionary from annotation
@@ -503,7 +503,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
         if (
                 field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
-                field_flags & FieldDictionaryAttributes.FfBits.Combo == 0
+                field_flags & FieldDictionaryAttributes.FfBits.COMBO == 0
         ):
             text = "\n".join(annotation.get_inherited(FieldDictionaryAttributes.Opt, []))
             selection = field.get("/V", [])
@@ -541,11 +541,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         # Retrieve formatting information
         is_comb = False
         max_length = None
-        if field_flags & FieldDictionaryAttributes.FfBits.Comb:
+        if field_flags & FieldDictionaryAttributes.FfBits.COMB:
             is_comb = True
             max_length = annotation.get("/MaxLen")
         is_multiline = False
-        if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
+        if field_flags & FieldDictionaryAttributes.FfBits.MULTI_LINE:
             is_multiline = True
         alignment = field.get("/Q", TextAlignment.LEFT)
         border_width = 1
