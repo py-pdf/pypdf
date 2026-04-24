@@ -4,6 +4,7 @@ import io
 import re
 import subprocess
 import sys
+import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -22,6 +23,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     format_iso8824_date,
     logger_error,
+    logger_warning2,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -343,6 +345,25 @@ def test_logger_error(caplog):
     logger_error(message, source=__name__, encoding=encoding)
     assert "Advanced encoding {'/key': 'value'} not implemented yet" in caplog.text
 
+
+def test_logger_warning_object(caplog):
+    caplog.set_level(logging.WARNING)
+    class DummyException(Exception):
+        def __init__(self,obj):
+            self.object=obj
+            super().__init__("Something went wrong with {obj!r}")
+    obj={"key":111}
+    exc=DummyException(obj)
+    logger_warning2("%(exception)s\ninitial string:%(object)r",
+        source=__name__,
+        exception=exc,
+        object=exc.object)
+    
+    assert len(caplog.records) ==1
+    record=caplog.records[0]
+    actual_message=record.getMessage()
+    expected = f"{exc}\ninitial string:{repr(obj)}"
+    assert actual_message == expected
 
 def test_rename_kwargs():
     def deprecation_bookmark_nofail(**aliases: str) -> Callable:

@@ -1256,7 +1256,7 @@ class PdfWriter(PdfDocCommon):
         # else: _info_obj = None done in clone_reader_document_root()
 
         try:
-            self._ID = cast(ArrayObject, reader._ID).clone(self)
+            self._ID = cast(ArrayObject, reader._id).clone(self)
         except AttributeError:
             pass
 

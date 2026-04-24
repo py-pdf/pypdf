@@ -15,7 +15,7 @@ from ..generic._base import (
 )
 from ..generic._rectangle import RectangleObject
 from ..generic._utils import hex_to_rgb
-from ._base import NO_FLAGS, AnnotationDictionary
+from ._base import no_flags, AnnotationDictionary
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeAlias
@@ -117,7 +117,7 @@ class Text(MarkupAnnotation):
         rect: Union[RectangleObject, tuple[float, float, float, float]],
         text: str,
         open: bool = False,
-        flags: int = NO_FLAGS,
+        flags: int = no_flags,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)

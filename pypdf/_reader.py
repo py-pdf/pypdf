@@ -278,7 +278,7 @@ class PdfReader(PdfDocCommon):
         return info
 
     @property
-    def _ID(self) -> Optional[ArrayObject]:
+    def _id(self) -> Optional[ArrayObject]:
         """
         Provide access to "/ID". Standardized with PdfWriter.
 

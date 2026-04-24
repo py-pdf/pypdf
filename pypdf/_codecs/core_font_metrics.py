@@ -16,7 +16,7 @@
 
 from pypdf._font import CoreFontMetrics, FontDescriptor
 
-CORE_FONT_METRICS: dict[str, CoreFontMetrics] = {
+core_font_metrics: dict[str, CoreFontMetrics] = {
     # Generated from Courier.afm
     # Copyright (c) 1989, 1990, 1991, 1992, 1993, 1997 Adobe Systems Incorporated.  All Rights
     # Reserved.
@@ -4469,15 +4469,15 @@ CORE_FONT_METRICS: dict[str, CoreFontMetrics] = {
 
 
 # Add aliases per table H.3 on pp. 1109-1110 of the PDF 1.7 reference
-CORE_FONT_METRICS["Arial"] = CORE_FONT_METRICS["Helvetica"]
-CORE_FONT_METRICS["Arial,Italic"] = CORE_FONT_METRICS["Helvetica-Oblique"]
-CORE_FONT_METRICS["Arial,Bold"] = CORE_FONT_METRICS["Helvetica-Bold"]
-CORE_FONT_METRICS["Arial,BoldItalic"] = CORE_FONT_METRICS["Helvetica-BoldOblique"]
-CORE_FONT_METRICS["CourierNew"] = CORE_FONT_METRICS["Courier"]
-CORE_FONT_METRICS["CourierNew,Italic"] = CORE_FONT_METRICS["Courier-Oblique"]
-CORE_FONT_METRICS["CourierNew,Bold"] = CORE_FONT_METRICS["Courier-Bold"]
-CORE_FONT_METRICS["CourierNew,BoldItalic"] = CORE_FONT_METRICS["Courier-BoldOblique"]
-CORE_FONT_METRICS["TimesNewRoman"] = CORE_FONT_METRICS["Times-Roman"]
-CORE_FONT_METRICS["TimesNewRoman,Italic"] = CORE_FONT_METRICS["Times-Italic"]
-CORE_FONT_METRICS["TimesNewRoman,Bold"] = CORE_FONT_METRICS["Times-Bold"]
-CORE_FONT_METRICS["TimesNewRoman,BoldItalic"] = CORE_FONT_METRICS["Times-BoldItalic"]
+core_font_metrics["Arial"] = core_font_metrics["Helvetica"]
+core_font_metrics["Arial,Italic"] = core_font_metrics["Helvetica-Oblique"]
+core_font_metrics["Arial,Bold"] = core_font_metrics["Helvetica-Bold"]
+core_font_metrics["Arial,BoldItalic"] = core_font_metrics["Helvetica-BoldOblique"]
+core_font_metrics["CourierNew"] = core_font_metrics["Courier"]
+core_font_metrics["CourierNew,Italic"] = core_font_metrics["Courier-Oblique"]
+core_font_metrics["CourierNew,Bold"] = core_font_metrics["Courier-Bold"]
+core_font_metrics["CourierNew,BoldItalic"] = core_font_metrics["Courier-BoldOblique"]
+core_font_metrics["TimesNewRoman"] = core_font_metrics["Times-Roman"]
+core_font_metrics["TimesNewRoman,Italic"] = core_font_metrics["Times-Italic"]
+core_font_metrics["TimesNewRoman,Bold"] = core_font_metrics["Times-Bold"]
+core_font_metrics["TimesNewRoman,BoldItalic"] = core_font_metrics["Times-BoldItalic"]

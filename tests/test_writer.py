@@ -2149,7 +2149,7 @@ def test_viewerpreferences():
 
     assert writer.viewer_preferences.enforce == []
     assert "/Enforce" not in writer.viewer_preferences
-    writer.viewer_preferences.enforce += writer.viewer_preferences.PRINT_SCALING
+    writer.viewer_preferences.enforce += writer.viewer_preferences.print_scaling_property
     assert writer.viewer_preferences["/Enforce"] == ["/PrintScaling"]
     writer.viewer_preferences.enforce = None
     assert "/Enforce" not in writer.viewer_preferences

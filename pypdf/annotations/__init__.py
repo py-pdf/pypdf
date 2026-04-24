@@ -11,7 +11,7 @@ does not implement a feature, users can easily extend the given functionality.
 """
 
 
-from ._base import NO_FLAGS, AnnotationDictionary
+from ._base import no_flags, AnnotationDictionary
 from ._markup_annotations import (
     Ellipse,
     FreeText,
@@ -26,7 +26,7 @@ from ._markup_annotations import (
 from ._non_markup_annotations import Link, Popup
 
 __all__ = [
-    "NO_FLAGS",
+    "no_flags",
     "AnnotationDictionary",
     "Ellipse",
     "FreeText",
