@@ -229,7 +229,7 @@ def test_image_extraction(src, page_index, image_key, expected):
 
 def test_get_inline_image_without_xobject_resources():
     page = PageObject(None, None)
-    inline_image = object()
+    inline_image = type("Mock", (), {"is_inline": True, "is_displayed": True})()
 
     with mock.patch.object(page, "_get_inline_images", return_value={"~0~": inline_image}):
         assert page._get_image("~0~") is inline_image
@@ -658,3 +658,42 @@ def test_get_ids_image__resources_is_none():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[2]
     assert list(page.images.items()) == []
+
+
+@pytest.mark.samples
+def test_is_xobject_image_displayed():
+    """Test XObject image display detection with expected results."""
+    path = SAMPLE_ROOT / "027-image-references-deduplication/wrong-references.pdf"
+    reader = PdfReader(path)
+
+    expected_results = [
+        # Page 1: /Im20 not displayed, /Im8 displayed
+        (0, "/Im20", False),
+        (0, "/Im8", True),
+        # Page 2: Neither displayed
+        (1, "/Im20", False),
+        (1, "/Im8", False),
+        # Page 3: /Im20 displayed, /Im8 not displayed
+        (2, "/Im20", True),
+        (2, "/Im8", False),
+    ]
+
+    for page_num, image_id, expected in expected_results:
+        img = reader.pages[page_num].images[image_id]
+        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
+
+@pytest.mark.samples
+def test_is_inline_image_displayed():
+    """This test ensures that displayed inline images are detected by `ImageFile.is_displayed`"""
+    path = SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf"
+    reader = PdfReader(path)
+
+    # Page 1:
+    expected_results = [
+        (0, "~0~", True),
+    ]
+
+    for page_num, image_id, expected in expected_results:
+        page = reader.pages[page_num]
+        img = page.images[image_id]
+        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"

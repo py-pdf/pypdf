@@ -351,6 +351,18 @@ class ImageFile:
     Reference to the object storing the stream.
     """
 
+    is_inline: bool = False
+    """
+    True if this is an inline image (~0~, ~1~, etc.).
+    """
+
+    is_displayed: bool = False
+    """
+    True if this image is displayed in the page content stream.
+    Some PDFs duplicate image references over all the pages,
+    so this is needed to disambiguate.
+    """
+
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the image with a new PIL image.
@@ -413,6 +425,49 @@ class ImageFile:
 
     def __repr__(self) -> str:
         return self.__str__()[:-1] + f", hash: {hash(self.data)})"
+
+    def _check_displayed(self, page: "PageObject") -> None:
+        """
+        Check if this image is displayed in the page content stream.
+
+        Args:
+            page: The page to check.
+
+        Sets:
+            is_displayed: True if the image is displayed, False otherwise.
+        """
+        # Inline images are always displayed
+        if self.is_inline:
+            self.is_displayed = True
+            return
+
+        # Check XObject images in content stream
+        from .generic._data_structures import ContentStream  # noqa: PLC0415
+
+        try:
+            if not self.indirect_reference:
+                self.is_displayed = False
+                return
+
+            raw_contents = page.get(NameObject("/Contents"), None)
+
+            stream = ContentStream(raw_contents, self.indirect_reference.pdf)
+
+            for operands, operator in stream.operations:
+                # First operand is the XObject name (may have leading /)
+                if operator == b"Do" and operands:
+                    xobj_name = str(operands[0])
+                    # Compare base names (without extension like .jp2)
+                    img_base = self.name.split(".")[0].lstrip("/")
+                    xobj_base = xobj_name.lstrip("/")
+
+                    if img_base == xobj_base:
+                        self.is_displayed = True
+                        return
+        except (KeyError, IndexError, AttributeError):
+            pass
+
+        self.is_displayed = False
 
 
 class VirtualListImages(Sequence[ImageFile]):
@@ -653,18 +708,24 @@ class PageObject(DictionaryObject):
                     self.inline_images = self._get_inline_images()
                 if self.inline_images is None:
                     raise KeyError("No inline image can be found")
-                return self.inline_images[id]
+                img = self.inline_images[id]
+                img.is_inline = True
+                img.is_displayed = True
+                return img
 
             assert xobjs is not None
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
-            return ImageFile(
+            img = ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
+            img.is_inline = False
+            img._check_displayed(self)
+            return img
         # in a subobject
         assert xobjs is not None
         ids = id[1:]
