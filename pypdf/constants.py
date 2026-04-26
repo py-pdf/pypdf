@@ -198,7 +198,7 @@ class PageAttributes:
 class FileSpecificationDictionaryEntries:
     """Table 3.41 Entries in a file specification dictionary."""
 
-    Type = "/Type"
+    TYPE = "/Type"
     FS = "/FS"  # The name of the file system to be used to interpret this file specification
     F = "/F"  # A file specification string of the form described in §3.10.1
     UF = "/UF"  # A Unicode string of the file as described in §3.10.1
@@ -335,10 +335,10 @@ class GoToActionArguments:
 class AnnotationDictionaryAttributes:
     """Table 8.15 Entries common to all annotation dictionaries."""
 
-    Type = "/Type"
-    Subtype = "/Subtype"
-    Rect = "/Rect"
-    Contents = "/Contents"
+    TYPE = "/Type"
+    SUBTYPE = "/Subtype"
+    RECT = "/Rect"
+    CONTENTS = "/Contents"
     P = "/P"
     NM = "/NM"
     M = "/M"
@@ -346,16 +346,16 @@ class AnnotationDictionaryAttributes:
     AP = "/AP"
     AS = "/AS"
     DA = "/DA"
-    Border = "/Border"
+    BORDER = "/Border"
     C = "/C"
-    StructParent = "/StructParent"
+    STRUCT_PARENT = "/StructParent"
     OC = "/OC"
 
 
 class InteractiveFormDictEntries:
-    Fields = "/Fields"
-    NeedAppearances = "/NeedAppearances"
-    SigFlags = "/SigFlags"
+    FIELDS = "/Fields"
+    NEED_APPEARANCES = "/NeedAppearances"
+    SIG_FLAGS = "/SigFlags"
     CO = "/CO"
     DR = "/DR"
     DA = "/DA"
@@ -372,8 +372,8 @@ class FieldDictionaryAttributes:
     """
 
     FT = "/FT"  # name, required for terminal fields
-    Parent = "/Parent"  # dictionary, required for children
-    Kids = "/Kids"  # array, sometimes required
+    PARENT = "/Parent"  # dictionary, required for children
+    KIDS = "/Kids"  # array, sometimes required
     T = "/T"  # text string, optional
     TU = "/TU"  # text string, optional
     TM = "/TM"  # text string, optional
@@ -459,12 +459,12 @@ class FieldDictionaryAttributes:
             cls.TM,
             cls.T,
             cls.FT,
-            cls.Parent,
+            cls.PARENT,
             cls.TU,
             cls.Ff,
             cls.V,
             cls.DV,
-            cls.Kids,
+            cls.KIDS,
             cls.AA,
         )
 
@@ -485,7 +485,7 @@ class FieldDictionaryAttributes:
         """
         return {
             cls.FT: "Field Type",
-            cls.Parent: "Parent",
+            cls.PARENT: "Parent",
             cls.T: "Field Name",
             cls.TU: "Alternate Field Name",
             cls.TM: "Mapping Name",
@@ -498,7 +498,7 @@ class FieldDictionaryAttributes:
 class CheckboxRadioButtonAttributes:
     """Table 8.76 Field flags common to all field types."""
 
-    Opt = "/Opt"  # Options, Optional
+    OPT = "/Opt"  # Options, Optional
 
     @classmethod
     def attributes(cls) -> tuple[str, ...]:
@@ -514,7 +514,7 @@ class CheckboxRadioButtonAttributes:
             A tuple containing all the attribute constants.
 
         """
-        return (cls.Opt,)
+        return (cls.OPT,)
 
     @classmethod
     def attributes_dict(cls) -> dict[str, str]:
@@ -532,7 +532,7 @@ class CheckboxRadioButtonAttributes:
 
         """
         return {
-            cls.Opt: "Options",
+            cls.OPT: "Options",
         }
 
 
@@ -644,8 +644,8 @@ class CatalogDictionary:
 class OutlineFontFlag(IntFlag):
     """A class used as an enumerable flag for formatting an outline font."""
 
-    italic = 1
-    bold = 2
+    ITALIC = 1
+    BOLD = 2
 
 
 class PageLabelStyle:

@@ -485,7 +485,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         """
         # Calculate rectangle dimensions
-        _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
+        _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.RECT])
         rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
 
         # Get default appearance dictionary from annotation
