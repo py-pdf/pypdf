@@ -39,12 +39,14 @@ Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
 
 [project.optional-dependencies]
-crypto = ["cryptography"]
+# This is due to the backend parameter being required back then:
+# https://cryptography.io/en/latest/changelog/#v3-1
+crypto = ["cryptography>3.0"]
 cryptodome = ["PyCryptodome"]
 fonts = ["fonttools"]
 image = ["Pillow>=8.0.0"]
 full = [
-    "cryptography",
+    "cryptography>3.0",
     "fonttools",
     "Pillow>=8.0.0"
 ]
