@@ -971,7 +971,7 @@ def test_form_topname_with_and_without_acroform(caplog):
         NameObject("/Parent")
     ] = DictionaryObject()
     r.add_form_topname("top")
-    assert "have a non-expected parent" in caplog.text
+    assert "has a non-expected parent" in caplog.text
 
 
 @pytest.mark.enable_socket

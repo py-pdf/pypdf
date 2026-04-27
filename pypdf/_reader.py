@@ -631,8 +631,8 @@ class PdfReader(PdfDocCommon):
             logger_warning(
                 "Superfluous whitespace found in object header %(idnum)d %(generation)d",
                 source=__name__,
-                idnum=idnum,
-                generation=generation,
+                idnum=int(idnum),
+                generation=int(generation),
             )
         return int(idnum), int(generation)
 
