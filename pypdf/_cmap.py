@@ -41,7 +41,10 @@ _predefined_cmap: dict[str, str] = {
 def get_encoding(
     ft: DictionaryObject
 ) -> tuple[Union[str, dict[int, str]], dict[Any, Any]]:
+    # First get the encoding based on the "/Encoding" entry in the resource dict, with differences applied.
+    # Results in either string with an encoding name, or in a 1-byte encoding dict with differences.
     encoding = _parse_encoding(ft)
+    # Next, either parse a "/ToUnicode" object or parse encoding embedded in Type1 font file.
     map_dict, int_entry = _parse_to_unicode(ft)
 
     # Apply rule from PDF ref 1.7 §5.9.1, 1st bullet:
@@ -60,18 +63,21 @@ def _parse_encoding(
     ft: DictionaryObject
 ) -> Union[str, dict[int, str]]:
     encoding: Union[str, list[str], dict[int, str]] = []
+    # We first check the "/Encoding" entry in the font resource
     if "/Encoding" not in ft:
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
             encoding = dict(
                 zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
             )
         else:
+            # The fallback encoding is "charmap".
             encoding = "charmap"
         return encoding
     enc: Union[str, DictionaryObject, NullObject] = cast(
         Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
     )
     if isinstance(enc, str):
+        # It's a known, predefined encoding, such as WinAnsi, PdfDoc or MacRoman. For anything more complex: utf-16-be.
         try:
             # already done : enc = NameObject.unnumber(enc.encode()).decode()
             # for #xx decoding
@@ -87,6 +93,7 @@ def _parse_encoding(
             logger_error("Advanced encoding %(encoding)s not implemented yet", source=__name__, encoding=enc)
             encoding = enc
     elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
+        # If it's a dict and we know the base encoding, first copy the base encoding/
         try:
             encoding = charset_encoding[cast(str, enc["/BaseEncoding"])].copy()
         except Exception:
@@ -94,10 +101,13 @@ def _parse_encoding(
                 "Advanced encoding %(encoding)s not implemented yet",
                 source=__name__, encoding=encoding
             )
+            # If the base encoding is unknown, fall back to standard encoding
             encoding = charset_encoding["/StandardEncoding"].copy()
     else:
+        # Fallback
         encoding = charset_encoding["/StandardEncoding"].copy()
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
+        # For encoding dicts, we process and apply differences
         x: int = 0
         o: Union[int, str]
         for o in cast(DictionaryObject, enc["/Differences"]):
@@ -111,6 +121,7 @@ def _parse_encoding(
                     encoding[x] = o  # type: ignore
                 x += 1
     if isinstance(encoding, list):
+        # The named encodings are lists, they need to be converted to dict
         encoding = dict(zip(range(256), encoding))
     return encoding
 
@@ -157,6 +168,7 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
         # the full range 0000-FFFF will be processed
         cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
     if isinstance(cm, str):
+        # Make sure that we deal with binary data
         cm = cm.encode()
     # we need to prepare cm before due to missing return line in pdf printed
     # to pdf from word
@@ -227,6 +239,25 @@ def _check_mapping_size(size: int) -> None:
         raise LimitReachedError(f"Maximum /ToUnicode size limit reached: {size} > {MAPPING_DICTIONARY_SIZE_LIMIT}.")
 
 
+# In both parse_bfrange and in parse_bfchar, we parse binary data of a /ToUnicode stream object.
+# We read that data (line by line in the case of parse_bfchar, or by range in parse_bfrange) to map character codes
+# (in the case of simple fonts, that is, Type1 or TrueyType / glyph IDs (that is, in the case of Type0 fonts) to
+# unicode code points. While the methods differ somewhat, their treatment of the binary data to produce the keys
+# and values of the map_dict (later: character_map) is the same across the methods, and easiest understood in the
+# parse_bfchar method:
+#        map_to = unhexlify(lst[1]).decode(
+#            "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
+#        )
+#        map_dict[
+#            unhexlify(lst[0]).decode(
+#                "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
+#            )
+#        ] = map_to
+# We receive hexadecimal binary data. We turn this into bytes. We decode the bytes to string, depending on the
+# length of the data. If < 4, it means we have less than two bytes per element (simple font, and will decode using
+# charmap. Otherwise (the case of CID fonts), decode as unicode. The result is strings and/or ints, depending on the
+# font type. The decoded result can be user-read as characters: The keys are the document-internal representation,
+# the values are the user-readable result.
 def parse_bfrange(
     line: bytes,
     map_dict: dict[Any, Any],

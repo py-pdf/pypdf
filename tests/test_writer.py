@@ -19,6 +19,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
+from pypdf._font import HAS_FONTTOOLS
 from pypdf.annotations import Link
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -1812,6 +1813,31 @@ def test_update_form_fields2(caplog):
         "test2.p3 YY": "21",
     }
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_update_form_fields3(caplog):
+    if HAS_FONTTOOLS:
+        url = "https://github.com/user-attachments/files/21073581/CERERE.INMATRICULARE.form.pdf"
+        name = "iss3361.pdf"
+        writer = PdfWriter()
+        output = BytesIO()
+        writer.append(BytesIO(get_data_from_url(url, name=name)))
+        data = {
+            "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+            "localitatea": "شهرزاد",
+            "strada": "Căpitan Nicolae Licăreț",
+            "adresa_judet": "Конференция",
+        }
+        writer.update_page_form_field_values(writer.pages[0], data, auto_regenerate=False, flatten=True)
+        writer.write(output)
+        output.seek(0)
+        reader = PdfReader(output)
+        extracted_text = reader.pages[0].extract_text()
+        for expected_value in data.values():
+            if expected_value != "شهرزاد":
+                assert expected_value in extracted_text
+        assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
 
 @pytest.mark.enable_socket
