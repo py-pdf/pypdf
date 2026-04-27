@@ -227,7 +227,7 @@ def _handle_flate(
             }[_get_image_mode(base, 0, "")[0]]
         except KeyError:  # pragma: no cover
             logger_warning(
-                "Base %(base)s not coded please share the pdf file with pypdf dev team",
+                "Base %(base)s not coded. Please share PDF with pypdf dev team",
                 source=__name__,
                 base=base,
             )
@@ -240,7 +240,7 @@ def _handle_flate(
                 if actual_count != expected_count:
                     if actual_count < expected_count:
                         logger_warning(
-                            "Not enough lookup values: Expected %(expected_count)s, got %(actual_count)s.",
+                            "Not enough lookup values: Expected %(expected_count)d, got %(actual_count)d.",
                             source=__name__,
                             expected_count=expected_count,
                             actual_count=actual_count,
@@ -248,7 +248,7 @@ def _handle_flate(
                         lookup += bytes([0] * (expected_count - actual_count))
                     elif not check_if_whitespace_only(lookup[expected_count:]):
                         logger_warning(
-                            "Too many lookup values: Expected %(expected_count)s, got %(actual_count)s.",
+                            "Too many lookup values: Expected %(expected_count)d, got %(actual_count)d.",
                             source=__name__,
                             expected_count=expected_count,
                             actual_count=actual_count,

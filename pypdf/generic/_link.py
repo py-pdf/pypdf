@@ -110,10 +110,10 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
 
     if len(new_links) != len(old_links):
         logger_warning(
-            "Annotation sizes differ: %(old_links)s vs. %(new_links)s",
+            "Annotation sizes differ: %(old_count)d vs. %(new_count)d",
             source=__name__,
-            old_links=old_links,
-            new_links=new_links,
+            old_count=len(old_links),
+            new_count=len(new_links),
         )
 
     return list(zip(new_links, old_links))
