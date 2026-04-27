@@ -315,7 +315,7 @@ for page in reader.pages:
     assert result.stdout == b""
     assert (
         result.stderr.replace(b"\r", b"")
-        == b"Superfluous whitespace found in object header b'4' b'0'\n"
+        == b"Superfluous whitespace found in object header 4 0\n"
     )
 
 
