@@ -1191,16 +1191,17 @@ class PdfWriter(PdfDocCommon):
         self._root_object = reader.root_object.clone(self)
         self._pages = self._root_object.raw_get("/Pages")
 
-        if len(self._objects) > cast(int, reader.trailer["/Size"]):
+        trailer_size = cast(int, reader.trailer["/Size"])
+        if len(self._objects) > trailer_size:
             if self.strict:
                 raise PdfReadError(
-                    f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}"
+                    f"Object count {len(self._objects)} exceeds defined trailer size {trailer_size}"
                 )
             logger_warning(
-                "Object count %(object_count)s exceeds defined trailer size %(trailer_size)s",
+                "Object count %(object_count)d exceeds defined trailer size %(trailer_size)d",
                 source=__name__,
                 object_count=len(self._objects),
-                trailer_size=reader.trailer["/Size"],
+                trailer_size=trailer_size,
             )
 
         # must be done here before rewriting

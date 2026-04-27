@@ -591,7 +591,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 except PdfReadError as exc:
                     if pdf is not None and pdf.strict:
                         raise
-                    logger_warning(exc.__repr__(), source=__name__)
+                    logger_warning("%(exception)r", source=__name__, exception=exc)
                     continue
                 tok = read_non_whitespace(stream)
                 stream.seek(-1, 1)
@@ -601,7 +601,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             except Exception as exc:
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(exc.__repr__())
-                logger_warning(exc.__repr__(), source=__name__)
+                logger_warning("%(exception)r", source=__name__, exception=exc)
                 retval = DictionaryObject()
                 retval.update(data)
                 return retval  # return partial data
@@ -614,9 +614,10 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     "Multiple definitions in dictionary at byte "
                     "%(position)s for key %(key)s"
                 )
+                values = {"position": hex(stream.tell()), "key": key}
                 if pdf is not None and pdf.strict:
-                    raise PdfReadError(msg % {"position": hex(stream.tell()), "key": key})
-                logger_warning(msg, source=__name__, position=hex(stream.tell()), key=key)
+                    raise PdfReadError(msg % values)
+                logger_warning(msg, source=__name__, **values)
 
         pos = stream.tell()
         s = read_non_whitespace(stream)
@@ -635,7 +636,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 if pdf is not None and pdf.strict:
                     raise PdfStreamError("Stream length not defined")
                 logger_warning(
-                    "Stream length not defined @pos=%(position)s",
+                    "Stream length not defined @pos=%(position)d",
                     source=__name__,
                     position=stream.tell(),
                 )

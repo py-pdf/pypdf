@@ -692,7 +692,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
                 text_string_object = str.__new__(cls, original_bytes.decode("utf-16"))
             except UnicodeDecodeError as exception:
                 logger_warning(
-                    "%(exception)s\ninitial string:%(initial_string)r",
+                    "%(exception)s; initial string: %(initial_string)r",
                     source=__name__,
                     exception=exception,
                     initial_string=exception.object,

@@ -219,9 +219,12 @@ class TextStreamAppearance(BaseStreamAppearance):
                 lines = [(text_width_unscaled * font_size, text)]
         elif is_comb:
             if max_length and len(text) > max_length:
-                logger_warning (
-                    f"Length of text {text} exceeds maximum length ({max_length}) of field, input truncated.",
-                    source=__name__
+                logger_warning(
+                    "Length of text %(text)s exceeds maximum length (%(max_length)d) "
+                    "of field, input truncated.",
+                    source=__name__,
+                    text=text,
+                    max_length=max_length,
                 )
             # We act as if each character is one line, because we draw it separately later on
             lines = [(
