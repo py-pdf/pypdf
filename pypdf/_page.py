@@ -2221,26 +2221,21 @@ class PageObject(DictionaryObject):
 
         visited = set()
         while True:
-            if isinstance(current, ArrayObject):
+            if isinstance(current, (ArrayObject, DictionaryObject)):
                 _id = id(current)
                 if _id in visited:
                     logger_warning(f"Detected cycle in the action tree for {current}", __name__)
                     break
                 visited.add(_id)
-                current = current[-1]
-            elif isinstance(current, DictionaryObject):
-                _id = id(current)
-                if _id in visited:
-                    logger_warning(f"Detected cycle in the action tree for {current}", __name__)
-                    break
-                visited.add(_id)
-                if is_null_or_none(current.get(NameObject("/Next"), None)):
-                    break
-                current = current.get(NameObject("/Next"))
             else:
                 raise TypeError(
                     "Must be either a single action dictionary or an array of action dictionaries"
                 )
+            if isinstance(current, ArrayObject):
+                current = current[-1]
+            elif isinstance(current, DictionaryObject):
+                if is_null_or_none(current.get(NameObject("/Next"), None)):
+                    break
 
         current[NameObject("/Next")] = action
         additional_actions.update({trigger_name: head})
