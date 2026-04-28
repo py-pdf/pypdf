@@ -450,7 +450,10 @@ def logger_error(message: str, *, source: str, **values: Any) -> None:
     See the docs on when to use which:
     https://pypdf.readthedocs.io/en/latest/user/suppress-warnings.html
     """
-    logging.getLogger(source).error(message, values)
+    if values:
+        logging.getLogger(source).error(message, values)
+    else:
+        logging.getLogger(source).error(message)
 
 
 def logger_warning(message: str, *, source: str, **values: Any) -> None:

@@ -201,7 +201,7 @@ def test_layout_mode_indirect_sequence_font_widths(caplog):
     name = "2788_example_malformed.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text(extraction_mode="layout")
-    assert "Invalid font width definition" in caplog.text
+    assert any("Invalid font width definition" in message for message in caplog.messages)
 
 
 def dummy_visitor_text(text, ctm, tm, fd, fs):
