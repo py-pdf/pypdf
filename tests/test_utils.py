@@ -344,6 +344,10 @@ def test_logger_error(caplog):
     logger_error(message, source=__name__, encoding=encoding)
     assert "Advanced encoding {'/key': 'value'} not implemented yet" in caplog.text
 
+    caplog.clear()
+    logger_error("No fields to update on this page", source=__name__)
+    assert "No fields to update on this page" in caplog.text
+
 
 def test_logger_warning(caplog):
     line = b"beginbfrange"
