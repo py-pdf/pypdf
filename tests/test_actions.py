@@ -23,19 +23,19 @@ def test_page_add_action(pdf_file_writer, caplog):
         ValueError,
         match = "The trigger must be 'open' or 'close'",
     ):
-        page.add_action("xyzzy", JavaScript('app.alert("This is page " + this.pageNum);'))
+        page.add_action("xyzzy", JavaScript('app.alert("This is page " + this.pageNum);'))  # type: ignore
 
     with pytest.raises(
         ValueError,
         match = "Currently the only action type supported is JavaScript"
     ):
-        page.add_action("open", "xyzzy")
+        page.add_action("open", "xyzzy")  # type: ignore
 
     with pytest.raises(
             ValueError,
             match = "Currently the only action type supported is JavaScript"
     ):
-        page.add_action("close", "xyzzy")
+        page.add_action("close", "xyzzy")  # type: ignore
 
     # Add an open action without a pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -230,15 +230,16 @@ def test_page_add_action(pdf_file_writer, caplog):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
-    # Add two identical open actions without a pre-existing action dictionary
+    # Add identical open actions to create a cycle
     action = JavaScript("app.alert('Page opened');")
+    page.add_action("open", action)
     page.add_action("open", action)
     page.add_action("open", action)
     assert caplog.messages[0].startswith("Detected cycle in the action tree")
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
-    # Add an open action when an additional-actions key exists and its value is an array
+    # Add an open action when an additional-actions key exists and its tree contains an array
     page[NameObject("/AA")] = DictionaryObject()
     # The trigger events take dictionary values, not arrays, so first add an action on which to attach the array
     page.add_action("open", JavaScript("app.alert('Action to attach an array of actions');"))
@@ -267,7 +268,7 @@ def test_page_add_action(pdf_file_writer, caplog):
         }
     }
     assert page[NameObject("/AA")] == expected
-    page.add_action("open", JavaScript("app.alert('Test of add_action when array of actions is present');"))
+    page.add_action("open", JavaScript("app.alert('Test when an array of actions is present');"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -284,7 +285,7 @@ def test_page_add_action(pdf_file_writer, caplog):
                         "/Type": "/Action",
                         "/Next": NullObject(),
                         "/S": "/JavaScript",
-                        "/JS": "app.alert('Test of add_action when array of actions is present');"
+                        "/JS": "app.alert('Test when an array of actions is present');"
                     },
                     "/S": "/JavaScript",
                     "/JS": "app.alert('Array of actions element 2';)"
@@ -306,7 +307,7 @@ def test_page_delete_action(pdf_file_writer):
         ValueError,
         match = "The trigger must be 'open' or 'close'",
     ):
-        page.delete_action("xyzzy")
+        page.delete_action("xyzzy")  # type: ignore
 
     with pytest.raises(
         ValueError,

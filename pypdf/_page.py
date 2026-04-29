@@ -2186,7 +2186,6 @@ class PageObject(DictionaryObject):
         if not isinstance(self[NameObject("/AA")], DictionaryObject):
             self[NameObject("/AA")] = DictionaryObject()
 
-        # This cast is confusing, it is not needed?
         additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
 
         if trigger_name not in additional_actions or is_null_or_none(additional_actions[trigger_name]):
@@ -2221,21 +2220,31 @@ class PageObject(DictionaryObject):
 
         visited = set()
         while True:
-            if isinstance(current, (ArrayObject, DictionaryObject)):
-                _id = id(current)
-                if _id in visited:
-                    logger_warning(f"Detected cycle in the action tree for {current}", __name__)
-                    break
-                visited.add(_id)
-            else:
+            next_ = current[NameObject("/Next")]
+
+            if is_null_or_none(next_):
+                break
+
+            if not isinstance(next_, (ArrayObject, DictionaryObject)):
                 raise TypeError(
                     "Must be either a single action dictionary or an array of action dictionaries"
                 )
-            if isinstance(current, ArrayObject):
-                current = current[-1]
-            elif isinstance(current, DictionaryObject):
-                if is_null_or_none(current.get(NameObject("/Next"), None)):
-                    break
+
+            id_ = id(next_)
+            if id_ in visited:
+                logger_warning(f"Detected cycle in the action tree for {current}", __name__)
+                break
+            visited.add(id_)
+
+            if isinstance(next_, ArrayObject):
+                current = next_[-1]
+            elif isinstance(next_, DictionaryObject):
+                current = next_
+            elif isinstance(next_, (NullObject, None)):
+                break
+
+        if not is_null_or_none(current[NameObject("/Next")]) and id(current[NameObject("/Next")]) in visited:
+                logger_warning(f"Detected cycle in the action tree for {current}", __name__)
 
         current[NameObject("/Next")] = action
         additional_actions.update({trigger_name: head})
