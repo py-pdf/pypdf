@@ -2240,8 +2240,6 @@ class PageObject(DictionaryObject):
                 current = next_[-1]
             elif isinstance(next_, DictionaryObject):
                 current = next_
-            elif isinstance(next_, (NullObject, None)):
-                break
 
         if not is_null_or_none(current[NameObject("/Next")]) and id(current[NameObject("/Next")]) in visited:
                 logger_warning(f"Detected cycle in the action tree for {current}", __name__)
