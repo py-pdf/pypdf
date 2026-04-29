@@ -1,14 +1,24 @@
 """Action types"""
 from abc import ABC
 from typing import (
-    Literal, cast,
-    # cast, Self,
+    Literal,
+    TYPE_CHECKING,
+    cast,
 )
 
+from ..generic import (
+    ArrayObject,
+    DictionaryObject,
+    NameObject,
+    NullObject,
+    TextStringObject,
+    is_null_or_none,
+)
 from .._utils import logger_warning
-import pypdf
-from ..generic import ArrayObject, DictionaryObject
-from ..generic._base import NameObject, NullObject, TextStringObject, is_null_or_none
+
+
+if TYPE_CHECKING:
+    from .._page import PageObject
 
 
 class Action(DictionaryObject, ABC):
@@ -22,7 +32,7 @@ class Action(DictionaryObject, ABC):
         self[NameObject("/Next")] = NullObject()  # Optional
 
     @classmethod
-    def _create_new(cls, page: pypdf.PageObject, trigger: Literal["open", "close"], action: Action) -> None:
+    def _create_new(cls, page: PageObject, trigger: Literal["open", "close"], action: Action) -> None:
         """
         """
         if trigger not in {"open", "close"}:
