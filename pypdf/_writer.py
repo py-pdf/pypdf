@@ -63,6 +63,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
+    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
 )
@@ -83,7 +84,7 @@ from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
-from .errors import PdfReadError, PyPdfError
+from .errors import LimitReachedError, PdfReadError, PyPdfError
 from .generic import (
     PAGE_FIT,
     ArrayObject,
@@ -177,6 +178,9 @@ class PdfWriter(PdfDocCommon):
         incremental: bool = False,
         full: bool = False,
         strict: bool = False,
+        *,
+        incremental_clone_object_count_limit: Optional[int] = 500_000,
+        incremental_clone_object_id_limit: Optional[int] = 1_000_000,
     ) -> None:
         self.strict = strict
         """
@@ -225,6 +229,16 @@ class PdfWriter(PdfDocCommon):
         "Tracks links in pages added to the writer for resolving later."
         self._merged_in_pages: dict[Optional[IndirectObject], Optional[IndirectObject]] = {}
         "Tracks pages added to the writer and what page they turned into."
+
+        # Security parameters.
+        self._incremental_clone_object_count_limit = (
+            incremental_clone_object_count_limit
+            if isinstance(incremental_clone_object_count_limit, int)
+            else sys.maxsize
+        )
+        self._incremental_clone_object_id_limit = (
+            incremental_clone_object_id_limit if isinstance(incremental_clone_object_id_limit, int) else sys.maxsize
+        )
 
         if self.incremental:
             if isinstance(fileobj, (str, Path)):
@@ -463,7 +477,8 @@ class PdfWriter(PdfDocCommon):
             raise ValueError("PDF must be self")
         else:
             obj = self._objects[indirect_reference.idnum - 1]
-        assert obj is not None, "mypy"
+        if obj is None:
+            raise PdfReadError(f"Object {indirect_reference!r} not found!")
         return obj
 
     def _replace_object(
@@ -699,10 +714,8 @@ class PdfWriter(PdfDocCommon):
         If no page size is specified for a dimension, use the size of the last page.
 
         Args:
-            width: The width of the new page expressed in default user
-                space units.
-            height: The height of the new page expressed in default
-                user space units.
+            width: The width of the new page in default user space units.
+            height: The height of the new page in default user space units.
             index: Position to add the page.
 
         Returns:
@@ -711,12 +724,20 @@ class PdfWriter(PdfDocCommon):
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
                 and previous page does not exist.
-
+            IndexError: Index is outside of [-self.get_num_pages(), self.get_num_pages()]
         """
-        if width is None or (height is None and index < self.get_num_pages()):
-            oldpage = self.pages[index]
-            width = oldpage.mediabox.width
-            height = oldpage.mediabox.height
+        num_pages = self.get_num_pages()
+        if abs(index) <= num_pages:
+            # Use the chosen index, but do not exceed the available pages
+            fixed_index = min(index, num_pages - 1)
+            mediabox = self.pages[fixed_index].mediabox
+            if width is None or width <= 0:
+                width = mediabox.width
+            if height is None or height <= 0:
+                height = mediabox.height
+        else:
+            raise IndexError(f"Index should be in range [-{num_pages}, {num_pages}]")
+
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page
@@ -1121,6 +1142,28 @@ class PdfWriter(PdfDocCommon):
                 lst.append(annotation)
         return lst
 
+    def _collect_incremental_clone_object_ids(self, reader: PdfReader) -> list[int]:
+        object_ids: set[int] = set()
+        for xref_entry in reader.xref.values():
+            object_ids.update(filter(None, xref_entry))
+        object_ids.update(filter(None, reader.xref_objStm))
+
+        object_count = len(object_ids)
+        if object_count > self._incremental_clone_object_count_limit:
+            raise LimitReachedError(
+                f"Incremental clone object count {object_count} exceeds "
+                f"maximum allowed count {self._incremental_clone_object_count_limit}."
+            )
+
+        max_object_id = max(object_ids, default=0)
+        if max_object_id > self._incremental_clone_object_id_limit:
+            raise LimitReachedError(
+                f"Incremental clone object ID {max_object_id} exceeds "
+                f"maximum allowed ID {self._incremental_clone_object_id_limit}."
+            )
+
+        return sorted(object_ids)
+
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
         Copy the reader document root to the writer and all sub-elements,
@@ -1133,11 +1176,12 @@ class PdfWriter(PdfDocCommon):
         """
         self._info_obj = None
         if self.incremental:
-            self._objects = [None] * (cast(int, reader.trailer["/Size"]) - 1)
-            for i in range(len(self._objects)):
-                o = reader.get_object(i + 1)
-                if o is not None:
-                    self._objects[i] = o.replicate(self)
+            object_ids = self._collect_incremental_clone_object_ids(reader)
+            self._objects = [None] * (object_ids[-1] if object_ids else 0)
+            for object_id in object_ids:
+                reader_object = reader.get_object(object_id)
+                if reader_object is not None:
+                    self._objects[object_id - 1] = reader_object.replicate(self)
         else:
             self._objects.clear()
         self._root_object = reader.root_object.clone(self)
@@ -1576,10 +1620,15 @@ class PdfWriter(PdfDocCommon):
             self._info = DictionaryObject()
         self._info.update(args)
 
+    _UNSET = object()
+
     def compress_identical_objects(
         self,
-        remove_identicals: bool = True,
-        remove_orphans: bool = True,
+        remove_identicals: Any = _UNSET,
+        remove_orphans: Any = _UNSET,
+        *,
+        remove_duplicates: bool = True,
+        remove_unreferenced: bool = True,
     ) -> None:
         """
         Parse the PDF file and merge objects that have the same hash.
@@ -1587,10 +1636,20 @@ class PdfWriter(PdfDocCommon):
         Recommended to be used just before writing output.
 
         Args:
-            remove_identicals: Remove identical objects.
-            remove_orphans: Remove unreferenced objects.
+            remove_identicals: Deprecated.
+            remove_orphans: Deprecated.
+            remove_duplicates: Remove duplicate objects.
+            remove_unreferenced: Remove unreferenced objects.
 
         """
+        if remove_identicals != self._UNSET:
+            deprecate_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
+            assert isinstance(remove_identicals, bool)
+            remove_duplicates = remove_identicals
+        if remove_orphans != self._UNSET:
+            deprecate_with_replacement("remove_orphans", "remove_unreferenced", "7.0.0")
+            assert isinstance(remove_orphans, bool)
+            remove_unreferenced = remove_orphans
 
         def replace_in_obj(
             obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
@@ -1604,17 +1663,17 @@ class PdfWriter(PdfDocCommon):
             assert isinstance(obj, (DictionaryObject, ArrayObject))
             for k, v in key_val:
                 if isinstance(v, IndirectObject):
-                    orphans[v.idnum - 1] = False
+                    unreferenced[v.idnum - 1] = False
                     if v in crossref:
                         obj[k] = crossref[v]
                 else:
-                    """the filtering on DictionaryObject and ArrayObject only
+                    """The filtering on DictionaryObject and ArrayObject only
                     will be performed within replace_in_obj"""
                     replace_in_obj(v, crossref)
 
-        # _idnum_hash :dict[hash]=(1st_ind_obj,[other_indir_objs,...])
+        # _idnum_hash: dict[hash] = (1st_ind_obj, [2nd_ind_obj,...])
         self._idnum_hash = {}
-        orphans = [True] * len(self._objects)
+        unreferenced = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
             if is_null_or_none(obj):
@@ -1622,7 +1681,7 @@ class PdfWriter(PdfDocCommon):
             assert obj is not None, "mypy"  # mypy: TypeGuard of `is_null_or_none` does not help here.
             assert isinstance(obj.indirect_reference, IndirectObject)
             h = obj.hash_value()
-            if remove_identicals and h in self._idnum_hash:
+            if remove_duplicates and h in self._idnum_hash:
                 self._idnum_hash[h][1].append(obj.indirect_reference)
                 self._objects[idx] = None
             else:
@@ -1639,18 +1698,19 @@ class PdfWriter(PdfDocCommon):
             if isinstance(obj, (DictionaryObject, ArrayObject)):
                 replace_in_obj(obj, cnv_rev)
 
-        # remove orphans (if applicable)
-        orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
+        if remove_unreferenced:
+            unreferenced[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
 
-        if not is_null_or_none(self._info):
-            orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+            if not is_null_or_none(self._info):
+                unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore
 
-        try:
-            orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
-        except AttributeError:
-            pass
-        for i in compress(range(len(self._objects)), orphans):
-            self._objects[i] = None
+            try:
+                unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
+            except AttributeError:
+                pass
+
+            for i in compress(range(len(self._objects)), unreferenced):
+                self._objects[i] = None
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
@@ -2947,9 +3007,9 @@ class PdfWriter(PdfDocCommon):
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
-                ano["/Subtype"] != "/Link"
+                ano["/Subtype"] != "/Link"  # type: ignore[comparison-overlap]
                 or "/A" not in ano
-                or cast("DictionaryObject", ano["/A"])["/S"] != "/GoTo"
+                or cast("DictionaryObject", ano["/A"])["/S"] != "/GoTo"  # type: ignore[comparison-overlap]
                 or "/Dest" in ano
             ):
                 if "/Dest" not in ano:

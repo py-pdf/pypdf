@@ -28,8 +28,11 @@
 import secrets
 
 from cryptography import __version__
-from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
+from cryptography.hazmat.primitives.padding import PKCS7
+
+from pypdf._utils import logger_warning
+from pypdf.errors import PdfStreamError
 
 try:
     # 43.0.0 - https://cryptography.io/en/latest/changelog/#v43-0-0
@@ -52,7 +55,7 @@ class CryptRC4(CryptBase):
         encryptor = self.cipher.encryptor()
         return encryptor.update(data) + encryptor.finalize()
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:
         decryptor = self.cipher.decryptor()
         return decryptor.update(data) + decryptor.finalize()
 
@@ -63,29 +66,41 @@ class CryptAES(CryptBase):
 
     def encrypt(self, data: bytes) -> bytes:
         iv = secrets.token_bytes(16)
-        pad = padding.PKCS7(128).padder()
-        data = pad.update(data) + pad.finalize()
+        padder = PKCS7(128).padder()
+        padded_data = padder.update(data) + padder.finalize()
 
         cipher = Cipher(self.alg, CBC(iv))
         encryptor = cipher.encryptor()
-        return iv + encryptor.update(data) + encryptor.finalize()
+        return iv + encryptor.update(padded_data) + encryptor.finalize()
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:
         iv = data[:16]
         data = data[16:]
         # for empty encrypted data
         if not data:
             return data
 
-        # just for robustness, it does not happen under normal circumstances
-        if len(data) % 16 != 0:
-            pad = padding.PKCS7(128).padder()
-            data = pad.update(data) + pad.finalize()
+        if not strict and len(data) % 16 != 0:
+            logger_warning("Adding missing padding.", src=__name__)
+            padder = PKCS7(128).padder()
+            data = padder.update(data) + padder.finalize()
 
         cipher = Cipher(self.alg, CBC(iv))
         decryptor = cipher.decryptor()
-        d = decryptor.update(data) + decryptor.finalize()
-        return d[: -d[-1]]
+        try:
+            padded_data = decryptor.update(data) + decryptor.finalize()
+        except ValueError as exception:
+            # Only raised in strict mode. Non-strict mode fixes padding.
+            raise PdfStreamError(exception)
+
+        unpadder = PKCS7(128).unpadder()
+        try:
+            return unpadder.update(padded_data) + unpadder.finalize()
+        except ValueError as exception:
+            if strict:
+                raise PdfStreamError(exception)
+            logger_warning(f"Ignoring padding error: {exception}", src=__name__)
+            return padded_data[: -padded_data[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:

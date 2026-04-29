@@ -1,5 +1,92 @@
 # CHANGELOG
 
+## Version 6.10.2, 2026-04-15
+
+### Security (SEC)
+- Do not rely on possibly invalid /Size for incremental cloning (#3735)
+- Introduce limits for FlateDecode parameters and image decoding (#3734)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.1...6.10.2)
+
+## Version 6.10.1, 2026-04-14
+
+### Security (SEC)
+- Limit the allowed size of xref and object streams (#3733)
+
+### Robustness (ROB)
+- Consider strict mode setting for decryption errors (#3731)
+
+### Documentation (DOC)
+- Use new parameter names for compress_identical_objects
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.0...6.10.1)
+
+## Version 6.10.0, 2026-04-10
+
+### Security (SEC)
+- Disallow custom XML entity declarations for XMP metadata (#3724)
+
+### New Features (ENH)
+- Skip MD5 key derivation for AES-256 encrypted PDFs (#3694)
+
+### Bug Fixes (BUG)
+- Use remove_orphans in compress_identical_objects (#3310)
+- Fix PdfReadError when xref table contains comments before trailer (#3710)
+- Correctly verify AES padding during decryption (#3699)
+- Fix stale object cache from non-authoritative object streams (#3698)
+- Fix extract_links pairing when annotations include non-links (#3687)
+
+### Documentation (DOC)
+- Add AI policy (#3717)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.2...6.10.0)
+
+## Version 6.9.2, 2026-03-23
+
+### Security (SEC)
+- Avoid infinite loop in read_from_stream for broken files (#3693)
+
+### Robustness (ROB)
+- Resolve UnboundLocalError for xobjs in _get_image (#3684)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.1...6.9.2)
+
+## Version 6.9.1, 2026-03-17
+
+### Security (SEC)
+- Improve performance and limit length of array-based content streams (#3686)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.0...6.9.1)
+
+## Version 6.9.0, 2026-03-15
+
+### New Features (ENH)
+- Expose /Perms verification result on Encryption object (#3672)
+
+### Performance Improvements (PI)
+- Fix O(n²) performance in NameObject read/write (#3679)
+- Batch-parse all objects in ObjStm on first access (#3677)
+
+### Bug Fixes (BUG)
+- Avoid sharing array-based content streams between pages (#3681)
+- Avoid accessing invalid page when inserting blank page under some conditions (#3529)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.8.0...6.9.0)
+
+## Version 6.8.0, 2026-03-09
+
+### Security (SEC)
+- Limit allowed `/Length` value of stream  (#3675)
+
+### New Features (ENH)
+- Add /IRT (in-reply-to) support for markup annotations (#3631)
+
+### Documentation (DOC)
+- Avoid using `PageObject.replace_contents` on PdfReader (#3669)
+- Document how to disable jbig2dec calls
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.7.5...6.8.0)
+
 ## Version 6.7.5, 2026-03-02
 
 ### Security (SEC)

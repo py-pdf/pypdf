@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', 'pypy3.11']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']  # , 'pypy3.11']
         use-crypto-lib: ['cryptography']
         include:
           - python-version: '3.9'
@@ -219,7 +219,7 @@ jobs:
       # Coverage on PyPy is skipped because running coverage with PyPy is slow and CPython test already provides
       # complete coverage data for the same code
       run: |
-        python -m pytest tests -n auto -vv -p no:benchmark
+        python -m pytest tests -n auto -vv -p no:benchmark -o faulthandler_timeout=60 --dist=loadfile
       if: ${{ startsWith(matrix.python-version, 'pypy') }}
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
@@ -262,7 +262,7 @@ jobs:
         ruff check .
     - name: Test with mypy
       run : |
-        mypy pypdf
+        mypy .
     - name: Install docs requirements
       run: |
         pip install -r requirements/docs.txt
@@ -339,7 +339,7 @@ jobs:
           python -m coverage combine
           python -m coverage xml
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

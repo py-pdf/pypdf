@@ -1,8 +1,10 @@
 coverage
+fonttools
 fpdf2
 mypy
 pillow
 cryptography
+pycryptodome
 pytest
 pytest-benchmark
 pytest-socket
@@ -12,3 +14,4 @@ pytest-cov
 # ruff  # only take this for 3.11
 typeguard
 pyyaml
+types-pyyaml

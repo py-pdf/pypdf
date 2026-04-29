@@ -541,7 +541,7 @@ class PageObject(DictionaryObject):
         space unit is 1/72 inch, and a value of 3 means that a user
         space unit is 3/72 inch.
         """
-        return self.get(PG.USER_UNIT, 1)
+        return cast(float, self.get(PG.USER_UNIT, 1))
 
     @staticmethod
     def create_blank_page(
@@ -638,21 +638,25 @@ class PageObject(DictionaryObject):
             id = list(id)
         if isinstance(id, list) and len(id) == 1:
             id = id[0]
+        xobjs: Optional[DictionaryObject] = None
         try:
             xobjs = cast(
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
-        except KeyError:
+        except KeyError as exc:
             if not (id[0] == "~" and id[-1] == "~"):
-                raise
+                raise KeyError(
+                    f"Cannot access image object {id} without XObject resources"
+                ) from exc
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
                 if self.inline_images is None:
                     self.inline_images = self._get_inline_images()
-                if self.inline_images is None:  # pragma: no cover
+                if self.inline_images is None:
                     raise KeyError("No inline image can be found")
                 return self.inline_images[id]
 
+            assert xobjs is not None
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
@@ -663,6 +667,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=xobjs[id].indirect_reference,
             )
         # in a subobject
+        assert xobjs is not None
         ids = id[1:]
         return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
@@ -943,15 +948,15 @@ class PageObject(DictionaryObject):
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
         """Add transformation matrix at the beginning of the given contents stream."""
-        contents = ContentStream(contents, pdf)
-        contents.operations.insert(
+        content_stream = ContentStream(contents, pdf)
+        content_stream.operations.insert(
             0,
-            [
+            (
                 [FloatObject(x) for x in ctm],
                 b"cm",
-            ],
+            ),
         )
-        return contents
+        return content_stream
 
     def _get_contents_as_bytes(self) -> Optional[bytes]:
         """
@@ -1077,7 +1082,7 @@ class PageObject(DictionaryObject):
     def _merge_page(
         self,
         page2: "PageObject",
-        page2transformation: Optional[Callable[[Any], ContentStream]] = None,
+        page2_transformation: Optional[Callable[[Any], ContentStream]] = None,
         ctm: Optional[CompressedTransformationMatrix] = None,
         over: bool = True,
         expand: bool = False,
@@ -1087,19 +1092,17 @@ class PageObject(DictionaryObject):
         # rename.
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
-            if hasattr(
-                self.indirect_reference.pdf, "_add_object"
-            ):  # to detect PdfWriter
+            if hasattr(self.indirect_reference.pdf, "_add_object"):  # to detect PdfWriter
                 return self._merge_page_writer(
-                    page2, page2transformation, ctm, over, expand
+                    page2, page2_transformation, ctm, over, expand
                 )
         except (AssertionError, AttributeError):
             pass
 
         new_resources = DictionaryObject()
-        rename = {}
+        rename: dict[str, Any] = {}
         original_resources = cast(DictionaryObject, self.get(PG.RESOURCES, DictionaryObject()).get_object())
-        page2resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
+        page2_resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
         new_annots = ArrayObject()
 
         for page in (self, page2):
@@ -1107,30 +1110,31 @@ class PageObject(DictionaryObject):
                 annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     new_annots.extend(annots)
+        self[NameObject(PG.ANNOTS)] = new_annots
 
         for res in (
             RES.EXT_G_STATE,
-            RES.FONT,
-            RES.XOBJECT,
             RES.COLOR_SPACE,
             RES.PATTERN,
             RES.SHADING,
+            RES.XOBJECT,
+            RES.FONT,
             RES.PROPERTIES,
         ):
-            new, newrename = self._merge_resources(
-                original_resources, page2resources, res
+            new, new_resource_name = self._merge_resources(
+                original_resources, page2_resources, res
             )
             if new:
                 new_resources[NameObject(res)] = new
-                rename.update(newrename)
+                rename.update(new_resource_name)
 
-        # Combine /ProcSet sets, making sure there's a consistent order
+        # Combine /ProcSet sets, making sure there is a consistent order
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
             sorted(
                 set(
                     original_resources.get(RES.PROC_SET, ArrayObject()).get_object()
                 ).union(
-                    set(page2resources.get(RES.PROC_SET, ArrayObject()).get_object())
+                    set(page2_resources.get(RES.PROC_SET, ArrayObject()).get_object())
                 )
             )
         )
@@ -1141,10 +1145,10 @@ class PageObject(DictionaryObject):
             original_content.isolate_graphics_state()
             new_content_array.append(original_content)
 
-        page2content = page2.get_contents()
-        if page2content is not None:
+        page2_content = page2.get_contents()
+        if page2_content is not None:
             rect = getattr(page2, MERGE_CROP_BOX)
-            page2content.operations.insert(
+            page2_content.operations.insert(
                 0,
                 (
                     map(
@@ -1159,18 +1163,18 @@ class PageObject(DictionaryObject):
                     b"re",
                 ),
             )
-            page2content.operations.insert(1, ([], b"W"))
-            page2content.operations.insert(2, ([], b"n"))
-            if page2transformation is not None:
-                page2content = page2transformation(page2content)
-            page2content = PageObject._content_stream_rename(
-                page2content, rename, self.pdf
+            page2_content.operations.insert(1, ([], b"W"))
+            page2_content.operations.insert(2, ([], b"n"))
+            if page2_transformation is not None:
+                page2_content = page2_transformation(page2_content)
+            page2_content = PageObject._content_stream_rename(
+                page2_content, rename, self.pdf
             )
-            page2content.isolate_graphics_state()
+            page2_content.isolate_graphics_state()
             if over:
-                new_content_array.append(page2content)
+                new_content_array.append(page2_content)
             else:
-                new_content_array.insert(0, page2content)
+                new_content_array.insert(0, page2_content)
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
@@ -1178,7 +1182,7 @@ class PageObject(DictionaryObject):
 
         self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
-        self[NameObject(PG.ANNOTS)] = new_annots
+
         return None
 
     def _merge_page_writer(
@@ -1195,7 +1199,6 @@ class PageObject(DictionaryObject):
         assert isinstance(self.indirect_reference, IndirectObject)
         pdf = self.indirect_reference.pdf
 
-        rename = {}
         if PG.RESOURCES not in self:
             self[NameObject(PG.RESOURCES)] = DictionaryObject()
         original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
@@ -1204,13 +1207,14 @@ class PageObject(DictionaryObject):
         else:
             page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
 
+        rename = {}
         for res in (
             RES.EXT_G_STATE,
-            RES.FONT,
-            RES.XOBJECT,
             RES.COLOR_SPACE,
             RES.PATTERN,
             RES.SHADING,
+            RES.XOBJECT,
+            RES.FONT,
             RES.PROPERTIES,
         ):
             if res in page2resources:
@@ -1220,7 +1224,7 @@ class PageObject(DictionaryObject):
                     original_resources, page2resources, res, False
                 )
                 rename.update(newrename)
-        # Combine /ProcSet sets.
+        # Combine /ProcSet sets
         if RES.PROC_SET in page2resources:
             if RES.PROC_SET not in original_resources:
                 original_resources[NameObject(RES.PROC_SET)] = ArrayObject()
@@ -1230,7 +1234,7 @@ class PageObject(DictionaryObject):
                     arr.append(x)
             arr.sort()
 
-        if PG.ANNOTS in page2:
+        if not is_null_or_none(page2.get(PG.ANNOTS, None)):
             if PG.ANNOTS not in self:
                 self[NameObject(PG.ANNOTS)] = ArrayObject()
             annots = cast(ArrayObject, self[PG.ANNOTS].get_object())
@@ -1623,7 +1627,7 @@ class PageObject(DictionaryObject):
             return None
         try:
             lst = self.indirect_reference.pdf.pages
-            return lst.index(self)
+            return int(lst.index(self))
         except ValueError:
             return None
 

@@ -92,7 +92,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
         raise PdfReadError("Invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
-    return struct.unpack(">q", d)[0]
+    return cast(int, struct.unpack(">q", d)[0])
 
 
 class DocumentInformation(DictionaryObject):
@@ -382,7 +382,7 @@ class PdfDocCommon:
             node: DictionaryObject, mi: int
         ) -> tuple[Optional[PdfObject], int]:
             ma = cast(int, node.get("/Count", 1))  # default 1 for /Page types
-            if node["/Type"] == "/Page":
+            if node["/Type"] == "/Page":  # type: ignore[comparison-overlap]
                 if page_number == mi:
                     return node, -1
                 return None, mi + 1
@@ -1166,7 +1166,7 @@ class PdfDocCommon:
         )
         if inherit is None:
             inherit = {}
-        if pages is None:
+        if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
             catalog = self.root_object
@@ -1174,6 +1174,7 @@ class PdfDocCommon:
             if not isinstance(pages, DictionaryObject):
                 raise PdfReadError("Invalid object in /Pages")
             self.flattened_pages = []
+        assert pages is not None, "mypy"
 
         if PagesAttributes.TYPE in pages:
             t = cast(str, pages[PagesAttributes.TYPE])
@@ -1306,10 +1307,40 @@ class PdfDocCommon:
 
     @property
     def user_access_permissions(self) -> Optional[UserAccessPermissions]:
-        """Get the user access permissions for encrypted documents. Returns None if not encrypted."""
+        """
+        Get the user access permissions for encrypted documents.
+        Returns None if not encrypted.
+
+        .. warning::
+
+            For AES-256 encrypted documents (R=5/R=6), the returned
+            permissions are derived from the ``/P`` field, which is
+            only trustworthy if the ``/Perms`` integrity check passed.
+            Check :attr:`are_permissions_valid` to verify.
+        """
         if self._encryption is None:
             return None
         return UserAccessPermissions(self._encryption.P)
+
+    @property
+    def are_permissions_valid(self) -> Optional[bool]:
+        """
+        Whether the ``/Perms`` integrity check passed for this document.
+
+        For AES-256 encrypted documents (R=5/R=6), the ``/Perms`` field
+        is an encrypted copy of the permissions that can be verified
+        independently. Returns ``False`` if this check fails (the ``/P``
+        permissions may have been tampered with).
+
+        Returns ``None`` if the document is not encrypted or has not yet
+        been decrypted via :meth:`decrypt()<pypdf.PdfReader.decrypt>`.
+        Returns ``True`` for non-AES-256 encryption (no ``/Perms`` to check).
+        """
+        if self._encryption is None:
+            return None
+        if not self._encryption.is_decrypted():
+            return None
+        return self._encryption._are_permissions_valid
 
     @property
     @abstractmethod

@@ -21,6 +21,7 @@ from pypdf._utils import (
     deprecate_with_replacement,
     deprecation_no_replacement,
     format_iso8824_date,
+    logger_error,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -33,6 +34,7 @@ from pypdf._utils import (
     skip_over_whitespace,
 )
 from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
+from pypdf.generic import DictionaryObject, NameObject, TextStringObject
 
 from . import is_sublist
 
@@ -92,6 +94,100 @@ def test_skip_over_comment(stream, remainder):
 def test_read_until_regex_premature_ending_name():
     stream = io.BytesIO(b"")
     assert read_until_regex(stream, re.compile(b".")) == b""
+
+
+def test_read_until_regex_match_in_first_chunk():
+    """Match within the first 16-byte chunk."""
+    stream = io.BytesIO(b"hello world")
+    result = read_until_regex(stream, re.compile(b" "))
+    assert result == b"hello"
+    assert stream.tell() == 5
+
+
+def test_read_until_regex_match_in_second_chunk():
+    """Match lands in the second chunk (past first 16 bytes)."""
+    payload = b"0123456789abcdefghij"
+    assert len(payload) == 20
+    data = payload + b" rest"
+    stream = io.BytesIO(data)
+    result = read_until_regex(stream, re.compile(b" "))
+    assert result == payload
+    assert stream.tell() == 20
+
+
+def test_read_until_regex_match_at_chunk_boundary():
+    """Delimiter sits exactly at byte 16 (first byte of second chunk)."""
+    payload = b"0123456789abcdef"
+    assert len(payload) == 16
+    data = payload + b" after"
+    stream = io.BytesIO(data)
+    result = read_until_regex(stream, re.compile(b" "))
+    assert result == payload
+    assert stream.tell() == 16
+
+
+def test_read_until_regex_multi_byte_spanning_boundary():
+    """Multi-byte regex pattern spans across a chunk boundary."""
+    # "X" at byte 15 (last byte of first chunk), "Y" at byte 16 (first of second)
+    payload = b"0123456789abcde"
+    assert len(payload) == 15
+    data = payload + b"XYafter"
+    stream = io.BytesIO(data)
+    result = read_until_regex(stream, re.compile(b"XY"))
+    assert result == payload
+    assert stream.tell() == 15
+
+
+def test_read_until_regex_no_match_exhausted():
+    """No match - stream is fully consumed and all data returned."""
+    data = b"0123456789" * 10
+    stream = io.BytesIO(data)
+    result = read_until_regex(stream, re.compile(b"ZZZ"))
+    assert result == data
+
+
+def test_read_until_regex_exponential_chunk_growth():
+    """Verify correctness with long input that exercises chunk doubling."""
+    payload = (b"0123456789abcdef" * 3125)[:50_000]
+    assert len(payload) == 50_000
+    data = payload + b"|done"
+    stream = io.BytesIO(data)
+    result = read_until_regex(stream, re.compile(rb"\|"))
+    assert result == payload
+    assert stream.tell() == 50_000
+
+
+def test_read_until_regex_match_spanning_later_boundary():
+    """Multi-byte match spanning a boundary after chunk size has grown."""
+    # Chunk 1: 16 bytes, chunk 2: 32 bytes → total 48 after two reads.
+    # Place "END" at offset 47 so it spans bytes 47-49.
+    payload = (b"0123456789abcdef" * 3)[:47]
+    assert len(payload) == 47
+    data = payload + b"ENDrest"
+    stream = io.BytesIO(data)
+    result = read_until_regex(stream, re.compile(b"END"))
+    assert result == payload
+    assert stream.tell() == 47
+
+
+def test_read_until_regex_tail_overlap_is_fixed():
+    """Tail overlap is 16 bytes regardless of chunk size growth.
+
+    Chunk reads: 16, 32, 64 -> total 112. Place a 16-byte pattern starting
+    one byte before the 64-byte chunk boundary (at offset 47) so it spans
+    into the third chunk. This only works if the tail kept from chunk 2
+    covers at least 16 bytes.
+    """
+    pattern = b"ABCDEFGHIJKLMNOP"  # 16 bytes
+    assert len(pattern) == 16
+    # Chunk 1: 16 bytes, chunk 2: 32 bytes -> boundary at offset 48.
+    # Pattern starts at 47, spanning bytes 47-62.
+    payload = b"x" * 47
+    data = payload + pattern + b"rest"
+    stream = io.BytesIO(data)
+    result = read_until_regex(stream, re.compile(re.escape(pattern)))
+    assert result == payload
+    assert stream.tell() == 47
 
 
 @pytest.mark.parametrize(
@@ -235,6 +331,17 @@ def test_deprecation_no_replacement():
         match=r"foo is deprecated and was removed in pypdf 4\.3\.2\.",
     ):
         foo()
+
+
+def test_logger_error(caplog):
+    enc = NameObject("/Invalid")
+    message = "Advanced encoding %(encoding)s not implemented yet"
+    logger_error(message, source=__name__, encoding=enc)
+    assert "Advanced encoding /Invalid not implemented yet" in caplog.text
+    encoding = DictionaryObject({NameObject("/key"): TextStringObject("value")})
+    message = "Advanced encoding %(encoding)s not implemented yet"
+    logger_error(message, source=__name__, encoding=encoding)
+    assert "Advanced encoding {'/key': 'value'} not implemented yet" in caplog.text
 
 
 def test_rename_kwargs():

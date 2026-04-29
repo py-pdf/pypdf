@@ -1,5 +1,6 @@
 """Test the pypdf._reader module."""
 import io
+import struct
 import sys
 import time
 from io import BytesIO
@@ -23,10 +24,12 @@ from pypdf.errors import (
     PdfStreamError,
     WrongPasswordError,
 )
+from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
     Destination,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     NumberObject,
     TextStringObject,
@@ -1887,7 +1890,9 @@ def test_infinite_loop_for_length_value():
 
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
-    with pytest.raises(PdfReadError, match=r"^Detected loop with self reference for IndirectObject\(165, 0, \d+\)\.$"):
+    with pytest.raises(
+            LimitReachedError, match=r"^Detected loop with self reference for IndirectObject\(165, 0, \d+\)\.$"
+    ):
         writer.add_page(reader.pages[0])
 
 
@@ -2010,3 +2015,253 @@ def test_find_pdf_objects():
 def test_find_pdf_trailers(data: bytes, expected: list[int]):
     result = list(PdfReader._find_pdf_trailers(data))
     assert result == expected
+
+
+def test_objstm_batch_parse_caches_all_objects():
+    """Resolving one ObjStm object should batch-cache all siblings."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    assert len(reader.xref_objStm) > 0
+
+    obj_ids = list(reader.xref_objStm.keys())
+    first_obj = reader.get_object(obj_ids[0])
+    assert first_obj is not None
+
+    for idnum in obj_ids[1:]:
+        cached = reader.cache_get_indirect_object(0, idnum)
+        assert cached is not None, f"Object {idnum} was not batch-cached"
+
+
+def test_objstm_cache_hit_returns_target():
+    """Second call to _get_object_from_stream should return cached objects."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    obj_ids = list(reader.xref_objStm.keys())
+
+    # Trigger batch parse
+    reader.get_object(obj_ids[0])
+
+    # Call again — all objects are already cached
+    second_id = obj_ids[1]
+    ref = IndirectObject(second_id, 0, reader)
+    result = reader._get_object_from_stream(ref)
+    assert result is reader.cache_get_indirect_object(0, second_id)
+
+
+def test_objstm_skips_cache_for_overridden_objects():
+    """Objects removed from xref_objStm should not be cached during batch parse."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    obj_ids = list(reader.xref_objStm.keys())
+    assert len(obj_ids) >= 2
+
+    # Simulate an incremental update overriding one object
+    removed_id = obj_ids[-1]
+    saved_entry = reader.xref_objStm.pop(removed_id)
+    reader.resolved_objects.clear()
+
+    result = reader.get_object(obj_ids[0])
+    assert result is not None
+    assert reader.cache_get_indirect_object(0, removed_id) is None
+    assert reader.cache_get_indirect_object(0, obj_ids[0]) is not None
+
+    reader.xref_objStm[removed_id] = saved_entry
+
+
+def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
+    """Decompressing a non-authoritative stream must not cache stale object copies."""
+
+    def _write_obj(buf: io.BytesIO, objnum: int, data: Union[str, bytes]) -> int:
+        offset = buf.tell()
+        buf.write(f"{objnum} 0 obj\n".encode())
+        buf.write(data if isinstance(data, bytes) else data.encode())
+        buf.write(b"\nendobj\n")
+        return offset
+
+    def _write_objstm(buf: io.BytesIO, objnum: int, obj_contents: list[tuple[int, bytes]]) -> int:
+        header_parts, data_parts, cur = [], [], 0
+        for oid, content in obj_contents:
+            header_parts.append(f"{oid} {cur}")
+            data_parts.append(content)
+            cur += len(content) + 1
+        header = " ".join(header_parts) + " "
+        data = b" ".join(data_parts)
+        stream = header.encode() + data
+        offset = buf.tell()
+        buf.write(f"{objnum} 0 obj\n".encode())
+        buf.write(
+            f"<< /Type /ObjStm /N {len(obj_contents)} "
+            f"/First {len(header)} /Length {len(stream)} >>\n".encode()
+        )
+        buf.write(b"stream\n")
+        buf.write(stream)
+        buf.write(b"\nendstream\nendobj\n")
+        return offset
+
+    buf = io.BytesIO()
+    buf.write(b"%PDF-1.5\n")
+
+    offsets = {}
+    offsets[1] = _write_obj(buf, 1, "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R >>")
+    offsets[2] = _write_obj(buf, 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    offsets[3] = _write_obj(
+        buf, 3,
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Annots [6 0 R] >>",
+    )
+    # Old object stream: AcroForm (obj 5) + field without /V (obj 6)
+    offsets[4] = _write_objstm(buf, 4, [
+        (5, b"<< /Fields [6 0 R] >>"),
+        (6, b"<< /Type /Annot /Subtype /Widget /FT /Tx /T (amount) >>"),
+    ])
+    # New object stream: field with /V (obj 6, updated)
+    offsets[7] = _write_objstm(buf, 7, [
+        (6, b"<< /Type /Annot /Subtype /Widget /FT /Tx /T (amount) /V (42) >>"),
+    ])
+
+    # Cross-reference stream
+    xref_offset = buf.tell()
+    raw_entries = [
+        (0, 0, 65535),          # obj 0: free
+        (1, offsets[1], 0),     # obj 1: catalog
+        (1, offsets[2], 0),     # obj 2: pages
+        (1, offsets[3], 0),     # obj 3: page
+        (1, offsets[4], 0),     # obj 4: old objstm
+        (2, 4, 0),              # obj 5: in objstm 4, index 0
+        (2, 7, 0),              # obj 6: in objstm 7, index 0 (authoritative)
+        (1, offsets[7], 0),     # obj 7: new objstm
+        (1, xref_offset, 0),    # obj 8: this xref stream
+    ]
+    stream_data = bytearray()
+    for typ, f1, f2 in raw_entries:
+        stream_data.append(typ)
+        stream_data.extend(f1.to_bytes(4, "big"))
+        stream_data.extend(f2.to_bytes(2, "big"))
+    buf.write(
+        f"8 0 obj\n<< /Type /XRef /Size 9 /W [1 4 2] "
+        f"/Root 1 0 R /Length {len(stream_data)} /Index [0 9] >>".encode()
+    )
+    buf.write(b"\nstream\n")
+    buf.write(bytes(stream_data))
+    buf.write(b"\nendstream\nendobj\n")
+    buf.write(f"startxref\n{xref_offset}\n%%EOF\n".encode())
+
+    reader = PdfReader(BytesIO(buf.getvalue()))
+
+    # Resolve AcroForm - this decompresses stream 4, which contains
+    # the stale copy of obj 6 (without /V).
+    acroform = reader.trailer["/Root"].get_object()["/AcroForm"].get_object()
+    assert "/Fields" in acroform
+
+    # obj 6 must reflect the authoritative version from stream 7.
+    field = reader.get_object(6)
+    assert field["/V"] == "42"
+
+
+def test_xref_table_with_comments_before_trailer():
+    """Comments between xref entries and trailer are legal per PDF spec §7.2.3.
+
+    Some PDF producers (e.g. Vectorizer.AI) insert human-readable comments
+    between the last xref entry and the ``trailer`` keyword.  pypdf must skip
+    these instead of crashing with ``PdfReadError: Could not read Boolean
+    object``.
+    """
+    pdf_data = (
+        b"%%PDF-1.4\n"
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+        b"2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n"
+        b"3 0 obj\n<< /Type /Page /MediaBox [0 0 100 100] /Parent 2 0 R >>\nendobj\n"
+        b"xref\n"
+        b"0 4\n"
+        b"0000000000 65535 f \n"
+        b"%010d 00000 n \n"
+        b"%010d 00000 n \n"
+        b"%010d 00000 n \n"
+        b"%% This is a legal PDF comment\n"
+        b"%% And another one\n"
+        b"trailer\n<< /Size 4 /Root 1 0 R >>\n"
+        b"startxref\n%d\n"
+        b"%%%%EOF\n"
+    )
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"xref") - 1,
+    )
+    reader = PdfReader(BytesIO(pdf_data))
+    assert len(reader.pages) == 1
+
+
+@pytest.mark.timeout(10)
+def test_read_pdf15_xref_stream__size_limit(caplog):
+    pdf = b"%PDF-1.7\n"
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+    startxref = len(pdf)
+    encoded = FlateDecode.encode(b"")
+    pdf += (
+        f"3 0 obj\n<< /Type /XRef /Size 50000000 /W [0 0 0] /Root 1 0 R /Filter /FlateDecode /Length {len(encoded)} >>"
+        f"\nstream\n"
+    ).encode()
+    pdf += encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Total XRef entries 50000000 exceed maximum allowed value 1\.$"
+    ):
+        _ = PdfReader(BytesIO(pdf), strict=True)
+    assert caplog.messages == []
+
+    _ = PdfReader(BytesIO(pdf), strict=False)
+    assert caplog.messages == [
+        "Clamping XRef count from 50000000 to 1 to fit stream size.",
+    ]
+
+
+@pytest.mark.timeout(10)
+def test_get_object_from_stream__size_limit(caplog):
+    obj_stm_encoded = FlateDecode.encode(b"4 0\nnull")
+    pdf = b"%PDF-1.7\n"
+    header_length = len(pdf)
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    catalog_length = len(pdf)
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [4 0 R] /Count 1 >>\nendobj\n"
+    pages_length = len(pdf)
+    pdf += (
+        f"3 0 obj\n<< /Type /ObjStm /N 5000000 /First 4 /Filter /FlateDecode /Length {len(obj_stm_encoded)} >>\n"
+        f"stream\n"
+    ).encode()
+    pdf += obj_stm_encoded + b"\nendstream\nendobj\n"
+    xref = bytearray()
+    for xref_type, value, generation in [
+            (0, 0, 0),
+            (1, header_length, 0),
+            (1, catalog_length, 0),
+            (1, pages_length, 0),
+            (2, 3, 0)
+    ]:
+        # xref type: 0 = free object, 1 = in-use object (points to byte offset), 2 = compressed (stored in stream)
+        # value: type 1 = byte offset in the file, type 2 = object stream number
+        # >B = 1 byte (unsigned char) for type and generation
+        # >H = 2 bytes (unsigned short) for value
+        xref += struct.pack(">B", xref_type) + struct.pack(">H", value) + struct.pack(">B", generation)
+    xref_encoded = FlateDecode.encode(bytes(xref))
+    startxref = len(pdf)
+    pdf += (
+        f"5 0 obj\n<< /Type /XRef /Size 6 /W [1 2 1] /Root 1 0 R /Filter /FlateDecode "
+        f"/Length {len(xref_encoded)} >>\nstream\n"
+    ).encode()
+    pdf += xref_encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+
+    with pytest.raises(LimitReachedError, match=r"^Value /N 5000000 for object 3 exceeds maximum allowed value 2\.$"):
+        reader = PdfReader(BytesIO(pdf), strict=True)
+        _ = reader.pages[0]
+    assert caplog.messages == []
+
+    with pytest.raises(PdfReadError, match=r"^Maximum recursion depth reached during page flattening\.$"):
+        reader = PdfReader(BytesIO(pdf), strict=False)
+        _ = reader.pages[0]
+    assert caplog.messages == [
+        "Value /N 5000000 for object 3 exceeds maximum allowed value 2. Limiting to 2.",
+        "NumberObject(b'') invalid; use 0 instead",
+        "NumberObject(b'') invalid; use 0 instead",
+    ]

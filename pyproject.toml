@@ -39,11 +39,15 @@ Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
 
 [project.optional-dependencies]
-crypto = ["cryptography"]
+# This is due to the backend parameter being required back then:
+# https://cryptography.io/en/latest/changelog/#v3-1
+crypto = ["cryptography>3.0"]
 cryptodome = ["PyCryptodome"]
+fonts = ["fonttools"]
 image = ["Pillow>=8.0.0"]
 full = [
-    "cryptography",
+    "cryptography>3.0",
+    "fonttools",
     "Pillow>=8.0.0"
 ]
 dev = [
@@ -239,13 +243,20 @@ wrap-summaries = 0
 wrap-descriptions = 0
 
 [tool.mypy]
-show_error_codes = true
+strict = true
 ignore_missing_imports = true
-check_untyped_defs = true
-disallow_any_generics = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_unused_configs = true
-exclude = ['venv', '.venv', 'tests', 'make_release.py']
+show_error_codes = true
+exclude = ['venv', '.venv']
+
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "tests.generic.*"
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "tests.scripts.*"
+ignore_errors = false

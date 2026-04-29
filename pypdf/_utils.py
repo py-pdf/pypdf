@@ -72,6 +72,7 @@ CompressedTransformationMatrix: TypeAlias = tuple[
 ]
 
 StreamType = IO[Any]
+BinaryStreamType = IO[bytes]
 StrByteType = Union[str, StreamType]
 
 
@@ -181,7 +182,7 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
     return txt
 
 
-def read_non_whitespace(stream: StreamType) -> bytes:
+def read_non_whitespace(stream: BinaryStreamType) -> bytes:
     """
     Find and read the next non-whitespace character (ignores whitespace).
 
@@ -254,21 +255,35 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
         The read bytes.
 
     """
-    name = b""
+    parts: list[bytes] = []
+    total_len = 0
+    tail = b""
+    chunk_size = 16
     while True:
-        tok = stream.read(16)
+        tok = stream.read(chunk_size)
         if not tok:
-            return name
-        m = regex.search(name + tok)
+            return b"".join(parts)
+        # Search overlap of previous tail + new chunk to catch
+        # multi-byte regex matches spanning chunk boundaries.
+        buf = tail + tok
+        m = regex.search(buf)
         if m is not None:
-            stream.seek(m.start() - (len(name) + len(tok)), 1)
-            name = (name + tok)[: m.start()]
-            break
-        name += tok
-    return name
+            overlap = len(tail)
+            actual_start = total_len - overlap + m.start()
+            stream.seek(actual_start - total_len - len(tok), 1)
+            parts.append(tok)
+            return b"".join(parts)[:actual_start]
+        parts.append(tok)
+        total_len += len(tok)
+        # Fixed overlap: 16 bytes is sufficient for the short
+        # delimiter patterns used in PDF parsing.
+        tail = tok[-16:]
+        if chunk_size < 8192:
+            chunk_size <<= 1
+    return b"".join(parts)
 
 
-def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
+def read_block_backwards(stream: BinaryStreamType, to_read: int) -> bytes:
     """
     Given a stream at position X, read a block of size to_read ending at position X.
 
@@ -426,7 +441,7 @@ def deprecation_no_replacement(name: str, removed_in: str) -> None:
     deprecation(f"{name} is deprecated and was removed in pypdf {removed_in}.")
 
 
-def logger_error(msg: str, src: str) -> None:
+def logger_error(message: str, *, source: str, **values: Any) -> None:
     """
     Use this instead of logger.error directly.
 
@@ -435,7 +450,7 @@ def logger_error(msg: str, src: str) -> None:
     See the docs on when to use which:
     https://pypdf.readthedocs.io/en/latest/user/suppress-warnings.html
     """
-    logging.getLogger(src).error(msg)
+    logging.getLogger(source).error(message, values)
 
 
 def logger_warning(msg: str, src: str) -> None:

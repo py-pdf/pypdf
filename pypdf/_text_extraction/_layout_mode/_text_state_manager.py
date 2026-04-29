@@ -132,7 +132,7 @@ class TextStateManager:
         _d: float = 1.0,
         _e: float = 0.0,
         _f: float = 0.0,
-    ) -> dict[int, float]:
+    ) -> TextStateManagerDictType:
         """Only a/b/c/d/e/f matrix params"""
         return dict(zip(range(6), map(float, (_a, _b, _c, _d, _e, _f))))
 
@@ -148,7 +148,7 @@ class TextStateManager:
         is_render: bool = False,
     ) -> TextStateManagerDictType:
         """Standard a/b/c/d/e/f matrix params + 'is_text' and 'is_render' keys"""
-        result: Any = TextStateManager.raw_transform(_a, _b, _c, _d, _e, _f)
+        result = TextStateManager.raw_transform(_a, _b, _c, _d, _e, _f)
         result.update({"is_text": is_text, "is_render": is_render})
         return result
 

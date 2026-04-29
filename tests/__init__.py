@@ -4,7 +4,8 @@ import ssl
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Optional
+from types import TracebackType
+from typing import Callable, Optional, cast
 from urllib.error import HTTPError
 
 if sys.version_info >= (3, 11):
@@ -21,7 +22,10 @@ SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 def _get_data_from_url(url: str) -> bytes:
-    ssl._create_default_https_context = ssl._create_unverified_context
+    ssl._create_default_https_context = cast(
+        Callable[..., ssl.SSLContext],
+        ssl._create_unverified_context,
+    )
     attempts = 0
     while attempts < 3:
         try:
@@ -99,7 +103,7 @@ def normalize_warnings(caplog_text: str) -> list[str]:
     return [_strip_position(line) for line in caplog_text.strip().split("\n")]
 
 
-def is_sublist(child_list, parent_list):
+def is_sublist(child_list: list[int], parent_list: list[int]) -> bool:
     """
     Check if child_list is a sublist of parent_list, with respect to
     * elements order
@@ -121,7 +125,7 @@ def read_yaml_to_list_of_dicts(yaml_file: Path) -> list[dict[str, str]]:
         return yaml.safe_load(yaml_input)
 
 
-def download_test_pdfs():
+def download_test_pdfs() -> None:
     """
     Run this before the tests are executed to ensure you have everything locally.
 
@@ -146,11 +150,17 @@ class PILContext:
     def __enter__(self) -> Self:
         # Allow loading incomplete images.
         from PIL import ImageFile  # noqa: PLC0415
+
         self._saved_load_truncated_images = ImageFile.LOAD_TRUNCATED_IMAGES
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         return self
 
-    def __exit__(self, type_, value, traceback) -> Optional[bool]:
+    def __exit__(
+        self,
+        type_: Optional[type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType]
+    ) -> Optional[bool]:
         from PIL import ImageFile  # noqa: PLC0415
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:

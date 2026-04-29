@@ -8,7 +8,7 @@ import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError, XmpDocumentError
-from pypdf.generic import NameObject, StreamObject
+from pypdf.generic import ContentStream, NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -887,3 +887,79 @@ def test_xmp_information__create_and_set_metadata():
     assert xmp.dc_contributor == ["test1"]
     assert xmp.dc_creator == ["test2"]
     assert xmp.dc_title == {"x-default": "test3"}
+
+
+def test_xmp_information__external_entity_expansion(tmpdir):
+    path = tmpdir / "secret.txt"
+    path.write("VERY SECRET")
+
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(f"""<?xml version="1.0"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file://{path}">
+]>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="">
+      <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">&xxe;abc</dc:creator>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>""".encode())
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'xxe'$"
+    ):
+        XmpInformation(stream)
+
+
+@pytest.mark.timeout(10)
+def test_xmp_information__exponential_entity_expansion():
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(b"""<?xml version="1.0"?>
+<!DOCTYPE lolz [
+  <!ENTITY lol "lol">
+  <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+  <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+  <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
+  <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
+  <!ENTITY lol6 "&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;">
+  <!ENTITY lol7 "&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;">
+  <!ENTITY lol8 "&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;">
+  <!ENTITY lol9 "&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;">
+]>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="">
+      <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">&lol9;</dc:title>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>""")
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'lol'$"
+    ):
+        XmpInformation(stream)
+
+
+@pytest.mark.timeout(10)
+def test_xmp_information__quadratic_entity_expansion():
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(f"""<?xml version="1.0"?>
+<!DOCTYPE lolz [
+  <!ENTITY a "{'A' * 10_000}">
+]>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="">
+      <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">{'&a;' * 99}</dc:title>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>""".encode())
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'a'$"
+    ):
+        XmpInformation(stream)
