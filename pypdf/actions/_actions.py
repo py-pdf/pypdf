@@ -16,7 +16,6 @@ from ..generic import (
 )
 from .._utils import logger_warning
 
-
 if TYPE_CHECKING:
     from .._page import PageObject
 
@@ -34,6 +33,16 @@ class Action(DictionaryObject, ABC):
     @classmethod
     def _create_new(cls, page: PageObject, trigger: Literal["open", "close"], action: Action) -> None:
         """
+        Create a new action and add it to the PageObject.
+
+        Args:
+            page: The PageObject instance to add the embedded file to.
+            trigger: "open" or "close" trigger event.
+            action: An :py:class:`~pypdf.actions.Action` object;
+                    JavaScript is currently the only available action type.
+
+        Returns:
+            None, the action is added to the page directly.
         """
         if trigger not in {"open", "close"}:
             raise ValueError("The trigger must be 'open' or 'close'")
@@ -115,8 +124,6 @@ class Action(DictionaryObject, ABC):
         additional_actions.update({trigger_name: head})
         page[NameObject("/AA")] = additional_actions
 
-        # Return an Action instance
-        #return cls(name=JavaScript("open"))
 
 class JavaScript(Action):
     # Upon invocation of an ECMAScript action, a PDF processor shall execute a script
