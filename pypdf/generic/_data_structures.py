@@ -1096,14 +1096,14 @@ class StreamObject(DictionaryObject):
 
         if self.get("/Subtype", "") != "/Image":
             try:
-                logger_warning(
-                    "%(indirect_reference)s does not seem to be an Image",  # pragma: no cover
+                logger_warning(  # pragma: no cover
+                    "%(indirect_reference)s does not seem to be an Image",
                     source=__name__,
                     indirect_reference=self.indirect_reference,
                 )
             except AttributeError:
-                logger_warning(
-                    "%(object_repr)s object does not seem to be an Image",  # pragma: no cover
+                logger_warning(  # pragma: no cover
+                    "%(object_repr)s object does not seem to be an Image",
                     source=__name__,
                     object_repr=self.__repr__(),
                 )

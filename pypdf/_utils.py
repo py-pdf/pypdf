@@ -475,6 +475,7 @@ def logger_warning(message: str, *, source: str, **values: Any) -> None:
     if values:
         logging.getLogger(source).warning(message, values)
     else:
+        # Keep parity with logger_error and support plain warning messages.
         # Passing an empty dict to logging is not equivalent to passing no args:
         # plain messages would fail while being formatted.
         logging.getLogger(source).warning(message)
