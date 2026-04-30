@@ -1567,12 +1567,12 @@ class Field(TreeObject):
     @property
     def parent(self) -> Optional[DictionaryObject]:
         """Read-only property accessing the parent of this field."""
-        return self.get(FieldDictionaryAttributes.Parent)
+        return self.get(FieldDictionaryAttributes.PARENT)
 
     @property
     def kids(self) -> Optional["ArrayObject"]:
         """Read-only property accessing the kids of this field."""
-        return self.get(FieldDictionaryAttributes.Kids)
+        return self.get(FieldDictionaryAttributes.KIDS)
 
     @property
     def name(self) -> Optional[str]:
