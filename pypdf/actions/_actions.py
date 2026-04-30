@@ -14,8 +14,10 @@ from ..generic import (
     TextStringObject,
     is_null_or_none,
 )
-from .._page import PageObject
 from .._utils import logger_warning
+
+if TYPE_CHECKING:
+    from .._page import PageObject
 
 
 class Action(DictionaryObject, ABC):
@@ -29,7 +31,7 @@ class Action(DictionaryObject, ABC):
         self[NameObject("/Next")] = NullObject()  # Optional
 
     @classmethod
-    def _create_new(cls, page: PageObject, trigger: Literal["open", "close"], action: Action) -> None:
+    def _create_new(cls, page: "PageObject", trigger: Literal["open", "close"], action: Action) -> None:
         """
         Create a new action and add it to the PageObject.
 
