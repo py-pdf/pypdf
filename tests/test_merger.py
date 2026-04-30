@@ -219,7 +219,7 @@ def test_merge_write_closed_fh_with_writer(pdf_file_path):
 def test_trim_outline_list_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381771/tika-995175.pdf"
     name = "tika-995175.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.add_outline_item_dict(merger.outline[0])
@@ -231,7 +231,7 @@ def test_trim_outline_list_with_writer(pdf_file_path):
 def test_zoom_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381769/tika-994759.pdf"
     name = "tika-994759.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -243,7 +243,7 @@ def test_zoom_with_writer(pdf_file_path):
 def test_zoom_xyz_no_left_with_add_page(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381704/tika-933322.pdf"
     name = "tika-933322.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     for p in reader.pages:
         merger.add_page(p)
@@ -255,7 +255,7 @@ def test_zoom_xyz_no_left_with_add_page(pdf_file_path):
 def test_zoom_xyz_no_left_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381704/tika-933322.pdf"
     name = "tika-933322.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -267,7 +267,7 @@ def test_zoom_xyz_no_left_with_writer(pdf_file_path):
 def test_outline_item_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381773/tika-997511.pdf"
     name = "tika-997511.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -279,7 +279,7 @@ def test_outline_item_with_writer(pdf_file_path):
 def test_trim_outline_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381759/tika-982336.pdf"
     name = "tika-982336.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -291,7 +291,7 @@ def test_trim_outline_with_writer(pdf_file_path):
 def test1_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381696/tika-923621.pdf"
     name = "tika-923621.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -304,7 +304,7 @@ def test_sweep_recursion1_with_writer(pdf_file_path):
     # TODO: This test looks like an infinite loop.
     url = "https://github.com/user-attachments/files/18381697/tika-924546.pdf"
     name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -331,7 +331,7 @@ def test_sweep_recursion1_with_writer(pdf_file_path):
     ],
 )
 def test_sweep_recursion2_with_writer(url, name, pdf_file_path):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -345,7 +345,7 @@ def test_sweep_recursion2_with_writer(url, name, pdf_file_path):
 def test_sweep_indirect_list_newobj_is_none_with_writer(caplog, pdf_file_path):
     url = "https://github.com/user-attachments/files/18381681/tika-906769.pdf"
     name = "tika-906769.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -362,7 +362,7 @@ def test_iss1145_with_writer():
     url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
     name = "iss1145.pdf"
     merger = PdfWriter()
-    merger.append(PdfReader(BytesIO(get_data_from_url(url, name=name))))
+    merger.append(PdfReader(BytesIO(get_data_from_url(url=url, name=name))))
     merger.close()
 
 
@@ -371,7 +371,7 @@ def test_iss1344_with_writer(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9549001/input.pdf"
     name = "iss1344.pdf"
     m = PdfWriter()
-    m.append(PdfReader(BytesIO(get_data_from_url(url, name=name))))
+    m.append(PdfReader(BytesIO(get_data_from_url(url=url, name=name))))
     b = BytesIO()
     m.write(b)
     p = PdfReader(b).pages[0]
@@ -384,7 +384,7 @@ def test_articles_with_writer(caplog):
     url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "924666.pdf"
     m = PdfWriter()
-    m.append(PdfReader(BytesIO(get_data_from_url(url, name=name))), (2, 10))
+    m.append(PdfReader(BytesIO(get_data_from_url(url=url, name=name))), (2, 10))
     b = BytesIO()
     m.write(b)
     r = PdfReader(b)

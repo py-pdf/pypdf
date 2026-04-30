@@ -94,7 +94,7 @@ def test_page_operations(pdf_path, password):
     is as expected.
     """
     if pdf_path.startswith("http"):
-        pdf_path = BytesIO(get_data_from_url(pdf_path, pdf_path.split("/")[-1]))
+        pdf_path = BytesIO(get_data_from_url(url = pdf_path, name = pdf_path.split("/")[-1]))
     else:
         pdf_path = RESOURCE_ROOT / pdf_path
     reader = PdfReader(pdf_path)
@@ -386,7 +386,7 @@ def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF"
     name = "st2019.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     txt = reader.pages[3].extract_text()
     # The following text is contained in two different cells:
     assert txt.find("有限公司") > 0
@@ -440,7 +440,7 @@ def test_iss_1142():
     ],
 )
 def test_extract_text(url, name):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     for page in reader.pages:
         page.extract_text()
 
@@ -450,7 +450,7 @@ def test_extract_text(url, name):
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://github.com/user-attachments/files/18381748/tika-972962.pdf"
     name = "tika-972962.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     for page in reader.pages:
         page.extract_text()
     warn_msgs = normalize_warnings(caplog.text)
@@ -462,7 +462,7 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://github.com/user-attachments/files/18381740/tika-967943.pdf"
     name = "tika-967943.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     for page in reader.pages:
         page.extract_text()
 
@@ -632,7 +632,7 @@ def test_get_fonts(pdf_path, password, embedded, unembedded):
 def test_get_fonts2():
     url = "https://github.com/py-pdf/pypdf/files/12618104/WS_T.483.8-2016.pdf"
     name = "WS_T.483.8-2016.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert reader.pages[1]._get_fonts() == (
         {
             "/E-HZ9-PK7483a5-Identity-H",
@@ -772,7 +772,7 @@ def test_annotation_setter(pdf_file_path):
 def test_text_extraction_issue_1091():
     url = "https://github.com/user-attachments/files/18381737/tika-966635.pdf"
     name = "tika-966635.pdf"
-    stream = BytesIO(get_data_from_url(url, name=name))
+    stream = BytesIO(get_data_from_url(url=url, name=name))
     with pytest.warns(PdfReadWarning):
         reader = PdfReader(stream)
     for page in reader.pages:
@@ -783,7 +783,7 @@ def test_text_extraction_issue_1091():
 def test_empyt_password_1088():
     url = "https://github.com/user-attachments/files/18381712/tika-941536.pdf"
     name = "tika-941536.pdf"
-    stream = BytesIO(get_data_from_url(url, name=name))
+    stream = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(stream)
     len(reader.pages)
 
@@ -832,7 +832,7 @@ def test_read_link_annotation():
 def test_no_resources():
     url = "https://github.com/py-pdf/pypdf/files/9572045/108.pdf"
     name = "108.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
     page_one = writer.pages[0]
     page_two = writer.pages[0]
     page_one.merge_page(page_two)
@@ -1024,10 +1024,10 @@ def test_merge_page_resources_smoke_test():
 def test_merge_transformed_page_into_blank():
     url = "https://github.com/py-pdf/pypdf/files/10768334/badges_3vjrh_7LXDZ_1-1.pdf"
     name = "badges_3vjrh_7LXDZ_1.pdf"
-    r1 = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    r1 = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     url = "https://github.com/py-pdf/pypdf/files/10768335/badges_3vjrh_7LXDZ_2-1.pdf"
     name = "badges_3vjrh_7LXDZ_2.pdf"
-    r2 = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    r2 = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     writer.pages[0].merge_translated_page(r1.pages[0], 0, 0, True, True)
@@ -1071,7 +1071,7 @@ def test_pages_printing():
 def test_del_pages():
     url = "https://github.com/user-attachments/files/18381712/tika-941536.pdf"
     name = "tika-941536.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
     ll = len(writer.pages)
     pp = writer.pages[1].indirect_reference
     del writer.pages[1]
@@ -1092,7 +1092,7 @@ def test_del_pages():
     for p in pp:
         assert p not in pages["/Kids"]
     # del whole arborescence
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     # error case
     pp = reader.pages[2]
     i = pp["/Parent"].get_object()["/Kids"].index(pp.indirect_reference)
@@ -1102,7 +1102,7 @@ def test_del_pages():
 
     url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
     name = "iss2343b.pdf"
-    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
+    writer = PdfWriter(BytesIO(get_data_from_url(url=url, name=name)), incremental=True)
     node, idx = writer._get_page_in_node(53)
     assert (node.indirect_reference.idnum, idx) == (11776, 1)
     node, idx = writer._get_page_in_node(10000)
@@ -1131,7 +1131,7 @@ def test_merge_with_stream_wrapped_in_save_restore():
     """Test for issue #2587"""
     url = "https://github.com/py-pdf/pypdf/files/14895914/blank_portrait.pdf"
     name = "blank_portrait.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
     page_one = writer.pages[0]
     assert page_one.get_contents().get_data() == b"q Q"
     page_two = writer.pages[0]
@@ -1203,7 +1203,7 @@ def test_pos_text_in_textvisitor():
     """See #2200"""
     url = "https://github.com/py-pdf/pypdf/files/12675974/page_178.pdf"
     name = "test_text_pos.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     p = ()
 
     def visitor_body2(text, cm, tm, fontdict, fontsize) -> None:
@@ -1221,7 +1221,7 @@ def test_pos_text_in_textvisitor2():
     """See #2075"""
     url = "https://github.com/py-pdf/pypdf/files/12318042/LegIndex-page6.pdf"
     name = "LegIndex-page6.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     x_lvl = 26
     lst = []
 
@@ -1281,7 +1281,7 @@ def test_missing_basefont_in_type3():
     """Cf #2289"""
     url = "https://github.com/py-pdf/pypdf/files/13307713/missing-base-font.pdf"
     name = "missing-base-font.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0]._get_fonts()
 
 
@@ -1360,7 +1360,7 @@ def test_scale_by():
     """Tests for #3487"""
     url = "https://github.com/user-attachments/files/22685841/input.pdf"
     name = "issue3487.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
 
     original_box = RectangleObject((0, 0, 595.275604, 841.88974))
     expected_box = RectangleObject((0.0, 0.0, 297.637802, 420.94487))
@@ -1385,7 +1385,7 @@ def test_box_rendering(tmp_path):
     """Tests for issue #3487."""
     url = "https://github.com/user-attachments/files/22685841/input.pdf"
     name = "issue3487.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
 
     for page in writer.pages:
         page.scale_by(0.5)
@@ -1393,7 +1393,7 @@ def test_box_rendering(tmp_path):
     target_png_path = tmp_path / "target.png"
     url = "https://github.com/user-attachments/assets/e9c2271c-bfc3-4a6f-8c91-ffefa24502e2"
     name = "issue3487.png"
-    target_png_path.write_bytes(get_data_from_url(url, name=name))
+    target_png_path.write_bytes(get_data_from_url(url=url, name=name))
 
     pdf_path = tmp_path / "out.pdf"
     writer.write(pdf_path)
@@ -1447,7 +1447,7 @@ def test_replace_contents_on_reader():
 def test_replace_contents_on_reader__indirect_reference():
     url = "https://github.com/user-attachments/files/24195534/test.pdf"
     name = "issue3568.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     writer = PdfWriter()
 
     lhs = reader.get_page(3)

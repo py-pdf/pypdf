@@ -513,7 +513,7 @@ def test_aes256_decrypt_does_not_call_md5(monkeypatch):
 def test_reader__decryption_error_handling(caplog) -> None:
     url = "https://github.com/user-attachments/files/26631168/757.pdf"
     name = "issue3725.pdf"
-    data = get_data_from_url(url, name=name)
+    data = get_data_from_url(url=url, name=name)
 
     reader = PdfReader(BytesIO(data), strict=False)
     assert len(reader.pages) == 7
