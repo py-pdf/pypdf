@@ -96,6 +96,7 @@ class Action(DictionaryObject, ABC):
 
         visited = set()
         while True:
+            current = cast(DictionaryObject, current)
             next_ = current[NameObject("/Next")]
 
             if is_null_or_none(next_):
@@ -117,6 +118,7 @@ class Action(DictionaryObject, ABC):
             elif isinstance(next_, DictionaryObject):
                 current = next_
 
+        current = cast(DictionaryObject, current)
         if not is_null_or_none(current[NameObject("/Next")]) and id(current[NameObject("/Next")]) in visited:
             logger_warning(f"Detected cycle in the action tree for {current}", __name__)
 
