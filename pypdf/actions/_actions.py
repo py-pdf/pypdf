@@ -14,10 +14,8 @@ from ..generic import (
     TextStringObject,
     is_null_or_none,
 )
+from .._page import PageObject
 from .._utils import logger_warning
-
-if TYPE_CHECKING:
-    from .._page import PageObject
 
 
 class Action(DictionaryObject, ABC):
