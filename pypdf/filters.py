@@ -60,12 +60,7 @@ from .constants import FilterTypeAbbreviations as FTA
 from .constants import FilterTypes as FT
 from .constants import ImageAttributes, StreamAttributes
 from .constants import LzwFilterParameters as LZW
-from .errors import (
-    DependencyError,
-    LimitReachedError,
-    PdfReadError,
-    PdfStreamError,
-)
+from .errors import DependencyError, LimitReachedError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     DictionaryObject,
