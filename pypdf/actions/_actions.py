@@ -1,8 +1,8 @@
 """Action types"""
 from abc import ABC
 from typing import (
-    Literal,
     TYPE_CHECKING,
+    Literal,
     cast,
 )
 
