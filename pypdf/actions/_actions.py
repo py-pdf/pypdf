@@ -1,11 +1,12 @@
 """Action types"""
 from abc import ABC
 from typing import (
-    TYPE_CHECKING,
     Literal,
+    TYPE_CHECKING,
     cast,
 )
 
+from .._utils import logger_warning
 from ..generic import (
     ArrayObject,
     DictionaryObject,
@@ -14,7 +15,6 @@ from ..generic import (
     TextStringObject,
     is_null_or_none,
 )
-from .._utils import logger_warning
 
 if TYPE_CHECKING:
     from .._page import PageObject
