@@ -152,7 +152,7 @@ def test_identity_function(x):
 )
 def test_xmpmm_instance_id(url, name, xmpmm_instance_id):
     """XMPMM instance id is correctly extracted."""
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
     # cache hit:
@@ -164,7 +164,7 @@ def test_xmp_dc_description_extraction():
     """XMP dc_description is correctly extracted."""
     url = "https://github.com/user-attachments/files/18381721/tika-953770.pdf"
     name = "tika-953770.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.dc_description == {
         "x-default": "U.S. Title 50 Certification Form"
@@ -180,7 +180,7 @@ def test_dc_creator_extraction():
     """XMP dc_creator is correctly extracted."""
     url = "https://github.com/user-attachments/files/18381721/tika-953770.pdf"
     name = "tika-953770.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.dc_creator == ["U.S. Fish and Wildlife Service"]
     # cache hit:
@@ -192,7 +192,7 @@ def test_custom_properties_extraction():
     """XMP custom_properties is correctly extracted."""
     url = "https://github.com/user-attachments/files/18381764/tika-986065.pdf"
     name = "tika-986065.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.custom_properties == {"Style": "Searchable Image (Exact)"}
     # cache hit:
@@ -204,7 +204,7 @@ def test_dc_subject_extraction():
     """XMP dc_subject is correctly extracted."""
     url = "https://github.com/user-attachments/files/18381730/tika-959519.pdf"
     name = "tika-959519.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.dc_subject == [
         "P&P",
@@ -240,7 +240,7 @@ def test_invalid_xmp_information_handling():
     """
     url = "https://github.com/py-pdf/pypdf/files/5536984/test.pdf"
     name = "pypdf-5536984.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     with pytest.raises(PdfReadError) as exc:
         reader.xmp_metadata
     assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
@@ -271,7 +271,7 @@ def test_pdfa_xmp_metadata_without_values():
 def test_xmp_metadata__content_stream_is_dictionary_object():
     url = "https://github.com/user-attachments/files/18943249/testing.pdf"
     name = "issue3107.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     with pytest.raises(
             PdfReadError,
@@ -284,7 +284,7 @@ def test_xmp_metadata__content_stream_is_dictionary_object():
 def test_dc_creator__bag_instead_of_seq():
     url = "https://github.com/user-attachments/files/18381698/tika-924562.pdf"
     name = "tika-924562.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     assert reader.xmp_metadata is not None
     assert reader.xmp_metadata.dc_creator == ["William J. Hussar"]

@@ -41,8 +41,7 @@ def _get_data_from_url(url: str) -> bytes:
     raise ValueError(f"Unknown error handling {url}")
 
 
-# TODO: Make keyword-only and drop name being optional.
-def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> bytes:
+def get_data_from_url(*, url: Optional[str] = None, name: str) -> bytes:
     """
     Download a File from a URL and return its contents.
 
@@ -58,9 +57,6 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
         Read File as bytes
 
     """
-    if name is None:
-        raise ValueError("A name must always be specified")
-
     if os.getenv("GITHUB_JOB", None) is not None:
         cache_dir = Path("tests", "pdf_cache").resolve()
     else:
@@ -135,7 +131,7 @@ def download_test_pdfs() -> None:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         futures = [
-            executor.submit(get_data_from_url, pdf["url"], name=pdf["local_filename"])
+            executor.submit(get_data_from_url, url=pdf["url"], name=pdf["local_filename"])
             for pdf in pdfs
         ]
         concurrent.futures.wait(futures)
