@@ -231,7 +231,7 @@ def test_get_inline_image_without_xobject_resources():
     page = PageObject(None, None)
     inline_image = type("Mock", (), {"is_inline": True, "is_displayed": True})()
 
-    with mock.patch.object(page, "_get_inline_images", return_value={"~0~": inline_image}):
+    with mock.patch.object(page, "_parse_images_from_content_stream", return_value={"~0~": inline_image}):
         assert page._get_image("~0~") is inline_image
 
 
@@ -239,7 +239,7 @@ def test_get_inline_image_without_xobject_resources_raises_when_missing():
     page = PageObject(None, None)
 
     with (
-        mock.patch.object(page, "_get_inline_images", return_value=None),
+        mock.patch.object(page, "_parse_images_from_content_stream", return_value=None),
         pytest.raises(KeyError, match="No inline image can be found"),
     ):
         page._get_image("~0~")
@@ -442,9 +442,9 @@ def test_inline_image_extraction():
         assert image_similarity(writer.pages[0].images[i].image, img) == 1
     writer.pages[0].extract_text()
     # check recalculation of inline images
-    assert writer.pages[0].inline_images is not None
+    assert writer.pages[0].displayed_images is not None
     writer.pages[0].merge_scaled_page(writer.pages[0], 0.25)
-    assert writer.pages[0].inline_images is None
+    assert writer.pages[0].displayed_images is None
     reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
     writer.pages[0].merge_page(reader.pages[0])
     assert list(writer.pages[0].images.keys()) == [
@@ -556,7 +556,7 @@ EI Q
     )
     page = PageObject(pdf=None)
     with mock.patch.object(page, "get_contents", return_value=stream):
-        images = page._get_inline_images()
+        images = page._parse_images_from_content_stream()
         assert list(images) == ["~0~"]
         assert images["~0~"].data == (
             b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x02\x00\x00\x00\x01\x08\x02\x00\x00\x00{@\xe8\xdd\x00\x00\x00\x0f"
