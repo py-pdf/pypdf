@@ -31,7 +31,7 @@ class Action(DictionaryObject, ABC):
         self[NameObject("/Next")] = NullObject()  # Optional
 
     @classmethod
-    def _create_new(cls, page: "PageObject", trigger: Literal["open", "close"], action: Action) -> None:
+    def _create_new(cls, page: "PageObject", trigger: Literal["open", "close"], action: "Action") -> None:
         """
         Create a new action and add it to the PageObject.
 
