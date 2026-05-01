@@ -1012,7 +1012,7 @@ def test_inline_images():
     with pytest.raises(KeyError):
         reader.pages[0].images["~999~"]
     del reader.pages[1]["/Resources"]["/ColorSpace"]["/R124"]
-    reader.pages[1].inline_images = None  # to force recalculation
+    reader.pages[1].displayed_images = None  # to force recalculation
     with pytest.raises(PdfReadError):
         reader.pages[1].images["~1~"]
 
