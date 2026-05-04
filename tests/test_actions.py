@@ -3,7 +3,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject, is_null_or_none
 
 from . import RESOURCE_ROOT
 
@@ -357,8 +357,6 @@ def test_page_delete_action(pdf_file_writer):
 
 def test_page_add_action_chaining_with_dictionary_next(pdf_file_writer):
     """Test chaining actions when /Next is a DictionaryObject to cover line 118."""
-    from pypdf.generic import is_null_or_none
-    
     page = pdf_file_writer.pages[0]
 
     # Add first action
