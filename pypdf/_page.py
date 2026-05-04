@@ -58,9 +58,12 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
-from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
-from .constants import AnnotationDictionaryAttributes as ADA
-from .constants import ImageAttributes as IA
+from .constants import (
+    _INLINE_IMAGE_KEY_MAPPING,
+    _INLINE_IMAGE_VALUE_MAPPING,
+    AnnotationDictionaryAttributes,
+    ImageAttributes,
+)
 from .constants import PageAttributes as PG
 from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
@@ -618,7 +621,7 @@ class PageObject(DictionaryObject):
         for o in x_object:
             if not isinstance(x_object[o], StreamObject):
                 continue
-            if x_object[o][IA.SUBTYPE] == "/Image":
+            if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
                 lst.append(o if len(ancest) == 0 else [*ancest, o])
             else:  # is a form with possible images inside
                 lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
@@ -1536,8 +1539,8 @@ class PageObject(DictionaryObject):
             if isinstance(annotations, ArrayObject):
                 for annotation in annotations:
                     annotation_obj = annotation.get_object()
-                    if ADA.Rect in annotation_obj:
-                        rectangle = annotation_obj[ADA.Rect]
+                    if AnnotationDictionaryAttributes.Rect in annotation_obj:
+                        rectangle = annotation_obj[AnnotationDictionaryAttributes.Rect]
                         if isinstance(rectangle, ArrayObject):
                             rectangle[0] = FloatObject(float(rectangle[0]) * sx)
                             rectangle[1] = FloatObject(float(rectangle[1]) * sy)
