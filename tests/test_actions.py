@@ -387,30 +387,30 @@ def test_page_add_action_chaining_with_array_next(pdf_file_writer):
 
     # Add first action
     page.add_action("open", JavaScript("app.alert('First action');"))
-    
+
     # Create an array with actions that have a Dictionary as /Next
     action1_in_array = JavaScript("app.alert('Array action 1');")
     action2_in_array = JavaScript("app.alert('Array action 2');")
-    
+
     # Create intermediate dict that will be /Next of the array
     intermediate_dict = JavaScript("app.alert('Intermediate dict');")
     action2_in_array[NameObject("/Next")] = intermediate_dict
-    
+
     # Set the first action's /Next to an array 
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject([action1_in_array, action2_in_array])
-    
+
     # Now add another action - this will:
     # 1. Traverse and hit line 117 (if isinstance(next_, ArrayObject))
     # 2. Set current to the last element (action2_in_array)
     # 3. Loop again and hit line 118 (elif isinstance(next_, DictionaryObject)) 
     #    because action2_in_array[/Next] = intermediate_dict
     page.add_action("open", JavaScript("app.alert('Final action');"))
-    
+
     # Verify the structure
     aa = page[NameObject("/AA")]
     first_action = aa[NameObject("/O")]
     next_array = first_action[NameObject("/Next")]
-    
+
     assert isinstance(next_array, ArrayObject)
     assert len(next_array) == 2
     # The last element of array has the intermediate dict as /Next
@@ -418,5 +418,5 @@ def test_page_add_action_chaining_with_array_next(pdf_file_writer):
     intermediate = last_array_element[NameObject("/Next")]
     # The intermediate dict has the final action as /Next
     final_action = intermediate[NameObject("/Next")]
-    
+
     assert final_action[NameObject("/JS")] == "app.alert('Final action');"
