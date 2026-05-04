@@ -363,20 +363,20 @@ def test_page_add_action_chaining_with_dictionary_next(pdf_file_writer):
 
     # Add first action
     page.add_action("open", JavaScript("app.alert('First action');"))
-    
+
     # Add second action - this will set the first action's /Next to this action
     page.add_action("open", JavaScript("app.alert('Second action');"))
-    
+
     # Add third action - this will traverse the chain and hit line 118
     # since the first action's /Next is a DictionaryObject (the second action)
     page.add_action("open", JavaScript("app.alert('Third action');"))
-    
+
     # Verify the chain is correct
     aa = page[NameObject("/AA")]
     first_action = aa[NameObject("/O")]
     second_action = first_action[NameObject("/Next")]
     third_action = second_action[NameObject("/Next")]
-    
+
     assert first_action[NameObject("/JS")] == "app.alert('First action');"
     assert second_action[NameObject("/JS")] == "app.alert('Second action');"
     assert third_action[NameObject("/JS")] == "app.alert('Third action');"
