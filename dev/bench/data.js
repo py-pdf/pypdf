@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1777882564019,
+  "lastUpdate": 1777882604623,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -102703,6 +102703,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04307076923257289",
             "extra": "mean: 861.6874147999965 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4f96a2e4ca34a93818159dfe0fa195d28489022f",
+          "message": "STY: Import AnnotationDictionaryAttributes and ImageAttributes without using abbreviations (#3755)\n\nAids readability when they are infrequently used in the code.",
+          "timestamp": "2026-05-04T10:13:18+02:00",
+          "tree_id": "8c5170ed4dab44e357319623de4cec5e17c02d0e",
+          "url": "https://github.com/py-pdf/pypdf/commit/4f96a2e4ca34a93818159dfe0fa195d28489022f"
+        },
+        "date": 1777882598934,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.172993663654648,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01742984924847492",
+            "extra": "mean: 70.55672384617012 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.67423672738256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013845963002306996",
+            "extra": "mean: 59.972760153860136 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1262890831606835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003788538712774092",
+            "extra": "mean: 887.8715197999782 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.48032482117430114,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0776469004522049",
+            "extra": "mean: 2.081924472600008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.17868304514997546,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05474163916322391",
+            "extra": "mean: 5.596501890599984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1569322679120138,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03871258787811619",
+            "extra": "mean: 864.3548353999677 msec\nrounds: 5"
           }
         ]
       }
