@@ -12,7 +12,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
-from pypdf.constants import ImageAttributes as IA
+from pypdf.constants import ImageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
@@ -172,7 +172,7 @@ def test_get_annotations(src):
         for page in reader.pages:
             if PG.ANNOTS in page:
                 for annot in page[PG.ANNOTS]:
-                    subtype = annot.get_object()[IA.SUBTYPE]
+                    subtype = annot.get_object()[ImageAttributes.SUBTYPE]
                     if subtype == "/Text":
                         annot.get_object()[PG.CONTENTS]
 
@@ -192,7 +192,7 @@ def test_get_attachments(src, nb_attachments):
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.get_object()
-                if annotobj[IA.SUBTYPE] == "/FileAttachment":
+                if annotobj[ImageAttributes.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
     assert len(attachments) == nb_attachments

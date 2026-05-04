@@ -58,9 +58,8 @@ from ._utils import (
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import FilterTypeAbbreviations as FTA
 from .constants import FilterTypes as FT
-from .constants import ImageAttributes as IA
+from .constants import ImageAttributes, StreamAttributes
 from .constants import LzwFilterParameters as LZW
-from .constants import StreamAttributes
 from .errors import DependencyError, LimitReachedError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
@@ -839,7 +838,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
             data = RunLengthDecode.decode(data)
         elif filter_name in (FT.CCITT_FAX_DECODE, FTA.CCF):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.CCF, new_name=FT.CCITT_FAX_DECODE)
-            height = stream.get(IA.HEIGHT, ())
+            height = stream.get(ImageAttributes.HEIGHT, ())
             data = CCITTFaxDecode.decode(data, params, height)
         elif filter_name in (FT.DCT_DECODE, FTA.DCT):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.DCT, new_name=FT.DCT_DECODE)
