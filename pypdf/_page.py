@@ -630,12 +630,7 @@ class PageObject(DictionaryObject):
             # Skip non-stream objects (only process StreamObject)
             if not isinstance(x_object[o], StreamObject):
                 continue
-
-            # Check if this XObject is an Image
-            if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
-                # Add the image ID (with ancestry if needed)
-                # When ancest is empty, o is top-level: "/I0"
-                # When ancest is not empty, [ancest, o] is nested: ["/Form1", "/I0"]
+            if x_object[o][IA.SUBTYPE] == "/Image":
                 lst.append(o if len(ancest) == 0 else [*ancest, o])
 
             # If it's a form, recursively search for images inside it
