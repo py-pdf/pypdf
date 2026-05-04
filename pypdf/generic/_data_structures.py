@@ -1103,9 +1103,9 @@ class StreamObject(DictionaryObject):
                 )
             except AttributeError:
                 logger_warning(  # pragma: no cover
-                    "%(object_repr)s object does not seem to be an Image",
+                    "%(obj)r object does not seem to be an Image",
                     source=__name__,
-                    object_repr=self.__repr__(),
+                    obj=self,
                 )
         extension, _, img = _xobj_to_image(self, pillow_parameters)
         if extension is None:

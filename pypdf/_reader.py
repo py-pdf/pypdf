@@ -615,10 +615,10 @@ class PdfReader(PdfDocCommon):
         skip_over_comment(stream)
         extra = skip_over_whitespace(stream)
         stream.seek(-1, 1)
-        idnum = read_until_whitespace(stream)
+        idnum = int(read_until_whitespace(stream))
         extra |= skip_over_whitespace(stream)
         stream.seek(-1, 1)
-        generation = read_until_whitespace(stream)
+        generation = int(read_until_whitespace(stream))
         extra |= skip_over_whitespace(stream)
         stream.seek(-1, 1)
 
@@ -631,10 +631,10 @@ class PdfReader(PdfDocCommon):
             logger_warning(
                 "Superfluous whitespace found in object header %(idnum)d %(generation)d",
                 source=__name__,
-                idnum=int(idnum),
-                generation=int(generation),
+                idnum=idnum,
+                generation=generation,
             )
-        return int(idnum), int(generation)
+        return idnum, generation
 
     def cache_get_indirect_object(
         self, generation: int, idnum: int
@@ -649,9 +649,10 @@ class PdfReader(PdfDocCommon):
     ) -> Optional[PdfObject]:
         if (generation, idnum) in self.resolved_objects:
             msg = "Overwriting cache for %(generation)d %(idnum)d"
+            values = {"generation": generation, "idnum": idnum}
             if self.strict:
-                raise PdfReadError(msg % {"generation": generation, "idnum": idnum})
-            logger_warning(msg, source=__name__, generation=generation, idnum=idnum)
+                raise PdfReadError(msg % values)
+            logger_warning(msg, source=__name__, **values)
         self.resolved_objects[(generation, idnum)] = obj
         if obj is not None:
             obj.indirect_reference = IndirectObject(idnum, generation, self)

@@ -220,8 +220,10 @@ class TextStreamAppearance(BaseStreamAppearance):
         elif is_comb:
             if max_length and len(text) > max_length:
                 logger_warning(
-                    "Length of text %(text)s exceeds maximum length (%(max_length)d) "
-                    "of field, input truncated.",
+                    (
+                        "Length of text %(text)s exceeds maximum length (%(max_length)d) "
+                        "of field, input truncated."
+                    ),
                     source=__name__,
                     text=text,
                     max_length=max_length,
