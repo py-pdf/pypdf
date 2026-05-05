@@ -420,8 +420,8 @@ def test_cmyk():
     assert ".jpg" in data.name
     assert image_similarity(data.image, refimg) > 0.99
     # deflate
-    reader = PdfReader(BytesIO(get_data_from_url(name="cmyk_deflate.pdf")))
-    refimg = BytesIO(get_data_from_url(name="cmyk_deflate.tif"))
+    reader = PdfReader(BytesIO(get_data_from_url( name="cmyk_deflate.pdf")))
+    refimg = BytesIO(get_data_from_url( name="cmyk_deflate.tif"))
     data = reader.pages[0].images[0]
     assert data.image.mode == "CMYK"
     assert ".tif" in data.name
@@ -431,7 +431,7 @@ def test_cmyk():
 @pytest.mark.enable_socket
 def test_iss1863():
     """Test doc from iss1863"""
-    reader = PdfReader(BytesIO(get_data_from_url(name="o1whh9b3.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url( name="o1whh9b3.pdf")))
     for p in reader.pages:
         for i in p.images:
             i.name
@@ -439,7 +439,7 @@ def test_iss1863():
 
 @pytest.mark.enable_socket
 def test_read_images():
-    reader = PdfReader(BytesIO(get_data_from_url(name="selbst.72916.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url( name="selbst.72916.pdf")))
     page = reader.pages[0]
     for _ in page.images:
         pass
@@ -447,7 +447,7 @@ def test_read_images():
 
 @pytest.mark.enable_socket
 def test_cascaded_filters_images():
-    reader = PdfReader(BytesIO(get_data_from_url(name="iss1912.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url( name="iss1912.pdf")))
     # for focus, analyse the page 23
     for p in reader.pages:
         for i in p.images:
@@ -456,16 +456,16 @@ def test_cascaded_filters_images():
 
 @pytest.mark.enable_socket
 def test_calrgb():
-    reader = PdfReader(BytesIO(get_data_from_url(name="calRGB.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url( name="calRGB.pdf")))
     reader.pages[0].images[0]
 
 
 @pytest.mark.enable_socket
 def test_index_lookup():
     """The lookup is provided as an str and bytes"""
-    reader = PdfReader(BytesIO(get_data_from_url(name="2023USDC.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url( name="2023USDC.pdf")))
     # TextStringObject Lookup
-    refimg = BytesIO(get_data_from_url(name="iss1982_im1.png"))
+    refimg = BytesIO(get_data_from_url( name="iss1982_im1.png"))
     data = reader.pages[0].images[-1]
     assert data.image.mode == "RGB"
     assert image_similarity(data.image, refimg) > 0.999
@@ -476,8 +476,8 @@ def test_index_lookup():
     assert image_similarity(data.image, refimg) > 0.999
     # indexed CMYK images
     # currently with a TODO as we convert the palette to RGB
-    reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
-    refimg = Image.open(BytesIO(get_data_from_url(name="usa.png")))
+    reader = PdfReader(BytesIO(get_data_from_url( name="tika-972174.pdf")))
+    refimg = Image.open(BytesIO(get_data_from_url( name="usa.png")))
     data = reader.pages[0].images["/Im3"]
     # assert data.image.mode == "PA" but currently "RGBA"
     assert image_similarity(data.image, refimg) > 0.999
@@ -486,10 +486,10 @@ def test_index_lookup():
 @pytest.mark.enable_socket
 def test_2bits_image():
     """From #1954, test with 2bits image. TODO: 4bits also"""
-    reader = PdfReader(BytesIO(get_data_from_url(name="paid.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url( name="paid.pdf")))
     url_png = "https://user-images.githubusercontent.com/4083478/253568117-ca95cc85-9dea-4145-a5e0-032f1c1aa322.png"
     name_png = "Paid.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert image_similarity(data.image, refimg) > 0.99
 
@@ -502,10 +502,10 @@ def test_gray_devicen_cmyk():
     """
     url = "https://github.com/py-pdf/pypdf/files/12080338/example_121.pdf"
     name = "gray_cmyk.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/254545494-42df4949-1557-4f2d-acca-6be6e8de1122.png"
     name_png = "velo.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert data.image.mode == "L"
     assert image_similarity(data.image, refimg) > 0.999
@@ -516,15 +516,15 @@ def test_runlengthdecode():
     """From #1954, test with 2bits image. TODO: 4bits also"""
     url = "https://github.com/py-pdf/pypdf/files/12159941/out.pdf"
     name = "RunLengthDecode.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/255940800-6d63972e-a3d6-4cf9-aa6f-0793af24cded.png"
     name_png = "RunLengthDecode.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert image_similarity(data.image, refimg) > 0.999
     url = "https://github.com/py-pdf/pypdf/files/12162905/out.pdf"
     name = "FailedRLE1.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].images[0]
     url = "https://github.com/py-pdf/pypdf/files/12162926/out.pdf"
     name = "FailedRLE2.pdf"
@@ -539,10 +539,10 @@ def test_gray_separation_cmyk():
     """
     url = "https://github.com/py-pdf/pypdf/files/12143372/tt.pdf"
     name = "TestWithSeparationBlack.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/254545494-42df4949-1557-4f2d-acca-6be6e8de1122.png"
     name_png = "velo.png"  # reused
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert data.image.mode == "L"
     assert image_similarity(data.image, refimg) > 0.999
@@ -553,7 +553,7 @@ def test_singleton_device():
     """From #2023"""
     url = "https://github.com/py-pdf/pypdf/files/12177287/tt.pdf"
     name = "pypdf_with_arr_deviceRGB.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].images[0]
 
 
@@ -562,7 +562,7 @@ def test_jpx_no_spacecode():
     """From #2061"""
     url = "https://github.com/py-pdf/pypdf/files/12253581/tt2.pdf"
     name = "jpx_no_spacecode.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     im = reader.pages[0].images[0]
     # create an object without filter and without colorspace
     # just for coverage
@@ -577,7 +577,7 @@ def test_encodedstream_lookup():
     """From #2124"""
     url = "https://github.com/py-pdf/pypdf/files/12455580/10.pdf"
     name = "iss2124.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[12].images[0]
 
 
@@ -586,7 +586,7 @@ def test_convert_1_to_la():
     """From #2165"""
     url = "https://github.com/py-pdf/pypdf/files/12543290/whitepaper.WBT.token.blockchain.whitepaper.pdf"
     name = "iss2165.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     for i in reader.pages[13].images:
         _ = i
 
@@ -596,7 +596,7 @@ def test_nested_device_n_color_space():
     """From #2240"""
     url = "https://github.com/py-pdf/pypdf/files/12814018/out1.pdf"
     name = "issue2240.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].images[0]
 
 
@@ -606,7 +606,7 @@ def test_flate_decode_with_image_mode_1():
     """From #2248"""
     url = "https://github.com/py-pdf/pypdf/files/12847339/Prototype-Declaration-VDE4110-HYD-5000-20000-ZSS-DE.pdf"
     name = "issue2248.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     for image in reader.pages[7].images:
         _ = image
 
@@ -616,7 +616,7 @@ def test_flate_decode_with_image_mode_1__whitespace_at_end_of_lookup():
     """From #2331"""
     url = "https://github.com/py-pdf/pypdf/files/13611048/out1.pdf"
     name = "issue2331.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].images[0]
 
 
@@ -625,7 +625,7 @@ def test_ascii85decode__invalid_end__recoverable(caplog):
     """From #2996"""
     url = "https://github.com/user-attachments/files/18050808/1af7d56a-5c8c-4914-85b3-b2536a5525cd.pdf"
     name = "issue2996.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[1]
     assert page.extract_text() == ""
@@ -657,7 +657,7 @@ def test_ascii85decode__ignore_whitespaces(caplog):
 def test_ccitt_fax_decode__black_is_1():
     url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
     name = "issue3193.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     other_reader = PdfReader(RESOURCE_ROOT / "imagemagick-CCITTFaxDecode.pdf")
 
     actual_image = reader.pages[0].images[0].image
@@ -667,7 +667,7 @@ def test_ccitt_fax_decode__black_is_1():
     assert expected_pixels == actual_pixels
 
     # AttributeError: 'NullObject' object has no attribute 'get'
-    data_modified = get_data_from_url(url, name=name).replace(
+    data_modified = get_data_from_url(url=url, name=name).replace(
         b"/DecodeParms [ << /K -1 /BlackIs1 true /Columns 16 /Rows 16 >> ]",
         b"/DecodeParms [ null ]"
     )
@@ -681,7 +681,7 @@ def test_flate_decode__image_is_none_due_to_size_limit(caplog):
     name = "issue3220.pdf"
 
     with mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", 0):
-        reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+        reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
         images = reader.pages[0].images
         assert len(images) == 1
         image = images[0]
@@ -698,7 +698,7 @@ def test_flate_decode__image_is_none_due_to_size_limit(caplog):
 def test_flate_decode__not_rectangular(caplog):
     url = "https://github.com/user-attachments/files/19663603/issue3241_compressed.txt"
     name = "issue3241.txt"
-    data = get_data_from_url(url, name=name)
+    data = get_data_from_url(url=url, name=name)
     decode_parms = DictionaryObject()
     decode_parms[NameObject("/Predictor")] = NumberObject(15)
     decode_parms[NameObject("/Columns")] = NumberObject(4881)
@@ -707,7 +707,7 @@ def test_flate_decode__not_rectangular(caplog):
 
     url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
     name = "issue3241.png"
-    expected_data = BytesIO(get_data_from_url(url, name=name))
+    expected_data = BytesIO(get_data_from_url(url=url, name=name))
     assert image_similarity(expected_data, actual_image) == 1
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
