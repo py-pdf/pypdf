@@ -40,9 +40,6 @@ class Action(DictionaryObject, ABC):
             trigger: "open" or "close" trigger event.
             action: An :py:class:`~pypdf.actions.Action` object;
                     JavaScript is currently the only available action type.
-
-        Returns:
-            None, the action is added to the page directly.
         """
         if trigger not in {"open", "close"}:
             raise ValueError("The trigger must be 'open' or 'close'")
@@ -127,9 +124,11 @@ class Action(DictionaryObject, ABC):
 
 
 class JavaScript(Action):
-    # Upon invocation of an ECMAScript action, a PDF processor shall execute a script
-    # that is written in the ECMAScript programming language. ECMAScript extensions
-    # described in ISO/DIS 21757-1 shall also be allowed.
+    """
+    Upon invocation of an ECMAScript action, a PDF processor shall execute a
+    script that is written in the ECMAScript programming language. ECMAScript
+    extensions described in ISO/DIS 21757-1 shall also be allowed.
+    """
     def __init__(self, JS: str) -> None:
         super().__init__()
         self[NameObject("/S")] = NameObject("/JavaScript")

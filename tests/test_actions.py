@@ -350,11 +350,6 @@ def test_page_add_action__chaining_with_array(pdf_file_writer):
     # Set the first action's /Next to an array
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject([action1_in_array, action2_in_array])
 
-    # Now add another action - this will:
-    # 1. Traverse and hit line 117 (if isinstance(next_, ArrayObject))
-    # 2. Set current to the last element (action2_in_array)
-    # 3. Loop again and hit line 118 (elif isinstance(next_, DictionaryObject))
-    #    because action2_in_array[/Next] = intermediate_dict
     page.add_action("open", JavaScript("app.alert('Final action');"))
 
     # Verify the structure
@@ -381,7 +376,7 @@ def test_page_delete_action(pdf_file_writer):
         match = "The trigger must be 'open' or 'close'",
     ):
         page.delete_action("xyzzy")  # type: ignore
- 
+
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
