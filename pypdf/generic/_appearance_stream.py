@@ -219,9 +219,14 @@ class TextStreamAppearance(BaseStreamAppearance):
                 lines = [(text_width_unscaled * font_size, text)]
         elif is_comb:
             if max_length and len(text) > max_length:
-                logger_warning (
-                    f"Length of text {text} exceeds maximum length ({max_length}) of field, input truncated.",
-                    __name__
+                logger_warning(
+                    (
+                        "Length of text %(text)s exceeds maximum length (%(max_length)d) "
+                        "of field, input truncated."
+                    ),
+                    source=__name__,
+                    text=text,
+                    max_length=max_length,
                 )
             # We act as if each character is one line, because we draw it separately later on
             lines = [(
@@ -345,7 +350,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         if font_resource:
             font = Font.from_font_resource(font_resource)
         else:
-            logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+            logger_warning(
+                "Font dictionary for %(font_name)s not found; defaulting to Helvetica.",
+                source=__name__,
+                font_name=font_name,
+            )
             font_name = "/Helv"
             core_font_metrics = CORE_FONT_METRICS["Helvetica"]
             font = Font(
@@ -376,10 +385,11 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         if not encodable:
             logger_warning(
-                f"Text string '{text}' contains characters not supported by font encoding. "
+                "Text string '%(text)s' contains characters not supported by font encoding. "
                 "This may result in text corruption. "
                 "Consider calling writer.update_page_form_field_values with auto_regenerate=True.",
-                __name__
+                source=__name__,
+                text=text,
             )
 
         font_glyph_byte_map: dict[str, bytes]
@@ -440,7 +450,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         if is_null_or_none(font_resource):
             if font_name.removeprefix("/") not in CORE_FONT_METRICS:
                 # Default to Helvetica if we haven't found a font resource and cannot construct one ourselves.
-                logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+                logger_warning(
+                    "Font dictionary for %(font_name)s not found; defaulting to Helvetica.",
+                    source=__name__,
+                    font_name=font_name,
+                )
                 font_name = "/Helvetica"
             core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
             font_resource = Font(

@@ -971,7 +971,7 @@ def test_form_topname_with_and_without_acroform(caplog):
         NameObject("/Parent")
     ] = DictionaryObject()
     r.add_form_topname("top")
-    assert "have a non-expected parent" in caplog.text
+    assert "has a non-expected parent" in caplog.text
 
 
 @pytest.mark.enable_socket
@@ -2015,6 +2015,14 @@ def test_find_pdf_objects():
 def test_find_pdf_trailers(data: bytes, expected: list[int]):
     result = list(PdfReader._find_pdf_trailers(data))
     assert result == expected
+
+
+def test_cache_indirect_object_strict_overwrite_error():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf", strict=True)
+    reader.resolved_objects[(99, 12345)] = None
+
+    with pytest.raises(PdfReadError, match=r"^Overwriting cache for 99 12345$"):
+        reader.cache_indirect_object(99, 12345, None)
 
 
 def test_objstm_batch_parse_caches_all_objects():

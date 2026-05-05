@@ -93,8 +93,9 @@ def _get_image_mode(
         if color_space_str == "/DeviceCMYK" and color_components == 1:
             if original_color_space[1][0] != "/Black":
                 logger_warning(
-                    f"Color {original_color_space[1][0]} converted to Gray. Please share PDF with pypdf dev team",
-                    __name__,
+                    "Color %(color)s converted to Gray. Please share PDF with pypdf dev team",
+                    source=__name__,
+                    color=original_color_space[1][0],
                 )
             return "L", True
         mode, invert_color = _get_image_mode(
@@ -226,8 +227,9 @@ def _handle_flate(
             }[_get_image_mode(base, 0, "")[0]]
         except KeyError:  # pragma: no cover
             logger_warning(
-                f"Base {base} not coded please share the pdf file with pypdf dev team",
-                __name__,
+                "Base %(base)s not coded. Please share PDF with pypdf dev team",
+                source=__name__,
+                base=base,
             )
             lookup = None
         else:
@@ -238,14 +240,18 @@ def _handle_flate(
                 if actual_count != expected_count:
                     if actual_count < expected_count:
                         logger_warning(
-                            f"Not enough lookup values: Expected {expected_count}, got {actual_count}.",
-                            __name__
+                            "Not enough lookup values: Expected %(expected_count)d, got %(actual_count)d.",
+                            source=__name__,
+                            expected_count=expected_count,
+                            actual_count=actual_count,
                         )
                         lookup += bytes([0] * (expected_count - actual_count))
                     elif not check_if_whitespace_only(lookup[expected_count:]):
                         logger_warning(
-                            f"Too many lookup values: Expected {expected_count}, got {actual_count}.",
-                            __name__
+                            "Too many lookup values: Expected %(expected_count)d, got %(actual_count)d.",
+                            source=__name__,
+                            expected_count=expected_count,
+                            actual_count=actual_count,
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
@@ -260,7 +266,7 @@ def _handle_flate(
             else:
                 img = img.convert(conv)
                 if len(lookup) != (hival + 1) * nb:
-                    logger_warning(f"Invalid Lookup Table in {obj_as_text}", __name__)
+                    logger_warning("Invalid Lookup Table in %(obj_as_text)s", source=__name__, obj_as_text=obj_as_text)
                     lookup = None
                 elif mode == "L":
                     # gray lookup does not work: it is converted to a similar RGB lookup
@@ -439,7 +445,9 @@ def _xobj_to_image(
             alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
             if img.size != alpha.size:
                 logger_warning(
-                    f"image and mask size not matching: {obj_as_text}", __name__
+                    "image and mask size not matching: %(obj_as_text)s",
+                    source=__name__,
+                    obj_as_text=obj_as_text,
                 )
             else:
                 # TODO: implement mask
@@ -585,6 +593,6 @@ def _xobj_to_image(
     try:  # temporary try/except until other fixes of images
         img = Image.open(BytesIO(data))
     except Exception as exception:
-        logger_warning(f"Failed loading image: {exception}", __name__)
+        logger_warning("Failed loading image: %(exception)s", source=__name__, exception=exception)
         img = None  # type: ignore[assignment,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
     return extension, data, img

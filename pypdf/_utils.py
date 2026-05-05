@@ -450,10 +450,13 @@ def logger_error(message: str, *, source: str, **values: Any) -> None:
     See the docs on when to use which:
     https://pypdf.readthedocs.io/en/latest/user/suppress-warnings.html
     """
-    logging.getLogger(source).error(message, values)
+    if values:
+        logging.getLogger(source).error(message, values)
+    else:
+        logging.getLogger(source).error(message)
 
 
-def logger_warning(msg: str, src: str) -> None:
+def logger_warning(message: str, *, source: str, **values: Any) -> None:
     """
     Use this instead of logger.warning directly.
 
@@ -469,7 +472,13 @@ def logger_warning(msg: str, src: str) -> None:
       pypdf could apply a robustness fix to still read it. This applies mainly
       to strict=False mode.
     """
-    logging.getLogger(src).warning(msg)
+    if values:
+        logging.getLogger(source).warning(message, values)
+    else:
+        # Keep parity with logger_error and support plain warning messages.
+        # Passing an empty dict to logging is not equivalent to passing no args:
+        # plain messages would fail while being formatted.
+        logging.getLogger(source).warning(message)
 
 
 def rename_kwargs(

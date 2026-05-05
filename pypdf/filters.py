@@ -163,7 +163,7 @@ def decompress(data: bytes) -> bytes:
                 error_str = str(error)
                 if error_str in known_errors:
                     continue
-                logger_warning(error_str, __name__)
+                logger_warning(error_str, source=__name__)
                 known_errors.add(error_str)
         return result_str
 
@@ -259,7 +259,7 @@ class FlateDecode:
     def _decode_png_prediction(data: bytes, columns: int, row_length: int) -> bytes:
         # PNG prediction can vary from row to row
         if (remainder := len(data) % row_length) != 0:
-            logger_warning("Image data is not rectangular. Adding padding.", __name__)
+            logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
             data += b"\x00" * (row_length - remainder)
             assert len(data) % row_length == 0
         output = []
@@ -371,7 +371,7 @@ class ASCIIHexDecode:
         if eod == -1:
             logger_warning(
                 "missing EOD in ASCIIHexDecode, check if output is OK",
-                __name__,
+                source=__name__,
             )
             hex_data = data
         else:
@@ -428,7 +428,7 @@ class RunLengthDecode:
         while True:
             if index >= data_length:
                 logger_warning(
-                    "missing EOD in RunLengthDecode, check if output is OK", __name__
+                    "missing EOD in RunLengthDecode, check if output is OK", source=__name__
                 )
                 break  # Reached end of string without an EOD
             length = data[index]
@@ -440,14 +440,14 @@ class RunLengthDecode:
                     # We will just ignore the last byte and raise a warning ...
                     if (index == data_length - 1) and (data[index : index + 1] == b"\n"):
                         logger_warning(
-                            "Found trailing newline in stream data, check if output is OK", __name__
+                            "Found trailing newline in stream data, check if output is OK", source=__name__
                         )
                         break
                     # Raising an exception here breaks all image extraction for this file, which might
                     # not be desirable. For this reason, indicate that the output is most likely wrong,
                     # as processing stopped after the first EOD marker. See issue #3517.
                     logger_warning(
-                        "Early EOD in RunLengthDecode, check if output is OK", __name__
+                        "Early EOD in RunLengthDecode, check if output is OK", source=__name__
                     )
                 break
             if length < 128:
@@ -525,7 +525,7 @@ class ASCII85Decode:
             return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
         except ValueError as error:
             if error.args[0] == "Ascii85 encoded byte sequences must end with b'~>'":
-                logger_warning("Ignoring missing Ascii85 end marker.", __name__)
+                logger_warning("Ignoring missing Ascii85 end marker.", source=__name__)
                 return a85decode(data, adobe=False, ignorechars=WHITESPACES_AS_BYTES)
             raise
 
@@ -759,7 +759,7 @@ class JBIG2Decode:
                 )
             if result.stderr:
                 for line in result.stderr.decode("utf-8").splitlines():
-                    logger_warning(line, __name__)
+                    logger_warning(line, source=__name__)
             if result.returncode != 0:
                 raise PdfStreamError(f"Unable to decode JBIG2 data. Exit code: {result.returncode}")
         return result.stdout
