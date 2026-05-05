@@ -787,7 +787,7 @@ class PageObject(DictionaryObject):
 
     @rotation.setter
     def rotation(self, r: float) -> None:
-        self[NameObject(PG.ROTATE)] = NumberObject((((int(r) + 45) // 90) * 90) % 360)
+        self[NameObject(PG.ROTATE)] = NumberObject(round(r / 90) * 90 % 360)
 
     def transfer_rotation_to_content(self) -> None:
         """
