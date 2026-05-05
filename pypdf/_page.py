@@ -2167,8 +2167,7 @@ class PageObject(DictionaryObject):
 
         Args:
             trigger: "open" or "close" trigger event.
-            action: An :py:class:`~pypdf.actions.Action` object;
-                    JavaScript is currently the only available action type.
+            action: An :py:class:`~pypdf.actions.Action` object.
 
         # Example: Display the page number when the page is opened
         >>> self.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);")))
@@ -2195,7 +2194,7 @@ class PageObject(DictionaryObject):
         trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
 
         if NameObject("/AA") not in self:
-            raise ValueError("An additional-actions dictionary is absent; nothing to delete")
+            return
 
         additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
 

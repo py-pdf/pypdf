@@ -16,7 +16,7 @@ def pdf_file_writer():
     return writer
 
 
-def test_page_add_action(pdf_file_writer, caplog):
+def test_page_add_action__errors(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
     with pytest.raises(
@@ -36,6 +36,10 @@ def test_page_add_action(pdf_file_writer, caplog):
             match = "Currently the only action type supported is JavaScript"
     ):
         page.add_action("close", "xyzzy")  # type: ignore
+
+
+def test_page_add_action__basic(pdf_file_writer):
+    page = pdf_file_writer.pages[0]
 
     # Add an open action without a pre-existing action dictionary
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -117,6 +121,33 @@ def test_page_add_action(pdf_file_writer, caplog):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
+    # Add an open and close action with a null object as the AA entry
+    page[NameObject("/AA")] = NullObject()
+    page.add_action("open", JavaScript("app.alert('Page opened');"))
+    page.add_action("close", JavaScript("app.alert('Page closed');"))
+    expected = {
+        "/O": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page opened');"
+        },
+        "/C": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page closed');"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("open")
+    page.delete_action("close")
+    assert page.get(NameObject("/AA")) is None
+
+
+def test_page_add_action(pdf_file_writer, caplog):
+    page = pdf_file_writer.pages[0]
+
     # Add an open action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             TypeError,
@@ -158,20 +189,6 @@ def test_page_add_action(pdf_file_writer, caplog):
     }
     assert page[NameObject("/AA")] == expected
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
-
-    # Add a close action without a pre-existing action dictionary
-    page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected = {
-        "/C": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('This is page ' + this.pageNum);"
-        }
-    }
-    assert page[NameObject("/AA")] == expected
-    page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
     # Add an open action when an additional-actions key exists, but is an empty dictionary
@@ -300,6 +317,62 @@ def test_page_add_action(pdf_file_writer, caplog):
     assert page.get(NameObject("/AA")) is None
 
 
+def test_page_add_action__chaining_with_dictionary(pdf_file_writer):
+    page = pdf_file_writer.pages[0]
+
+    page.add_action("open", JavaScript("app.alert('First action');"))
+    page.add_action("open", JavaScript("app.alert('Second action');"))
+    page.add_action("open", JavaScript("app.alert('Third action');"))
+
+    # Verify the chain is correct
+    aa = page[NameObject("/AA")]
+    first_action = aa[NameObject("/O")]
+    second_action = first_action[NameObject("/Next")]
+    third_action = second_action[NameObject("/Next")]
+
+    assert first_action[NameObject("/JS")] == "app.alert('First action');"
+    assert second_action[NameObject("/JS")] == "app.alert('Second action');"
+    assert third_action[NameObject("/JS")] == "app.alert('Third action');"
+    assert is_null_or_none(third_action[NameObject("/Next")])
+
+
+def test_page_add_action__chaining_with_array(pdf_file_writer):
+    page = pdf_file_writer.pages[0]
+
+    page.add_action("open", JavaScript("app.alert('First action');"))
+    action1_in_array = JavaScript("app.alert('Array action 1');")
+    action2_in_array = JavaScript("app.alert('Array action 2');")
+
+    # Create intermediate dict that will be /Next of the array
+    intermediate_dict = JavaScript("app.alert('Intermediate dict');")
+    action2_in_array[NameObject("/Next")] = intermediate_dict
+
+    # Set the first action's /Next to an array
+    page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject([action1_in_array, action2_in_array])
+
+    # Now add another action - this will:
+    # 1. Traverse and hit line 117 (if isinstance(next_, ArrayObject))
+    # 2. Set current to the last element (action2_in_array)
+    # 3. Loop again and hit line 118 (elif isinstance(next_, DictionaryObject))
+    #    because action2_in_array[/Next] = intermediate_dict
+    page.add_action("open", JavaScript("app.alert('Final action');"))
+
+    # Verify the structure
+    aa = page[NameObject("/AA")]
+    first_action = aa[NameObject("/O")]
+    next_array = first_action[NameObject("/Next")]
+
+    assert isinstance(next_array, ArrayObject)
+    assert len(next_array) == 2
+    # The last element of array has the intermediate dict as /Next
+    last_array_element = next_array[-1]
+    intermediate = last_array_element[NameObject("/Next")]
+    # The intermediate dict has the final action as /Next
+    final_action = intermediate[NameObject("/Next")]
+
+    assert final_action[NameObject("/JS")] == "app.alert('Final action');"
+
+
 def test_page_delete_action(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
@@ -308,18 +381,12 @@ def test_page_delete_action(pdf_file_writer):
         match = "The trigger must be 'open' or 'close'",
     ):
         page.delete_action("xyzzy")  # type: ignore
+ 
+    page.delete_action("open")
+    assert page.get(NameObject("/AA")) is None
 
-    with pytest.raises(
-        ValueError,
-        match = "An additional-actions dictionary is absent; nothing to delete",
-    ):
-        page.delete_action("open")
-
-    with pytest.raises(
-        ValueError,
-        match = "An additional-actions dictionary is absent; nothing to delete",
-    ):
-        page.delete_action("close")
+    page.delete_action("close")
+    assert page.get(NameObject("/AA")) is None
 
     page.add_action("open", JavaScript("app.alert('Page opened');"))
     page.add_action("close", JavaScript("app.alert('Page closed');"))
@@ -353,70 +420,3 @@ def test_page_delete_action(pdf_file_writer):
     assert page[NameObject("/AA")] == expected
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
-
-
-def test_page_add_action_chaining_with_dictionary_next(pdf_file_writer):
-    """Test chaining actions when /Next is a DictionaryObject to cover line 118."""
-    page = pdf_file_writer.pages[0]
-
-    # Add first action
-    page.add_action("open", JavaScript("app.alert('First action');"))
-
-    # Add second action - this will set the first action's /Next to this action
-    page.add_action("open", JavaScript("app.alert('Second action');"))
-
-    # Add third action - this will traverse the chain and hit line 118
-    # since the first action's /Next is a DictionaryObject (the second action)
-    page.add_action("open", JavaScript("app.alert('Third action');"))
-
-    # Verify the chain is correct
-    aa = page[NameObject("/AA")]
-    first_action = aa[NameObject("/O")]
-    second_action = first_action[NameObject("/Next")]
-    third_action = second_action[NameObject("/Next")]
-
-    assert first_action[NameObject("/JS")] == "app.alert('First action');"
-    assert second_action[NameObject("/JS")] == "app.alert('Second action');"
-    assert third_action[NameObject("/JS")] == "app.alert('Third action');"
-    assert is_null_or_none(third_action[NameObject("/Next")])
-
-
-def test_page_add_action_chaining_with_array_next(pdf_file_writer):
-    """Test chaining actions when /Next is an ArrayObject to cover line 117-118 branches."""
-    page = pdf_file_writer.pages[0]
-
-    # Add first action
-    page.add_action("open", JavaScript("app.alert('First action');"))
-
-    # Create an array with actions that have a Dictionary as /Next
-    action1_in_array = JavaScript("app.alert('Array action 1');")
-    action2_in_array = JavaScript("app.alert('Array action 2');")
-
-    # Create intermediate dict that will be /Next of the array
-    intermediate_dict = JavaScript("app.alert('Intermediate dict');")
-    action2_in_array[NameObject("/Next")] = intermediate_dict
-
-    # Set the first action's /Next to an array
-    page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject([action1_in_array, action2_in_array])
-
-    # Now add another action - this will:
-    # 1. Traverse and hit line 117 (if isinstance(next_, ArrayObject))
-    # 2. Set current to the last element (action2_in_array)
-    # 3. Loop again and hit line 118 (elif isinstance(next_, DictionaryObject))
-    #    because action2_in_array[/Next] = intermediate_dict
-    page.add_action("open", JavaScript("app.alert('Final action');"))
-
-    # Verify the structure
-    aa = page[NameObject("/AA")]
-    first_action = aa[NameObject("/O")]
-    next_array = first_action[NameObject("/Next")]
-
-    assert isinstance(next_array, ArrayObject)
-    assert len(next_array) == 2
-    # The last element of array has the intermediate dict as /Next
-    last_array_element = next_array[-1]
-    intermediate = last_array_element[NameObject("/Next")]
-    # The intermediate dict has the final action as /Next
-    final_action = intermediate[NameObject("/Next")]
-
-    assert final_action[NameObject("/JS")] == "app.alert('Final action');"
