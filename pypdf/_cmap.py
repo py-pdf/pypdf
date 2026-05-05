@@ -212,7 +212,7 @@ def process_cm_line(
         try:
             multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
         except binascii.Error as error:
-            logger_warning(f"Skipping broken line {line!r}: {error}", __name__)
+            logger_warning("Skipping broken line %(line)r: %(error)s",source= __name__,line=line,error=error)
     elif process_char:
         parse_bfchar(line, map_dict, int_entry)
     return process_rg, process_char, multiline_rg
@@ -309,7 +309,8 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
                     "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
                 )  # join is here as some cases where the code was split
             except BinasciiError as exception:
-                logger_warning(f"Got invalid hex string: {exception!s} ({lst[1]!r})", __name__)
+                logger_warning("Got invalid hex string: %(exception)s (%(item)r)",
+                               source=__name__,exception=exception,item=lst[1])
         map_dict[
             unhexlify(lst[0]).decode(
                 "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"

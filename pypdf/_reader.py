@@ -161,7 +161,7 @@ class PdfReader(PdfDocCommon):
             logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
-                __name__,
+                source=__name__,
             )
         self._stream_opened = False
         if isinstance(stream, (str, Path)):
@@ -220,7 +220,7 @@ class PdfReader(PdfDocCommon):
             return self._validated_root
         root = self.trailer.get(TK.ROOT)
         if is_null_or_none(root):
-            logger_warning('Cannot find "/Root" key in trailer', __name__)
+            logger_warning('Cannot find "/Root" key in trailer', source=__name__)
         elif (
             cast(DictionaryObject, cast(PdfObject, root).get_object()).get("/Type")
             == "/Catalog"
@@ -229,9 +229,9 @@ class PdfReader(PdfDocCommon):
                 DictionaryObject, cast(PdfObject, root).get_object()
             )
         else:
-            logger_warning("Invalid Root object in trailer", __name__)
+            logger_warning("Invalid Root object in trailer",source= __name__)
         if self._validated_root is None:
-            logger_warning('Searching object with "/Catalog" key', __name__)
+            logger_warning('Searching object with "/Catalog" key', source=__name__)
             number_of_objects = cast(int, self.trailer.get("/Size", 0))
             for i in range(number_of_objects):
                 if i >= self._root_object_recovery_limit:
@@ -242,13 +242,16 @@ class PdfReader(PdfDocCommon):
                     obj = None
                 if isinstance(obj, DictionaryObject) and obj.get("/Type") == "/Catalog":
                     self._validated_root = obj
-                    logger_warning(f"Root found at {obj.indirect_reference!r}", __name__)
+                    logger_warning("Root found at %(obj)r",
+                                    source= __name__,
+                                    obj=obj.indirect_reference)
                     break
         if self._validated_root is None:
             if not is_null_or_none(root) and "/Pages" in cast(DictionaryObject, cast(PdfObject, root).get_object()):
                 logger_warning(
-                    f"Possible root found at {cast(PdfObject, root).indirect_reference!r}, but missing /Catalog key",
-                    __name__
+                    "Possible root found at %(ref)r, but missing /Catalog key",
+                    source=__name__,
+                    ref=cast(PdfObject, root).indirect_reference
                 )
                 self._validated_root = cast(
                     DictionaryObject, cast(PdfObject, root).get_object()
@@ -370,8 +373,11 @@ class PdfReader(PdfDocCommon):
             if self.strict:
                 raise LimitReachedError(f"Value /N {n} for object {stmnum} exceeds maximum allowed value {max_n}.")
             logger_warning(
-                f"Value /N {n} for object {stmnum} exceeds maximum allowed value {max_n}. Limiting to {max_n}.",
-                src=__name__
+                "Value /N %(n)s for object %(stmnum)s exceeds maximum allowed value %(max_n)s. Limiting to %(max_n)s.",
+                source=__name__,
+                n=n,
+                stmnum=stmnum,
+                max_n=max_n,
             )
             n = max_n
 
@@ -412,9 +418,12 @@ class PdfReader(PdfDocCommon):
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 logger_warning(
-                    f"Invalid stream (index {i}) within object "
-                    f"{obj_num} 0: {exc}",
-                    __name__,
+                    "Invalid stream (index %(i)s) within object "
+                    "%(obj_num)s 0: %(exc)s",
+                    source=__name__,
+                    i=i,
+                    obj_num=obj_num,
+                    exc=exc
                 )
                 if self.strict:  # pragma: no cover
                     raise PdfReadError(
@@ -485,8 +494,10 @@ class PdfReader(PdfDocCommon):
                 )
                 if m is not None:
                     logger_warning(
-                        f"Object ID {indirect_reference.idnum},{indirect_reference.generation} ref repaired",
-                        __name__,
+                        "Object ID %(idnum)s,%(generation)s ref repaired",
+                        source=__name__,
+                        idnum=indirect_reference.idnum,
+                        generation=indirect_reference.generation
                     )
                     self.xref[indirect_reference.generation][
                         indirect_reference.idnum
@@ -546,9 +557,11 @@ class PdfReader(PdfDocCommon):
             )
             if m is not None:
                 logger_warning(
-                    f"Object {indirect_reference.idnum} {indirect_reference.generation} found",
-                    __name__,
-                )
+                        "Object %(idnum)s,%(generation)s found",
+                        source=__name__,
+                        idnum=indirect_reference.idnum,
+                        generation=indirect_reference.generation
+                    )
                 if indirect_reference.generation not in self.xref:
                     self.xref[indirect_reference.generation] = {}
                 self.xref[indirect_reference.generation][indirect_reference.idnum] = (
@@ -572,8 +585,10 @@ class PdfReader(PdfDocCommon):
                     )
             else:
                 logger_warning(
-                    f"Object {indirect_reference.idnum} {indirect_reference.generation} not defined.",
-                    __name__,
+                    "Object %(idnum)s %(generation)s not defined.",
+                    source=__name__,
+                    idnum=indirect_reference.idnum,
+                    generation=indirect_reference.generation
                 )
                 if self.strict:
                     raise PdfReadError("Could not find object.")
@@ -613,8 +628,10 @@ class PdfReader(PdfDocCommon):
         stream.seek(-1, 1)
         if extra and self.strict:
             logger_warning(
-                f"Superfluous whitespace found in object header {idnum} {generation}",  # type: ignore
-                __name__,
+                "Superfluous whitespace found in object header %(idnum)s %(generation)s",
+                source=__name__,
+                idnum=idnum,
+                generation=generation
             )
         return int(idnum), int(generation)
 
@@ -630,10 +647,10 @@ class PdfReader(PdfDocCommon):
         self, generation: int, idnum: int, obj: Optional[PdfObject]
     ) -> Optional[PdfObject]:
         if (generation, idnum) in self.resolved_objects:
-            msg = f"Overwriting cache for {generation} {idnum}"
+            msg = "Overwriting cache for %(generation)s %(idnum)s"
             if self.strict:
                 raise PdfReadError(msg)
-            logger_warning(msg, __name__)
+            logger_warning(msg,source= __name__,generation=generation,idnum=idnum)
         self.resolved_objects[(generation, idnum)] = obj
         if obj is not None:
             obj.indirect_reference = IndirectObject(idnum, generation, self)
@@ -667,7 +684,9 @@ class PdfReader(PdfDocCommon):
         if xref_issue_nr != 0:
             if self.strict and xref_issue_nr:
                 raise PdfReadError("Broken xref table")
-            logger_warning(f"incorrect startxref pointer({xref_issue_nr})", __name__)
+            logger_warning("incorrect startxref pointer(%(xref_issue_nr)s)",
+                            source= __name__,
+                            xref_issue_nr=xref_issue_nr)
 
         # read all cross-reference tables and their trailers
         self._read_xref_tables_and_trailers(stream, startxref, xref_issue_nr)
@@ -709,8 +728,11 @@ class PdfReader(PdfDocCommon):
                         self.read_object_header(stream)
                     except ValueError:
                         logger_warning(
-                            f"Ignoring wrong pointing object {id} {gen} (offset {xref_entry[id]})",
-                            __name__,
+                            "Ignoring wrong pointing object %(id)s %(gen)s (offset %(entry)s)",
+                            source=__name__,
+                            id=id,
+                            gen=gen,
+                            entry=xref_entry[id]
                         )
                         del xref_entry[id]  # we can delete the id, we are parsing ids
             stream.seek(loc, 0)  # return to where it was
@@ -730,7 +752,9 @@ class PdfReader(PdfDocCommon):
                     f"PDF starts with '{header_byte.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            logger_warning(f"invalid pdf header: {header_byte!r}", __name__)
+            logger_warning("invalid pdf header: %(header_byte!r)s",
+                            source=__name__,
+                            header_byte=header_byte)
         stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
@@ -751,19 +775,19 @@ class PdfReader(PdfDocCommon):
                 ):
                     # Consider the file as truncated while
                     # having enough confidence to carry on.
-                    logger_warning("EOF marker seems truncated", __name__)
+                    logger_warning("EOF marker seems truncated",source= __name__)
                     break
                 first = False
             if b"startxref" in line:
                 logger_warning(
                     "CAUTION: startxref found while searching for %%EOF. "
                     "The file might be truncated and some data might not be read.",
-                    __name__,
+                    source=__name__,
                 )
             if stream.tell() < HEADER_SIZE:
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
-                logger_warning("EOF marker not found", __name__)
+                logger_warning("EOF marker not found",source= __name__)
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
@@ -785,7 +809,7 @@ class PdfReader(PdfDocCommon):
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
             startxref = int(line[9:].strip())
-            logger_warning("startxref on same line as offset", __name__)
+            logger_warning("startxref on same line as offset",source= __name__)
         else:
             line = read_previous_line(stream)
             if not line.startswith(b"startxref"):
@@ -807,7 +831,7 @@ class PdfReader(PdfDocCommon):
                 if self.strict:
                     logger_warning(
                         "Xref table not zero-indexed. ID numbers for objects will be corrected.",
-                        __name__,
+                        source= __name__,
                     )
                     # if table not zero indexed, could be due to error from when PDF was created
                     # which will lead to mismatched indices later on, only warned and corrected if self.strict==True
@@ -818,7 +842,7 @@ class PdfReader(PdfDocCommon):
             if not isinstance(size, int):
                 logger_warning(
                     "Invalid/Truncated xref table. Rebuilding it.",
-                    __name__,
+                    source=__name__,
                 )
                 self._rebuild_xref_table(stream)
                 stream.read()
@@ -867,16 +891,16 @@ class PdfReader(PdfDocCommon):
                     f = re.search(rf"{num}\s+(\d+)\s+obj".encode(), buf)
                     if f is None:
                         logger_warning(
-                            f"entry {num} in Xref table invalid; object not found",
-                            __name__,
+                            "entry %(num)s in Xref table invalid; object not found",
+                            source=__name__,num=num
                         )
                         generation = 65535
                         offset = -1
                         entry_type_b = b"f"
                     else:
                         logger_warning(
-                            f"entry {num} in Xref table invalid but object found",
-                            __name__,
+                            "entry %(num)s in Xref table invalid but object found",
+                            source=__name__,num=num
                         )
                         generation = int(f.group(1))
                         offset = f.start()
@@ -934,8 +958,8 @@ class PdfReader(PdfDocCommon):
             # Detect circular /Prev references in the xref chain
             if startxref in visited_xref_offsets:
                 logger_warning(
-                    f"Circular xref chain detected at offset {startxref}, stopping",
-                    __name__,
+                    "Circular xref chain detected at offset %(startxref)s, stopping",
+                    source=__name__,startxref=startxref
                 )
                 break
             visited_xref_offsets.add(startxref)
@@ -958,7 +982,8 @@ class PdfReader(PdfDocCommon):
                 except Exception as e:
                     if TK.ROOT in self.trailer:
                         logger_warning(
-                            f"Previous trailer cannot be read: {e.args}", __name__
+                            "Previous trailer cannot be read: %(el)s",
+                            source= __name__,el=e.args
                         )
                         break
                     raise PdfReadError(f"Trailer cannot be read: {e!s}")
@@ -1000,8 +1025,9 @@ class PdfReader(PdfDocCommon):
                 self._read_pdf15_xref_stream(stream)
             except Exception:
                 logger_warning(
-                    f"XRef object at {new_trailer['/XRefStm']} can not be read, some object may be missing",
-                    __name__,
+                    "XRef object at %(newtrailer)s can not be read, some object may be missing",
+                    source=__name__,
+                    newtrailer=new_trailer["/XRefStm"]
                 )
             stream.seek(p, 0)
         if "/Prev" in new_trailer:
@@ -1019,7 +1045,7 @@ class PdfReader(PdfDocCommon):
                 )
             logger_warning(
                 "/Prev=0 in the trailer - assuming there is no previous xref table",
-                __name__,
+                source=__name__,
             )
             return None
         # bad xref character at startxref. Let's see if we can find
@@ -1041,7 +1067,7 @@ class PdfReader(PdfDocCommon):
         # no xref table found at specified location
         if "/Root" in self.trailer and not self.strict:
             # if Root has been already found, just raise warning
-            logger_warning("Invalid parent xref., rebuild xref", __name__)
+            logger_warning("Invalid parent xref., rebuild xref",source= __name__)
             try:
                 self._rebuild_xref_table(stream)
                 return None
@@ -1075,8 +1101,10 @@ class PdfReader(PdfDocCommon):
                         )
                     new_v = max(0, max_entries - total)
                     logger_warning(
-                        f"Clamping XRef count from {pair_value_int} to {new_v} to fit stream size.",
-                        src=__name__
+                        "Clamping XRef count from %(pair_value_int)s to %(new_v)s to fit stream size.",
+                        source=__name__,
+                        pair_value_int=pair_value_int,
+                        new_v=new_v,
                     )
                     pair_value_int = new_v
 
@@ -1242,7 +1270,7 @@ class PdfReader(PdfDocCommon):
                 self.xref[generation_number] = {}
             self.xref[generation_number][object_number] = object_start
 
-        logger_warning("parsing for Object Streams", __name__)
+        logger_warning("parsing for Object Streams",source= __name__)
         for generation_number in self.xref:
             for object_number in self.xref[generation_number]:
                 # get_object in manual
@@ -1269,9 +1297,13 @@ class PdfReader(PdfDocCommon):
                         actual_count += 1
                     if actual_count != obj.get("/N"):  # pragma: no cover
                         logger_warning(  # pragma: no cover
-                            f"found {actual_count} objects within Object({object_number},{generation_number})"
-                            f" whereas {obj.get('/N')} expected",
-                            __name__,
+                            "found %(actual_count)s objects within Object(%(object_number)s,%(generation_number)s)"
+                            " whereas %(object)s expected",
+                            source=__name__,
+                            actual_count=actual_count,
+                            object_number=object_number,
+                            generation_number=generation_number,
+                            object=obj.get("/N")
                         )
                 except Exception:  # could be multiple causes
                     pass
@@ -1398,8 +1430,9 @@ class PdfReader(PdfDocCommon):
             obj = o.get_object()
             if "/Parent" in obj:
                 logger_warning(
-                    f"Top Level Form Field {obj.indirect_reference} have a non-expected parent",
-                    __name__,
+                    "Top Level Form Field %(object)s have a non-expected parent",
+                    source=__name__,
+                    object=obj.indirect_reference
                 )
             obj[NameObject("/Parent")] = interim.indirect_reference
         return interim

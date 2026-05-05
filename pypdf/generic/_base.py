@@ -497,7 +497,7 @@ class FloatObject(float, PdfObject):
             # If this isn't a valid decimal (happens in malformed PDFs)
             # fallback to 0
             logger_warning(
-                f"{e} : FloatObject ({value}) invalid; use 0.0 instead", __name__
+                "%(e)s : FloatObject (%(value)s) invalid; use 0.0 instead",source= __name__,e=e,value=value
             )
             return float.__new__(cls, 0.0)
 
@@ -552,7 +552,7 @@ class NumberObject(int, PdfObject):
         try:
             return int.__new__(cls, int(value))
         except ValueError:
-            logger_warning(f"NumberObject({value}) invalid; use 0 instead", __name__)
+            logger_warning("NumberObject(%(value)s) invalid; use 0 instead",source= __name__,value=value)
             return int.__new__(cls, 0)
 
     def clone(
@@ -689,8 +689,8 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
                 text_string_object = str.__new__(cls, original_bytes.decode("utf-16"))
             except UnicodeDecodeError as exception:
                 logger_warning(
-                    f"{exception!s}\ninitial string:{exception.object!r}",
-                    __name__,
+                    "%(exception)s\ninitial string:%(object)r",
+                    source=__name__,exception=exception,object=exception.object
                 )
                 text_string_object = str.__new__(cls, exception.object[: exception.start].decode("utf-16"))
             text_string_object._original_bytes = original_bytes
@@ -917,9 +917,9 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
             if not pdf.strict:
                 logger_warning(
-                    f"Illegal character in NameObject ({name!r}), "
+                    "Illegal character in NameObject (%(name)r), "
                     "you may need to adjust NameObject.CHARSETS",
-                    __name__,
+                    source=__name__,name=name
                 )
                 return NameObject(name.decode("charmap"))
             raise PdfReadError(

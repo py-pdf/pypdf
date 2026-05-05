@@ -153,7 +153,9 @@ class Font:
             if not isinstance(w_entry, (int, float)):
                 # We should never get here due to skip_count above. But
                 # sometimes we do.
-                logger_warning(f"Expected numeric value for width, got {w_entry}. Ignoring it.", __name__)
+                logger_warning("Expected numeric value for width, got %(w_entry)s. Ignoring it.",
+                                source= __name__,
+                                w_entry=w_entry)
                 continue
             # check for format (1): `int [int int int int ...]`
             w_next_entry = _w[idx + 1].get_object()
@@ -197,8 +199,8 @@ class Font:
                 # This handles the case of out of bounds (reaching the end of the width definitions
                 # while expecting more elements).
                 logger_warning(
-                    f"Invalid font width definition. Last element: {w_entry}.",
-                    __name__
+                    "Invalid font width definition. Last element: %(w_entry).",
+                    source=__name__,w_entry=w_entry
                 )
 
     @staticmethod
@@ -264,7 +266,12 @@ class Font:
                     font_file = font_descriptor_obj[source_key].get_object()
                     font_descriptor_kwargs["font_file"] = font_file
                 except PdfReadError as e:
-                    logger_warning(f"Failed to get {source_key!r} in {font_descriptor_obj}: {e}", __name__)
+                    logger_warning("Failed to get %(source_key)r in %(font_descriptor_obj)s: %(e)r",
+                                    source= __name__,
+                                    source_key=source_key,
+                                    font_descriptor_obj=font_descriptor_obj,
+                                    exception=e
+                                    )
         return font_descriptor_kwargs
 
     @classmethod
