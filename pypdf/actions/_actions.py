@@ -33,10 +33,10 @@ class Action(DictionaryObject, ABC):
     @classmethod
     def _create_new(cls, page: "PageObject", trigger: Literal["open", "close"], action: "Action") -> None:
         """
-        Create a new action and add it to the PageObject.
+        Create a new action and add it to the page.
 
         Args:
-            page: The PageObject instance to add the embedded file to.
+            page: The page to add the action to.
             trigger: "open" or "close" trigger event.
             action: An :py:class:`~pypdf.actions.Action` object;
                     JavaScript is currently the only available action type.
