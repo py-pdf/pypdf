@@ -984,21 +984,22 @@ class PdfWriter(PdfDocCommon):
             DictionaryObject,
             appearance_stream_resources.get("/Font", DictionaryObject()).get_object()
         )
-        if appearance_stream_font_resources:
-            target_fonts = target_resource_dict.setdefault(NameObject("/Font"), DictionaryObject().get_object())
-            for font_name, font_res in appearance_stream_font_resources.items():
-                if font_name not in target_fonts:
-                    font_res_ref = self._add_font_resource(
-                        target_fonts,
-                        cast(DictionaryObject, font_res),
-                        font_name
-                    )
-                    appearance_stream_font_resources[font_name] = font_res_ref
-                else:
-                    existing_font = target_fonts[font_name]
-                    appearance_stream_font_resources[font_name] = getattr(
-                        existing_font, "indirect_reference", existing_font
-                    )
+        # Assume that appearance_stream_font_resources is not empty. It shouldn't be, because this code is
+        # only reached when dealing with text field annotations, which by definition have an associated font.
+        target_fonts = target_resource_dict.setdefault(NameObject("/Font"), DictionaryObject().get_object())
+        for font_name, font_res in appearance_stream_font_resources.items():
+            if font_name not in target_fonts:
+                font_res_ref = self._add_font_resource(
+                    target_fonts,
+                    cast(DictionaryObject, font_res),
+                    font_name
+                )
+                appearance_stream_font_resources[font_name] = font_res_ref
+            else:
+                existing_font = target_fonts[font_name]
+                appearance_stream_font_resources[font_name] = getattr(
+                    existing_font, "indirect_reference", existing_font
+                )
 
     FFBITS_NUL = FA.FfBits(0)
 
