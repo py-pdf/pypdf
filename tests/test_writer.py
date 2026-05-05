@@ -1,8 +1,10 @@
 """Test the pypdf._writer module."""
 
+import os
 import re
 import shutil
 import subprocess
+import sys
 from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -38,7 +40,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, is_sublist
+from . import RESOURCE_ROOT, SAMPLE_ROOT, TESTS_ROOT, get_data_from_url, is_sublist
 from .test_images import image_similarity
 
 GHOSTSCRIPT_BINARY = shutil.which("gs")
@@ -1812,6 +1814,67 @@ def test_update_form_fields2(caplog):
         "test2.p3 YY": "21",
     }
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_update_form_fields3(caplog, tmp_path):
+    url = "https://github.com/user-attachments/files/21073581/CERERE.INMATRICULARE.form.pdf"
+    name = "iss3361.pdf"
+    writer = PdfWriter()
+    output = BytesIO()
+    writer.append(BytesIO(get_data_from_url(url, name=name)))
+    data = {
+        "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+        "localitatea": "شهرزاد",
+        "strada": "Căpitan Nicolae Licăreț",
+        "adresa_judet": "Конференция",
+    }
+    writer.update_page_form_field_values(writer.pages[0], data, auto_regenerate=False, flatten=True)
+    writer.write(output)
+    output.seek(0)
+    reader = PdfReader(output)
+    extracted_text = reader.pages[0].extract_text()
+    for expected_value in data.values():
+        if expected_value != "شهرزاد":
+            assert expected_value in extracted_text
+    assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+
+    # Also test for the case where fonttools is missing.
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
+    # We should have just downloaded the issue-file, so we can link to that.
+    file_path: Path = TESTS_ROOT / "pdf_cache" / name
+    source_file = tmp_path / "script.py"
+    source_file.write_text(
+        """
+import sys
+
+import pytest
+
+sys.modules["fontTools.ttLib"] = None
+from pypdf._font import Font
+from pypdf._writer import PdfWriter
+
+writer = PdfWriter()
+writer.append(sys.argv[1])
+data = {"subsemnatul": "Σ"}
+writer.update_page_form_field_values(writer.pages[0], data, auto_regenerate=False, flatten=True)
+
+""",
+        encoding="utf-8"
+    )
+
+    try:
+        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
+    except KeyError:
+        env["PYTHONPATH"] = "."
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, source_file, str(file_path)],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert b"Unable to use embedded font for encoding" in result.stderr
 
 
 @pytest.mark.enable_socket
