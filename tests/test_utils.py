@@ -1,6 +1,7 @@
 """Test the pypdf._utils module."""
 import functools
 import io
+import logging
 import re
 import subprocess
 import sys
@@ -22,6 +23,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     format_iso8824_date,
     logger_error,
+    logger_warning,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -343,6 +345,146 @@ def test_logger_error(caplog):
     logger_error(message, source=__name__, encoding=encoding)
     assert "Advanced encoding {'/key': 'value'} not implemented yet" in caplog.text
 
+def test_logger_warning_repr_str(caplog):
+    caplog.set_level(logging.WARNING)
+    message = "Skipping broken line %(line)r:%(error)s"
+    line = "some line broken"
+    error = "error"
+    logger_warning(message, source=__name__, line=line, error=error)
+    assert len(caplog.records)==1
+    record=caplog.records[0]
+    actual_message = f"Skipping broken line {line!r}:{error!s}"
+    assert record.levelname == "WARNING"
+    assert record.message == actual_message
+
+def test_logger_warning_object(caplog):
+    caplog.set_level(logging.WARNING)
+    class DummyError(Exception):
+        def __init__(self,obj) -> None:
+            self.object=obj
+            super().__init__(f"Something went wrong with {obj!r}")
+    obj={"key":111}
+    exc=DummyError(obj)
+    logger_warning("%(exception)s\ninitial string:%(object)r",
+        source=__name__,
+        exception=exc,
+        object=exc.object)
+    assert len(caplog.records) ==1
+    record=caplog.records[0]
+    actual_message=record.getMessage()
+    expected = f"{exc}\ninitial string:{obj!r}"
+    assert actual_message == expected
+
+
+def test_strict_pdf_raises_error():
+    class DummyPdf:
+        strict=True
+    pdf=DummyPdf()
+    msg="Multiple definitions in dictionary at byte %(streamTell)s for key %(key)s"
+
+    with pytest.raises(PdfReadError) as exc:
+        if pdf is not None and pdf.strict:
+            raise PdfReadError(msg)
+    assert exc.value.args[0] == msg
+
+def test_non_strict_pdf_warning(caplog):
+    caplog.set_level(logging.WARNING)
+    class DummyStream:
+        def __init__(self,pos: int =1234) -> None:
+            self._pos=pos
+        def tell(self) -> int:
+            return self._pos
+    class DummyPdf:
+        strict=False
+    pdf=DummyPdf()
+    stream=DummyStream()
+    key=NameObject("/key")
+    msg="Multiple definitions in dictionary at byte %(streamTell)s for key %(key)s"
+    if pdf is not None and pdf.strict:
+        raise PdfReadError(msg)
+    logger_warning(msg,source=__name__,streamTell=hex(stream.tell()),key=key)
+    assert len(caplog.records) == 1
+    record=caplog.records[0]
+    expected=f"Multiple definitions in dictionary at byte {hex(stream.tell())} for key {key}"
+    assert record.levelname == "WARNING"
+    assert expected == record.getMessage()
+
+def test_logger_warning_root_found(caplog):
+    caplog.set_level(logging.WARNING)
+    class DummyClass:
+        indirect_reference="ref-1"
+    logger_warning("Root found at %(obj)r",source=__name__,obj=DummyClass.indirect_reference)
+    assert len(caplog.records) == 1
+    record=caplog.records[0]
+    assert record.levelname == "WARNING"
+    excepted=f"Root found at {DummyClass.indirect_reference!r}"
+    assert record.getMessage() == excepted
+
+def test_unexpected_escaped_string(caplog):
+    caplog.set_level(logging.WARNING)
+    tok = b"hello123"
+    msg = "Unexpected escaped string:%(string)s"
+    logger_warning(msg, source=__name__, string=tok.decode("utf-8", "ignore"))
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    expected = "Unexpected escaped string:hello123"
+    assert record.levelname == "WARNING"
+    assert record.message == expected
+
+def test_logger_warning_with_exception(caplog):
+    caplog.set_level(logging.WARNING)
+    state = True
+    try:
+        raise Exception("boom")
+    except Exception as exc:
+        logger_warning(
+            "set_need_appearances_writer(%(state)s) catch : %(exc)s",
+            source=__name__,
+            state=state,
+            exc=exc
+        )
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    expected = f"set_need_appearances_writer({state}) catch : boom"
+    assert record.levelname == "WARNING"
+    assert record.message == expected
+
+def test_xobject_duplicate_logs_warning(caplog):
+    caplog.set_level(logging.WARNING)
+    pg_xo_res = {"XO1": "ref1"}  # already exists
+    xobject_name = "XO1"
+    xobject_ref = "ref2"
+    if xobject_name not in pg_xo_res:
+        pg_xo_res[xobject_name] = xobject_ref
+    else:
+        logger_warning(
+            "XObject %(xobject_name)r already added to page resources. This might be an issue.",
+            source=__name__,
+            xobject_name=xobject_name
+        )
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    expected = f"XObject {xobject_name!r} already added to page resources. This might be an issue."
+    assert record.levelname == "WARNING"
+    assert record.message == expected
+
+def test_logger_warning_layouts(caplog):
+    caplog.set_level(logging.WARNING)
+    class Dummy:
+        def __init__(self) -> None:
+            self._valid_layouts = ["SinglePage", "TwoPageLeft"]
+    dummy = Dummy()
+    logger_warning(
+        "Layout should be one of: %(layouts)s",
+        source=__name__,
+        layouts=("", "".join(dummy._valid_layouts))
+    )
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    expected_layouts = ("", "".join(dummy._valid_layouts))
+    expected = f"Layout should be one of: {expected_layouts}"
+    assert record.levelname == "WARNING"
+    assert record.message == expected
 
 def test_rename_kwargs():
     def deprecation_bookmark_nofail(**aliases: str) -> Callable:

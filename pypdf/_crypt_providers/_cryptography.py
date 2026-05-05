@@ -81,7 +81,7 @@ class CryptAES(CryptBase):
             return data
 
         if not strict and len(data) % 16 != 0:
-            logger_warning("Adding missing padding.", src=__name__)
+            logger_warning("Adding missing padding.", source=__name__)
             padder = PKCS7(128).padder()
             data = padder.update(data) + padder.finalize()
 
@@ -99,7 +99,7 @@ class CryptAES(CryptBase):
         except ValueError as exception:
             if strict:
                 raise PdfStreamError(exception)
-            logger_warning(f"Ignoring padding error: {exception}", src=__name__)
+            logger_warning("Ignoring padding error: %(exception)r", source=__name__,exc=exception)
             return padded_data[: -padded_data[-1]]
 
 
