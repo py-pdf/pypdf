@@ -58,7 +58,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
-from .actions import Action
+from .actions import Action, TriggerType
 from .constants import (
     _INLINE_IMAGE_KEY_MAPPING,
     _INLINE_IMAGE_VALUE_MAPPING,
@@ -2161,7 +2161,7 @@ class PageObject(DictionaryObject):
         else:
             self[NameObject("/Annots")] = value
 
-    def add_action(self, trigger: Literal["open", "close"], action: Action) -> None:
+    def add_action(self, trigger: TriggerType, action: Action) -> None:
         """
         Add an action which will launch on the open or close trigger event of this page.
 

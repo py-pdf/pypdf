@@ -256,7 +256,10 @@ def test_page_add_action(pdf_file_writer, caplog):
     page.delete_action("open")
     assert page.get(NameObject("/AA")) is None
 
-    # Add an open action when an additional-actions key exists and its tree contains an array
+
+def test_page_add_action__with_existing_array(pdf_file_writer):
+    page = pdf_file_writer.pages[0]
+
     page[NameObject("/AA")] = DictionaryObject()
     # The trigger events take dictionary values, not arrays, so first add an action on which to attach the array
     page.add_action("open", JavaScript("app.alert('Action to attach an array of actions');"))

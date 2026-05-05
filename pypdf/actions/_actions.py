@@ -20,6 +20,9 @@ if TYPE_CHECKING:
     from .._page import PageObject
 
 
+TriggerType = Literal["open", "close"]
+
+
 class Action(DictionaryObject, ABC):
     """An action dictionary defines the characteristics and behaviour of an action."""
     def __init__(self) -> None:
@@ -31,15 +34,14 @@ class Action(DictionaryObject, ABC):
         self[NameObject("/Next")] = NullObject()  # Optional
 
     @classmethod
-    def _create_new(cls, page: "PageObject", trigger: Literal["open", "close"], action: "Action") -> None:
+    def _create_new(cls, page: "PageObject", trigger: TriggerType, action: "Action") -> None:
         """
         Create a new action and add it to the page.
 
         Args:
             page: The page to add the action to.
             trigger: "open" or "close" trigger event.
-            action: An :py:class:`~pypdf.actions.Action` object;
-                    JavaScript is currently the only available action type.
+            action: An :py:class:`~pypdf.actions.Action` object.
         """
         if trigger not in {"open", "close"}:
             raise ValueError("The trigger must be 'open' or 'close'")

@@ -13,4 +13,5 @@ from ._actions import Action, JavaScript
 __all__ = [
     "Action",
     "JavaScript",
+    "TriggerType",
 ]
