@@ -115,7 +115,7 @@ class Action(DictionaryObject, ABC):
 
             if isinstance(next_, ArrayObject):
                 current = next_[-1]
-            elif isinstance(next_, DictionaryObject):
+            else:
                 current = next_
 
         if not is_null_or_none(current[NameObject("/Next")]) and id(current[NameObject("/Next")]) in visited:
