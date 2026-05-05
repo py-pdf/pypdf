@@ -11,6 +11,7 @@ __pycache__/
 # in-project virtual environments
 venv/
 .venv/
+
 # Code coverage artifacts
 .coverage*
 coverage.xml
