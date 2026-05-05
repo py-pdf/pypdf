@@ -1,5 +1,6 @@
 """Test the pypdf._encryption module."""
 import hashlib
+import re
 import secrets
 from io import BytesIO
 from typing import NoReturn
@@ -11,8 +12,8 @@ from pypdf import PasswordType, PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
 from pypdf._encryption import AlgV5, CryptAES, CryptRC4
-from pypdf.errors import DependencyError, PdfReadError
-from tests import RESOURCE_ROOT, SAMPLE_ROOT
+from pypdf.errors import DependencyError, PdfReadError, PdfStreamError
+from tests import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
 USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
@@ -359,7 +360,7 @@ def test_aes_decrypt__empty_data_section():
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_aes_decrypt__wrong_padding():
+def test_aes_decrypt__wrong_padding(caplog):
     # Use fixed values for reliability in testing these.
     # Depending on the input and values chosen during encryption, some cases might
     # not raise the desired exception, but this is out of our control.
@@ -371,13 +372,39 @@ def test_aes_decrypt__wrong_padding():
     )
 
     assert aes.decrypt(encrypted) == original
+    assert aes.decrypt(encrypted, strict=False) == original
+
     for i in range(256):
         broken = encrypted[:-1] + bytes([i])
         if broken == encrypted:
             # We will at some point in time generate the original valid encrypted bytes.
             continue
-        with pytest.raises(ValueError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
+        with pytest.raises(PdfStreamError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
             aes.decrypt(broken)
+
+        assert aes.decrypt(broken, strict=False) != original
+        assert caplog.messages != []
+        assert re.match(
+            r"^Ignoring padding error: (Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$",
+            caplog.messages[0]
+        )
+        caplog.clear()
+
+    with pytest.raises(
+            PdfStreamError,
+            match=(
+                r"^(The length of the provided data is not a multiple of the block length\.|"
+                r"Data must be padded to 16 byte boundary in CBC mode)$"
+            )
+    ):
+        aes.decrypt(encrypted[:-2])
+
+    assert aes.decrypt(encrypted[:-2], strict=False) != original
+    assert caplog.messages[0] == "Adding missing padding."
+    assert re.match(
+        r"^Ignoring padding error: (Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$",
+        caplog.messages[1]
+    )
 
 
 @pytest.mark.samples
@@ -479,3 +506,23 @@ def test_aes256_decrypt_does_not_call_md5(monkeypatch):
     assert result != PasswordType.NOT_DECRYPTED
     assert len(reader.pages) > 0
     reader.pages[0].extract_text()
+
+
+@pytest.mark.enable_socket
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_reader__decryption_error_handling(caplog) -> None:
+    url = "https://github.com/user-attachments/files/26631168/757.pdf"
+    name = "issue3725.pdf"
+    data = get_data_from_url(url, name=name)
+
+    reader = PdfReader(BytesIO(data), strict=False)
+    assert len(reader.pages) == 7
+    assert caplog.messages != []
+    assert re.match(
+        r"^Ignoring padding error: (Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$",
+        caplog.messages[0]
+    )
+
+    with pytest.raises(PdfStreamError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
+        reader = PdfReader(BytesIO(data), strict=True)
+        _ = list(reader.pages)

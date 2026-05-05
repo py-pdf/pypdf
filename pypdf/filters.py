@@ -58,9 +58,8 @@ from ._utils import (
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import FilterTypeAbbreviations as FTA
 from .constants import FilterTypes as FT
-from .constants import ImageAttributes as IA
+from .constants import ImageAttributes, StreamAttributes
 from .constants import LzwFilterParameters as LZW
-from .constants import StreamAttributes as SA
 from .errors import DependencyError, LimitReachedError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
@@ -80,6 +79,9 @@ LZW_MAX_OUTPUT_LENGTH = 75_000_000
 RUN_LENGTH_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000
+FLATE_MAX_COLUMNS = 250_000
+FLATE_MAX_ROW_LENGTH = 4_000_000
+FLATE_MAX_BUFFER_SIZE = 75_000_000
 
 # Reuse cached 1-byte values in the fallback loop to avoid per-byte allocations.
 _SINGLE_BYTES = tuple(bytes((i,)) for i in range(256))
@@ -201,23 +203,27 @@ class FlateDecode:
             columns, colors, bits_per_component = FlateDecode._get_parameters(parameters)
 
             # PNG predictor can vary by row and so is the lead byte on each row
-            rowlength = (
+            row_length = (
                 math.ceil(columns * colors * bits_per_component / 8) + 1
             )  # number of bytes
+            if row_length > FLATE_MAX_ROW_LENGTH:
+                raise LimitReachedError(
+                    f"Row length of {row_length} exceeds defined limit of {FLATE_MAX_ROW_LENGTH}."
+                )
 
             # TIFF prediction:
             if predictor == 2:
-                rowlength -= 1  # remove the predictor byte
-                bpp = rowlength // columns
-                str_data = bytearray(str_data)
-                for i in range(len(str_data)):
-                    if i % rowlength >= bpp:
-                        str_data[i] = (str_data[i] + str_data[i - bpp]) % 256
-                str_data = bytes(str_data)
+                row_length -= 1  # remove the predictor byte
+                bpp = row_length // columns
+                str_data_mut = bytearray(str_data)
+                for i in range(len(str_data_mut)):
+                    if i % row_length >= bpp:
+                        str_data_mut[i] = (str_data_mut[i] + str_data_mut[i - bpp]) % 256
+                str_data = bytes(str_data_mut)
             # PNG prediction:
             elif 10 <= predictor <= 15:
                 str_data = FlateDecode._decode_png_prediction(
-                    str_data, columns, rowlength
+                    str_data, columns, row_length
                 )
             else:
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
@@ -233,52 +239,64 @@ class FlateDecode:
             return _value
 
         columns = get(key=LZW.COLUMNS, default=1)
+        if columns > FLATE_MAX_COLUMNS:
+            raise LimitReachedError(f"Number of columns {columns} exceeds defined limit of {FLATE_MAX_COLUMNS}.")
+
         colors = get(key=LZW.COLORS, default=1)
+        if colors > 16:
+            raise LimitReachedError(
+                f"Color value {colors} exceeds limit of 16. "
+                f"Please open an issue if this limits valid use cases."
+            )
+
         bits_per_component = get(key=LZW.BITS_PER_COMPONENT, default=8)
+        if bits_per_component > 16:
+            raise PdfReadError(f"More than 16 bits per component are not allowed: {bits_per_component}")
+
         return columns, colors, bits_per_component
 
     @staticmethod
-    def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
+    def _decode_png_prediction(data: bytes, columns: int, row_length: int) -> bytes:
         # PNG prediction can vary from row to row
-        if (remainder := len(data) % rowlength) != 0:
-            logger_warning("Image data is not rectangular. Adding padding.",source= __name__)
-            data += b"\x00" * (rowlength - remainder)
-            assert len(data) % rowlength == 0
+        if (remainder := len(data) % row_length) != 0:
+            logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
+            data += b"\x00" * (row_length - remainder)
+            assert len(data) % row_length == 0
         output = []
-        prev_rowdata = (0,) * rowlength
-        bpp = (rowlength - 1) // columns  # recomputed locally to not change params
-        for row in range(0, len(data), rowlength):
-            rowdata: list[int] = list(data[row : row + rowlength])
-            filter_byte = rowdata[0]
+        previous_row_data = (0,) * row_length
+        bpp = (row_length - 1) // columns  # recomputed locally to not change params
+        for row in range(0, len(data), row_length):
+            row_data: list[int] = list(data[row : row + row_length])
+            filter_byte = row_data[0]
 
             if filter_byte == 0:
                 # PNG None Predictor
                 pass
             elif filter_byte == 1:
                 # PNG Sub Predictor
-                for i in range(bpp + 1, rowlength):
-                    rowdata[i] = (rowdata[i] + rowdata[i - bpp]) % 256
+                for i in range(bpp + 1, row_length):
+                    row_data[i] = (row_data[i] + row_data[i - bpp]) % 256
             elif filter_byte == 2:
                 # PNG Up Predictor
-                for i in range(1, rowlength):
-                    rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
+                for i in range(1, row_length):
+                    row_data[i] = (row_data[i] + previous_row_data[i]) % 256
             elif filter_byte == 3:
                 # PNG Average Predictor
                 for i in range(1, bpp + 1):
-                    floor = prev_rowdata[i] // 2
-                    rowdata[i] = (rowdata[i] + floor) % 256
-                for i in range(bpp + 1, rowlength):
-                    left = rowdata[i - bpp]
-                    floor = (left + prev_rowdata[i]) // 2
-                    rowdata[i] = (rowdata[i] + floor) % 256
+                    floor = previous_row_data[i] // 2
+                    row_data[i] = (row_data[i] + floor) % 256
+                for i in range(bpp + 1, row_length):
+                    left = row_data[i - bpp]
+                    floor = (left + previous_row_data[i]) // 2
+                    row_data[i] = (row_data[i] + floor) % 256
             elif filter_byte == 4:
                 # PNG Paeth Predictor
                 for i in range(1, bpp + 1):
-                    rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
-                for i in range(bpp + 1, rowlength):
-                    left = rowdata[i - bpp]
-                    up = prev_rowdata[i]
-                    up_left = prev_rowdata[i - bpp]
+                    row_data[i] = (row_data[i] + previous_row_data[i]) % 256
+                for i in range(bpp + 1, row_length):
+                    left = row_data[i - bpp]
+                    up = previous_row_data[i]
+                    up_left = previous_row_data[i - bpp]
 
                     p = left + up - up_left
                     dist_left = abs(p - left)
@@ -292,13 +310,13 @@ class FlateDecode:
                     else:
                         paeth = up_left
 
-                    rowdata[i] = (rowdata[i] + paeth) % 256
+                    row_data[i] = (row_data[i] + paeth) % 256
             else:
                 raise PdfReadError(
                     f"Unsupported PNG filter {filter_byte!r}"
                 )  # pragma: no cover
-            prev_rowdata = tuple(rowdata)
-            output.extend(rowdata[1:])
+            previous_row_data = tuple(row_data)
+            output.extend(row_data[1:])
         return bytes(output)
 
     @staticmethod
@@ -787,13 +805,13 @@ def decode_stream_data(stream: StreamObject) -> bytes:
         NotImplementedError: If an unsupported filter type is encountered.
 
     """
-    filters = stream.get(SA.FILTER, ())
+    filters = stream.get(StreamAttributes.FILTER, ())
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
     if not isinstance(filters, ArrayObject):
         # We have a single filter instance
         filters = (filters,)
-    decode_parms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
+    decode_parms = stream.get(StreamAttributes.DECODE_PARMS, ({},) * len(filters))
     if not isinstance(decode_parms, (list, tuple)):
         decode_parms = (decode_parms,)
     data: bytes = stream._data
@@ -820,7 +838,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
             data = RunLengthDecode.decode(data)
         elif filter_name in (FT.CCITT_FAX_DECODE, FTA.CCF):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.CCF, new_name=FT.CCITT_FAX_DECODE)
-            height = stream.get(IA.HEIGHT, ())
+            height = stream.get(ImageAttributes.HEIGHT, ())
             data = CCITTFaxDecode.decode(data, params, height)
         elif filter_name in (FT.DCT_DECODE, FTA.DCT):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.DCT, new_name=FT.DCT_DECODE)

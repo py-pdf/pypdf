@@ -12,12 +12,14 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
+    ByteStringObject,
     ContentStream,
     DictionaryObject,
     NameObject,
     NullObject,
     RectangleObject,
     StreamObject,
+    TextStringObject,
     TreeObject,
 )
 from tests import RESOURCE_ROOT, get_data_from_url
@@ -120,6 +122,23 @@ def test_array_object__clone_same_stream_multiple_times() -> None:
         ContentStream(stream=cloned2, pdf=None).get_data() ==
         b"Lorem ipsum!\nShared stream 0\nShared stream 1\nShared stream 2\n"
     )
+
+
+def test_array_object__to_lst_conversion() -> None:
+    arr = ArrayObject()
+
+    # str not starting with "/" -> TextStringObject
+    arr += "hello"
+    assert isinstance(arr[0], TextStringObject)
+
+    # bytes -> ByteStringObject
+    arr += b"data"
+    assert isinstance(arr[1], ByteStringObject)
+
+    # number (else branch) - should pass through unwrapped
+    arr += 42
+    assert arr[2] == 42
+    assert type(arr[2]) is int
 
 
 @pytest.mark.enable_socket
@@ -265,7 +284,7 @@ def test_content_stream__array_based__output_length() -> None:
     reader = PdfReader(buffer)
     with pytest.raises(
             expected_exception=LimitReachedError,
-            match=r"^Array\-based stream has at least 75003501 > 75000000 output bytes\.$"
+            match=r"^Array\-based stream has at least 75002550 > 75000000 output bytes\.$"
     ):
         _ = reader.pages[0].get_contents()
 

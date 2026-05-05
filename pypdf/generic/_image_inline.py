@@ -32,6 +32,7 @@ from typing import IO
 from .._utils import (
     WHITESPACES,
     WHITESPACES_AS_BYTES,
+    BinaryStreamType,
     StreamType,
     logger_warning,
     read_non_whitespace,
@@ -145,7 +146,8 @@ def extract_inline__run_length_decode(stream: StreamType) -> bytes:
                 data_out += data_buffered[: pos_tok + 1]
                 stream.seek(-len(data_buffered) + pos_tok + 1, 1)
             else:
-                logger_warning("Early EOD in RunLengthDecode of inline image, using fallback.",source= __name__)
+                logger_warning("Early EOD in RunLengthDecode of inline image, using fallback.",
+                                source= __name__)
                 ei_marker = data_buffered.find(b"EI")
                 if ei_marker > 0:
                     data_out += data_buffered[: ei_marker]
@@ -158,7 +160,7 @@ def extract_inline__run_length_decode(stream: StreamType) -> bytes:
     return bytes(data_out)
 
 
-def extract_inline__dct_decode(stream: StreamType) -> bytes:
+def extract_inline__dct_decode(stream: BinaryStreamType) -> bytes:
     """
     Extract DCT (JPEG) stream from inline image.
     The stream will be moved onto the EI.

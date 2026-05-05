@@ -92,7 +92,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
         raise PdfReadError("Invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
-    return struct.unpack(">q", d)[0]
+    return cast(int, struct.unpack(">q", d)[0])
 
 
 class DocumentInformation(DictionaryObject):
@@ -382,7 +382,7 @@ class PdfDocCommon:
             node: DictionaryObject, mi: int
         ) -> tuple[Optional[PdfObject], int]:
             ma = cast(int, node.get("/Count", 1))  # default 1 for /Page types
-            if node["/Type"] == "/Page":
+            if node["/Type"] == "/Page":  # type: ignore[comparison-overlap]
                 if page_number == mi:
                     return node, -1
                 return None, mi + 1
@@ -1169,7 +1169,7 @@ class PdfDocCommon:
         )
         if inherit is None:
             inherit = {}
-        if pages is None:
+        if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
             catalog = self.root_object
@@ -1177,6 +1177,7 @@ class PdfDocCommon:
             if not isinstance(pages, DictionaryObject):
                 raise PdfReadError("Invalid object in /Pages")
             self.flattened_pages = []
+        assert pages is not None, "mypy"
 
         if PagesAttributes.TYPE in pages:
             t = cast(str, pages[PagesAttributes.TYPE])

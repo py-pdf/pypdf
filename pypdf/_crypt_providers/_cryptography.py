@@ -31,6 +31,9 @@ from cryptography import __version__
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.padding import PKCS7
 
+from pypdf._utils import logger_warning
+from pypdf.errors import PdfStreamError
+
 try:
     # 43.0.0 - https://cryptography.io/en/latest/changelog/#v43-0-0
     from cryptography.hazmat.decrepit.ciphers.algorithms import ARC4
@@ -52,7 +55,7 @@ class CryptRC4(CryptBase):
         encryptor = self.cipher.encryptor()
         return encryptor.update(data) + encryptor.finalize()
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:
         decryptor = self.cipher.decryptor()
         return decryptor.update(data) + decryptor.finalize()
 
@@ -70,19 +73,34 @@ class CryptAES(CryptBase):
         encryptor = cipher.encryptor()
         return iv + encryptor.update(padded_data) + encryptor.finalize()
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:
         iv = data[:16]
         data = data[16:]
         # for empty encrypted data
         if not data:
             return data
 
+        if not strict and len(data) % 16 != 0:
+            logger_warning("Adding missing padding.", source=__name__)
+            padder = PKCS7(128).padder()
+            data = padder.update(data) + padder.finalize()
+
         cipher = Cipher(self.alg, CBC(iv))
         decryptor = cipher.decryptor()
-        padded_data = decryptor.update(data) + decryptor.finalize()
+        try:
+            padded_data = decryptor.update(data) + decryptor.finalize()
+        except ValueError as exception:
+            # Only raised in strict mode. Non-strict mode fixes padding.
+            raise PdfStreamError(exception)
 
         unpadder = PKCS7(128).unpadder()
-        return unpadder.update(padded_data) + unpadder.finalize()
+        try:
+            return unpadder.update(padded_data) + unpadder.finalize()
+        except ValueError as exception:
+            if strict:
+                raise PdfStreamError(exception)
+            logger_warning("Ignoring padding error: %(exception)r", source=__name__,exc=exception)
+            return padded_data[: -padded_data[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:

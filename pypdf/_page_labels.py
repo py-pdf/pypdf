@@ -156,7 +156,7 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     if not isinstance(value, dict):
         return str(index + 1)  # Fallback
     start = value.get("/St", 1)
-    prefix = value.get("/P", "")
+    prefix = cast(str, value.get("/P", ""))
     mapping_function = m[value.get("/S")]
     return prefix + mapping_function(index - start_index + start)
 
@@ -206,7 +206,8 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
                 # and continue with the fallback.
                 break
 
-    logger_warning("Could not reliably determine page label for %(index)s.",source= __name__,index=index)
+    logger_warning("Could not reliably determine page label for %(index)s.",
+                    source= __name__,index=index)
     return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
 
 

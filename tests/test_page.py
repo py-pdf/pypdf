@@ -17,6 +17,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
+from pypdf.annotations import Polygon
 from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
@@ -835,6 +836,25 @@ def test_no_resources():
     page_one = writer.pages[0]
     page_two = writer.pages[0]
     page_one.merge_page(page_two)
+
+
+def test_merge_page_with_annotations():
+    pdf_path = RESOURCE_ROOT / "two-different-pages.pdf"
+    writer = PdfWriter(clone_from=pdf_path)
+    page0 = writer.pages[0]
+    page1 = writer.pages[1]
+
+    page1[NameObject("/Annots")] = NullObject()
+    page0.merge_page(page1)
+    assert page0.annotations is None
+
+    annotation = Polygon(
+        vertices=[(55, 555), (205, 655), (75, 755), (55, 705)],
+    )
+    writer.add_annotation(page_number=0, annotation=annotation)
+
+    page0.merge_page(page1)
+    assert len(page0.annotations) == 1
 
 
 def test_merge_page_reproducible_with_proc_set():

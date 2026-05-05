@@ -66,7 +66,7 @@ class DirectReferenceLink:
         self._reference = reference
 
     def find_referenced_page(self) -> IndirectObject:
-        return self._reference[0]
+        return cast(IndirectObject, self._reference[0])
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
         """target_pdf: PdfWriter which the new link went into"""
@@ -111,7 +111,7 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
     if len(new_links) != len(old_links):
         logger_warning(
             "Annotation sizes differ: %(old_links)s vs. %(new_links)s",
-            source=__name__, 
+            source=__name__,
             old_links=old_links,
             new_links=new_links
         )

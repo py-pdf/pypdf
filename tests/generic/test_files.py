@@ -3,9 +3,9 @@ import datetime
 import shutil
 import subprocess
 from io import BytesIO
+from pathlib import Path
 
 import pytest
-from py import path
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import AFRelationship
@@ -28,12 +28,12 @@ PDFATTACH_BINARY = shutil.which("pdfattach")
 
 
 @pytest.mark.skipif(PDFATTACH_BINARY is None, reason="Requires poppler-utils")
-def test_embedded_file__basic(tmpdir: path.LocalPath) -> None:
+def test_embedded_file__basic(tmp_path: Path) -> None:
     assert PDFATTACH_BINARY is not None
     clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
-    attached_path = tmpdir / "attached.pdf"
-    file_path = tmpdir / "test.txt"
-    file_path.write_binary(b"Hello World\n")
+    attached_path = tmp_path / "attached.pdf"
+    file_path = tmp_path / "test.txt"
+    file_path.write_bytes(b"Hello World\n")
     subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path])  # noqa: S603
     with PdfReader(str(attached_path)) as reader:
         attachment = next(iter(EmbeddedFile._load(reader.root_object)))
@@ -501,7 +501,7 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     assert isinstance(embedded, DictionaryObject)
 
     result = embedded["/Names"]
-    assert result == [
+    assert result == [  # type: ignore[comparison-overlap]
         "factur-x.xml",
         attachments[0].pdf_object.indirect_reference,
         "test.pdf",
@@ -605,7 +605,7 @@ def test_embedded_file__order() -> None:
     assert isinstance(names, DictionaryObject)
     files = names["/EmbeddedFiles"]
     assert isinstance(files, DictionaryObject)
-    assert files["/Names"] == [
+    assert files["/Names"] == [  # type: ignore[comparison-overlap]
         "abc.txt", attachment2.pdf_object.indirect_reference,
         "test.txt", attachment1.pdf_object.indirect_reference,
         "test.txt", attachment4.pdf_object.indirect_reference,

@@ -32,6 +32,8 @@ from Crypto.Cipher import AES, ARC4
 from Crypto.Util.Padding import pad, unpad
 
 from pypdf._crypt_providers._base import CryptBase
+from pypdf._utils import logger_warning
+from pypdf.errors import PdfStreamError
 
 crypt_provider = ("pycryptodome", __version__)
 
@@ -43,7 +45,7 @@ class CryptRC4(CryptBase):
     def encrypt(self, data: bytes) -> bytes:
         return ARC4.ARC4Cipher(self.key).encrypt(data)
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:
         return ARC4.ARC4Cipher(self.key).decrypt(data)
 
 
@@ -57,16 +59,31 @@ class CryptAES(CryptBase):
         aes = AES.new(self.key, AES.MODE_CBC, iv)
         return iv + aes.encrypt(padded_data)
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:
         iv = data[:16]
         data = data[16:]
         # for empty encrypted data
         if not data:
             return data
 
+        if not strict and len(data) % 16 != 0:
+            logger_warning("Adding missing padding.", source=__name__)
+            data = pad(data, 16)
+
         aes = AES.new(self.key, AES.MODE_CBC, iv)
-        padded_data = aes.decrypt(data)
-        return unpad(padded_data, 16)
+        try:
+            padded_data = aes.decrypt(data)
+        except ValueError as exception:
+            # Only raised in strict mode. Non-strict mode fixes padding.
+            raise PdfStreamError(exception)
+
+        try:
+            return unpad(padded_data, 16)
+        except ValueError as exception:
+            if strict:
+                raise PdfStreamError(exception)
+            logger_warning("Ignoring padding error: %(exception)r", source=__name__,exc=exception)
+            return padded_data[: -padded_data[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
