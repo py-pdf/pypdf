@@ -73,18 +73,8 @@ class Action(DictionaryObject, ABC):
         annotation with the mouse can be to play a sound, jump to a new
         page, and start up a movie. Note that the Next entry is not
         restricted to a single action but can contain an array of actions,
-        each of which in turn can have a Next entry of its own. The actions
-        can thus form a tree instead of a simple linked list. Actions within
-        each Next array are executed in order, each followed in turn by any
-        actions specified in its Next entry, and so on recursively. It is
-        recommended that interactive PDF processors attempt to provide
-        reasonable behaviour in anomalous situations. For example,
-        self-referential actions ought not be executed more than once, and
-        actions that close the document or otherwise render the next action
-        impossible ought to terminate the execution sequence. Applications
-        need also provide some mechanism for the user to interrupt and
-        manually terminate a sequence of actions.
-        12.6.2 Action dictionaries ISO 32000-2:2020
+        each of which in turn can have a Next entry of its own.
+        §12.6.2 Action dictionaries ISO 32000-2:2020
         """
         head = current = additional_actions.get(trigger_name)
         if not isinstance(head, DictionaryObject):
