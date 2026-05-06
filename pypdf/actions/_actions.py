@@ -65,7 +65,6 @@ class Action(DictionaryObject, ABC):
 
         if trigger_name not in additional_actions or is_null_or_none(additional_actions[trigger_name]):
             additional_actions.update({trigger_name: action})
-            page[NameObject("/AA")] = additional_actions
             return
 
         """
@@ -122,7 +121,6 @@ class Action(DictionaryObject, ABC):
 
         current[NameObject("/Next")] = action
         additional_actions.update({trigger_name: head})
-        page[NameObject("/AA")] = additional_actions
 
     @classmethod
     def _delete(cls, page: "PageObject", trigger: PageTriggerType) -> None:
