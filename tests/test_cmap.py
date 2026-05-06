@@ -52,7 +52,7 @@ from . import RESOURCE_ROOT, get_data_from_url
     ],
 )
 def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=strict)
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()
     assert caplog.text == ""
@@ -89,7 +89,7 @@ def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
 )
 def test_text_extraction_fast(caplog, url: str, name: str, strict: bool):
     """Text extraction runs without exceptions or warnings"""
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=strict)
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()
     assert caplog.text == ""
@@ -133,7 +133,7 @@ def test_ascii_charset():
 def test_text_extraction_of_specific_pages(
     url: str, name: str, page_nb: int, within_text
 ):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert within_text in reader.pages[page_nb].extract_text()
 
 
@@ -168,7 +168,7 @@ def test_iss1533():
     ],
 )
 def test_cmap_encodings(caplog, url, name, page_index, within_text, caplog_text):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     extracted = reader.pages[page_index].extract_text()  # no error
     for contained in within_text:
         assert contained in extracted
@@ -256,7 +256,7 @@ def test_unigb_utf16():
         "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
     )
     name = "iss2812.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "《中国能源展望 2060（2024 年版）》编写委员会" in reader.pages[1].extract_text()
 
 
@@ -267,7 +267,7 @@ def test_too_many_differences():
         "https://github.com/user-attachments/files/16911741/dumb_extract_text_crash.pdf"
     )
     name = "iss2836.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert reader.pages[0].extract_text() == ""
 
 
@@ -277,7 +277,7 @@ def test_iss2925():
         "https://github.com/user-attachments/files/17621508/2305.09315.pdf"
     )
     name = "iss2925.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "slicing on the PDG to extract the relevant contextual" in reader.pages[3].extract_text()
 
 
@@ -288,7 +288,7 @@ def test_iss2966():
         "https://github.com/user-attachments/files/17904233/repro_out.pdf"
     )
     name = "iss2966.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "Lorem ipsum dolor sit amet" in reader.pages[0].extract_text()
 
 
@@ -297,7 +297,7 @@ def test_binascii_odd_length_string(caplog):
     """Tests for #2216"""
     url = "https://github.com/user-attachments/files/18199642/iss2216.pdf"
     name = "iss2216.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[0]
     assert "\n(Many other theorems may\n" in page.extract_text()
@@ -309,7 +309,7 @@ def test_standard_encoding(caplog):
     """Tests for #3156"""
     url = "https://github.com/user-attachments/files/18983503/standard-encoding.pdf"
     name = "issue3156.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[0]
     assert page.extract_text() == "Lorem ipsum"
@@ -321,7 +321,7 @@ def test_function_in_font_widths(caplog):
     """Tests for #3153"""
     url = "https://github.com/user-attachments/files/18945709/Marseille_pypdf_level_0.2._compressed.pdf"
     name = "issue3153.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[455]
     assert "La vulnérabilité correspond aux conséquences potentielles" in page.extract_text()

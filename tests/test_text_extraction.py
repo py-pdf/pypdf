@@ -156,7 +156,7 @@ def test_font_class_to_dict():
 def test_uninterpretable_type3_font(mock_logger_warning):
     url = "https://github.com/user-attachments/files/18551904/UninterpretableType3Font.pdf"
     name = "UninterpretableType3Font.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[0]
     assert page.extract_text(extraction_mode="layout") == ""
     mock_logger_warning.assert_called_with(
@@ -169,7 +169,7 @@ def test_uninterpretable_type3_font(mock_logger_warning):
 def test_layout_mode_epic_page_fonts():
     url = "https://github.com/py-pdf/pypdf/files/13836944/Epic.Page.PDF"
     name = "Epic Page.PDF"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     expected = (RESOURCE_ROOT / "Epic.Page.layout.txt").read_text(encoding="utf-8")
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
@@ -187,7 +187,7 @@ def test_layout_mode_type0_font_widths():
     # /DescendantFonts /W array entries.
     url = "https://github.com/py-pdf/pypdf/files/13533204/Claim.Maker.Alerts.Guide_pg2.PDF"
     name = "Claim Maker Alerts Guide_pg2.PDF"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     expected = (RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt").read_text(
         encoding="utf-8"
     )
@@ -200,11 +200,11 @@ def test_layout_mode_indirect_sequence_font_widths(caplog):
     # https://github.com/py-pdf/pypdf/pull/2788
     url = "https://github.com/user-attachments/files/16491621/2788_example.pdf"
     name = "2788_example.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert reader.pages[0].extract_text(extraction_mode="layout") == ""
     url = "https://github.com/user-attachments/files/16491619/2788_example_malformed.pdf"
     name = "2788_example_malformed.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].extract_text(extraction_mode="layout")
     assert "Invalid font width definition" in caplog.text
 
@@ -231,7 +231,7 @@ def test_space_with_one_unit_smaller_than_font_width():
     """Tests for #1328"""
     url = "https://github.com/py-pdf/pypdf/files/9498481/0004.pdf"
     name = "iss1328.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[0]
     extracted = page.extract_text()
     assert "Reporting crude oil leak.\n" in extracted
@@ -242,7 +242,7 @@ def test_space_position_calculation():
     """Tests for #1153"""
     url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
     name = "iss1153.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[3]
     extracted = page.extract_text()
     assert "Shortly after the Geneva BOF session, the" in extracted
@@ -296,7 +296,7 @@ def test_infinite_loop_arrays():
     """Tests for #2928"""
     url = "https://github.com/user-attachments/files/17576546/arrayabruptending.pdf"
     name = "arrayabruptending.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[0]
     extracted = page.extract_text()
@@ -308,7 +308,7 @@ def test_content_stream_is_dictionary_object(caplog):
     """Tests for #2995"""
     url = "https://github.com/user-attachments/files/18049322/6fa5fd46-5f98-4a67-800d-5e2362b0164f.pdf"
     name = "iss2995.pdf"
-    data = get_data_from_url(url, name=name)
+    data = get_data_from_url(url=url, name=name)
 
     reader = PdfReader(BytesIO(data))
     page = reader.pages[0]
@@ -331,7 +331,7 @@ def test_tz_with_no_operands():
     """Tests for #2975"""
     url = "https://github.com/user-attachments/files/17974120/9E5E080E-C8DB-4A6B-822B-9A67DC04E526-120438.pdf"
     name = "iss2975.pdf"
-    data = get_data_from_url(url, name=name)
+    data = get_data_from_url(url=url, name=name)
 
     reader = PdfReader(BytesIO(data))
     page = reader.pages[1]
@@ -343,7 +343,7 @@ def test_iss3060():
     """Test for not throwing 'font not set: is PDF missing a Tf operator'"""
     url = "https://github.com/user-attachments/files/18482531/test-anon.pdf"
     name = "iss3060.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     # pypdf.errors.PdfReadError: font not set: is PDF missing a Tf operator?
     txt = reader.pages[0].extract_text(extraction_mode="layout")
     assert txt.startswith(" *******")
@@ -354,7 +354,7 @@ def test_iss3074():
     """Test for not throwing 'ZeroDivisionError: float division by zero'"""
     url = "https://github.com/user-attachments/files/18533211/test-anon.pdf"
     name = "iss3074.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     # pypdf.errors.PdfReadError: ZeroDivisionError: float division by zero
     txt = reader.pages[0].extract_text(extraction_mode="layout")
     assert txt.strip().startswith("AAAAAA")
@@ -366,11 +366,11 @@ def test_layout_mode_text_state():
     # Get the PDF from issue #3212
     url = "https://github.com/user-attachments/files/19396790/garbled.pdf"
     name = "garbled-font.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     # Get the txt from issue #3212 and normalize line endings
     txt_url = "https://github.com/user-attachments/files/19510731/garbled-font.layout.txt"
     txt_name = "garbled-font.layout.txt"
-    expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
+    expected = get_data_from_url(url=txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
     # Ignore differences in rendering of spaces to work around older differences between the
     # old layout mode Font code and the new Font class in calculating and dealing with the
     # fallback width for a character that has no width defined in character_widths.
@@ -383,11 +383,11 @@ def test_rotated_line_wrap():
     # Get the PDF from issue #3247
     url = "https://github.com/user-attachments/files/19696918/link16-line-wrap.sanitized.pdf"
     name = "link16-line-wrap.sanitized.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     # Get the txt from issue #3247 and normalize line endings
     txt_url = "https://github.com/user-attachments/files/19696917/link16-line-wrap.sanitized.expected.txt"
     txt_name = "link16-line-wrap.sanitized.expected.txt"
-    expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
+    expected = get_data_from_url(url=txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
 
     assert expected == reader.pages[0].extract_text()
 
@@ -423,7 +423,7 @@ def test_rotated_layout_mode(caplog):
     """Ensures text extraction of rotated pages, as in issue #3270."""
     url = "https://github.com/user-attachments/files/19981120/rotated-page.pdf"
     name = "rotated-page.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
     page = writer.pages[0]
 
     page.transfer_rotation_to_content()
@@ -439,7 +439,7 @@ def test_rotated_layout_mode(caplog):
 def test_extract_text__none_objects():
     url = "https://github.com/user-attachments/files/18381726/tika-957721.pdf"
     name = "tika-957721.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     reader.pages[0].extract_text()
     reader.pages[8].extract_text()
@@ -452,7 +452,7 @@ def test_extract_text__with_visitor_text():
 
     url = "https://github.com/user-attachments/files/18381718/tika-952016.pdf"
     name = "tika-952016.pdf"
-    stream = BytesIO(get_data_from_url(url, name=name))
+    stream = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(stream)
     page = reader.pages[0]
     page.extract_text(visitor_text=visitor_text)
@@ -466,7 +466,7 @@ def test_extract_text__with_visitor_text():
 def test_extract_text__restore_cm_stack_pop_error():
     url = "https://github.com/user-attachments/files/18381737/tika-966635.pdf"
     name = "tika-966635.pdf"
-    stream = BytesIO(get_data_from_url(url, name=name))
+    stream = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(stream)
     page = reader.pages[10]
 
@@ -482,7 +482,7 @@ def test_slow_huge_string():
     """Tests for #3541"""
     url = "https://github.com/user-attachments/files/23855795/file.pdf"
     name = "issue-3541.pdf"
-    stream = BytesIO(get_data_from_url(url, name=name))
+    stream = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(stream)
     page = reader.pages[0]
 
@@ -493,7 +493,7 @@ def test_slow_huge_string():
 def test_extract_text_with_missing_font_bbox():
     url = "https://github.com/user-attachments/files/24611650/bbox_bug_emoji.pdf"
     name = "issue-3599.pdf"
-    stream = BytesIO(get_data_from_url(url, name=name))
+    stream = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(stream)
     page = reader.pages[0]
     text = page.extract_text()

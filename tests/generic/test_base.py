@@ -25,7 +25,7 @@ def test_text_string_object__looks_like_bom(source: bytes, expected: str) -> Non
 def test_text_string_object__wrongly_detected_bom() -> None:
     url = "https://github.com/user-attachments/files/24401507/minimal.pdf"
     name = "issue3587.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader_page = reader.pages[0]
 
     writer = PdfWriter()

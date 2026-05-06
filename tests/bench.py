@@ -217,7 +217,7 @@ def image_new_property(data):
 def test_image_new_property_performance(benchmark):
     url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
     name = "pdf_font_garbled.pdf"
-    data = BytesIO(get_data_from_url(url, name=name))
+    data = BytesIO(get_data_from_url(url=url, name=name))
 
     benchmark(image_new_property, data)
 
@@ -230,5 +230,5 @@ def image_extraction(data):
 @pytest.mark.enable_socket
 def test_large_compressed_image_performance(benchmark):
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
-    data = BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf"))
+    data = BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))
     benchmark(image_extraction, data)
