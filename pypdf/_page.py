@@ -2169,40 +2169,32 @@ class PageObject(DictionaryObject):
             trigger: "open" or "close" trigger event.
             action: An :py:class:`~pypdf.actions.Action` object.
 
-        # Example: Display the page number when the page is opened
-        >>> self.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);")))
-        # Example: Display the page number when the page is closed
-        >>> self.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);")))
+        Example:
+        >>> from pypdf import PdfWriter
+        >>> page = PdfWriter().add_blank_page(595, 842)
+        # Display the page number when the page is opened
+        >>> page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);")))
+        # Display the page number when the page is closed
+        >>> page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);")))
         """
         Action._create_new(self, trigger, action)
 
-    def delete_action(self, trigger: Literal["open", "close"]) -> None:
+    def delete_action(self, trigger: TriggerType) -> None:
         """
         Delete an action associated with an open or close trigger event of this page.
 
         Args:
             trigger: "open" or "close" trigger event.
 
-        # Example: Delete all actions triggered by a page open.
-        >>> self.delete_action("open")
-        # Example: Delete all actions triggered by a page close.
-        >>> self.delete_action("close")
+        Example:
+        >>> from pypdf import PdfWriter
+        >>> page = PdfWriter().add_blank_page(595, 842)
+        # Delete all actions triggered by a page open
+        >>> page.delete_action("open")
+        # Delete all actions triggered by a page close
+        >>> page.delete_action("close")
         """
-        if trigger not in {"open", "close"}:
-            raise ValueError("The trigger must be 'open' or 'close'")
-
-        trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
-
-        if NameObject("/AA") not in self:
-            return
-
-        additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
-
-        if trigger_name in additional_actions:
-            del additional_actions[trigger_name]
-
-            if not additional_actions:
-                del self[NameObject("/AA")]
+        Action._delete(self, trigger)
 
 
 class _VirtualList(Sequence[PageObject]):

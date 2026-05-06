@@ -124,6 +124,24 @@ class Action(DictionaryObject, ABC):
         additional_actions.update({trigger_name: head})
         page[NameObject("/AA")] = additional_actions
 
+    @classmethod
+    def _delete(cls, page: "PageObject", trigger: TriggerType) -> None:
+        if trigger not in {"open", "close"}:
+            raise ValueError("The trigger must be 'open' or 'close'")
+
+        trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
+
+        if NameObject("/AA") not in page:
+            return
+
+        additional_actions: DictionaryObject = cast(DictionaryObject, page[NameObject("/AA")])
+
+        if trigger_name in additional_actions:
+            del additional_actions[trigger_name]
+
+            if not additional_actions:
+                del page[NameObject("/AA")]
+
 
 class JavaScript(Action):
     """

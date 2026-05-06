@@ -8,7 +8,7 @@ associated object.
 """
 
 
-from ._actions import Action, JavaScript
+from ._actions import Action, JavaScript, TriggerType
 
 __all__ = [
     "Action",
