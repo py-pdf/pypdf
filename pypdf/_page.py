@@ -58,9 +58,8 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
-from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
+from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING, ImageAttributes
 from .constants import AnnotationDictionaryAttributes as ADA
-from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
@@ -635,7 +634,7 @@ class PageObject(DictionaryObject):
                 continue
 
             # Check if this XObject is an Image
-            if x_object[o][IA.SUBTYPE] == "/Image":
+            if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
                 # Add the image ID (with ancestry if needed)
                 # When ancest is empty, o is top-level: "/I0"
                 # When ancest is not empty, [ancest, o] is nested: ["/Form1", "/I0"]
@@ -832,7 +831,7 @@ class PageObject(DictionaryObject):
                         do_name_str = str(do_name)
                     xobj = xobjs[do_name]
                     # Only process if it's an actual image, not a form
-                    if isinstance(xobj, DictionaryObject) and str(xobj[IA.SUBTYPE]) == "/Image":
+                    if isinstance(xobj, DictionaryObject) and str(xobj[ImageAttributes.SUBTYPE]) == "/Image":
                         from .generic._image_xobject import _xobj_to_image as _xobj_to_image2  # noqa: PLC0415
                         imgd = _xobj_to_image2(xobj)
                         extension, byte_stream, img = imgd
