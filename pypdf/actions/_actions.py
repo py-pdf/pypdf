@@ -40,7 +40,7 @@ class Action(DictionaryObject, ABC):
 
         Args:
             page: The page to add the action to.
-            trigger: "open" or "close" trigger event.
+            trigger: The trigger event.
             action: An :py:class:`~pypdf.actions.Action` object.
         """
         if trigger not in {"open", "close"}:
