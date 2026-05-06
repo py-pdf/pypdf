@@ -152,7 +152,7 @@ ignore = [
     "ARG001",  # Unused function argument
     "ARG002",  # Unused method argument
     "ARG004",  # Unused static method argument
-    "B905",    # `zip()` without an explicit `strict=` parameter
+    "B904",    # Within an `except` clause, raise exceptions with
     "BLE001",  # Do not catch blind exception: `Exception`
     "COM812",  # Yes, they make the diff smaller
     "D101",    # Missing docstring in public class
@@ -202,6 +202,7 @@ ignore = [
     "TRY004",  # Prefer `TypeError` exception for invalid type
     "TRY201",  # Use `raise` without specifying exception name
     "TRY300",  # Consider moving this statement to an `else` block
+    "TRY301",  # Abstract `raise` to an inner function
 ]
 
 [tool.ruff.lint.mccabe]
