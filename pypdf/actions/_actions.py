@@ -84,7 +84,7 @@ class Action(DictionaryObject, ABC):
         impossible ought to terminate the execution sequence. Applications
         need also provide some mechanism for the user to interrupt and
         manually terminate a sequence of actions.
-        ISO 32000-2:2020
+        12.6.2 Action dictionaries ISO 32000-2:2020
         """
         head = current = additional_actions.get(trigger_name)
         if not isinstance(head, DictionaryObject):
