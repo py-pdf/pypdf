@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .._page import PageObject
 
 
-TriggerType = Literal["open", "close"]
+PageTriggerType = Literal["open", "close"]
 
 
 class Action(DictionaryObject, ABC):
@@ -34,7 +34,7 @@ class Action(DictionaryObject, ABC):
         self[NameObject("/Next")] = NullObject()  # Optional
 
     @classmethod
-    def _create_new(cls, page: "PageObject", trigger: TriggerType, action: "Action") -> None:
+    def _create_new(cls, page: "PageObject", trigger: PageTriggerType, action: "Action") -> None:
         """
         Create a new action and add it to the page.
 
@@ -125,7 +125,7 @@ class Action(DictionaryObject, ABC):
         page[NameObject("/AA")] = additional_actions
 
     @classmethod
-    def _delete(cls, page: "PageObject", trigger: TriggerType) -> None:
+    def _delete(cls, page: "PageObject", trigger: PageTriggerType) -> None:
         if trigger not in {"open", "close"}:
             raise ValueError("The trigger must be 'open' or 'close'")
 
