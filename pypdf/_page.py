@@ -58,7 +58,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
-from .actions import Action, PageTriggerType
+from .actions import Action, JavaScript, PageTriggerType
 from .constants import (
     _INLINE_IMAGE_KEY_MAPPING,
     _INLINE_IMAGE_VALUE_MAPPING,
@@ -2171,7 +2171,8 @@ class PageObject(DictionaryObject):
 
         Example:
             >>> from pypdf import PdfWriter
-            >>> page = PdfWriter().add_blank_page(595, 842)
+            >>> writer = PdfWriter()
+            >>> page = writer.add_blank_page(595, 842)
             # Display the page number when the page is opened
             >>> page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
             # Display the page number when the page is closed
@@ -2188,7 +2189,10 @@ class PageObject(DictionaryObject):
 
         Example:
             >>> from pypdf import PdfWriter
-            >>> page = PdfWriter().add_blank_page(595, 842)
+            >>> writer = PdfWriter()
+            >>> page = writer.add_blank_page(595, 842)
+            >>> page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+            >>> page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
             # Delete all actions triggered by a page open
             >>> page.delete_action("open")
             # Delete all actions triggered by a page close
