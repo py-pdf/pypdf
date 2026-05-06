@@ -71,11 +71,11 @@ def test_writer_clone():
     reader = PdfReader(src)
     writer = PdfWriter(clone_from=reader)
     assert len(writer.pages) == 4
-    assert "PageObject" in str(type(writer.pages[0]))
+    assert isinstance(writer.pages[0], PageObject)
 
     writer = PdfWriter(clone_from=src)
     assert len(writer.pages) == 4
-    assert "PageObject" in str(type(writer.pages[0]))
+    assert isinstance(writer.pages[0], PageObject)
 
 
 def test_clone_metadata():
