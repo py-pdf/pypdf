@@ -58,7 +58,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
-from .actions import Action, JavaScript, PageTriggerType
+from .actions import Action, PageTriggerType
 from .constants import (
     _INLINE_IMAGE_KEY_MAPPING,
     _INLINE_IMAGE_VALUE_MAPPING,
