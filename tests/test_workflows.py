@@ -6,6 +6,7 @@ They don't mock/patch anything, they cover typical user needs.
 
 import binascii
 import platform
+import sys
 from io import BytesIO
 from pathlib import Path
 from re import findall
@@ -967,7 +968,11 @@ def test_replace_image(tmp_path, monkeypatch):
             pdf_parser.buf.close()
         pdf_parser.buf = None
 
-    if Version(pil_version) < Version("12.3.0") and platform.python_implementation() == "PyPy":
+    if (
+            Version(pil_version) < Version("12.3.0") and
+            platform.python_implementation() == "PyPy" and
+            sys.pypy_version_info[:3] >= (7, 3, 22)
+    ):
         # Regression since PyPy 7.3.22.
         monkeypatch.setattr(PdfParser.PdfParser, "close_buf", pdf_parser_close_buf)
 
