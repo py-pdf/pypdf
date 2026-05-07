@@ -485,10 +485,21 @@ def test_index_lookup():
 
 @pytest.mark.enable_socket
 def test_2bits_image():
-    """From #1954, test with 2bits image. TODO: 4bits also"""
+    """From #1954, test with 2bits image."""
     reader = PdfReader(BytesIO(get_data_from_url(name="paid.pdf")))
     url_png = "https://user-images.githubusercontent.com/4083478/253568117-ca95cc85-9dea-4145-a5e0-032f1c1aa322.png"
     name_png = "Paid.png"
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
+    data = reader.pages[0].images[0]
+    assert image_similarity(data.image, refimg) > 0.99
+
+
+@pytest.mark.enable_socket
+def test_4bits_image():
+    """From #1954, test with 4bits image."""
+    reader = PdfReader(BytesIO(get_data_from_url(name="4bits_image.pdf")))
+    url_png = "https://github.com/user-attachments/files/27492549/4bits_image.png.txt"
+    name_png = "4bits_image.png"
     refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert image_similarity(data.image, refimg) > 0.99
