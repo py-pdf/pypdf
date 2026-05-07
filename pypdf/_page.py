@@ -2171,6 +2171,7 @@ class PageObject(DictionaryObject):
 
         Example:
             >>> from pypdf import PdfWriter
+            >>> from pypdf.actions import JavaScript
             >>> writer = PdfWriter()
             >>> page = writer.add_blank_page(595, 842)
             # Display the page number when the page is opened
@@ -2189,6 +2190,7 @@ class PageObject(DictionaryObject):
 
         Example:
             >>> from pypdf import PdfWriter
+            >>> from pypdf.actions import JavaScript
             >>> writer = PdfWriter()
             >>> page = writer.add_blank_page(595, 842)
             >>> page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
