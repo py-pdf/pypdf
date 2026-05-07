@@ -32,8 +32,8 @@ def test_page_add_action__errors(pdf_file_writer):
         page.add_action("open", "xyzzy")  # type: ignore[arg-type]
 
     with pytest.raises(
-            ValueError,
-            match = "Currently the only action type supported is JavaScript"
+        ValueError,
+        match = "The action must be an Action type"
     ):
         page.add_action("close", "xyzzy")  # type: ignore[arg-type]
 
