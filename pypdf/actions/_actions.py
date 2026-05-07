@@ -48,8 +48,8 @@ class Action(DictionaryObject, ABC):
 
         trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
 
-        if not isinstance(action, JavaScript):
-            raise ValueError("Currently the only action type supported is JavaScript")
+        if not isinstance(action, Action):
+            raise ValueError("The action musy be an Action type")
 
         if NameObject("/AA") not in page:
             # Additional actions key not present
