@@ -21,7 +21,7 @@ def test_page_add_action__errors(pdf_file_writer):
 
     with pytest.raises(
         ValueError,
-        match="The trigger must be one of {'open', 'close'}",
+        match="The trigger must be one of {'close', 'open'}",
     ):
         page.add_action("xyzzy", JavaScript('app.alert("This is page " + this.pageNum);'))  # type: ignore[arg-type]
 
@@ -445,50 +445,50 @@ def test_page_add_action__chaining_with_array(pdf_file_writer):
     assert final_action[NameObject("/JS")] == "app.alert('Final action');"
 
 
-# def test_page_delete_action(pdf_file_writer):
-#     page = pdf_file_writer.pages[0]
-#
-#     with pytest.raises(
-#         ValueError,
-#         match="The trigger must be one of {'open', 'close'}",
-#     ):
-#         page.delete_action("xyzzy")  # type: ignore
-#
-#     page.delete_action("open")
-#     assert page.get(NameObject("/AA")) is None
-#
-#     page.delete_action("close")
-#     assert page.get(NameObject("/AA")) is None
-#
-#     page.add_action("open", JavaScript("app.alert('Page opened');"))
-#     page.add_action("close", JavaScript("app.alert('Page closed');"))
-#     expected = {
-#         "/O": {
-#             "/Type": "/Action",
-#             "/Next": NullObject(),
-#             "/S": "/JavaScript",
-#             "/JS": "app.alert('Page opened');"
-#         },
-#         "/C": {
-#             "/Type": "/Action",
-#             "/Next": NullObject(),
-#             "/S": "/JavaScript",
-#             "/JS": "app.alert('Page closed');"
-#         }
-#     }
-#     assert page[NameObject("/AA")] == expected
-#     page.delete_action("open")
-#     expected = {
-#         "/C": {
-#             "/Type": "/Action",
-#             "/Next": NullObject(),
-#             "/S": "/JavaScript",
-#             "/JS": "app.alert('Page closed');"
-#         }
-#     }
-#     assert page[NameObject("/AA")] == expected
-#     # Redundantly delete again, for coverage
-#     page.delete_action("open")
-#     assert page[NameObject("/AA")] == expected
-#     page.delete_action("close")
-#     assert page.get(NameObject("/AA")) is None
+def test_page_delete_action(pdf_file_writer):
+    page = pdf_file_writer.pages[0]
+
+    with pytest.raises(
+        ValueError,
+        match="The trigger must be one of {'close', 'open'}",
+    ):
+        page.delete_action("xyzzy")  # type: ignore
+
+    page.delete_action("open")
+    assert page.get(NameObject("/AA")) is None
+
+    page.delete_action("close")
+    assert page.get(NameObject("/AA")) is None
+
+    page.add_action("open", JavaScript("app.alert('Page opened');"))
+    page.add_action("close", JavaScript("app.alert('Page closed');"))
+    expected = {
+        "/O": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page opened');"
+        },
+        "/C": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page closed');"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("open")
+    expected = {
+        "/C": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page closed');"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    # Redundantly delete again, for coverage
+    page.delete_action("open")
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("close")
+    assert page.get(NameObject("/AA")) is None
