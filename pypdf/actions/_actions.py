@@ -119,7 +119,7 @@ class Action(DictionaryObject, ABC):
     @classmethod
     def _delete(cls, page: "PageObject", trigger: PageTriggerType) -> None:
         if trigger not in {TRIGGER_OPEN, TRIGGER_CLOSE}:
-            raise ValueError("The trigger must be 'open' or 'close'")
+            raise ValueError(f"The trigger must be one of {TRIGGERS}")
 
         trigger_name = NameObject("/O") if trigger == TRIGGER_OPEN else NameObject("/C")
 
