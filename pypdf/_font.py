@@ -10,6 +10,7 @@ from pypdf.generic import (
     FloatObject,
     NameObject,
     NumberObject,
+    PdfObject,
     StreamObject,
     TextStringObject,
 )
@@ -532,45 +533,31 @@ class Font:
             interpretable=True
         )
 
-    def as_font_resource(self) -> DictionaryObject:
-        # If we have an embedded Truetype font, we assume that we need to produce a Type 2 CID font resource.
-        if self.font_descriptor.font_file and self.sub_type == "TrueType":
-            # Create the descendant font, using Identity mapping
-            cid_font = DictionaryObject({
-                NameObject("/Type"): NameObject("/Font"),
-                NameObject("/Subtype"): NameObject("/CIDFontType2"),
-                NameObject("/BaseFont"): NameObject(f"/{self.name}"),
-                NameObject("/CIDSystemInfo"): DictionaryObject({
-                    NameObject("/Registry"): TextStringObject("Adobe"),
-                    NameObject("/Ordering"): TextStringObject("Identity"),
-                    NameObject("/Supplement"): NumberObject(0)
-                }),
-                NameObject("/FontDescriptor"): self.font_descriptor.as_font_descriptor_resource()
-            })
-
-            # Build the widths (/W) array. This can have two formats:
-            # [first_cid [w1 w2 w3]] or [first last width]
-            # Here we choose the first format and simply provide one array with one width for every cid.
-            widths_list = []
-            unicode_map = []
-            # In the loop, char is the decoded GID string (the reverse unicode hack)
-            # and character_map[char] is the actual character.
-            for gid_str, actual_char in self.character_map.items():
+    def _create_widths_list_and_unicode_stream(self) -> tuple[list[PdfObject], StreamObject]:
+        widths_list = []
+        unicode_map = []
+        # In the loop, char is the decoded GID string (the reverse unicode hack)
+        # and character_map[char] is the actual character.
+        # The widths (/W) array can have two formats:
+        # [first_cid [w1 w2 w3]] or [first last width]
+        # Here we choose the first format and simply provide one array with one width for every cid.
+        for gid_str, actual_char in self.character_map.items():
+            uni_point = ord(actual_char)
+            # Only deal with Basic Multilingual Plane characters.
+            # TODO: Add all characters. However, this requires widths reworking first.
+            if uni_point <= 0xFFFF:
                 cid = ord(gid_str)
                 cid_hex = f"{cid:04X}"
-                uni_point = ord(actual_char)
                 uni_hex = f"{uni_point:04X}"
                 unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
 
                 width = self.character_widths.get(gid_str, self.character_widths["default"])
                 widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
 
-            cid_font[NameObject("/W")] = ArrayObject(widths_list)
-            cid_font[NameObject("/DW")] = NumberObject(self.character_widths["default"])
-            cid_font[NameObject("/CIDToGIDMap")] = NameObject("/Identity")
-
-            # Create the /ToUnicode CMap Stream
-            cmap_body = (
+        # Create the /ToUnicode CMap Stream
+        to_unicode_stream = StreamObject()
+        to_unicode_stream.set_data(
+            (
                 "/CIDInit /ProcSet findresource begin\n"
                 "12 dict begin\n"
                 "begincmap\n"
@@ -584,12 +571,35 @@ class Font:
                 "endcmap\n"
                 "CMapName currentdict /CMap defineresource pop\n"
                 "end end"
-            )
+            ).encode("ascii")
+        )
 
-            to_unicode_stream = StreamObject()
-            to_unicode_stream.set_data(cmap_body.encode("ascii"))
+        return widths_list, to_unicode_stream
 
-            # Create the Type 0 font object)
+    def as_font_resource(self) -> DictionaryObject:
+        # If we have an embedded Truetype font, we assume that we need to produce a Type 2 CID font resource.
+        if self.font_descriptor.font_file and self.sub_type == "TrueType":
+            # Begin with creating the widths array (part of the descendant font) and the unicode cmap (part
+            # of the Type 0 font obect).
+            widths_list, to_unicode_stream = self._create_widths_list_and_unicode_stream()
+
+            # Create the descendant font object
+            cid_font = DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/CIDFontType2"),
+                NameObject("/BaseFont"): NameObject(f"/{self.name}"),
+                NameObject("/CIDSystemInfo"): DictionaryObject({
+                    NameObject("/Registry"): TextStringObject("Adobe"),
+                    NameObject("/Ordering"): TextStringObject("Identity"),
+                    NameObject("/Supplement"): NumberObject(0)
+                }),
+                NameObject("/FontDescriptor"): self.font_descriptor.as_font_descriptor_resource(),
+                NameObject("/W"): ArrayObject(widths_list),
+                NameObject("/DW"): NumberObject(self.character_widths["default"]),
+                NameObject("/CIDToGIDMap"): NameObject("/Identity")
+            })
+
+            # Create the Type 0 font object
             return DictionaryObject({
                 NameObject("/Type"): NameObject("/Font"),
                 NameObject("/Subtype"): NameObject("/Type0"),
