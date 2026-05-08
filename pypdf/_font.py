@@ -8,6 +8,7 @@ from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
     FloatObject,
+    IndirectObject,
     NameObject,
     NumberObject,
     PdfObject,
@@ -27,6 +28,8 @@ if TYPE_CHECKING:
     from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
     from fontTools.ttLib.tables._p_o_s_t import table__p_o_s_t
     from fontTools.ttLib.tables.O_S_2f_2 import table_O_S_2f_2
+
+    from ._writer import PdfWriter
 
 try:
     from fontTools.ttLib import TTFont
@@ -617,6 +620,34 @@ class Font:
             NameObject("/BaseFont"): NameObject(f"/{self.name}"),
             NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
         })
+
+    def add_to_writer(
+        self,
+        writer: PdfWriter,
+        target_resource_dict: DictionaryObject,
+        font_resource_name: NameObject
+    ) -> IndirectObject:
+        font_resource = self.as_font_resource()
+        if "/ToUnicode" in font_resource:
+            font_resource[NameObject("/ToUnicode")] = writer._add_object(font_resource["/ToUnicode"])
+
+        if "/DescendantFonts" in font_resource:
+            descendant_fonts = cast(ArrayObject, font_resource["/DescendantFonts"])
+            font_resource_dict = cast(DictionaryObject, descendant_fonts[0])
+        else:
+            font_resource_dict = font_resource
+
+        if "/FontDescriptor" in font_resource_dict:
+            font_descriptor_obj = cast(DictionaryObject, font_resource_dict["/FontDescriptor"])
+            for key in ["/FontFile", "/FontFile2", "/FontFile3"]:
+                if key in font_descriptor_obj:
+                    font_descriptor_obj[NameObject(key)] = writer._add_object(font_descriptor_obj[key])
+            font_resource_dict[NameObject("/FontDescriptor")] = writer._add_object(
+                font_resource_dict["/FontDescriptor"]
+            )
+        font_resource_ref = writer._add_object(font_resource)
+        target_resource_dict[font_resource_name] = font_resource_ref
+        return font_resource_ref
 
     def text_width(self, text: str = "") -> float:
         """Sum of character widths specified in PDF font for the supplied text."""

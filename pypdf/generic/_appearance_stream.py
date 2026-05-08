@@ -412,7 +412,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             annotation: DictionaryObject,
             acro_form: DictionaryObject,
             text: str
-        ) -> tuple[str, DictionaryObject, Font]:
+        ) -> tuple[str, Font]:
         # Try to find a resource dictionary for the font by examining the annotation and, if that fails,
         # the AcroForm resources dictionary
         acro_form_resources: Any = cast(
@@ -447,7 +447,6 @@ class TextStreamAppearance(BaseStreamAppearance):
                 font_descriptor=core_font_metrics.font_descriptor,
                 character_widths=core_font_metrics.character_widths
             )
-            font_resource = font.as_font_resource()
 
         # If we have found a font resource, it still might not be able to encode the text value we received
         encodable = font.can_encode(text)
@@ -458,7 +457,6 @@ class TextStreamAppearance(BaseStreamAppearance):
             if font.font_descriptor.font_file and font.sub_type == "TrueType":
                 try:
                     font = font.from_truetype_font_file(BytesIO(font.font_descriptor.font_file.get_data()))
-                    font_resource = font.as_font_resource()
                     font_name = "/PYPDF1"  # This means we most probably do not clash with an existing font name
                     encodable = font.can_encode(text)
                 except (ImportError, PdfReadError) as e:
@@ -473,13 +471,13 @@ class TextStreamAppearance(BaseStreamAppearance):
                     text=text,
                 )
 
-        return font_name, font_resource, font
+        return font_name, font
 
     @staticmethod
     def _sync_appearance_stream_font_resources(
         writer: PdfWriter,
         font_name: str,
-        font_resource: DictionaryObject,
+        font: Font,
         target_resource_dict: DictionaryObject
     ) -> DictionaryObject | IndirectObject:
         """
@@ -488,9 +486,9 @@ class TextStreamAppearance(BaseStreamAppearance):
         """
         target_fonts = target_resource_dict.setdefault(NameObject("/Font"), DictionaryObject()).get_object()
         if font_name not in target_fonts:
-            return writer._add_font_resource(
+            return font.add_to_writer(
+                writer,
                 target_fonts,
-                font_resource,
                 NameObject(font_name)
             )
 
@@ -585,7 +583,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         if user_font_size > 0:
             font_size = user_font_size
 
-        font_name, font_resource, font = cls._find_annotation_font_resource(font_name, annotation, acro_form, text)
+        font_name, font = cls._find_annotation_font_resource(font_name, annotation, acro_form, text)
 
         # Synchronise font resources
         if flatten:
@@ -593,7 +591,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:
             sync_target = acro_form.setdefault(NameObject("/DR"), DictionaryObject())
 
-        font_resource_ref = cls._sync_appearance_stream_font_resources(writer, font_name, font_resource, sync_target)
+        font_resource_ref = cls._sync_appearance_stream_font_resources(writer, font_name, font, sync_target)
 
         # Retrieve formatting information
         is_comb = False

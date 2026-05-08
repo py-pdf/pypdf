@@ -938,39 +938,6 @@ class PdfWriter(PdfDocCommon):
         xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
         self._merge_content_stream_to_page(page, xobject_drawing_commands)
 
-    def _add_font_resource(
-            self,
-            target_resource_dict: DictionaryObject,
-            font_resource: DictionaryObject,
-            font_resource_name: NameObject
-        ) -> IndirectObject:
-        # See if we can add the font to the page font resources
-        if "/ToUnicode" in font_resource and not isinstance(font_resource.raw_get("/ToUnicode"), IndirectObject):
-                to_unicode_ref = self._add_object(font_resource["/ToUnicode"])
-                font_resource[NameObject("/ToUnicode")] = to_unicode_ref
-
-        if "/DescendantFonts" in font_resource:
-            descendant_fonts = cast(ArrayObject, font_resource["/DescendantFonts"])
-            font_resource_dict = cast(DictionaryObject, descendant_fonts[0])
-        else:
-            font_resource_dict = font_resource
-
-        if "/FontDescriptor" in font_resource_dict:
-            font_descriptor_obj = cast(DictionaryObject, font_resource_dict["/FontDescriptor"])
-            for key in ["/FontFile", "/FontFile2", "/FontFile3"]:
-                if key in font_descriptor_obj:
-                    font_file_ref = self._add_object(font_descriptor_obj[key])
-                    font_descriptor_obj[NameObject(key)] = font_file_ref
-            if not isinstance(
-                font_resource_dict.raw_get("/FontDescriptor"), IndirectObject
-            ):
-                font_resource_dict[NameObject("/FontDescriptor")] = self._add_object(
-                    font_resource_dict["/FontDescriptor"]
-                )
-        font_resource_ref = self._add_object(font_resource)
-        target_resource_dict[font_resource_name] = font_resource_ref
-        return font_resource_ref
-
     FFBITS_NUL = FA.FfBits(0)
 
     def update_page_form_field_values(
