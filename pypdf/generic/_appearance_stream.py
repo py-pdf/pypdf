@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 from enum import IntEnum
 from io import BytesIO
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 from .._codecs import fill_from_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
@@ -25,7 +27,7 @@ DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 @dataclass
 class BaseStreamConfig:
     """A container representing the basic layout of an appearance stream."""
-    rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0)
+    rectangle: RectangleObject | tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
     border_width: int = 1  # The width of the border in points
     border_style: str = BorderStyles.SOLID
 
@@ -33,7 +35,7 @@ class BaseStreamConfig:
 class BaseStreamAppearance(DecodedStreamObject):
     """A class representing the very base of an appearance stream, that is, a rectangle and a border."""
 
-    def __init__(self, layout: Optional[BaseStreamConfig] = None) -> None:
+    def __init__(self, layout: BaseStreamConfig | None) -> None:
         """
         Takes the appearance stream layout as an argument.
 
@@ -145,16 +147,16 @@ class TextStreamAppearance(BaseStreamAppearance):
     def _generate_appearance_stream_data(
         self,
         text: str,
-        selection: Union[list[str], None],
+        selection: list[str] | None ,
         font: Font,
-        font_glyph_byte_map: Optional[dict[str, bytes]] = None,
+        font_glyph_byte_map: dict[str, bytes] | None = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
         is_multiline: bool = False,
         alignment: TextAlignment = TextAlignment.LEFT,
         is_comb: bool = False,
-        max_length: Optional[int] = None
+        max_length: int | None = None
     ) -> bytes:
         """
         Generates the raw bytes of the PDF appearance stream for a text field.
@@ -311,18 +313,18 @@ class TextStreamAppearance(BaseStreamAppearance):
 
     def __init__(
         self,
-        layout: Optional[BaseStreamConfig] = None,
+        layout: BaseStreamConfig | None = None,
         text: str = "",
-        selection: Optional[list[str]] = None,
-        font: Optional[Font] = None,
-        font_resource: Optional[DictionaryObject] = None,
+        selection: list[str] | None = None,
+        font: Font | None = None,
+        font_resource: DictionaryObject | None = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
         is_multiline: bool = False,
         alignment: TextAlignment = TextAlignment.LEFT,
         is_comb: bool = False,
-        max_length: Optional[int] = None
+        max_length: int | None = None
     ) -> None:
         """
         Initializes a TextStreamAppearance object.
@@ -475,7 +477,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         annotation: DictionaryObject,
         user_font_name: str = "",
         user_font_size: float = -1,
-    ) -> "TextStreamAppearance":
+    ) -> TextStreamAppearance:
         """
         Creates a TextStreamAppearance object from a text field annotation.
 
