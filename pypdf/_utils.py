@@ -42,6 +42,7 @@ from re import Pattern
 from typing import (
     IO,
     Any,
+    NoReturn,
     Optional,
     Union,
     overload,
@@ -412,7 +413,7 @@ def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
 
 
-def deprecation(msg: str) -> None:
+def deprecation(msg: str) -> NoReturn:
     raise DeprecationError(msg)
 
 
@@ -424,7 +425,7 @@ def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) ->
     )
 
 
-def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
+def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> NoReturn:
     """Raise an exception that a feature was already removed, but has a replacement."""
     deprecation(
         f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead."
@@ -436,7 +437,7 @@ def deprecate_no_replacement(name: str, removed_in: str) -> None:
     deprecate(f"{name} is deprecated and will be removed in pypdf {removed_in}.", 4)
 
 
-def deprecation_no_replacement(name: str, removed_in: str) -> None:
+def deprecation_no_replacement(name: str, removed_in: str) -> NoReturn:
     """Raise an exception that a feature was already removed without replacement."""
     deprecation(f"{name} is deprecated and was removed in pypdf {removed_in}.")
 
