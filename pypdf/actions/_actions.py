@@ -24,7 +24,7 @@ PageTriggerType = Literal["open", "close"]
 
 TRIGGER_OPEN = "open"
 TRIGGER_CLOSE = "close"
-TRIGGERS = {TRIGGER_OPEN, TRIGGER_CLOSE}
+TRIGGERS = (TRIGGER_OPEN, TRIGGER_CLOSE)
 
 
 class Action(DictionaryObject, ABC):
@@ -52,8 +52,8 @@ class Action(DictionaryObject, ABC):
 
         trigger_name = NameObject("/O") if trigger == TRIGGER_OPEN else NameObject("/C")
 
-        if not isinstance(action, Action):
-            raise ValueError("The action must be an Action type")
+        # if not isinstance(action, Action):
+        #     raise ValueError("The action must be an Action type")
 
         if NameObject("/AA") not in page:
             # Additional actions key not present
