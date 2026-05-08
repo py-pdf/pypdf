@@ -2174,9 +2174,9 @@ class PageObject(DictionaryObject):
             >>> from pypdf.actions import JavaScript
             >>> writer = PdfWriter()
             >>> page = writer.add_blank_page(595, 842)
-            # Display the page number when the page is opened
+            >>> # Display the page number when the page is opened
             >>> page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
-            # Display the page number when the page is closed
+            >>> # Display the page number when the page is closed
             >>> page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
         """
         Action._create_new(self, trigger, action)
@@ -2195,9 +2195,9 @@ class PageObject(DictionaryObject):
             >>> page = writer.add_blank_page(595, 842)
             >>> page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
             >>> page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
-            # Delete all actions triggered by a page open
+            >>> # Delete all actions triggered by a page open
             >>> page.delete_action("open")
-            # Delete all actions triggered by a page close
+            >>> # Delete all actions triggered by a page close
             >>> page.delete_action("close")
         """
         Action._delete(self, trigger)
