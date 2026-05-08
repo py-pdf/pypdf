@@ -22,6 +22,10 @@ if TYPE_CHECKING:
 
 PageTriggerType = Literal["open", "close"]
 
+TRIGGER_OPEN = "open"
+TRIGGER_CLOSE = "close"
+TRIGGERS = {TRIGGER_OPEN, TRIGGER_CLOSE}
+
 
 class Action(DictionaryObject, ABC):
     """An action dictionary defines the characteristics and behaviour of an action."""
@@ -43,10 +47,10 @@ class Action(DictionaryObject, ABC):
             trigger: The trigger event.
             action: An :py:class:`~pypdf.actions.Action` object.
         """
-        if trigger not in {"open", "close"}:
+        if trigger not in {TRIGGER_OPEN, TRIGGER_CLOSE}:
             raise ValueError("The trigger must be 'open' or 'close'")
 
-        trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
+        trigger_name = NameObject("/O") if trigger == TRIGGER_OPEN else NameObject("/C")
 
         if not isinstance(action, Action):
             raise ValueError("The action must be an Action type")
@@ -114,10 +118,10 @@ class Action(DictionaryObject, ABC):
 
     @classmethod
     def _delete(cls, page: "PageObject", trigger: PageTriggerType) -> None:
-        if trigger not in {"open", "close"}:
+        if trigger not in {TRIGGER_OPEN, TRIGGER_CLOSE}:
             raise ValueError("The trigger must be 'open' or 'close'")
 
-        trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
+        trigger_name = NameObject("/O") if trigger == TRIGGER_OPEN else NameObject("/C")
 
         if NameObject("/AA") not in page:
             return
