@@ -47,8 +47,8 @@ class Action(DictionaryObject, ABC):
             trigger: The trigger event.
             action: An :py:class:`~pypdf.actions.Action` object.
         """
-        if trigger not in {TRIGGER_OPEN, TRIGGER_CLOSE}:
-            raise ValueError("The trigger must be 'open' or 'close'")
+        if trigger not in TRIGGERS:
+            raise ValueError(f"The trigger must be one of {TRIGGERS}")
 
         trigger_name = NameObject("/O") if trigger == TRIGGER_OPEN else NameObject("/C")
 
@@ -89,7 +89,7 @@ class Action(DictionaryObject, ABC):
 
         visited = set()
         while True:
-            next_ = current[NameObject("/Next")]
+            next_ = current.get("/Next", None)
 
             if is_null_or_none(next_):
                 break

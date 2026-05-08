@@ -2163,10 +2163,10 @@ class PageObject(DictionaryObject):
 
     def add_action(self, trigger: PageTriggerType, action: Action) -> None:
         """
-        Add an action which will launch on the open or close trigger event of this page.
+        Add an action which will launch on the given trigger event of this page.
 
         Args:
-            trigger: "open" or "close" trigger event.
+            trigger: The trigger event.
             action: An :py:class:`~pypdf.actions.Action` object.
 
         Example:
