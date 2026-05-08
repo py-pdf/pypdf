@@ -615,10 +615,10 @@ class PdfReader(PdfDocCommon):
         skip_over_comment(stream)
         extra = skip_over_whitespace(stream)
         stream.seek(-1, 1)
-        idnum = int(read_until_whitespace(stream))
+        idnum = read_until_whitespace(stream)
         extra |= skip_over_whitespace(stream)
         stream.seek(-1, 1)
-        generation = int(read_until_whitespace(stream))
+        generation = read_until_whitespace(stream)
         extra |= skip_over_whitespace(stream)
         stream.seek(-1, 1)
 
@@ -629,12 +629,12 @@ class PdfReader(PdfDocCommon):
         stream.seek(-1, 1)
         if extra and self.strict:
             logger_warning(
-                "Superfluous whitespace found in object header %(idnum)d %(generation)d",
+                "Superfluous whitespace found in object header %(idnum)r %(generation)r",
                 source=__name__,
                 idnum=idnum,
                 generation=generation,
             )
-        return idnum, generation
+        return int(idnum), int(generation)
 
     def cache_get_indirect_object(
         self, generation: int, idnum: int
