@@ -971,40 +971,6 @@ class PdfWriter(PdfDocCommon):
         target_resource_dict[font_resource_name] = font_resource_ref
         return font_resource_ref
 
-    def _sync_appearance_stream_font_resources(
-        self,
-        appearance_stream_obj: StreamObject,
-        target_resource_dict: DictionaryObject
-    ) -> None:
-        """
-        Unified helper to sync fonts from an AP stream to a target
-        resource dictionary (e.g., AcroForm /DR or Page /Resources).
-        """
-        appearance_stream_resources = cast(
-            DictionaryObject,
-            appearance_stream_obj.get("/Resources", DictionaryObject())
-        )
-        appearance_stream_font_resources = cast(
-            DictionaryObject,
-            appearance_stream_resources.get("/Font", DictionaryObject()).get_object()
-        )
-        # Assume that appearance_stream_font_resources is not empty. It shouldn't be, because this code is
-        # only reached when dealing with text field annotations, which by definition have an associated font.
-        target_fonts = target_resource_dict.setdefault(NameObject("/Font"), DictionaryObject().get_object())
-        for font_name, font_res in appearance_stream_font_resources.items():
-            if font_name not in target_fonts:
-                font_res_ref = self._add_font_resource(
-                    target_fonts,
-                    cast(DictionaryObject, font_res),
-                    font_name
-                )
-                appearance_stream_font_resources[font_name] = font_res_ref
-            else:
-                existing_font = target_fonts[font_name]
-                appearance_stream_font_resources[font_name] = getattr(
-                    existing_font, "indirect_reference", existing_font
-                )
-
     FFBITS_NUL = FA.FfBits(0)
 
     def update_page_form_field_values(
@@ -1122,11 +1088,11 @@ class PdfWriter(PdfDocCommon):
                     # Textbox; we need to generate the appearance stream object
                     if isinstance(value, tuple):
                         appearance_stream_obj = TextStreamAppearance.from_text_annotation(
-                            acro_form, parent_annotation, annotation, value[1], value[2]
+                            self, page, flatten, acro_form, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
                         appearance_stream_obj = TextStreamAppearance.from_text_annotation(
-                            acro_form, parent_annotation, annotation
+                            self, page, flatten, acro_form, parent_annotation, annotation
                         )
                     # Add the appearance stream object
                     if AA.AP not in annotation:
@@ -1146,15 +1112,8 @@ class PdfWriter(PdfDocCommon):
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", source=__name__)
 
-                # Make font resources and font descriptors indirect objects
-                if appearance_stream_obj:
-                    if flatten:
-                        sync_target = cast(DictionaryObject, page[PG.RESOURCES])
-                    else:
-                        sync_target = acro_form.setdefault(NameObject("/DR"), DictionaryObject())
-                    self._sync_appearance_stream_font_resources(appearance_stream_obj, sync_target)
-                    if flatten:
-                        self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
+                if appearance_stream_obj and flatten:
+                    self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
 
     def reattach_fields(
         self, page: Optional[PageObject] = None

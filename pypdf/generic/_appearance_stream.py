@@ -4,22 +4,28 @@ import re
 from dataclasses import dataclass
 from enum import IntEnum
 from io import BytesIO
-from typing import Any, Union, cast
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from .._codecs import fill_from_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
 from .._font import Font
 from .._utils import logger_warning
-from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes
+from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes, PageAttributes
 from ..errors import PdfReadError
 from ..generic import (
     DecodedStreamObject,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     NumberObject,
     RectangleObject,
 )
 from ..generic._base import ByteStringObject, TextStringObject
+
+if TYPE_CHECKING:
+    from pypdf._writer import PdfWriter
+
+    from .._page import PageObject
 
 DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
@@ -317,7 +323,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         text: str = "",
         selection: list[str] | None = None,
         font: Font | None = None,
-        font_resource: DictionaryObject | None = None,
+        font_resource: DictionaryObject | IndirectObject | None = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
@@ -469,9 +475,33 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         return font_name, font_resource, font
 
+    @staticmethod
+    def _sync_appearance_stream_font_resources(
+        writer: PdfWriter,
+        font_name: str,
+        font_resource: DictionaryObject,
+        target_resource_dict: DictionaryObject
+    ) -> DictionaryObject | IndirectObject:
+        """
+        Unified helper to sync fonts from an AP stream to a target
+        resource dictionary (e.g., AcroForm /DR or Page /Resources).
+        """
+        target_fonts = target_resource_dict.setdefault(NameObject("/Font"), DictionaryObject()).get_object()
+        if font_name not in target_fonts:
+            return writer._add_font_resource(
+                target_fonts,
+                font_resource,
+                NameObject(font_name)
+            )
+
+        return cast(Union[DictionaryObject, IndirectObject], target_fonts[font_name])
+
     @classmethod
     def from_text_annotation(
         cls,
+        writer: PdfWriter,
+        page: PageObject,
+        flatten: bool,
         acro_form: DictionaryObject,  # _root_object[CatalogDictionary.ACRO_FORM])
         field: DictionaryObject,
         annotation: DictionaryObject,
@@ -487,6 +517,10 @@ class TextStreamAppearance(BaseStreamAppearance):
         It respects inheritance for properties like default appearance (`/DA`).
 
         Args:
+            writer: The PdfWriter instance that we are creating text stream appearances for.
+            page: The page that we are processing annotations for.
+            flatten: Whether we flatten text annotations or not. If true, add new font resource
+                to the page font resources. Otherwise, add them to the AcroForm resources.
             acro_form: The root AcroForm dictionary from the PDF catalog.
             field: The field dictionary object.
             annotation: The widget annotation dictionary object associated with the field.
@@ -553,6 +587,14 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         font_name, font_resource, font = cls._find_annotation_font_resource(font_name, annotation, acro_form, text)
 
+        # Synchronise font resources
+        if flatten:
+            sync_target = cast(DictionaryObject, page[PageAttributes.RESOURCES])
+        else:
+            sync_target = acro_form.setdefault(NameObject("/DR"), DictionaryObject())
+
+        font_resource_ref = cls._sync_appearance_stream_font_resources(writer, font_name, font_resource, sync_target)
+
         # Retrieve formatting information
         is_comb = False
         max_length = None
@@ -576,7 +618,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             text,
             selection,
             font,
-            font_resource,
+            font_resource_ref,
             font_name=font_name,
             font_size=font_size,
             font_color=font_color,
@@ -597,7 +639,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                     if "/Font" not in value:
                         value.get_object()[NameObject("/Font")] = DictionaryObject()
                     value["/Font"].get_object()[NameObject(font_name)] = getattr(
-                        font_resource, "indirect_reference", font_resource
+                        font_resource_ref, "indirect_reference", font_resource_ref
                     )
                 else:
                     new_appearance_stream[key] = value
