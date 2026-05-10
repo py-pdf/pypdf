@@ -172,10 +172,10 @@ class LzwCodec(Codec):
             # Reduce data to get rid of the overhead,
             # which increases performance on large streams significantly.
             self._next_data = self._next_data & 0xFFFFF
-
-            return code
         except IndexError:
             return self.EOD_MARKER
+        else:
+            return code
 
     # The following method has been converted to Python from PDFsharp:
     # https://github.com/empira/PDFsharp/blob/5fbf6ed14740bc4e16786816882d32e43af3ff5d/src/foundation/src/PDFsharp/src/PdfSharp/Pdf.Filters/LzwDecode.cs

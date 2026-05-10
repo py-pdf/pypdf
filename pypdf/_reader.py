@@ -1044,9 +1044,10 @@ class PdfReader(PdfDocCommon):
             logger_warning("Invalid parent xref., rebuild xref", __name__)
             try:
                 self._rebuild_xref_table(stream)
-                return None
             except Exception:
                 raise PdfReadError("Cannot rebuild xref")
+            else:
+                return None
         raise PdfReadError("Could not find xref table at specified location")
 
     def _sanitize_pdf15_xref_stream_index_pairs(

@@ -185,9 +185,10 @@ def create_string_object(
             retval = TextStringObject(decode_pdfdocencoding(string))
             retval._original_bytes = string
             retval.autodetect_pdfdocencoding = True
-            return retval
         except UnicodeDecodeError:
             return ByteStringObject(string)
+        else:
+            return retval
     else:
         raise TypeError("create_string_object should have str or unicode arg")
 
