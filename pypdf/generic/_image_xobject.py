@@ -158,7 +158,7 @@ def _extended_image_from_bytes(
                 "Data is 0 bytes, cannot process an image from empty data."
             ) from exc
         if data_length % nb_pix != 0:
-            raise exc
+            raise
         k = nb_pix * len(mode) / data_length
         data = b"".join(bytes((x,) * int(k)) for x in data)
         img = Image.frombytes(mode, size, data)
