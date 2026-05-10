@@ -193,7 +193,6 @@ ignore = [
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected
     "S110",    # `try`-`except`-`pass` detected, consider logging the exception
-    "SIM105",  # contextlib.suppress
     "SIM108",  # Don't enforce ternary operators
     "SLF001",  # Private member accessed
     "TC006",   # To discuss: Add quotes to type expression in `typing.cast()`

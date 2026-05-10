@@ -1,4 +1,5 @@
 """Test the pypdf._reader module."""
+import contextlib
 import io
 import struct
 import sys
@@ -513,10 +514,8 @@ def test_read_malformed_header(caplog):
         PdfReader(io.BytesIO(b"foo"), strict=True)
     assert exc.value.args[0] == "PDF starts with 'foo', but '%PDF-' expected"
     caplog.clear()
-    try:
+    with contextlib.suppress(Exception):
         PdfReader(io.BytesIO(b"foo"), strict=False)
-    except Exception:
-        pass
     assert caplog.messages[0].startswith("invalid pdf header")
 
 

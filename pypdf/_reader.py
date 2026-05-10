@@ -48,6 +48,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+import contextlib
+
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._utils import (
@@ -893,14 +895,10 @@ class PdfReader(PdfDocCommon):
                 else:
                     if entry_type_b == b"n":
                         self.xref[generation][num] = offset
-                    try:
+                    with contextlib.suppress(Exception):
                         self.xref_free_entry[generation][num] = entry_type_b == b"f"
-                    except Exception:
-                        pass
-                    try:
+                    with contextlib.suppress(Exception):
                         self.xref_free_entry[65535][num] = entry_type_b == b"f"
-                    except Exception:
-                        pass
                 cnt += 1
                 num += 1
             read_non_whitespace(stream)

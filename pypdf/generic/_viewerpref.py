@@ -26,6 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 from typing import (
     Any,
     Optional,
@@ -43,10 +44,8 @@ class ViewerPreferences(DictionaryObject):
         super().__init__(self)
         if not is_null_or_none(obj):
             self.update(obj.items())  # type: ignore
-        try:
+        with contextlib.suppress(AttributeError):
             self.indirect_reference = obj.indirect_reference  # type: ignore
-        except AttributeError:
-            pass
 
     def _get_bool(self, key: str, default: Optional[BooleanObject]) -> Optional[BooleanObject]:
         return self.get(key, default)
@@ -69,10 +68,8 @@ class ViewerPreferences(DictionaryObject):
 
     def _set_arr(self, key: str, v: Optional[ArrayObject]) -> None:
         if v is None:
-            try:
+            with contextlib.suppress(KeyError):
                 del self[NameObject(key)]
-            except KeyError:
-                pass
             return
         if not isinstance(v, ArrayObject):
             raise ValueError("ArrayObject is expected")

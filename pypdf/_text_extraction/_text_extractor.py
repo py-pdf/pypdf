@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import math
 from typing import Any, Callable, Optional, Union
 
@@ -300,10 +301,8 @@ class TextExtraction:
             )
 
         self._space_width = self.font.space_width / 2  # Actually the width of _half_ a space...
-        try:
+        with contextlib.suppress(Exception):  # keep previous size
             self.font_size = float(operands[1])
-        except Exception:
-            pass  # keep previous size
 
     def _handle_td(self, operands: list[Any]) -> float:
         """Handle Td (Move text position) operation - Table 5.5 page 406."""
