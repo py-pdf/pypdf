@@ -1304,9 +1304,11 @@ class PdfReader(PdfDocCommon):
                     expected_count = cast(int, obj["/N"])
                     if actual_count != expected_count:  # pragma: no cover
                         logger_warning(  # pragma: no cover
-                            "found %(actual_count)d objects within "
-                            "Object(%(object_number)d,%(generation_number)d) "
-                            "whereas %(expected)d expected",
+                            (
+                                "found %(actual_count)d objects within "
+                                "Object(%(object_number)d,%(generation_number)d) "
+                                "whereas %(expected)d expected"
+                            ),
                             source=__name__,
                             actual_count=actual_count,
                             object_number=object_number,
