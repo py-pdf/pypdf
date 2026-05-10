@@ -44,7 +44,6 @@ from typing import (
     Any,
     Optional,
     Union,
-    overload,
 )
 
 if sys.version_info[:2] >= (3, 10):
@@ -385,27 +384,6 @@ def mark_location(stream: StreamType) -> None:
         output_fh.write(b"HERE")
         output_fh.write(stream.read(radius))
     stream.seek(-radius, 1)
-
-
-@overload
-def ord_(b: str) -> int:
-    ...
-
-
-@overload
-def ord_(b: bytes) -> bytes:
-    ...
-
-
-@overload
-def ord_(b: int) -> int:
-    ...
-
-
-def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
-    if isinstance(b, str):
-        return ord(b)
-    return b
 
 
 def deprecate(msg: str, stacklevel: int = 3) -> None:
