@@ -804,7 +804,8 @@ class TreeObject(DictionaryObject):
             prev["/Prev"][NameObject("/Next")] = child_reference
             child_obj[NameObject("/Prev")] = prev["/Prev"]
         except Exception:  # it means we are inserting in first position
-            del child_obj["/Next"]
+            if "/Next" in child_obj:
+                del child_obj["/Next"]
         child_obj[NameObject("/Next")] = prev
         prev[NameObject("/Prev")] = child_reference
         child_obj[NameObject("/Parent")] = self.indirect_reference
