@@ -33,11 +33,11 @@ def _get_data_from_url(url: str) -> bytes:
                     url
             ) as response:
                 return response.read()
-        except HTTPError as e:
+        except HTTPError:
             if attempts < 3:
                 attempts += 1
             else:
-                raise e
+                raise
     raise ValueError(f"Unknown error handling {url}")
 
 
