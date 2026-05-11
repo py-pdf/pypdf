@@ -375,7 +375,8 @@ class PdfReader(PdfDocCommon):
             if self.strict:
                 raise LimitReachedError(f"Value /N {n} for object {stream_num} exceeds maximum allowed value {max_n}.")
             logger_warning(
-                "Value /N %(n)d for object %(stream_num)d exceeds maximum allowed value %(max_n)d. Limiting to %(max_n)d.",
+                "Value /N %(n)d for object %(stream_num)d exceeds maximum allowed value %(max_n)d."
+                "Limiting to %(max_n)d.",
                 source=__name__,
                 n=n,
                 stream_num=stream_num,
@@ -756,7 +757,9 @@ class PdfReader(PdfDocCommon):
                     f"PDF starts with '{header_bytes.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            logger_warning("invalid pdf header: %(header_byte)r", source=__name__, header_byte=header_byte)
+            logger_warning("invalid pdf header: %(header_bytes)r",
+                            source=__name__, 
+                            header_bytes=header_bytes)
         stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
@@ -805,7 +808,7 @@ class PdfReader(PdfDocCommon):
         """
         line = read_previous_line(stream)
         try:
-            start_xref = int(line)
+            startxref = int(line)
         except ValueError:
             # 'startxref' may be on the same line as the location
             if not line.startswith(b"startxref"):
@@ -816,7 +819,7 @@ class PdfReader(PdfDocCommon):
             line = read_previous_line(stream)
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
-        return start_xref
+        return startxref
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
