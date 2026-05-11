@@ -384,18 +384,18 @@ class PdfReader(PdfDocCommon):
             )
             n = max_n
 
-        # Phase 1: Read the index (objnum, offset) pairs from the header.
+        # Phase 1: Read the index (obj_num, offset) pairs from the header.
         obj_index: list[tuple[int, int]] = []
         for _i in range(n):
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            obj_num = NumberObject.read_from_stream(stream_data)
+            obj_num = int(NumberObject.read_from_stream(stream_data))
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            offset = NumberObject.read_from_stream(stream_data)
+            offset = int(NumberObject.read_from_stream(stream_data))
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            obj_index.append((int(obj_num), int(offset)))
+            obj_index.append((obj_num, offset))
 
         # Phase 2: Parse each object and cache it.
         target_obj: Union[int, PdfObject, str] = NullObject()
