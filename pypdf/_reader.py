@@ -350,8 +350,8 @@ class PdfReader(PdfDocCommon):
     ) -> Union[int, PdfObject, str]:
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
+        stream_num, _idx = self.xref_objStm[indirect_reference.idnum]
+        obj_stm: EncodedStreamObject = IndirectObject(stream_num, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # Parse ALL objects in this stream in one pass and cache them.
@@ -368,9 +368,9 @@ class PdfReader(PdfDocCommon):
         stream_data.seek(0)
         if n > max_n:
             if self.strict:
-                raise LimitReachedError(f"Value /N {n} for object {stmnum} exceeds maximum allowed value {max_n}.")
+                raise LimitReachedError(f"Value /N {n} for object {stream_num} exceeds maximum allowed value {max_n}.")
             logger_warning(
-                f"Value /N {n} for object {stmnum} exceeds maximum allowed value {max_n}. Limiting to {max_n}.",
+                f"Value /N {n} for object {stream_num} exceeds maximum allowed value {max_n}. Limiting to {max_n}.",
                 src=__name__
             )
             n = max_n
@@ -380,13 +380,13 @@ class PdfReader(PdfDocCommon):
         for _i in range(n):
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            objnum = NumberObject.read_from_stream(stream_data)
+            obj_num = NumberObject.read_from_stream(stream_data)
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
             offset = NumberObject.read_from_stream(stream_data)
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            obj_index.append((int(objnum), int(offset)))
+            obj_index.append((int(obj_num), int(offset)))
 
         # Phase 2: Parse each object and cache it.
         target_obj: Union[int, PdfObject, str] = NullObject()
@@ -426,7 +426,7 @@ class PdfReader(PdfDocCommon):
             # Incremental updates may override objects originally in the stream;
             # caching those stale versions would shadow the newer xref entry.
             authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
-            if authoritative_stm == stmnum:
+            if authoritative_stm == stream_num:
                 self.cache_indirect_object(0, obj_num, obj)  # type: ignore[arg-type]
 
             if obj_num == indirect_reference.idnum:
@@ -719,18 +719,18 @@ class PdfReader(PdfDocCommon):
         """Ensure the stream is valid and not empty."""
         stream.seek(0, os.SEEK_SET)
         try:
-            header_byte = stream.read(5)
+            header_bytes = stream.read(5)
         except UnicodeDecodeError:
             raise UnsupportedOperation("cannot read header")
-        if header_byte == b"":
+        if header_bytes == b"":
             raise EmptyFileError("Cannot read an empty file")
-        if header_byte != b"%PDF-":
+        if header_bytes != b"%PDF-":
             if self.strict:
                 raise PdfReadError(
-                    f"PDF starts with '{header_byte.decode('utf8')}', "
+                    f"PDF starts with '{header_bytes.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            logger_warning(f"invalid pdf header: {header_byte!r}", __name__)
+            logger_warning(f"invalid pdf header: {header_bytes!r}", __name__)
         stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
@@ -779,18 +779,18 @@ class PdfReader(PdfDocCommon):
         """
         line = read_previous_line(stream)
         try:
-            startxref = int(line)
+            start_xref = int(line)
         except ValueError:
             # 'startxref' may be on the same line as the location
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
-            startxref = int(line[9:].strip())
+            start_xref = int(line[9:].strip())
             logger_warning("startxref on same line as offset", __name__)
         else:
             line = read_previous_line(stream)
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
-        return startxref
+        return start_xref
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
@@ -825,8 +825,8 @@ class PdfReader(PdfDocCommon):
                 return
             read_non_whitespace(stream)
             stream.seek(-1, 1)
-            cnt = 0
-            while cnt < size:
+            count_number = 0
+            while count_number < size:
                 line = stream.read(20)
                 if not line:
                     raise PdfReadError("Unexpected empty line in Xref table.")
@@ -901,7 +901,7 @@ class PdfReader(PdfDocCommon):
                         self.xref_free_entry[65535][num] = entry_type_b == b"f"
                     except Exception:
                         pass
-                cnt += 1
+                count_number += 1
                 num += 1
             read_non_whitespace(stream)
             stream.seek(-1, 1)
@@ -977,10 +977,10 @@ class PdfReader(PdfDocCommon):
             if key in xrefstream and key not in self.trailer:
                 self.trailer[NameObject(key)] = xrefstream.raw_get(key)
         if "/XRefStm" in xrefstream:
-            p = self.stream.tell()
+            stream_position = self.stream.tell()
             self.stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
             self._read_pdf15_xref_stream(self.stream)
-            self.stream.seek(p, 0)
+            self.stream.seek(stream_position, 0)
 
     def _read_xref(self, stream: StreamType) -> Optional[int]:
         self._read_standard_xref_table(stream)
@@ -994,7 +994,7 @@ class PdfReader(PdfDocCommon):
             if key not in self.trailer:
                 self.trailer[key] = value
         if "/XRefStm" in new_trailer:
-            p = stream.tell()
+            stream_position = stream.tell()
             stream.seek(cast(int, new_trailer["/XRefStm"]) + 1, 0)
             try:
                 self._read_pdf15_xref_stream(stream)
@@ -1003,7 +1003,7 @@ class PdfReader(PdfDocCommon):
                     f"XRef object at {new_trailer['/XRefStm']} can not be read, some object may be missing",
                     __name__,
                 )
-            stream.seek(p, 0)
+            stream.seek(stream_position, 0)
         if "/Prev" in new_trailer:
             return cast(int, new_trailer["/Prev"])
         return None
@@ -1026,8 +1026,8 @@ class PdfReader(PdfDocCommon):
         # the xref table nearby, as we've observed this error with an
         # off-by-one before.
         stream.seek(-11, 1)
-        tmp = stream.read(20)
-        xref_loc = tmp.find(b"xref")
+        xref_data  = stream.read(20)
+        xref_loc = xref_data .find(b"xref")
         if xref_loc != -1:
             startxref -= 10 - xref_loc
             return startxref
@@ -1311,11 +1311,11 @@ class PdfReader(PdfDocCommon):
                         self.xref[generation][num] = byte_offset  # type: ignore
                 elif xref_type == 2:
                     # compressed objects
-                    objstr_num = get_entry(1)
-                    obstr_idx = get_entry(2)
+                    obj_str_num = get_entry(1)
+                    obj_str_idx = get_entry(2)
                     generation = 0  # PDF spec table 18, generation is 0
                     if not used_before(num, generation):
-                        self.xref_objStm[num] = (objstr_num, obstr_idx)
+                        self.xref_objStm[num] = (obj_str_num, obj_str_idx)
                 elif self.strict:
                     raise PdfReadError(f"Unknown xref type: {xref_type}")
 
