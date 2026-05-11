@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 6.11.0, 2026-05-09
+
+### New Features (ENH)
+- Initialise a Font from an embedded font file (#3704)
+
+### Robustness (ROB)
+- Allow to fix AES padding length in non-strict mode (#3742)
+
+### Developer Experience (DEV)
+- Enable PyPy testing again (#3752)
+- Align mypy Makefile target with strict mode (#3690)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.2...6.11.0)
+
 ## Version 6.10.2, 2026-04-15
 
 ### Security (SEC)

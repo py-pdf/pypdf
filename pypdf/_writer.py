@@ -590,7 +590,10 @@ class PdfWriter(PdfDocCommon):
             ] = BooleanObject(state)
         except Exception as exc:  # pragma: no cover
             logger_warning(
-                f"set_need_appearances_writer({state}) catch : {exc}", __name__
+                "set_need_appearances_writer(%(state)s) catch : %(exc)s",
+                source=__name__,
+                state=state,
+                exc=exc,
             )
 
     def create_viewer_preferences(self) -> ViewerPreferences:
@@ -942,8 +945,9 @@ class PdfWriter(PdfDocCommon):
             pg_xo_res[xobject_name] = xobject_ref
         else:
             logger_warning(
-                f"XObject {xobject_name!r} already added to page resources. This might be an issue.",
-                __name__
+                "XObject %(xobject_name)r already added to page resources. This might be an issue.",
+                source=__name__,
+                xobject_name=xobject_name,
             )
         xobject_cm = Transformation().translate(x_offset, y_offset)
         xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
@@ -1005,7 +1009,7 @@ class PdfWriter(PdfDocCommon):
                     self.update_page_form_field_values(p, fields, flags, None, flatten=flatten)
             return
         if PG.ANNOTS not in page:
-            logger_warning("No fields to update on this page", __name__)
+            logger_warning("No fields to update on this page", source=__name__)
             return
         appearance_stream_obj: Optional[StreamObject] = None
 
@@ -1088,7 +1092,7 @@ class PdfWriter(PdfDocCommon):
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
-                    logger_warning("Signature forms not implemented yet", __name__)
+                    logger_warning("Signature forms not implemented yet", source=__name__)
                 if flatten and appearance_stream_obj is not None:
                     self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
 
@@ -1187,14 +1191,17 @@ class PdfWriter(PdfDocCommon):
         self._root_object = reader.root_object.clone(self)
         self._pages = self._root_object.raw_get("/Pages")
 
-        if len(self._objects) > cast(int, reader.trailer["/Size"]):
+        trailer_size = cast(int, reader.trailer["/Size"])
+        if len(self._objects) > trailer_size:
             if self.strict:
                 raise PdfReadError(
-                    f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}"
+                    f"Object count {len(self._objects)} exceeds defined trailer size {trailer_size}"
                 )
             logger_warning(
-                f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}",
-                __name__
+                "Object count %(object_count)d exceeds defined trailer size %(trailer_size)d",
+                source=__name__,
+                object_count=len(self._objects),
+                trailer_size=trailer_size,
             )
 
         # must be done here before rewriting
@@ -1367,9 +1374,10 @@ class PdfWriter(PdfDocCommon):
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
-                f"File <{stream.name}> to write to is not in binary mode. "
+                "File <%(stream_name)s> to write to is not in binary mode. "
                 "It may not be written to correctly.",
-                __name__,
+                source=__name__,
+                stream_name=stream.name,
             )
         self._resolve_links()
 
@@ -1881,8 +1889,9 @@ class PdfWriter(PdfDocCommon):
                     page_ref = NumberObject(page_number)
             if page_ref is None:
                 logger_warning(
-                    f"can not find reference of page {page_number}",
-                    __name__,
+                    "can not find reference of page %(page_number)s",
+                    source=__name__,
+                    page_number=page_number,
                 )
                 page_ref = NullObject()
             dest = Destination(
@@ -2383,8 +2392,9 @@ class PdfWriter(PdfDocCommon):
         if not isinstance(layout, NameObject):
             if layout not in self._valid_layouts:
                 logger_warning(
-                    f"Layout should be one of: {'', ''.join(self._valid_layouts)}",
-                    __name__,
+                    "Layout should be one of: %(layouts)s",
+                    source=__name__,
+                    layouts={"", "".join(self._valid_layouts)},
                 )
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
@@ -2491,7 +2501,9 @@ class PdfWriter(PdfDocCommon):
         else:
             if mode not in self._valid_modes:
                 logger_warning(
-                    f"Mode should be one of: {', '.join(self._valid_modes)}", __name__
+                    "Mode should be one of: %(modes)s",
+                    source=__name__,
+                    modes=", ".join(self._valid_modes),
                 )
             mode_name = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode_name})
@@ -3002,7 +3014,12 @@ class PdfWriter(PdfDocCommon):
         if annots is None:
             return outlist
         if not isinstance(annots, list):
-            logger_warning(f"Expected list of annotations, got {annots} of type {annots.__class__.__name__}.", __name__)
+            logger_warning(
+                "Expected list of annotations, got %(annots)s of type %(annots_type)s.",
+                source=__name__,
+                annots=annots,
+                annots_type=annots.__class__.__name__,
+            )
             return outlist
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
