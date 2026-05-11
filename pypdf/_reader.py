@@ -757,9 +757,10 @@ class PdfReader(PdfDocCommon):
                     f"PDF starts with '{header_bytes.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            logger_warning("invalid pdf header: %(header_bytes)r",
-                            source=__name__, 
-                            header_bytes=header_bytes)
+            logger_warning(
+                "invalid pdf header: %(header_bytes)r",
+                source=__name__, 
+                header_bytes=header_bytes)
         stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
