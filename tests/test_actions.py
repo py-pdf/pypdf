@@ -181,7 +181,7 @@ def test_page_add_action__edge_cases(pdf_file_writer, caplog):
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = NameObject("/xyzzy")
     with pytest.raises(
         TypeError,
-        match="Must be either a single action dictionary or an array of action dictionaries",
+        match="Must be either a single Action dictionary or an array of Action dictionaries",
     ):
         page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action("open")
@@ -192,7 +192,7 @@ def test_page_add_action__edge_cases(pdf_file_writer, caplog):
     page[NameObject("/AA")][NameObject("/C")][NameObject("/Next")] = NameObject("/xyzzy")
     with pytest.raises(
             TypeError,
-            match="Must be either a single action dictionary or an array of action dictionaries",
+            match="Must be either a single Action dictionary or an array of Action dictionaries",
     ):
         page.add_action("close", JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action("close")
