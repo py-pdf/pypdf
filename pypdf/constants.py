@@ -3,11 +3,10 @@
 import sys
 from enum import Enum, IntFlag, auto, unique
 
-
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
-    class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
+    class StrEnum(str, Enum):
         def __str__(self) -> str:
             return str(self.value)
 
