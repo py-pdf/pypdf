@@ -38,7 +38,7 @@ class Action(DictionaryObject, ABC):
         self[NameObject("/Next")] = NullObject()  # Optional
 
     @classmethod
-    def _create_new(cls, page: "PageObject", trigger: PageTrigger, action: "Action") -> None:
+    def _create_new(cls, page: "PageObject", trigger: str, action: "Action") -> None:
         """
         Create a new action and add it to the page.
 
@@ -117,8 +117,7 @@ class Action(DictionaryObject, ABC):
         additional_actions.update({trigger_name: head})
 
     @classmethod
-    #def _delete(cls, page: "PageObject", trigger: PageTriggerType) -> None:
-    def _delete(cls, page: "PageObject", trigger: PageTrigger) -> None:
+    def _delete(cls, page: "PageObject", trigger: str) -> None:
         try:
             trigger = PageTrigger(trigger).value
         except ValueError:
