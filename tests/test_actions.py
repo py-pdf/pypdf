@@ -157,7 +157,7 @@ def test_page_add_action__edge_cases(pdf_file_writer, caplog):
     # Add an open action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             TypeError,
-            match="The entries in a page object's additional-actions dictionary must be dictionaries"
+            match="The value in a page object's additional-actions key must be a DictionaryObject"
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")
@@ -168,7 +168,7 @@ def test_page_add_action__edge_cases(pdf_file_writer, caplog):
     # Add a close action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             TypeError,
-            match="The entries in a page object's additional-actions dictionary must be dictionaries"
+            match="The value in a page object's additional-actions key must be a DictionaryObject"
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/C")] = NameObject("/xyzzy")
