@@ -101,7 +101,7 @@ class Action(DictionaryObject, ABC):
 
             id_ = id(next_)
             if id_ in visited:
-                logger_warning(f"Detected cycle in the action tree for {current}", __name__)
+                logger_warning(f"Detected cycle in the action tree for {current}", source=__name__)
                 break
             visited.add(id_)
 
@@ -111,7 +111,7 @@ class Action(DictionaryObject, ABC):
                 current = next_
 
         if not is_null_or_none(current[NameObject("/Next")]) and id(current[NameObject("/Next")]) in visited:
-            logger_warning(f"Detected cycle in the action tree for {current}", __name__)
+            logger_warning(f"Detected cycle in the action tree for {current}", source=__name__)
 
         current[NameObject("/Next")] = action
         additional_actions.update({trigger_name: head})
