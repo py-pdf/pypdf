@@ -90,7 +90,7 @@ class Action(DictionaryObject, ABC):
         head = current = additional_actions.get(trigger_name)
         if not isinstance(head, DictionaryObject):
             raise TypeError(
-                "The value in a page object's additional-actions key must be a DictionaryObject"
+                "The type in a page object's additional-actions key must be a DictionaryObject"
             )
         current = cast(DictionaryObject, current)
 
