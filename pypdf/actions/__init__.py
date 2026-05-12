@@ -8,9 +8,10 @@ associated object.
 """
 
 
-from ._actions import Action, JavaScript
+from ._actions import Action, JavaScript, PageTrigger
 
 __all__ = [
     "Action",
     "JavaScript",
+    "PageTrigger",
 ]

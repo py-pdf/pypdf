@@ -3,12 +3,11 @@ from abc import ABC
 from enum import unique
 from typing import (
     TYPE_CHECKING,
-    Literal,
     cast,
 )
 
-from ..constants import StrEnum
 from .._utils import logger_warning
+from ..constants import StrEnum
 from ..generic import (
     ArrayObject,
     DictionaryObject,
