@@ -1,13 +1,13 @@
 """Action types"""
+import sys
 from abc import ABC
-from enum import unique
+from enum import Enum, unique
 from typing import (
     TYPE_CHECKING,
     cast,
 )
 
 from .._utils import logger_warning
-from ..constants import StrEnum
 from ..generic import (
     ArrayObject,
     DictionaryObject,
@@ -16,6 +16,13 @@ from ..generic import (
     TextStringObject,
     is_null_or_none,
 )
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    class StrEnum(str, Enum):
+        def __str__(self) -> str:
+            return str(self.value)
 
 if TYPE_CHECKING:
     from .._page import PageObject
