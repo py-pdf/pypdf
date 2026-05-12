@@ -8,10 +8,9 @@ associated object.
 """
 
 
-from ._actions import Action, JavaScript, PageTriggerType
+from ._actions import Action, JavaScript
 
 __all__ = [
     "Action",
     "JavaScript",
-    "PageTriggerType",
 ]

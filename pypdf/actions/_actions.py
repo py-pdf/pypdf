@@ -1,11 +1,13 @@
 """Action types"""
 from abc import ABC
+from enum import unique
 from typing import (
     TYPE_CHECKING,
     Literal,
     cast,
 )
 
+from ..constants import StrEnum
 from .._utils import logger_warning
 from ..generic import (
     ArrayObject,
@@ -20,11 +22,10 @@ if TYPE_CHECKING:
     from .._page import PageObject
 
 
-PageTriggerType = Literal["open", "close"]
-
-TRIGGER_OPEN = "open"
-TRIGGER_CLOSE = "close"
-TRIGGERS = (TRIGGER_OPEN, TRIGGER_CLOSE)
+@unique
+class PageTrigger(StrEnum):
+    OPEN = "open"
+    CLOSE = "close"
 
 
 class Action(DictionaryObject, ABC):
@@ -38,22 +39,22 @@ class Action(DictionaryObject, ABC):
         self[NameObject("/Next")] = NullObject()  # Optional
 
     @classmethod
-    def _create_new(cls, page: "PageObject", trigger: PageTriggerType, action: "Action") -> None:
+    def _create_new(cls, page: "PageObject", trigger: PageTrigger, action: "Action") -> None:
         """
         Create a new action and add it to the page.
 
         Args:
-            page: The page to add the action to.
+            page: The page to add the action.
             trigger: The trigger event.
             action: An :py:class:`~pypdf.actions.Action` object.
         """
-        if trigger not in TRIGGERS:
-            raise ValueError(f"The trigger must be one of {TRIGGERS}")
+        try:
+            trigger = PageTrigger(trigger).value
+        except ValueError:
+            valid_values = [t.value for t in PageTrigger]
+            raise ValueError(f"The trigger must be one of {valid_values}")
 
-        trigger_name = NameObject("/O") if trigger == TRIGGER_OPEN else NameObject("/C")
-
-        # if not isinstance(action, Action):
-        #     raise ValueError("The action must be an Action type")
+        trigger_name = NameObject("/O") if trigger == PageTrigger.OPEN else NameObject("/C")
 
         if NameObject("/AA") not in page:
             # Additional actions key not present
@@ -117,11 +118,15 @@ class Action(DictionaryObject, ABC):
         additional_actions.update({trigger_name: head})
 
     @classmethod
-    def _delete(cls, page: "PageObject", trigger: PageTriggerType) -> None:
-        if trigger not in TRIGGERS:
-            raise ValueError(f"The trigger must be one of {TRIGGERS}")
+    #def _delete(cls, page: "PageObject", trigger: PageTriggerType) -> None:
+    def _delete(cls, page: "PageObject", trigger: PageTrigger) -> None:
+        try:
+            trigger = PageTrigger(trigger).value
+        except ValueError:
+            valid_values = [t.value for t in PageTrigger]
+            raise ValueError(f"The trigger must be one of {valid_values}")
 
-        trigger_name = NameObject("/O") if trigger == TRIGGER_OPEN else NameObject("/C")
+        trigger_name = NameObject("/O") if trigger == PageTrigger.OPEN else NameObject("/C")
 
         if NameObject("/AA") not in page:
             return
