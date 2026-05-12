@@ -355,7 +355,7 @@ class PdfReader(PdfDocCommon):
     ) -> Union[int, PdfObject, str]:
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        stream_object_number , _idx = self.xref_objStm[indirect_reference.idnum]
+        stream_object_number, _idx = self.xref_objStm[indirect_reference.idnum]
         obj_stm: EncodedStreamObject = IndirectObject(stream_object_number, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
@@ -855,7 +855,7 @@ class PdfReader(PdfDocCommon):
                 return
             read_non_whitespace(stream)
             stream.seek(-1, 1)
-            count  = 0
+            count = 0
             while count < size:
                 line = stream.read(20)
                 if not line:
