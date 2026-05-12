@@ -1023,7 +1023,7 @@ class Encryption:
         # verify Perms
         self._are_permissions_valid = AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata)
         if not self._are_permissions_valid:
-            logger_warning("ignore '/Perms' verify failed", __name__)
+            logger_warning("ignore '/Perms' verify failed", source=__name__)
         return key, rc
 
     def write_entry(
