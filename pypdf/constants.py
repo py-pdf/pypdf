@@ -1,11 +1,15 @@
 """Various constants, enums, and flags to aid readability."""
 
+import sys
 from enum import Enum, IntFlag, auto, unique
 
 
-class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
-    def __str__(self) -> str:
-        return str(self.value)
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
+        def __str__(self) -> str:
+            return str(self.value)
 
 
 class Core:
