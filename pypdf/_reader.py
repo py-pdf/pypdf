@@ -355,8 +355,8 @@ class PdfReader(PdfDocCommon):
     ) -> Union[int, PdfObject, str]:
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        stream_num, _idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm: EncodedStreamObject = IndirectObject(stream_num, 0, self).get_object()  # type: ignore
+        stream_object_number, _idx = self.xref_objStm[indirect_reference.idnum]
+        obj_stm: EncodedStreamObject = IndirectObject(stream_object_number, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # Parse ALL objects in this stream in one pass and cache them.
@@ -373,13 +373,13 @@ class PdfReader(PdfDocCommon):
         stream_data.seek(0)
         if n > max_n:
             if self.strict:
-                raise LimitReachedError(f"Value /N {n} for object {stream_num} exceeds maximum allowed value {max_n}.")
+                raise LimitReachedError(f"Value /N {n} for object {stream_object_number} exceeds maximum allowed value {max_n}.")
             logger_warning(
-                "Value /N %(n)d for object %(stream_num)d exceeds maximum allowed value %(max_n)d. "
+                "Value /N %(n)d for object %(stream_object_number)d exceeds maximum allowed value %(max_n)d. "
                 "Limiting to %(max_n)d.",
                 source=__name__,
                 n=n,
-                stream_num=stream_num,
+                stream_object_number=stream_object_number,
                 max_n=max_n,
             )
             n = max_n
@@ -437,7 +437,7 @@ class PdfReader(PdfDocCommon):
             # Incremental updates may override objects originally in the stream;
             # caching those stale versions would shadow the newer xref entry.
             authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
-            if authoritative_stm == stream_num:
+            if authoritative_stm == stream_object_number:
                 self.cache_indirect_object(0, obj_num, obj)  # type: ignore[arg-type]
 
             if obj_num == indirect_reference.idnum:
@@ -855,8 +855,8 @@ class PdfReader(PdfDocCommon):
                 return
             read_non_whitespace(stream)
             stream.seek(-1, 1)
-            count_number = 0
-            while count_number < size:
+            count = 0
+            while count < size:
                 line = stream.read(20)
                 if not line:
                     raise PdfReadError("Unexpected empty line in Xref table.")
@@ -933,7 +933,7 @@ class PdfReader(PdfDocCommon):
                         self.xref_free_entry[65535][num] = entry_type_b == b"f"
                     except Exception:
                         pass
-                count_number += 1
+                count += 1
                 num += 1
             read_non_whitespace(stream)
             stream.seek(-1, 1)
