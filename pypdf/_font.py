@@ -632,7 +632,6 @@ class Font:
         ensures that ToUnicode, FontDescriptor, FontFile, and, ultimately, the font
         resource itself, are registered with the PdfWriter instance as indirect objects.
         """
-
         font_resource = self.as_font_resource()
         if "/ToUnicode" in font_resource:
             font_resource[NameObject("/ToUnicode")] = writer._add_object(font_resource["/ToUnicode"])
