@@ -103,7 +103,7 @@ class Action(DictionaryObject, ABC):
 
             if not isinstance(next_, (ArrayObject, DictionaryObject)):
                 raise TypeError(
-                    "Must be either a single Action dictionary or an array of Action dictionaries"
+                    "An action dictionary’s Next entry must be a Action dictionary or an array of Action dictionaries"
                 )
 
             id_ = id(next_)
