@@ -376,8 +376,7 @@ class PdfReader(PdfDocCommon):
                 raise LimitReachedError(f"Value /N {n} for object {object_stream_number} exceeds maximum allowed value {max_n}.")
             logger_warning(
                 "Value /N %(n)d for object %(object_stream_number)d exceeds"
-                " maximum allowed value %(max_n)d. "
-                "Limiting to %(max_n)d.",
+                " maximum allowed value %(max_n)d. Limiting to %(max_n)d.",
                 source=__name__,
                 n=n,
                 object_stream_number=object_stream_number,
