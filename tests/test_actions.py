@@ -41,9 +41,9 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert "/AA" not in page
 
     # Add a close action
     page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))

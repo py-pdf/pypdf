@@ -30,7 +30,8 @@ if TYPE_CHECKING:
 
 @unique
 class PageTrigger(StrEnum):
-    """Trigger event entries in a page object’s additional-actions dictionary."""
+    """Trigger event entries in a page object's additional-actions dictionary."""
+
     OPEN = "open"
     CLOSE = "close"
 
@@ -69,10 +70,10 @@ class Action(DictionaryObject, ABC):
             )
             return
 
-        if not isinstance(page[NameObject("/AA")], DictionaryObject):
+        if not isinstance(page["/AA"], DictionaryObject):
             page[NameObject("/AA")] = DictionaryObject()
 
-        additional_actions: DictionaryObject = cast(DictionaryObject, page[NameObject("/AA")])
+        additional_actions: DictionaryObject = cast(DictionaryObject, page["/AA"])
 
         if is_null_or_none(additional_actions.get(trigger_name)):
             additional_actions.update({trigger_name: action})
@@ -117,7 +118,7 @@ class Action(DictionaryObject, ABC):
             else:
                 current = next_
 
-        if not is_null_or_none(current[NameObject("/Next")]) and id(current[NameObject("/Next")]) in visited:
+        if not is_null_or_none(next_ := current.get("/Next")) and id(next_) in visited:
             logger_warning("Detected cycle in the action tree for %(current)s", current=current, source=__name__)
 
         current[NameObject("/Next")] = action
@@ -135,13 +136,13 @@ class Action(DictionaryObject, ABC):
         if "/AA" not in page:
             return
 
-        additional_actions: DictionaryObject = cast(DictionaryObject, page[NameObject("/AA")])
+        additional_actions: DictionaryObject = cast(DictionaryObject, page["/AA"])
 
         if trigger_name in additional_actions:
             del additional_actions[trigger_name]
 
             if not additional_actions:
-                del page[NameObject("/AA")]
+                del page["/AA"]
 
 
 class JavaScript(Action):
