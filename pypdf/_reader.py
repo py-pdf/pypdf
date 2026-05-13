@@ -355,8 +355,8 @@ class PdfReader(PdfDocCommon):
     ) -> Union[int, PdfObject, str]:
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        stream_object_number, _idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm: EncodedStreamObject = IndirectObject(stream_object_number, 0, self).get_object()  # type: ignore
+        object_stram_number, _idx = self.xref_objStm[indirect_reference.idnum]
+        obj_stm: EncodedStreamObject = IndirectObject(object_stram_number, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # Parse ALL objects in this stream in one pass and cache them.
@@ -373,13 +373,13 @@ class PdfReader(PdfDocCommon):
         stream_data.seek(0)
         if n > max_n:
             if self.strict:
-                raise LimitReachedError(f"Value /N {n} for object {stream_object_number} exceeds maximum allowed value {max_n}.")
+                raise LimitReachedError(f"Value /N {n} for object {object_stram_number} exceeds maximum allowed value {max_n}.")
             logger_warning(
-                "Value /N %(n)d for object %(stream_object_number)d exceeds maximum allowed value %(max_n)d. "
+                "Value /N %(n)d for object %(object_stram_number)d exceeds maximum allowed value %(max_n)d. "
                 "Limiting to %(max_n)d.",
                 source=__name__,
                 n=n,
-                stream_object_number=stream_object_number,
+                object_stram_number=object_stram_number,
                 max_n=max_n,
             )
             n = max_n
@@ -437,7 +437,7 @@ class PdfReader(PdfDocCommon):
             # Incremental updates may override objects originally in the stream;
             # caching those stale versions would shadow the newer xref entry.
             authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
-            if authoritative_stm == stream_object_number:
+            if authoritative_stm == object_stram_number:
                 self.cache_indirect_object(0, obj_num, obj)  # type: ignore[arg-type]
 
             if obj_num == indirect_reference.idnum:
