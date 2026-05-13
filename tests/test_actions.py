@@ -18,7 +18,7 @@ def pdf_file_writer():
     return writer
 
 
-def test_page_add_action__errors(pdf_file_writer):
+def test_page_add_action__error(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
     with pytest.raises(
@@ -26,18 +26,6 @@ def test_page_add_action__errors(pdf_file_writer):
         match=re.escape("The trigger must be one of ['open', 'close']"),
     ):
         page.add_action("xyzzy", JavaScript('app.alert("This is page " + this.pageNum);'))  # type: ignore[arg-type]
-
-    # with pytest.raises(
-    #     ValueError,
-    #     match="The action must be an Action type"
-    # ):
-    #     page.add_action("open", "xyzzy")  # type: ignore[arg-type]
-    #
-    # with pytest.raises(
-    #     ValueError,
-    #     match="The action must be an Action type"
-    # ):
-    #     page.add_action("close", "xyzzy")  # type: ignore[arg-type]
 
 
 def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
