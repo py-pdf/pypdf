@@ -55,13 +55,12 @@ class Action(DictionaryObject, ABC):
             trigger: The trigger event.
             action: An :py:class:`~pypdf.actions.Action` object.
         """
-        try:
-            trigger = PageTrigger(trigger).value
-        except ValueError:
-            valid_values = [t.value for t in PageTrigger]
+        valid_values = [trigger.value for trigger in PageTrigger]
+
+        if trigger not in valid_values:
             raise ValueError(f"The trigger must be one of {valid_values}")
 
-        trigger_name = NameObject("/O") if trigger == PageTrigger.OPEN else NameObject("/C")
+        trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
 
         if "/AA" not in page:
             # Additional actions key not present
@@ -126,13 +125,12 @@ class Action(DictionaryObject, ABC):
 
     @classmethod
     def _delete(cls, page: "PageObject", trigger: str) -> None:
-        try:
-            trigger = PageTrigger(trigger).value
-        except ValueError:
-            valid_values = [t.value for t in PageTrigger]
+        valid_values = [trigger.value for trigger in PageTrigger]
+
+        if trigger not in valid_values:
             raise ValueError(f"The trigger must be one of {valid_values}")
 
-        trigger_name = NameObject("/O") if trigger == PageTrigger.OPEN else NameObject("/C")
+        trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
 
         if "/AA" not in page:
             return
@@ -153,6 +151,12 @@ class JavaScript(Action):
     extensions described in ISO/DIS 21757-1 shall also be allowed.
     """
     def __init__(self, JS: str) -> None:
+        """
+        Initialize JavaScript with a string.
+
+        Args:
+            JS (str): A text string containing the ECMAScript script to be executed.
+        """
         super().__init__()
         self[NameObject("/S")] = NameObject("/JavaScript")
         self[NameObject("/JS")] = TextStringObject(JS)
