@@ -542,7 +542,7 @@ class Font:
         # In the loop, char is the decoded GID string (the reverse unicode hack)
         # and character_map[char] is the actual character.
         # The widths (/W) array can have two formats:
-        # [first_cid [w1 w2 w3]] or [first last width]
+        #    [first_cid [w1 w2 w3]] or [first last width]
         # Here we choose the first format and simply provide one array with one width for every cid.
         for gid_str, actual_char in self.character_map.items():
             uni_point = ord(actual_char)
@@ -612,7 +612,7 @@ class Font:
                 NameObject("/ToUnicode"): to_unicode_stream,
             })
 
-        # Fallback: Return a font resource for the 14 Adobe Core fonts.
+        # Fallback: Return a font resource for one of the 14 Adobe Core fonts.
         return DictionaryObject({
             NameObject("/Type"): NameObject("/Font"),
             NameObject("/Subtype"): NameObject("/Type1"),
@@ -621,12 +621,18 @@ class Font:
             NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
         })
 
-    def add_to_writer(
+    def _add_to_writer(
         self,
         writer: PdfWriter,
         target_resource_dict: DictionaryObject,
         font_resource_name: NameObject
     ) -> IndirectObject:
+        """
+        Some objects in a font resource need to be indirect objects. This method
+        ensures that ToUnicode, FontDescriptor, FontFile, and, ultimately, the font
+        resource itself, are registered with the PdfWriter instance as indirect objects.
+        """
+
         font_resource = self.as_font_resource()
         if "/ToUnicode" in font_resource:
             font_resource[NameObject("/ToUnicode")] = writer._add_object(font_resource["/ToUnicode"])

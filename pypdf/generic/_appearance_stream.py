@@ -448,7 +448,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 character_widths=core_font_metrics.character_widths
             )
 
-        # If we have found a font resource, it still might not be able to encode the text value we received
+        # If we have found a font resource, it still might not be able to encode the text value we received.
         encodable = font.can_encode(text)
 
         if not encodable:
@@ -464,9 +464,11 @@ class TextStreamAppearance(BaseStreamAppearance):
 
             if not encodable:
                 logger_warning(
-                    "Text string '%(text)s' contains characters not supported by font encoding. "
-                    "This may result in text corruption. "
-                    "Consider calling writer.update_page_form_field_values with auto_regenerate=True.",
+                    (
+                        "Text string '%(text)s' contains characters not supported by font encoding. "
+                        "This may result in text corruption. "
+                        "Consider calling writer.update_page_form_field_values with auto_regenerate=True."
+                    ),
                     source=__name__,
                     text=text,
                 )
@@ -486,7 +488,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         """
         target_fonts = target_resource_dict.setdefault(NameObject("/Font"), DictionaryObject()).get_object()
         if font_name not in target_fonts:
-            return font.add_to_writer(
+            return font._add_to_writer(
                 writer,
                 target_fonts,
                 NameObject(font_name)
@@ -591,7 +593,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:
             sync_target = acro_form.setdefault(NameObject("/DR"), DictionaryObject())
 
-        font_resource_ref = cls._sync_appearance_stream_font_resources(writer, font_name, font, sync_target)
+        font_resource_reference = cls._sync_appearance_stream_font_resources(writer, font_name, font, sync_target)
 
         # Retrieve formatting information
         is_comb = False
@@ -616,7 +618,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             text,
             selection,
             font,
-            font_resource_ref,
+            font_resource_reference,
             font_name=font_name,
             font_size=font_size,
             font_color=font_color,
@@ -637,7 +639,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                     if "/Font" not in value:
                         value.get_object()[NameObject("/Font")] = DictionaryObject()
                     value["/Font"].get_object()[NameObject(font_name)] = getattr(
-                        font_resource_ref, "indirect_reference", font_resource_ref
+                        font_resource_reference, "indirect_reference", font_resource_reference
                     )
                 else:
                     new_appearance_stream[key] = value
