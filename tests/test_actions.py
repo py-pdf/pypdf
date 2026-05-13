@@ -139,6 +139,24 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
     assert page.get("/AA") is None
 
 
+def test_page_add_action__with_existing_array_object(pdf_file_writer):
+    page = pdf_file_writer.pages[0]
+
+    # Add an open action with an array object as the AA entry
+    page[NameObject("/AA")] = ArrayObject()
+    page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    assert page["/AA"] == ArrayObject()
+    page.delete_action("open")
+    assert page.get("/AA") is None
+
+    # Add a close action with an array object as the AA entry
+    page[NameObject("/AA")] = ArrayObject()
+    page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    assert page["/AA"] == ArrayObject()
+    page.delete_action("close")
+    assert page.get("/AA") is None
+
+
 def test_page_add_action__edge_cases(pdf_file_writer, caplog):
     page = pdf_file_writer.pages[0]
 

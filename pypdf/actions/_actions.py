@@ -32,8 +32,8 @@ if TYPE_CHECKING:
 class PageTrigger(StrEnum):
     """Trigger event entries in a page object's additional-actions dictionary."""
 
-    OPEN = "open"
-    CLOSE = "close"
+    OPEN = "open"  # An action that shall be performed when the page is opened
+    CLOSE = "close"  # An action that shall be performed when the page is closed
 
 
 class Action(DictionaryObject, ABC):
@@ -70,8 +70,15 @@ class Action(DictionaryObject, ABC):
             )
             return
 
-        if not isinstance(page["/AA"], DictionaryObject):
+        if isinstance(page["/AA"], NullObject):
             page[NameObject("/AA")] = DictionaryObject()
+
+        if not isinstance(page["/AA"], DictionaryObject):
+            logger_warning(
+                "The PageObject has an AA whose value was not a DictionaryObject.",
+                source=__name__,
+            )
+            return
 
         additional_actions: DictionaryObject = cast(DictionaryObject, page["/AA"])
 
