@@ -55,9 +55,9 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add an open and close action
     page.add_action("open", JavaScript("app.alert('Page opened');"))
@@ -76,10 +76,10 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
             "/JS": "app.alert('Page closed');"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
 
 def test_page_add_action__with_existing_null_object(pdf_file_writer):
@@ -96,9 +96,9 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add a close action with a null object as the AA entry
     page[NameObject("/AA")] = NullObject()
@@ -111,9 +111,9 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add an open and close action with a null object as the AA entry
     page[NameObject("/AA")] = NullObject()
@@ -133,10 +133,10 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
             "/JS": "app.alert('Page closed');"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
 
 def test_page_add_action__edge_cases(pdf_file_writer, caplog):
@@ -151,7 +151,7 @@ def test_page_add_action__edge_cases(pdf_file_writer, caplog):
         page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")
         page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add a close action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
@@ -162,7 +162,7 @@ def test_page_add_action__edge_cases(pdf_file_writer, caplog):
         page[NameObject("/AA")][NameObject("/C")] = NameObject("/xyzzy")
         page.add_action("close", JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add an open action with a pre-existing open action which has an invalid Next entry
     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -173,7 +173,7 @@ def test_page_add_action__edge_cases(pdf_file_writer, caplog):
     ):
         page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add a close action with a pre-existing open action which has an invalid Next entry
     page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -184,7 +184,7 @@ def test_page_add_action__edge_cases(pdf_file_writer, caplog):
     ):
         page.add_action("close", JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
 
 def test_page_add_action__next_is_null(pdf_file_writer):
@@ -207,9 +207,9 @@ def test_page_add_action__next_is_null(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add a close action with a pre-existing open action which has a Next key with a NullObject value
     page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -228,9 +228,9 @@ def test_page_add_action__next_is_null(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
 
 def test_page_add_action__empty_dictionary(pdf_file_writer):
@@ -247,9 +247,9 @@ def test_page_add_action__empty_dictionary(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add a close action when an additional-actions key exists, but is an empty dictionary
     page[NameObject("/AA")] = DictionaryObject()
@@ -262,9 +262,9 @@ def test_page_add_action__empty_dictionary(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
 
 def test_page_add_action__multiple(pdf_file_writer, caplog):
@@ -286,9 +286,9 @@ def test_page_add_action__multiple(pdf_file_writer, caplog):
             "/JS": "app.alert('Page opened 1');"
         },
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add two close actions without a pre-existing action dictionary
     page.add_action("close", JavaScript("app.alert('Page closed 1');"))
@@ -307,9 +307,9 @@ def test_page_add_action__multiple(pdf_file_writer, caplog):
             "/JS": "app.alert('Page closed 1');"
         },
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     # Add identical open actions to create a cycle
     action = JavaScript("app.alert('Page opened');")
@@ -318,7 +318,7 @@ def test_page_add_action__multiple(pdf_file_writer, caplog):
     page.add_action("open", action)
     assert caplog.messages[0].startswith("Detected cycle in the action tree")
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
 
 def test_page_add_action__with_existing_array(pdf_file_writer):
@@ -351,7 +351,7 @@ def test_page_add_action__with_existing_array(pdf_file_writer):
             "/JS": "app.alert('Action to attach an array of actions');"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.add_action("open", JavaScript("app.alert('Test when an array of actions is present');"))
     expected = {
         "/O": {
@@ -379,9 +379,9 @@ def test_page_add_action__with_existing_array(pdf_file_writer):
             "/JS": "app.alert('Action to attach an array of actions');"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
 
 def test_page_add_action__chaining_with_dictionary(pdf_file_writer):
@@ -392,7 +392,7 @@ def test_page_add_action__chaining_with_dictionary(pdf_file_writer):
     page.add_action("open", JavaScript("app.alert('Third action');"))
 
     # Verify the chain is correct
-    aa = page[NameObject("/AA")]
+    aa = page["/AA"]
     first_action = aa[NameObject("/O")]
     second_action = first_action[NameObject("/Next")]
     third_action = second_action[NameObject("/Next")]
@@ -420,7 +420,7 @@ def test_page_add_action__chaining_with_array(pdf_file_writer):
     page.add_action("open", JavaScript("app.alert('Final action');"))
 
     # Verify the structure
-    aa = page[NameObject("/AA")]
+    aa = page["/AA"]
     first_action = aa[NameObject("/O")]
     next_array = first_action[NameObject("/Next")]
 
@@ -445,10 +445,10 @@ def test_page_delete_action(pdf_file_writer):
         page.delete_action("xyzzy")  # type: ignore
 
     page.delete_action("open")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
 
     page.add_action("open", JavaScript("app.alert('Page opened');"))
     page.add_action("close", JavaScript("app.alert('Page closed');"))
@@ -466,7 +466,7 @@ def test_page_delete_action(pdf_file_writer):
             "/JS": "app.alert('Page closed');"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("open")
     expected = {
         "/C": {
@@ -476,9 +476,9 @@ def test_page_delete_action(pdf_file_writer):
             "/JS": "app.alert('Page closed');"
         }
     }
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     # Redundantly delete again, for coverage
     page.delete_action("open")
-    assert page[NameObject("/AA")] == expected
+    assert page["/AA"] == expected
     page.delete_action("close")
-    assert page.get(NameObject("/AA")) is None
+    assert page.get("/AA") is None
