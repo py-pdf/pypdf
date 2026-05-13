@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 
 @unique
 class PageTrigger(StrEnum):
+    """Trigger event entries in a page object’s additional-actions dictionary."""
     OPEN = "open"
     CLOSE = "close"
 
