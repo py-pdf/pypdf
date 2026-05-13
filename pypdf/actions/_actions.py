@@ -63,7 +63,7 @@ class Action(DictionaryObject, ABC):
 
         trigger_name = NameObject("/O") if trigger == PageTrigger.OPEN else NameObject("/C")
 
-        if NameObject("/AA") not in page:
+        if "/AA" not in page:
             # Additional actions key not present
             page[NameObject("/AA")] = DictionaryObject(
                 {trigger_name: action}
@@ -134,7 +134,7 @@ class Action(DictionaryObject, ABC):
 
         trigger_name = NameObject("/O") if trigger == PageTrigger.OPEN else NameObject("/C")
 
-        if NameObject("/AA") not in page:
+        if "/AA" not in page:
             return
 
         additional_actions: DictionaryObject = cast(DictionaryObject, page[NameObject("/AA")])
