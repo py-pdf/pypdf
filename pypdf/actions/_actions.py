@@ -80,7 +80,8 @@ class Action(DictionaryObject, ABC):
             )
             return
 
-        additional_actions: DictionaryObject = cast(DictionaryObject, page["/AA"])
+        #additional_actions: DictionaryObject = cast(DictionaryObject, page["/AA"])
+        additional_actions = page["/AA"]
 
         if is_null_or_none(additional_actions.get(trigger_name)):
             additional_actions.update({trigger_name: action})
