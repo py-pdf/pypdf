@@ -61,8 +61,7 @@ def get_data_from_url(*, url: Optional[str] = None, name: str) -> bytes:
         cache_dir = Path("tests", "pdf_cache").resolve()
     else:
         cache_dir = Path(__file__).parent / "pdf_cache"
-    if not cache_dir.exists():
-        cache_dir.mkdir()
+    cache_dir.mkdir(exist_ok=True)
     cache_path = cache_dir / name
 
     if url is not None:
@@ -134,7 +133,8 @@ def download_test_pdfs() -> None:
             executor.submit(get_data_from_url, url=pdf["url"], name=pdf["local_filename"])
             for pdf in pdfs
         ]
-        concurrent.futures.wait(futures)
+        for future in concurrent.futures.as_completed(futures):
+            future.result()  # re-raises any exception from the worker thread
 
 
 class PILContext:
