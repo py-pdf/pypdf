@@ -395,13 +395,13 @@ class PdfReader(PdfDocCommon):
         for _i in range(num_objects):
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            object_number = NumberObject.read_from_stream(stream_data)
+            raw_object_number = NumberObject.read_from_stream(stream_data)
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            offset = NumberObject.read_from_stream(stream_data)
+            raw_offset = NumberObject.read_from_stream(stream_data)
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            object_index.append((int(object_number),int(offset)))
+            object_index.append((int(raw_object_number), int(raw_offset)))
 
         # Phase 2: Parse each object and cache it.
         target_obj: Union[int, PdfObject, str] = NullObject()
