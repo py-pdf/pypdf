@@ -118,7 +118,7 @@ class Action(DictionaryObject, ABC):
 
             id_ = id(next_)
             if id_ in visited:
-                logger_warning("Detected cycle in the action tree for %current", source=__name__, current=current)
+                logger_warning("Detected cycle in the action tree for %(current)s", source=__name__, current=current)
                 break
             visited.add(id_)
 
