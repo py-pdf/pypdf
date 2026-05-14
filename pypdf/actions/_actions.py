@@ -112,8 +112,8 @@ class Action(DictionaryObject, ABC):
 
             if not isinstance(next_, (ArrayObject, DictionaryObject)):
                 raise TypeError(
-                    f"An action dictionary’s Next entry must be a Action dictionary or an array of Action dictionaries: "
-                    f"received type {type(next_)}"
+                    f"An action dictionary’s Next entry must be an Action dictionary "
+                    f"or an array of Action dictionaries: received type {type(next_)}"
                 )
 
             id_ = id(next_)

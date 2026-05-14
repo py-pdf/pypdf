@@ -1,6 +1,5 @@
 """Test the pypdf.actions submodule."""
 import re
-import warnings
 
 import pytest
 
