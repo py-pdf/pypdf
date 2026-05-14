@@ -125,6 +125,7 @@ class Font:
     font_descriptor: FontDescriptor = field(default_factory=FontDescriptor)
     character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
     space_width: float | int = 250
+    space_char: str = " "
     interpretable: bool = True
 
     @staticmethod
@@ -384,6 +385,7 @@ class Font:
             character_map=character_map,
             character_widths=character_widths,
             space_width=space_width,
+            space_char=space_char,
             interpretable=interpretable
         )
 
@@ -532,6 +534,7 @@ class Font:
             character_map=character_map,
             character_widths=character_widths,
             space_width=space_width,
+            space_char=space_char,
             interpretable=True
         )
 

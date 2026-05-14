@@ -151,6 +151,7 @@ def test_font_class_to_dict():
             ),
         },
         "character_widths": {"default": 500},
+        "space_char": " ",
         "space_width": 8,
         "interpretable": True,
     }
