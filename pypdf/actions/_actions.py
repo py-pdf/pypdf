@@ -98,7 +98,8 @@ class Action(DictionaryObject, ABC):
         head = current = additional_actions.get(trigger_name)
         if not isinstance(head, DictionaryObject):
             raise TypeError(
-                "The type in a page object's additional-actions key must be a DictionaryObject"
+                f"The type in a page object's additional-actions key must be a DictionaryObject: "
+                f"received type {type(head)}"
             )
         current = cast(DictionaryObject, current)
 
@@ -111,12 +112,13 @@ class Action(DictionaryObject, ABC):
 
             if not isinstance(next_, (ArrayObject, DictionaryObject)):
                 raise TypeError(
-                    "An action dictionary’s Next entry must be a Action dictionary or an array of Action dictionaries"
+                    f"An action dictionary’s Next entry must be a Action dictionary or an array of Action dictionaries: "
+                    f"received type {type(next_)}"
                 )
 
             id_ = id(next_)
             if id_ in visited:
-                logger_warning(f"Detected cycle in the action tree for {current}", source=__name__)
+                logger_warning("Detected cycle in the action tree for %current", source=__name__, current=current)
                 break
             visited.add(id_)
 
