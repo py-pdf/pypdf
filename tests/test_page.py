@@ -335,24 +335,44 @@ def test_page_properties():
 def test_page_rotation():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     page = writer.pages[0]
-    with pytest.raises(ValueError) as exc:
-        page.rotate(91)
-    assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
-    # test rotation
+    # Test rotation
     assert page.rotation == 0
     page.rotation = 180
     assert page.rotation == 180
     page.rotation += 190
     assert page.rotation == 0
 
-    # test transfer_rotate_to_content
+    page.rotation = -135
+    assert page.rotation == 180
+    page.rotation = -90
+    assert page.rotation == 270
+    page.rotation = -45
+    assert page.rotation == 0
+    page.rotation = 0
+    assert page.rotation == 0
+    page.rotation = 45
+    assert page.rotation == 0
+    page.rotation = 90
+    assert page.rotation == 90
+    page.rotation = 135
+    assert page.rotation == 180
+
+    # Test transfer_rotation_to_content
     page.rotation -= 90
     page.transfer_rotation_to_content()
     assert math.isclose(page.mediabox.left, 0, abs_tol=0.1)
     assert math.isclose(page.mediabox.bottom, 0, abs_tol=0.1)
     assert math.isclose(page.mediabox.right, 792, abs_tol=0.1)
     assert math.isclose(page.mediabox.top, 612, abs_tol=0.1)
+
+
+def test_page_rotate():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    with pytest.raises(ValueError) as exc:
+        page.rotate(91)
+    assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 
 def test_page_indirect_rotation():
