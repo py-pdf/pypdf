@@ -153,6 +153,7 @@ ignore = [
     "ARG002",  # Unused method argument
     "ARG004",  # Unused static method argument
     "B904",    # Within an `except` clause, raise exceptions with
+    "B905",    # `zip()` without an explicit `strict=` parameter
     "BLE001",  # Do not catch blind exception: `Exception`
     "COM812",  # Yes, they make the diff smaller
     "D101",    # Missing docstring in public class
@@ -203,6 +204,7 @@ ignore = [
     "TRY201",  # Use `raise` without specifying exception name
     "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
+    "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
 ]
 
 [tool.ruff.lint.mccabe]
