@@ -58,9 +58,12 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
-from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
-from .constants import AnnotationDictionaryAttributes as ADA
-from .constants import ImageAttributes as IA
+from .constants import (
+    _INLINE_IMAGE_KEY_MAPPING,
+    _INLINE_IMAGE_VALUE_MAPPING,
+    AnnotationDictionaryAttributes,
+    ImageAttributes,
+)
 from .constants import PageAttributes as PG
 from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
@@ -103,7 +106,12 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
     if isinstance(retval, ArrayObject) and (length := len(retval)) > 4:
-        logger_warning(f"Expected four values, got {length}: {retval}", __name__)
+        logger_warning(
+            "Expected four values, got %(length)d: %(retval)s",
+            source=__name__,
+            length=length,
+            retval=retval,
+        )
         retval = RectangleObject(tuple(retval[:4]))
     else:
         retval = RectangleObject(retval)  # type: ignore
@@ -618,7 +626,7 @@ class PageObject(DictionaryObject):
         for o in x_object:
             if not isinstance(x_object[o], StreamObject):
                 continue
-            if x_object[o][IA.SUBTYPE] == "/Image":
+            if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
                 lst.append(o if len(ancest) == 0 else [*ancest, o])
             else:  # is a form with possible images inside
                 lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
@@ -1536,8 +1544,8 @@ class PageObject(DictionaryObject):
             if isinstance(annotations, ArrayObject):
                 for annotation in annotations:
                     annotation_obj = annotation.get_object()
-                    if ADA.Rect in annotation_obj:
-                        rectangle = annotation_obj[ADA.Rect]
+                    if AnnotationDictionaryAttributes.Rect in annotation_obj:
+                        rectangle = annotation_obj[AnnotationDictionaryAttributes.Rect]
                         if isinstance(rectangle, ArrayObject):
                             rectangle[0] = FloatObject(float(rectangle[0]) * sx)
                             rectangle[1] = FloatObject(float(rectangle[1]) * sy)
@@ -1809,8 +1817,10 @@ class PageObject(DictionaryObject):
                             )
                 except Exception as exception:
                     logger_warning(
-                        f"Impossible to decode XFormObject {operands[0]}: {exception}",
-                        __name__,
+                        "Impossible to decode XFormObject %(operand)s: %(exception)s",
+                        source=__name__,
+                        operand=operands[0],
+                        exception=exception,
                     )
                 finally:
                     extractor.text = ""
@@ -2006,8 +2016,9 @@ class PageObject(DictionaryObject):
             ):
                 if locals()[visitor]:
                     logger_warning(
-                        f"Argument {visitor} is ignored in layout mode",
-                        __name__,
+                        "Argument %(visitor)s is ignored in layout mode",
+                        source=__name__,
+                        visitor=visitor,
                     )
             return self._layout_mode_text(
                 space_vertically=kwargs.get("layout_mode_space_vertically", True),
