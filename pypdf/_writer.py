@@ -918,22 +918,7 @@ class PdfWriter(PdfDocCommon):
             x_offset: The horizontal offset for the appearance stream.
             y_offset: The vertical offset for the appearance stream.
         """
-        # Prepare XObject resource dictionary on the page. This currently
-        # only deals with font resources, but can easily be adapted to also
-        # include other resources.
         pg_res = cast(DictionaryObject, page[PG.RESOURCES])
-        if "/Resources" in appearance_stream_obj:
-            ap_stream_res = cast(DictionaryObject, appearance_stream_obj["/Resources"])
-            ap_stream_font_dict = cast(DictionaryObject, ap_stream_res.get("/Font", DictionaryObject()))
-            if "/Font" not in pg_res:
-                font_dict_ref = self._add_object(DictionaryObject())
-                pg_res[NameObject("/Font")] = font_dict_ref
-            pg_font_res = cast(DictionaryObject, pg_res["/Font"].get_object())
-            # Merge fonts from the appearance stream into the page's font resources
-            for font_name, font_res in ap_stream_font_dict.items():
-                if font_name not in pg_font_res:
-                    font_res_ref = self._add_object(font_res)
-                    pg_font_res[font_name] = font_res_ref
         # Always add the resolved stream object to the writer to get a new IndirectObject.
         # This ensures we have a valid IndirectObject managed by *this* writer.
         xobject_ref = self._add_object(appearance_stream_obj)
@@ -1070,11 +1055,11 @@ class PdfWriter(PdfDocCommon):
                     # Textbox; we need to generate the appearance stream object
                     if isinstance(value, tuple):
                         appearance_stream_obj = TextStreamAppearance.from_text_annotation(
-                            acro_form, parent_annotation, annotation, value[1], value[2]
+                            self, page, flatten, acro_form, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
                         appearance_stream_obj = TextStreamAppearance.from_text_annotation(
-                            acro_form, parent_annotation, annotation
+                            self, page, flatten, acro_form, parent_annotation, annotation
                         )
                     # Add the appearance stream object
                     if AA.AP not in annotation:
@@ -1093,7 +1078,8 @@ class PdfWriter(PdfDocCommon):
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", source=__name__)
-                if flatten and appearance_stream_obj is not None:
+
+                if appearance_stream_obj and flatten:
                     self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
 
     def reattach_fields(
