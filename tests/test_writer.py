@@ -1841,6 +1841,8 @@ def test_update_form_fields3(caplog, tmp_path):
     with mock.patch("pypdf._font.HAS_FONTTOOLS", False):
         writer.update_page_form_field_values(writer.pages[0], {"subsemnatul": "Σ"})
         assert "Unable to use embedded font for encoding" in caplog.text
+        # Also test that an ImportError is raised by the Font class
+        assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in caplog.text
 
 
 @pytest.mark.enable_socket

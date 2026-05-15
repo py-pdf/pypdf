@@ -1,7 +1,4 @@
 """Test font-related functionality."""
-import os
-import subprocess
-import sys
 from io import BytesIO
 
 import pytest
@@ -107,36 +104,3 @@ def test_font_from_font_file():
                 tt_font_object.save(crippled_font_data)
                 with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
                     Font.from_truetype_font_file(crippled_font_data)
-
-
-def test_font_from_font_file_no_fonttools(tmp_path):
-    env = os.environ.copy()
-    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
-
-    source_file = tmp_path / "script.py"
-    source_file.write_text(
-        """
-import sys
-from io import BytesIO
-
-import pytest
-
-sys.modules["fontTools.ttLib"] = None
-from pypdf._font import Font
-
-with pytest.raises(ImportError, match=r"^The 'fontTools' library is required to use 'from_truetype_font_file'$"):
-    Font.from_truetype_font_file(BytesIO(b""))
-"""
-    )
-
-    try:
-        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
-    except KeyError:
-        env["PYTHONPATH"] = "."
-    result = subprocess.run(  # noqa: S603
-        [sys.executable, source_file],
-        capture_output=True,
-        env=env,
-    )
-    assert result.returncode == 0
-    assert result.stdout == b""
