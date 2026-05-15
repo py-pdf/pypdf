@@ -28,7 +28,6 @@
 import secrets
 
 from cryptography import __version__
-from cryptography.hazmat.decrepit.ciphers.algorithms import ARC4
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.base import Cipher
 from cryptography.hazmat.primitives.ciphers.modes import CBC, ECB
@@ -37,6 +36,12 @@ from cryptography.hazmat.primitives.padding import PKCS7
 from pypdf._crypt_providers._base import CryptBase
 from pypdf._utils import logger_warning
 from pypdf.errors import PdfStreamError
+
+try:
+    # 43.0.0: https://cryptography.io/en/latest/changelog/#v43-0-0
+    from cryptography.hazmat.decrepit.ciphers.algorithms import ARC4
+except ImportError:
+    from cryptography.hazmat.primitives.ciphers.algorithms import ARC4
 
 crypt_provider = ("cryptography", __version__)
 
