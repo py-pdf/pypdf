@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import math
 from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
@@ -914,10 +915,8 @@ class PageObject(DictionaryObject):
             if not same_value:
                 if is_pdf_writer:
                     new_res[newname] = page2res.raw_get(key).clone(pdf)
-                    try:
+                    with contextlib.suppress(AttributeError):
                         new_res[newname] = new_res[newname].indirect_reference
-                    except AttributeError:
-                        pass
                 else:
                     new_res[newname] = page2res.raw_get(key)
             lst = sorted(new_res.items())
@@ -1026,11 +1025,9 @@ class PageObject(DictionaryObject):
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
             content_array = cast(ArrayObject, self[PG.CONTENTS])
             for reference in content_array:
-                try:
+                # Occurs when called on PdfReader.
+                with contextlib.suppress(ValueError):
                     writer._replace_object(indirect_reference=reference.indirect_reference, obj=NullObject())
-                except ValueError:
-                    # Occurs when called on PdfReader.
-                    pass
 
         if isinstance(content, ArrayObject):
             content = ArrayObject(writer._add_object(obj) for obj in content)
@@ -1277,10 +1274,8 @@ class PageObject(DictionaryObject):
                         + trsf.apply_on((q[4], q[5]), True)
                         + trsf.apply_on((q[6], q[7]), True)
                     )
-                try:
+                with contextlib.suppress(KeyError):
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
-                except KeyError:
-                    pass
                 try:
                     aa[NameObject("/P")] = self.indirect_reference
                     annots.append(aa.indirect_reference)
@@ -1660,7 +1655,7 @@ class PageObject(DictionaryObject):
                     out += enc_repr + "\n"
                 except Exception:
                     pass
-                try:
+                with contextlib.suppress(Exception):
                     out += (
                         self[PG.RESOURCES]["/Font"][fo][  # type:ignore
                             "/ToUnicode"
@@ -1669,8 +1664,6 @@ class PageObject(DictionaryObject):
                         .decode()
                         + "\n"
                     )
-                except Exception:
-                    pass
 
         except KeyError:
             out += "No Font\n"

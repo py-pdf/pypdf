@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import decimal
 import enum
 import hashlib
@@ -362,10 +363,8 @@ class PdfWriter(PdfDocCommon):
     @_info.setter
     def _info(self, value: Optional[Union[IndirectObject, DictionaryObject]]) -> None:
         if value is None:
-            try:
+            with contextlib.suppress(KeyError, AttributeError):
                 self._objects[self._info_obj.indirect_reference.idnum - 1] = None  # type: ignore
-            except (KeyError, AttributeError):
-                pass
             self._info_obj = None
         else:
             if self._info_obj is None:
@@ -518,12 +517,10 @@ class PdfWriter(PdfDocCommon):
         # page; therefore in order to add multiple copies of the same
         # page, we need to create a new dictionary for the page, however the
         # objects below (including content) are not duplicated:
-        try:  # delete an already existing page
+        with contextlib.suppress(Exception):  # delete an already existing page
             del self._id_translated[id(page_org.indirect_reference.pdf)][  # type: ignore
                 page_org.indirect_reference.idnum  # type: ignore
             ]
-        except Exception:
-            pass
 
         page = cast(
             "PageObject", page_org.clone(self, False, excluded_keys).get_object()
@@ -754,10 +751,8 @@ class PdfWriter(PdfDocCommon):
     @open_destination.setter
     def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
         if dest is None:
-            try:
+            with contextlib.suppress(KeyError):
                 del self._root_object["/OpenAction"]
-            except KeyError:
-                pass
         elif isinstance(dest, str):
             self._root_object[NameObject("/OpenAction")] = TextStringObject(dest)
         elif isinstance(dest, Destination):
@@ -1248,10 +1243,8 @@ class PdfWriter(PdfDocCommon):
             )
         # else: _info_obj = None done in clone_reader_document_root()
 
-        try:
+        with contextlib.suppress(AttributeError):
             self._ID = cast(ArrayObject, reader._ID).clone(self)
-        except AttributeError:
-            pass
 
         if callable(after_page_append):
             for page in cast(
@@ -1698,10 +1691,8 @@ class PdfWriter(PdfDocCommon):
             if not is_null_or_none(self._info):
                 unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore
 
-            try:
+            with contextlib.suppress(AttributeError):
                 unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
-            except AttributeError:
-                pass
 
             for i in compress(range(len(self._objects)), unreferenced):
                 self._objects[i] = None
@@ -2151,10 +2142,8 @@ class PdfWriter(PdfDocCommon):
                                 if k1 not in ["/Length", "/Filter", "/DecodeParms"]
                             }
                         )
-                        try:
+                        with contextlib.suppress(AttributeError):  # pragma: no cover
                             content.indirect_reference = o.indirect_reference
-                        except AttributeError:  # pragma: no cover
-                            pass
                     stack.append(elt)
 
                     # clean subforms
@@ -3186,15 +3175,11 @@ class PdfWriter(PdfDocCommon):
         if reader is None:
             self._id_translated = {}
         elif isinstance(reader, PdfReader):
-            try:
+            with contextlib.suppress(Exception):
                 del self._id_translated[id(reader)]
-            except Exception:
-                pass
         elif isinstance(reader, IndirectObject):
-            try:
+            with contextlib.suppress(Exception):
                 del self._id_translated[id(reader.pdf)]
-            except Exception:
-                pass
         else:
             raise Exception("invalid parameter {reader}")
 

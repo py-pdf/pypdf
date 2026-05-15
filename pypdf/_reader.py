@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import os
 import re
 import sys
@@ -925,14 +926,10 @@ class PdfReader(PdfDocCommon):
                 else:
                     if entry_type_b == b"n":
                         self.xref[generation][num] = offset
-                    try:
+                    with contextlib.suppress(Exception):
                         self.xref_free_entry[generation][num] = entry_type_b == b"f"
-                    except Exception:
-                        pass
-                    try:
+                    with contextlib.suppress(Exception):
                         self.xref_free_entry[65535][num] = entry_type_b == b"f"
-                    except Exception:
-                        pass
                 cnt += 1
                 num += 1
             read_non_whitespace(stream)
