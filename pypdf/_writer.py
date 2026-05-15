@@ -1348,7 +1348,7 @@ class PdfWriter(PdfDocCommon):
         assert self._ID
         self._encryption = Encryption.make(alg, permissions_flag, self._ID[0])
         # in case call `encrypt` again
-        entry = self._encryption.write_entry(user_password, owner_password)
+        entry = self._encryption.write_entry(user_password, owner_password, strict=self.strict)
         if self._encrypt_entry:
             # replace old encrypt_entry
             assert self._encrypt_entry.indirect_reference is not None
