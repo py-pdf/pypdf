@@ -1821,6 +1821,14 @@ def test_update_form_fields3(caplog, tmp_path):
     writer = PdfWriter()
     output = BytesIO()
     writer.append(BytesIO(get_data_from_url(url=url, name=name)))
+    # First test for the case where fonttools is missing.
+    with mock.patch("pypdf._font.HAS_FONTTOOLS", False):
+        writer.update_page_form_field_values(writer.pages[0], {"subsemnatul": "Σ"})
+        assert "Unable to use embedded font for encoding" in caplog.text
+        # Also test that an ImportError is raised by the Font class
+        assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in caplog.text
+
+    # Test with fonttools
     data = {
         "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
         "localitatea": "شهرزاد",
@@ -1836,13 +1844,6 @@ def test_update_form_fields3(caplog, tmp_path):
         if expected_value != "شهرزاد":
             assert expected_value in extracted_text
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
-
-    # Also test for the case where fonttools is missing.
-    with mock.patch("pypdf._font.HAS_FONTTOOLS", False):
-        writer.update_page_form_field_values(writer.pages[0], {"subsemnatul": "Σ"})
-        assert "Unable to use embedded font for encoding" in caplog.text
-        # Also test that an ImportError is raised by the Font class
-        assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in caplog.text
 
 
 @pytest.mark.enable_socket
