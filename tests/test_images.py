@@ -442,9 +442,9 @@ def test_inline_image_extraction():
         assert image_similarity(writer.pages[0].images[i].image, img) == 1
     writer.pages[0].extract_text()
     # check recalculation of inline images
-    assert writer.pages[0].displayed_images is not None
+    assert writer.pages[0]._displayed_images is not None
     writer.pages[0].merge_scaled_page(writer.pages[0], 0.25)
-    assert writer.pages[0].displayed_images is None
+    assert writer.pages[0]._displayed_images is None
     reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
     writer.pages[0].merge_page(reader.pages[0])
     assert list(writer.pages[0].images.keys()) == [
