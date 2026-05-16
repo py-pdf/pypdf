@@ -300,9 +300,15 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             pass
 
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
+        try:
+            obj_cls = self.__class__()
+        except Exception:
+            # Some subclasses (e.g., annotation types) require constructor
+            # arguments. Fall back to a plain DictionaryObject.
+            obj_cls = DictionaryObject()  # type: ignore[assignment]
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
+            self._reference_clone(obj_cls, pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []
