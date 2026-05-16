@@ -7,7 +7,6 @@ The tested code might be in _page.py.
 import re
 from dataclasses import asdict
 from io import BytesIO
-from unittest.mock import patch
 
 import pytest
 
@@ -152,17 +151,13 @@ def test_font_class_to_dict():
 
 
 @pytest.mark.enable_socket
-@patch("pypdf._text_extraction._layout_mode._fixed_width_page.logger_warning")
-def test_uninterpretable_type3_font(mock_logger_warning):
+def test_uninterpretable_type3_font(caplog):
     url = "https://github.com/user-attachments/files/18551904/UninterpretableType3Font.pdf"
     name = "UninterpretableType3Font.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[0]
     assert page.extract_text(extraction_mode="layout") == ""
-    mock_logger_warning.assert_called_with(
-        "PDF contains an uninterpretable font. Output will be incomplete.",
-        "pypdf._text_extraction._layout_mode._fixed_width_page"
-    )
+    assert "PDF contains an uninterpretable font. Output will be incomplete." in caplog.messages
 
 
 @pytest.mark.enable_socket
@@ -206,24 +201,23 @@ def test_layout_mode_indirect_sequence_font_widths(caplog):
     name = "2788_example_malformed.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].extract_text(extraction_mode="layout")
-    assert "Invalid font width definition" in caplog.text
+    assert any("Invalid font width definition" in message for message in caplog.messages)
 
 
 def dummy_visitor_text(text, ctm, tm, fd, fs):
     pass
 
 
-@patch("pypdf._page.logger_warning")
-def test_layout_mode_warnings(mock_logger_warning):
+def test_layout_mode_warnings(caplog):
     # Check that a warning is issued when an argument is ignored
     reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
     page = reader.pages[0]
+    expected = "Argument visitor_text is ignored in layout mode"
+
     page.extract_text(extraction_mode="plain", visitor_text=dummy_visitor_text)
-    mock_logger_warning.assert_not_called()
+    assert expected not in caplog.messages
     page.extract_text(extraction_mode="layout", visitor_text=dummy_visitor_text)
-    mock_logger_warning.assert_called_with(
-        "Argument visitor_text is ignored in layout mode", "pypdf._page"
-    )
+    assert expected in caplog.messages
 
 
 @pytest.mark.enable_socket
@@ -403,7 +397,7 @@ def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
     """Ensures that imbalanced q/Q or EB/ET is handled gracefully."""
     text_show_operations(ops=iter([([], op)]), fonts={})
     assert caplog.records
-    assert caplog.records[-1].msg == msg
+    assert caplog.records[-1].getMessage() == msg
 
 
 def test_process_operation__cm_multiplication_issue():

@@ -267,7 +267,7 @@ class LzwCodec(Codec):
     def _add_entry_decode(self, old_string: bytes, new_char: int) -> None:
         new_string = old_string + bytes([new_char])
         if self._table_index > self.max_code_value:
-            logger_warning("Ignoring too large LZW table index.", __name__)
+            logger_warning("Ignoring too large LZW table index.", source=__name__)
             return
         self.decoding_table[self._table_index] = new_string
         self._table_index += 1

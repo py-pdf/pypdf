@@ -5,6 +5,8 @@ They don't mock/patch anything, they cover typical user needs.
 """
 
 import binascii
+import platform
+import sys
 from io import BytesIO
 from pathlib import Path
 from re import findall
@@ -14,6 +16,7 @@ from PIL import Image, ImageChops
 from PIL import __version__ as pil_version
 
 from pypdf import PdfReader, PdfWriter, Transformation
+from pypdf._utils import Version
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
@@ -955,7 +958,24 @@ def test_fields_returning_stream():
     assert "BtchIssQATit_time" in reader.get_form_text_fields()["TimeStampData"]
 
 
-def test_replace_image(tmp_path):
+def test_replace_image(tmp_path, monkeypatch):
+    from PIL import PdfParser  # noqa: PLC0415
+
+    def pdf_parser_close_buf(pdf_parser: PdfParser.PdfParser) -> None:
+        if isinstance(pdf_parser.buf, memoryview):
+            pdf_parser.buf.release()
+        elif isinstance(pdf_parser.buf, PdfParser.mmap.mmap):
+            pdf_parser.buf.close()
+        pdf_parser.buf = None
+
+    if (
+            Version(pil_version) < Version("12.3.0") and
+            platform.python_implementation() == "PyPy" and
+            sys.pypy_version_info[:3] >= (7, 3, 22)
+    ):
+        # Regression since PyPy 7.3.22.
+        monkeypatch.setattr(PdfParser.PdfParser, "close_buf", pdf_parser_close_buf)
+
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "labeled-edges-center-image.pdf")
     reader = PdfReader(RESOURCE_ROOT / "jpeg.pdf")
     img = reader.pages[0].images[0].image

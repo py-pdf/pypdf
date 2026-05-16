@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']  # , 'pypy3.11']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', 'pypy3.11']
         use-crypto-lib: ['cryptography']
         include:
           - python-version: '3.9'
@@ -183,6 +183,7 @@ jobs:
         allow-prereleases: true
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci-3.11.txt'
+        check-latest: ${{ startsWith(matrix.python-version, 'pypy') }}
     - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip

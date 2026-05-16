@@ -6,6 +6,7 @@ import time
 from io import BytesIO
 from pathlib import Path
 from typing import Union
+from unittest import mock
 
 import pytest
 
@@ -971,7 +972,7 @@ def test_form_topname_with_and_without_acroform(caplog):
         NameObject("/Parent")
     ] = DictionaryObject()
     r.add_form_topname("top")
-    assert "have a non-expected parent" in caplog.text
+    assert "has a non-expected parent" in caplog.text
 
 
 @pytest.mark.enable_socket
@@ -2017,6 +2018,14 @@ def test_find_pdf_trailers(data: bytes, expected: list[int]):
     assert result == expected
 
 
+def test_cache_indirect_object_strict_overwrite_error():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf", strict=True)
+    reader.resolved_objects[(99, 12345)] = None
+
+    with pytest.raises(PdfReadError, match=r"^Overwriting cache for 99 12345$"):
+        reader.cache_indirect_object(99, 12345, None)
+
+
 def test_objstm_batch_parse_caches_all_objects():
     """Resolving one ObjStm object should batch-cache all siblings."""
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
@@ -2265,3 +2274,13 @@ def test_get_object_from_stream__size_limit(caplog):
         "NumberObject(b'') invalid; use 0 instead",
         "NumberObject(b'') invalid; use 0 instead",
     ]
+
+
+def test_named_destinations_cache():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    with mock.patch("pypdf._doc_common.PdfDocCommon._get_named_destinations") as get_mock:
+        for _ix in range(20):
+            reader.named_destinations.get("foo")
+
+        get_mock.assert_called_once()
