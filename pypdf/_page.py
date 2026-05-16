@@ -777,7 +777,7 @@ class PageObject(DictionaryObject):
             >>> from pypdf import PdfReader
             >>> reader = PdfReader("example.pdf")
             >>> page = reader.pages[0]
-            >>> inline_images = page.inline_images  # Deprecated
+            >>> inline_images = {k: v for k, v in page.images.items() if v.is_inline}
         """
         deprecate_with_replacement(
             "PageObject.inline_images",
@@ -794,7 +794,8 @@ class PageObject(DictionaryObject):
         Setter for inline_images.
 
         Setting to None clears the cache and forces recalculation on next access,
-        emulating the previous caching control mechanism.
+        emulating the previous caching control mechanism. Setting to a dict merges
+        the values into the existing cache.
         """
         if value is None:
             self._displayed_images = None
@@ -1211,7 +1212,7 @@ class PageObject(DictionaryObject):
                 # as a backup solution, we put content as an object although not in accordance with pdf ref
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
-        # forces recalculation of inline_images
+        # forces recalculation of images
         self._displayed_images = None
 
     def merge_page(
