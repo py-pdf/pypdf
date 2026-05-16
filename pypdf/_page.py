@@ -55,6 +55,7 @@ from ._utils import (
     TransformationMatrixType,
     _human_readable_bytes,
     deprecate,
+    deprecate_with_replacement,
     logger_warning,
     matrix_multiply,
 )
@@ -524,7 +525,7 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf = pdf
-        self.displayed_images: Optional[dict[str, ImageFile]] = None
+        self._displayed_images: Optional[dict[str, ImageFile]] = None
         self.indirect_reference = indirect_reference
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
@@ -620,8 +621,8 @@ class PageObject(DictionaryObject):
         if _i in call_stack:
             return []
         call_stack.append(_i)
-        if self.displayed_images is None:
-            self.displayed_images = self._parse_images_from_content_stream()
+        if self._displayed_images is None:
+            self._displayed_images = self._parse_images_from_content_stream()
         if obj is None:
             obj = self
         if ancest is None:
@@ -632,7 +633,7 @@ class PageObject(DictionaryObject):
                 is_null_or_none(resources := obj[PG.RESOURCES]) or
                 RES.XOBJECT not in cast(DictionaryObject, resources)
         ):
-            return [] if self.displayed_images is None else list(self.displayed_images.keys())
+            return [] if self._displayed_images is None else list(self._displayed_images.keys())
 
         x_object = resources[RES.XOBJECT].get_object()  # type: ignore
 
@@ -663,7 +664,7 @@ class PageObject(DictionaryObject):
         # Add inline images (they may overlap with XObject images)
         # Preserves order
         # Inline images have names starting with ~ (e.g., ~0~, ~1~)
-        for k in self.displayed_images:
+        for k in self._displayed_images:
             if k not in deduplicated:
                 deduplicated.append(k)
 
@@ -692,19 +693,19 @@ class PageObject(DictionaryObject):
                 ) from exc
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
-                if self.displayed_images is None:
-                    self.displayed_images = self._parse_images_from_content_stream()
-                if self.displayed_images is None:
+                if self._displayed_images is None:
+                    self._displayed_images = self._parse_images_from_content_stream()
+                if self._displayed_images is None:
                     raise KeyError("No inline image can be found")
-                img = self.displayed_images[id]
+                img = self._displayed_images[id]
                 img.is_inline = True
                 img.is_displayed = True
                 return img
 
             assert xobjs is not None
             # Check if image is in content stream (from _parse_images_from_content_stream)
-            if self.displayed_images and id in self.displayed_images:
-                img = self.displayed_images[id]
+            if self._displayed_images and id in self._displayed_images:
+                img = self._displayed_images[id]
                 img.is_inline = False
                 return img
 
@@ -763,6 +764,45 @@ class PageObject(DictionaryObject):
         """
         return VirtualListImages(self._get_ids_image, self._get_image)
 
+    @property
+    def inline_images(self) -> Optional[dict[str, ImageFile]]:
+        """
+        Return only inline images from the page.
+
+        .. deprecated::
+            Use :attr:`images` and filter by :attr:`ImageFile.is_inline` instead.
+            This property will be removed in pypdf 7.0.
+
+        Examples:
+            >>> from pypdf import PdfReader
+            >>> reader = PdfReader("example.pdf")
+            >>> page = reader.pages[0]
+            >>> inline_images = page.inline_images  # Deprecated
+        """
+        deprecate_with_replacement(
+            "PageObject.inline_images",
+            "PageObject.images",
+            "7.0",
+        )
+        if self._displayed_images is None:
+            return None
+        return {k: v for k, v in self._displayed_images.items() if v.is_inline}
+
+    @inline_images.setter
+    def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
+        """
+        Setter for inline_images.
+
+        Setting to None clears the cache and forces recalculation on next access,
+        emulating the previous caching control mechanism.
+        """
+        if value is None:
+            self._displayed_images = None
+        else:
+            if self._displayed_images is None:
+                self._displayed_images = {}
+            self._displayed_images.update(value)
+
     def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
         try:
@@ -796,13 +836,13 @@ class PageObject(DictionaryObject):
             Dictionary mapping image names to ImageFile instances.
         """
         # Idempotent: if already parsed, return cached result
-        if self.displayed_images is not None:
-            return self.displayed_images
+        if self._displayed_images is not None:
+            return self._displayed_images
 
         content = self.get_contents()
         if is_null_or_none(content):
-            self.displayed_images = {}
-            return self.displayed_images
+            self._displayed_images = {}
+            return self._displayed_images
         imgs_data = []
         do_image_names: list[bytes] = []
         assert content is not None, "mypy"
@@ -886,8 +926,8 @@ class PageObject(DictionaryObject):
                 is_displayed=True,
             )
 
-        self.displayed_images = files
-        return self.displayed_images
+        self._displayed_images = files
+        return self._displayed_images
 
     @property
     def rotation(self) -> int:
@@ -1172,7 +1212,7 @@ class PageObject(DictionaryObject):
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
         # forces recalculation of inline_images
-        self.displayed_images = None
+        self._displayed_images = None
 
     def merge_page(
         self, page2: "PageObject", expand: bool = False, over: bool = True
