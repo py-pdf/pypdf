@@ -344,7 +344,6 @@ class ASCIIHexDecode:
     @staticmethod
     def decode(
         data: Union[str, bytes],
-        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -353,7 +352,6 @@ class ASCIIHexDecode:
         Args:
           data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-          decode_parms: this filter does not use parameters.
 
         Returns:
           A string conversion in base-7 ASCII, where each of its values
@@ -404,7 +402,6 @@ class RunLengthDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -412,7 +409,6 @@ class RunLengthDecode:
 
         Args:
           data: a bytes sequence of length/data
-          decode_parms: this filter does not use parameters.
 
         Returns:
           A bytes decompressed sequence.
@@ -502,7 +498,6 @@ class ASCII85Decode:
     @staticmethod
     def decode(
         data: Union[str, bytes],
-        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -510,7 +505,6 @@ class ASCII85Decode:
 
         Args:
           data: ``bytes`` or ``str`` text to decode.
-          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
@@ -534,7 +528,6 @@ class DCTDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -544,7 +537,6 @@ class DCTDecode:
 
         Args:
           data: text to decode.
-          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
@@ -557,7 +549,6 @@ class JPXDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -566,7 +557,6 @@ class JPXDecode:
 
         Args:
           data: text to decode.
-          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
