@@ -106,22 +106,21 @@ def test_tree_object__insert_child_in_first_position_with_next() -> None:
     tree = TreeObject()
     writer._add_object(tree)
 
-    # Create two children already linked: A -> B
+    # Create a single child A as the /First (and /Last)
     child_a = DictionaryObject()
     child_a_ref = writer._add_object(child_a)
     tree.add_child(child_a_ref, writer)
 
-    child_b = DictionaryObject()
-    child_b_ref = writer._add_object(child_b)
-    tree.insert_child(child_b_ref, child_a_ref, writer)
+    # prev = tree["/Last"] = A, prev == before, so no while loop.
+    # try: prev["/Prev"] — A has no /Prev → KeyError → except block fires.
 
-    # Now create a new child C that already has a /Next pointer
+    # Create child C with a /Next pointer pointing to something
     child_c = DictionaryObject()
     child_c[NameObject("/Next")] = child_a_ref  # C -> A
     child_c_ref = writer._add_object(child_c)
     assert "/Next" in child_c
 
-    # Insert C before A (first position) — C has /Next, so the del fires
+    # Insert C before A (first position)
     tree.insert_child(child_c_ref, child_a_ref, writer)
 
     # C is now first, linked to A
