@@ -321,7 +321,7 @@ def test_dictionary_object__clone_fallback_on_annotation_subclass() -> None:
     writer1 = PdfWriter()
     page1 = writer1.add_blank_page(100, 100)
 
-    from pypdf.annotations import Polygon  # noqa: F811
+    from pypdf.annotations import Polygon  # noqa: PLC0415
 
     annotation = Polygon(vertices=[(10, 10), (50, 10), (50, 50), (10, 50)])
     writer1.add_annotation(page_number=0, annotation=annotation)
