@@ -94,6 +94,42 @@ def test_tree_object__insert_child_without_next_key() -> None:
     assert first_child["/Prev"] == fresh_child
 
 
+def test_tree_object__insert_child_in_first_position_with_next() -> None:
+    r"""
+    Regression test: When a child with a ``/Next`` entry is inserted in the
+    first position, the ``except`` handler must delete ``/Next`` from the
+    child (since it's now the first node and should not have a forward
+    pointer). This tests the guarded deletion ``if "/Next" in child_obj:
+    del child_obj["/Next"]`` inside the except block.
+    """
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    # Create two children already linked: A -> B
+    child_a = DictionaryObject()
+    child_a_ref = writer._add_object(child_a)
+    tree.add_child(child_a_ref, writer)
+
+    child_b = DictionaryObject()
+    child_b_ref = writer._add_object(child_b)
+    tree.insert_child(child_b_ref, child_a_ref, writer)
+
+    # Now create a new child C that already has a /Next pointer
+    child_c = DictionaryObject()
+    child_c[NameObject("/Next")] = child_a_ref  # C -> A
+    child_c_ref = writer._add_object(child_c)
+    assert "/Next" in child_c
+
+    # Insert C before A (first position) — C has /Next, so the del fires
+    tree.insert_child(child_c_ref, child_a_ref, writer)
+
+    # C is now first, linked to A
+    c_obj = child_c_ref.get_object()
+    assert isinstance(c_obj, DictionaryObject)
+    assert c_obj["/Next"] == child_a
+
+
 @pytest.mark.enable_socket
 def test_array_object__clone_same_object_multiple_times(caplog: pytest.LogCaptureFixture) -> None:
     url = "https://github.com/user-attachments/files/25412858/Draft_OSMF_financial_statement_2013.pdf"
