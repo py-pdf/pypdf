@@ -66,6 +66,33 @@ def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None
     assert "Detected cycle in outline structure for " in caplog.text
 
 
+def test_tree_object__insert_child_without_next_key() -> None:
+    """
+    Regression test: ``TreeObject.insert_child`` previously raised a
+    ``KeyError`` when the new child had no ``/Next`` entry yet and was
+    inserted in the first position. The except branch unconditionally
+    deleted ``/Next``, which only worked for children that already had it.
+    """
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    first_child_ref = writer._add_object(DictionaryObject())
+    tree.add_child(first_child_ref, writer)
+
+    fresh_child = DictionaryObject()
+    fresh_child_ref = writer._add_object(fresh_child)
+    assert "/Next" not in fresh_child
+
+    # Must not raise KeyError("/Next") even though the new child has no /Next.
+    tree.insert_child(fresh_child_ref, first_child_ref, writer)
+
+    # The new child is linked before the existing one.
+    first_child = first_child_ref.get_object()
+    assert fresh_child["/Next"] == first_child
+    assert first_child["/Prev"] == fresh_child
+
+
 @pytest.mark.enable_socket
 def test_array_object__clone_same_object_multiple_times(caplog: pytest.LogCaptureFixture) -> None:
     url = "https://github.com/user-attachments/files/25412858/Draft_OSMF_financial_statement_2013.pdf"
