@@ -169,6 +169,38 @@ def test_polygon(pdf_file_path):
         writer.write(fp)
 
 
+def test_merge_page_with_markup_annotation():
+    """
+    Regression test for #3467: merging a page that holds a markup annotation
+    instance (e.g. ``Polygon``, ``Line``) must not crash in
+    ``DictionaryObject.clone`` because ``self.__class__()`` cannot be
+    constructed without the subclass' required arguments.
+    """
+    src_writer = PdfWriter()
+    src_page = src_writer.add_blank_page(width=200, height=200)
+    src_writer.add_annotation(
+        0, Polygon(vertices=[(50, 50), (150, 50), (100, 150)])
+    )
+    src_writer.add_annotation(
+        0, Line(rect=(50, 550, 200, 650), p1=(50, 550), p2=(200, 650))
+    )
+
+    dst_writer = PdfWriter()
+    dst_page = dst_writer.add_blank_page(width=200, height=200)
+    dst_page.merge_page(src_page)
+
+    output = BytesIO()
+    dst_writer.write(output)
+    output.seek(0)
+
+    # The output PDF must be readable and the merged annotations preserved.
+    merged_reader = PdfReader(output)
+    merged_annots = merged_reader.pages[0]["/Annots"]
+    subtypes = {a.get_object()["/Subtype"] for a in merged_annots}
+    assert "/Polygon" in subtypes
+    assert "/Line" in subtypes
+
+
 def test_polyline(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
