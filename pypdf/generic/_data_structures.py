@@ -305,7 +305,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         except Exception:
             # Some subclasses (e.g., annotation types) require constructor
             # arguments. Fall back to a plain DictionaryObject.
-            obj_cls = DictionaryObject()  # type: ignore[assignment]
+            obj_cls = DictionaryObject()
         d__ = cast(
             "DictionaryObject",
             self._reference_clone(obj_cls, pdf_dest, force_duplicate),
