@@ -306,3 +306,29 @@ startxref
     reader = PdfReader(buffer, strict=False)
     with pytest.raises(expected_exception=PdfReadError, match=r"^Cannot find Root object in pdf$"):
         assert len(reader.pages) == 0
+
+
+def test_dictionary_object__clone_fallback_on_annotation_subclass() -> None:
+    """
+    Regression test: ``DictionaryObject.clone()`` calls ``self.__class__()``
+    with no arguments. Annotation subclasses like ``Polygon`` require
+    constructor arguments and would raise a ``TypeError``. The fix catches
+    the exception and falls back to a plain ``DictionaryObject``.
+
+    This test clones a page that contains a Polygon annotation across
+    PdfWriters, triggering the clone path on the annotation.
+    """
+    writer1 = PdfWriter()
+    page1 = writer1.add_blank_page(100, 100)
+
+    from pypdf.annotations import Polygon  # noqa: F811
+
+    annotation = Polygon(vertices=[(10, 10), (50, 10), (50, 50), (10, 50)])
+    writer1.add_annotation(page_number=0, annotation=annotation)
+
+    # Cloning to a new writer triggers ``DictionaryObject.clone``,
+    # which should not crash for Polygon annotations.
+    writer2 = PdfWriter()
+    cloned_page = writer2.add_page(page1)
+    assert cloned_page is not None
+    assert len(writer2.pages) == 1
