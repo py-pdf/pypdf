@@ -89,6 +89,7 @@ def test_tree_object__insert_child_without_next_key() -> None:
 
     # The new child is linked before the existing one.
     first_child = first_child_ref.get_object()
+    assert isinstance(first_child, DictionaryObject)
     assert fresh_child["/Next"] == first_child
     assert first_child["/Prev"] == fresh_child
 
