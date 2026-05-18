@@ -443,9 +443,9 @@ def test_inline_image_extraction():
         assert image_similarity(writer.pages[0].images[i].image, img) == 1
     writer.pages[0].extract_text()
     # check recalculation of inline images
-    assert writer.pages[0]._displayed_images is not None
+    assert writer.pages[0]._content_stream_images is not None
     writer.pages[0].merge_scaled_page(writer.pages[0], 0.25)
-    assert writer.pages[0]._displayed_images is None
+    assert writer.pages[0]._content_stream_images is None
     reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
     writer.pages[0].merge_page(reader.pages[0])
     assert list(writer.pages[0].images.keys()) == [
@@ -738,13 +738,13 @@ def test_inline_images_setter_clears_cache():
 
     # Force cache population by accessing images
     _ = list(page.images)
-    assert page._displayed_images is not None
+    assert page._content_stream_images is not None
 
     # Clear cache via setter
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         page.inline_images = None
-    assert page._displayed_images is None
+    assert page._content_stream_images is None
 
 
 @pytest.mark.samples
@@ -755,12 +755,12 @@ def test_inline_images_setter_merges():
 
     # Force cache population by accessing images
     _ = list(page.images)
-    original_keys = set(page._displayed_images.keys())
+    original_keys = set(page._content_stream_images.keys())
 
     # Merge new values
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         page.inline_images = {"new_key": page.images[0]}
-    merged_keys = set(page._displayed_images.keys())
+    merged_keys = set(page._content_stream_images.keys())
     assert original_keys.issubset(merged_keys), "Original keys should be preserved"
     assert "new_key" in merged_keys, "New key should be added"

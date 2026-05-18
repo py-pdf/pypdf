@@ -525,7 +525,7 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf = pdf
-        self._displayed_images: Optional[dict[str, ImageFile]] = None
+        self._content_stream_images: Optional[dict[str, ImageFile]] = None
         self.indirect_reference = indirect_reference
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
@@ -621,8 +621,8 @@ class PageObject(DictionaryObject):
         if _i in call_stack:
             return []
         call_stack.append(_i)
-        if self._displayed_images is None:
-            self._displayed_images = self._parse_images_from_content_stream()
+        if self._content_stream_images is None:
+            self._content_stream_images = self._parse_images_from_content_stream()
         if obj is None:
             obj = self
         if ancest is None:
@@ -633,7 +633,7 @@ class PageObject(DictionaryObject):
                 is_null_or_none(resources := obj[PG.RESOURCES]) or
                 RES.XOBJECT not in cast(DictionaryObject, resources)
         ):
-            return [] if self._displayed_images is None else list(self._displayed_images.keys())
+            return [] if self._content_stream_images is None else list(self._content_stream_images.keys())
 
         x_object = resources[RES.XOBJECT].get_object()  # type: ignore
 
@@ -664,7 +664,7 @@ class PageObject(DictionaryObject):
         # Add inline images (they may overlap with XObject images)
         # Preserves order
         # Inline images have names starting with ~ (e.g., ~0~, ~1~)
-        for k in self._displayed_images:
+        for k in self._content_stream_images:
             if k not in deduplicated:
                 deduplicated.append(k)
 
@@ -693,19 +693,19 @@ class PageObject(DictionaryObject):
                 ) from exc
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
-                if self._displayed_images is None:
-                    self._displayed_images = self._parse_images_from_content_stream()
-                if self._displayed_images is None:
+                if self._content_stream_images is None:
+                    self._content_stream_images = self._parse_images_from_content_stream()
+                if self._content_stream_images is None:
                     raise KeyError("No inline image can be found")
-                img = self._displayed_images[id]
+                img = self._content_stream_images[id]
                 img.is_inline = True
                 img.is_displayed = True
                 return img
 
             assert xobjs is not None
             # Check if image is in content stream (from _parse_images_from_content_stream)
-            if self._displayed_images and id in self._displayed_images:
-                img = self._displayed_images[id]
+            if self._content_stream_images and id in self._content_stream_images:
+                img = self._content_stream_images[id]
                 img.is_inline = False
                 return img
 
@@ -784,9 +784,9 @@ class PageObject(DictionaryObject):
             "PageObject.images",
             "7.0",
         )
-        if self._displayed_images is None:
+        if self._content_stream_images is None:
             return None
-        return {k: v for k, v in self._displayed_images.items() if v.is_inline}
+        return {k: v for k, v in self._content_stream_images.items() if v.is_inline}
 
     @inline_images.setter
     def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
@@ -798,11 +798,11 @@ class PageObject(DictionaryObject):
         the values into the existing cache.
         """
         if value is None:
-            self._displayed_images = None
+            self._content_stream_images = None
         else:
-            if self._displayed_images is None:
-                self._displayed_images = {}
-            self._displayed_images.update(value)
+            if self._content_stream_images is None:
+                self._content_stream_images = {}
+            self._content_stream_images.update(value)
 
     def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
@@ -837,13 +837,13 @@ class PageObject(DictionaryObject):
             Dictionary mapping image names to ImageFile instances.
         """
         # Idempotent: if already parsed, return cached result
-        if self._displayed_images is not None:
-            return self._displayed_images
+        if self._content_stream_images is not None:
+            return self._content_stream_images
 
         content = self.get_contents()
         if is_null_or_none(content):
-            self._displayed_images = {}
-            return self._displayed_images
+            self._content_stream_images = {}
+            return self._content_stream_images
         imgs_data = []
         do_image_names: list[bytes] = []
         assert content is not None, "mypy"
@@ -927,8 +927,8 @@ class PageObject(DictionaryObject):
                 is_displayed=True,
             )
 
-        self._displayed_images = files
-        return self._displayed_images
+        self._content_stream_images = files
+        return self._content_stream_images
 
     @property
     def rotation(self) -> int:
@@ -1213,7 +1213,7 @@ class PageObject(DictionaryObject):
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
         # forces recalculation of images
-        self._displayed_images = None
+        self._content_stream_images = None
 
     def merge_page(
         self, page2: "PageObject", expand: bool = False, over: bool = True
