@@ -230,7 +230,7 @@ def test_image_extraction(src, page_index, image_key, expected):
 
 def test_get_inline_image_without_xobject_resources():
     page = PageObject(None, None)
-    inline_image = type("Mock", (), {"is_inline": True, "is_displayed": True})()
+    inline_image = mock.Mock(is_inline=True, is_displayed=True)
 
     with mock.patch.object(page, "_parse_images_from_content_stream", return_value={"~0~": inline_image}):
         assert page._get_image("~0~") is inline_image
