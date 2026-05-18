@@ -683,6 +683,7 @@ def test_is_xobject_image_displayed():
         img = reader.pages[page_num].images[image_id]
         assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
 
+
 @pytest.mark.samples
 def test_is_inline_image_displayed():
     """This test ensures that displayed inline images are detected by `ImageFile.is_displayed`"""
