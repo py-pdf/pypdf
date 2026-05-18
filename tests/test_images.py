@@ -312,6 +312,7 @@ def test_separation_1byte_to_rgb_inverted():
     assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
     obj = reader.pages[0].images[0].indirect_reference.get_object()
     obj.set_data(obj.get_data() + b"\x00")
+    reader.pages[0]._content_stream_images = None  # invalidate cache
     with pytest.raises(ValueError):
         reader.pages[0].images[0]
 
