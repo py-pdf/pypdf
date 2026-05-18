@@ -741,22 +741,6 @@ class PageObject(DictionaryObject):
             * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' XObject form
             * `for img in reader.pages[0].images:` # loops through all objects
 
-        images.keys() and images.items() can be used.
-
-        The ImageFile has the following properties:
-
-            * `.name` : name of the object
-            * `.data` : bytes of the object
-            * `.image` : PIL Image Object
-            * `.indirect_reference` : object reference (None for inline images)
-            * `.is_inline` : True for inline images (~0~, ~1~...), False for XObjects
-            * `.is_displayed` : True for images found in content stream, False otherwise
-
-        and the following methods:
-            `.replace(new_image: PIL.Image.Image, **kwargs)` :
-                replace the image in the pdf with the new image
-                applying the saving parameters indicated (such as quality)
-
         Example usage:
 
             reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
