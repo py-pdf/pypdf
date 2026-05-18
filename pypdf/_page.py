@@ -883,6 +883,14 @@ class PageObject(DictionaryObject):
                         files[do_name_str] = img_file
                 except KeyError:
                     continue
+                except OSError as e:
+                    logger_warning(
+                        "Failed loading image %(image_name)s: %(exception)s",
+                        source=__name__,
+                        image_name=do_name_str,
+                        exception=e,
+                    )
+                    continue
 
         # Then process inline images
         for num, ii in enumerate(imgs_data):
