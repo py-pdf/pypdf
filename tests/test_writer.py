@@ -1105,7 +1105,7 @@ def test_startup_dest():
 
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = pdf_file_writer.pages[9]
-    # checked also using Acrobrat to verify the good page is opened
+    # checked also using Acrobat to verify the good page is opened
     op = pdf_file_writer.root_object["/OpenAction"]
     assert op[0] == pdf_file_writer.pages[9].indirect_reference
     assert op[1] == "/Fit"
@@ -1124,7 +1124,7 @@ def test_startup_dest():
     assert "Invalid Destination" in str(exc.value)
 
     pdf_file_writer.open_destination = "Test"
-    # checked also using Acrobrat to verify open_destination
+    # checked also using Acrobat to verify open_destination
     op = pdf_file_writer.root_object["/OpenAction"]
     assert isinstance(op, TextStringObject)
     assert op == "Test"
@@ -1218,7 +1218,7 @@ def test_append_multiple():
     writer = PdfWriter()
     writer.append(
         reader, [0, 0, 0]
-    )  # to demonstre multiple insertion of same page at once
+    )  # to demonstrate multiple insertion of same page at once
     writer.append(reader, [0, 0, 0])  # second pack
     pages = writer.root_object["/Pages"]["/Kids"]
     assert pages[0] not in pages[1:]  # page not repeated

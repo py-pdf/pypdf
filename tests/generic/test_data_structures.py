@@ -66,6 +66,58 @@ def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None
     assert "Detected cycle in outline structure for " in caplog.text
 
 
+def test_tree_object__insert_child_without_next_key() -> None:
+    """Regression test for TreeObject.insert_child without /Next."""
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    first_child_ref = writer._add_object(DictionaryObject())
+    tree.add_child(first_child_ref, writer)
+
+    fresh_child = DictionaryObject()
+    fresh_child_ref = writer._add_object(fresh_child)
+    assert "/Next" not in fresh_child
+
+    # Must not raise KeyError("/Next") even though the new child has no /Next.
+    tree.insert_child(fresh_child_ref, first_child_ref, writer)
+
+    # The new child is linked before the existing one.
+    first_child = first_child_ref.get_object()
+    assert isinstance(first_child, DictionaryObject)
+    assert fresh_child["/Next"] == first_child
+    assert first_child["/Prev"] == fresh_child
+
+
+def test_tree_object__insert_child_in_first_position_with_next() -> None:
+    """Regression test: child with /Next inserted in first position."""
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    # Create a single child A as the /First (and /Last)
+    child_a = DictionaryObject()
+    child_a_ref = writer._add_object(child_a)
+    tree.add_child(child_a_ref, writer)
+
+    # prev = tree["/Last"] = A, prev == before, so no while loop.
+    # try: prev["/Prev"] — A has no /Prev → KeyError → except block fires.
+
+    # Create child C with a /Next pointer pointing to something
+    child_c = DictionaryObject()
+    child_c[NameObject("/Next")] = child_a_ref  # C -> A
+    child_c_ref = writer._add_object(child_c)
+    assert "/Next" in child_c
+
+    # Insert C before A (first position)
+    tree.insert_child(child_c_ref, child_a_ref, writer)
+
+    # C is now first, linked to A
+    c_obj = child_c_ref.get_object()
+    assert isinstance(c_obj, DictionaryObject)
+    assert c_obj["/Next"] == child_a
+
+
 @pytest.mark.enable_socket
 def test_array_object__clone_same_object_multiple_times(caplog: pytest.LogCaptureFixture) -> None:
     url = "https://github.com/user-attachments/files/25412858/Draft_OSMF_financial_statement_2013.pdf"
