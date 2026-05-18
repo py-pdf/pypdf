@@ -67,12 +67,7 @@ def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None
 
 
 def test_tree_object__insert_child_without_next_key() -> None:
-    """
-    Regression test: ``TreeObject.insert_child`` previously raised a
-    ``KeyError`` when the new child had no ``/Next`` entry yet and was
-    inserted in the first position. The except branch unconditionally
-    deleted ``/Next``, which only worked for children that already had it.
-    """
+    """Regression test for TreeObject.insert_child without /Next."""
     writer = PdfWriter()
     tree = TreeObject()
     writer._add_object(tree)
@@ -95,13 +90,7 @@ def test_tree_object__insert_child_without_next_key() -> None:
 
 
 def test_tree_object__insert_child_in_first_position_with_next() -> None:
-    r"""
-    Regression test: When a child with a ``/Next`` entry is inserted in the
-    first position, the ``except`` handler must delete ``/Next`` from the
-    child (since it's now the first node and should not have a forward
-    pointer). This tests the guarded deletion ``if "/Next" in child_obj:
-    del child_obj["/Next"]`` inside the except block.
-    """
+    """Regression test: child with /Next inserted in first position."""
     writer = PdfWriter()
     tree = TreeObject()
     writer._add_object(tree)
