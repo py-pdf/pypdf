@@ -696,7 +696,7 @@ class PageObject(DictionaryObject):
                 if self._content_stream_images is None:
                     self._content_stream_images = self._parse_images_from_content_stream()
                 if self._content_stream_images is None:
-                    raise KeyError("No inline image can be found")
+                    raise KeyError("No image can be found")
                 img = self._content_stream_images[id]
                 img.is_inline = True
                 img.is_displayed = True
@@ -915,8 +915,7 @@ class PageObject(DictionaryObject):
                 is_displayed=True,
             )
 
-        self._content_stream_images = files
-        return self._content_stream_images
+        return files
 
     @property
     def rotation(self) -> int:
