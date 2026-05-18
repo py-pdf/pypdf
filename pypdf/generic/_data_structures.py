@@ -318,7 +318,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     f"Could not construct {type(self).__name__}() during clone; "
                     "falling back to DictionaryObject. The cloned object will "
                     "lose its subclass type.",
-                    __name__,
+                    source=__name__,
                 )
                 obj = DictionaryObject()
         d__ = cast(
