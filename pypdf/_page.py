@@ -780,6 +780,10 @@ class PageObject(DictionaryObject):
         Setting to None clears the cache and forces recalculation on next access,
         emulating the previous caching control mechanism. Setting to a dict merges
         the values into the existing cache.
+
+        .. deprecated::
+            Use :attr:`images` and filter by :attr:`ImageFile.is_inline` instead.
+            This property will be removed in pypdf 7.0.
         """
         if value is None:
             self._content_stream_images = None
