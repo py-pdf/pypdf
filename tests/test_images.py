@@ -241,7 +241,7 @@ def test_get_inline_image_without_xobject_resources_raises_when_missing():
 
     with (
         mock.patch.object(page, "_parse_images_from_content_stream", return_value=None),
-        pytest.raises(KeyError, match="No inline image can be found"),
+        pytest.raises(KeyError, match="No image can be found"),
     ):
         page._get_image("~0~")
 
