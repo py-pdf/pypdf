@@ -272,6 +272,12 @@ class ArrayObject(list[Any], PdfObject):
 
 
 class DictionaryObject(dict[Any, Any], PdfObject):
+    _clone_class: Optional[type["DictionaryObject"]] = None
+    """If set, ``clone()`` will instantiate this class instead of
+    ``self.__class__()`` when creating the cloned object. This allows
+    subclasses that require constructor arguments (e.g., annotation types)
+    to specify a suitable fallback (typically ``DictionaryObject``)."""
+
     def replicate(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -300,15 +306,24 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             pass
 
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
-        try:
-            obj_cls = self.__class__()
-        except Exception:
-            # Some subclasses (e.g., annotation types) require constructor
-            # arguments. Fall back to a plain DictionaryObject.
-            obj_cls = DictionaryObject()
+        if self._clone_class is not None:
+            obj = self._clone_class()
+        else:
+            try:
+                obj = self.__class__()
+            except TypeError:
+                # Some subclasses (e.g., annotation types) require constructor
+                # arguments. Fall back to a plain DictionaryObject.
+                logger_warning(
+                    f"Could not construct {type(self).__name__}() during clone; "
+                    "falling back to DictionaryObject. The cloned object will "
+                    "lose its subclass type.",
+                    __name__,
+                )
+                obj = DictionaryObject()
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(obj_cls, pdf_dest, force_duplicate),
+            self._reference_clone(obj, pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []
