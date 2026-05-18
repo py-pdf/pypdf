@@ -830,8 +830,7 @@ class PageObject(DictionaryObject):
 
         content = self.get_contents()
         if is_null_or_none(content):
-            self._content_stream_images = {}
-            return self._content_stream_images
+            return {}
         imgs_data = []
         do_image_names: list[bytes] = []
         assert content is not None, "mypy"
