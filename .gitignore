@@ -15,6 +15,8 @@ venv/
 # Code coverage artifacts
 .coverage*
 coverage.xml
+# coverage.py annotated source files
+*.py,cover
 
 # Editors / IDEs
 .vscode/
