@@ -13,6 +13,8 @@ from ._base import AnnotationDictionary
 
 
 class Link(AnnotationDictionary):
+    _clone_class = DictionaryObject
+
     def __init__(
         self,
         *,
@@ -77,6 +79,8 @@ class Link(AnnotationDictionary):
 
 
 class Popup(AnnotationDictionary):
+    _clone_class = DictionaryObject
+
     def __init__(
         self,
         *,

@@ -99,6 +99,7 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
 
 
 class Text(MarkupAnnotation):
+    _clone_class = DictionaryObject
     """
     A text annotation.
 
@@ -129,6 +130,7 @@ class Text(MarkupAnnotation):
 
 
 class FreeText(MarkupAnnotation):
+    _clone_class = DictionaryObject
     """A FreeText annotation"""
 
     def __init__(
@@ -193,6 +195,8 @@ class FreeText(MarkupAnnotation):
 
 
 class Line(MarkupAnnotation):
+    _clone_class = DictionaryObject
+
     def __init__(
         self,
         p1: Vertex,
@@ -233,6 +237,8 @@ class Line(MarkupAnnotation):
 
 
 class PolyLine(MarkupAnnotation):
+    _clone_class = DictionaryObject
+
     def __init__(
         self,
         vertices: list[Vertex],
@@ -255,6 +261,8 @@ class PolyLine(MarkupAnnotation):
 
 
 class Rectangle(MarkupAnnotation):
+    _clone_class = DictionaryObject
+
     def __init__(
         self,
         rect: Union[RectangleObject, tuple[float, float, float, float]],
@@ -278,6 +286,8 @@ class Rectangle(MarkupAnnotation):
 
 
 class Highlight(MarkupAnnotation):
+    _clone_class = DictionaryObject
+
     def __init__(
         self,
         *,
@@ -303,6 +313,8 @@ class Highlight(MarkupAnnotation):
 
 
 class Ellipse(MarkupAnnotation):
+    _clone_class = DictionaryObject
+
     def __init__(
         self,
         rect: Union[RectangleObject, tuple[float, float, float, float]],
@@ -327,6 +339,8 @@ class Ellipse(MarkupAnnotation):
 
 
 class Polygon(MarkupAnnotation):
+    _clone_class = DictionaryObject
+
     def __init__(
         self,
         vertices: list[tuple[float, float]],
