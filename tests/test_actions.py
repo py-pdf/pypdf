@@ -139,34 +139,42 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
     assert page.get("/AA") is None
 
 
-# def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
-#     page = pdf_file_writer.pages[0]
-#
-#     # Add an open action with an array object as the AA entry
-#     page[NameObject("/AA")] = ArrayObject()
-#     page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
-#     assert caplog.messages[0] == "The PageObject has an AA whose value was not a DictionaryObject."
-#     assert page.get("/AA") == ArrayObject()
-#
-#     # Add a close action with an array object as the AA entry
-#     page[NameObject("/AA")] = ArrayObject()
-#     page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
-#     assert caplog.messages[0] == "The PageObject has an AA whose value was not a DictionaryObject."
-#     assert page.get("/AA") == ArrayObject()
+def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
+    page = pdf_file_writer.pages[0]
+
+    # Add an open action with an array object as the AA entry
+    page[NameObject("/AA")] = ArrayObject()
+    page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    assert caplog.messages[0] == "The PageObject has an AA entry whose value is not a DictionaryObject."
+    assert page.get("/AA") == ArrayObject()
+
+    # Add a close action with an array object as the AA entry
+    page[NameObject("/AA")] = ArrayObject()
+    page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    assert caplog.messages[0] == "The PageObject has an AA entry whose value is not a DictionaryObject."
+    assert page.get("/AA") == ArrayObject()
+
 
 def test_page_add_action__with_existing_array_object__strict():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    writer = PdfWriter(strict=True)
-    writer.append_pages_from_reader(reader)
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf", strict=True)
     page = writer.pages[0]
 
     # Add an open action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
     with pytest.raises(
         ValueError,
-        match=r"^The PageObject has an AA whose value was not a DictionaryObject.$"
+        match=r"^The PageObject has an AA entry whose value is not a DictionaryObject.$"
     ):
         page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    assert page.get("/AA") == ArrayObject()
+
+    # Add a close action with an array object as the AA entry
+    page[NameObject("/AA")] = ArrayObject()
+    with pytest.raises(
+            ValueError,
+            match=r"^The PageObject has an AA entry whose value is not a DictionaryObject.$"
+    ):
+        page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert page.get("/AA") == ArrayObject()
 
 
