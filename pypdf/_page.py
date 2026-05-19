@@ -770,7 +770,11 @@ class PageObject(DictionaryObject):
         )
         if self._content_stream_images is None:
             return None
-        return {k: v for k, v in self._content_stream_images.items() if v.is_inline}
+        return {
+            image_name: image_file
+            for image_name, image_file in self._content_stream_images.items()
+            if image_file.is_inline
+        }
 
     @inline_images.setter
     def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
