@@ -1,6 +1,5 @@
 """Test the pypdf._page module."""
 import json
-import math
 import os
 import re
 import shutil
@@ -155,8 +154,8 @@ def test_mediabox_expansion_after_rotation(
     mediabox = writer.pages[0].mediabox
 
     # Deviation of up to 2 pixels is acceptable
-    assert math.isclose(mediabox.width, expected_width, abs_tol=2)
-    assert math.isclose(mediabox.height, expected_height, abs_tol=2)
+    assert mediabox.width == pytest.approx(expected_width, abs=2)
+    assert mediabox.height == pytest.approx(expected_height, abs=2)
 
 
 def test_transformation_equivalence():
@@ -349,10 +348,10 @@ def test_page_rotation():
     # test transfer_rotate_to_content
     page.rotation -= 90
     page.transfer_rotation_to_content()
-    assert math.isclose(page.mediabox.left, 0, abs_tol=0.1)
-    assert math.isclose(page.mediabox.bottom, 0, abs_tol=0.1)
-    assert math.isclose(page.mediabox.right, 792, abs_tol=0.1)
-    assert math.isclose(page.mediabox.top, 612, abs_tol=0.1)
+    assert page.mediabox.left == pytest.approx(0, abs=0.1)
+    assert page.mediabox.bottom == pytest.approx(0, abs=0.1)
+    assert page.mediabox.right == pytest.approx(792, abs=0.1)
+    assert page.mediabox.top == pytest.approx(612, abs=0.1)
 
 
 def test_page_indirect_rotation():
