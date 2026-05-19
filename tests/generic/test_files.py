@@ -101,7 +101,7 @@ def test_embedded_file__kids() -> None:
     #   * The input PDF file has been the `002-trivial-libre-office-writer.pdf` file.
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
     name = "embedded_files_kids.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     attachments = list(EmbeddedFile._load(reader.root_object))
     assert len(attachments) == 1
     attachment = attachments[0]
@@ -144,7 +144,7 @@ def test_embedded_file__kids() -> None:
 def test_embedded_file__ensure_params__existing_params() -> None:
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
     name = "embedded_files_kids.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     attachments = list(EmbeddedFile._load(reader.root_object))
     assert len(attachments) == 1
     attachment = attachments[0]
@@ -468,7 +468,7 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     """Test for issue #3473."""
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
     name = "embedded_files_kids.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
 
     writer.add_attachment("test.pdf", b"content")
 

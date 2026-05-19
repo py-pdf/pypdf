@@ -23,7 +23,7 @@ def test_get_imagemode_recursion_depth() -> None:
     name = "issue2240.pdf"
     # Simple example: Just let the color space object reference itself.
     # The alternative would be to generate a chain of referencing objects.
-    content = get_data_from_url(url, name=name)
+    content = get_data_from_url(url=url, name=name)
     source = b"\n10 0 obj\n[ /DeviceN [ /HKS#2044#20K /Magenta /Yellow /Black ] 7 0 R 11 0 R 12 0 R ]\nendobj\n"
     target = b"\n10 0 obj\n[ /DeviceN [ /HKS#2044#20K /Magenta /Yellow /Black ] 10 0 R 11 0 R 12 0 R ]\nendobj\n"
     reader = PdfReader(BytesIO(content.replace(source, target)))
@@ -159,7 +159,7 @@ def test_handle_flate__autodesk_indexed() -> None:
 def test_get_mode_and_invert_color() -> None:
     url = "https://github.com/user-attachments/files/18381726/tika-957721.pdf"
     name = "tika-957721.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[12]
     for _name, image in page.images.items():  # noqa: PERF102
         assert image.image is not None
@@ -170,7 +170,7 @@ def test_get_mode_and_invert_color() -> None:
 def test_get_imagemode__empty_array() -> None:
     url = "https://github.com/user-attachments/files/23050451/poc.pdf"
     name = "issue3499.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[0]
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
@@ -224,7 +224,7 @@ def test_p_image_with_alpha_mask() -> None:
 def test_handle_flate__icc_based__image_mode_1() -> None:
     url = "https://github.com/user-attachments/files/23756943/pypdf_bug_3534_iccbased.pdf"
     name = "issue3534.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[0]
 
     image = page.images[0].image

@@ -102,5 +102,5 @@ class Popup(AnnotationDictionary):
 
                 logger_warning(
                     "Unregistered Parent object : No Parent field set",
-                    __name__,
+                    source=__name__,
                 )

@@ -22,6 +22,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     format_iso8824_date,
     logger_error,
+    logger_warning,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -342,6 +343,22 @@ def test_logger_error(caplog):
     message = "Advanced encoding %(encoding)s not implemented yet"
     logger_error(message, source=__name__, encoding=encoding)
     assert "Advanced encoding {'/key': 'value'} not implemented yet" in caplog.text
+
+    caplog.clear()
+    logger_error("No fields to update on this page", source=__name__)
+    assert "No fields to update on this page" in caplog.text
+
+
+def test_logger_warning(caplog):
+    line = b"beginbfrange"
+    error = Exception("odd length string")
+    message = "Skipping broken line %(line)r: %(error)s"
+    logger_warning(message, source=__name__, line=line, error=error)
+    assert "Skipping broken line b'beginbfrange': odd length string" in caplog.text
+
+    caplog.clear()
+    logger_warning("No fields to update on this page", source=__name__)
+    assert "No fields to update on this page" in caplog.text
 
 
 def test_rename_kwargs():

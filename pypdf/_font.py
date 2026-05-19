@@ -4,7 +4,17 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject, StreamObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    FloatObject,
+    IndirectObject,
+    NameObject,
+    NumberObject,
+    PdfObject,
+    StreamObject,
+    TextStringObject,
+)
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
@@ -18,6 +28,8 @@ if TYPE_CHECKING:
     from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
     from fontTools.ttLib.tables._p_o_s_t import table__p_o_s_t
     from fontTools.ttLib.tables.O_S_2f_2 import table_O_S_2f_2
+
+    from ._writer import PdfWriter
 
 try:
     from fontTools.ttLib import TTFont
@@ -59,6 +71,25 @@ class FontDescriptor:
     flags: int = 32  # Non-serif, non-symbolic, not fixed width
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
     font_file: StreamObject | None = None
+
+    def as_font_descriptor_resource(self) -> DictionaryObject:
+        font_descriptor_resource = DictionaryObject({
+            NameObject("/Type"): NameObject("/FontDescriptor"),
+            NameObject("/FontName"): NameObject(f"/{self.name}"),
+            NameObject("/Flags"): NumberObject(self.flags),
+            NameObject("/FontBBox"): ArrayObject([FloatObject(n) for n in self.bbox]),
+            NameObject("/ItalicAngle"): FloatObject(self.italic_angle),
+            NameObject("/Ascent"): FloatObject(self.ascent),
+            NameObject("/Descent"): FloatObject(self.descent),
+            NameObject("/CapHeight"): FloatObject(self.cap_height),
+            NameObject("/XHeight"): FloatObject(self.x_height),
+        })
+
+        if self.font_file:
+            # Add the stream. For now, we assume a TrueType font (FontFile2)
+            font_descriptor_resource[NameObject("/FontFile2")] = self.font_file
+
+        return font_descriptor_resource
 
 
 @dataclass(frozen=True)
@@ -153,7 +184,11 @@ class Font:
             if not isinstance(w_entry, (int, float)):
                 # We should never get here due to skip_count above. But
                 # sometimes we do.
-                logger_warning(f"Expected numeric value for width, got {w_entry}. Ignoring it.", __name__)
+                logger_warning(
+                    "Expected numeric value for width, got %(w_entry)s. Ignoring it.",
+                    source=__name__,
+                    w_entry=w_entry,
+                )
                 continue
             # check for format (1): `int [int int int int ...]`
             w_next_entry = _w[idx + 1].get_object()
@@ -197,8 +232,9 @@ class Font:
                 # This handles the case of out of bounds (reaching the end of the width definitions
                 # while expecting more elements).
                 logger_warning(
-                    f"Invalid font width definition. Last element: {w_entry}.",
-                    __name__
+                    "Invalid font width definition. Last element: %(w_entry)s.",
+                    source=__name__,
+                    w_entry=w_entry,
                 )
 
     @staticmethod
@@ -264,7 +300,13 @@ class Font:
                     font_file = font_descriptor_obj[source_key].get_object()
                     font_descriptor_kwargs["font_file"] = font_file
                 except PdfReadError as e:
-                    logger_warning(f"Failed to get {source_key!r} in {font_descriptor_obj}: {e}", __name__)
+                    logger_warning(
+                        "Failed to get %(source_key)r in %(font_descriptor_obj)s: %(error)s",
+                        source=__name__,
+                        source_key=source_key,
+                        font_descriptor_obj=font_descriptor_obj,
+                        error=e,
+                    )
         return font_descriptor_kwargs
 
     @classmethod
@@ -494,20 +536,143 @@ class Font:
             interpretable=True
         )
 
-    def as_font_resource(self) -> DictionaryObject:
-        # For now, this returns a font resource that only works with the 14 Adobe Core fonts.
-        return (
-            DictionaryObject({
-                NameObject("/Subtype"): NameObject("/Type1"),
-                NameObject("/Name"): NameObject(f"/{self.name}"),
-                NameObject("/Type"): NameObject("/Font"),
-                NameObject("/BaseFont"): NameObject(f"/{self.name}"),
-                NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
-            })
+    def _create_widths_list_and_unicode_stream(self) -> tuple[list[PdfObject], StreamObject]:
+        widths_list = []
+        unicode_map = []
+        # In the loop, char is the decoded GID string (the reverse unicode hack)
+        # and character_map[char] is the actual character.
+        # The widths (/W) array can have two formats:
+        #    [first_cid [w1 w2 w3]] or [first last width]
+        # Here we choose the first format and simply provide one array with one width for every cid.
+        for gid_str, actual_char in self.character_map.items():
+            uni_point = ord(actual_char)
+            # Only deal with Basic Multilingual Plane characters.
+            # TODO: Add all characters. However, this requires widths reworking first.
+            if uni_point <= 0xFFFF:
+                cid = ord(gid_str)
+                cid_hex = f"{cid:04X}"
+                uni_hex = f"{uni_point:04X}"
+                unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
+
+                width = self.character_widths.get(gid_str, self.character_widths["default"])
+                widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+
+        # Create the /ToUnicode CMap Stream
+        to_unicode_stream = StreamObject()
+        to_unicode_stream.set_data(
+            (
+                "/CIDInit /ProcSet findresource begin\n"
+                "12 dict begin\n"
+                "begincmap\n"
+                "/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n"
+                "/CMapName /Adobe-Identity-UCS def\n"
+                "/CMapType 2 def\n"
+                "1 begincodespacerange <0000> <FFFF> endcodespacerange\n"
+                f"{len(unicode_map)} beginbfchar\n"
+                + "\n".join(unicode_map) + "\n"
+                "endbfchar\n"
+                "endcmap\n"
+                "CMapName currentdict /CMap defineresource pop\n"
+                "end end"
+            ).encode("ascii")
         )
+
+        return widths_list, to_unicode_stream
+
+    def as_font_resource(self) -> DictionaryObject:
+        # If we have an embedded Truetype font, we assume that we need to produce a Type 2 CID font resource.
+        if self.font_descriptor.font_file and self.sub_type == "TrueType":
+            # Begin with creating the widths array (part of the descendant font) and the unicode cmap (part
+            # of the Type 0 font obect).
+            widths_list, to_unicode_stream = self._create_widths_list_and_unicode_stream()
+
+            # Create the descendant font object
+            cid_font = DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/CIDFontType2"),
+                NameObject("/BaseFont"): NameObject(f"/{self.name}"),
+                NameObject("/CIDSystemInfo"): DictionaryObject({
+                    NameObject("/Registry"): TextStringObject("Adobe"),
+                    NameObject("/Ordering"): TextStringObject("Identity"),
+                    NameObject("/Supplement"): NumberObject(0)
+                }),
+                NameObject("/FontDescriptor"): self.font_descriptor.as_font_descriptor_resource(),
+                NameObject("/W"): ArrayObject(widths_list),
+                NameObject("/DW"): NumberObject(self.character_widths["default"]),
+                NameObject("/CIDToGIDMap"): NameObject("/Identity")
+            })
+
+            # Create the Type 0 font object
+            return DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/Type0"),
+                NameObject("/BaseFont"): NameObject(f"/{self.name}"),
+                NameObject("/Encoding"): NameObject("/Identity-H"),
+                NameObject("/DescendantFonts"): ArrayObject([cid_font]),
+                NameObject("/ToUnicode"): to_unicode_stream,
+            })
+
+        # Fallback: Return a font resource for one of the 14 Adobe Core fonts.
+        return DictionaryObject({
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/Name"): NameObject(f"/{self.name}"),
+            NameObject("/BaseFont"): NameObject(f"/{self.name}"),
+            NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+        })
+
+    def _add_to_writer(
+        self,
+        writer: PdfWriter,
+        target_resource_dict: DictionaryObject,
+        font_resource_name: NameObject
+    ) -> IndirectObject:
+        """
+        Some objects in a font resource need to be indirect objects. This method
+        ensures that ToUnicode, FontDescriptor, FontFile, and, ultimately, the font
+        resource itself, are registered with the PdfWriter instance as indirect objects.
+        """
+        font_resource = self.as_font_resource()
+        if "/ToUnicode" in font_resource:
+            font_resource[NameObject("/ToUnicode")] = writer._add_object(font_resource["/ToUnicode"])
+
+        if "/DescendantFonts" in font_resource:
+            descendant_fonts = cast(ArrayObject, font_resource["/DescendantFonts"])
+            font_resource_dict = cast(DictionaryObject, descendant_fonts[0])
+        else:
+            font_resource_dict = font_resource
+
+        if "/FontDescriptor" in font_resource_dict:
+            font_descriptor_obj = cast(DictionaryObject, font_resource_dict["/FontDescriptor"])
+            for key in ["/FontFile", "/FontFile2", "/FontFile3"]:
+                if key in font_descriptor_obj:
+                    font_descriptor_obj[NameObject(key)] = writer._add_object(font_descriptor_obj[key])
+            font_resource_dict[NameObject("/FontDescriptor")] = writer._add_object(
+                font_resource_dict["/FontDescriptor"]
+            )
+        font_resource_ref = writer._add_object(font_resource)
+        target_resource_dict[font_resource_name] = font_resource_ref
+        return font_resource_ref
 
     def text_width(self, text: str = "") -> float:
         """Sum of character widths specified in PDF font for the supplied text."""
         return sum(
             [self.character_widths.get(char, self.character_widths["default"]) for char in text], 0.0
         )
+
+    def can_encode(self, text: str) -> bool:
+        """Check whether the font is able to encode a text string."""
+        try:
+            if self.character_map:
+                supported_chars = set(self.character_map.values())
+                return all(char in supported_chars for char in text)
+            if isinstance(self.encoding, str):
+                text.encode(self.encoding, "surrogatepass")
+            else:
+                supported_chars = set(self.encoding.values())
+                return all(char in supported_chars for char in text)
+
+        except UnicodeEncodeError:
+            return False
+
+        return True

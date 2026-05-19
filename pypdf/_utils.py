@@ -44,7 +44,6 @@ from typing import (
     Any,
     Optional,
     Union,
-    overload,
 )
 
 if sys.version_info[:2] >= (3, 10):
@@ -387,27 +386,6 @@ def mark_location(stream: StreamType) -> None:
     stream.seek(-radius, 1)
 
 
-@overload
-def ord_(b: str) -> int:
-    ...
-
-
-@overload
-def ord_(b: bytes) -> bytes:
-    ...
-
-
-@overload
-def ord_(b: int) -> int:
-    ...
-
-
-def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
-    if isinstance(b, str):
-        return ord(b)
-    return b
-
-
 def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
 
@@ -450,10 +428,13 @@ def logger_error(message: str, *, source: str, **values: Any) -> None:
     See the docs on when to use which:
     https://pypdf.readthedocs.io/en/latest/user/suppress-warnings.html
     """
-    logging.getLogger(source).error(message, values)
+    if values:
+        logging.getLogger(source).error(message, values)
+    else:
+        logging.getLogger(source).error(message)
 
 
-def logger_warning(msg: str, src: str) -> None:
+def logger_warning(message: str, *, source: str, **values: Any) -> None:
     """
     Use this instead of logger.warning directly.
 
@@ -469,7 +450,13 @@ def logger_warning(msg: str, src: str) -> None:
       pypdf could apply a robustness fix to still read it. This applies mainly
       to strict=False mode.
     """
-    logging.getLogger(src).warning(msg)
+    if values:
+        logging.getLogger(source).warning(message, values)
+    else:
+        # Keep parity with logger_error and support plain warning messages.
+        # Passing an empty dict to logging is not equivalent to passing no args:
+        # plain messages would fail while being formatted.
+        logging.getLogger(source).warning(message)
 
 
 def rename_kwargs(
