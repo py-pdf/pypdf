@@ -5,6 +5,7 @@ Typically, tests in here should compare the extracted images count, names,
 and/or the actual image data with the expected value.
 """
 
+import warnings
 from io import BytesIO
 from pathlib import Path
 from typing import Union
@@ -229,9 +230,9 @@ def test_image_extraction(src, page_index, image_key, expected):
 
 def test_get_inline_image_without_xobject_resources():
     page = PageObject(None, None)
-    inline_image = object()
+    inline_image = mock.Mock(is_inline=True, is_displayed=True)
 
-    with mock.patch.object(page, "_get_inline_images", return_value={"~0~": inline_image}):
+    with mock.patch.object(page, "_parse_images_from_content_stream", return_value={"~0~": inline_image}):
         assert page._get_image("~0~") is inline_image
 
 
@@ -239,8 +240,8 @@ def test_get_inline_image_without_xobject_resources_raises_when_missing():
     page = PageObject(None, None)
 
     with (
-        mock.patch.object(page, "_get_inline_images", return_value=None),
-        pytest.raises(KeyError, match="No inline image can be found"),
+        mock.patch.object(page, "_parse_images_from_content_stream", return_value=None),
+        pytest.raises(KeyError, match="No image can be found"),
     ):
         page._get_image("~0~")
 
@@ -311,6 +312,7 @@ def test_separation_1byte_to_rgb_inverted():
     assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
     obj = reader.pages[0].images[0].indirect_reference.get_object()
     obj.set_data(obj.get_data() + b"\x00")
+    reader.pages[0]._content_stream_images = None  # invalidate cache
     with pytest.raises(ValueError):
         reader.pages[0].images[0]
 
@@ -442,9 +444,9 @@ def test_inline_image_extraction():
         assert image_similarity(writer.pages[0].images[i].image, img) == 1
     writer.pages[0].extract_text()
     # check recalculation of inline images
-    assert writer.pages[0].inline_images is not None
+    assert writer.pages[0]._content_stream_images is not None
     writer.pages[0].merge_scaled_page(writer.pages[0], 0.25)
-    assert writer.pages[0].inline_images is None
+    assert writer.pages[0]._content_stream_images is None
     reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
     writer.pages[0].merge_page(reader.pages[0])
     assert list(writer.pages[0].images.keys()) == [
@@ -556,7 +558,7 @@ EI Q
     )
     page = PageObject(pdf=None)
     with mock.patch.object(page, "get_contents", return_value=stream):
-        images = page._get_inline_images()
+        images = page._parse_images_from_content_stream()
         assert list(images) == ["~0~"]
         assert images["~0~"].data == (
             b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x02\x00\x00\x00\x01\x08\x02\x00\x00\x00{@\xe8\xdd\x00\x00\x00\x0f"
@@ -658,3 +660,108 @@ def test_get_ids_image__resources_is_none():
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[2]
     assert list(page.images.items()) == []
+
+
+@pytest.mark.samples
+def test_is_xobject_image_displayed():
+    """Test XObject image display detection with expected results."""
+    path = SAMPLE_ROOT / "028-image-references-deduplication/wrong-references.pdf"
+    reader = PdfReader(path)
+
+    expected_results = [
+        # Page 1: /Im20 not displayed, /Im8 displayed
+        (0, "/Im20", False),
+        (0, "/Im8", True),
+        # Page 2: Neither displayed
+        (1, "/Im20", False),
+        (1, "/Im8", False),
+        # Page 3: /Im20 displayed, /Im8 not displayed
+        (2, "/Im20", True),
+        (2, "/Im8", False),
+    ]
+
+    for page_num, image_id, expected in expected_results:
+        img = reader.pages[page_num].images[image_id]
+        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
+
+
+@pytest.mark.samples
+def test_is_inline_image_displayed():
+    """This test ensures that displayed inline images are detected by `ImageFile.is_displayed`"""
+    path = SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf"
+    reader = PdfReader(path)
+
+    # Page 1:
+    expected_results = [
+        (0, "~0~", True),
+    ]
+
+    for page_num, image_id, expected in expected_results:
+        page = reader.pages[page_num]
+        img = page.images[image_id]
+        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
+
+
+@pytest.mark.samples
+def test_inline_images_property_deprecation_warning():
+    """Test that inline_images property emits a deprecation warning."""
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    page = reader.pages[0]
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = page.inline_images
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "inline_images" in str(w[0].message)
+        assert "images" in str(w[0].message)
+
+
+@pytest.mark.samples
+def test_inline_images_property_returns_only_inline():
+    """Test that inline_images returns only images with is_inline=True."""
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    page = reader.pages[0]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        inline = page.inline_images
+        if inline is not None:
+            for k, v in inline.items():
+                assert v.is_inline is True, f"Image {k} should have is_inline=True"
+
+
+@pytest.mark.samples
+def test_inline_images_setter_clears_cache():
+    """Test that setting inline_images to None clears the cache."""
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    page = reader.pages[0]
+
+    # Force cache population by accessing images
+    _ = list(page.images)
+    assert page._content_stream_images is not None
+
+    # Clear cache via setter
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        page.inline_images = None
+    assert page._content_stream_images is None
+
+
+@pytest.mark.samples
+def test_inline_images_setter_merges():
+    """Test that setting inline_images to a dict merges into the cache."""
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    page = reader.pages[0]
+
+    # Force cache population by accessing images
+    _ = list(page.images)
+    original_keys = set(page._content_stream_images.keys())
+
+    # Merge new values
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        page.inline_images = {"new_key": page.images[0]}
+    merged_keys = set(page._content_stream_images.keys())
+    assert original_keys.issubset(merged_keys), "Original keys should be preserved"
+    assert "new_key" in merged_keys, "New key should be added"
