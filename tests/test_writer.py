@@ -1836,6 +1836,11 @@ def test_update_form_fields3(caplog, tmp_path):
         "adresa_judet": "Конференция",
     }
     writer.update_page_form_field_values(writer.pages[0], data, flatten=True)
+    # Test that we have changed the font rsource from /Ubuntu to /PYPDF1
+    new_font_resource = "/PYPDF1"
+    assert new_font_resource in writer.pages[0]["/Annots"][0]["/DA"]
+    assert new_font_resource in writer.pages[0]["/Resources"]["/Font"]
+    assert new_font_resource in writer._root_object["/AcroForm"]["/DR"]["/Font"]
     writer.write(output)
     output.seek(0)
     reader = PdfReader(output)
