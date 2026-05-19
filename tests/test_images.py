@@ -312,7 +312,6 @@ def test_separation_1byte_to_rgb_inverted():
     assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
     obj = reader.pages[0].images[0].indirect_reference.get_object()
     obj.set_data(obj.get_data() + b"\x00")
-    reader.pages[0]._content_stream_images = None  # invalidate cache
     with pytest.raises(ValueError):
         reader.pages[0].images[0]
 
@@ -664,7 +663,7 @@ def test_get_ids_image__resources_is_none():
 
 @pytest.mark.samples
 def test_is_xobject_image_displayed():
-    """Test XObject image display detection with expected results."""
+    """Test XObject image display detection via _content_stream_images membership."""
     path = SAMPLE_ROOT / "028-image-references-deduplication/wrong-references.pdf"
     reader = PdfReader(path)
 
@@ -681,13 +680,17 @@ def test_is_xobject_image_displayed():
     ]
 
     for page_num, image_id, expected in expected_results:
-        img = reader.pages[page_num].images[image_id]
-        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
-
+        page = reader.pages[page_num]
+        _ = page.images[image_id]  # trigger parsing
+        assert page._content_stream_images is not None
+        in_content_stream = image_id in page._content_stream_images
+        assert in_content_stream == expected, (
+            f"Page {page_num}: {image_id} expected {expected}, got {in_content_stream}"
+        )
 
 @pytest.mark.samples
 def test_is_inline_image_displayed():
-    """This test ensures that displayed inline images are detected by `ImageFile.is_displayed`"""
+    """This test ensures displayed inline images are detected via _content_stream_images membership."""
     path = SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf"
     reader = PdfReader(path)
 
@@ -698,9 +701,12 @@ def test_is_inline_image_displayed():
 
     for page_num, image_id, expected in expected_results:
         page = reader.pages[page_num]
-        img = page.images[image_id]
-        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
-
+        _ = page.images[image_id]  # trigger parsing
+        assert page._content_stream_images is not None
+        in_content_stream = image_id in page._content_stream_images
+        assert in_content_stream == expected, (
+            f"Page {page_num}: {image_id} expected {expected}, got {in_content_stream}"
+        )
 
 @pytest.mark.samples
 def test_inline_images_property_deprecation_warning():
@@ -727,8 +733,9 @@ def test_inline_images_property_returns_only_inline():
         warnings.simplefilter("ignore")
         inline = page.inline_images
         if inline is not None:
-            for k, v in inline.items():
-                assert v.is_inline is True, f"Image {k} should have is_inline=True"
+            for k in inline:
+                is_inline = k.startswith("~")
+                assert is_inline is True, f"Inline image {k} should be named like ~N~"
 
 
 @pytest.mark.samples
@@ -762,6 +769,60 @@ def test_inline_images_setter_merges():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         page.inline_images = {"new_key": page.images[0]}
+    assert page._content_stream_images is not None
     merged_keys = set(page._content_stream_images.keys())
     assert original_keys.issubset(merged_keys), "Original keys should be preserved"
     assert "new_key" in merged_keys, "New key should be added"
+
+
+@pytest.mark.samples
+def test_do_images_stored_as_none_in_cache():
+    """Test that Do-referenced images are stored as None in _content_stream_images."""
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    page = reader.pages[0]
+
+    # Force cache population
+    _ = list(page.images)
+    assert page._content_stream_images is not None
+
+    # Do images should be in the cache with None value
+    do_images = {k: v for k, v in page._content_stream_images.items()
+                 if not k.startswith("~")}
+    for k, v in do_images.items():
+        assert v is None, f"Image {k} should be None (lazy placeholder)"
+
+
+@pytest.mark.samples
+def test_inline_images_skips_none_entries():
+    """Test that inline_images property skips None (Do) entries."""
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    page = reader.pages[0]
+
+    # Force cache population
+    _ = list(page.images)
+
+    # Access inline_images (suppress deprecation warning)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        inline = page.inline_images
+
+    if inline is not None:
+        for k, v in inline.items():
+            assert v is not None, "Inline_images should not contain None values"
+            assert k.startswith("~"), "Inline_images keys should start with ~"
+
+
+@pytest.mark.enable_socket
+def test_do_image_lazy_decode_preserves_none():
+    """Test that Do images remain as None after access (never cached by design)."""
+    url = "https://github.com/py-pdf/pypdf/files/13127130/Binance.discovery.responses.2.gov.uscourts.dcd.256060.140.1.pdf"
+    name = "iss2265.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    page = reader.pages[2]
+
+    # First access: triggers lazy decode in _get_image()
+    img = page.images[1]
+    assert img is not None
+    assert page._content_stream_images is not None
+    # Do images should remain as None (never cached, decoded on demand each time)
+    assert page._content_stream_images["/Im1"] is None

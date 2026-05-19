@@ -589,7 +589,6 @@ def test_jpx_no_spacecode():
     # create an object without filter and without colorspace
     # just for coverage
     del im.indirect_reference.get_object()["/Filter"]
-    reader.pages[0]._content_stream_images = None  # invalidate cache
     with pytest.raises(PdfReadError) as exc:
         reader.pages[0].images[0]
     assert exc.value.args[0].startswith("ColorSpace field not found")
