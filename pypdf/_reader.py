@@ -188,7 +188,7 @@ class PdfReader(PdfDocCommon):
         # try empty password if no password provided
         pwd = password if password is not None else b""
         if (
-            self._encryption.verify(pwd) == PasswordType.NOT_DECRYPTED
+            self._encryption.verify(pwd, strict=self.strict) == PasswordType.NOT_DECRYPTED
             and password is not None
         ):
             # raise if password provided
@@ -1395,7 +1395,7 @@ class PdfReader(PdfDocCommon):
         if not self._encryption:
             raise PdfReadError("Not encrypted file")
         # TODO: raise Exception for wrong password
-        return self._encryption.verify(password)
+        return self._encryption.verify(password, strict=self.strict)
 
     @property
     def is_encrypted(self) -> bool:
