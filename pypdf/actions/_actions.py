@@ -80,7 +80,7 @@ class Action(DictionaryObject, ABC):
             )
             return
 
-        additional_actions: DictionaryObject = cast(DictionaryObject, page["/AA"])
+        additional_actions: DictionaryObject = page["/AA"]
 
         if is_null_or_none(additional_actions.get(trigger_name)):
             additional_actions.update({trigger_name: action})
@@ -128,7 +128,7 @@ class Action(DictionaryObject, ABC):
                 current = next_
 
         if not is_null_or_none(next_ := current.get("/Next")) and id(next_) in visited:
-            logger_warning("Detected cycle in the action tree for %(current)s", current=current, source=__name__)
+            logger_warning("Detected cycle in the action tree for %(current)s", source=__name__, current=current)
 
         current[NameObject("/Next")] = action
         additional_actions.update({trigger_name: head})
