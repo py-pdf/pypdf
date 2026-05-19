@@ -74,7 +74,7 @@ class Action(DictionaryObject, ABC):
             page[NameObject("/AA")] = DictionaryObject()
 
         if not isinstance(page["/AA"], DictionaryObject):
-            if hasattr(page.pdf, "strict") and page.pdf.strict:
+            if page.pdf is not None and hasattr(page.pdf, "strict") and page.pdf.strict:
                 raise ValueError("The PageObject has an AA entry whose value is not a DictionaryObject.")
             logger_warning(
                 "The PageObject has an AA entry whose value is not a DictionaryObject.",
