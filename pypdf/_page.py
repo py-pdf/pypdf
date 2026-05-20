@@ -58,6 +58,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
+from .actions import Action
 from .constants import (
     _INLINE_IMAGE_KEY_MAPPING,
     _INLINE_IMAGE_VALUE_MAPPING,
@@ -2167,6 +2168,47 @@ class PageObject(DictionaryObject):
             del self[NameObject("/Annots")]
         else:
             self[NameObject("/Annots")] = value
+
+    def add_action(self, trigger: str, action: Action) -> None:
+        """
+        Add an action which will launch on the given trigger event of this page.
+
+        Args:
+            trigger: The trigger event.
+            action: An :py:class:`~pypdf.actions.Action` object.
+
+        Example:
+            >>> from pypdf import PdfWriter
+            >>> from pypdf.actions import JavaScript
+            >>> writer = PdfWriter()
+            >>> page = writer.add_blank_page(595, 842)
+            >>> # Display the page number when the page is opened
+            >>> page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+            >>> # Display the page number when the page is closed
+            >>> page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
+        """
+        Action._create_new(self, trigger, action)
+
+    def delete_action(self, trigger: str) -> None:
+        """
+        Delete an action associated with an open or close trigger event of this page.
+
+        Args:
+            trigger: "open" or "close" trigger event.
+
+        Example:
+            >>> from pypdf import PdfWriter
+            >>> from pypdf.actions import JavaScript
+            >>> writer = PdfWriter()
+            >>> page = writer.add_blank_page(595, 842)
+            >>> page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+            >>> page.add_action("close", JavaScript("app.alert('This is page ' + this.pageNum);"))
+            >>> # Delete all actions triggered by a page open
+            >>> page.delete_action("open")
+            >>> # Delete all actions triggered by a page close
+            >>> page.delete_action("close")
+        """
+        Action._delete(self, trigger)
 
 
 class _VirtualList(Sequence[PageObject]):

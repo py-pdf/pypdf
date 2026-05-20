@@ -62,6 +62,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    modules/RectangleObject
    modules/Transformation
    modules/XmpInformation
+   modules/actions
    modules/annotations
    modules/constants
    modules/errors
