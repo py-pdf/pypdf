@@ -78,7 +78,7 @@ class Action(DictionaryObject, ABC):
         if isinstance(page["/AA"], NullObject):
             page[NameObject("/AA")] = DictionaryObject()
 
-        if not isinstance(page["/AA"], DictionaryObject):
+        if not isinstance(page["/AA"].get_object(), DictionaryObject):
             if page.pdf is not None and getattr(page.pdf, "strict", False):
                 raise ParseError(f"The PageObject AA entry should be a DictionaryObject. "
                                  f"It currently is a {type(page["/AA"])}."
