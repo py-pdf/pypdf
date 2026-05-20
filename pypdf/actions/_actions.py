@@ -52,7 +52,7 @@ class Action(DictionaryObject, ABC):
         self[NameObject("/Next")] = NullObject()  # Optional
 
     @classmethod
-    def _create_new(cls, page: "PageObject", trigger: str, action: "Action") -> None:
+    def _create_new(cls, page: "PageObject", trigger: PageTrigger, action: "Action") -> None:
         """
         Create a new action and add it to the page.
 
@@ -61,10 +61,10 @@ class Action(DictionaryObject, ABC):
             trigger: The trigger event.
             action: An :py:class:`~pypdf.actions.Action` object.
         """
-        valid_values = [trigger.value for trigger in PageTrigger]
-
-        if trigger not in valid_values:
-            raise ValueError(f"The trigger must be one of {valid_values}")
+        # valid_values = [trigger.value for trigger in PageTrigger]
+        #
+        # if trigger not in valid_values:
+        #     raise ValueError(f"The trigger must be one of {valid_values}")
 
         trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
 
@@ -144,14 +144,13 @@ class Action(DictionaryObject, ABC):
         additional_actions.update({trigger_name: head})
 
     @classmethod
-    def _delete(cls, page: "PageObject", trigger: str) -> None:
-        valid_values = [trigger.value for trigger in PageTrigger]
-
+    def _delete(cls, page: "PageObject", trigger:PageTrigger) -> None:
         if "/AA" not in page:
             return
 
-        if trigger not in valid_values:
-            raise ValueError(f"The trigger must be one of {valid_values}")
+        # valid_values = [trigger.value for trigger in PageTrigger]
+        # if trigger not in valid_values:
+        #     raise ValueError(f"The trigger must be one of {valid_values}")
 
         trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
 
