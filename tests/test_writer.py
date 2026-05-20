@@ -3210,3 +3210,11 @@ def test_clone_reader_document_root__incremental__unknown_object():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     with mock.patch.object(writer, "_collect_incremental_clone_object_ids", return_value=[*list(range(1, 23)), 42]):
         writer.clone_reader_document_root(reader)
+
+
+def test_encrypt__incremental():
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer.add_blank_page(width=10, height=10)
+
+    with pytest.raises(NotImplementedError):
+        writer.encrypt(user_password="dummy")
