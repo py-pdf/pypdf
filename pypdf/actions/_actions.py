@@ -58,14 +58,9 @@ class Action(DictionaryObject, ABC):
 
         Args:
             page: The page to add the action.
-            trigger: The trigger event.
-            action: An :py:class:`~pypdf.actions.Action` object.
+            trigger: A :py:class:`~pypdf.actions.PageTrigger` object.
+            action: A :py:class:`~pypdf.actions.Action` object.
         """
-        # valid_values = [trigger.value for trigger in PageTrigger]
-        #
-        # if trigger not in valid_values:
-        #     raise ValueError(f"The trigger must be one of {valid_values}")
-
         trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
 
         if "/AA" not in page:
@@ -80,8 +75,9 @@ class Action(DictionaryObject, ABC):
 
         if not isinstance(page["/AA"].get_object(), DictionaryObject):
             if page.pdf is not None and getattr(page.pdf, "strict", False):
+                current_type = type(page["/AA"])
                 raise ParseError(f"The PageObject AA entry should be a DictionaryObject. "
-                                 f"It currently is a {type(page["/AA"])}."
+                                 f"It currently is a {current_type}."
                 )
             logger_warning(
                 "The PageObject AA entry should be a DictionaryObject. It currently is a %(type)s.",
@@ -145,12 +141,15 @@ class Action(DictionaryObject, ABC):
 
     @classmethod
     def _delete(cls, page: "PageObject", trigger:PageTrigger) -> None:
+        """
+        Delete an object on the page.
+
+        Args:
+            page: The page to add the action.
+            trigger: A :py:class:`~pypdf.actions.PageTrigger` object.
+        """
         if "/AA" not in page:
             return
-
-        # valid_values = [trigger.value for trigger in PageTrigger]
-        # if trigger not in valid_values:
-        #     raise ValueError(f"The trigger must be one of {valid_values}")
 
         trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
 
