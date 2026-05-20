@@ -8,6 +8,7 @@ from typing import (
 )
 
 from .._utils import logger_warning
+from ..errors import ParseError
 from ..generic import (
     ArrayObject,
     DictionaryObject,
@@ -30,10 +31,14 @@ if TYPE_CHECKING:
 
 @unique
 class PageTrigger(StrEnum):
-    """Trigger event entries in a page object's additional-actions dictionary."""
+    """Trigger event entries in a page object's additional-actions dictionary.
 
-    OPEN = "open"  # An action that shall be performed when the page is opened
-    CLOSE = "close"  # An action that shall be performed when the page is closed
+    Members:
+        - OPEN: An action that shall be performed when the page is opened
+        - CLOSE: An action that shall be performed when the page is closed
+    """
+    OPEN = "open"
+    CLOSE = "close"
 
 
 class Action(DictionaryObject, ABC):
@@ -74,11 +79,14 @@ class Action(DictionaryObject, ABC):
             page[NameObject("/AA")] = DictionaryObject()
 
         if not isinstance(page["/AA"], DictionaryObject):
-            if page.pdf is not None and hasattr(page.pdf, "strict") and page.pdf.strict:
-                raise ValueError("The PageObject has an AA entry whose value is not a DictionaryObject.")
+            if page.pdf is not None and getattr(page.pdf, "strict", False):
+                raise ParseError(f"The PageObject AA entry should be a DictionaryObject. "
+                                 f"It currently is a {type(page["/AA"])}."
+                )
             logger_warning(
-                "The PageObject has an AA entry whose value is not a DictionaryObject.",
+                "The PageObject AA entry should be a DictionaryObject. It currently is a %(type)s.",
                 source=__name__,
+                type=type(page["/AA"])
             )
             return
 
@@ -139,21 +147,21 @@ class Action(DictionaryObject, ABC):
     def _delete(cls, page: "PageObject", trigger: str) -> None:
         valid_values = [trigger.value for trigger in PageTrigger]
 
+        if "/AA" not in page:
+            return
+
         if trigger not in valid_values:
             raise ValueError(f"The trigger must be one of {valid_values}")
 
         trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
 
-        if "/AA" not in page:
-            return
-
-        additional_actions: DictionaryObject = cast(DictionaryObject, page["/AA"])
+        additional_actions = cast(DictionaryObject, page["/AA"])
 
         if trigger_name in additional_actions:
             del additional_actions[trigger_name]
 
-            if not additional_actions:
-                del page["/AA"]
+        if not additional_actions:
+            del page["/AA"]
 
 
 class JavaScript(Action):
