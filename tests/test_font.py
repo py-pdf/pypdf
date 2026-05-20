@@ -18,7 +18,8 @@ from . import RESOURCE_ROOT
 def test_font_descriptor():
     font_res = DictionaryObject({
         NameObject("/BaseFont"): NameObject("/Helvetica"),
-        NameObject("/Subtype"): NameObject("/Type1")
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
     })
     my_font = Font.from_font_resource(font_res)
     assert my_font.font_descriptor.family == "Helvetica"
@@ -26,8 +27,10 @@ def test_font_descriptor():
     assert my_font.font_descriptor.ascent == 718
     assert my_font.font_descriptor.descent == -207
 
-    test_string = "This is a long sentence. !@%%^€€€. çûįö¶´"
-    charwidth = my_font.text_width(test_string)
+    test_string = "This is a long sentence. !@%%^€€€. çûiö¶´"
+    reverse_map = {char: byte for byte, char in my_font.encoding.items()}
+    encoded_string = ([chr(reverse_map[char]) for char in test_string])
+    charwidth = my_font.text_width(encoded_string)
     assert charwidth == 19251
 
     font_res[NameObject("/BaseFont")] = NameObject("/Palatino")
