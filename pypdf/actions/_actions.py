@@ -170,6 +170,7 @@ class JavaScript(Action):
     script that is written in the ECMAScript programming language. ECMAScript
     extensions described in ISO/DIS 21757-1 shall also be allowed.
     """
+
     def __init__(self, js: str) -> None:
         """
         Initialize JavaScript with a string.
