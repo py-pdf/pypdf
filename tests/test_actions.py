@@ -24,8 +24,7 @@ def test_page_add_action__error(pdf_file_writer):
 
     with pytest.raises(
         ValueError,
-        #match=re.escape("The trigger must be one of ['open', 'close']"),
-        match="The trigger must be one of ['open', 'close']",
+        match="The trigger must be one of \['open', 'close'\]",
     ):
         page.add_action("xyzzy", JavaScript('app.alert("This is page " + this.pageNum);'))  # type: ignore[arg-type]
 
