@@ -74,6 +74,7 @@ from .generic import (
     ArrayObject,
     ContentStream,
     DecodedStreamObject,
+    Destination,
     DictionaryObject,
     EncodedStreamObject,
     IndirectObject,
@@ -83,6 +84,7 @@ from .generic import (
     PdfObject,
     StreamObject,
     TextStringObject,
+    TreeObject,
     is_null_or_none,
     read_object,
 )
@@ -156,6 +158,8 @@ class PdfReader(PdfDocCommon):
         elif password is not None:
             raise PdfReadError("Not an encrypted file")
 
+        self._named_destinations_cache: Optional[dict[str, Destination]] = None
+
     def _initialize_stream(self, stream: Union[StrByteType, Path]) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
@@ -184,7 +188,7 @@ class PdfReader(PdfDocCommon):
         # try empty password if no password provided
         pwd = password if password is not None else b""
         if (
-            self._encryption.verify(pwd) == PasswordType.NOT_DECRYPTED
+            self._encryption.verify(pwd, strict=self.strict) == PasswordType.NOT_DECRYPTED
             and password is not None
         ):
             # raise if password provided
@@ -1391,7 +1395,7 @@ class PdfReader(PdfDocCommon):
         if not self._encryption:
             raise PdfReadError("Not encrypted file")
         # TODO: raise Exception for wrong password
-        return self._encryption.verify(password)
+        return self._encryption.verify(password, strict=self.strict)
 
     @property
     def is_encrypted(self) -> bool:
@@ -1505,3 +1509,18 @@ class PdfReader(PdfDocCommon):
             data = {k: v for k, v in data.items() if k not in exclude}
 
         return data
+
+    def _get_named_destinations(
+        self,
+        tree: Union[TreeObject, None] = None,
+        retval: Optional[dict[str, Destination]] = None,
+    ) -> dict[str, Destination]:
+        """Override from PdfDocCommon. In the reader we can assume this is
+        static, but not in the writer.
+        """
+        if tree or retval:
+            return super()._get_named_destinations(tree, retval)
+
+        if self._named_destinations_cache is None:
+            self._named_destinations_cache = super()._get_named_destinations()
+        return self._named_destinations_cache

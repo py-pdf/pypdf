@@ -524,7 +524,7 @@ def test_gray_devicen_cmyk():
 
 @pytest.mark.enable_socket
 def test_runlengthdecode():
-    """From #1954, test with 2bits image. TODO: 4bits also"""
+    """From #1954, test with 2bits image."""
     url = "https://github.com/py-pdf/pypdf/files/12159941/out.pdf"
     name = "RunLengthDecode.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
@@ -540,6 +540,17 @@ def test_runlengthdecode():
     url = "https://github.com/py-pdf/pypdf/files/12162926/out.pdf"
     name = "FailedRLE2.pdf"
     reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket
+def test_4bits_runlengthdecode():
+    """From #1954, test with 4bits RunLengthDecode image."""
+    reader = PdfReader(BytesIO(get_data_from_url(name="4bits_rle.pdf")))
+    url_png = "https://github.com/user-attachments/files/27605287/4bit_rle_ref.png.txt"
+    name_png = "4bits_rle.png"
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
+    data = reader.pages[0].images[0]
+    assert image_similarity(data.image, refimg) > 0.99
 
 
 @pytest.mark.enable_socket

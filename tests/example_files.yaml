@@ -106,6 +106,8 @@
   url: https://github.com/py-pdf/pypdf/files/12050253/tt.pdf
 - local_filename: 4bits_image.pdf
   url: https://github.com/user-attachments/files/27491104/test_4bit.pdf
+- local_filename: 4bits_rle.pdf
+  url: https://github.com/user-attachments/files/27605288/test_4bit_rle.pdf
 - local_filename: Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf
   url: https://www.joinville.sc.gov.br/wp-content/uploads/2023/11/Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf
 - local_filename: iss2138.pdf

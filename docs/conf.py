@@ -144,7 +144,7 @@ napoleon_use_rtype = False  # False, so the return type is inline with the descr
 # "sphinx-build" command was invoked. To avoid relative paths in docs and to
 # allow to run "sphinx-build" command from any directory, we modify the current
 # working directory in each tested file. Tests are executed against our
-# temporary directory where we have copied all nessesary resources.
+# temporary directory where we have copied all necessary resources.
 #
 # Each doc page that requires file operations must use "testsetup" directive
 # to call "pypdf_test_setup" function to prepare the test environment for that
@@ -215,7 +215,7 @@ def pypdf_test_global_cleanup():
         file_name = os.path.join(dst_root_dir, name)
         if os.path.isfile(file_name):
             if not has_files:
-                print("Docs page was not configured propery for running code examples")
+                print("Docs page was not configured properly for running code examples")
                 print("Please use 'pypdf_test_setup' function in 'testsetup' directive")
                 print("Deleting unexpected file(s) in " + dst_root_dir)
                 has_files = True

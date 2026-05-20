@@ -1105,7 +1105,7 @@ def test_startup_dest():
 
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = pdf_file_writer.pages[9]
-    # checked also using Acrobrat to verify the good page is opened
+    # checked also using Acrobat to verify the good page is opened
     op = pdf_file_writer.root_object["/OpenAction"]
     assert op[0] == pdf_file_writer.pages[9].indirect_reference
     assert op[1] == "/Fit"
@@ -1124,7 +1124,7 @@ def test_startup_dest():
     assert "Invalid Destination" in str(exc.value)
 
     pdf_file_writer.open_destination = "Test"
-    # checked also using Acrobrat to verify open_destination
+    # checked also using Acrobat to verify open_destination
     op = pdf_file_writer.root_object["/OpenAction"]
     assert isinstance(op, TextStringObject)
     assert op == "Test"
@@ -1218,7 +1218,7 @@ def test_append_multiple():
     writer = PdfWriter()
     writer.append(
         reader, [0, 0, 0]
-    )  # to demonstre multiple insertion of same page at once
+    )  # to demonstrate multiple insertion of same page at once
     writer.append(reader, [0, 0, 0])  # second pack
     pages = writer.root_object["/Pages"]["/Kids"]
     assert pages[0] not in pages[1:]  # page not repeated
@@ -1811,6 +1811,43 @@ def test_update_form_fields2(caplog):
         "test2.p3 DD": "25",
         "test2.p3 YY": "21",
     }
+    assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_update_form_fields3(caplog, tmp_path):
+    url = "https://github.com/user-attachments/files/21073581/CERERE.INMATRICULARE.form.pdf"
+    name = "iss3361.pdf"
+    writer = PdfWriter()
+    output = BytesIO()
+    writer.append(BytesIO(get_data_from_url(url=url, name=name)))
+    # First test for the case where fonttools is missing.
+    with mock.patch("pypdf._font.HAS_FONTTOOLS", False):
+        writer.update_page_form_field_values(writer.pages[0], {"subsemnatul": "Σ"})
+        assert "Unable to use embedded font for encoding" in caplog.text
+        # Also test that an ImportError is raised by the Font class
+        assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in caplog.text
+
+    # Test with fonttools
+    data = {
+        "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+        "localitatea": "شهرزاد",
+        "strada": "Căpitan Nicolae Licăreț",
+        "adresa_judet": "Конференция",
+    }
+    writer.update_page_form_field_values(writer.pages[0], data, flatten=True)
+    # Test that we have changed the font resource from /Ubuntu to /PYPDF1
+    new_font_resource = "/PYPDF1"
+    assert new_font_resource in writer.pages[0]["/Annots"][0]["/DA"]
+    assert new_font_resource in writer.pages[0]["/Resources"]["/Font"]
+    assert new_font_resource in writer._root_object["/AcroForm"]["/DR"]["/Font"]
+    writer.write(output)
+    output.seek(0)
+    reader = PdfReader(output)
+    extracted_text = reader.pages[0].extract_text()
+    for expected_value in data.values():
+        if expected_value != "شهرزاد":
+            assert expected_value in extracted_text
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
 

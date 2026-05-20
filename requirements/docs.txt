@@ -17,7 +17,7 @@ docutils==0.21.2
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
-idna==3.10
+idna==3.15
     # via requests
 imagesize==1.4.1
     # via sphinx
@@ -71,5 +71,5 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 tomli==2.0.2
     # via sphinx
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
