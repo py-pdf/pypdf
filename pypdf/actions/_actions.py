@@ -174,7 +174,7 @@ class JavaScript(Action):
         Initialize JavaScript with a string.
 
         Args:
-            js (str): A text string containing the ECMAScript script to be executed.
+            js: A text string containing the ECMAScript script to be executed.
         """
         super().__init__()
         self[NameObject("/S")] = NameObject("/JavaScript")

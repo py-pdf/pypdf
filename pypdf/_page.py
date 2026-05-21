@@ -2187,7 +2187,7 @@ class PageObject(DictionaryObject):
             >>> # Display the page number when the page is closed
             >>> page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
         """
-        Action._create_new(self, trigger, action)
+        return Action._create_new(self, trigger, action)
 
     def delete_action(self, trigger: PageTrigger) -> None:
         """
@@ -2208,7 +2208,7 @@ class PageObject(DictionaryObject):
             >>> # Delete all actions triggered by a page close
             >>> page.delete_action(PageTrigger("close"))
         """
-        Action._delete(self, trigger)
+        return Action._delete(self, trigger)
 
 
 class _VirtualList(Sequence[PageObject]):
