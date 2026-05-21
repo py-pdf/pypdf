@@ -33,9 +33,9 @@ if TYPE_CHECKING:
 class PageTrigger(StrEnum):
     """Trigger event entries in a page object's additional-actions dictionary."""
     OPEN = "open"
-    """OPEN: A :py:class:`~pypdf.actions.PageTrigger` object triggering an action when the page is opened."""
+    """A :py:class:`~pypdf.actions.PageTrigger` object triggering an action when the page is opened."""
     CLOSE = "close"
-    """CLOSE: A :py:class:`~pypdf.actions.PageTrigger` object triggering an action when the page is closed."""
+    """A :py:class:`~pypdf.actions.PageTrigger` object triggering an action when the page is closed."""
 
 
 class Action(DictionaryObject, ABC):
