@@ -78,7 +78,7 @@ class Action(DictionaryObject, ABC):
                     f"It currently is a {current_type}."
                 )
             logger_warning(
-                "The AA entry of the page should be a DictionaryObject. It currently is an %(type)s.",
+                "The AA entry of the page should be a DictionaryObject. It currently is a %(type)s.",
                 source=__name__,
                 type=type(page["/AA"])
             )
