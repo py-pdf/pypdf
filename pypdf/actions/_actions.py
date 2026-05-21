@@ -78,7 +78,7 @@ class Action(DictionaryObject, ABC):
                 current_type = type(page["/AA"])
                 raise ParseError(
                     f"The PageObject AA entry should be a DictionaryObject. "
-                                 f"It currently is a {current_type}."
+                    f"It currently is a {current_type}."
                 )
             logger_warning(
                 "The PageObject AA entry should be a DictionaryObject. It currently is a %(type)s.",
