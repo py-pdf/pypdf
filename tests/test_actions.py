@@ -166,7 +166,7 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
     current_type = type(page["/AA"])
     assert caplog.messages[0] == (
-        "The AA entry of the page should be a DictionaryObject. It currently is a ArrayObject."
+        "The AA entry of the page should be a DictionaryObject. It currently is an ArrayObject."
     )
     assert page.get("/AA") == ArrayObject()
 
