@@ -164,7 +164,6 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     # Add an open action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
     page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
-    current_type = type(page["/AA"])
     assert caplog.messages[0] == (
         "The AA entry of the page should be a DictionaryObject. It currently is an ArrayObject."
     )
@@ -173,10 +172,9 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     # Add a close action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
     page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
-    current_type = type(page["/AA"])
-    assert (caplog.messages[0] == rf"The PageObject AA entry should be a DictionaryObject. "
-                                  rf"It currently is a {current_type}."
-            )
+    assert caplog.messages[0] == (
+        "The PageObject AA entry should be a DictionaryObject. It currently is an ArrayObject."
+    )
     assert page.get("/AA") == ArrayObject()
 
 
