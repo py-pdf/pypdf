@@ -74,11 +74,11 @@ class Action(DictionaryObject, ABC):
             if page.pdf is not None and getattr(page.pdf, "strict", False):
                 current_type = type(page["/AA"])
                 raise ParseError(
-                    f"The PageObject AA entry should be a DictionaryObject. "
+                    f"The AA entry of the page should be a DictionaryObject. "
                     f"It currently is a {current_type}."
                 )
             logger_warning(
-                "The PageObject AA entry should be a DictionaryObject. It currently is a %(type)s.",
+                "The AA entry of the page should be a DictionaryObject. It currently is an %(type)s.",
                 source=__name__,
                 type=type(page["/AA"])
             )
