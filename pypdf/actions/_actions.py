@@ -90,15 +90,13 @@ class Action(DictionaryObject, ABC):
             additional_actions.update({trigger_name: action})
             return
 
-        """
-        The action dictionary's Next entry allows sequences of actions to be
-        chained together. For example, the effect of clicking a link
-        annotation with the mouse can be to play a sound, jump to a new
-        page, and start up a movie. Note that the Next entry is not
-        restricted to a single action but can contain an array of actions,
-        each of which in turn can have a Next entry of its own.
-        §12.6.2 Action dictionaries ISO 32000-2:2020
-        """
+        # The action dictionary's Next entry allows sequences of actions to be
+        # chained together. For example, the effect of clicking a link
+        # annotation with the mouse can be to play a sound, jump to a new
+        # page, and start up a movie. Note that the Next entry is not
+        # restricted to a single action but can contain an array of actions,
+        # each of which in turn can have a Next entry of its own.
+        # §12.6.2 Action dictionaries ISO 32000-2:2020
         head = current = additional_actions.get(trigger_name)
         if not isinstance(head, DictionaryObject):
             raise ParseError(
