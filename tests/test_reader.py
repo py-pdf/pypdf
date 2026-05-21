@@ -2199,7 +2199,7 @@ def test_xref_table_with_comments_before_trailer():
 
 
 @pytest.mark.timeout(10)
-def test_read_pdf15_xref_stream__size_limit(caplog):
+def test_read_pdf15_xref_stream__w_0_0_0(caplog):
     pdf = b"%PDF-1.7\n"
     pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
     pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
@@ -2207,6 +2207,33 @@ def test_read_pdf15_xref_stream__size_limit(caplog):
     encoded = FlateDecode.encode(b"")
     pdf += (
         f"3 0 obj\n<< /Type /XRef /Size 50000000 /W [0 0 0] /Root 1 0 R /Filter /FlateDecode /Length {len(encoded)} >>"
+        f"\nstream\n"
+    ).encode()
+    pdf += encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Cross\-reference stream encodes no entry data\.$"
+    ):
+        _ = PdfReader(BytesIO(pdf), strict=True)
+    assert caplog.messages == []
+
+    _ = PdfReader(BytesIO(pdf), strict=False)
+    assert caplog.messages == [
+        "Cross-reference stream encodes no entry data.",
+    ]
+
+
+@pytest.mark.timeout(10)
+def test_read_pdf15_xref_stream__size_limit(caplog):
+    pdf = b"%PDF-1.7\n"
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+    startxref = len(pdf)
+    encoded = FlateDecode.encode(b"")
+    pdf += (
+        f"3 0 obj\n<< /Type /XRef /Size 50000000 /W [1 0 0] /Root 1 0 R /Filter /FlateDecode /Length {len(encoded)} >>"
         f"\nstream\n"
     ).encode()
     pdf += encoded + b"\nendstream\nendobj\n"
