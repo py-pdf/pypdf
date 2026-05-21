@@ -13,9 +13,15 @@ import pytest
 from pypdf import PdfReader, PdfWriter, mult
 from pypdf._font import Font
 from pypdf._text_extraction import set_custom_rtl
-from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
+from pypdf._text_extraction._layout_mode._fixed_width_page import (
+    BTGroup,
+    fixed_width_page,
+    recurse_to_target_op,
+    text_show_operations,
+)
+from pypdf._text_extraction._layout_mode._text_state_manager import TextStateManager
 from pypdf.errors import PdfReadError
-from pypdf.generic import ContentStream
+from pypdf.generic import ContentStream, DictionaryObject, NameObject
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
@@ -492,3 +498,101 @@ def test_extract_text_with_missing_font_bbox():
     page = reader.pages[0]
     text = page.extract_text()
     assert "🎉" in text
+
+
+def test_recurse_to_target_op__excessive_intra_group_spacing(caplog):
+    operators = [
+        (["/F1", 12], b"Tf"),
+        ([1, 0, 0, 1, 0, 700], b"Tm"),
+        ([b"A"], b"Tj"),
+        ([1, 0, 0, 1, 1000000, 700], b"Tm"),
+        ([b"B"], b"Tj"),
+        ([], b"ET")
+    ]
+    text_state_manager = TextStateManager()
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    fonts = {"/F1": Font.from_font_resource(font)}
+
+    bt_groups, _tj_ops = recurse_to_target_op(
+        ops=iter(operators),
+        text_state_mgr=text_state_manager,
+        end_target=b"ET",
+        fonts=fonts,
+    )
+    assert bt_groups == [
+        {
+            "displaced_tx": 1000008.004,
+            "flip_sort": 1,
+            "font_height": 12.0,
+            "font_size": 12,
+            "text": "A" + 10000 * " " + "B",
+            "tx": 0.0,
+            "ty": 700.0
+        }
+    ]
+    assert caplog.messages == ["Limiting excessive whitespace from 299757 to 10000 characters."]
+
+
+def test_fixed_width_page__excessive_blank_lines(caplog):
+    ty_groups = {
+        100: [
+            BTGroup(tx=0, text="Top", displaced_tx=3, font_height=1, ty=0, font_size=12, flip_sort=1),
+        ],
+        # Creates 1499 blank lines:
+        # (1600 - 100) / (1 * 1) - 1
+        # = 1500 - 1
+        # = 1499
+        1600: [
+            BTGroup(tx=0, text="Bottom", displaced_tx=6, font_height=1, ty=0, font_size=12, flip_sort=1)
+        ],
+    }
+
+    result = fixed_width_page(
+        ty_groups=ty_groups,
+        char_width=1,
+        space_vertically=True,
+        font_height_weight=1,
+    )
+
+    lines = result.splitlines()
+
+    assert lines[0] == "Top"
+    assert lines[-1] == "Bottom"
+
+    # 2 content lines + reduced 1000 blank lines
+    assert len(lines) == 1002
+
+    blank_lines = lines[1:-1]
+    assert all(line == "" for line in blank_lines)
+
+    assert caplog.messages == ["Limiting excessive newlines from 1499 to 1000."]
+
+
+def test_fixed_width_page__excessive_needed_spaces(caplog):
+    ty_groups = {
+        100: [
+            BTGroup(
+                tx=13_000,
+                text="X",
+                displaced_tx=13_370,
+                font_height=12,
+                ty=0,
+                font_size=12,
+                flip_sort=1,
+            )
+        ]
+    }
+
+    result = fixed_width_page(
+        ty_groups=ty_groups,
+        char_width=1,
+        space_vertically=True,
+        font_height_weight=1,
+    )
+
+    assert result == " " * 10_000 + "X"
+    assert caplog.messages == ["Limiting excessive whitespace from 13000 to 10000 characters."]
