@@ -183,7 +183,7 @@ def test_page_add_action__edge_cases(pdf_file_writer):
 
     # Add an open action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
-            TypeError,
+            ParseError,
             match="The type in a page object's additional-actions key must be a DictionaryObject"
     ):
         page[NameObject("/AA")] = DictionaryObject()
@@ -194,7 +194,7 @@ def test_page_add_action__edge_cases(pdf_file_writer):
 
     # Add a close action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
-            TypeError,
+            ParseError,
             match="The type in a page object's additional-actions key must be a DictionaryObject"
     ):
         page[NameObject("/AA")] = DictionaryObject()

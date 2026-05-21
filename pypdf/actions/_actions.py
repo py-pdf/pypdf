@@ -31,14 +31,11 @@ if TYPE_CHECKING:
 
 @unique
 class PageTrigger(StrEnum):
-    """Trigger event entries in a page object's additional-actions dictionary.
-
-    Members:
-        - OPEN: An action that shall be performed when the page is opened
-        - CLOSE: An action that shall be performed when the page is closed
-    """
+    """Trigger event entries in a page object's additional-actions dictionary."""
     OPEN = "open"
+    """OPEN: An action that shall be performed when the page is opened."""
     CLOSE = "close"
+    """CLOSE: An action that shall be performed when the page is closed."""
 
 
 class Action(DictionaryObject, ABC):
@@ -103,7 +100,7 @@ class Action(DictionaryObject, ABC):
         """
         head = current = additional_actions.get(trigger_name)
         if not isinstance(head, DictionaryObject):
-            raise TypeError(
+            raise ParseError(
                 f"The type in a page object's additional-actions key must be a DictionaryObject: "
                 f"received type {type(head)}"
             )
