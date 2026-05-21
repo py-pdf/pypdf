@@ -73,8 +73,9 @@ class Action(DictionaryObject, ABC):
         if not isinstance(page["/AA"].get_object(), DictionaryObject):
             if page.pdf is not None and getattr(page.pdf, "strict", False):
                 current_type = type(page["/AA"])
-                raise ParseError(f"The PageObject AA entry should be a DictionaryObject. "
-                                 f"It currently is a {current_type}."
+                raise ParseError(
+                    f"The PageObject AA entry should be a DictionaryObject. "
+                    f"It currently is a {current_type}."
                 )
             logger_warning(
                 "The PageObject AA entry should be a DictionaryObject. It currently is a %(type)s.",
@@ -137,7 +138,7 @@ class Action(DictionaryObject, ABC):
         additional_actions.update({trigger_name: head})
 
     @classmethod
-    def _delete(cls, page: "PageObject", trigger:PageTrigger) -> None:
+    def _delete(cls, page: "PageObject", trigger: PageTrigger) -> None:
         """
         Delete an object on the page.
 

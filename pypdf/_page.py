@@ -2174,7 +2174,7 @@ class PageObject(DictionaryObject):
         Add an action which will launch on the given trigger event of this page.
 
         Args:
-            trigger: A :py:class:`~pypdf.actions.PageTrigger` object.
+            trigger: The action trigger to use.
             action: A :py:class:`~pypdf.actions.Action` object.
 
         Example:
