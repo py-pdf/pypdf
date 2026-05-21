@@ -141,7 +141,7 @@ class Action(DictionaryObject, ABC):
         additional_actions.update({trigger_name: head})
 
     @classmethod
-    def _delete(cls, page: "PageObject", trigger:PageTrigger) -> None:
+    def _delete(cls, page: "PageObject", trigger: PageTrigger) -> None:
         """
         Delete an object on the page.
 

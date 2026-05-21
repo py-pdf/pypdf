@@ -149,8 +149,10 @@ def test_page_add_action__with_existing_array_object__strict():
     current_type = type(page["/AA"])
     with pytest.raises(
             ParseError,
-            match=rf"^The PageObject AA entry should be a DictionaryObject. "
-                  rf"It currently is a {current_type}.$"
+            match=(
+                rf"^The PageObject AA entry should be a DictionaryObject. "
+                rf"It currently is a {current_type}.$"
+            )
     ):
         page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert page.get("/AA") == ArrayObject()
