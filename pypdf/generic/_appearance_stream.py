@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from enum import IntEnum
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from .._codecs import fill_from_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
@@ -480,21 +480,33 @@ class TextStreamAppearance(BaseStreamAppearance):
         writer: PdfWriter,
         font_name: str,
         font: Font,
-        target_resource_dict: DictionaryObject
-    ) -> DictionaryObject | IndirectObject:
+        target_resource_dict: DictionaryObject,
+        page: PageObject | None = None
+    ) -> IndirectObject:
         """
-        Unified helper to sync fonts from an AP stream to a target
-        resource dictionary (e.g., AcroForm /DR or Page /Resources).
+        Unified helper to sync fonts from an AP stream to a target resource dictionary (e.g., AcroForm /DR).
+        Will sync to page resources as well when page is added to the arguments.
         """
         target_fonts = target_resource_dict.setdefault(NameObject("/Font"), DictionaryObject()).get_object()
         if font_name not in target_fonts:
-            return font._add_to_writer(
+            font_resource_reference = font._add_to_writer(
                 writer,
                 target_fonts,
                 NameObject(font_name)
             )
+        else:
+            font_resource_reference = target_fonts[font_name]
 
-        return cast(Union[DictionaryObject, IndirectObject], target_fonts[font_name])
+        if page:
+            page_fonts_resource = cast(DictionaryObject, page[PageAttributes.RESOURCES]).setdefault(
+                NameObject("/Font"), DictionaryObject()
+            ).get_object()
+            if font_name not in page_fonts_resource:
+                page_fonts_resource[NameObject(font_name)] = getattr(
+                    font_resource_reference, "indirect_reference", font_resource_reference
+                )
+
+        return font_resource_reference
 
     @classmethod
     def from_text_annotation(
@@ -574,26 +586,33 @@ class TextStreamAppearance(BaseStreamAppearance):
         # font) operator along with its two operands, font and size" (Section 12.7.4.3
         # "Variable text" of the PDF 2.0 specification).
         font_properties = [prop for prop in re.split(r"\s", default_appearance) if prop]
-        font_name = font_properties.pop(font_properties.index("Tf") - 2)
+        da_font_name = font_properties.pop(font_properties.index("Tf") - 2)
         font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
         font_properties.remove("Tf")
         font_color = " ".join(font_properties)
         # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name
+        else:
+            font_name = da_font_name
         # Determine the font size to use, prioritizing the user's input
         if user_font_size > 0:
             font_size = user_font_size
 
         font_name, font = cls._find_annotation_font_resource(font_name, annotation, acro_form, text)
 
-        # Synchronise font resources
-        if flatten:
-            sync_target = cast(DictionaryObject, page[PageAttributes.RESOURCES])
-        else:
-            sync_target = acro_form.setdefault(NameObject("/DR"), DictionaryObject())
+        # Change the /DA information if we changed the font name
+        if font_name != da_font_name:
+            annotation[NameObject("/DA")] = TextStringObject(default_appearance.replace(da_font_name, font_name))
 
-        font_resource_reference = cls._sync_appearance_stream_font_resources(writer, font_name, font, sync_target)
+        # Synchronise font resources
+        font_resource_reference = cls._sync_appearance_stream_font_resources(
+            writer,
+            font_name,
+            font,
+            acro_form.setdefault(NameObject("/DR"), DictionaryObject()),
+            page if flatten else None,
+        )
 
         # Retrieve formatting information
         is_comb = False

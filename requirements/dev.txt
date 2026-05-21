@@ -30,7 +30,7 @@ flit-core==3.11.0
     # via flit
 identify==2.6.1
     # via pre-commit
-idna==3.10
+idna==3.15
     # via requests
 importlib-metadata==8.5.0
     # via build

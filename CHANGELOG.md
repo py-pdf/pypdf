@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## Version 6.12.0, 2026-05-21
+
+### Security (SEC)
+- Disallow cross-reference streams with zero-only width values (#3791)
+- Avoid excessive whitespace in layout mode text extraction (#3790)
+
+### New Features (ENH)
+- Implement SASLprep (RFC 4013) for AES-256 password normalization (#3780)
+- CID font resource from font file to encode more characters (#3652)
+
+### Performance Improvements (PI)
+- Optimize retrieval of named destinatinos in reader (#3442)
+
+### Bug Fixes (BUG)
+- Fix TreeObject.insert_child KeyError on fresh children (#3786)
+
+### Robustness (ROB)
+- AppearanceStream: Also honor user-set font name when not flattening annotations (#3781)
+
+### Documentation (DOC)
+- Block encrypting writer in incremental mode (#3789)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.11.0...6.12.0)
+
 ## Version 6.11.0, 2026-05-09
 
 ### New Features (ENH)
