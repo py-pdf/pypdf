@@ -168,8 +168,6 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     assert caplog.messages[0] == (
         "The AA entry of the page should be a DictionaryObject. It currently is a ArrayObject."
     )
-                                  rf"It currently is a {current_type}."
-            )
     assert page.get("/AA") == ArrayObject()
 
     # Add a close action with an array object as the AA entry
