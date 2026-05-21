@@ -490,10 +490,10 @@ def test_page_delete_action(pdf_file_writer):
     page[NameObject("/AA")] = DictionaryObject()
 
     page.delete_action(PageTrigger(PageTrigger("open")))
-    assert page.get("/AA") is None
+    assert page.get("/AA") == DictionaryObject()
 
     page.delete_action(PageTrigger("close"))
-    assert page.get("/AA") is None
+    assert page.get("/AA") == DictionaryObject()
 
     page.add_action(PageTrigger("open"), JavaScript("app.alert('Page opened');"))
     page.add_action(PageTrigger("close"), JavaScript("app.alert('Page closed');"))

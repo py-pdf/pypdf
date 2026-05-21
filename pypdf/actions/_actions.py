@@ -155,8 +155,10 @@ class Action(DictionaryObject, ABC):
 
         additional_actions = cast(DictionaryObject, page["/AA"])
 
-        if trigger_name in additional_actions:
-            del additional_actions[trigger_name]
+        if trigger_name not in additional_actions:
+            return
+
+        del additional_actions[trigger_name]
 
         if not additional_actions:
             del page["/AA"]
