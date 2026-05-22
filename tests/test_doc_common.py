@@ -581,3 +581,23 @@ def test_xfa__decompression_limit():
             expected_exception=LimitReachedError, match=r"^Limit reached while decompressing. 902 bytes remaining.$"
     ):
         _ = reader.xfa
+
+
+@pytest.mark.timeout(5)
+def test_get_pages_showing_field__cyclic() -> None:
+    writer = PdfWriter()
+
+    dictionary1 = DictionaryObject()
+    reference1 = writer._add_object(dictionary1)
+    dictionary2 = DictionaryObject()
+    reference2 = writer._add_object(dictionary2)
+    dictionary3 = DictionaryObject({NameObject("/Parent"): reference2})
+    reference3 = writer._add_object(dictionary3)
+    dictionary1[NameObject("/Parent")] = reference3
+    dictionary2[NameObject("/Parent")] = reference1
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Detected cycle in /Parent hierarchy when retrieving value for key 'key'\.$"
+    ):
+        dictionary1.get_inherited("key")

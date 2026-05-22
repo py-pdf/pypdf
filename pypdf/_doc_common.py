@@ -743,22 +743,12 @@ class PdfDocCommon:
                     (example: radio buttons, field repeated on multiple pages).
 
         """
-
-        def _get_inherited(obj: DictionaryObject, key: str) -> Any:
-            if key in obj:
-                return obj[key]
-            if "/Parent" in obj:
-                return _get_inherited(
-                    cast(DictionaryObject, obj["/Parent"].get_object()), key
-                )
-            return None
-
         try:
             # to cope with all types
             field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
         except Exception as exc:
             raise ValueError("Field type is invalid") from exc
-        if is_null_or_none(_get_inherited(field, "/FT")):
+        if is_null_or_none(field.get_inherited(key="/FT", default=None)):
             raise ValueError("Field is not valid")
         ret = []
         if field.get("/Subtype", "") == "/Widget":
