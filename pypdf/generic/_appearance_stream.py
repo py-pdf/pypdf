@@ -362,13 +362,18 @@ class TextStreamAppearance(BaseStreamAppearance):
         if not font or not font_resource:
             font_name = "/Helv"
             core_font_metrics = CORE_FONT_METRICS["Helvetica"]
+            win_ansi_encoding_list = fill_from_encoding("cp1252")
             font = Font(
                 name="Helvetica",
                 character_map={},
-                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
+                encoding=dict(zip(range(256), win_ansi_encoding_list)),  # WinAnsiEncoding
                 sub_type="Type1",
                 font_descriptor=core_font_metrics.font_descriptor,
-                character_widths=core_font_metrics.character_widths
+                character_widths={
+                    chr(code): core_font_metrics.character_widths[value] for code, value in enumerate(
+                        win_ansi_encoding_list
+                    ) if value in core_font_metrics.character_widths
+                },
             )
             font_resource = font.as_font_resource()
 
