@@ -339,7 +339,16 @@ class Font:
 
                 elif name in CORE_FONT_METRICS:
                     font_descriptor = CORE_FONT_METRICS[name].font_descriptor
-                    character_widths = CORE_FONT_METRICS[name].character_widths
+                    if isinstance(encoding, dict):
+                        for code, character in encoding.items():
+                            # Look up the width using the glyph name from the encoding
+                            if character in CORE_FONT_METRICS[name].character_widths:
+                                character_widths[chr(code)] = CORE_FONT_METRICS[name].character_widths[character]
+                    else:
+                        for code in range(256):
+                            character = chr(code)
+                            if character in CORE_FONT_METRICS[name].character_widths:
+                                character_widths[character] = CORE_FONT_METRICS[name].character_widths[character]
                 if "/FontDescriptor" in pdf_font_dict:
                     font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
                     if "/MissingWidth" in font_descriptor_obj:
