@@ -7,7 +7,7 @@ import pytest
 import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import PdfReadError, XmpDocumentError
+from pypdf.errors import LimitReachedError, PdfReadError, XmpDocumentError
 from pypdf.generic import ContentStream, NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
@@ -961,5 +961,36 @@ def test_xmp_information__quadratic_entity_expansion():
     with pytest.raises(
             expected_exception=PdfReadError,
             match=r"^XML in XmpInformation was invalid: Forbidden entities: 'a'$"
+    ):
+        XmpInformation(stream)
+
+
+@pytest.mark.timeout(10)
+def test_xmp_information__input_limit():
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(b"A" * 10_000_000)
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^XMP stream size 10000000 exceeds limit of 5000000\.$"
+    ):
+        XmpInformation(stream)
+
+
+@pytest.mark.timeout(10)
+def test_xmp_information__element_limit():
+    stream = ContentStream(pdf=None, stream=None)
+
+    xmp = b'<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>\n'
+    xmp += b'<x:xmpmeta xmlns:x="adobe:ns:meta/">'
+    xmp += b'<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+    xmp += b'<rdf:Description rdf:about="" xmlns:custom="urn:custom">'
+    xmp += b"<custom:a/>" * 100_010
+    xmp += b"</rdf:Description></rdf:RDF></x:xmpmeta>"
+    stream.set_data(xmp)
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^XMP metadata exceeds limit of 100000 elements\.$"
     ):
         XmpInformation(stream)

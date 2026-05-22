@@ -452,15 +452,26 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             Current key or inherited one, otherwise default value.
 
         """
-        if key in self:
-            return self[key]
-        try:
-            if "/Parent" not in self:
+        current = self
+        visited: set[int] = set()
+
+        while True:
+            # Detect cyclic parent references
+            obj_id = id(current)
+            if obj_id in visited:
+                raise LimitReachedError(f"Detected cycle in /Parent hierarchy when retrieving value for key {key!r}.")
+            visited.add(obj_id)
+
+            if key in current:
+                return current[key]
+
+            if "/Parent" not in current:
                 return default
-            raise KeyError("Not present")
-        except KeyError:
-            return cast("DictionaryObject", self["/Parent"].get_object()).get_inherited(
-                key, default
+
+            # Walk upward
+            current = cast(
+                "DictionaryObject",
+                current["/Parent"].get_object(),
             )
 
     def __setitem__(self, key: Any, value: Any) -> Any:

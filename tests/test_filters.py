@@ -24,6 +24,7 @@ from pypdf.filters import (
     CCITTParameters,
     FlateDecode,
     JBIG2Decode,
+    LZWDecode,
     RunLengthDecode,
     decode_stream_data,
     decompress,
@@ -1119,3 +1120,13 @@ def test_flatedecode__upper_limits():
             match=r"^Row length of 4160001 exceeds defined limit of 4000000\.$"
     ):
         FlateDecode.decode(data=encoded, decode_parms=parameters)
+
+
+def test_lzwdecode__invalid_first_code():
+    lzw_data = bytes([0x81, 0x00, 0x00])  # first 9 bits = 100000010 = 258 (>= _table_index)
+
+    with pytest.raises(
+            expected_exception=PdfStreamError,
+            match=r"^LZW code 258 out of range with empty base at table index 258\.$"
+    ):
+        LZWDecode.decode(data=lzw_data)
