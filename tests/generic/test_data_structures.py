@@ -358,3 +358,23 @@ startxref
     reader = PdfReader(buffer, strict=False)
     with pytest.raises(expected_exception=PdfReadError, match=r"^Cannot find Root object in pdf$"):
         assert len(reader.pages) == 0
+
+
+@pytest.mark.timeout(5)
+def test_dictionary_object__get_inherited__cyclic() -> None:
+    writer = PdfWriter()
+
+    dictionary1 = DictionaryObject()
+    reference1 = writer._add_object(dictionary1)
+    dictionary2 = DictionaryObject()
+    reference2 = writer._add_object(dictionary2)
+    dictionary3 = DictionaryObject({NameObject("/Parent"): reference2})
+    reference3 = writer._add_object(dictionary3)
+    dictionary1[NameObject("/Parent")] = reference3
+    dictionary2[NameObject("/Parent")] = reference1
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Detected cycle in /Parent hierarchy when retrieving value for key '/FT'\.$"
+    ):
+        writer.get_pages_showing_field(reference1)

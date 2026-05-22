@@ -50,6 +50,13 @@ For *PdfWriter* instances, the following limits are employed for incremental rea
 * `incremental_clone_object_id_limit` limits the maximum object ID to read during cloning. It defaults to
   1 000 000. Setting it to `None` will fully disable this limit.
 
+### XMP
+
+For reading the XML-based XMP metadata, the following limits apply:
+
+* `pypdf.xmp.XMP_MAX_INPUT_LENGTH` for the maximum stream length, defaulting to 5 MB.
+* `pypdf.xmp.XMP_MAX_ELEMENT_COUNT` for the maximum number of elements, defaulting to 100 000.
+
 ## Reporting possible vulnerabilities
 
 Please refer to our [security policy](https://github.com/py-pdf/pypdf/security/policy).
