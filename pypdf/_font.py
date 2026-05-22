@@ -547,6 +547,34 @@ class Font:
             interpretable=True
         )
 
+    def _get_typographic_maps(self) -> tuple[dict[str, str], dict[str, bytes]]:
+        """
+        Generates maps to translate input unicode text to bytes in two steps:
+        Unicode code point -> raw_character (reverse cmap) -> PDF bytes (encoding cmap).
+        """
+        reverse_cmap = {}
+        encoding_cmap = {}
+
+        if isinstance(self.encoding, str):
+            for glyph_id, unicode_char in self.character_map.items():
+                glyph_id_str = str(glyph_id)
+                reverse_cmap[unicode_char] = glyph_id_str
+                encoding_cmap[glyph_id_str] = glyph_id_str.encode(self.encoding)
+        else:
+            for character_code, unicode_char in self.encoding.items():
+                character_str = chr(character_code)
+                reverse_cmap[unicode_char] = character_str
+                encoding_cmap[character_str] = bytes((character_code,))
+
+            unicode_to_bytes = {
+                unicode_char: bytes((character_code,)) for character_code, unicode_char in self.encoding.items()
+            }
+            for glyph_id, unicode_char in self.character_map.items():  # This code is not covered nor tested
+                reverse_cmap[unicode_char] = glyph_id
+                encoding_cmap[glyph_id] = unicode_to_bytes.get(unicode_char, bytes((glyph_id,)))
+
+        return reverse_cmap, encoding_cmap
+
     def _create_widths_list_and_unicode_stream(self) -> tuple[list[PdfObject], StreamObject]:
         widths_list = []
         unicode_map = []
