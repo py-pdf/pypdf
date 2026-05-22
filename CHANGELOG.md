@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Version 6.12.1, 2026-05-22
+
+### Security (SEC)
+- Limit input size and element count for XMP metadata (#3796)
+
+### Robustness (ROB)
+- Prevent cyclic parent hierarchies for inherited dictionaries (#3795)
+- Deal with invalid first code in LZW decoder (#3794)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.12.0...6.12.1)
+
 ## Version 6.12.0, 2026-05-21
 
 ### Security (SEC)
