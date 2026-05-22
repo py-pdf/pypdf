@@ -690,7 +690,7 @@ def test_is_xobject_image_displayed():
 
 @pytest.mark.samples
 def test_is_inline_image_displayed():
-    """This test ensures displayed inline images are detected via _content_stream_images membership."""
+    """This test ensures that displayed inline images are detected by `ImageFile.is_displayed`"""
     path = SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf"
     reader = PdfReader(path)
 
@@ -701,12 +701,8 @@ def test_is_inline_image_displayed():
 
     for page_num, image_id, expected in expected_results:
         page = reader.pages[page_num]
-        _ = page.images[image_id]  # trigger parsing
-        assert page._content_stream_images is not None
-        in_content_stream = image_id in page._content_stream_images
-        assert in_content_stream == expected, (
-            f"Page {page_num}: {image_id} expected {expected}, got {in_content_stream}"
-        )
+        img = page.images[image_id]
+        assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
 
 @pytest.mark.samples
 def test_inline_images_property_deprecation_warning():
@@ -733,9 +729,8 @@ def test_inline_images_property_returns_only_inline():
         warnings.simplefilter("ignore")
         inline = page.inline_images
         if inline is not None:
-            for k in inline:
-                is_inline = k.startswith("~")
-                assert is_inline is True, f"Inline image {k} should be named like ~N~"
+            for k, v in inline.items():
+                assert v.is_inline is True, f"Image {k} should have is_inline=True"
 
 
 @pytest.mark.samples

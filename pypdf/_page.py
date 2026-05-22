@@ -360,6 +360,16 @@ class ImageFile:
     Reference to the object storing the stream.
     """
 
+    is_inline: bool = False
+    """
+    True if this is an inline image (~0~, ~1~, etc.).
+    """
+
+    is_displayed: bool = False
+    """
+    True if this image is displayed in the page content stream.
+    """
+
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the image with a new PIL image.
@@ -630,7 +640,7 @@ class PageObject(DictionaryObject):
             # Skip non-stream objects (only process StreamObject)
             if not isinstance(x_object[o], StreamObject):
                 continue
-            if x_object[o][IA.SUBTYPE] == "/Image":
+            if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
                 lst.append(o if len(ancest) == 0 else [*ancest, o])
 
             # If it's a form, recursively search for images inside it
@@ -680,7 +690,8 @@ class PageObject(DictionaryObject):
                     self._content_stream_images = self._parse_images_from_content_stream()
                 if self._content_stream_images is None:
                     raise KeyError("No image can be found")
-                assert id in self._content_stream_images
+                if id not in self._content_stream_images:
+                    raise KeyError(f"Image {id} not found")
                 image_file = self._content_stream_images[id]
                 assert image_file is not None
                 return image_file
@@ -700,6 +711,8 @@ class PageObject(DictionaryObject):
                     data=byte_stream,
                     image=img,
                     indirect_reference=xobjs[id].indirect_reference,
+                    is_inline=False,
+                    is_displayed=True,
                 )
 
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
@@ -710,6 +723,8 @@ class PageObject(DictionaryObject):
                 data=byte_stream,
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
+                is_inline=False,
+                is_displayed=False,
             )
         # in a subobject
         assert xobjs is not None
@@ -745,7 +760,7 @@ class PageObject(DictionaryObject):
         Return only inline images from the page.
 
         .. deprecated::
-            Use :attr:`images` and filter by key name (~N~ prefix) instead.
+            Use :attr:`images` and filter by :attr:`ImageFile.is_inline` instead.
             This property will be removed in pypdf 7.0.
 
         Examples:
@@ -753,8 +768,9 @@ class PageObject(DictionaryObject):
             >>> reader = PdfReader("example.pdf")
             >>> page = reader.pages[0]
             >>> inline_images = {
-            >>>     image_name: image_file for image_name, image_file in page.images.items()
-            >>>     if image_name.startswith("~")
+            >>>     image_name: image_file
+            >>>     for image_name, image_file in page.images.items()
+            >>>     if image_file.is_inline
             >>> }
         """
         deprecate_with_replacement(
@@ -767,7 +783,7 @@ class PageObject(DictionaryObject):
         return {
             image_name: image_file
             for image_name, image_file in self._content_stream_images.items()
-            if image_file is not None
+            if image_file and image_file.is_inline # for inline images, image_file is populated
         }
 
     @inline_images.setter
@@ -780,7 +796,7 @@ class PageObject(DictionaryObject):
         the values into the existing cache.
 
         .. deprecated::
-            Use :attr:`images` and filter by key name (~N~ prefix) instead.
+            Use :attr:`images` and filter by :attr:`ImageFile.is_inline` instead.
             This property will be removed in pypdf 7.0.
         """
         if value is None:
@@ -811,13 +827,13 @@ class PageObject(DictionaryObject):
         This method scans the page content stream and extracts:
 
         1. **Inline images** (~0~, ~1~...): Embedded directly in content stream via BI/EI operators
-           - Cached with decoded ImageFile, key matches ~N~ pattern
+           - is_inline=True, is_displayed=True, indirect_reference=None
 
         2. **Do-referenced images** (/Im0, /Im1...): Referenced via "Do" operator
-           - Stored as None in cache, decoded on demand in _get_image()
+           - is_inline=False, is_displayed=True, indirect_reference=<image object>
 
         3. **Pure XObject images** (/I0, /Image1...): Defined in Resources only (not in content stream)
-           - Not stored in cache, decoded on demand in _get_image()
+           - is_inline=False, is_displayed=False, indirect_reference=<image object>
 
         Returns:
             dict: Dictionary mapping image names to ImageFile instances (inline) or None (Do).
@@ -897,6 +913,8 @@ class PageObject(DictionaryObject):
                 data=byte_stream,
                 image=img,
                 indirect_reference=None,
+                is_inline=True,
+                is_displayed=True,
             )
 
         return files
