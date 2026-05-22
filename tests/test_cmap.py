@@ -1,4 +1,5 @@
 """Test the pypdf_cmap module."""
+import sys
 from io import BytesIO
 
 import pytest
@@ -301,7 +302,10 @@ def test_binascii_odd_length_string(caplog):
 
     page = reader.pages[0]
     assert "\n(Many other theorems may\n" in page.extract_text()
-    assert "Skipping broken line b'143f   143f   10300': Odd-length string\n" in caplog.text
+    if sys.version_info >= (3, 15):
+        assert "Skipping broken line b'143f   143f   10300': Odd number of hexadecimal digits\n" in caplog.text
+    else:
+        assert "Skipping broken line b'143f   143f   10300': Odd-length string\n" in caplog.text
 
 
 @pytest.mark.enable_socket
@@ -345,7 +349,10 @@ def test_parse_bfchar(caplog):
 
     assert map_dict == {-1: 2, "ծ": "", "վ": "ጷ"}
     assert int_entry == [1406, 1390]
-    assert caplog.messages == ["Got invalid hex string: Odd-length string (b'1f310')"]
+    if sys.version_info >= (3, 15):
+        assert caplog.messages == ["Got invalid hex string: Odd number of hexadecimal digits (b'1f310')"]
+    else:
+        assert caplog.messages == ["Got invalid hex string: Odd-length string (b'1f310')"]
 
 
 def test_parse_bfrange__iteration_limit():

@@ -1089,9 +1089,15 @@ class PdfReader(PdfDocCommon):
             self, index_pairs: list[int], entry_sizes: list[int], xref_stream: ContentStream
     ) -> list[int]:
         # `entry_sizes` holds the byte widths for the entries. Summing determines the total number of bytes per entry.
-        # We expect up to 3 values, clamping to at least 1 avoids ZeroDivisionError in next step.
-        # `min_entry_bytes` will be the smallest plausible size of one xref entry.
-        min_entry_bytes = max(sum(int(entry_sizes[i]) for i in range(min(len(entry_sizes), 3))), 1)
+        # We expect up to 3 values. `min_entry_bytes` will be the smallest plausible size of one xref entry.
+        min_entry_bytes = sum(int(entry_sizes[i]) for i in range(min(len(entry_sizes), 3)))
+        if min_entry_bytes == 0:
+            message = "Cross-reference stream encodes no entry data."
+            if self.strict:
+                raise PdfStreamError(message)
+            logger_warning(message, source=__name__)
+            return []
+
         # maximum number of entries that could physically fit
         max_entries = len(xref_stream.get_data()) // min_entry_bytes + 1
 
