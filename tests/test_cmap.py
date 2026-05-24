@@ -439,3 +439,64 @@ def test_parse_bfchar__iteration_limit():
             map_dict=map_dict, int_entry=int_entry,
         )
     assert map_dict == {}
+
+
+def _make_japanese_cmap_pdf(cmap_name: str, encoding: str) -> bytes:
+    """Minimal PDF with a CIDFont using *cmap_name* as /Encoding, no /ToUnicode."""
+    char_hex = "日本語テスト".encode(encoding).hex().upper()
+    objs: list[bytes] = []
+
+    def add(s: str | bytes) -> None:
+        objs.append(s.encode("latin-1") if isinstance(s, str) else s)
+
+    add("<< /Type /Catalog /Pages 2 0 R >>")
+    add("<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    add("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        "/Contents 4 0 R "
+        "/Resources << /Font << /F0 5 0 R /F1 7 0 R >> >> >>")
+    content = (
+        "BT\n/F0 14 Tf\n72 720 Td\n(Hello ASCII) Tj\n"
+        f"0 -28 Td\n/F1 14 Tf\n<{char_hex}> Tj\nET\n"
+    ).encode("latin-1")
+    add(f"<< /Length {len(content)} >>\nstream\n".encode() + content + b"\nendstream")
+    add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica "
+        "/Encoding /WinAnsiEncoding >>")
+    add("<< /Type /Font /Subtype /CIDFontType2 /BaseFont /HeiseiMin-W3 "
+        "/CIDSystemInfo << /Registry (Adobe) /Ordering (Japan1) /Supplement 2 >> "
+        "/DW 1000 >>")
+    add(f"<< /Type /Font /Subtype /Type0 /BaseFont /HeiseiMin-W3 "
+        f"/Encoding {cmap_name} /DescendantFonts [6 0 R] >>")
+
+    out = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n\n"
+    offsets: list[int] = []
+    for i, obj in enumerate(objs, 1):
+        offsets.append(len(out))
+        out += f"{i} 0 obj\n".encode() + obj + b"\nendobj\n\n"
+    xref_pos = len(out)
+    n = len(objs)
+    out += f"xref\n0 {n+1}\n0000000000 65535 f \n".encode()
+    for off in offsets:
+        out += f"{off:010d} 00000 n \n".encode()
+    out += (f"trailer\n<< /Size {n+1} /Root 1 0 R >>\n"
+            f"startxref\n{xref_pos}\n%%EOF\n").encode()
+    return out
+
+
+@pytest.mark.parametrize(
+    ("cmap_name", "python_codec"),
+    [
+        ("/90ms-RKSJ-H",    "cp932"),
+        ("/90ms-RKSJ-V",    "cp932"),
+        ("/UniJIS-UTF16-H", "utf-16-be"),
+        ("/UniJIS-UTF16-V", "utf-16-be"),
+    ],
+    ids=["90ms-RKSJ-H", "90ms-RKSJ-V", "UniJIS-UTF16-H", "UniJIS-UTF16-V"],
+)
+def test_japanese_cmap_encodings(cmap_name: str, python_codec: str, caplog) -> None:
+    """Japanese predefined CMaps must be decoded correctly. Resolves #3799."""
+    pdf_bytes = _make_japanese_cmap_pdf(cmap_name, python_codec)
+    reader = PdfReader(BytesIO(pdf_bytes))
+    text = reader.pages[0].extract_text()
+    assert "日本語テスト" in text, f"Japanese text garbled for {cmap_name}"
+    assert "Hello ASCII"  in text, f"ASCII baseline broken for {cmap_name}"
+    assert "Advanced encoding" not in caplog.text
