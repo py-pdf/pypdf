@@ -541,11 +541,13 @@ class PdfWriter(PdfDocCommon):
         else:
             cast(ArrayObject, node[PagesAttributes.KIDS]).append(page.indirect_reference)
             self.flattened_pages.append(page)
+        current: Optional[PdfObject] = node
         recurse = 0
-        while not is_null_or_none(node):
-            node = cast(DictionaryObject, node.get_object())
-            node[NameObject(PagesAttributes.COUNT)] = NumberObject(cast(int, node[PagesAttributes.COUNT]) + 1)
-            node = node.get(PagesAttributes.PARENT, None)  # type: ignore[assignment]  # TODO: Fix.
+        while not is_null_or_none(current):
+            assert current is not None  # for mypy; guarded by is_null_or_none
+            node_dict = cast(DictionaryObject, current.get_object())
+            node_dict[NameObject(PagesAttributes.COUNT)] = NumberObject(cast(int, node_dict[PagesAttributes.COUNT]) + 1)
+            current = node_dict.get(PagesAttributes.PARENT, None)
             recurse += 1
             if recurse > 1000:
                 raise PyPdfError("Too many recursive calls!")

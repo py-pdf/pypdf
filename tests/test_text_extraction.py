@@ -596,3 +596,27 @@ def test_fixed_width_page__excessive_needed_spaces(caplog):
 
     assert result == " " * 10_000 + "X"
     assert caplog.messages == ["Limiting excessive whitespace from 13000 to 10000 characters."]
+
+
+def test_page__extract_text__xform__self_references(caplog):
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=10, height=10)
+
+    form = ContentStream(stream=None, pdf=writer)
+    form[NameObject("/Type")] = NameObject("/XObject")
+    form[NameObject("/Subtype")] = NameObject("/Form")
+    form.set_data(b"/X1 Do")
+    form_reference = writer._add_object(form)
+    form[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/X1"): form_reference
+        })
+    })
+
+    page[NameObject("/Resources")] = form[NameObject("/Resources")]
+    content = ContentStream(stream=None, pdf=writer)
+    content.set_data(b"q /X1 Do Q")
+    page.replace_contents(content)
+
+    assert page.extract_text() == ""
+    assert caplog.messages == ["Detected cyclic form XObject reference, skipping /X1."]
