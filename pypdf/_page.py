@@ -688,8 +688,6 @@ class PageObject(DictionaryObject):
             if id[0] == "~" and id[-1] == "~":
                 if self._content_stream_images is None:
                     self._content_stream_images = self._parse_images_from_content_stream()
-                if self._content_stream_images is None:
-                    raise KeyError("No image can be found")
                 if id not in self._content_stream_images:
                     raise KeyError(f"Image {id} not found")
                 image_file = self._content_stream_images[id]
