@@ -263,13 +263,28 @@ class ArrayObject(list[Any], PdfObject):
 
 
 class DictionaryObject(dict[Any, Any], PdfObject):
+    def _empty_instance(self) -> "DictionaryObject":
+        """
+        Create a new empty instance of the same class as ``self``.
+
+        Some subclasses (in particular the annotation classes derived from
+        :class:`DictionaryObject`) require positional or keyword arguments
+        in their ``__init__``. When cloning or replicating such instances we
+        only need an empty container of a compatible type, so we fall back
+        to plain :class:`DictionaryObject` in that case.
+        """
+        try:
+            return self.__class__()
+        except TypeError:
+            return DictionaryObject()
+
     def replicate(
         self,
         pdf_dest: PdfWriterProtocol,
     ) -> "DictionaryObject":
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, False),
+            self._reference_clone(self._empty_instance(), pdf_dest, False),
         )
         for k, v in self.items():
             d__[k.replicate(pdf_dest)] = (
@@ -293,7 +308,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
+            self._reference_clone(self._empty_instance(), pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []

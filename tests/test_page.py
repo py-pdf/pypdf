@@ -1504,3 +1504,23 @@ def test_extract_text__none_type():
     page[NameObject("/Resources")] = resources
     with mock.patch.object(none_reference, "get_object", return_value=None):
         assert page.extract_text() == ""
+
+
+def test_merge_page_with_markup_annotation():
+    """Tests that merge_page does not fail when the source page contains a
+    markup annotation. Regression test for issue #3467."""
+    from pypdf.annotations import Polygon
+
+    writer = PdfWriter()
+    writer2 = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer2.add_blank_page(100, 100)
+
+    annotation = Polygon(
+        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    )
+    writer.add_annotation(0, annotation)
+
+    page_one = writer.pages[0]
+    page_two = writer2.pages[0]
+    page_two.merge_page(page_one)
