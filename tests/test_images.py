@@ -688,6 +688,7 @@ def test_is_xobject_image_displayed():
             f"Page {page_num}: {image_id} expected {expected}, got {in_content_stream}"
         )
 
+
 @pytest.mark.samples
 def test_is_inline_image_displayed():
     """This test ensures that displayed inline images are detected by `ImageFile.is_displayed`"""
