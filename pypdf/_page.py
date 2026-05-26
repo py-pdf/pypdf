@@ -783,7 +783,7 @@ class PageObject(DictionaryObject):
         return {
             image_name: image_file
             for image_name, image_file in self._content_stream_images.items()
-            if image_file and image_file.is_inline # for inline images, image_file is populated
+            if image_file and image_file.is_inline  # for inline images, image_file is populated
         }
 
     @inline_images.setter
