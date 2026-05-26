@@ -705,9 +705,10 @@ def test_is_inline_image_displayed():
         assert img.is_displayed == expected, f"Page {page_num}: {image_id} expected {expected}, got {img.is_displayed}"
 
 
+@pytest.mark.samples
 def test_inline_images_property_deprecation_warning():
     """Test that inline_images property emits a deprecation warning."""
-    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
     with warnings.catch_warnings(record=True) as w:
@@ -719,9 +720,10 @@ def test_inline_images_property_deprecation_warning():
         assert "images" in str(w[0].message)
 
 
+@pytest.mark.samples
 def test_inline_images_property_returns_only_inline():
     """Test that inline_images returns only images with is_inline=True."""
-    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
     with warnings.catch_warnings():
@@ -732,9 +734,10 @@ def test_inline_images_property_returns_only_inline():
                 assert v.is_inline is True, f"Image {k} should have is_inline=True"
 
 
+@pytest.mark.samples
 def test_inline_images_setter_clears_cache():
     """Test that setting inline_images to None clears the cache."""
-    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
     # Force cache population by accessing images
@@ -748,9 +751,10 @@ def test_inline_images_setter_clears_cache():
     assert page._content_stream_images is None
 
 
+@pytest.mark.samples
 def test_inline_images_setter_merges():
     """Test that setting inline_images to a dict merges into the cache."""
-    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
     # Force cache population by accessing images
