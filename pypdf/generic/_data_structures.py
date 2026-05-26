@@ -94,7 +94,7 @@ else:
 
 logger = logging.getLogger(__name__)
 
-IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
+IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^A-Za-z]")
 
 
 class ArrayObject(list[Any], PdfObject):
