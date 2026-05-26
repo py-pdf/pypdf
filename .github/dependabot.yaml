@@ -9,3 +9,5 @@ updates:
       interval: "daily"
     commit-message:
       prefix: "DEV"
+    cooldown:
+      default-days: 7
