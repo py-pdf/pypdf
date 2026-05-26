@@ -698,33 +698,18 @@ class PageObject(DictionaryObject):
 
             assert xobjs is not None
             # Check if image is in content stream (from _parse_images_from_content_stream)
-            if self._content_stream_images and id in self._content_stream_images:
-                cached = self._content_stream_images[id]
-                if cached is not None:
-                    return cached
-                # Do image: decode on demand, don't cache
-                from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
-                imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
-                extension, byte_stream, img = imgd
-                return ImageFile(
-                    name=f"{id[1:]}{extension}",
-                    data=byte_stream,
-                    image=img,
-                    indirect_reference=xobjs[id].indirect_reference,
-                    is_inline=False,
-                    is_displayed=True,
-                )
+            is_displayed = bool(self._content_stream_images and id in self._content_stream_images)
 
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
-            extension, byte_stream = imgd[:2]
+            extension, byte_stream, img = imgd
             return ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
-                image=imgd[2],
+                image=img,
                 indirect_reference=xobjs[id].indirect_reference,
                 is_inline=False,
-                is_displayed=False,
+                is_displayed=is_displayed,
             )
         # in a subobject
         assert xobjs is not None
