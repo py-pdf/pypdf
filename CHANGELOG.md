@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Version 6.12.2, 2026-05-26
+
+### Security (SEC)
+- Optimize _decode_png_prediction regarding memory and speed (#3806)
+- Improve loop control in text extraction (#3805)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.12.1...6.12.2)
+
 ## Version 6.12.1, 2026-05-22
 
 ### Security (SEC)
