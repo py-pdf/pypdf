@@ -711,13 +711,11 @@ def test_inline_images_property_deprecation_warning():
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
+    with pytest.warns(DeprecationWarning, match="PageObject.inline_images is deprecated") as w:
         _ = page.inline_images
-        assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
-        assert "inline_images" in str(w[0].message)
-        assert "images" in str(w[0].message)
+
+    assert "inline_images" in str(w[0].message)
+    assert "images" in str(w[0].message)
 
 
 @pytest.mark.samples
