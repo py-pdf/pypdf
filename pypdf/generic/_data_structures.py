@@ -263,13 +263,19 @@ class ArrayObject(list[Any], PdfObject):
 
 
 class DictionaryObject(dict[Any, Any], PdfObject):
+    def _new_empty(self) -> "DictionaryObject":
+        try:
+            return self.__class__()
+        except TypeError:
+            return self.__class__.__new__(self.__class__)
+
     def replicate(
         self,
         pdf_dest: PdfWriterProtocol,
     ) -> "DictionaryObject":
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, False),
+            self._reference_clone(self._new_empty(), pdf_dest, False),
         )
         for k, v in self.items():
             d__[k.replicate(pdf_dest)] = (
@@ -293,7 +299,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
+            self._reference_clone(self._new_empty(), pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []
@@ -372,7 +378,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                             clon = cast(
                                 "DictionaryObject",
                                 cur_obj._reference_clone(
-                                    cur_obj.__class__(), pdf_dest, force_duplicate
+                                    cur_obj._new_empty(), pdf_dest, force_duplicate
                                 ),
                             )
                             # Check to see if we've previously processed our item
@@ -911,7 +917,7 @@ class StreamObject(DictionaryObject):
     ) -> "StreamObject":
         d__ = cast(
             "StreamObject",
-            self._reference_clone(self.__class__(), pdf_dest, False),
+            self._reference_clone(self._new_empty(), pdf_dest, False),
         )
         d__._data = self._data
         try:
