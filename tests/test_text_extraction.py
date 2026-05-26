@@ -598,30 +598,6 @@ def test_fixed_width_page__excessive_needed_spaces(caplog):
     assert caplog.messages == ["Limiting excessive whitespace from 13000 to 10000 characters."]
 
 
-"""
-objects[3] = (
-    b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792]"
-    b" /Resources << /XObject << /X1 4 0 R >> >>"
-    b" /Contents 5 0 R >>"
-)
-# Form XObject X1: its content stream is "/X1 Do" -- a self-reference.
-# X1's /Resources also lists X1 -> itself, so /Do resolves to X1.
-xform_content = b"/X1 Do"
-objects[4] = (
-    b"<< /Type /XObject /Subtype /Form /BBox [0 0 100 100]"
-    b" /Resources << /XObject << /X1 4 0 R >> >>"
-    b" /Length " + str(len(xform_content)).encode() + b" >>\n"
-    b"stream\n" + xform_content + b"\nendstream"
-)
-# Page content stream invokes X1 once.
-page_content = b"q /X1 Do Q"
-objects[5] = (
-    b"<< /Length " + str(len(page_content)).encode() + b" >>\n"
-    b"stream\n" + page_content + b"\nendstream"
-)
-"""
-
-
 def test_page__extract_text__xform__self_references(caplog):
     writer = PdfWriter()
     page = writer.add_blank_page(width=10, height=10)
