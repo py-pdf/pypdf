@@ -1705,16 +1705,17 @@ class PageObject(DictionaryObject):
         font_resources: dict[str, DictionaryObject] = {}
         fonts: dict[str, Font] = {}
 
-        try:
-            resources_dict = cast(DictionaryObject, obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject()))
-        except Exception:
+        resources_dict = cast(
+            Optional[DictionaryObject],
+            obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject())
+        )
+        if is_null_or_none(resources_dict) or not resources_dict:
             # No resources means no text is possible (no font); we consider the
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
         if (
-            not is_null_or_none(resources_dict)
-            and "/Font" in resources_dict
+            "/Font" in resources_dict
             and (font_resources_dict := cast(DictionaryObject, resources_dict["/Font"]))
         ):
             for font_resource in font_resources_dict:
