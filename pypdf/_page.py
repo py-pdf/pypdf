@@ -1678,7 +1678,7 @@ class PageObject(DictionaryObject):
 
     def _extract_text(
         self,
-        obj: Any,
+        obj: DictionaryObject,
         pdf: Any,
         orientations: tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
@@ -1686,6 +1686,8 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        *,
+        known_ids: Optional[set[int]] = None,
     ) -> str:
         """
         See extract_text for most arguments.
@@ -1696,18 +1698,15 @@ class PageObject(DictionaryObject):
                 default = "/Content"
 
         """
+        if known_ids is None:
+            known_ids = set()
+
         extractor = TextExtraction()
         font_resources: dict[str, DictionaryObject] = {}
         fonts: dict[str, Font] = {}
 
         try:
-            objr = obj
-            while NameObject(PG.RESOURCES) not in objr:
-                # /Resources can be inherited so we look to parents
-                objr = objr["/Parent"].get_object()
-                # If no parents then no /Resources will be available,
-                # so an exception will be raised
-            resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
+            resources_dict = cast(DictionaryObject, obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject()))
         except Exception:
             # No resources means no text is possible (no font); we consider the
             # file as not damaged, no need to check for TJ or Tj
@@ -1796,16 +1795,31 @@ class PageObject(DictionaryObject):
                 except IndexError:
                     pass
                 try:
-                    xobj = resources_dict["/XObject"]
-                    if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
-                        text = self.extract_xform_text(
-                            xobj[operands[0]],  # type: ignore
-                            orientations,
-                            space_width,
-                            visitor_operand_before,
-                            visitor_operand_after,
-                            visitor_text,
-                        )
+                    xobj = cast(DictionaryObject, resources_dict["/XObject"])
+                    xform = cast(EncodedStreamObject, xobj[operands[0]])
+                    if xform["/Subtype"] != NameObject("/Image"):
+                        xform_id = id(xform)
+                        if xform_id in known_ids:
+                            logger_warning(
+                                "Detected cyclic form XObject reference, skipping %(operand)s.",
+                                source=__name__,
+                                operand=operands[0]
+                            )
+                            text = ""
+                        else:
+                            known_ids.add(xform_id)
+                            try:
+                                text = self.extract_xform_text(
+                                    xform,
+                                    orientations,
+                                    space_width,
+                                    visitor_operand_before,
+                                    visitor_operand_after,
+                                    visitor_text,
+                                    known_ids=known_ids,
+                                )
+                            finally:
+                                known_ids.discard(xform_id)
                         extractor.output += text
                         if visitor_text is not None:
                             visitor_text(
@@ -2071,6 +2085,8 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        *,
+        known_ids: Optional[set[int]] = None,
     ) -> str:
         """
         Extract text from an XObject.
@@ -2096,6 +2112,7 @@ class PageObject(DictionaryObject):
             visitor_operand_before,
             visitor_operand_after,
             visitor_text,
+            known_ids=known_ids,
         )
 
     def _get_fonts(self) -> tuple[set[str], set[str]]:
