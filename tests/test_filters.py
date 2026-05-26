@@ -1130,3 +1130,18 @@ def test_lzwdecode__invalid_first_code():
             match=r"^LZW code 258 out of range with empty base at table index 258\.$"
     ):
         LZWDecode.decode(data=lzw_data)
+
+
+@pytest.mark.timeout(5)  # Has been 20 seconds before.
+def test_flatedecode__decode_png_prediction__speed():
+    columns = 4096
+    rows = 120000
+    row_length = columns + 1  # +1 for PNG filter byte
+
+    # Build raw PNG-predicted data: every row starts with filter byte 0 (PNG None)
+    raw = bytearray(rows * row_length)
+    for row in range(rows):
+        raw[row * row_length] = 0
+    data = bytes(raw)
+
+    FlateDecode._decode_png_prediction(data=data, columns=columns, row_length=row_length)
