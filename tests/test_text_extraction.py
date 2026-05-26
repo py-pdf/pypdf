@@ -620,4 +620,3 @@ def test_page__extract_text__xform__self_references(caplog):
 
     assert page.extract_text() == ""
     assert caplog.messages == ["Detected cyclic form XObject reference, skipping /X1."]
-
