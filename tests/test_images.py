@@ -16,6 +16,7 @@ import pytest
 from PIL import Image, ImageChops, ImageDraw
 
 from pypdf import PageObject, PdfReader, PdfWriter
+from pypdf._page import ImageFile
 from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import ContentStream, NameObject, NullObject
@@ -230,7 +231,7 @@ def test_image_extraction(src, page_index, image_key, expected):
 
 def test_get_inline_image_without_xobject_resources():
     page = PageObject(None, None)
-    inline_image = mock.Mock(is_inline=True, is_displayed=True)
+    inline_image = ImageFile(is_inline=True, is_displayed=True)
 
     with mock.patch.object(page, "_parse_images_from_content_stream", return_value={"~0~": inline_image}):
         assert page._get_image("~0~") is inline_image
