@@ -768,10 +768,10 @@ class PageObject(DictionaryObject):
             >>> reader = PdfReader("example.pdf")
             >>> page = reader.pages[0]
             >>> inline_images = {
-            >>>     image_name: image_file
-            >>>     for image_name, image_file in page.images.items()
-            >>>     if image_file.is_inline
-            >>> }
+            ...     image_name: image_file
+            ...     for image_name, image_file in page.images.items()
+            ...     if image_file.is_inline
+            ... }
         """
         deprecate_with_replacement(
             "PageObject.inline_images",
