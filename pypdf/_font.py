@@ -693,7 +693,7 @@ class Font:
         target_resource_dict[font_resource_name] = font_resource_ref
         return font_resource_ref
 
-    def text_width(self, text: str = "") -> float:
+    def get_text_width(self, text: str = "") -> float:
         """Sum of character widths specified in PDF font for the supplied text."""
         return sum(
             [self.character_widths.get(char, self.character_widths["default"]) for char in text], 0.0

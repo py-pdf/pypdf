@@ -30,7 +30,7 @@ def test_font_descriptor():
     test_string = "This is a long sentence. !@%%^€€€. çûiö¶´"
     reverse_map = {char: byte for byte, char in my_font.encoding.items()}
     encoded_string = ([chr(reverse_map[char]) for char in test_string])
-    charwidth = my_font.text_width(encoded_string)
+    charwidth = my_font.get_text_width(encoded_string)
     assert charwidth == 19251
 
     font_res[NameObject("/BaseFont")] = NameObject("/Palatino")

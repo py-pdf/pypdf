@@ -147,7 +147,7 @@ class TextStateParams:
             if char == self.font.space_char:
                 width += self.font.space_width
             else:
-                width += self.font.text_width(char)
+                width += self.font.get_text_width(char)
 
         return (
             (self.font_size * ((width - td_offset) / 1000.0))

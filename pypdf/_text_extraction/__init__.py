@@ -206,7 +206,7 @@ def get_display_str(
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
     widths: float = 0.0
     for raw_character in text_operands:
-        widths += font.space_width if raw_character == font.space_char else font.text_width(raw_character)
+        widths += font.space_width if raw_character == font.space_char else font.get_text_width(raw_character)
         x = font.character_map.get(raw_character, raw_character)
         # x can be a sequence of bytes ; ex: habibi.pdf
         if len(x) == 1:

@@ -111,7 +111,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 continue
             words = paragraph.split(font.space_char)
             for i, word in enumerate(words):
-                word_width = font.text_width(word) * font_size / 1000
+                word_width = font.get_text_width(word) * font_size / 1000
                 test_width = current_line_width + word_width + (space_width if i else 0)
                 if test_width > field_width and current_line_words:
                     wrapped_lines.append((current_line_width, font.space_char.join(current_line_words)))
@@ -231,7 +231,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             else:
                 max_vertical_size = field_height / leading_factor
                 glyphs = _unicode_to_glyph_id(text, reverse_cmap)
-                text_width_unscaled = font.text_width(glyphs) / 1000
+                text_width_unscaled = font.get_text_width(glyphs) / 1000
                 max_horizontal_size = field_width / (text_width_unscaled or 1)
                 font_size = round(max(min(max_vertical_size, max_horizontal_size), min_font_size), 1)
                 lines = [(text_width_unscaled * font_size, glyphs)]
@@ -251,12 +251,12 @@ class TextStreamAppearance(BaseStreamAppearance):
             for index, char in enumerate(text):
                 if index < (max_length or len(text)):
                     glyphs = _unicode_to_glyph_id(char, reverse_cmap)
-                    lines.append((font.text_width(glyphs) * font_size / 1000, glyphs))
+                    lines.append((font.get_text_width(glyphs) * font_size / 1000, glyphs))
         else:
             lines = []
             for line in text.splitlines():
                 glyphs = _unicode_to_glyph_id(line, reverse_cmap)
-                lines.append((font.text_width(glyphs) * font_size / 1000, glyphs))
+                lines.append((font.get_text_width(glyphs) * font_size / 1000, glyphs))
 
         # Set the vertical offset
         if is_multiline:
