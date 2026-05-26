@@ -836,7 +836,7 @@ class PageObject(DictionaryObject):
            - is_inline=False, is_displayed=False, indirect_reference=<image object>
 
         Returns:
-            dict: Dictionary mapping image names to ImageFile instances (inline) or None (Do).
+            Dictionary mapping image names to ImageFile instances (inline) or None (Do).
         """
         # Idempotent: if already parsed, return cached result
         if self._content_stream_images is not None:
