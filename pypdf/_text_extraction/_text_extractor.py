@@ -45,8 +45,6 @@ class TextExtraction:
     """
 
     def __init__(self) -> None:
-        self._font_width_maps: dict[str, tuple[dict[Any, float], str, float]] = {}
-
         # Text extraction state variables
         self.cm_matrix: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         self.tm_matrix: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
@@ -184,7 +182,9 @@ class TextExtraction:
         )
         if is_str_operands:
             text += text_operands
-            font_widths = sum([font.space_width if x == " " else font.text_width(x) for x in text_operands])
+            font_widths = sum(
+                [font.space_width if x == font.space_char else font.get_text_width(x) for x in text_operands]
+            )
         else:
             text, rtl_dir, font_widths = get_display_str(
                 text,

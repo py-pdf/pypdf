@@ -92,7 +92,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
         raise PdfReadError("Invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
-    return cast(int, struct.unpack(">q", d)[0])
+    return cast(int, struct.unpack(">Q", d)[0])
 
 
 class DocumentInformation(DictionaryObject):

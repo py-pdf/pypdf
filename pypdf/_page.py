@@ -528,7 +528,6 @@ class PageObject(DictionaryObject):
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
-        self._font_width_maps: dict[str, tuple[dict[str, float], str, float]] = {}
 
     def hash_bin(self) -> int:
         """
@@ -1836,7 +1835,7 @@ class PageObject(DictionaryObject):
                     font_resources[font_resource] = font_resource_object
                     fonts[font_resource] = Font.from_font_resource(font_resource_object)
                     # Override space width, if applicable
-                    if fonts[font_resource].character_widths.get(" ", 0) == 0:
+                    if fonts[font_resource].character_widths.get(fonts[font_resource].space_char, 0) == 0:
                         fonts[font_resource].space_width = space_width
                 except (AttributeError, TypeError):
                     pass

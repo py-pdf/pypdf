@@ -145,6 +145,8 @@ def _parse_to_unicode(
             int_entry,
         )
 
+    map_dict.pop(-1, None)  # Don't pass the -1 key, we only used it to temporarily store encoding length
+
     return map_dict, int_entry
 
 

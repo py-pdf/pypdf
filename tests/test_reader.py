@@ -870,8 +870,17 @@ def test_pages_attribute():
     assert exc.value.args[0] == "Sequence index out of range"
 
 
-def test_convert_to_int():
-    assert convert_to_int(b"\x01", 8) == 1
+@pytest.mark.parametrize(
+    ("d", "size", "expected"),
+    [
+        (b"\x01", 8, 1),
+        # Cross-reference stream entry fields are >= 0 (ISO 32000-2, Table 18),
+        # so a wide field with the high bit set must not decode to a negative value.
+        (b"\x80\x00\x00\x00\x00\x00\x00\x01", 8, 0x8000000000000001),
+    ],
+)
+def test_convert_to_int(d, size, expected):
+    assert convert_to_int(d, size) == expected
 
 
 def test_convert_to_int_error():
