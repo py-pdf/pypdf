@@ -733,7 +733,7 @@ class PageObject(DictionaryObject):
 
             >>> from pypdf import PdfReader
             >>> from PIL.Image import Image
-            >>> reader = PdfReader("example.pdf")
+            >>> reader = PdfReader("resources/example.pdf")
             >>> reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
 
         """
@@ -750,7 +750,7 @@ class PageObject(DictionaryObject):
 
         Examples:
             >>> from pypdf import PdfReader
-            >>> reader = PdfReader("example.pdf")
+            >>> reader = PdfReader("resources/example.pdf")
             >>> page = reader.pages[0]
             >>> inline_images = {
             ...     image_name: image_file
