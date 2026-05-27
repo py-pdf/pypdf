@@ -245,7 +245,7 @@ wrap-descriptions = 0
 strict = true
 ignore_missing_imports = true
 show_error_codes = true
-exclude = ['venv', '.venv']
+exclude = ['venv', '.venv', 'sample-files']
 
 
 [[tool.mypy.overrides]]
