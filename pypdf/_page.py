@@ -731,10 +731,10 @@ class PageObject(DictionaryObject):
 
         Example usage:
 
-            >>> from pypdf import PdfReader
-            >>> from PIL.Image import Image
-            >>> reader = PdfReader("resources/example.pdf")
-            >>> reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
+            >>> from pypdf import PdfWriter
+            >>> reader = PdfWriter()
+            >>> page = writer.add_blank_page(800,600)
+            >>> images = page.images
 
         """
         return VirtualListImages(self._get_ids_image, self._get_image)
@@ -749,14 +749,12 @@ class PageObject(DictionaryObject):
             This property will be removed in pypdf 7.0.
 
         Examples:
-            >>> from pypdf import PdfReader
-            >>> reader = PdfReader("resources/example.pdf")
-            >>> page = reader.pages[0]
-            >>> inline_images = {
-            ...     image_name: image_file
-            ...     for image_name, image_file in page.images.items()
-            ...     if image_file.is_inline
-            ... }
+            >>> from pypdf import PdfWriter
+            >>> reader = PdfWriter()
+            >>> page = writer.add_blank_page(800,600)
+            >>> for image_name, image_file in page.images.items()
+            ...     if image_file.is_inline:
+            ...         print(f"{image_name} is inline")
         """
         deprecate_with_replacement(
             "PageObject.inline_images",
