@@ -731,6 +731,9 @@ class PageObject(DictionaryObject):
 
         Example usage:
 
+            >>> from pypdf import PdfReader
+            >>> from PIL.Image import Image
+            >>> reader = PdfReader("example.pdf")
             >>> reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
 
         """
