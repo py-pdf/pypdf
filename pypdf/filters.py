@@ -455,6 +455,11 @@ class RunLengthDecode:
                 lst.append(data[index : (index + length)])
                 index += length
             else:  # >128
+                if index >= data_length:
+                    logger_warning(
+                        "missing EOD in RunLengthDecode, check if output is OK", source=__name__
+                    )
+                    break  # Reached end of string without the replicated byte
                 length = 257 - length
                 lst.append(bytes((data[index],)) * length)
                 index += 1
