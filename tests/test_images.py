@@ -5,7 +5,6 @@ Typically, tests in here should compare the extracted images count, names,
 and/or the actual image data with the expected value.
 """
 
-import warnings
 from io import BytesIO
 from pathlib import Path
 from typing import Union
@@ -703,11 +702,8 @@ def test_inline_images_property_deprecation_warning():
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
-    with pytest.warns(DeprecationWarning, match="PageObject.inline_images is deprecated") as w:
+    with pytest.warns(DeprecationWarning, match="PageObject.inline_images is deprecated"):
         _ = page.inline_images
-
-    assert "inline_images" in str(w[0].message)
-    assert "images" in str(w[0].message)
 
 
 @pytest.mark.samples
@@ -716,12 +712,11 @@ def test_inline_images_property_returns_only_inline():
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with pytest.warns(DeprecationWarning, match="PageObject.inline_images is deprecated"):
         inline = page.inline_images
-        if inline is not None:
-            for k, v in inline.items():
-                assert v.is_inline is True, f"Image {k} should have is_inline=True"
+    if inline is not None:
+        for k, v in inline.items():
+            assert v.is_inline is True, f"Image {k} should have is_inline=True"
 
 
 @pytest.mark.samples
@@ -735,9 +730,7 @@ def test_inline_images_setter_clears_cache():
     assert page._content_stream_images is not None
 
     # Clear cache via setter
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        page.inline_images = None
+    page.inline_images = None
     assert page._content_stream_images is None
 
 
@@ -752,9 +745,7 @@ def test_inline_images_setter_merges():
     original_keys = set(page._content_stream_images.keys())
 
     # Merge new values
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        page.inline_images = {"new_key": page.images[0]}
+    page.inline_images = {"new_key": page.images[0]}
     assert page._content_stream_images is not None
     merged_keys = set(page._content_stream_images.keys())
     assert original_keys.issubset(merged_keys), "Original keys should be preserved"
@@ -786,8 +777,7 @@ def test_inline_images_skips_none_entries():
     _ = list(page.images)
 
     # Access inline_images (suppress deprecation warning)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with pytest.warns(DeprecationWarning, match="PageObject.inline_images is deprecated"):
         inline = page.inline_images
 
     if inline is not None:
