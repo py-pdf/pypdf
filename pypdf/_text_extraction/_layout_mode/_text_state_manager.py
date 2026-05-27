@@ -94,26 +94,8 @@ class TextStateManager:
             raise PdfReadError(
                 "font not set: is PDF missing a Tf operator?"
             )  # pragma: no cover
-        if isinstance(value, bytes):
-            try:
-                if isinstance(self.font.encoding, str):
-                    txt = value.decode(self.font.encoding, "surrogatepass")
-                else:
-                    txt = "".join(
-                        self.font.encoding[x]
-                        if x in self.font.encoding
-                        else bytes((x,)).decode()
-                        for x in value
-                    )
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                txt = value.decode("utf-8", "replace")
-            txt = "".join(
-                self.font.character_map.get(x, x) for x in txt
-            )
-        else:
-            txt = value
         return TextStateParams(
-            txt,
+            value,
             self.font,
             self.font_size,
             self.Tc,
