@@ -45,8 +45,6 @@ class TextExtraction:
     """
 
     def __init__(self) -> None:
-        self._font_width_maps: dict[str, tuple[dict[Any, float], str, float]] = {}
-
         # Text extraction state variables
         self.cm_matrix: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         self.tm_matrix: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
