@@ -8,14 +8,14 @@ on:
     branches:
       - main
     paths-ignore:
-      - "**/*.md"
-      - "**/*.rst"
+      - '**/*.md'
+      - '**/*.rst'
   pull_request:
     branches:
       - main
     paths-ignore:
-      - "**/*.md"
-      - "**/*.rst"
+      - '**/*.md'
+      - '**/*.rst'
   workflow_dispatch:
 
 concurrency:
@@ -29,275 +29,277 @@ jobs:
     name: pytest on windows
     runs-on: windows-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          submodules: "recursive"
-          persist-credentials: false
-      - name: Cache Downloaded Files
-        id: cache-downloaded-files-windows
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        if: github.ref == 'refs/heads/main'
-        with:
-          path: "**/tests/pdf_cache/*"
-          key: cache-downloaded-files-main-${{ github.run_id }}
-          restore-keys: |
-            cache-downloaded-files-main-
-            cache-downloaded-files
-          enableCrossOsArchive: true
-      - name: Restore Downloaded Files
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        if: github.ref != 'refs/heads/main'
-        with:
-          path: "**/tests/pdf_cache/*"
-          key: cache-downloaded-files-main-
-          restore-keys: |
-            cache-downloaded-files-main-
-            cache-downloaded-files
-          enableCrossOsArchive: true
-      - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.x"
-          allow-prereleases: true
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-      - name: Install requirements (Python 3.11+)
-        run: |
-          pip install -r requirements/ci-3.11.txt
-      - name: Install cryptography
-        run: |
-          pip install cryptography
-      - name: Install pypdf
-        run: |
-          pip install .
-      - name: Prepare
-        run: |
-          python -c "from tests import download_test_pdfs; download_test_pdfs()"
-      - name: Test with pytest
-        run: |
-          python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
+    - name: Checkout Code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        submodules: 'recursive'
+        persist-credentials: false
+    - name: Cache Downloaded Files
+      id: cache-downloaded-files-windows
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      if: github.ref == 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-${{ github.run_id }}
+        restore-keys: |
+          cache-downloaded-files-main-
+          cache-downloaded-files
+        enableCrossOsArchive: true
+    - name: Restore Downloaded Files
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      if: github.ref != 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-
+        restore-keys: |
+          cache-downloaded-files-main-
+          cache-downloaded-files
+        enableCrossOsArchive: true
+    - name: Setup Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      with:
+        python-version: '3.x'
+        allow-prereleases: true
+    - name: Upgrade pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install requirements (Python 3.11+)
+      run: |
+        pip install -r requirements/ci-3.11.txt
+    - name: Install cryptography
+      run: |
+        pip install cryptography
+    - name: Install pypdf
+      run: |
+        pip install .
+    - name: Prepare
+      run: |
+        python -c "from tests import download_test_pdfs; download_test_pdfs()"
+    - name: Test with pytest
+      run: |
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
 
   test_macos:
     name: pytest on macOS
     runs-on: macos-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          submodules: "recursive"
-          persist-credentials: false
-      - name: Cache Downloaded Files
-        id: cache-downloaded-files-mac
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        if: github.ref == 'refs/heads/main'
-        with:
-          path: "**/tests/pdf_cache/*"
-          key: cache-downloaded-files-main-${{ github.run_id }}
-          restore-keys: |
-            cache-downloaded-files-main-
-            cache-downloaded-files
-      - name: Restore Downloaded Files
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        if: github.ref != 'refs/heads/main'
-        with:
-          path: "**/tests/pdf_cache/*"
-          key: cache-downloaded-files-main-
-          restore-keys: |
-            cache-downloaded-files-main-
-            cache-downloaded-files
-      - name: Setup Python (3.11+)
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.x"
-          allow-prereleases: true
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-      - name: Install requirements (Python 3.11+)
-        run: |
-          pip install -r requirements/ci-3.11.txt
-      - name: Install cryptography
-        run: |
-          pip install cryptography
-      - name: Install OS dependencies
-        run: brew install ghostscript jbig2dec poppler
-      - name: Install pypdf
-        run: |
-          pip install .
-      - name: Prepare
-        run: |
-          python -c "from tests import download_test_pdfs; download_test_pdfs()"
-      - name: Test with pytest
-        run: |
-          python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
+    - name: Checkout Code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        submodules: 'recursive'
+        persist-credentials: false
+    - name: Cache Downloaded Files
+      id: cache-downloaded-files-mac
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      if: github.ref == 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-${{ github.run_id }}
+        restore-keys: |
+          cache-downloaded-files-main-
+          cache-downloaded-files
+    - name: Restore Downloaded Files
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      if: github.ref != 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-
+        restore-keys: |
+          cache-downloaded-files-main-
+          cache-downloaded-files
+    - name: Setup Python (3.11+)
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      with:
+        python-version: '3.x'
+        allow-prereleases: true
+    - name: Upgrade pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install requirements (Python 3.11+)
+      run: |
+        pip install -r requirements/ci-3.11.txt
+    - name: Install cryptography
+      run: |
+        pip install cryptography
+    - name: Install OS dependencies
+      run:
+        brew install ghostscript jbig2dec poppler
+    - name: Install pypdf
+      run: |
+        pip install .
+    - name: Prepare
+      run: |
+        python -c "from tests import download_test_pdfs; download_test_pdfs()"
+    - name: Test with pytest
+      run: |
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
 
   tests:
     name: "pytest on ${{ matrix.python-version }} (crypto-lib: ${{ matrix.use-crypto-lib }})"
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version:
-          ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "pypy3.11"]
-        use-crypto-lib: ["cryptography"]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', 'pypy3.11']
+        use-crypto-lib: ['cryptography']
         include:
-          - python-version: "3.9"
-            use-crypto-lib: "pycryptodome"
-          - python-version: "3.9"
-            use-crypto-lib: "none"
+          - python-version: '3.9'
+            use-crypto-lib: 'pycryptodome'
+          - python-version: '3.9'
+            use-crypto-lib: 'none'
     steps:
-      - name: Update APT packages
-        run: sudo apt-get update
-      - name: Install APT dependencies
-        run: sudo apt-get install ghostscript jbig2dec poppler-utils
-      - name: Checkout Code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          submodules: "recursive"
-          persist-credentials: false
-      - name: Cache Downloaded Files
-        id: cache-downloaded-files
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        if: github.ref == 'refs/heads/main'
-        with:
-          path: "**/tests/pdf_cache/*"
-          key: cache-downloaded-files-main-${{ github.run_id }}
-          restore-keys: |
-            cache-downloaded-files-main-
-            cache-downloaded-files
-      - name: Restore Downloaded Files
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        if: github.ref != 'refs/heads/main'
-        with:
-          path: "**/tests/pdf_cache/*"
-          key: cache-downloaded-files-main-
-          restore-keys: |
-            cache-downloaded-files-main-
-            cache-downloaded-files
-      - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-          cache-dependency-path: "**/requirements/ci.txt"
-      - name: Setup Python (3.11+)
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
-        with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-          cache: "pip"
-          cache-dependency-path: "**/requirements/ci-3.11.txt"
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-      - name: Install requirements (Python 3)
-        run: |
-          pip install -r requirements/ci.txt
-        if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
-      - name: Install requirements (Python 3.11+)
-        run: |
-          pip install -r requirements/ci-3.11.txt
-        if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
-      - name: Remove pycryptodome and cryptography
-        run: |
-          pip uninstall pycryptodome cryptography -y
-      - name: Install cryptography
-        run: |
-          pip install cryptography
-        if: matrix.use-crypto-lib == 'cryptography'
-      - name: Install pycryptodome
-        run: |
-          pip install pycryptodome
-        if: matrix.use-crypto-lib == 'pycryptodome'
-      - name: Install pypdf
-        run: |
-          pip install .
-      - name: Download test files
-        run: |
-          python -c "from tests import download_test_pdfs; download_test_pdfs()"
-      - name: Test with pytest
-        run: |
-          python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
-        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
-      - name: Test with pytest (PyPy, no coverage)
-        # Coverage on PyPy is skipped because running coverage with PyPy is slow and CPython test already provides
-        # complete coverage data for the same code
-        run: |
-          python -m pytest tests -n auto -vv -p no:benchmark -o faulthandler_timeout=60 --dist=loadfile
-        if: ${{ startsWith(matrix.python-version, 'pypy') }}
-      - name: Rename coverage data file
-        run: mv .coverage ".coverage.$RANDOM"
-        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
-      - name: Upload coverage data
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
-        with:
-          name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
-          path: .coverage.*
-          if-no-files-found: ignore
-          include-hidden-files: true
+    - name: Update APT packages
+      run:
+        sudo apt-get update
+    - name: Install APT dependencies
+      run:
+        sudo apt-get install ghostscript jbig2dec poppler-utils
+    - name: Checkout Code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        submodules: 'recursive'
+        persist-credentials: false
+    - name: Cache Downloaded Files
+      id: cache-downloaded-files
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      if: github.ref == 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-${{ github.run_id }}
+        restore-keys: |
+          cache-downloaded-files-main-
+          cache-downloaded-files
+    - name: Restore Downloaded Files
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      if: github.ref != 'refs/heads/main'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-
+        restore-keys: |
+          cache-downloaded-files-main-
+          cache-downloaded-files
+    - name: Setup Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: '**/requirements/ci.txt'
+    - name: Setup Python (3.11+)
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
+        cache: 'pip'
+        cache-dependency-path: '**/requirements/ci-3.11.txt'
+    - name: Upgrade pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install requirements (Python 3)
+      run: |
+        pip install -r requirements/ci.txt
+      if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
+    - name: Install requirements (Python 3.11+)
+      run: |
+        pip install -r requirements/ci-3.11.txt
+      if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
+    - name: Remove pycryptodome and cryptography
+      run: |
+        pip uninstall pycryptodome cryptography -y
+    - name: Install cryptography
+      run: |
+        pip install cryptography
+      if: matrix.use-crypto-lib == 'cryptography'
+    - name: Install pycryptodome
+      run: |
+        pip install pycryptodome
+      if: matrix.use-crypto-lib == 'pycryptodome'
+    - name: Install pypdf
+      run: |
+        pip install .
+    - name: Download test files
+      run: |
+        python -c "from tests import download_test_pdfs; download_test_pdfs()"
+    - name: Test with pytest
+      run: |
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+    - name: Test with pytest (PyPy, no coverage)
+      # Coverage on PyPy is skipped because running coverage with PyPy is slow and CPython test already provides
+      # complete coverage data for the same code
+      run: |
+        python -m pytest tests -n auto -vv -p no:benchmark -o faulthandler_timeout=60 --dist=loadfile
+      if: ${{ startsWith(matrix.python-version, 'pypy') }}
+    - name: Rename coverage data file
+      run: mv .coverage ".coverage.$RANDOM"
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+    - name: Upload coverage data
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+      with:
+        name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
+        path: .coverage.*
+        if-no-files-found: ignore
+        include-hidden-files: true
 
   codestyle:
     name: Check code style issues
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          submodules: "recursive"
-          persist-credentials: false
-      - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.x"
-          cache: "pip"
-          cache-dependency-path: "**/requirements/ci-3.11.txt"
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-      - name: Install requirements
-        run: |
-          pip install -r requirements/ci-3.11.txt
-      - name: Install pypdf
-        run: |
-          pip install .
-      - name: Test with ruff
-        run: |
-          echo `ruff --version`
-          ruff check .
-      - name: Test with mypy
-        run: |
-          mypy --exclude sample-files/ .
-      - name: Install docs requirements
-        run: |
-          pip install -r requirements/docs.txt
-      - name: Test docs build
-        working-directory: ./docs
-        run: |
-          sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback -d _build/doctrees --builder html . _build/html
-      - name: Test docs examples
-        working-directory: ./docs
-        run: |
-          sphinx-build -d _build/doctrees --builder doctest . _build/doctest
-      - name: Check with pre-commit
-        run: |
-          pip install -r requirements/dev.txt
-          pre-commit run --all-files --show-diff-on-failure
+    - name: Checkout Code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        submodules: 'recursive'
+        persist-credentials: false
+    - name: Setup Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      with:
+        python-version: '3.x'
+        cache: 'pip'
+        cache-dependency-path: '**/requirements/ci-3.11.txt'
+    - name: Upgrade pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install requirements
+      run: |
+        pip install -r requirements/ci-3.11.txt
+    - name: Install pypdf
+      run: |
+        pip install .
+    - name: Test with ruff
+      run: |
+        echo `ruff --version`
+        ruff check .
+    - name: Test with mypy
+      run : |
+        mypy .
+    - name: Install docs requirements
+      run: |
+        pip install -r requirements/docs.txt
+    - name: Test docs build
+      working-directory: ./docs
+      run: |
+        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback -d _build/doctrees --builder html . _build/html
+    - name: Test docs examples
+      working-directory: ./docs
+      run: |
+        sphinx-build -d _build/doctrees --builder doctest . _build/doctest
+    - name: Check with pre-commit
+      run: |
+        pip install -r requirements/dev.txt
+        pre-commit run --all-files --show-diff-on-failure
 
   package:
     name: Build & verify package
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
-          python-version: "3.x"
+          python-version: '3.x'
 
       - run: python -m pip install flit check-wheel-contents
       - run: flit build
@@ -322,16 +324,16 @@ jobs:
     needs: tests
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
-          python-version: "3.x"
+          python-version: '3.x'
 
       - run: python -m pip install --upgrade coverage[toml]
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           pattern: coverage-data*
           merge-multiple: true
@@ -351,7 +353,7 @@ jobs:
           python -m coverage combine
           python -m coverage xml
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354  # v6.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
