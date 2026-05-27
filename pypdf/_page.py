@@ -752,7 +752,7 @@ class PageObject(DictionaryObject):
             >>> from pypdf import PdfWriter
             >>> writer = PdfWriter()
             >>> page = writer.add_blank_page(800,600)
-            >>> for image_name, image_file in page.images.items()
+            >>> for image_name, image_file in page.images.items():
             ...     if image_file.is_inline:
             ...         print(f"{image_name} is inline")
         """
