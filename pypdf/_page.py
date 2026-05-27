@@ -517,7 +517,6 @@ class PageObject(DictionaryObject):
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
-        self._font_width_maps: dict[str, tuple[dict[str, float], str, float]] = {}
 
     def hash_bin(self) -> int:
         """
