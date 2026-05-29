@@ -630,7 +630,14 @@ class PageObject(DictionaryObject):
                 is_null_or_none(resources := obj[PG.RESOURCES]) or
                 RES.XOBJECT not in cast(DictionaryObject, resources)
         ):
-            return [] if self._content_stream_images is None else list(self._content_stream_images.keys())
+            # Forms without XObject resources have no images inside them
+            if len(ancest) > 0:
+                return []
+            # Top-level: only return inline images (Do objects handled below)
+            if self._content_stream_images is None:
+                return []
+            # for inline images, cache dict entries are not None
+            return [image_name for image_name, image_value in self._content_stream_images.items() if image_value]
 
         x_object = resources[RES.XOBJECT].get_object()  # type: ignore
 
@@ -653,12 +660,22 @@ class PageObject(DictionaryObject):
             if item not in deduplicated:
                 deduplicated.append(item)
 
-        # Add inline images (they may overlap with XObject images)
-        # Preserves order
-        # Inline images have names starting with ~ (e.g., ~0~, ~1~)
-        for k in self._content_stream_images:
-            if k not in deduplicated:
-                deduplicated.append(k)
+        # Add inline images and Do-referenced /Image objects from _content_stream_images
+        # Inline images (~0~, ~1~...) always added; Do names filtered by /Image subtype
+        # to exclude non-image XObjects (forms, etc.) from the images list
+        # Only check subtype at top level (ancest is empty) — recursive calls have
+        # form-level XObjects where page-level keys won't be found
+        for object_name, object_value in self._content_stream_images.items():
+            if object_name not in deduplicated:
+                if object_value: # inline images have cache populated
+                    deduplicated.append(object_name)
+                elif len(ancest) == 0:
+                    xobj_candidate = x_object.get(object_name)
+                    if (
+                        isinstance(xobj_candidate, StreamObject)
+                        and str(xobj_candidate.get(ImageAttributes.SUBTYPE, "")) == "/Image"
+                    ):
+                        deduplicated.append(object_name)
 
         return deduplicated
 
@@ -693,18 +710,24 @@ class PageObject(DictionaryObject):
                 assert image_file is not None
                 return image_file
 
+            # Do-referenced image name (non-inline string keys like /Im0)
             assert xobjs is not None
-            # Check if image is in content stream (from _parse_images_from_content_stream)
+            if id not in xobjs:
+                raise KeyError(f"Image {id} not found")
+            xobj = cast(DictionaryObject, xobjs[id])
+            if str(xobj.get(ImageAttributes.SUBTYPE, "")) != "/Image":
+                raise KeyError(f"XObject {id} is not an image")
+
+            # Check if displayed (in content stream)
             is_displayed = bool(self._content_stream_images and id in self._content_stream_images)
 
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
-            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
-            extension, byte_stream, img = imgd
+            extension, byte_stream, img = _xobj_to_image(xobj)
             return ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=img,
-                indirect_reference=xobjs[id].indirect_reference,
+                indirect_reference=xobj.indirect_reference,
                 is_inline=False,
                 is_displayed=is_displayed,
             )
@@ -801,14 +824,14 @@ class PageObject(DictionaryObject):
         1. **Inline images** (~0~, ~1~...): Embedded directly in content stream via BI/EI operators
            - is_inline=True, is_displayed=True, indirect_reference=None
 
-        2. **Do-referenced images** (/Im0, /Im1...): Referenced via "Do" operator
+        2. **Do-referenced objects** (/Im0, /Im1..., /Form1...): Referenced via "Do" operator
            - is_inline=False, is_displayed=True, indirect_reference=<image object>
 
         3. **Pure XObject images** (/I0, /Image1...): Defined in Resources only (not in content stream)
            - is_inline=False, is_displayed=False, indirect_reference=<image object>
 
         Returns:
-            Dictionary mapping image names to ImageFile instances (inline) or None (Do).
+            Dictionary mapping names to ImageFile instances (inline) or None (Do-referenced).
         """
         # Idempotent: if already parsed, return cached result
         if self._content_stream_images is not None:
@@ -832,7 +855,7 @@ class PageObject(DictionaryObject):
                     f"{ope!r} operator met whereas not expected, "
                     "please share use case with pypdf dev team"
                 )
-        # Process Do-referenced images first
+        # Process Do-referenced objects first (images + forms, no subtype check)
         files: dict[str, Optional[ImageFile]] = {}
         xobjs: Optional[DictionaryObject] = None
         try:
@@ -852,10 +875,7 @@ class PageObject(DictionaryObject):
                         do_name_str = do_name.decode()
                     else:
                         do_name_str = str(do_name)
-                    xobj = xobjs[do_name]
-                    # Only process if it's an actual image, not a form
-                    if isinstance(xobj, DictionaryObject) and str(xobj[ImageAttributes.SUBTYPE]) == "/Image":
-                        files[do_name_str] = None  # Lazy decode placeholder
+                    files[do_name_str] = None  # ALL Do-referenced objects (images + forms)
                 except KeyError:
                     continue
 
