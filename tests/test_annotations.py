@@ -376,7 +376,7 @@ def test_popup(caplog):
     Popup(
         rect=(50, 550, 200, 650),
         open=True,
-        parent=True,  # broken parameter
+        parent=True,  # broken parameter  # type: ignore
     )
     assert "Unregistered Parent object : No Parent field set" in caplog.text
 

@@ -371,9 +371,9 @@ def test_rename_kwargs():
             outline = a collection of outline items.
         """
 
-        def decoration(func: Callable) -> Any:
+        def decoration(func: Callable) -> Any:  # type: ignore
             @functools.wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
                 rename_kwargs(func.__name__, kwargs, aliases, fail=False)
                 return func(*args, **kwargs)
 

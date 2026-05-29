@@ -1656,7 +1656,7 @@ class PdfWriter(PdfDocCommon):
             if isinstance(obj, DictionaryObject):
                 key_val = obj.items()
             elif isinstance(obj, ArrayObject):
-                key_val = enumerate(obj)   # type: ignore[assignment]
+                key_val = enumerate(obj)  # type: ignore[assignment]
             else:
                 return
             assert isinstance(obj, (DictionaryObject, ArrayObject))

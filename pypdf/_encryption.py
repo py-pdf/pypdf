@@ -85,7 +85,7 @@ class CryptFilter:
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
         elif isinstance(obj, DictionaryObject):
-            obj2 = DictionaryObject()   # type: ignore[assignment]
+            obj2 = DictionaryObject()  # type: ignore[assignment]
             for key, value in obj.items():
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
