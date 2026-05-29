@@ -229,7 +229,7 @@ def _prepare_test_dictionary_object__read_from_stream__no_limit(
     def limit_virtual_memory() -> None:
         limit_kb = 1_000_000
         limit_bytes = limit_kb * 1024
-        resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, limit_bytes))
+        resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, limit_bytes))  # type: ignore[attr-defined]
 
     return pdf_path_str, env, limit_virtual_memory
 

@@ -85,7 +85,7 @@ class CryptFilter:
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
         elif isinstance(obj, DictionaryObject):
-            obj2 = DictionaryObject()  # type: ignore
+            obj2 = DictionaryObject()   # type: ignore[assignment]
             for key, value in obj.items():
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
@@ -1232,11 +1232,11 @@ class Encryption:
             ef_filter = encryption_entry.get("/EFF", stm_filter)
 
             if stm_filter != "/Identity":
-                stm_filter = filters[stm_filter]["/CFM"]  # type: ignore
+                stm_filter = filters[stm_filter]["/CFM"]  # type: ignore[index]
             if str_filter != "/Identity":
-                str_filter = filters[str_filter]["/CFM"]  # type: ignore
+                str_filter = filters[str_filter]["/CFM"]  # type: ignore[index]
             if ef_filter != "/Identity":
-                ef_filter = filters[ef_filter]["/CFM"]  # type: ignore
+                ef_filter = filters[ef_filter]["/CFM"]  # type: ignore[index]
 
             allowed_methods = ("/Identity", "/V2", "/AESV2", "/AESV3")
             if stm_filter not in allowed_methods:
