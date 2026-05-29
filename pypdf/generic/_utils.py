@@ -8,7 +8,7 @@ from ._base import ByteStringObject, TextStringObject
 
 
 def hex_to_rgb(value: str) -> tuple[float, float, float]:
-    return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
+    return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
 
 
 def read_hex_string_from_stream(
