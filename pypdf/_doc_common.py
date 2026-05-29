@@ -130,7 +130,7 @@ class DocumentInformation(DictionaryObject):
         specified.
         """
         return (
-            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore
+            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore[union-attr]
             if self.get(DI.TITLE)
             else None
         )
@@ -344,7 +344,7 @@ class PdfDocCommon:
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
         if self.is_encrypted:
-            return self.root_object["/Pages"]["/Count"]  # type: ignore
+            return self.root_object["/Pages"]["/Count"]  # type: ignore[no-any-return, index]
         if self.flattened_pages is None:
             self._flatten(self._readonly)
         assert self.flattened_pages is not None
@@ -642,7 +642,7 @@ class PdfDocCommon:
         stack.append(tree)
         if PagesAttributes.KIDS in tree:
             # recurse down the tree
-            for kid in tree[PagesAttributes.KIDS]:  # type: ignore
+            for kid in tree[PagesAttributes.KIDS]:  # type: ignore[attr-defined]
                 kid = kid.get_object()
                 self.get_fields(kid, retval, fileobj, stack)
 
@@ -745,7 +745,7 @@ class PdfDocCommon:
         """
         try:
             # to cope with all types
-            field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
+            field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore[union-attr]
         except Exception as exc:
             raise ValueError("Field type is invalid") from exc
         if is_null_or_none(field.get_inherited(key="/FT", default=None)):
@@ -777,7 +777,7 @@ class PdfDocCommon:
         return [
             x
             if isinstance(x, PageObject)
-            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore
+            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore[index, union-attr]
             for x in ret
         ]
 
@@ -954,9 +954,9 @@ class PdfDocCommon:
         ):
             page = NullObject()
             return Destination(title, page, Fit.fit())
-        page, typ, *array = array  # type: ignore
+        page, typ, *array = array  # type: ignore[assignment]
         try:
-            return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
+            return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore[arg-type]
         except PdfReadError:
             logger_warning("Unknown destination: %(title)r %(array)s", source=__name__, title=title, array=array)
             if self.strict:
@@ -1024,7 +1024,7 @@ class PdfDocCommon:
         if outline_item:
             if "/C" in node:
                 # Color of outline item font in (R, G, B) with values ranging 0.0-1.0
-                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
+                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore[attr-defined]
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
                 # with 1=italic, 2=bold, 3=both
@@ -1059,7 +1059,7 @@ class PdfDocCommon:
             PdfWriter.
 
         """
-        return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore
+        return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore[return-value]
 
     @property
     def page_labels(self) -> list[str]:
@@ -1121,7 +1121,7 @@ class PdfDocCommon:
              - Show attachments panel
         """
         try:
-            return self.root_object["/PageMode"]  # type: ignore
+            return self.root_object["/PageMode"]  # type: ignore[return-value]
         except KeyError:
             return None
 
@@ -1163,7 +1163,7 @@ class PdfDocCommon:
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
             catalog = self.root_object
-            pages = catalog.get("/Pages").get_object()  # type: ignore
+            pages = catalog.get("/Pages").get_object()  # type: ignore[union-attr]
             if not isinstance(pages, DictionaryObject):
                 raise PdfReadError("Invalid object in /Pages")
             self.flattened_pages = []
@@ -1209,7 +1209,7 @@ class PdfDocCommon:
                 page_obj.update(pages)
 
             # TODO: Could flattened_pages be None at this point?
-            self.flattened_pages.append(page_obj)  # type: ignore
+            self.flattened_pages.append(page_obj)  # type: ignore[union-attr]
 
     def remove_page(
         self,

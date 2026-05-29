@@ -127,7 +127,6 @@ exclude_lines = [
     # Don't complain about missing debug-only code:
     "def __repr__",
     "def __str__",
-    "if self\\.debug",
 
     # Don't complain if tests don't hit defensive assertion code:
     "raise AssertionError",
@@ -246,7 +245,6 @@ strict = true
 ignore_missing_imports = true
 show_error_codes = true
 exclude = ['venv', '.venv', 'sample-files']
-
 
 [[tool.mypy.overrides]]
 module = "tests.*"

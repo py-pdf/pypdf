@@ -115,7 +115,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
         )
         retval = RectangleObject(tuple(retval[:4]))
     else:
-        retval = RectangleObject(retval)  # type: ignore
+        retval = RectangleObject(retval)  # type: ignore[arg-type]
     _set_rectangle(self, name, retval)
     return retval
 
@@ -601,7 +601,7 @@ class PageObject(DictionaryObject):
             else:
                 raise PageSizeNotDefinedError
         page.__setitem__(
-            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore
+            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore[arg-type]
         )
 
         return page
@@ -929,7 +929,7 @@ class PageObject(DictionaryObject):
         self.add_transformation(trsf, False)
         for b in ["/MediaBox", "/CropBox", "/BleedBox", "/TrimBox", "/ArtBox"]:
             if b in self:
-                rr = RectangleObject(self[b])  # type: ignore
+                rr = RectangleObject(self[b])  # type: ignore[arg-type]
                 pt1 = trsf.apply_on(rr.lower_left)
                 pt2 = trsf.apply_on(rr.upper_right)
                 self[NameObject(b)] = RectangleObject(
@@ -1669,7 +1669,7 @@ class PageObject(DictionaryObject):
             if isinstance(viewport, ArrayObject):
                 bbox = viewport[0]["/BBox"]
             else:
-                bbox = viewport["/BBox"]  # type: ignore
+                bbox = viewport["/BBox"]  # type: ignore[index]
             scaled_bbox = RectangleObject(
                 (
                     float(bbox[0]) * sx,
@@ -1679,11 +1679,11 @@ class PageObject(DictionaryObject):
                 )
             )
             if isinstance(viewport, ArrayObject):
-                self[NameObject(PG.VP)][NumberObject(0)][  # type: ignore
+                self[NameObject(PG.VP)][NumberObject(0)][  # type: ignore[index]
                     NameObject("/BBox")
                 ] = scaled_bbox
             else:
-                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox  # type: ignore
+                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox  # type: ignore[index]
 
     def scale_by(self, factor: float) -> None:
         """
@@ -1722,8 +1722,8 @@ class PageObject(DictionaryObject):
         if content is not None:
             content_obj = content.flate_encode(level)
             try:
-                content.indirect_reference.pdf._objects[  # type: ignore
-                    content.indirect_reference.idnum - 1  # type: ignore
+                content.indirect_reference.pdf._objects[  # type: ignore[union-attr]
+                    content.indirect_reference.idnum - 1  # type: ignore[union-attr]
                 ] = content_obj
             except AttributeError:
                 if self.indirect_reference is not None and hasattr(
