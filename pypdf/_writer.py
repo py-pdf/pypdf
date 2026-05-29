@@ -268,12 +268,11 @@ class PdfWriter(PdfDocCommon):
             ):
                 return clone_from
             cloning = True
-            if isinstance(fileobj, (str, Path)) and (
-                not Path(str(fileobj)).exists()
-                or Path(str(fileobj)).stat().st_size == 0
-            ):
-                cloning = False
-            if isinstance(fileobj, (IOBase, BytesIO)):
+            if isinstance(fileobj, (str, Path)):
+                fileobj_path = Path(fileobj)
+                if not fileobj_path.exists() or fileobj_path.stat().st_size == 0:
+                    cloning = False
+            elif isinstance(fileobj, (IOBase, BytesIO)):
                 t = fileobj.tell()
                 if fileobj.seek(0, 2) == 0:
                     cloning = False
