@@ -264,7 +264,7 @@ class PdfWriter(PdfDocCommon):
             clone_from: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
         ) -> Union[None, PdfReader, str, Path, IO[Any], BytesIO]:
             if isinstance(fileobj, (str, Path, IO, BytesIO)) and (
-                fileobj is None or clone_from is not None
+                fileobj == "" or clone_from is not None
             ):
                 return clone_from
             cloning = True
