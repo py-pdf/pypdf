@@ -311,6 +311,7 @@ class PdfDocCommon(ABC):
         return retval
 
     @property
+    @abstractmethod
     def xmp_metadata(self) -> Optional[XmpInformation]:
         ...  # pragma: no cover
 
