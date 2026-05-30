@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import struct
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, Iterator, Mapping
 from datetime import datetime
 from typing import (
@@ -255,7 +255,7 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.KEYWORDS)
 
 
-class PdfDocCommon:
+class PdfDocCommon(ABC):
     """
     Common functions from PdfWriter and PdfReader objects.
 
