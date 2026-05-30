@@ -16,8 +16,8 @@ from pypdf.generic import (
     EncodedStreamObject,
     IndirectObject,
     NameObject,
-    NumberObject,
     NullObject,
+    NumberObject,
     StreamObject,
     TextStringObject,
 )
