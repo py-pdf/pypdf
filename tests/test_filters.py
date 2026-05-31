@@ -898,7 +898,7 @@ def test_rle_decode_truncated_after_run_length(caplog):
     # repeat must be handled like any other truncated input instead of reading
     # past the end of the data.
     assert RunLengthDecode.decode(b"\x00A\xff") == b"A"
-    assert caplog.messages == ["missing EOD in RunLengthDecode, check if output is OK"]
+    assert caplog.messages == ["Missing EOD in RunLengthDecode, check if output is OK"]
 
 
 def test_decompress():
