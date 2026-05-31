@@ -276,3 +276,10 @@ def test_bits2byte__limit() -> None:
             match=r"^Requested buffer size 76500000 exceeds limit of 75000000\.$"
     ):
         bits2byte(data=b"TEST", size=(9000, 8500), bits=8)
+
+
+def test_bits2byte__truncated_data(caplog) -> None:
+    # 4x4 image at 2 bits per sample needs 4 bytes; provide only 1.
+    result = bits2byte(data=b"\x00", size=(4, 4), bits=2)
+    assert result == bytes(16)
+    assert "Image data is not rectangular. Adding padding." in caplog.text
