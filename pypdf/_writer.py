@@ -405,12 +405,10 @@ class PdfWriter(PdfDocCommon):
     @property
     def with_as_usage(self) -> bool:
         deprecation_no_replacement("with_as_usage", "5.0")
-        return self._with_as_usage
 
     @with_as_usage.setter
     def with_as_usage(self, value: bool) -> None:
         deprecation_no_replacement("with_as_usage", "5.0")
-        self._with_as_usage = value
 
     def __enter__(self) -> Self:
         """Store how writer is initialized by 'with'."""

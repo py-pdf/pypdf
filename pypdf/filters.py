@@ -46,7 +46,7 @@ from base64 import a85decode
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Optional, Union, cast
+from typing import Any, NoReturn, Optional, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
@@ -604,9 +604,8 @@ def __create_old_class_instance(
     K: int = 0,
     columns: int = 0,
     rows: int = 0
-) -> CCITTParameters:
+) -> NoReturn:
     deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
-    return CCITTParameters(K, columns, rows)
 
 
 # Create an alias for the old class name
