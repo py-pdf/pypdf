@@ -719,7 +719,7 @@ class PageObject(DictionaryObject):
                 raise KeyError(f"XObject {id} is not an image")
 
             # Check if displayed (in content stream)
-            is_displayed = bool(self._content_stream_images and id in self._content_stream_images)
+            is_displayed = self._content_stream_images is not None and id in self._content_stream_images
 
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             extension, byte_stream, img = _xobj_to_image(xobj)
