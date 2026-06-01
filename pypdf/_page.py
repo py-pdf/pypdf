@@ -673,7 +673,7 @@ class PageObject(DictionaryObject):
                     xobj_candidate = x_object.get(object_name)
                     if (
                         isinstance(xobj_candidate, StreamObject)
-                        and str(xobj_candidate.get(ImageAttributes.SUBTYPE, "")) == "/Image"
+                        and xobj_candidate.get(ImageAttributes.SUBTYPE, "") == "/Image"
                     ):
                         deduplicated.append(object_name)
 
@@ -715,7 +715,7 @@ class PageObject(DictionaryObject):
             if id not in xobjs:
                 raise KeyError(f"Image {id} not found")
             xobj = cast(DictionaryObject, xobjs[id])
-            if str(xobj.get(ImageAttributes.SUBTYPE, "")) != "/Image":
+            if xobj.get(ImageAttributes.SUBTYPE, "") != "/Image":
                 raise KeyError(f"XObject {id} is not an image")
 
             # Check if displayed (in content stream)
