@@ -136,7 +136,7 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     i = 0
     value = None
     start_index = 0
-    while i < len(nums):
+    while i + 1 < len(nums):
         start_index = nums[i]
         value = nums[i + 1].get_object()
         if i + 2 == len(nums):
