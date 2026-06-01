@@ -869,15 +869,12 @@ class PageObject(DictionaryObject):
             pass
         else:
             for do_name in do_image_names:
-                try:
-                    # Handle both NameObject (str) and bytes
-                    if isinstance(do_name, bytes):
-                        do_name_str = do_name.decode()
-                    else:
-                        do_name_str = str(do_name)
-                    files[do_name_str] = None  # ALL Do-referenced objects (images + forms)
-                except KeyError:
-                    continue
+                # Handle both NameObject (str) and bytes
+                if isinstance(do_name, bytes):
+                    do_name_str = do_name.decode()
+                else:
+                    do_name_str = str(do_name)
+                files[do_name_str] = None  # ALL Do-referenced objects (images + forms)
 
         # Then process inline images
         for num, ii in enumerate(imgs_data):
