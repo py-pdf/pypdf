@@ -218,7 +218,7 @@ def _handle_flate(
         if isinstance(lookup, str):
             lookup = lookup.encode()
         try:
-            nb, conv, mode = {  # type: ignore
+            nb, conv, mode = {  # type: ignore[assignment]
                 "1": (0, "", ""),
                 "L": (1, "P", "L"),
                 "P": (0, "", ""),
@@ -475,7 +475,7 @@ def _xobj_to_image(
 
     # Get size and data
     size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
-    data = x_object.get_data()  # type: ignore
+    data = x_object.get_data()  # type: ignore[attr-defined]
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
     if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'

@@ -341,7 +341,7 @@ class PdfReader(PdfDocCommon):
         """
         if self._page_id2num is None:
             self._page_id2num = {
-                x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore
+                x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore[union-attr]
             }
 
         if is_null_or_none(indirect_reference):
@@ -360,7 +360,7 @@ class PdfReader(PdfDocCommon):
         # indirect reference to object in object stream
         # read the entire object stream into memory
         stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
+        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # Parse ALL objects in this stream in one pass and cache them.
@@ -534,7 +534,7 @@ class PdfReader(PdfDocCommon):
             if current_object in self._known_objects:
                 raise LimitReachedError(f"Detected loop with self reference for {indirect_reference!r}.")
             self._known_objects.add(current_object)
-            retval = read_object(self.stream, self)  # type: ignore
+            retval = read_object(self.stream, self)  # type: ignore[assignment]
             self._known_objects.remove(current_object)
 
             # override encryption is used for the /Encrypt dictionary
@@ -575,7 +575,7 @@ class PdfReader(PdfDocCommon):
                 self.stream.seek(m.end(0) + 1)
                 skip_over_whitespace(self.stream)
                 self.stream.seek(-1, 1)
-                retval = read_object(self.stream, self)  # type: ignore
+                retval = read_object(self.stream, self)  # type: ignore[assignment]
 
                 # override encryption is used for the /Encrypt dictionary
                 if not self._override_encryption and self._encryption is not None:
@@ -1173,7 +1173,7 @@ class PdfReader(PdfDocCommon):
 
         def used_before(num: int, generation: Union[int, tuple[int, ...]]) -> bool:
             # We move backwards through the xrefs, don't replace any.
-            return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore
+            return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore[arg-type]
 
         # Iterate through each subsection
         self._read_xref_subsections(index_pairs, get_entry, used_before)
@@ -1358,9 +1358,9 @@ class PdfReader(PdfDocCommon):
                     byte_offset = get_entry(1)
                     generation = get_entry(2)
                     if generation not in self.xref:
-                        self.xref[generation] = {}  # type: ignore
+                        self.xref[generation] = {}  # type: ignore[index]
                     if not used_before(num, generation):
-                        self.xref[generation][num] = byte_offset  # type: ignore
+                        self.xref[generation][num] = byte_offset  # type: ignore[index]
                 elif xref_type == 2:
                     # compressed objects
                     objstr_num = get_entry(1)

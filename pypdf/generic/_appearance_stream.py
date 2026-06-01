@@ -79,7 +79,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         leading_factor: float,
         field_width: float,
         field_height: float,
-        text: str,
+        paragraphs: list[str],
         min_font_size: float,
         font_size_step: float = 0.2
     ) -> tuple[list[tuple[float, str]], float]:
@@ -93,7 +93,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             leading_factor: The line distance.
             field_width: The width of the field in which to fit the text.
             field_height: The height of the field in which to fit the text.
-            text: The text to fit with the field.
+            paragraphs: The text paragraphs to fit with the field.
             min_font_size: The minimum font size at which to scale the text.
             font_size_step: The amount by which to decrement font size per step while scaling.
 
@@ -101,8 +101,6 @@ class TextStreamAppearance(BaseStreamAppearance):
             The text in the form of list of tuples, each tuple containing the length of a line
             and its contents, and the font_size for these lines and lengths.
         """
-        orig_text = text
-        paragraphs = text.replace("\n", "\r").split("\r")
         wrapped_lines = []
         current_line_words: list[str] = []
         current_line_width: float = 0
@@ -111,12 +109,12 @@ class TextStreamAppearance(BaseStreamAppearance):
             if not paragraph.strip():
                 wrapped_lines.append((0.0, ""))
                 continue
-            words = paragraph.split(" ")
+            words = paragraph.split(font.space_char)
             for i, word in enumerate(words):
-                word_width = font.text_width(word) * font_size / 1000
+                word_width = font.get_text_width(word) * font_size / 1000
                 test_width = current_line_width + word_width + (space_width if i else 0)
                 if test_width > field_width and current_line_words:
-                    wrapped_lines.append((current_line_width, " ".join(current_line_words)))
+                    wrapped_lines.append((current_line_width, font.space_char.join(current_line_words)))
                     current_line_words = [word]
                     current_line_width = word_width
                 elif not current_line_words and word_width > field_width:
@@ -129,7 +127,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                     current_line_words.append(word)
                     current_line_width += word_width
             if current_line_words:
-                wrapped_lines.append((current_line_width, " ".join(current_line_words)))
+                wrapped_lines.append((current_line_width, font.space_char.join(current_line_words)))
                 current_line_words = []
                 current_line_width = 0
         # Estimate total height.
@@ -144,7 +142,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                     leading_factor,
                     field_width,
                     field_height,
-                    orig_text,
+                    paragraphs,
                     min_font_size,
                     font_size_step
                 )
@@ -155,7 +153,6 @@ class TextStreamAppearance(BaseStreamAppearance):
         text: str,
         selection: list[str] | None ,
         font: Font,
-        font_glyph_byte_map: dict[str, bytes] | None = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
@@ -175,8 +172,6 @@ class TextStreamAppearance(BaseStreamAppearance):
             text: The text to be rendered in the form field.
             selection: An optional list of strings that should be highlighted as selected.
             font: The font to use.
-            font_glyph_byte_map: An optional dictionary mapping characters to their
-                byte representation for glyph encoding.
             font_name: The name of the font resource to use (e.g., "/Helv").
             font_size: The font size. If 0, it is automatically calculated
                 based on whether the field is multiline or not.
@@ -194,7 +189,6 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         """
         rectangle = self._layout.rectangle
-        font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
         leading_factor = (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / 1000.0
@@ -205,6 +199,16 @@ class TextStreamAppearance(BaseStreamAppearance):
         field_height = rectangle.height - 2 * margin
         field_width = rectangle.width - 4 * margin
 
+        reverse_cmap, encoding_cmap = font._get_typographic_maps()
+
+        def _unicode_to_glyph_id(text: str, reverse_cmap: dict[str, str]) -> str:
+            return "".join(reverse_cmap.get(character, character) for character in text)
+
+        def _glyph_id_to_bytes(glyphs: str, encoding_cmap: dict[str, bytes]) -> list[bytes]:
+            return [encoding_cmap.get(
+                glyph_id, bytes((ord(glyph_id),)) if ord(glyph_id) < 256 else b"?"
+            ) for glyph_id in glyphs]
+
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
             min_font_size = 4.0       # The mininum font size
@@ -212,21 +216,25 @@ class TextStreamAppearance(BaseStreamAppearance):
                 is_multiline = False  # with matching "selection" with "line" later on.
             if is_multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
+                glyph_paragraphs = [
+                    _unicode_to_glyph_id(paragraph, reverse_cmap) for paragraph in text.splitlines()
+                ]
                 lines, font_size = self._scale_text(
                     font,
                     font_size,
                     leading_factor,
                     field_width,
                     field_height,
-                    text,
+                    glyph_paragraphs,
                     min_font_size
                 )
             else:
                 max_vertical_size = field_height / leading_factor
-                text_width_unscaled = font.text_width(text) / 1000
+                glyphs = _unicode_to_glyph_id(text, reverse_cmap)
+                text_width_unscaled = font.get_text_width(glyphs) / 1000
                 max_horizontal_size = field_width / (text_width_unscaled or 1)
                 font_size = round(max(min(max_vertical_size, max_horizontal_size), min_font_size), 1)
-                lines = [(text_width_unscaled * font_size, text)]
+                lines = [(text_width_unscaled * font_size, glyphs)]
         elif is_comb:
             if max_length and len(text) > max_length:
                 logger_warning(
@@ -239,15 +247,16 @@ class TextStreamAppearance(BaseStreamAppearance):
                     max_length=max_length,
                 )
             # We act as if each character is one line, because we draw it separately later on
-            lines = [(
-                font.text_width(char) * font_size / 1000,
-                char
-            ) for index, char in enumerate(text) if index < (max_length or len(text))]
+            lines = []
+            for index, char in enumerate(text):
+                if index < (max_length or len(text)):
+                    glyphs = _unicode_to_glyph_id(char, reverse_cmap)
+                    lines.append((font.get_text_width(glyphs) * font_size / 1000, glyphs))
         else:
-            lines = [(
-                font.text_width(line) * font_size / 1000,
-                line
-            ) for line in text.replace("\n", "\r").split("\r")]
+            lines = []
+            for line in text.splitlines():
+                glyphs = _unicode_to_glyph_id(line, reverse_cmap)
+                lines.append((font.get_text_width(glyphs) * font_size / 1000, glyphs))
 
         # Set the vertical offset
         if is_multiline:
@@ -263,7 +272,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         current_x_pos: float = 0  # Initial virtual position within the text object.
 
         for line_number, (line_width, line) in enumerate(lines):
-            if selection and line in selection:
+            if selection and line in _unicode_to_glyph_id("".join(selection), reverse_cmap):
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {y_offset - (line_number * font_size * leading_factor) - 1} "
@@ -307,14 +316,13 @@ class TextStreamAppearance(BaseStreamAppearance):
             # This is the X position where the *current line* will start.
             current_x_pos = desired_abs_x_start
 
-            encoded_line: list[bytes] = [
-                font_glyph_byte_map.get(c, c.encode("utf-16-be")) for c in line
-            ]
+            encoded_line = _glyph_id_to_bytes(line, encoding_cmap)
             if any(len(c) >= 2 for c in encoded_line):
                 ap_stream += b"<" + (b"".join(encoded_line)).hex().encode() + b"> Tj\n"
             else:
                 ap_stream += b"(" + b"".join(encoded_line) + b") Tj\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
+
         return ap_stream
 
     def __init__(
@@ -362,32 +370,26 @@ class TextStreamAppearance(BaseStreamAppearance):
         if not font or not font_resource:
             font_name = "/Helv"
             core_font_metrics = CORE_FONT_METRICS["Helvetica"]
+            win_ansi_encoding_list = fill_from_encoding("cp1252")  # WinAnsiEncoding
             font = Font(
                 name="Helvetica",
                 character_map={},
-                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
+                encoding=dict(zip(range(256), win_ansi_encoding_list)),
                 sub_type="Type1",
                 font_descriptor=core_font_metrics.font_descriptor,
-                character_widths=core_font_metrics.character_widths
+                character_widths={
+                    chr(code): core_font_metrics.character_widths[value] for code, value in enumerate(
+                        win_ansi_encoding_list
+                    ) if value in core_font_metrics.character_widths
+                },
             )
+            font.character_widths["default"] = core_font_metrics.character_widths["default"]
             font_resource = font.as_font_resource()
-
-        font_glyph_byte_map: dict[str, bytes] = {}
-        if isinstance(font.encoding, str):
-            font.character_map.pop(-1, None)  # Remove -1 key that does not map a character
-            for k, v in font.character_map.items():
-                font_glyph_byte_map[v] = k.encode(font.encoding)
-        else:
-            font_glyph_byte_map = {v: bytes((k,)) for k, v in font.encoding.items()}
-            font_encoding_rev = {v: bytes((k,)) for k, v in font.encoding.items()}
-            for key, value in font.character_map.items():
-                font_glyph_byte_map[value] = font_encoding_rev.get(key, key)
 
         ap_stream_data = self._generate_appearance_stream_data(
             text,
             selection,
             font,
-            font_glyph_byte_map,
             font_name=font_name,
             font_size=font_size,
             font_color=font_color,

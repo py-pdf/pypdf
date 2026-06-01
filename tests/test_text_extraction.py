@@ -20,6 +20,7 @@ from pypdf._text_extraction._layout_mode._fixed_width_page import (
     text_show_operations,
 )
 from pypdf._text_extraction._layout_mode._text_state_manager import TextStateManager
+from pypdf._text_extraction._layout_mode._text_state_params import TextStateParams
 from pypdf.errors import PdfReadError
 from pypdf.generic import ContentStream, DictionaryObject, NameObject
 
@@ -151,6 +152,7 @@ def test_font_class_to_dict():
             ),
         },
         "character_widths": {"default": 500},
+        "space_char": " ",
         "space_width": 8,
         "interpretable": True,
     }
@@ -596,3 +598,54 @@ def test_fixed_width_page__excessive_needed_spaces(caplog):
 
     assert result == " " * 10_000 + "X"
     assert caplog.messages == ["Limiting excessive whitespace from 13000 to 10000 characters."]
+
+
+def test_page__extract_text__xform__self_references(caplog):
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=10, height=10)
+
+    form = ContentStream(stream=None, pdf=writer)
+    form[NameObject("/Type")] = NameObject("/XObject")
+    form[NameObject("/Subtype")] = NameObject("/Form")
+    form.set_data(b"/X1 Do")
+    form_reference = writer._add_object(form)
+    form[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/X1"): form_reference
+        })
+    })
+
+    page[NameObject("/Resources")] = form[NameObject("/Resources")]
+    content = ContentStream(stream=None, pdf=writer)
+    content.set_data(b"q /X1 Do Q")
+    page.replace_contents(content)
+
+    assert page.extract_text() == ""
+    assert caplog.messages == ["Detected cyclic form XObject reference, skipping /X1."]
+
+
+@pytest.mark.parametrize(
+    "encoding",
+    [
+        "ascii",
+        {65: "A"},
+    ],
+    ids=["string", "dictionary"],
+)
+def test_text_state_params__unicode_decode_error(encoding):
+    font_dictionary = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    font = Font.from_font_resource(font_dictionary)
+    font.encoding = encoding
+
+    # For string: 0xff (255) is out of range for ASCII (0-127)
+    # For dictionary: 0xff (255) is missing from the dict, and bytes((255,)).decode()
+    # throws a UnicodeDecodeError under default UTF-8 rules.
+    parameters = TextStateParams(value=b"\xff", font=font, font_size=10)
+
+    # Assertions: 'replace' mode changes invalid UTF-8 bytes to '\xfffd'.
+    assert parameters.text == "\ufffd"
+    assert parameters._decoded_value == "\ufffd"

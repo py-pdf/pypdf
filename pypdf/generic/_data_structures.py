@@ -121,7 +121,7 @@ class ArrayObject(list[Any], PdfObject):
     ) -> "ArrayObject":
         """Clone object into pdf_dest."""
         try:
-            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
+            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore[union-attr]
                 return self
         except Exception:
             pass
@@ -294,7 +294,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
     ) -> "DictionaryObject":
         """Clone object into pdf_dest."""
         try:
-            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
+            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore[union-attr]
                 return self
         except Exception:
             pass
@@ -736,7 +736,7 @@ class TreeObject(DictionaryObject):
 
             if child == last:
                 return
-            child_ref = child.get(NameObject("/Next"))  # type: ignore
+            child_ref = child.get(NameObject("/Next"))  # type: ignore[union-attr]
             if is_null_or_none(child_ref):
                 return
             child = child_ref.get_object()
@@ -846,7 +846,7 @@ class TreeObject(DictionaryObject):
                 del next_obj[NameObject("/Prev")]
                 self[NameObject("/First")] = next_ref
                 self[NameObject("/Count")] = NumberObject(
-                    self[NameObject("/Count")] - 1  # type: ignore
+                    self[NameObject("/Count")] - 1  # type: ignore[operator]
                 )
 
             else:
@@ -866,7 +866,7 @@ class TreeObject(DictionaryObject):
                 assert cur == last
                 del prev[NameObject("/Next")]
                 self[NameObject("/Last")] = prev_ref
-            self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] - 1)  # type: ignore
+            self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] - 1)  # type: ignore[operator]
 
     def remove_child(self, child: Any) -> None:
         child_obj = child.get_object()
@@ -881,7 +881,7 @@ class TreeObject(DictionaryObject):
         prev_ref = None
         prev = None
         cur_ref: Optional[Any] = self[NameObject("/First")]
-        cur: Optional[dict[str, Any]] = cur_ref.get_object()  # type: ignore
+        cur: Optional[dict[str, Any]] = cur_ref.get_object()  # type: ignore[union-attr]
         last_ref = self[NameObject("/Last")]
         last = last_ref.get_object()
         while cur is not None:
@@ -1296,7 +1296,7 @@ class ContentStream(DecodedStreamObject):
 
         """
         try:
-            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
+            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore[union-attr]
                 return self
         except Exception:
             pass
