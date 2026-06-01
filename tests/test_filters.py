@@ -905,6 +905,14 @@ def test_rle_decode_exception_with_corrupted_stream(caplog):
     assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
 
 
+def test_rle_decode_truncated_after_run_length(caplog):
+    # A replicate run (length byte > 128) that is not followed by the byte to
+    # repeat must be handled like any other truncated input instead of reading
+    # past the end of the data.
+    assert RunLengthDecode.decode(b"\x00A\xff") == b"A"
+    assert caplog.messages == ["Missing EOD in RunLengthDecode, check if output is OK"]
+
+
 def test_decompress():
     data = string.printable.encode("utf-8") + string.printable[::-1].encode("utf-8")
     compressed = FlateDecode.encode(data)
