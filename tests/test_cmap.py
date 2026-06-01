@@ -506,8 +506,8 @@ def _make_japanese_cmap_pdf(cmap_name: str, encoding: str) -> bytes:
 @pytest.mark.parametrize(
     ("cmap_name", "python_codec"),
     [
-        ("/90ms-RKSJ-H",    "cp932"),
-        ("/90ms-RKSJ-V",    "cp932"),
+        ("/90ms-RKSJ-H", "cp932"),
+        ("/90ms-RKSJ-V", "cp932"),
         ("/UniJIS-UTF16-H", "utf-16-be"),
         ("/UniJIS-UTF16-V", "utf-16-be"),
     ],
