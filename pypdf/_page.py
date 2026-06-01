@@ -663,7 +663,7 @@ class PageObject(DictionaryObject):
         # Add inline images and Do-referenced /Image objects from _content_stream_images
         # Inline images (~0~, ~1~...) always added; Do names filtered by /Image subtype
         # to exclude non-image XObjects (forms, etc.) from the images list
-        # Only check subtype at top level (ancest is empty) — recursive calls have
+        # Only check subtype at top level (ancest is empty) - recursive calls have
         # form-level XObjects where page-level keys won't be found
         for object_name, object_value in self._content_stream_images.items():
             if object_name not in deduplicated:
