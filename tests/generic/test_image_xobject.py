@@ -278,8 +278,36 @@ def test_bits2byte__limit() -> None:
         bits2byte(data=b"TEST", size=(9000, 8500), bits=8)
 
 
-def test_bits2byte__truncated_data(caplog) -> None:
+def test_bits2byte__truncated_data(caplog: pytest.LogCaptureFixture) -> None:
     # 4x4 image at 2 bits per sample needs 4 bytes; provide only 1.
     result = bits2byte(data=b"\x00", size=(4, 4), bits=2)
     assert result == bytes(16)
+    assert "Image data is not rectangular. Adding padding." in caplog.text
+
+
+def test_handle_flate__truncated_2bit_image(caplog: pytest.LogCaptureFixture) -> None:
+    # A 3x3 indexed image at 2 bits per sample needs 3 bytes; provide only 1.
+    # Padding the missing bytes lets the image still be loaded instead of
+    # raising IndexError out of bits2byte.
+    lookup = DecodedStreamObject()
+    lookup.set_data(bytes([0, 0, 0, 10, 10, 10, 20, 20, 20, 30, 30, 30]))
+    result = _handle_flate(
+        size=(3, 3),
+        data=b"\xe4",
+        mode="2bits",
+        color_space=ArrayObject(
+            [NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(3), lookup]
+        ),
+        colors=1,
+        obj_as_text="dummy",
+    )
+    image = result[0]
+    image.load()
+    assert image.mode == "RGB"
+    assert image.size == (3, 3)
+    assert get_image_data(image) == (
+        (30, 30, 30), (20, 20, 20), (10, 10, 10),
+        (0, 0, 0), (0, 0, 0), (0, 0, 0),
+        (0, 0, 0), (0, 0, 0), (0, 0, 0),
+    )
     assert "Image data is not rectangular. Adding padding." in caplog.text
