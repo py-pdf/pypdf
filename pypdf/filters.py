@@ -660,7 +660,9 @@ class CCITTFaxDecode:
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
-        tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
+        # TIFF SHORT and LONG fields are unsigned (TIFF 6.0, §2); pack them with
+        # unsigned codes so dimensions with the high bit set do not overflow.
+        tiff_header_struct = "<2sHLH" + "HHLL" * 8 + "H"
         tiff_header = struct.pack(
             tiff_header_struct,
             b"II",  # Byte order indication: Little endian

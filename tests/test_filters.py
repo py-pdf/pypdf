@@ -251,6 +251,18 @@ def test_ccitt_fax_decode():
     )
 
 
+def test_ccitt_fax_decode__unsigned_columns():
+    # /Columns above 2**31 - 1 is a valid unsigned TIFF LONG and must not
+    # overflow the packed header.
+    data = b"\x00\x01\x02\x03"
+    parameters = DictionaryObject(
+        {"/K": NumberObject(-1), "/Columns": NumberObject(3_000_000_000)}
+    )
+    result = CCITTFaxDecode.decode(data, parameters, height=10)
+    assert result.endswith(data)
+    assert result[18:22] == (3_000_000_000).to_bytes(4, "little")
+
+
 @pytest.mark.enable_socket
 def test_decompress_zlib_error(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-952445.pdf")))
