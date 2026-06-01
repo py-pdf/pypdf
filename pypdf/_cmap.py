@@ -34,6 +34,11 @@ _predefined_cmap: dict[str, str] = {
     "/UniCNS-UTF16-V": "utf-16-be",
     "/UniGB-UTF16-H": "gb18030",
     "/UniGB-UTF16-V": "gb18030",
+    # Japanese CMaps (PDF Reference 1.7, Appendix H)
+    "/90ms-RKSJ-H": "cp932",  # Shift-JIS (JIS X 0208-1990), horizontal
+    "/90ms-RKSJ-V": "cp932",  # Shift-JIS (JIS X 0208-1990), vertical
+    "/UniJIS-UTF16-H": "utf-16-be",  # Unicode UTF-16BE -> JIS, horizontal
+    "/UniJIS-UTF16-V": "utf-16-be",  # Unicode UTF-16BE -> JIS, vertical
     # UCS2 in code
 }
 

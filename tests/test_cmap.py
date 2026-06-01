@@ -11,12 +11,15 @@ from pypdf._font import Font
 from pypdf.errors import LimitReachedError
 from pypdf.generic import (
     ArrayObject,
+    DecodedStreamObject,
     DictionaryObject,
     EncodedStreamObject,
     IndirectObject,
     NameObject,
     NullObject,
+    NumberObject,
     StreamObject,
+    TextStringObject,
 )
 
 from . import RESOURCE_ROOT, get_data_from_url
@@ -439,3 +442,82 @@ def test_parse_bfchar__iteration_limit():
             map_dict=map_dict, int_entry=int_entry,
         )
     assert map_dict == {}
+
+
+def _make_japanese_cmap_pdf(cmap_name: str, encoding: str) -> bytes:
+    """Minimal PDF with a CIDFont using *cmap_name* as /Encoding, no /ToUnicode."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    cid_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/CIDFontType2"),
+        NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
+        NameObject("/CIDSystemInfo"): DictionaryObject({
+            NameObject("/Registry"): TextStringObject("Adobe"),
+            NameObject("/Ordering"): TextStringObject("Japan1"),
+            NameObject("/Supplement"): NumberObject(2),
+        }),
+        NameObject("/DW"): NumberObject(1000)
+    })
+    cid_font_ref = writer._add_object(cid_font)
+
+    type0_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
+        NameObject("/Encoding"): NameObject(cmap_name),
+        NameObject("/DescendantFonts"): ArrayObject([cid_font_ref])
+    })
+    type0_font_ref = writer._add_object(type0_font)
+
+    type1_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+    })
+    type1_font_ref = writer._add_object(type1_font)
+
+    char_hex = "日本語テスト".encode(encoding).hex().upper()
+    content_data = (
+        "BT\n/F0 14 Tf\n72 720 Td\n(Hello ASCII) Tj\n"
+        f"0 -28 Td\n/F1 14 Tf\n<{char_hex}> Tj\nET\n"
+    ).encode("latin-1")
+    content_stream = DecodedStreamObject()
+    content_stream.set_data(content_data)
+    content_ref = writer._add_object(content_stream)
+
+    page.update({
+        NameObject("/Contents"): content_ref,
+        NameObject("/Resources"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F0"): type1_font_ref,
+                NameObject("/F1"): type0_font_ref
+            })
+        })
+    })
+
+    buf = BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+@pytest.mark.parametrize(
+    ("cmap_name", "python_codec"),
+    [
+        ("/90ms-RKSJ-H", "cp932"),
+        ("/90ms-RKSJ-V", "cp932"),
+        ("/UniJIS-UTF16-H", "utf-16-be"),
+        ("/UniJIS-UTF16-V", "utf-16-be"),
+    ],
+    ids=["90ms-RKSJ-H", "90ms-RKSJ-V", "UniJIS-UTF16-H", "UniJIS-UTF16-V"],
+)
+def test_japanese_cmap_encodings(cmap_name: str, python_codec: str, caplog) -> None:
+    """Japanese predefined CMaps must be decoded correctly. Resolves #3799."""
+    pdf_bytes = _make_japanese_cmap_pdf(cmap_name, python_codec)
+    reader = PdfReader(BytesIO(pdf_bytes))
+    text = reader.pages[0].extract_text()
+    assert "日本語テスト" in text, f"Japanese text garbled for {cmap_name}"
+    assert "Hello ASCII"  in text, f"ASCII baseline broken for {cmap_name}"
+    assert "Advanced encoding" not in caplog.text

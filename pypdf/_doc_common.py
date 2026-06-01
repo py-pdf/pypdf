@@ -29,11 +29,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import struct
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, Iterator, Mapping
 from datetime import datetime
 from typing import (
     Any,
+    NoReturn,
     Optional,
     Union,
     cast,
@@ -255,7 +256,7 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.KEYWORDS)
 
 
-class PdfDocCommon:
+class PdfDocCommon(ABC):
     """
     Common functions from PdfWriter and PdfReader objects.
 
@@ -311,6 +312,7 @@ class PdfDocCommon:
         return retval
 
     @property
+    @abstractmethod
     def xmp_metadata(self) -> Optional[XmpInformation]:
         ...  # pragma: no cover
 
@@ -1273,30 +1275,13 @@ class PdfDocCommon:
 
     def decode_permissions(
         self, permissions_code: int
-    ) -> dict[str, bool]:  # pragma: no cover
+    ) -> NoReturn:  # pragma: no cover
         """Take the permissions as an integer, return the allowed access."""
         deprecation_with_replacement(
             old_name="decode_permissions",
             new_name="user_access_permissions",
             removed_in="5.0.0",
         )
-
-        permissions_mapping = {
-            "print": UserAccessPermissions.PRINT,
-            "modify": UserAccessPermissions.MODIFY,
-            "copy": UserAccessPermissions.EXTRACT,
-            "annotations": UserAccessPermissions.ADD_OR_MODIFY,
-            "forms": UserAccessPermissions.FILL_FORM_FIELDS,
-            # Do not fix typo, as part of official, but deprecated API.
-            "accessability": UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
-            "assemble": UserAccessPermissions.ASSEMBLE_DOC,
-            "print_high_quality": UserAccessPermissions.PRINT_TO_REPRESENTATION,
-        }
-
-        return {
-            key: permissions_code & flag != 0
-            for key, flag in permissions_mapping.items()
-        }
 
     @property
     def user_access_permissions(self) -> Optional[UserAccessPermissions]:
