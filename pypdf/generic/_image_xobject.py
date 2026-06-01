@@ -133,9 +133,9 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
     mask = (1 << bits) - 1
 
     required = size[1] * ((size[0] * bits + 7) // 8)
-    if len(data) < required:
+    if (length := len(data)) < required:
         logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
-        data += b"\x00" * (required - len(data))
+        data += b"\x00" * (required - length)
 
     data_index = 0
     bit = 8 - bits
