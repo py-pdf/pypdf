@@ -633,9 +633,6 @@ class PageObject(DictionaryObject):
             # Forms without XObject resources have no images inside them
             if len(ancest) > 0:
                 return []
-            # Top-level: only return inline images (Do objects handled below)
-            if self._content_stream_images is None:
-                return []
             # for inline images, cache dict entries are not None
             return [image_name for image_name, image_value in self._content_stream_images.items() if image_value]
 
