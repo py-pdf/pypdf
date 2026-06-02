@@ -823,12 +823,21 @@ class PdfReader(PdfDocCommon):
                 # missing or corrupt (for example a truncated 'tartxref').
                 # Some producers append a broken trailing cross-reference
                 # pointer while an earlier, intact 'startxref' from a previous
-                # revision is still present. Rather than giving up, scan
-                # further back for that pointer (#3238).
+                # revision is still present. Recovering from this violates the
+                # standard, so only attempt it in non-strict mode (#3238).
+                if self.strict:
+                    raise PdfReadError("startxref not found")
                 startxref = self._find_previous_startxref_pos(stream)
         return startxref
 
-    def _find_previous_startxref_pos(self, stream: StreamType) -> int:
+    # Upper bound on the number of lines _find_previous_startxref_pos scans
+    # backwards while recovering a corrupt trailing startxref pointer. Kept
+    # fixed and non-configurable so a crafted file cannot trigger an unbounded
+    # backwards scan.
+    _MAX_STARTXREF_RECOVERY_LINES = 1000
+
+    @classmethod
+    def _find_previous_startxref_pos(cls, stream: StreamType) -> int:
         """
         Recover the most recent intact ``startxref`` pointer by scanning
         backwards from the current position.
@@ -837,33 +846,38 @@ class PdfReader(PdfDocCommon):
         the final ``%%EOF`` is corrupt (#3238). The offset always appears on
         the line directly below the keyword, so the value read immediately
         before encountering ``startxref`` (while moving backwards) is returned.
+        At most ``_MAX_STARTXREF_RECOVERY_LINES`` lines are inspected.
 
         Args:
-            stream:
+            stream: The PDF byte stream, positioned just above the corrupt
+                trailing pointer.
 
         Returns:
-            The bytes offset
+            The bytes offset of the recovered ``startxref``.
 
         """
         offset: Optional[int] = None
-        while stream.tell() > 0:
-            line = read_previous_line(stream)
-            if line.startswith(b"startxref"):
-                if len(line) > 9:
-                    # 'startxref' on the same line as the offset
-                    return int(line[9:].strip())
-                if offset is not None:
-                    logger_warning(
-                        "found startxref pointing to a previous revision after "
-                        "a corrupt one",
-                        source=__name__,
-                    )
-                    return offset
+        for _ in range(cls._MAX_STARTXREF_RECOVERY_LINES):
+            if stream.tell() <= 0:
                 break
-            try:
-                offset = int(line)
-            except ValueError:
-                offset = None
+            line = read_previous_line(stream)
+            if not line.startswith(b"startxref"):
+                try:
+                    offset = int(line)
+                except ValueError:
+                    offset = None
+                continue
+            if len(line) > 9:
+                # 'startxref' on the same line as the offset
+                return int(line[9:].strip())
+            if offset is not None:
+                logger_warning(
+                    "found startxref pointing to a previous revision after "
+                    "a corrupt one",
+                    source=__name__,
+                )
+                return offset
+            break
         raise PdfReadError("startxref not found")
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:

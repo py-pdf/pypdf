@@ -422,6 +422,11 @@ def test_startxref_corrupt_trailing_pointer(caplog):
         "found startxref pointing to a previous revision after a corrupt one",
     ]
 
+    # Recovering from the corrupt pointer violates the standard, so it must
+    # only happen in non-strict mode; strict mode raises instead.
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(io.BytesIO(pdf_data), strict=True)
+
 
 @pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
