@@ -182,6 +182,14 @@ def test_image_new_property():
     assert list(PageObject(None, None).images) == []
 
 
+@pytest.mark.enable_socket
+def test_get_image_keyerror_for_non_image_xobject():
+    """Test that accessing an XObject which is not a image directly raises KeyError."""
+    reader = PdfReader(BytesIO(get_data_from_url(name="pdf_font_garbled.pdf")))
+    with pytest.raises(KeyError):
+        reader.pages[0].images["/TPL1"]  # /TPL1 is a form, not /Image
+
+
 @pytest.mark.parametrize(
     ("src", "page_index", "image_key", "expected"),
     [
