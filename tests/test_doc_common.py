@@ -20,6 +20,7 @@ from pypdf.generic import (
     EncodedStreamObject,
     NameObject,
     NullObject,
+    NumberObject,
     TextStringObject,
     ViewerPreferences,
 )
@@ -473,6 +474,21 @@ def test_flatten__cyclic_references():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Detected cyclic page references\.$"):
         reader._flatten()
+
+
+def test_flatten__pages_without_kids():
+    # A malformed /Pages node may advertise "/Count 0" without providing any
+    # /Kids entry. Flattening such a page tree used to raise a bare
+    # ``KeyError: '/Kids'`` instead of being handled gracefully (#3811).
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    pages_object = reader.root_object["/Pages"]
+    del pages_object["/Kids"]
+    pages_object[NameObject("/Count")] = NumberObject(0)
+    reader.flattened_pages = None
+
+    assert len(reader.pages) == 0
+    assert list(reader.pages) == []
 
 
 @pytest.mark.enable_socket
