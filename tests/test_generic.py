@@ -1280,19 +1280,32 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
     assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
 
 
-def test_inline_image_at_end_of_stream():
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+def test_inline_image_at_end_of_stream(tail):
     # An inline image whose `EI` marker is the very end of the content stream
     # (no trailing whitespace or operator) must not raise (#3468).
     image = b"abcdefghijklmnop"  # 4 * 4 * 1 byte
-    for tail in (b"", b"\n", b"\nQ\n"):
-        b = b"q 100 0 0 100 100 100 cm\nBI\n/W 4 /H 4 /CS /G\nID\n" + image + b"\nEI" + tail
-        ec = DecodedStreamObject()
-        ec.set_data(b)
-        co = ContentStream(ec, None)
-        operations = co.operations
-        inline = [op for op in operations if op[1] == b"INLINE IMAGE"]
-        assert len(inline) == 1
-        assert inline[0][0]["data"] == image
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 4 /H 4 /CS /G\nID\n" + image + b"\nEI" + tail
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert inline_images[0][0]["data"] == image
+
+
+def test_inline_image_at_end_of_stream_default_extractor():
+    # An unrecognized colorspace forces extraction through
+    # `extract_inline_default`, which must also accept an `EI` marker at the
+    # very end of the stream without raising (#3468).
+    image = b"abcdefghijklmnop"  # 4 * 4 * 1 byte
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 4 /H 4 /CS /Unknown\nID\n" + image + b"\nEI"
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert image in inline_images[0][0]["data"]
 
 
 def test_missing_hashbin():
