@@ -3,6 +3,7 @@
 import re
 import shutil
 import subprocess
+import unicodedata
 from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -1847,7 +1848,7 @@ def test_update_form_fields3(caplog, tmp_path):
     extracted_text = reader.pages[0].extract_text()
     for expected_value in data.values():
         if expected_value != "شهرزاد":
-            assert expected_value in extracted_text
+            assert unicodedata.normalize("NFKC", expected_value) in extracted_text
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
 
