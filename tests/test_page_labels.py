@@ -176,7 +176,7 @@ def test_get_label_from_nums__empty_nums_list():
     assert get_label_from_nums(dictionary_object, 13) == "14"
 
 
-def test_get_label_from_nums__truncated_pair():
+def test_get_label_from_nums__truncated_pair(caplog):
     # Odd-length /Nums: the trailing key has no value object.
     value = DictionaryObject()
     value[NameObject("/S")] = NameObject("/D")
@@ -185,6 +185,7 @@ def test_get_label_from_nums__truncated_pair():
         [NumberObject(0), value, NumberObject(5)]
     )
     assert get_label_from_nums(dictionary_object, 7) == "8"
+    assert "Ignoring last /Nums key without a value." in caplog.text
 
 
 def test_index2label__empty_kids_list():

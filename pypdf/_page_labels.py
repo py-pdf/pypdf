@@ -133,13 +133,19 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     # analogously to the arrangement of keys in a name tree
     # as described in 7.9.6, "Name Trees."
     nums = cast(ArrayObject, dictionary_object["/Nums"])
+    nums_length = len(nums)
     i = 0
     value = None
     start_index = 0
-    while i + 1 < len(nums):
+    while i < nums_length:
+        if i + 1 >= nums_length:
+            logger_warning(
+                "Ignoring last /Nums key without a value.", source=__name__
+            )
+            break
         start_index = nums[i]
         value = nums[i + 1].get_object()
-        if i + 2 == len(nums):
+        if i + 2 == nums_length:
             break
         if nums[i + 2] > index:
             break
