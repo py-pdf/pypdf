@@ -857,24 +857,13 @@ class PageObject(DictionaryObject):
                 )
         # Process Do-referenced objects first (images + forms, no subtype check)
         files: dict[str, Optional[ImageFile]] = {}
-        xobjs: Optional[DictionaryObject] = None
-        try:
-            resources = cast(DictionaryObject, self[PG.RESOURCES])
-            xobjs = cast(DictionaryObject, resources[RES.XOBJECT])
-        except KeyError:
-            pass  # Continue with inline images only
-
-        if xobjs is None:
-            # No XOBJECT resources, skip Do-referenced images
-            pass
-        else:
-            for do_name in do_image_names:
-                # Handle both NameObject (str) and bytes
-                if isinstance(do_name, bytes):
-                    do_name_str = do_name.decode()
-                else:
-                    do_name_str = str(do_name)
-                files[do_name_str] = None  # ALL Do-referenced objects (images + forms)
+        for do_name in do_image_names:
+            # Handle both NameObject (str) and bytes
+            if isinstance(do_name, bytes):
+                do_name_str = do_name.decode()
+            else:
+                do_name_str = str(do_name)
+            files[do_name_str] = None  # ALL Do-referenced objects (images + forms)
 
         # Then process inline images
         for num, ii in enumerate(imgs_data):
