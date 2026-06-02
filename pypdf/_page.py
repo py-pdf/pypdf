@@ -819,10 +819,6 @@ class PageObject(DictionaryObject):
         Returns:
             Dictionary mapping names to ImageFile instances (inline) or None (Do-referenced).
         """
-        # Idempotent: if already parsed, return cached result
-        if self._content_stream_images is not None:
-            return self._content_stream_images
-
         content = self.get_contents()
         if is_null_or_none(content):
             return {}
