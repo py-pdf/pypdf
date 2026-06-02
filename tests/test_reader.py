@@ -374,6 +374,55 @@ def test_issue297(caplog):
     reader.pages[0]
 
 
+def test_startxref_corrupt_trailing_pointer(caplog):
+    """
+    A corrupt trailing startxref keyword (e.g. ``tartxref``) must not prevent
+    reading when an earlier, intact startxref from a previous revision is still
+    present further up the file. See #3238.
+    """
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << /Root 5 0 R /Size 6 >>\n"
+        b"startxref\n"
+        b"%d\n"
+        b"%%%%EOF\n"
+        # A corrupt, trailing cross-reference pointer left behind by a broken
+        # incremental update: the keyword has lost its leading 's'.
+        b"tartxref\n"
+        b"99999\n"
+        b"%%%%EOF"
+    )
+    pdf_data = pdf_data % (
+        # - 1 below in the find because of the double % at the beginning
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"4 0 obj") - 1,
+        pdf_data.find(b"5 0 obj") - 1,
+        pdf_data.find(b"xref") - 1,
+    )
+    reader = PdfReader(io.BytesIO(pdf_data))
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox.width == 2550
+    assert normalize_warnings(caplog.text) == [
+        "found startxref pointing to a previous revision after a corrupt one",
+    ]
+
+
 @pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
     [

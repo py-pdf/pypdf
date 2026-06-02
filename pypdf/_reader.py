@@ -819,8 +819,52 @@ class PdfReader(PdfDocCommon):
         else:
             line = read_previous_line(stream)
             if not line.startswith(b"startxref"):
-                raise PdfReadError("startxref not found")
+                # The 'startxref' keyword expected just above the offset is
+                # missing or corrupt (for example a truncated 'tartxref').
+                # Some producers append a broken trailing cross-reference
+                # pointer while an earlier, intact 'startxref' from a previous
+                # revision is still present. Rather than giving up, scan
+                # further back for that pointer (#3238).
+                startxref = self._find_previous_startxref_pos(stream)
         return startxref
+
+    def _find_previous_startxref_pos(self, stream: StreamType) -> int:
+        """
+        Recover the most recent intact ``startxref`` pointer by scanning
+        backwards from the current position.
+
+        This is used as a fallback when the ``startxref`` keyword belonging to
+        the final ``%%EOF`` is corrupt (#3238). The offset always appears on
+        the line directly below the keyword, so the value read immediately
+        before encountering ``startxref`` (while moving backwards) is returned.
+
+        Args:
+            stream:
+
+        Returns:
+            The bytes offset
+
+        """
+        offset: Optional[int] = None
+        while stream.tell() > 0:
+            line = read_previous_line(stream)
+            if line.startswith(b"startxref"):
+                if len(line) > 9:
+                    # 'startxref' on the same line as the offset
+                    return int(line[9:].strip())
+                if offset is not None:
+                    logger_warning(
+                        "found startxref pointing to a previous revision after "
+                        "a corrupt one",
+                        source=__name__,
+                    )
+                    return offset
+                break
+            try:
+                offset = int(line)
+            except ValueError:
+                offset = None
+        raise PdfReadError("startxref not found")
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
