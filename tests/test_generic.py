@@ -1280,6 +1280,21 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
     assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
 
 
+def test_inline_image_at_end_of_stream():
+    # An inline image whose `EI` marker is the very end of the content stream
+    # (no trailing whitespace or operator) must not raise (#3468).
+    image = b"abcdefghijklmnop"  # 4 * 4 * 1 byte
+    for tail in (b"", b"\n", b"\nQ\n"):
+        b = b"q 100 0 0 100 100 100 cm\nBI\n/W 4 /H 4 /CS /G\nID\n" + image + b"\nEI" + tail
+        ec = DecodedStreamObject()
+        ec.set_data(b)
+        co = ContentStream(ec, None)
+        operations = co.operations
+        inline = [op for op in operations if op[1] == b"INLINE IMAGE"]
+        assert len(inline) == 1
+        assert inline[0][0]["data"] == image
+
+
 def test_missing_hashbin():
     assert NullObject().hash_bin() == hash((NullObject,))
     assert hash(NullObject()) == NullObject().hash_bin()
