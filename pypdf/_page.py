@@ -855,15 +855,10 @@ class PageObject(DictionaryObject):
                     f"{ope!r} operator met whereas not expected, "
                     "please share use case with pypdf dev team"
                 )
-        # Process Do-referenced objects first (images + forms, no subtype check)
+
         files: dict[str, Optional[ImageFile]] = {}
-        for do_name in do_image_names:
-            # Handle both NameObject (str) and bytes
-            if isinstance(do_name, bytes):
-                do_name_str = do_name.decode()
-            else:
-                do_name_str = str(do_name)
-            files[do_name_str] = None  # ALL Do-referenced objects (images + forms)
+        # Process Do-referenced objects first (images + forms, no subtype check)
+        files = dict.fromkeys(list(map(str, do_image_names)), None)
 
         # Then process inline images
         for num, ii in enumerate(imgs_data):
