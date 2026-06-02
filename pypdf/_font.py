@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, cast
@@ -612,13 +613,17 @@ class Font:
         #    [first_cid [w1 w2 w3]] or [first last width]
         # Here we choose the first format and simply provide one array with one width for every cid.
         for gid_str, actual_char in self.character_map.items():
-            uni_point = ord(actual_char)
+            # Make sure that we do not include arabic presentation form characters and such.
+            # Note that, in some cases, unicodedata.normalize() might split a ligature, resulting
+            # in multiple characters.
+            normalized_chars = unicodedata.normalize("NFKC", actual_char)
+            uni_points = [ord(char) for char in normalized_chars]
             # Only deal with Basic Multilingual Plane characters.
             # TODO: Add all characters. However, this requires widths reworking first.
-            if uni_point <= 0xFFFF:
+            if all(uni_point <= 0xFFFF for uni_point in uni_points):
                 cid = ord(gid_str)
                 cid_hex = f"{cid:04X}"
-                uni_hex = f"{uni_point:04X}"
+                uni_hex = "".join(f"{uni_point:04X}" for uni_point in uni_points)
                 unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
 
                 width = self.character_widths.get(gid_str, self.character_widths["default"])
