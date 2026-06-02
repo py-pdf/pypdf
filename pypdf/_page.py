@@ -784,8 +784,7 @@ class PageObject(DictionaryObject):
         if value is None:
             self._content_stream_images = None
         else:
-            if self._content_stream_images is None:
-                self._content_stream_images = {}
+            assert self._content_stream_images is not None, "Can't edit inline_images before accessing images"
             self._content_stream_images.update(value)
 
     def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
