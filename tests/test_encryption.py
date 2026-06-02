@@ -216,6 +216,17 @@ def test_encrypt_decrypt_with_cipher_class(cryptcls):
     assert crypt.decrypt(crypt.encrypt(message)) == message
 
 
+def test_make_crypt_filter_large_object_number():
+    """Object/generation numbers above the signed 32-bit range do not raise."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones-encrypted-256.pdf", password="password")
+    encryption = reader._encryption
+    # Object and generation numbers are unsigned and may exceed 2**31 in a
+    # crafted file; only their low-order bytes are used.
+    for idnum in (5, 2**31, 2**32 + 1):
+        encryption._make_crypt_filter(idnum, 0)
+    encryption._make_crypt_filter(5, 2**31)
+
+
 def test_attempt_decrypt_unencrypted_pdf():
     """Attempting to decrypt an unencrypted PDF raises a PdfReadError."""
     path = RESOURCE_ROOT / "crazyones.pdf"
