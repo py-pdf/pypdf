@@ -654,25 +654,15 @@ class PageObject(DictionaryObject):
         # Removes duplicates and preserves order
         deduplicated = []
         for item in lst:
+            # Useful for pages in which the same X-Object is referenced multiple times
             if item not in deduplicated:
                 deduplicated.append(item)
 
-        # Add inline images and Do-referenced /Image objects from _content_stream_images
-        # Inline images (~0~, ~1~...) always added; Do names filtered by /Image subtype
-        # to exclude non-image XObjects (forms, etc.) from the images list
-        # Only check subtype at top level (ancest is empty) - recursive calls have
-        # form-level XObjects where page-level keys won't be found
+        # Add inline images from _content_stream_images
         for object_name, object_value in self._content_stream_images.items():
-            if object_name not in deduplicated:
-                if object_value: # inline images have cache populated
-                    deduplicated.append(object_name)
-                elif len(ancest) == 0:
-                    xobj_candidate = x_object.get(object_name)
-                    if (
-                        isinstance(xobj_candidate, StreamObject)
-                        and xobj_candidate.get(ImageAttributes.SUBTYPE, "") == "/Image"
-                    ):
-                        deduplicated.append(object_name)
+            # inline images have cache populated
+            if object_name not in deduplicated and object_value:
+                deduplicated.append(object_name)
 
         return deduplicated
 
