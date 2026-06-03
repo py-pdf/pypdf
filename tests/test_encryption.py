@@ -216,14 +216,17 @@ def test_encrypt_decrypt_with_cipher_class(cryptcls):
     assert crypt.decrypt(crypt.encrypt(message)) == message
 
 
-@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 @pytest.mark.parametrize("idnum", [5, 2**31, 2**32 + 1])
 def test_make_crypt_filter_large_object_number(idnum):
-    """Object numbers above the signed 32-bit range do not raise."""
-    reader = PdfReader(RESOURCE_ROOT / "crazyones-encrypted-256.pdf", password="password")
-    # Object numbers are unsigned and may exceed 2**31 in a crafted file;
-    # only their low-order bytes are used.
-    reader._encryption._make_crypt_filter(idnum, 0)
+    """Object numbers above the signed 32-bit range use only their low-order bytes."""
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r3-user-password.pdf", password="asdfzxcv")
+    encryption = reader._encryption
+    # Object numbers are unsigned and may exceed 2**31 in a crafted file. Only
+    # the low-order three bytes feed the per-object key, so a large number must
+    # not raise and must encrypt identically to its masked equivalent.
+    reference = encryption._make_crypt_filter(idnum & 0xFFFFFF, 0)
+    crypt_filter = encryption._make_crypt_filter(idnum, 0)
+    assert crypt_filter.stm_crypt.encrypt(b"hello world") == reference.stm_crypt.encrypt(b"hello world")
 
 
 def test_attempt_decrypt_unencrypted_pdf():
