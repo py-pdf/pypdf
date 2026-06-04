@@ -1000,8 +1000,8 @@ class Encryption:
            that is stored as the first 16 bytes of the encrypted stream or string.
            The output is the encrypted data to be stored in the PDF file.
         """
-        pack1 = struct.pack("<i", idnum)[:3]
-        pack2 = struct.pack("<i", generation)[:2]
+        pack1 = (idnum & 0xFFFFFF).to_bytes(3, "little")
+        pack2 = (generation & 0xFFFF).to_bytes(2, "little")
 
         assert self._key
         key = self._key
