@@ -33,9 +33,9 @@ if TYPE_CHECKING:
 class PageTrigger(StrEnum):
     """Trigger event entries in a page object's additional-actions dictionary."""
     OPEN = "open"
-    """A :py:class:`~pypdf.actions.PageTrigger` object triggering an action when the page is opened."""
+    """Trigger object triggering an action when the page is opened."""
     CLOSE = "close"
-    """A :py:class:`~pypdf.actions.PageTrigger` object triggering an action when the page is closed."""
+    """Trigger object triggering an action when the page is closed."""
 
 
 class Action(DictionaryObject, ABC):
@@ -54,9 +54,9 @@ class Action(DictionaryObject, ABC):
         Create a new action and add it to the page.
 
         Args:
-            page: The page to add the action.
-            trigger: A :py:class:`~pypdf.actions.PageTrigger` object.
-            action: A :py:class:`~pypdf.actions.Action` object.
+            page: The page to add the action to.
+            trigger: An open or close trigger.
+            action: The action to be done.
         """
         trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
 
@@ -71,8 +71,8 @@ class Action(DictionaryObject, ABC):
             page[NameObject("/AA")] = DictionaryObject()
 
         if not isinstance(page["/AA"].get_object(), DictionaryObject):
+            current_type = type(page["/AA"])
             if page.pdf is not None and getattr(page.pdf, "strict", False):
-                current_type = type(page["/AA"])
                 raise ParseError(
                     f"The AA entry of the page should be a DictionaryObject. "
                     f"It currently is a {current_type}."
@@ -80,7 +80,7 @@ class Action(DictionaryObject, ABC):
             logger_warning(
                 "The AA entry of the page should be a DictionaryObject. It currently is a %(type)s.",
                 source=__name__,
-                type=type(page["/AA"])
+                type=current_type
             )
             return
 
@@ -138,11 +138,11 @@ class Action(DictionaryObject, ABC):
     @classmethod
     def _delete(cls, page: "PageObject", trigger: PageTrigger) -> None:
         """
-        Delete an object on the page.
+        Delete an action from the page.
 
         Args:
-            page: The page to add the action.
-            trigger: A :py:class:`~pypdf.actions.PageTrigger` object.
+            page: The page to delete the action.
+            trigger: An open or close trigger.
         """
         if "/AA" not in page:
             return

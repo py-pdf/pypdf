@@ -2175,7 +2175,7 @@ class PageObject(DictionaryObject):
 
         Args:
             trigger: The action trigger to use.
-            action: A :py:class:`~pypdf.actions.Action` object.
+            action: The action to be done.
 
         Example:
             >>> from pypdf import PdfWriter
@@ -2191,10 +2191,10 @@ class PageObject(DictionaryObject):
 
     def delete_action(self, trigger: PageTrigger) -> None:
         """
-        Delete an action associated with an open or close trigger event of this page.
+        Delete all actions associated with an open or close trigger event of this page.
 
         Args:
-            trigger: A :py:class:`~pypdf.actions.PageTrigger` object.
+            trigger: An open or close trigger.
 
         Example:
             >>> from pypdf import PdfWriter

@@ -22,7 +22,7 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
     # Add an open action
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -32,11 +32,11 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert "/AA" not in page
 
     # Add a close action
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/C": {
             "/Type": "/Action",
@@ -46,12 +46,12 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
     # Add an open and close action
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Page opened');"))
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('Page closed');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Page opened');"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('Page closed');"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -67,7 +67,7 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     page.delete_action(PageTrigger("close"))
     assert page.get("/AA") is None
 
@@ -77,7 +77,7 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
 
     # Add an open action with a null object as the AA entry
     page[NameObject("/AA")] = NullObject()
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -87,12 +87,12 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
     # Add a close action with a null object as the AA entry
     page[NameObject("/AA")] = NullObject()
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/C": {
             "/Type": "/Action",
@@ -102,13 +102,13 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
     # Add an open and close action with a null object as the AA entry
     page[NameObject("/AA")] = NullObject()
     page.add_action(PageTrigger("open"), JavaScript("app.alert('Page opened');"))
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('Page closed');"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('Page closed');"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -124,8 +124,8 @@ def test_page_add_action__with_existing_null_object(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.OPEN)
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
 
@@ -141,7 +141,7 @@ def test_page_add_action__with_existing_array_object__strict():
         match=rf"^The AA entry of the page should be a DictionaryObject. "
               rf"It currently is a {current_type}.$"
     ):
-        page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+        page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert page.get("/AA") == ArrayObject()
 
     # Add a close action with an array object as the AA entry
@@ -154,7 +154,7 @@ def test_page_add_action__with_existing_array_object__strict():
                 rf"It currently is a {current_type}.$"
             )
     ):
-        page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+        page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert page.get("/AA") == ArrayObject()
 
 
@@ -163,7 +163,7 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
 
     # Add an open action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     current_type = type(ArrayObject())
     assert caplog.messages[0] == (
         rf"The AA entry of the page should be a DictionaryObject. It currently is a {current_type}."
@@ -172,7 +172,7 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
 
     # Add a close action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     current_type = type(ArrayObject())
     assert caplog.messages[0] == (
         rf"The AA entry of the page should be a DictionaryObject. It currently is a {current_type}."
@@ -190,8 +190,8 @@ def test_page_add_action__edge_cases(pdf_file_writer):
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")
-        page.add_action(PageTrigger("open"), JavaScript('app.alert("This is page " + this.pageNum);'))
-    page.delete_action(PageTrigger("open"))
+        page.add_action(PageTrigger.OPEN, JavaScript('app.alert("This is page " + this.pageNum);'))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
     # Add a close action where a non-dictionary object is the entry in the trigger
@@ -201,30 +201,30 @@ def test_page_add_action__edge_cases(pdf_file_writer):
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/C")] = NameObject("/xyzzy")
-        page.add_action(PageTrigger("close"), JavaScript('app.alert("This is page " + this.pageNum);'))
-    page.delete_action(PageTrigger("close"))
+        page.add_action(PageTrigger.CLOSE, JavaScript('app.alert("This is page " + this.pageNum);'))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
     # Add an open action with a pre-existing open action which has an invalid Next entry
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = NameObject("/xyzzy")
     with pytest.raises(
         TypeError,
         match="An action dictionary’s Next entry must be an Action dictionary or an array of Action dictionaries",
     ):
-        page.add_action(PageTrigger("open"), JavaScript('app.alert("This is page " + this.pageNum);'))
-    page.delete_action(PageTrigger("open"))
+        page.add_action(PageTrigger.OPEN, JavaScript('app.alert("This is page " + this.pageNum);'))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
     # Add a close action with a pre-existing open action which has an invalid Next entry
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     page[NameObject("/AA")][NameObject("/C")][NameObject("/Next")] = NameObject("/xyzzy")
     with pytest.raises(
             TypeError,
             match="An action dictionary’s Next entry must be an Action dictionary or an array of Action dictionaries",
     ):
-        page.add_action(PageTrigger("close"), JavaScript('app.alert("This is page " + this.pageNum);'))
-    page.delete_action(PageTrigger("close"))
+        page.add_action(PageTrigger.CLOSE, JavaScript('app.alert("This is page " + this.pageNum);'))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
 
@@ -232,9 +232,9 @@ def test_page_add_action__next_is_null(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
     # Add an open action with a pre-existing open action which has a Next key with a NullObject value
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = NullObject()
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -249,13 +249,13 @@ def test_page_add_action__next_is_null(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
     # Add a close action with a pre-existing open action which has a Next key with a NullObject value
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     page[NameObject("/AA")][NameObject("/C")][NameObject("/Next")] = NullObject()
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/C": {
             "/Type": "/Action",
@@ -270,7 +270,7 @@ def test_page_add_action__next_is_null(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
 
@@ -279,7 +279,7 @@ def test_page_add_action__empty_dictionary(pdf_file_writer):
 
     # Add an open action when an additional-actions key exists, but is an empty dictionary
     page[NameObject("/AA")] = DictionaryObject()
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -289,12 +289,12 @@ def test_page_add_action__empty_dictionary(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
     # Add a close action when an additional-actions key exists, but is an empty dictionary
     page[NameObject("/AA")] = DictionaryObject()
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected = {
         "/C": {
             "/Type": "/Action",
@@ -304,7 +304,7 @@ def test_page_add_action__empty_dictionary(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
 
@@ -312,8 +312,8 @@ def test_page_add_action__multiple(pdf_file_writer, caplog):
     page = pdf_file_writer.pages[0]
 
     # Add two open actions without a pre-existing action dictionary
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Page opened 1');"))
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Page opened 2');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Page opened 1');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Page opened 2');"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -328,12 +328,12 @@ def test_page_add_action__multiple(pdf_file_writer, caplog):
         },
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
     # Add two close actions without a pre-existing action dictionary
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('Page closed 1');"))
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('Page closed 2');"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('Page closed 1');"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('Page closed 2');"))
     expected = {
         "/C": {
             "/Type": "/Action",
@@ -349,16 +349,16 @@ def test_page_add_action__multiple(pdf_file_writer, caplog):
         },
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
     # Add identical open actions to create a cycle
     action = JavaScript("app.alert('Page opened');")
-    page.add_action(PageTrigger("open"), action)
-    page.add_action(PageTrigger("open"), action)
-    page.add_action(PageTrigger("open"), action)
+    page.add_action(PageTrigger.OPEN, action)
+    page.add_action(PageTrigger.OPEN, action)
+    page.add_action(PageTrigger.OPEN, action)
     assert caplog.messages[0].startswith("Detected cycle in the action tree")
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
 
@@ -367,7 +367,7 @@ def test_page_add_action__with_existing_array(pdf_file_writer):
 
     page[NameObject("/AA")] = DictionaryObject()
     # The trigger events take dictionary values, not arrays, so first add an action on which to attach the array
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Action to attach an array of actions');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Action to attach an array of actions');"))
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject(
         [JavaScript("app.alert('Array of actions element 1';)"), JavaScript("app.alert('Array of actions element 2';)")]
     )
@@ -393,7 +393,7 @@ def test_page_add_action__with_existing_array(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Test when an array of actions is present');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Test when an array of actions is present');"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -421,16 +421,16 @@ def test_page_add_action__with_existing_array(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
 
 def test_page_add_action__chaining_with_dictionary(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('First action');"))
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Second action');"))
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Third action');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('First action');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Second action');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Third action');"))
 
     # Verify the chain is correct
     aa = page["/AA"]
@@ -447,7 +447,7 @@ def test_page_add_action__chaining_with_dictionary(pdf_file_writer):
 def test_page_add_action__chaining_with_array(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('First action');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('First action');"))
     action1_in_array = JavaScript("app.alert('Array action 1');")
     action2_in_array = JavaScript("app.alert('Array action 2');")
 
@@ -458,7 +458,7 @@ def test_page_add_action__chaining_with_array(pdf_file_writer):
     # Set the first action's /Next to an array
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject([action1_in_array, action2_in_array])
 
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Final action');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Final action');"))
 
     # Verify the structure
     aa = page["/AA"]
@@ -480,10 +480,10 @@ def test_page_delete_action__without_existing(pdf_file_writer):
     page = pdf_file_writer.pages[0]
     assert page.get("/AA") is None
 
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
 
@@ -491,14 +491,14 @@ def test_page_delete_action(pdf_file_writer):
     page = pdf_file_writer.pages[0]
     page[NameObject("/AA")] = DictionaryObject()
 
-    page.delete_action(PageTrigger(PageTrigger("open")))
+    page.delete_action(PageTrigger(PageTrigger.OPEN))
     assert page.get("/AA") == DictionaryObject()
 
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") == DictionaryObject()
 
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Page opened');"))
-    page.add_action(PageTrigger("close"), JavaScript("app.alert('Page closed');"))
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Page opened');"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('Page closed');"))
     expected = {
         "/O": {
             "/Type": "/Action",
@@ -514,7 +514,7 @@ def test_page_delete_action(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     expected = {
         "/C": {
             "/Type": "/Action",
@@ -525,7 +525,7 @@ def test_page_delete_action(pdf_file_writer):
     }
     assert page["/AA"] == expected
     # Redundantly delete again, for coverage
-    page.delete_action(PageTrigger("open"))
+    page.delete_action(PageTrigger.OPEN)
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger("close"))
+    page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
