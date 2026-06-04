@@ -1308,6 +1308,22 @@ def test_inline_image_at_end_of_stream_default_extractor():
     assert image in inline_images[0][0]["data"]
 
 
+def test_inline_image_at_end_of_stream_fallback_extractor():
+    # A recognized colorspace with oversized `/W`/`/H` makes the primary
+    # dimension-based read overshoot the `EI` marker, so extraction falls back
+    # to `extract_inline_default`. With the marker at the very end of the
+    # stream the fallback `read(3)` returns only two bytes (`b"EI"`), which
+    # exercises the `len(ei) != 3` path of the fallback branch (#3468).
+    image = b"abcdefghijklmnop"  # 16 bytes; `/W 8` * `/H 4` would expect 32
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 8 /H 4 /CS /G\nID\n" + image + b"\nEI"
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert image in inline_images[0][0]["data"]
+
+
 def test_missing_hashbin():
     assert NullObject().hash_bin() == hash((NullObject,))
     assert hash(NullObject()) == NullObject().hash_bin()
