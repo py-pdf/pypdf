@@ -18,12 +18,21 @@ def pdf_file_writer():
     return writer
 
 
-def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
+@pytest.mark.parametrize(
+    "action_dictionary",
+    [
+        None,
+        NullObject(),
+    ]
+)
+def test_page_add_action__with_existing_null_object(pdf_file_writer, action_dictionary):
     page = pdf_file_writer.pages[0]
 
     # Add an open action
+    if action_dictionary:
+        page[NameObject("/AA")] = NullObject()
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected = {
+    expected_open = {
         "/O": {
             "/Type": "/Action",
             "/Next": NullObject(),
@@ -31,13 +40,15 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page["/AA"] == expected
+    assert page["/AA"] == expected_open
     page.delete_action(PageTrigger.OPEN)
-    assert "/AA" not in page
+    assert page.get("/AA") is None
 
     # Add a close action
+    if action_dictionary:
+        page[NameObject("/AA")] = NullObject()
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected = {
+    expected_close = {
         "/C": {
             "/Type": "/Action",
             "/Next": NullObject(),
@@ -45,85 +56,16 @@ def test_page_add_action__without_existing_action_dictionary(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page["/AA"] == expected
+    assert page["/AA"] == expected_close
     page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
     # Add an open and close action
-    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Page opened');"))
-    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('Page closed');"))
-    expected = {
-        "/O": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('Page opened');"
-        },
-        "/C": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('Page closed');"
-        }
-    }
-    assert page["/AA"] == expected
-    page.delete_action(PageTrigger.OPEN)
-    page.delete_action(PageTrigger("close"))
-    assert page.get("/AA") is None
-
-
-def test_page_add_action__with_existing_null_object(pdf_file_writer):
-    page = pdf_file_writer.pages[0]
-
-    # Add an open action with a null object as the AA entry
-    page[NameObject("/AA")] = NullObject()
+    if action_dictionary:
+        page[NameObject("/AA")] = NullObject()
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected = {
-        "/O": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('This is page ' + this.pageNum);"
-        }
-    }
-    assert page["/AA"] == expected
-    page.delete_action(PageTrigger.OPEN)
-    assert page.get("/AA") is None
-
-    # Add a close action with a null object as the AA entry
-    page[NameObject("/AA")] = NullObject()
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected = {
-        "/C": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('This is page ' + this.pageNum);"
-        }
-    }
-    assert page["/AA"] == expected
-    page.delete_action(PageTrigger.CLOSE)
-    assert page.get("/AA") is None
-
-    # Add an open and close action with a null object as the AA entry
-    page[NameObject("/AA")] = NullObject()
-    page.add_action(PageTrigger("open"), JavaScript("app.alert('Page opened');"))
-    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('Page closed');"))
-    expected = {
-        "/O": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('Page opened');"
-        },
-        "/C": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('Page closed');"
-        }
-    }
-    assert page["/AA"] == expected
+    assert page["/AA"] == expected_open | expected_close
     page.delete_action(PageTrigger.OPEN)
     page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
