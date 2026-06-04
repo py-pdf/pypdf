@@ -105,10 +105,8 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     page[NameObject("/AA")] = ArrayObject()
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert caplog.messages[0] == (
-        (
-            "The AA entry of the page should be a DictionaryObject. "
-            "It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>."
-        )
+        "The AA entry of the page should be a DictionaryObject. "
+        "It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>."
     )
     assert page.get("/AA") == ArrayObject()
 
@@ -418,36 +416,42 @@ def test_page_add_action__chaining_with_array(pdf_file_writer):
     assert final_action[NameObject("/JS")] == "app.alert('Final action');"
 
 
-def test_page_delete_action__without_existing(pdf_file_writer):
+@pytest.mark.parametrize(
+    "action_dictionary",
+    [
+        None,
+        DictionaryObject(),
+    ]
+)
+def test_page_delete_action(pdf_file_writer, action_dictionary):
     page = pdf_file_writer.pages[0]
-    assert page.get("/AA") is None
 
-    page.delete_action(PageTrigger.OPEN)
-    assert page.get("/AA") is None
-
-    page.delete_action(PageTrigger.CLOSE)
-    assert page.get("/AA") is None
-
-
-def test_page_delete_action(pdf_file_writer):
-    page = pdf_file_writer.pages[0]
-    page[NameObject("/AA")] = DictionaryObject()
+    if action_dictionary is not None:
+        page[NameObject("/AA")] = DictionaryObject()
 
     page.delete_action(PageTrigger(PageTrigger.OPEN))
-    assert page.get("/AA") == DictionaryObject()
+    if action_dictionary is None:
+        assert page.get("/AA") is None
+    else:
+        assert page.get("/AA") == DictionaryObject()
 
     page.delete_action(PageTrigger.CLOSE)
-    assert page.get("/AA") == DictionaryObject()
+    if action_dictionary is None:
+        assert page.get("/AA") is None
+    else:
+        assert page.get("/AA") == DictionaryObject()
 
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Page opened');"))
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('Page closed');"))
-    expected = {
+    expected_open = {
         "/O": {
             "/Type": "/Action",
             "/Next": NullObject(),
             "/S": "/JavaScript",
             "/JS": "app.alert('Page opened');"
-        },
+        }
+    }
+    expected_close = {
         "/C": {
             "/Type": "/Action",
             "/Next": NullObject(),
@@ -455,19 +459,11 @@ def test_page_delete_action(pdf_file_writer):
             "/JS": "app.alert('Page closed');"
         }
     }
-    assert page["/AA"] == expected
+    assert page["/AA"] == expected_open | expected_close
     page.delete_action(PageTrigger.OPEN)
-    expected = {
-        "/C": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('Page closed');"
-        }
-    }
-    assert page["/AA"] == expected
+    assert page["/AA"] == expected_close
     # Redundantly delete again, for coverage
     page.delete_action(PageTrigger.OPEN)
-    assert page["/AA"] == expected
+    assert page["/AA"] == expected_close
     page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
