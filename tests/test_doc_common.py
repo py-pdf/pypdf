@@ -491,6 +491,33 @@ def test_flatten__pages_without_kids():
     assert list(reader.pages) == []
 
 
+def test_flatten__pages_with_null_kids():
+    # A /Pages node whose /Kids resolve to a NullObject is treated the same as
+    # a missing /Kids: no children rather than a crash (#3811).
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    pages_object = reader.root_object["/Pages"]
+    pages_object[NameObject("/Kids")] = NullObject()
+    pages_object[NameObject("/Count")] = NumberObject(0)
+    reader.flattened_pages = None
+
+    assert len(reader.pages) == 0
+    assert list(reader.pages) == []
+
+
+def test_flatten__pages_with_non_array_kids():
+    # A /Pages node whose /Kids is neither an array nor null is malformed; we
+    # raise a descriptive error instead of failing obscurely on iteration.
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    pages_object = reader.root_object["/Pages"]
+    pages_object[NameObject("/Kids")] = NumberObject(0)
+    reader.flattened_pages = None
+
+    with pytest.raises(PdfReadError, match=r"^Expected /Kids to be an array, got NumberObject\.$"):
+        list(reader.pages)
+
+
 @pytest.mark.enable_socket
 @pytest.mark.timeout(10)
 def test_get_outline__cyclic_references(caplog):

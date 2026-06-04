@@ -1184,15 +1184,14 @@ class PdfDocCommon(ABC):
                 if attr in pages:
                     inherit[attr] = pages[attr]
             pages_reference = getattr(pages, "indirect_reference", object())
-            # A malformed /Pages node may be missing /Kids (for example a page
-            # tree advertising "/Count 0" without any children). Treat it as
-            # having no kids instead of raising a bare KeyError here (#3811).
-            kids = (
-                pages[PagesAttributes.KIDS]
-                if PagesAttributes.KIDS in pages
-                else ArrayObject()
-            )
-            for page in cast(ArrayObject, kids):
+            kids = pages.get(PagesAttributes.KIDS, ArrayObject()).get_object()
+            if isinstance(kids, NullObject):
+                kids = ArrayObject()
+            elif not isinstance(kids, ArrayObject):
+                raise PdfReadError(
+                    f"Expected /Kids to be an array, got {type(kids).__name__}."
+                )
+            for page in kids:
                 if getattr(page, "indirect_reference", object()) == pages_reference:
                     raise PdfReadError("Detected cyclic page references.")
 
