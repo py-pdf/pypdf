@@ -233,6 +233,13 @@ def extract_inline_default(stream: StreamType) -> bytes:
                 stream.seek(saved_pos, 0)
                 continue
             tok3 = stream.read(1)  # possible space after "EI"
+            if tok3 == b"":
+                # The `EI` marker is at the very end of the stream. There can be
+                # no trailing binary data, so this is unambiguously the end of the
+                # inline image (#3468).
+                stream.seek(saved_pos - 1, 0)
+                stream_out.truncate(sav_pos_ei)
+                break
             if tok3 not in WHITESPACES:
                 stream.seek(saved_pos, 0)
                 continue

@@ -1429,14 +1429,22 @@ class ContentStream(DecodedStreamObject):
             data = extract_inline_default(stream)
 
         ei = stream.read(3)
-        stream.seek(-1, 1)
-        if ei[:2] != b"EI" or ei[2:3] not in WHITESPACES:
+        # An `EI` at the very end of the stream yields only two bytes; rewinding
+        # unconditionally would step back into the marker (#3468).
+        if len(ei) == 3:
+            stream.seek(-1, 1)
+        ei_trailing = ei[2:3]
+        if ei[:2] != b"EI" or (ei_trailing != b"" and ei_trailing not in WHITESPACES):
             # Deal with wrong/missing `EI` tags. Example: Wrong dimensions specified above.
             stream.seek(savpos, 0)
             data = extract_inline_default(stream)
             ei = stream.read(3)
-            stream.seek(-1, 1)
-            if ei[:2] != b"EI" or ei[2:3] not in WHITESPACES:  # pragma: no cover
+            if len(ei) == 3:
+                stream.seek(-1, 1)
+            ei_trailing = ei[2:3]
+            if ei[:2] != b"EI" or (
+                ei_trailing != b"" and ei_trailing not in WHITESPACES
+            ):  # pragma: no cover
                 # Check the same condition again. This should never fail as
                 # edge cases are covered by `extract_inline_default` above,
                 # but check this ot make sure that we are behind the `EI` afterwards.
