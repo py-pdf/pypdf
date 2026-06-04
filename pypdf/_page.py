@@ -652,11 +652,7 @@ class PageObject(DictionaryObject):
                 lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
 
         # Removes duplicates and preserves order
-        deduplicated = []
-        for item in lst:
-            # Useful for pages in which the same X-Object is referenced multiple times
-            if item not in deduplicated:
-                deduplicated.append(item)
+        deduplicated = lst.copy()
 
         # Add inline images from _content_stream_images
         for object_name, object_value in self._content_stream_images.items():
