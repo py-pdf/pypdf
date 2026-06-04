@@ -165,15 +165,13 @@ class JavaScript(Action):
     Upon invocation of an ECMAScript action, a PDF processor shall execute a
     script that is written in the ECMAScript programming language. ECMAScript
     extensions described in ISO/DIS 21757-1 shall also be allowed.
+
+    Args:
+        js: A text string containing the ECMAScript script to be executed.
     """
 
     def __init__(self, js: str) -> None:
-        """
-        Initialize JavaScript with a string.
-
-        Args:
-            js: A text string containing the ECMAScript script to be executed.
-        """
+        """Initialize JavaScript with a string."""
         super().__init__()
         self[NameObject("/S")] = NameObject("/JavaScript")
         self[NameObject("/JS")] = TextStringObject(js)
