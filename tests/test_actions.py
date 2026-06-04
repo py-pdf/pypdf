@@ -79,8 +79,8 @@ def test_page_add_action__with_existing_array_object__strict():
     page[NameObject("/AA")] = ArrayObject()
     with pytest.raises(
         ParseError,
-        match="^The AA entry of the page should be a DictionaryObject. "
-              "It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>.$"
+        match=r"^The AA entry of the page should be a DictionaryObject. "
+              r"It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>.$"
     ):
         page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert page.get("/AA") == ArrayObject()
@@ -90,8 +90,8 @@ def test_page_add_action__with_existing_array_object__strict():
     with pytest.raises(
             ParseError,
             match=(
-                "^The AA entry of the page should be a DictionaryObject. "
-                "It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>.$"
+                r"^The AA entry of the page should be a DictionaryObject. "
+                r"It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>.$"
             )
     ):
         page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
