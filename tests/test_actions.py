@@ -135,23 +135,21 @@ def test_page_add_action__with_existing_array_object__strict():
 
     # Add an open action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
-    current_type = type(page["/AA"])
     with pytest.raises(
         ParseError,
-        match=rf"^The AA entry of the page should be a DictionaryObject. "
-              rf"It currently is a {current_type}.$"
+        match="^The AA entry of the page should be a DictionaryObject. "
+              "It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>.$"
     ):
         page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert page.get("/AA") == ArrayObject()
 
     # Add a close action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
-    current_type = type(page["/AA"])
     with pytest.raises(
             ParseError,
             match=(
-                rf"^The AA entry of the page should be a DictionaryObject. "
-                rf"It currently is a {current_type}.$"
+                "^The AA entry of the page should be a DictionaryObject. "
+                "It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>.$"
             )
     ):
         page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -164,18 +162,20 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     # Add an open action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    current_type = type(ArrayObject())
     assert caplog.messages[0] == (
-        rf"The AA entry of the page should be a DictionaryObject. It currently is a {current_type}."
+        (
+            "The AA entry of the page should be a DictionaryObject. "
+            "It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>."
+        )
     )
     assert page.get("/AA") == ArrayObject()
 
     # Add a close action with an array object as the AA entry
     page[NameObject("/AA")] = ArrayObject()
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    current_type = type(ArrayObject())
     assert caplog.messages[0] == (
-        rf"The AA entry of the page should be a DictionaryObject. It currently is a {current_type}."
+        "The AA entry of the page should be a DictionaryObject. "
+        "It currently is a <class 'pypdf.generic._data_structures.ArrayObject'>."
     )
     assert page.get("/AA") == ArrayObject()
 
