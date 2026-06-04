@@ -643,11 +643,11 @@ class PageObject(DictionaryObject):
             # Skip non-stream objects (only process StreamObject)
             if not isinstance(x_object[o], StreamObject):
                 continue
-            # If it's an image, add it to lst for further processing
             if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
+                # If it's an image, add it to lst for further processing
                 lst.append(o if len(ancest) == 0 else [*ancest, o])
-            # If it's a form, recursively search for images inside it
             else:
+                # If it's a form, recursively search for images inside it
                 # Forms may contain images that are Do-referenced in their content stream
                 lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
 
