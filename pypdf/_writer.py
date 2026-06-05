@@ -2788,7 +2788,7 @@ class PdfWriter(PdfDocCommon):
         _ro = reader.root_object
         if import_outline and CO.OUTLINES in _ro:
             outline = self._get_filtered_outline(
-                _ro.get(CO.OUTLINES, None), srcpages, reader
+                node=_ro.get(CO.OUTLINES, None), pages=srcpages, reader=reader
             )
             self._insert_filtered_outline(
                 outline, outline_item_typ, None
@@ -3053,54 +3053,69 @@ class PdfWriter(PdfDocCommon):
 
     def _get_filtered_outline(
         self,
+        *,
         node: Any,
         pages: dict[int, PageObject],
         reader: PdfReader,
+        visited: Optional[set[int]] = None,
     ) -> list[Destination]:
         """
         Extract outline item entries that are part of the specified page set.
-
-        Args:
-            node:
-            pages:
-            reader:
 
         Returns:
             A list of destination objects.
 
         """
-        new_outline = []
+        if visited is None:
+            visited = set()
+        new_outline: list[Destination] = []
         if node is None:
-            node = NullObject()
+            return new_outline
         node = node.get_object()
         if is_null_or_none(node):
             node = DictionaryObject()
+
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
+            node_id = id(node)
+            if node_id in visited:
+                logger_warning("Detected cycle in outlines.", source=__name__)
+                return []
+            visited.add(node_id)
+
             node = node.get("/First", None)
             if node is not None:
                 node = node.get_object()
-                new_outline += self._get_filtered_outline(node, pages, reader)
+                new_outline += self._get_filtered_outline(node=node, pages=pages, reader=reader, visited=visited)
         else:
-            v: Union[None, IndirectObject, NullObject]
-            while node is not None:
+            cloned_page: Union[None, IndirectObject, NullObject]
+            while True:
                 node = node.get_object()
-                o = cast("Destination", reader._build_outline_item(node))
-                v = self._get_cloned_page(cast("PageObject", o["/Page"]), pages, reader)
-                if v is None:
-                    v = NullObject()
-                o[NameObject("/Page")] = v
+                node_id = id(node)
+                if node_id in visited:
+                    logger_warning("Detected cycle in outlines.", source=__name__)
+                    break
+                visited.add(node_id)
+
+                destination = cast("Destination", reader._build_outline_item(node))
+                cloned_page = self._get_cloned_page(cast("PageObject", destination["/Page"]), pages, reader)
+                if cloned_page is None:
+                    cloned_page = NullObject()
+                destination[NameObject("/Page")] = cloned_page
                 if "/First" in node:
-                    o._filtered_children = self._get_filtered_outline(
-                        node["/First"], pages, reader
+                    destination._filtered_children = self._get_filtered_outline(
+                        node=node["/First"], pages=pages, reader=reader, visited=visited
                     )
                 else:
-                    o._filtered_children = []
+                    destination._filtered_children = []
                 if (
-                    not isinstance(o["/Page"], NullObject)
-                    or len(o._filtered_children) > 0
+                    not isinstance(cloned_page, NullObject)
+                    or len(destination._filtered_children) > 0
                 ):
-                    new_outline.append(o)
-                node = node.get("/Next", None)
+                    new_outline.append(destination)
+
+                if "/Next" not in node:
+                    break
+                node = node["/Next"]
         return new_outline
 
     def _clone_outline(self, dest: Destination) -> TreeObject:

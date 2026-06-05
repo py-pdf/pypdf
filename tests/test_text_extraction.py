@@ -649,3 +649,32 @@ def test_text_state_params__unicode_decode_error(encoding):
     # Assertions: 'replace' mode changes invalid UTF-8 bytes to '\xfffd'.
     assert parameters.text == "\ufffd"
     assert parameters._decoded_value == "\ufffd"
+
+
+@pytest.mark.timeout(5)
+def test_page_object__layout_mode_fonts__cyclic(caplog) -> None:
+    writer = PdfWriter()
+
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    fonts = {"/F1": Font.from_font_resource(font)}
+    page = writer.add_blank_page(width=10, height=10)
+    dictionary2 = DictionaryObject(DictionaryObject({
+        NameObject("/Resources"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F1"): font
+            })
+        })
+    }))
+    reference2 = writer._add_object(dictionary2)
+    dictionary3 = DictionaryObject({NameObject("/Parent"): reference2})
+    reference3 = writer._add_object(dictionary3)
+    page[NameObject("/Parent")] = reference3
+    dictionary2[NameObject("/Parent")] = page.indirect_reference
+    page.pdf = writer
+
+    assert page._layout_mode_fonts() == fonts
+    assert caplog.messages == ["Detected cycle in /Parent hierarchy when retrieving fonts."]
