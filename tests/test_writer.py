@@ -3218,3 +3218,80 @@ def test_encrypt__incremental():
 
     with pytest.raises(NotImplementedError):
         writer.encrypt(user_password="dummy")
+
+
+@pytest.mark.timeout(5)
+def test_get_filtered_outline__first__cyclic(caplog) -> None:
+    writer = PdfWriter()
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    dictionary1 = DictionaryObject({
+        NameObject("/Type"): NameObject("/Outlines")
+    })
+    reference1 = writer._add_object(dictionary1)
+    dictionary2 = DictionaryObject({
+        NameObject("/Type"): NameObject("/Outlines")
+    })
+    reference2 = writer._add_object(dictionary2)
+    dictionary3 = DictionaryObject({
+        NameObject("/First"): reference2,
+        NameObject("/Type"): NameObject("/Outlines")
+    })
+    reference3 = writer._add_object(dictionary3)
+    dictionary1[NameObject("/First")] = reference3
+    dictionary2[NameObject("/First")] = reference1
+
+    assert writer._get_filtered_outline(node=dictionary1, pages={}, reader=reader) == []
+    assert caplog.messages == ["Detected cycle in outlines."]
+
+
+@pytest.mark.timeout(5)
+def test_get_filtered_outline__next_first__cyclic(caplog) -> None:
+    writer = PdfWriter()
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    dictionary1 = DictionaryObject({
+        NameObject("/Title"): TextStringObject("test")
+    })
+    _reference1 = writer._add_object(dictionary1)
+    dictionary2 = DictionaryObject({
+        NameObject("/Type"): NameObject("/Outlines")
+    })
+    reference2 = writer._add_object(dictionary2)
+    dictionary1[NameObject("/Next")] = reference2
+    dictionary2[NameObject("/First")] = reference2
+
+    assert writer._get_filtered_outline(node=dictionary1, pages={}, reader=reader) == []
+    assert caplog.messages == ["Detected cycle in outlines."]
+
+
+@pytest.mark.timeout(5)
+def test_get_filtered_outline__next_next__cyclic(caplog) -> None:
+    writer = PdfWriter()
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    dictionary1 = DictionaryObject({
+        NameObject("/Title"): TextStringObject("test")
+    })
+    reference1 = writer._add_object(dictionary1)
+    dictionary2 = DictionaryObject({
+        NameObject("/Title"): TextStringObject("test")
+    })
+    reference2 = writer._add_object(dictionary2)
+    dictionary3 = DictionaryObject({
+        NameObject("/Next"): reference2,
+        NameObject("/Title"): TextStringObject("test")
+    })
+    reference3 = writer._add_object(dictionary3)
+    dictionary1[NameObject("/Next")] = reference3
+    dictionary2[NameObject("/Next")] = reference1
+
+    assert writer._get_filtered_outline(node=dictionary1, pages={}, reader=reader) == []
+    assert caplog.messages == ["Detected cycle in outlines."]
+
+
+def test_get_filtered_outline__node_is_none() -> None:
+    writer = PdfWriter()
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    assert writer._get_filtered_outline(node=None, pages={}, reader=reader) == []
