@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## Version 6.13.0, 2026-06-05
+
+### Security (SEC)
+- Avoid infinite loops for outlines and text extraction (#3830)
+
+### New Features (ENH)
+- Add Japanese predefined CMaps (#3800)
+- Font: Collect all character widths, not only those that can be unicode mapped (#3798)
+
+### Robustness (ROB)
+- Recover a corrupt trailing startxref pointer (closes #3238) (#3826)
+- Handle /Pages node without /Kids during flattening (#3825)
+- Accept inline image EI marker at the end of a content stream (#3827)
+
+### Maintenance (MAINT)
+- Type the always-raising deprecation helpers as `NoReturn` (#3819)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.12.2...6.13.0)
+
 ## Version 6.12.2, 2026-05-26
 
 ### Security (SEC)
