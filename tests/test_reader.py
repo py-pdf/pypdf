@@ -428,6 +428,29 @@ def test_startxref_corrupt_trailing_pointer(caplog):
         PdfReader(io.BytesIO(pdf_data), strict=True)
 
 
+def test_find_previous_startxref_pos_recovery_variants():
+    """Cover the backward-scan branches of _find_previous_startxref_pos (#3238)."""
+
+    def scan(data: bytes) -> int:
+        stream = io.BytesIO(data)
+        stream.seek(0, 2)
+        return PdfReader._find_previous_startxref_pos(stream)
+
+    # Offset on the line below the keyword (the usual layout)
+    assert scan(b"startxref\n12345\ngarbage\n") == 12345
+
+    # Keyword and offset share a line
+    assert scan(b"startxref 6789\ngarbage\n") == 6789
+
+    # A startxref keyword with no numeric offset above it cannot be recovered
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"startxref\nnot-a-number\n")
+
+    # No startxref keyword at all: the scan exhausts the stream and gives up
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"only some bytes\nand more\n")
+
+
 @pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
     [
