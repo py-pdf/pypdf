@@ -1864,20 +1864,24 @@ class PageObject(DictionaryObject):
 
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
-        objr: Any = self
+        obj: Any = self
         fonts: dict[str, Font] = {}
-        while objr is not None:
-            try:
-                resources_dict: Any = objr[PG.RESOURCES]
-            except KeyError:
-                resources_dict = {}
+        visited: set[int] = set()
+        while True:
+            obj_id = id(obj)
+            if obj_id in visited:
+                logger_warning("Detected cycle in /Parent hierarchy when retrieving fonts.", source=__name__)
+                break
+            visited.add(obj_id)
+
+            resources_dict: Any = obj.get(PG.RESOURCES, {})
             if "/Font" in resources_dict and self.pdf is not None:
                 for font_name in resources_dict["/Font"]:
                     fonts[font_name] = Font.from_font_resource(resources_dict["/Font"][font_name])
-            try:
-                objr = objr["/Parent"].get_object()
-            except KeyError:
-                objr = None
+
+            if "/Parent" not in obj:
+                break
+            obj = obj["/Parent"].get_object()
 
         return fonts
 
