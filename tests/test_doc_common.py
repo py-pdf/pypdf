@@ -20,6 +20,7 @@ from pypdf.generic import (
     EncodedStreamObject,
     NameObject,
     NullObject,
+    NumberObject,
     TextStringObject,
     ViewerPreferences,
 )
@@ -473,6 +474,48 @@ def test_flatten__cyclic_references():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Detected cyclic page references\.$"):
         reader._flatten()
+
+
+def test_flatten__pages_without_kids():
+    # A malformed /Pages node may advertise "/Count 0" without providing any
+    # /Kids entry. Flattening such a page tree used to raise a bare
+    # ``KeyError: '/Kids'`` instead of being handled gracefully (#3811).
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    pages_object = reader.root_object["/Pages"]
+    del pages_object["/Kids"]
+    pages_object[NameObject("/Count")] = NumberObject(0)
+    reader.flattened_pages = None
+
+    assert len(reader.pages) == 0
+    assert list(reader.pages) == []
+
+
+def test_flatten__pages_with_null_kids():
+    # A /Pages node whose /Kids resolve to a NullObject is treated the same as
+    # a missing /Kids: no children rather than a crash (#3811).
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    pages_object = reader.root_object["/Pages"]
+    pages_object[NameObject("/Kids")] = NullObject()
+    pages_object[NameObject("/Count")] = NumberObject(0)
+    reader.flattened_pages = None
+
+    assert len(reader.pages) == 0
+    assert list(reader.pages) == []
+
+
+def test_flatten__pages_with_non_array_kids():
+    # A /Pages node whose /Kids is neither an array nor null is malformed; we
+    # raise a descriptive error instead of failing obscurely on iteration.
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    pages_object = reader.root_object["/Pages"]
+    pages_object[NameObject("/Kids")] = NumberObject(0)
+    reader.flattened_pages = None
+
+    with pytest.raises(PdfReadError, match=r"^Expected /Kids to be an array, got NumberObject\.$"):
+        list(reader.pages)
 
 
 @pytest.mark.enable_socket

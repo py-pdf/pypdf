@@ -34,6 +34,11 @@ _predefined_cmap: dict[str, str] = {
     "/UniCNS-UTF16-V": "utf-16-be",
     "/UniGB-UTF16-H": "gb18030",
     "/UniGB-UTF16-V": "gb18030",
+    # Japanese CMaps (PDF Reference 1.7, Appendix H)
+    "/90ms-RKSJ-H": "cp932",  # Shift-JIS (JIS X 0208-1990), horizontal
+    "/90ms-RKSJ-V": "cp932",  # Shift-JIS (JIS X 0208-1990), vertical
+    "/UniJIS-UTF16-H": "utf-16-be",  # Unicode UTF-16BE -> JIS, horizontal
+    "/UniJIS-UTF16-V": "utf-16-be",  # Unicode UTF-16BE -> JIS, vertical
     # UCS2 in code
 }
 
@@ -106,9 +111,9 @@ def _parse_encoding(
             else:  # isinstance(o, str):
                 try:
                     if x < len(encoding):
-                        encoding[x] = adobe_glyphs[o]  # type: ignore
+                        encoding[x] = adobe_glyphs[o]  # type: ignore[index]
                 except Exception:
-                    encoding[x] = o  # type: ignore
+                    encoding[x] = o  # type: ignore[index]
                 x += 1
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
@@ -144,6 +149,8 @@ def _parse_to_unicode(
             map_dict,
             int_entry,
         )
+
+    map_dict.pop(-1, None)  # Don't pass the -1 key, we only used it to temporarily store encoding length
 
     return map_dict, int_entry
 

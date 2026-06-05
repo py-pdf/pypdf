@@ -411,21 +411,21 @@ class IndirectObject(PdfObject):
 
     def __getitem__(self, key: Any) -> Any:
         # items should be extracted from pointed Object
-        return self._get_object_with_check()[key]  # type: ignore
+        return self._get_object_with_check()[key]  # type: ignore[index]
 
     def __contains__(self, key: Any) -> bool:
-        return key in self._get_object_with_check()  # type: ignore
+        return key in self._get_object_with_check()  # type: ignore[operator]
 
     def __iter__(self) -> Any:
-        return self._get_object_with_check().__iter__()  # type: ignore
+        return self._get_object_with_check().__iter__()  # type: ignore[union-attr]
 
     def __float__(self) -> str:
         # in this case we are looking for the pointed data
-        return self.get_object().__float__()  # type: ignore
+        return self.get_object().__float__()  # type: ignore[union-attr, no-any-return]
 
     def __int__(self) -> int:
         # in this case we are looking for the pointed data
-        return self.get_object().__int__()  # type: ignore
+        return self.get_object().__int__()  # type: ignore[union-attr, no-any-return]
 
     def __str__(self) -> str:
         # in this case we are looking for the pointed data

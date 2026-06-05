@@ -251,6 +251,18 @@ def test_ccitt_fax_decode():
     )
 
 
+def test_ccitt_fax_decode__unsigned_columns():
+    # /Columns above 2**31 - 1 is a valid unsigned TIFF LONG and must not
+    # overflow the packed header.
+    data = b"\x00\x01\x02\x03"
+    parameters = DictionaryObject(
+        {"/K": NumberObject(-1), "/Columns": NumberObject(3_000_000_000)}
+    )
+    result = CCITTFaxDecode.decode(data, parameters, height=10)
+    assert result.endswith(data)
+    assert result[18:22] == (3_000_000_000).to_bytes(4, "little")
+
+
 @pytest.mark.enable_socket
 def test_decompress_zlib_error(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-952445.pdf")))
@@ -891,6 +903,14 @@ def test_rle_decode_exception_with_corrupted_stream(caplog):
     assert decoded.endswith(b"\x87\x83\x83\x83\x83\x83\x83\x83]]]]]]]RRRRRRRX\xa5")
     assert len(decoded) == 1048576
     assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
+
+
+def test_rle_decode_truncated_after_run_length(caplog):
+    # A replicate run (length byte > 128) that is not followed by the byte to
+    # repeat must be handled like any other truncated input instead of reading
+    # past the end of the data.
+    assert RunLengthDecode.decode(b"\x00A\xff") == b"A"
+    assert caplog.messages == ["Missing EOD in RunLengthDecode, check if output is OK"]
 
 
 def test_decompress():

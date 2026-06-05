@@ -150,7 +150,7 @@ def recurse_to_target_op(
                             actual=spaces, limit=WHITESPACE_LIMIT, source=__name__
                         )
                         spaces = WHITESPACE_LIMIT
-                    new_text = f'{" " * spaces}{_tj.txt}'
+                    new_text = f'{" " * spaces}{_tj.text}'
 
                     last_ty = _tj.ty
                     _text = f"{_text}{new_text}"

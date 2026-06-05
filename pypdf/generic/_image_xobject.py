@@ -131,6 +131,12 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
 
     byte_buffer = bytearray(buffer_size)
     mask = (1 << bits) - 1
+
+    required = size[1] * ((size[0] * bits + 7) // 8)
+    if (length := len(data)) < required:
+        logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
+        data += b"\x00" * (required - length)
+
     data_index = 0
     bit = 8 - bits
     for y in range(size[1]):
@@ -218,7 +224,7 @@ def _handle_flate(
         if isinstance(lookup, str):
             lookup = lookup.encode()
         try:
-            nb, conv, mode = {  # type: ignore
+            nb, conv, mode = {  # type: ignore[assignment]
                 "1": (0, "", ""),
                 "L": (1, "P", "L"),
                 "P": (0, "", ""),
@@ -475,7 +481,7 @@ def _xobj_to_image(
 
     # Get size and data
     size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
-    data = x_object.get_data()  # type: ignore
+    data = x_object.get_data()  # type: ignore[attr-defined]
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
     if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'

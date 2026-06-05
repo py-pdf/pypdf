@@ -46,7 +46,7 @@ from base64 import a85decode
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Optional, Union, cast
+from typing import Any, NoReturn, Optional, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
@@ -455,6 +455,11 @@ class RunLengthDecode:
                 lst.append(data[index : (index + length)])
                 index += length
             else:  # >128
+                if index >= data_length:
+                    logger_warning(
+                        "Missing EOD in RunLengthDecode, check if output is OK", source=__name__
+                    )
+                    break  # Reached end of string without the replicated byte
                 length = 257 - length
                 lst.append(bytes((data[index],)) * length)
                 index += 1
@@ -604,9 +609,8 @@ def __create_old_class_instance(
     K: int = 0,
     columns: int = 0,
     rows: int = 0
-) -> CCITTParameters:
+) -> NoReturn:
     deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
-    return CCITTParameters(K, columns, rows)
 
 
 # Create an alias for the old class name
@@ -643,11 +647,11 @@ class CCITTFaxDecode:
                         ccitt_parameters.BlackIs1 = decode_parm[CCITT.BLACK_IS_1].get_object().value
             else:
                 if CCITT.K in parameters_unwrapped:
-                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore[assignment]
                 if CCITT.COLUMNS in parameters_unwrapped:
-                    ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
+                    ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore[assignment]
                 if CCITT.BLACK_IS_1 in parameters_unwrapped:
-                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore
+                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore[union-attr]
         return ccitt_parameters
 
     @staticmethod
@@ -660,7 +664,9 @@ class CCITTFaxDecode:
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
-        tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
+        # TIFF SHORT and LONG fields are unsigned (TIFF 6.0, §2); pack them with
+        # unsigned codes so dimensions with the high bit set do not overflow.
+        tiff_header_struct = "<2sHLH" + "HHLL" * 8 + "H"
         tiff_header = struct.pack(
             tiff_header_struct,
             b"II",  # Byte order indication: Little endian
