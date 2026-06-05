@@ -7,6 +7,9 @@ from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 from ._base import ByteStringObject, TextStringObject
 
 
+_HEX_DIGITS = b"0123456789abcdefABCDEF"
+
+
 def hex_to_rgb(value: str) -> tuple[float, float, float]:
     return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
 
@@ -24,6 +27,12 @@ def read_hex_string_from_stream(
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         if tok == b">":
             break
+        if tok not in _HEX_DIGITS:
+            logger_warning(
+                f"Ignoring non-hexadecimal character {tok!r} in hex string",
+                source=__name__,
+            )
+            continue
         x += tok
         if len(x) == 2:
             arr.append(int(x, base=16))

@@ -156,6 +156,12 @@ def test_read_hex_string_from_stream_exception():
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
+def test_read_hex_string_from_stream_non_hex(caplog):
+    stream = BytesIO(b"<41ZZ42>")
+    assert read_hex_string_from_stream(stream) == "AB"
+    assert "Ignoring non-hexadecimal character" in caplog.text
+
+
 def test_read_string_from_stream_exception():
     stream = BytesIO(b"x")
     with pytest.raises(PdfStreamError) as exc:
