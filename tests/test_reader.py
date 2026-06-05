@@ -450,6 +450,11 @@ def test_find_previous_startxref_pos_recovery_variants():
     with pytest.raises(PdfReadError, match="startxref not found"):
         scan(b"only some bytes\nand more\n")
 
+    # The backward scan is bounded: a long stream without a recoverable
+    # pointer hits the line cap and gives up instead of scanning forever
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"x\n" * (PdfReader._MAX_STARTXREF_RECOVERY_LINES + 100))
+
 
 @pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
