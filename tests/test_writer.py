@@ -3288,3 +3288,10 @@ def test_get_filtered_outline__next_next__cyclic(caplog) -> None:
 
     assert writer._get_filtered_outline(node=dictionary1, pages={}, reader=reader) == []
     assert caplog.messages == ["Detected cycle in outlines."]
+
+
+def test_get_filtered_outline__node_is_none() -> None:
+    writer = PdfWriter()
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    assert writer._get_filtered_outline(node=None, pages={}, reader=reader) == []
