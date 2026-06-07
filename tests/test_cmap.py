@@ -344,6 +344,32 @@ def test_get_encoding__encoding_value_is_none():
     )
 
 
+def _type1_font(font_file_data: bytes) -> DictionaryObject:
+    font_file = DecodedStreamObject()
+    font_file.set_data(font_file_data)
+    font_descriptor = DictionaryObject()
+    font_descriptor[NameObject("/FontFile")] = font_file
+    ft = DictionaryObject()
+    ft[NameObject("/Subtype")] = NameObject("/Type1")
+    ft[NameObject("/FontDescriptor")] = font_descriptor
+    return ft
+
+
+def test_get_encoding__type1_font_file_without_encoding():
+    # Clear part of the embedded Type1 program has no /Encoding section.
+    ft = _type1_font(b"%!PS-AdobeFont\n/FontName /Foo def\neexec\nbinary")
+    assert get_encoding(ft) == ("charmap", {})
+
+
+def test_get_encoding__type1_font_file_truncated_dup_line():
+    # A "dup" entry missing the glyph name must be skipped, not crash.
+    ft = _type1_font(
+        b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
+    )
+    _encoding, character_map = get_encoding(ft)
+    assert character_map == {"a": "a"}
+
+
 def test_parse_bfchar(caplog):
     map_dict = {}
     int_entry = []
