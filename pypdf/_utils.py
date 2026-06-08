@@ -280,7 +280,6 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
         tail = tok[-16:]
         if chunk_size < 8192:
             chunk_size <<= 1
-    return b"".join(parts)
 
 
 def read_block_backwards(stream: BinaryStreamType, to_read: int) -> bytes:
