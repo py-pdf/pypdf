@@ -3295,3 +3295,35 @@ def test_get_filtered_outline__node_is_none() -> None:
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
 
     assert writer._get_filtered_outline(node=None, pages={}, reader=reader) == []
+
+
+@pytest.mark.timeout(5)
+def test_add_articles_thread__cyclic() -> None:
+    writer = PdfWriter()
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    thread = DictionaryObject()
+    writer._add_object(thread)
+    article1 = DictionaryObject({
+        NameObject("/P"): NullObject(),
+    })
+    reference1 = writer._add_object(article1)
+    article2 = DictionaryObject({
+        NameObject("/P"): NullObject(),
+    })
+    reference2 = writer._add_object(article2)
+    article3 = DictionaryObject({
+        NameObject("/P"): NullObject(),
+    })
+    reference3 = writer._add_object(article3)
+
+    thread[NameObject("/F")] = reference1
+    article1[NameObject("/N")] = reference2
+    article2[NameObject("/N")] = reference3
+    article3[NameObject("/N")] = reference3
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Detected cyclic article structure\.$"
+    ):
+        writer._add_articles_thread(thread=thread, pages={}, reader=reader)

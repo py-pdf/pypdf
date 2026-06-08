@@ -2873,7 +2873,7 @@ class PdfWriter(PdfDocCommon):
 
     def _add_articles_thread(
         self,
-        thread: DictionaryObject,  # thread entry from the reader's array of threads
+        thread: DictionaryObject,
         pages: dict[int, PageObject],
         reader: PdfReader,
     ) -> IndirectObject:
@@ -2881,33 +2881,40 @@ class PdfWriter(PdfDocCommon):
         Clone the thread with only the applicable articles.
 
         Args:
-            thread:
-            pages:
-            reader:
+            thread: Thread entry from the reader's array of threads
+            pages: Mapping of object numbers to page objects.
+            reader: The corresponding reader.
 
         Returns:
             The added thread as an indirect reference
 
         """
-        nthread = thread.clone(
+        new_thread = thread.clone(
             self, force_duplicate=True, ignore_fields=("/F",)
         )  # use of clone to keep link between reader and writer
-        self.threads.append(nthread.indirect_reference)
+        self.threads.append(new_thread.indirect_reference)
         first_article = cast("DictionaryObject", thread["/F"])
         current_article: Optional[DictionaryObject] = first_article
         new_article: Optional[DictionaryObject] = None
+
+        visited: set[int] = set()
         while current_article is not None:
-            pag = self._get_cloned_page(
+            article_id = id(current_article)
+            if article_id in visited:
+                raise LimitReachedError("Detected cyclic article structure.")
+            visited.add(article_id)
+
+            page = self._get_cloned_page(
                 cast("PageObject", current_article["/P"]), pages, reader
             )
-            if pag is not None:
+            if page is not None:
                 if new_article is None:
                     new_article = cast(
                         "DictionaryObject",
                         self._add_object(DictionaryObject()).get_object(),
                     )
                     new_first = new_article
-                    nthread[NameObject("/F")] = new_article.indirect_reference
+                    new_thread[NameObject("/F")] = new_article.indirect_reference
                 else:
                     new_article2 = cast(
                         "DictionaryObject",
@@ -2919,22 +2926,24 @@ class PdfWriter(PdfDocCommon):
                     )
                     new_article[NameObject("/N")] = new_article2.indirect_reference
                     new_article = new_article2
-                new_article[NameObject("/P")] = pag
-                new_article[NameObject("/T")] = nthread.indirect_reference
+                new_article[NameObject("/P")] = page
+                new_article[NameObject("/T")] = new_thread.indirect_reference
                 new_article[NameObject("/R")] = current_article["/R"]
-                pag_obj = cast("PageObject", pag.get_object())
-                if "/B" not in pag_obj:
-                    pag_obj[NameObject("/B")] = ArrayObject()
-                cast("ArrayObject", pag_obj["/B"]).append(
+                page_object = cast("PageObject", page.get_object())
+                if "/B" not in page_object:
+                    page_object[NameObject("/B")] = ArrayObject()
+                cast("ArrayObject", page_object["/B"]).append(
                     new_article.indirect_reference
                 )
+
             current_article = cast("DictionaryObject", current_article["/N"])
             if current_article == first_article:
                 new_article[NameObject("/N")] = new_first.indirect_reference  # type: ignore[index]
                 new_first[NameObject("/V")] = new_article.indirect_reference  # type: ignore[union-attr]
                 current_article = None
-        assert nthread.indirect_reference is not None
-        return nthread.indirect_reference
+
+        assert new_thread.indirect_reference is not None
+        return new_thread.indirect_reference
 
     def add_filtered_articles(
         self,
