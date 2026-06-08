@@ -335,9 +335,6 @@ class FlateDecode:
         return zlib.compress(data, level)
 
 
-_ASCII_HEX_DIGITS = b"0123456789abcdefABCDEF"
-
-
 class ASCIIHexDecode:
     """
     The ASCIIHexDecode filter decodes data that has been encoded in ASCII
@@ -383,22 +380,17 @@ class ASCIIHexDecode:
         # Remove whitespace
         hex_data = b"".join(hex_data.split())
 
-        # Drop bytes that are not valid hexadecimal digits. The spec permits
-        # only 0-9, A-F, a-f and whitespace inside the stream; stray bytes used
-        # to raise an uncaught binascii.Error here.
-        filtered = bytes(b for b in hex_data if b in _ASCII_HEX_DIGITS)
-        if len(filtered) != len(hex_data):
-            logger_warning(
-                "Ignoring non-hexadecimal characters in ASCIIHexDecode stream",
-                source=__name__,
-            )
-        hex_data = filtered
-
         # Pad if odd length
         if len(hex_data) % 2 == 1:
             hex_data += b"0"
 
-        return binascii.unhexlify(hex_data)
+        # The spec permits only 0-9, A-F, a-f and whitespace inside the stream.
+        # Stray bytes used to surface as an uncaught binascii.Error; turn them
+        # into a proper PdfStreamError instead.
+        try:
+            return binascii.unhexlify(hex_data)
+        except binascii.Error as error:
+            raise PdfStreamError(f"Invalid hexadecimal character in ASCIIHexDecode stream: {error}")
 
 
 class RunLengthDecode:

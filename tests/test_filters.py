@@ -140,10 +140,10 @@ def test_ascii_hex_decode_missing_eod(caplog):
     assert "missing EOD in ASCIIHexDecode, check if output is OK" in caplog.text
 
 
-def test_ascii_hex_decode_non_hex(caplog):
-    """ASCIIHexDecode.decode() drops invalid bytes instead of crashing."""
-    assert ASCIIHexDecode.decode(b"41ZZ42>") == b"AB"
-    assert "Ignoring non-hexadecimal characters in ASCIIHexDecode stream" in caplog.text
+def test_ascii_hex_decode_non_hex():
+    """ASCIIHexDecode.decode() raises a proper error on invalid bytes."""
+    with pytest.raises(PdfStreamError, match="Invalid hexadecimal character"):
+        ASCIIHexDecode.decode(b"41ZZ42>")
 
 
 @pytest.mark.enable_socket
