@@ -115,7 +115,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
         )
         retval = RectangleObject(tuple(retval[:4]))
     else:
-        retval = RectangleObject(retval)  # type: ignore
+        retval = RectangleObject(retval)  # type: ignore[arg-type]
     _set_rectangle(self, name, retval)
     return retval
 
@@ -518,7 +518,6 @@ class PageObject(DictionaryObject):
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
-        self._font_width_maps: dict[str, tuple[dict[str, float], str, float]] = {}
 
     def hash_bin(self) -> int:
         """
@@ -592,7 +591,7 @@ class PageObject(DictionaryObject):
             else:
                 raise PageSizeNotDefinedError
         page.__setitem__(
-            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore
+            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore[arg-type]
         )
 
         return page
@@ -623,7 +622,7 @@ class PageObject(DictionaryObject):
         ):
             return [] if self.inline_images is None else list(self.inline_images.keys())
 
-        x_object = resources[RES.XOBJECT].get_object()  # type: ignore
+        x_object = resources[RES.XOBJECT].get_object()  # type: ignore[index]
         for o in x_object:
             if not isinstance(x_object[o], StreamObject):
                 continue
@@ -818,7 +817,7 @@ class PageObject(DictionaryObject):
         self.add_transformation(trsf, False)
         for b in ["/MediaBox", "/CropBox", "/BleedBox", "/TrimBox", "/ArtBox"]:
             if b in self:
-                rr = RectangleObject(self[b])  # type: ignore
+                rr = RectangleObject(self[b])  # type: ignore[arg-type]
                 pt1 = trsf.apply_on(rr.lower_left)
                 pt2 = trsf.apply_on(rr.upper_right)
                 self[NameObject(b)] = RectangleObject(
@@ -1558,7 +1557,7 @@ class PageObject(DictionaryObject):
             if isinstance(viewport, ArrayObject):
                 bbox = viewport[0]["/BBox"]
             else:
-                bbox = viewport["/BBox"]  # type: ignore
+                bbox = viewport["/BBox"]  # type: ignore[index]
             scaled_bbox = RectangleObject(
                 (
                     float(bbox[0]) * sx,
@@ -1568,11 +1567,11 @@ class PageObject(DictionaryObject):
                 )
             )
             if isinstance(viewport, ArrayObject):
-                self[NameObject(PG.VP)][NumberObject(0)][  # type: ignore
+                self[NameObject(PG.VP)][NumberObject(0)][  # type: ignore[index]
                     NameObject("/BBox")
                 ] = scaled_bbox
             else:
-                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox  # type: ignore
+                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox  # type: ignore[index]
 
     def scale_by(self, factor: float) -> None:
         """
@@ -1611,8 +1610,8 @@ class PageObject(DictionaryObject):
         if content is not None:
             content_obj = content.flate_encode(level)
             try:
-                content.indirect_reference.pdf._objects[  # type: ignore
-                    content.indirect_reference.idnum - 1  # type: ignore
+                content.indirect_reference.pdf._objects[  # type: ignore[union-attr]
+                    content.indirect_reference.idnum - 1  # type: ignore[union-attr]
                 ] = content_obj
             except AttributeError:
                 if self.indirect_reference is not None and hasattr(
@@ -1679,7 +1678,7 @@ class PageObject(DictionaryObject):
 
     def _extract_text(
         self,
-        obj: Any,
+        obj: DictionaryObject,
         pdf: Any,
         orientations: tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
@@ -1687,6 +1686,8 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        *,
+        known_ids: Optional[set[int]] = None,
     ) -> str:
         """
         See extract_text for most arguments.
@@ -1697,26 +1698,24 @@ class PageObject(DictionaryObject):
                 default = "/Content"
 
         """
+        if known_ids is None:
+            known_ids = set()
+
         extractor = TextExtraction()
         font_resources: dict[str, DictionaryObject] = {}
         fonts: dict[str, Font] = {}
 
-        try:
-            objr = obj
-            while NameObject(PG.RESOURCES) not in objr:
-                # /Resources can be inherited so we look to parents
-                objr = objr["/Parent"].get_object()
-                # If no parents then no /Resources will be available,
-                # so an exception will be raised
-            resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
-        except Exception:
+        resources_dict = cast(
+            Optional[DictionaryObject],
+            obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject())
+        )
+        if is_null_or_none(resources_dict) or not resources_dict:
             # No resources means no text is possible (no font); we consider the
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
         if (
-            not is_null_or_none(resources_dict)
-            and "/Font" in resources_dict
+            "/Font" in resources_dict
             and (font_resources_dict := cast(DictionaryObject, resources_dict["/Font"]))
         ):
             for font_resource in font_resources_dict:
@@ -1725,7 +1724,7 @@ class PageObject(DictionaryObject):
                     font_resources[font_resource] = font_resource_object
                     fonts[font_resource] = Font.from_font_resource(font_resource_object)
                     # Override space width, if applicable
-                    if fonts[font_resource].character_widths.get(" ", 0) == 0:
+                    if fonts[font_resource].character_widths.get(fonts[font_resource].space_char, 0) == 0:
                         fonts[font_resource].space_width = space_width
                 except (AttributeError, TypeError):
                     pass
@@ -1797,16 +1796,31 @@ class PageObject(DictionaryObject):
                 except IndexError:
                     pass
                 try:
-                    xobj = resources_dict["/XObject"]
-                    if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
-                        text = self.extract_xform_text(
-                            xobj[operands[0]],  # type: ignore
-                            orientations,
-                            space_width,
-                            visitor_operand_before,
-                            visitor_operand_after,
-                            visitor_text,
-                        )
+                    xobj = cast(DictionaryObject, resources_dict["/XObject"])
+                    xform = cast(EncodedStreamObject, xobj[operands[0]])
+                    if xform["/Subtype"] != NameObject("/Image"):
+                        xform_id = id(xform)
+                        if xform_id in known_ids:
+                            logger_warning(
+                                "Detected cyclic form XObject reference, skipping %(operand)s.",
+                                source=__name__,
+                                operand=operands[0]
+                            )
+                            text = ""
+                        else:
+                            known_ids.add(xform_id)
+                            try:
+                                text = self.extract_xform_text(
+                                    xform,
+                                    orientations,
+                                    space_width,
+                                    visitor_operand_before,
+                                    visitor_operand_after,
+                                    visitor_text,
+                                    known_ids=known_ids,
+                                )
+                            finally:
+                                known_ids.discard(xform_id)
                         extractor.output += text
                         if visitor_text is not None:
                             visitor_text(
@@ -1851,20 +1865,24 @@ class PageObject(DictionaryObject):
 
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
-        objr: Any = self
+        obj: Any = self
         fonts: dict[str, Font] = {}
-        while objr is not None:
-            try:
-                resources_dict: Any = objr[PG.RESOURCES]
-            except KeyError:
-                resources_dict = {}
+        visited: set[int] = set()
+        while True:
+            obj_id = id(obj)
+            if obj_id in visited:
+                logger_warning("Detected cycle in /Parent hierarchy when retrieving fonts.", source=__name__)
+                break
+            visited.add(obj_id)
+
+            resources_dict: Any = obj.get(PG.RESOURCES, {})
             if "/Font" in resources_dict and self.pdf is not None:
                 for font_name in resources_dict["/Font"]:
                     fonts[font_name] = Font.from_font_resource(resources_dict["/Font"][font_name])
-            try:
-                objr = objr["/Parent"].get_object()
-            except KeyError:
-                objr = None
+
+            if "/Parent" not in obj:
+                break
+            obj = obj["/Parent"].get_object()
 
         return fonts
 
@@ -2072,6 +2090,8 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        *,
+        known_ids: Optional[set[int]] = None,
     ) -> str:
         """
         Extract text from an XObject.
@@ -2097,6 +2117,7 @@ class PageObject(DictionaryObject):
             visitor_operand_before,
             visitor_operand_after,
             visitor_text,
+            known_ids=known_ids,
         )
 
     def _get_fonts(self) -> tuple[set[str], set[str]]:

@@ -205,7 +205,9 @@ def get_display_str(
 ) -> tuple[str, bool, float]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
     widths: float = 0.0
-    for x in [font.character_map.get(x, x) for x in text_operands]:
+    for raw_character in text_operands:
+        widths += font.space_width if raw_character == font.space_char else font.get_text_width(raw_character)
+        x = font.character_map.get(raw_character, raw_character)
         # x can be a sequence of bytes ; ex: habibi.pdf
         if len(x) == 1:
             xx = ord(x)
@@ -240,6 +242,5 @@ def get_display_str(
                     visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                 text = ""
             text = text + x
-        widths += font.space_width if x == " " else font.text_width(x)
         # fmt: on
     return text, rtl_dir, widths

@@ -17,7 +17,7 @@ def test_slash_prefix():
     - Contains alphanumeric characters (letters and digits)
     - The attribute name should be a case-insensitive match, with underscores removed
     """
-    pattern = re.compile(r"^\/[A-Z]+[a-zA-Z0-9]*$")
+    pattern = re.compile(r"^/[A-Z]+[a-zA-Z0-9]*$")
     for cls in PDF_KEYS:
         for attr in dir(cls):
             # Skip magic methods

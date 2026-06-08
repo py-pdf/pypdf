@@ -1,4 +1,3 @@
-import binascii
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from math import ceil
@@ -34,6 +33,11 @@ _predefined_cmap: dict[str, str] = {
     "/UniCNS-UTF16-V": "utf-16-be",
     "/UniGB-UTF16-H": "gb18030",
     "/UniGB-UTF16-V": "gb18030",
+    # Japanese CMaps (PDF Reference 1.7, Appendix H)
+    "/90ms-RKSJ-H": "cp932",  # Shift-JIS (JIS X 0208-1990), horizontal
+    "/90ms-RKSJ-V": "cp932",  # Shift-JIS (JIS X 0208-1990), vertical
+    "/UniJIS-UTF16-H": "utf-16-be",  # Unicode UTF-16BE -> JIS, horizontal
+    "/UniJIS-UTF16-V": "utf-16-be",  # Unicode UTF-16BE -> JIS, vertical
     # UCS2 in code
 }
 
@@ -106,9 +110,9 @@ def _parse_encoding(
             else:  # isinstance(o, str):
                 try:
                     if x < len(encoding):
-                        encoding[x] = adobe_glyphs[o]  # type: ignore
+                        encoding[x] = adobe_glyphs[o]  # type: ignore[index]
                 except Exception:
-                    encoding[x] = o  # type: ignore
+                    encoding[x] = o  # type: ignore[index]
                 x += 1
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
@@ -144,6 +148,8 @@ def _parse_to_unicode(
             map_dict,
             int_entry,
         )
+
+    map_dict.pop(-1, None)  # Don't pass the -1 key, we only used it to temporarily store encoding length
 
     return map_dict, int_entry
 
@@ -211,10 +217,13 @@ def process_cm_line(
     elif process_rg:
         try:
             multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
-        except binascii.Error as error:
+        except (ValueError, IndexError) as error:
             logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     elif process_char:
-        parse_bfchar(line, map_dict, int_entry)
+        try:
+            parse_bfchar(line, map_dict, int_entry)
+        except (ValueError, IndexError) as error:
+            logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     return process_rg, process_char, multiline_rg
 
 
