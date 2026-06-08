@@ -431,6 +431,40 @@ def test_parse_bfrange__iteration_limit():
     assert map_dict == {-1: 1, "\x01": "�", "\x02": "�", "\x03": "�", "\x04": "\uffff", "\x05": "ﾫ"}
 
 
+def test_parse_to_unicode_skips_truncated_lines(caplog):
+    """A truncated bfrange or malformed bfchar line must not crash extraction."""
+    writer = PdfWriter()
+
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<0001> <0005>\n"  # missing destination token
+        b"endbfrange\n"
+        b"beginbfchar\n"
+        b"<0001> <0041>\n"  # valid
+        b"zz <0042>\n"  # non-hex source
+        b"endbfchar\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+
+    # No exception, broken lines reported.
+    page.extract_text()
+    assert "Skipping broken line b'0001   0005': list index out of range" in caplog.text
+    assert "Skipping broken line b'zz  0042': Non-hexadecimal digit found" in caplog.text
+
+
 def test_parse_bfchar__iteration_limit():
     int_entry = [0] * 99_995
     map_dict = {}

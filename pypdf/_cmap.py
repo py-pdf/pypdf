@@ -1,4 +1,3 @@
-import binascii
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from math import ceil
@@ -218,10 +217,13 @@ def process_cm_line(
     elif process_rg:
         try:
             multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
-        except binascii.Error as error:
+        except (ValueError, IndexError) as error:
             logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     elif process_char:
-        parse_bfchar(line, map_dict, int_entry)
+        try:
+            parse_bfchar(line, map_dict, int_entry)
+        except (ValueError, IndexError) as error:
+            logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     return process_rg, process_char, multiline_rg
 
 
