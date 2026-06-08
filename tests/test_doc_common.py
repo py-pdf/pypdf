@@ -22,6 +22,7 @@ from pypdf.generic import (
     NullObject,
     NumberObject,
     TextStringObject,
+    TreeObject,
     ViewerPreferences,
 )
 from tests import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -644,3 +645,36 @@ def test_get_pages_showing_field__cyclic() -> None:
             match=r"^Detected cycle in /Parent hierarchy when retrieving value for key 'key'\.$"
     ):
         dictionary1.get_inherited("key")
+
+
+@pytest.mark.timeout(5)
+def test_get_named_destinations__cyclic(caplog) -> None:
+    writer = PdfWriter()
+
+    tree1 = TreeObject()
+    reference1 = writer._add_object(tree1)
+    tree2 = TreeObject()
+    reference2 = writer._add_object(tree2)
+    tree1[NameObject("/Kids")] = ArrayObject([reference2.indirect_reference])
+    tree2[NameObject("/Kids")] = ArrayObject([reference1.indirect_reference])
+
+    assert writer._get_named_destinations(tree=tree1) == {}
+    assert caplog.messages == ["Detected cycle in destination tree."]
+
+
+@pytest.mark.timeout(5)
+def test_get_qualified_field_name__cyclic() -> None:
+    writer = PdfWriter()
+
+    dictionary1 = DictionaryObject()
+    reference1 = writer._add_object(dictionary1)
+    dictionary2 = TreeObject()
+    reference2 = writer._add_object(dictionary2)
+    dictionary1[NameObject("/Parent")] = reference2.indirect_reference
+    dictionary2[NameObject("/Parent")] = reference1.indirect_reference
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Detected cycle in /Parent hierarchy when retrieving qualified field name\.$"
+    ):
+        _ = writer._get_qualified_field_name(parent=dictionary1)

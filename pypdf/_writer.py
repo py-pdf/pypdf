@@ -1011,7 +1011,7 @@ class PdfWriter(PdfDocCommon):
             for field, value in fields.items():
                 rectangle = cast(RectangleObject, annotation[AA.Rect])
                 if not (
-                    self._get_qualified_field_name(parent_annotation) == field
+                    self._get_qualified_field_name(parent=parent_annotation) == field
                     or parent_annotation.get("/T", None) == field
                 ):
                     continue
