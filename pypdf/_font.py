@@ -168,7 +168,7 @@ class Font:
                 )
                 continue
             # check for format (1): `int [int int int int ...]`
-            w_next_entry = _w[idx + 1].get_object()
+            w_next_entry = _w[idx + 1].get_object() if idx + 1 < len(_w) else None
             if isinstance(w_next_entry, Sequence):
                 start_idx, width_list = w_entry, w_next_entry
                 current_widths.update(
@@ -186,8 +186,10 @@ class Font:
                 )
                 skip_count = 1
             # check for format (2): `int int int`
-            elif isinstance(w_next_entry, (int, float)) and isinstance(
-                _w[idx + 2].get_object(), (int, float)
+            elif (
+                isinstance(w_next_entry, (int, float))
+                and idx + 2 < len(_w)
+                and isinstance(_w[idx + 2].get_object(), (int, float))
             ):
                 start_idx, stop_idx, const_width = (
                     w_entry,

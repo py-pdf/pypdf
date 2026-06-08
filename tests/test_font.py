@@ -10,7 +10,13 @@ from fontTools.ttLib import TTFont
 from pypdf import PdfReader
 from pypdf._font import Font
 from pypdf.errors import PdfReadError
-from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    EncodedStreamObject,
+    NameObject,
+    NumberObject,
+)
 
 from . import RESOURCE_ROOT
 
@@ -54,6 +60,21 @@ def test_font_descriptor():
         "/CapHeight": 562,
         "/XHeight": 439
     }
+
+
+@pytest.mark.parametrize("w_array", [[45], [45, 65]])
+def test_collect_cid_character_widths_truncated_w(w_array):
+    # A /W array that ends mid-entry must not read past its bounds.
+    d_font = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/CIDFontType2"),
+        NameObject("/W"): ArrayObject(NumberObject(v) for v in w_array),
+    })
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/DescendantFonts"): ArrayObject([d_font]),
+    })
+    Font.from_font_resource(font_res)
 
 
 def test_font_file():
