@@ -791,10 +791,11 @@ def test_inline_images_skips_none_entries():
     with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
         inline = page.inline_images
 
-    assert inline is not None, "The document contains at least one inline image"
-    for image_name, image_value in inline.items():
-        assert image_value is not None, "inline_images value should not contain None values"
-        assert image_name.startswith("~"), "inline_images keys should start with ~"
+    assert inline is not None, "inline_images must not be None after accessing images"
+    assert len(list(inline.keys())) == 0, (
+        "inline_images must not contain non-inline images. "
+        "This document only contains one Do-referenced image."
+    )
 
 
 @pytest.mark.enable_socket
