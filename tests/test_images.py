@@ -770,10 +770,13 @@ def test_do_images_stored_as_none_in_cache():
     assert page._content_stream_images is not None
 
     # Do images should be in the cache with None value
-    do_images = {k: v for k, v in page._content_stream_images.items()
-                 if not k.startswith("~")}
-    for k, v in do_images.items():
-        assert v is None, f"Image {k} should be None (lazy placeholder)"
+    do_images = {
+        k: v for k, v in page._content_stream_images.items()
+        if not v
+    }
+    assert len(do_images) == 1, "Document should contain only 1 Do-referenced image."
+    do_image_key = next(iter(do_images.keys()))
+    assert do_images[do_image_key] is None, f"Image {do_image_key} should be None (lazy placeholder)"
 
 
 def test_inline_images_skips_none_entries():
