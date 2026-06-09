@@ -152,7 +152,9 @@ class Font:
         #   (2) A character start index, a character stop index, and a width, e.g.
         #       `45 65 500` applies width 500 to characters 45-65.
         skip_count = 0
-        _w = d_font.get("/W", [])
+        # /W may be stored as an indirect reference; resolve it so the
+        # bounds checks below can call len() on the actual array.
+        _w = d_font.get("/W", ArrayObject()).get_object()
         for idx, w_entry in enumerate(_w):
             w_entry = w_entry.get_object()
             if skip_count:
