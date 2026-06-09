@@ -24,6 +24,10 @@ def read_hex_string_from_stream(
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         if tok == b">":
             break
+        if tok not in b"0123456789abcdefABCDEF":
+            raise PdfStreamError(
+                f"Invalid hexadecimal character {tok!r} in hex string"
+            )
         x += tok
         if len(x) == 2:
             arr.append(int(x, base=16))

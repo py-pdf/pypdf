@@ -384,7 +384,13 @@ class ASCIIHexDecode:
         if len(hex_data) % 2 == 1:
             hex_data += b"0"
 
-        return binascii.unhexlify(hex_data)
+        # The spec permits only 0-9, A-F, a-f and whitespace inside the stream.
+        # Stray bytes used to surface as an uncaught binascii.Error; turn them
+        # into a proper PdfStreamError instead.
+        try:
+            return binascii.unhexlify(hex_data)
+        except binascii.Error as error:
+            raise PdfStreamError(f"Invalid hexadecimal character in ASCIIHexDecode stream: {error}")
 
 
 class RunLengthDecode:
