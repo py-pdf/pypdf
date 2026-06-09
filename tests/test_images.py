@@ -723,8 +723,8 @@ def test_inline_images_property_returns_only_inline():
     with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
         inline = page.inline_images
     if inline is not None:
-        for k, v in inline.items():
-            assert v.is_inline is True, f"Image {k} should have is_inline=True"
+        for image_name, image_value in inline.items():
+            assert image_value.is_inline is True, f"Image {image_name} should have is_inline=True"
 
 
 @pytest.mark.samples
