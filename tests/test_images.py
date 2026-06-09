@@ -710,7 +710,7 @@ def test_inline_images_property_deprecation_warning():
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
-    with pytest.warns(DeprecationWarning, match="PageObject.inline_images is deprecated"):
+    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
         _ = page.inline_images
 
 
@@ -720,7 +720,7 @@ def test_inline_images_property_returns_only_inline():
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
-    with pytest.warns(DeprecationWarning, match="PageObject.inline_images is deprecated"):
+    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
         inline = page.inline_images
     if inline is not None:
         for k, v in inline.items():
@@ -785,7 +785,7 @@ def test_inline_images_skips_none_entries():
     _ = list(page.images)
 
     # Access inline_images (suppress deprecation warning)
-    with pytest.warns(DeprecationWarning, match="PageObject.inline_images is deprecated"):
+    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
         inline = page.inline_images
 
     if inline is not None:
