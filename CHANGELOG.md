@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.13.1, 2026-06-08
+
+### Security (SEC)
+- Prevent infinite loops when processing threads/articles (#3839)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.0...6.13.1)
+
 ## Version 6.13.0, 2026-06-05
 
 ### Security (SEC)

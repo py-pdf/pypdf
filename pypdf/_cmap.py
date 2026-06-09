@@ -1,4 +1,3 @@
-import binascii
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from math import ceil
@@ -218,10 +217,13 @@ def process_cm_line(
     elif process_rg:
         try:
             multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
-        except binascii.Error as error:
+        except (ValueError, IndexError) as error:
             logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     elif process_char:
-        parse_bfchar(line, map_dict, int_entry)
+        try:
+            parse_bfchar(line, map_dict, int_entry)
+        except (ValueError, IndexError) as error:
+            logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     return process_rg, process_char, multiline_rg
 
 
@@ -344,12 +346,15 @@ def _type1_alternative(
     assert ft_desc is not None, "mypy"
     txt = ft_desc.get_object().get_data()
     txt = txt.split(b"eexec\n")[0]  # only clear part
-    txt = txt.split(b"/Encoding")[1]  # to get the encoding part
+    encoding_part = txt.split(b"/Encoding")
+    if len(encoding_part) < 2:
+        return map_dict, int_entry
+    txt = encoding_part[1]  # to get the encoding part
     lines = txt.replace(b"\r", b"\n").split(b"\n")
     for li in lines:
         if li.startswith(b"dup"):
             words = [_w for _w in li.split(b" ") if _w != b""]
-            if len(words) > 3 and words[3] != b"put":
+            if len(words) < 3 or (len(words) > 3 and words[3] != b"put"):
                 continue
             try:
                 i = int(words[1])
