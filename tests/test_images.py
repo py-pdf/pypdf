@@ -17,7 +17,7 @@ from PIL import Image, ImageChops, ImageDraw
 from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
-from pypdf.generic import ContentStream, NameObject, NullObject
+from pypdf.generic import ContentStream, DecodedStreamObject, NameObject, NullObject
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 from .utils import get_image_data
@@ -243,6 +243,34 @@ def test_get_inline_image_without_xobject_resources_raises_when_missing():
         pytest.raises(KeyError, match="No inline image can be found"),
     ):
         page._get_image("~0~")
+
+
+def test_inline_image_with_unknown_key():
+    """
+    An inline image carrying a key outside the abbreviation map must not
+    crash image extraction (cf. _get_inline_images).
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    # 2x2 RGB image with a non-standard `/Foo` key that is absent from
+    # _INLINE_IMAGE_KEY_MAPPING. A numeric value keeps value translation from
+    # bailing out first so the key lookup is reached.
+    content = (
+        b"q 20 0 0 20 0 0 cm "
+        b"BI /W 2 /H 2 /CS /RGB /BPC 8 /Foo 1 ID " + b"\x00" * 12 + b" EI Q"
+    )
+    stream = DecodedStreamObject()
+    stream.set_data(content)
+    page[NameObject("/Contents")] = writer._add_object(stream)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    reader = PdfReader(buffer)
+    images = reader.pages[0].images
+    assert len(images) == 1
+    assert images[0].image is not None
 
 
 def test_get_xobject_image_without_xobject_resources_raises():

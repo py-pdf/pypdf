@@ -764,7 +764,7 @@ class PageObject(DictionaryObject):
                     )
                 else:
                     v = self._translate_value_inline_image(k, v)
-                k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
+                k = NameObject(_INLINE_IMAGE_KEY_MAPPING.get(k, k))
                 if k not in init:
                     init[k] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
