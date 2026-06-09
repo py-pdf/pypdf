@@ -33,9 +33,18 @@ if TYPE_CHECKING:
 class PageTrigger(StrEnum):
     """Trigger event entries in a page object's additional-actions dictionary."""
     OPEN = "open"
-    """Trigger object triggering an action when the page is opened."""
+    """Trigger an action when the page is opened."""
     CLOSE = "close"
-    """Trigger object triggering an action when the page is closed."""
+    """Trigger an action when the page is closed."""
+
+    @property
+    def name_object(self) -> NameObject:
+        """Returns the corresponding NameObject for the trigger."""
+        mapping = {
+            PageTrigger.OPEN: NameObject("/O"),
+            PageTrigger.CLOSE: NameObject("/C"),
+        }
+        return mapping[self]
 
 
 class Action(DictionaryObject, ABC):
@@ -58,7 +67,7 @@ class Action(DictionaryObject, ABC):
             trigger: An open or close trigger.
             action: The action to be done.
         """
-        trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
+        trigger_name = trigger.name_object
 
         if "/AA" not in page:
             # Additional actions key not present
@@ -107,29 +116,29 @@ class Action(DictionaryObject, ABC):
 
         visited = set()
         while True:
-            next_ = current.get("/Next", None)
+            next_node = current.get("/Next", None)
 
-            if is_null_or_none(next_):
+            if is_null_or_none(next_node):
                 break
 
-            if not isinstance(next_, (ArrayObject, DictionaryObject)):
+            if not isinstance(next_node, (ArrayObject, DictionaryObject)):
                 raise TypeError(
                     f"An action dictionary’s Next entry must be an Action dictionary "
-                    f"or an array of Action dictionaries: received type {type(next_)}"
+                    f"or an array of Action dictionaries: received type {type(next_node)}"
                 )
 
-            id_ = id(next_)
-            if id_ in visited:
+            id_next = id(next_node)
+            if id_next in visited:
                 logger_warning("Detected cycle in the action tree for %(current)s", source=__name__, current=current)
                 break
-            visited.add(id_)
+            visited.add(id_next)
 
-            if isinstance(next_, ArrayObject):
-                current = next_[-1]
+            if isinstance(next_node, ArrayObject):
+                current = next_node[-1]
             else:
-                current = next_
+                current = next_node
 
-        if not is_null_or_none(next_ := current.get("/Next")) and id(next_) in visited:
+        if not is_null_or_none(next_node := current.get("/Next")) and id(next_node) in visited:
             logger_warning("Detected cycle in the action tree for %(current)s", source=__name__, current=current)
 
         current[NameObject("/Next")] = action
@@ -147,7 +156,7 @@ class Action(DictionaryObject, ABC):
         if "/AA" not in page:
             return
 
-        trigger_name = NameObject("/O") if PageTrigger(trigger).value == PageTrigger.OPEN else NameObject("/C")
+        trigger_name = trigger.name_object
 
         additional_actions = cast(DictionaryObject, page["/AA"])
 

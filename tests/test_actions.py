@@ -25,12 +25,12 @@ def pdf_file_writer():
         NullObject(),
     ]
 )
-def test_page_add_action__with_existing_null_object(pdf_file_writer, action_dictionary):
+def test_page_add_action__with_none_and_null(pdf_file_writer, action_dictionary):
     page = pdf_file_writer.pages[0]
 
     # Add an open action
-    if action_dictionary:
-        page[NameObject("/AA")] = NullObject()
+    if action_dictionary is not None:
+        page[NameObject("/AA")] = action_dictionary
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected_open = {
         "/O": {
@@ -86,7 +86,6 @@ def test_page_add_action__with_existing_array_object__strict():
     assert page.get("/AA") == ArrayObject()
 
     # Add a close action with an array object as the AA entry
-    page[NameObject("/AA")] = ArrayObject()
     with pytest.raises(
             ParseError,
             match=(
@@ -126,7 +125,7 @@ def test_page_add_action__edge_cases(pdf_file_writer):
     # Add an open action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             ParseError,
-            match="The type in a page object's additional-actions key must be a DictionaryObject"
+            match="^The type in a page object's additional-actions key must be a DictionaryObject"
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")
@@ -220,7 +219,7 @@ def test_page_add_action__empty_dictionary(pdf_file_writer):
     # Add an open action when an additional-actions key exists, but is an empty dictionary
     page[NameObject("/AA")] = DictionaryObject()
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected = {
+    expected_open = {
         "/O": {
             "/Type": "/Action",
             "/Next": NullObject(),
@@ -228,14 +227,14 @@ def test_page_add_action__empty_dictionary(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page["/AA"] == expected
+    assert page["/AA"] == expected_open
     page.delete_action(PageTrigger.OPEN)
     assert page.get("/AA") is None
 
     # Add a close action when an additional-actions key exists, but is an empty dictionary
     page[NameObject("/AA")] = DictionaryObject()
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected = {
+    expected_close = {
         "/C": {
             "/Type": "/Action",
             "/Next": NullObject(),
@@ -243,7 +242,16 @@ def test_page_add_action__empty_dictionary(pdf_file_writer):
             "/JS": "app.alert('This is page ' + this.pageNum);"
         }
     }
-    assert page["/AA"] == expected
+    assert page["/AA"] == expected_close
+    page.delete_action(PageTrigger.CLOSE)
+    assert page.get("/AA") is None
+
+    # Add an open and close action
+    page[NameObject("/AA")] = DictionaryObject()
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
+    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
+    assert page["/AA"] == expected_open | expected_close
+    page.delete_action(PageTrigger.OPEN)
     page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
@@ -427,7 +435,7 @@ def test_page_delete_action(pdf_file_writer, action_dictionary):
     page = pdf_file_writer.pages[0]
 
     if action_dictionary is not None:
-        page[NameObject("/AA")] = DictionaryObject()
+        page[NameObject("/AA")] = action_dictionary
 
     page.delete_action(PageTrigger(PageTrigger.OPEN))
     if action_dictionary is None:
