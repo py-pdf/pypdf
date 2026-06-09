@@ -123,10 +123,10 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
 def test_page_add_action__edge_cases(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
-    # Add an open action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             ParseError,
-            match=r"^The type in a page object's additional-actions key must be a DictionaryObject"
+            match=r"^The type in a page object's additional-actions key must be a DictionaryObject: "
+                  r"received type NameObject$"
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")

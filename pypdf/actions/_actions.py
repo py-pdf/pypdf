@@ -111,7 +111,7 @@ class Action(DictionaryObject, ABC):
         if not isinstance(head, DictionaryObject):
             raise ParseError(
                 f"The type in a page object's additional-actions key must be a DictionaryObject: "
-                f"received type {type(head)}"
+                f"received type {type(head).__name__}"
             )
         current = cast(DictionaryObject, current)
 
