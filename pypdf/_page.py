@@ -739,7 +739,7 @@ class PageObject(DictionaryObject):
 
             >>> from pypdf import PdfWriter
             >>> writer = PdfWriter()
-            >>> page = writer.add_blank_page(800,600)
+            >>> page = writer.add_blank_page(800, 600)
             >>> images = page.images
 
         """
