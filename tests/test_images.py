@@ -771,8 +771,8 @@ def test_do_images_stored_as_none_in_cache():
 
     # Do images should be in the cache with None value
     do_images = {
-        k: v for k, v in page._content_stream_images.items()
-        if not v
+        image_name: image_value for image_name, image_value in page._content_stream_images.items()
+        if not image_value
     }
     assert len(do_images) == 1, "Document should contain only 1 Do-referenced image."
     do_image_key = next(iter(do_images.keys()))
@@ -791,10 +791,10 @@ def test_inline_images_skips_none_entries():
     with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
         inline = page.inline_images
 
-    if inline is not None:
-        for k, v in inline.items():
-            assert v is not None, "Inline_images should not contain None values"
-            assert k.startswith("~"), "Inline_images keys should start with ~"
+    assert inline is not None, "The document contains at least one inline image"
+    for image_name, image_value in inline.items():
+        assert image_value is not None, "inline_images value should not contain None values"
+        assert image_name.startswith("~"), "inline_images keys should start with ~"
 
 
 @pytest.mark.enable_socket
