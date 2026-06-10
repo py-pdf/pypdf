@@ -1157,7 +1157,7 @@ class PdfDocCommon(ABC):
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
-        _seen_refs: Optional[set] = None,
+        _seen_refs: Optional[set[tuple[int, int]]] = None,
     ) -> None:
         """
         Process the document pages to ease searching.
