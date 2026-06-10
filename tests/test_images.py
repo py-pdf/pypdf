@@ -17,7 +17,7 @@ from PIL import Image, ImageChops, ImageDraw
 from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
-from pypdf.generic import ContentStream, DecodedStreamObject, NameObject, NullObject
+from pypdf.generic import ContentStream, NameObject, NullObject
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 from .utils import get_image_data
@@ -245,7 +245,7 @@ def test_get_inline_image_without_xobject_resources_raises_when_missing():
         page._get_image("~0~")
 
 
-def test_inline_image_with_unknown_key():
+def test_inline_image_with_unknown_key(caplog):
     """
     An inline image carrying a key outside the abbreviation map must not
     crash image extraction (cf. _get_inline_images).
@@ -259,9 +259,9 @@ def test_inline_image_with_unknown_key():
         b"q 20 0 0 20 0 0 cm "
         b"BI /W 2 /H 2 /CS /RGB /BPC 8 /Foo 1 ID " + b"\x00" * 12 + b" EI Q"
     )
-    stream = DecodedStreamObject()
+    stream = ContentStream(stream=None, pdf=writer)
     stream.set_data(content)
-    page[NameObject("/Contents")] = writer._add_object(stream)
+    page.replace_contents(stream)
 
     buffer = BytesIO()
     writer.write(buffer)
@@ -271,6 +271,7 @@ def test_inline_image_with_unknown_key():
     images = reader.pages[0].images
     assert len(images) == 1
     assert images[0].image is not None
+    assert "Unknown inline image key /Foo" in caplog.text
 
 
 def test_get_xobject_image_without_xobject_resources_raises():
