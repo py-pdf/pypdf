@@ -1157,6 +1157,7 @@ class PdfDocCommon(ABC):
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
+        _seen_refs: Optional[set] = None,
     ) -> None:
         """
         Process the document pages to ease searching.
@@ -1175,6 +1176,9 @@ class PdfDocCommon(ABC):
             pages:
             inherit:
             indirect_reference: Used recursively to flatten the /Pages object.
+            _seen_refs: Set of indirect-reference idnum/generation pairs already
+                visited while traversing /Pages nodes. Detects multi-hop cycles
+                such as A→B→C→A that the single-parent check misses.
 
         """
         inheritable_page_attributes = (
@@ -1185,6 +1189,8 @@ class PdfDocCommon(ABC):
         )
         if inherit is None:
             inherit = {}
+        if _seen_refs is None:
+            _seen_refs = set()
         if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
@@ -1225,12 +1231,13 @@ class PdfDocCommon(ABC):
                 obj = page.get_object()
                 if obj:
                     # damaged file may have invalid child in /Pages
-                    try:
-                        self._flatten(list_only, obj, inherit, **addt)
-                    except RecursionError:
-                        raise PdfReadError(
-                            "Maximum recursion depth reached during page flattening."
-                        )
+                    ref = getattr(obj, "indirect_reference", None)
+                    ref_key = (ref.idnum, ref.generation) if ref is not None else None
+                    if ref_key is not None:
+                        if ref_key in _seen_refs:
+                            raise PdfReadError("Detected cyclic page references.")
+                        _seen_refs.add(ref_key)
+                    self._flatten(list_only, obj, inherit, _seen_refs=_seen_refs, **addt)
         elif t == "/Page":
             for attr_in, value in inherit.items():
                 # if the page has its own value, it does not inherit the
