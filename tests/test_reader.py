@@ -2022,6 +2022,32 @@ def test_read_standard_xref_table__two_whitespace_characters_between_offset_and_
     assert reader.pages[0].extract_text() == "Hello World!"
 
 
+def test_read_standard_xref_table__entry_invalid_but_object_found(caplog):
+    """Tests for #3841"""
+    body = (
+        b"%PDF-1.7\n"
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"
+    )
+    xref_offset = len(body)
+    corrupt_entry = b"xxxxxxxxxxxxxxxx 0\r\n"
+    assert len(corrupt_entry) == 20
+    data = body + (
+        b"xref\n1 3\n"
+        + corrupt_entry
+        + b"%010d 00000 n\r\n" % body.index(b"2 0 obj")
+        + b"%010d 00000 n\r\n" % body.index(b"3 0 obj")
+        + b"trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n"
+        + b"%d" % xref_offset
+        + b"\n%%EOF"
+    )
+
+    reader = PdfReader(BytesIO(data))
+    assert len(reader.pages) == 1
+    assert "entry 1 in Xref table invalid but object found" in caplog.text
+
+
 @pytest.mark.enable_socket
 def test_root_object_recovery_limit(caplog):
     url = "https://github.com/user-attachments/files/24525509/root_object_recovery_limit.pdf"

@@ -970,6 +970,7 @@ class PdfReader(PdfDocCommon):
                         )
                         generation = int(f.group(1))
                         offset = f.start()
+                        entry_type_b = b"n"
 
                 if generation not in self.xref:
                     self.xref[generation] = {}
