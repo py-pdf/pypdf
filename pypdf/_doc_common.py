@@ -1157,6 +1157,7 @@ class PdfDocCommon(ABC):
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
+        visited: Optional[set[int]] = None,
     ) -> None:
         """
         Process the document pages to ease searching.
@@ -1175,6 +1176,9 @@ class PdfDocCommon(ABC):
             pages:
             inherit:
             indirect_reference: Used recursively to flatten the /Pages object.
+            visited: Set of id() values of /Pages nodes already visited during
+                traversal. Detects multi-hop cycles such as A→B→C→A that the
+                single-parent check misses.
 
         """
         inheritable_page_attributes = (
@@ -1185,6 +1189,8 @@ class PdfDocCommon(ABC):
         )
         if inherit is None:
             inherit = {}
+        if visited is None:
+            visited = set()
         if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
@@ -1225,12 +1231,11 @@ class PdfDocCommon(ABC):
                 obj = page.get_object()
                 if obj:
                     # damaged file may have invalid child in /Pages
-                    try:
-                        self._flatten(list_only, obj, inherit, **addt)
-                    except RecursionError:
-                        raise PdfReadError(
-                            "Maximum recursion depth reached during page flattening."
-                        )
+                    obj_id = id(obj)
+                    if obj_id in visited:
+                        raise PdfReadError("Detected cyclic page references.")
+                    visited.add(obj_id)
+                    self._flatten(list_only, obj, inherit, visited=visited, **addt)
         elif t == "/Page":
             for attr_in, value in inherit.items():
                 # if the page has its own value, it does not inherit the
