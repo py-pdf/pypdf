@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## Version 6.14.0, 2026-XX-XX
+
+### Security (SEC)
+- Detect multi-hop cyclic /Pages trees in `_flatten` to prevent SIGSEGV (#XXXX)
+
 ## Version 6.13.1, 2026-06-08
 
 ### Security (SEC)
