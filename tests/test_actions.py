@@ -23,6 +23,7 @@ def pdf_file_writer():
     [
         None,
         NullObject(),
+        DictionaryObject(),
     ]
 )
 def test_page_add_action__with_none_and_null(pdf_file_writer, action_dictionary):
