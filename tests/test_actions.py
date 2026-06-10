@@ -26,7 +26,7 @@ def pdf_file_writer():
         DictionaryObject(),
     ]
 )
-def test_page_add_action__with_none_and_null(pdf_file_writer, action_dictionary):
+def test_page_add_action__with_empyty_objects(pdf_file_writer, action_dictionary):
     page = pdf_file_writer.pages[0]
 
     # Add an open action
@@ -215,49 +215,6 @@ def test_page_add_action__next_is_null(pdf_file_writer):
         }
     }
     assert page["/AA"] == expected
-    page.delete_action(PageTrigger.CLOSE)
-    assert page.get("/AA") is None
-
-
-def test_page_add_action__empty_dictionary(pdf_file_writer):
-    page = pdf_file_writer.pages[0]
-
-    # Add an open action when an additional-actions key exists, but is an empty dictionary
-    page[NameObject("/AA")] = DictionaryObject()
-    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected_open = {
-        "/O": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('This is page ' + this.pageNum);"
-        }
-    }
-    assert page["/AA"] == expected_open
-    page.delete_action(PageTrigger.OPEN)
-    assert page.get("/AA") is None
-
-    # Add a close action when an additional-actions key exists, but is an empty dictionary
-    page[NameObject("/AA")] = DictionaryObject()
-    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    expected_close = {
-        "/C": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('This is page ' + this.pageNum);"
-        }
-    }
-    assert page["/AA"] == expected_close
-    page.delete_action(PageTrigger.CLOSE)
-    assert page.get("/AA") is None
-
-    # Add an open and close action
-    page[NameObject("/AA")] = DictionaryObject()
-    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
-    assert page["/AA"] == expected_open | expected_close
-    page.delete_action(PageTrigger.OPEN)
     page.delete_action(PageTrigger.CLOSE)
     assert page.get("/AA") is None
 
