@@ -38,7 +38,7 @@ class PageTrigger(StrEnum):
     """Trigger an action when the page is closed."""
 
     @property
-    def name_object(self) -> NameObject:
+    def _name_object(self) -> NameObject:
         """Returns the corresponding NameObject for the trigger."""
         mapping = {
             PageTrigger.OPEN: NameObject("/O"),
@@ -67,7 +67,7 @@ class Action(DictionaryObject, ABC):
             trigger: An open or close trigger.
             action: The action to be done.
         """
-        trigger_name = trigger.name_object
+        trigger_name = trigger._name_object
 
         if "/AA" not in page:
             # Additional actions key not present
@@ -80,7 +80,6 @@ class Action(DictionaryObject, ABC):
             page[NameObject("/AA")] = DictionaryObject()
 
         if not isinstance(page["/AA"].get_object(), DictionaryObject):
-            #current_type = type(page["/AA"])
             current_type = type(page["/AA"]).__name__
             if page.pdf is not None and getattr(page.pdf, "strict", False):
                 raise ParseError(
@@ -157,7 +156,7 @@ class Action(DictionaryObject, ABC):
         if "/AA" not in page:
             return
 
-        trigger_name = trigger.name_object
+        trigger_name = trigger._name_object
 
         additional_actions = cast(DictionaryObject, page["/AA"])
 

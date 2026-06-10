@@ -45,8 +45,8 @@ def test_page_add_action__with_none_and_null(pdf_file_writer, action_dictionary)
     assert page.get("/AA") is None
 
     # Add a close action
-    if action_dictionary:
-        page[NameObject("/AA")] = NullObject()
+    if action_dictionary is not None:
+        page[NameObject("/AA")] = action_dictionary
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     expected_close = {
         "/C": {
@@ -61,8 +61,8 @@ def test_page_add_action__with_none_and_null(pdf_file_writer, action_dictionary)
     assert page.get("/AA") is None
 
     # Add an open and close action
-    if action_dictionary:
-        page[NameObject("/AA")] = NullObject()
+    if action_dictionary is not None:
+        page[NameObject("/AA")] = action_dictionary
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert page["/AA"] == expected_open | expected_close
@@ -79,8 +79,10 @@ def test_page_add_action__with_existing_array_object__strict():
     page[NameObject("/AA")] = ArrayObject()
     with pytest.raises(
         ParseError,
-        match=r"^The AA entry of the page should be a DictionaryObject. "
-              r"It currently is a ArrayObject.$"
+        match = (
+            r"^The AA entry of the page should be a DictionaryObject\. "
+            r"It currently is a ArrayObject\.$"
+        )
     ):
         page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert page.get("/AA") == ArrayObject()
@@ -88,9 +90,9 @@ def test_page_add_action__with_existing_array_object__strict():
     # Add a close action with an array object as the AA entry
     with pytest.raises(
             ParseError,
-            match=(
-                r"^The AA entry of the page should be a DictionaryObject. "
-                r"It currently is a ArrayObject.$"
+            match = (
+                r"^The AA entry of the page should be a DictionaryObject\. "
+                r"It currently is a ArrayObject\.$"
             )
     ):
         page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -125,8 +127,10 @@ def test_page_add_action__edge_cases(pdf_file_writer):
 
     with pytest.raises(
             ParseError,
-            match=r"^The type in a page object's additional-actions key must be a DictionaryObject: "
-                  r"received type NameObject$"
+            match = (
+                r"^The type in a page object's additional-actions key must be a DictionaryObject: "
+                r"received type NameObject$"
+            )
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/O")] = NameObject("/xyzzy")
@@ -137,7 +141,7 @@ def test_page_add_action__edge_cases(pdf_file_writer):
     # Add a close action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             ParseError,
-            match="The type in a page object's additional-actions key must be a DictionaryObject"
+            match = "The type in a page object's additional-actions key must be a DictionaryObject"
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/C")] = NameObject("/xyzzy")
