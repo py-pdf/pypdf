@@ -685,7 +685,7 @@ def test_circular_xref_prev_reference(caplog):
 
 
 def test_cyclic_pages_tree():
-    """Circular /Pages reference (multi-hop cycle) must raise PdfReadError, not recurse infinitely (#XXXX)."""
+    """Circular /Pages reference (multi-hop cycle) must raise PdfReadError, not recurse infinitely (#3847)."""
     # Page tree: root /Pages (obj 2) -> /Pages obj 3 -> /Pages obj 4 -> /Pages obj 5 -> obj 3 (cycle)
     # obj 6 is the only real /Page (reachable directly from root).
     pdf_data = b"""%PDF-1.7
@@ -761,7 +761,7 @@ startxref
 841
 %%EOF
 """
-    with pytest.raises(PdfReadError, match="cyclic"):
+    with pytest.raises(PdfReadError, match=r"^Detected cyclic page references\.$"):
         reader = PdfReader(io.BytesIO(pdf_data), strict=False)
         len(reader.pages)
 
