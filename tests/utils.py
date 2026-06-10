@@ -79,7 +79,7 @@ def extract_text_and_rectangles(
             logger.debug("before: %s at %s, %s", op, cm_matrix, tm_matrix)
         if op == b"re":
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"  add rectangle: {args}")
+                logger.debug("  add rectangle: %s", args)
             w = args[2]
             h = args[3]
             r = Rectangle(args[0], args[1], w, h)
@@ -93,7 +93,7 @@ def extract_text_and_rectangles(
     ) -> None:
         if text.strip() != "":
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"at {cm_matrix}, {tm_matrix}, font size={font_size}")
+                logger.debug("at %s, %s, font size=%s", cm_matrix, tm_matrix, font_size)
             texts.append(
                 PositionedText(text, tm_matrix[4], tm_matrix[5], font_dict, font_size)
             )
@@ -180,7 +180,7 @@ def extract_table(
             rows.append(curr_row)
         col_nr += 1
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"cell: x={r.x}, y={r.y}, w={r.w}, h={r.h}")
+            logger.debug("cell: x=%s, y=%s, w=%s, h=%s", r.x, r.y, r.w, r.h)
         if r not in rectangle2texts:
             curr_row.append("")
             continue
