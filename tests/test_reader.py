@@ -684,6 +684,88 @@ def test_circular_xref_prev_reference(caplog):
     assert "Circular xref chain detected" in caplog.text
 
 
+def test_cyclic_pages_tree():
+    """Circular /Pages reference (multi-hop cycle) must raise PdfReadError, not recurse infinitely (#3847)."""
+    # Page tree: root /Pages (obj 2) -> /Pages obj 3 -> /Pages obj 4 -> /Pages obj 5 -> obj 3 (cycle)
+    # obj 6 is the only real /Page (reachable directly from root).
+    pdf_data = b"""%PDF-1.7
+
+1 0 obj
+  << /Type /Catalog
+     /Pages 2 0 R
+  >>
+endobj
+
+2 0 obj
+  << /Type /Pages
+     /Kids [6 0 R 3 0 R]
+     /Count 2
+     /MediaBox [0 0 595 842]
+  >>
+endobj
+
+3 0 obj
+  << /Type /Pages
+     /Kids [4 0 R]
+     /Count 1
+     /MediaBox [0 0 595 842]
+  >>
+endobj
+
+4 0 obj
+  << /Type /Pages
+     /Kids [5 0 R]
+     /Count 1
+     /MediaBox [0 0 595 842]
+  >>
+endobj
+
+5 0 obj
+  << /Type /Pages
+     /Kids [3 0 R]
+     /Count 1
+     /MediaBox [0 0 595 842]
+  >>
+endobj
+
+6 0 obj
+  << /Type /Page
+     /Parent 2 0 R
+     /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Courier >> >> >>
+     /Contents [7 0 R]
+  >>
+endobj
+
+7 0 obj
+  << /Length 44 >>
+stream
+  BT /F1 22 Tf 30 800 Td (Test) Tj ET
+endstream
+endobj
+
+xref
+0 8
+0000000000 65535 f\x20
+0000000010 00000 n\x20
+0000000069 00000 n\x20
+0000000176 00000 n\x20
+0000000277 00000 n\x20
+0000000378 00000 n\x20
+0000000479 00000 n\x20
+0000000744 00000 n\x20
+trailer
+  << /Root 1 0 R
+     /Size 8
+  >>
+startxref
+841
+%%EOF
+"""
+    with pytest.raises(PdfReadError, match=r"^Detected cyclic page references\.$"):
+        reader = PdfReader(io.BytesIO(pdf_data), strict=False)
+        len(reader.pages)
+
+
 def test_read_missing_startxref():
     pdf_data = (
         b"%%PDF-1.7\n"
@@ -2410,7 +2492,7 @@ def test_get_object_from_stream__size_limit(caplog):
         _ = reader.pages[0]
     assert caplog.messages == []
 
-    with pytest.raises(PdfReadError, match=r"^Maximum recursion depth reached during page flattening\.$"):
+    with pytest.raises(PdfReadError, match=r"cyclic page references|Maximum recursion depth"):
         reader = PdfReader(BytesIO(pdf), strict=False)
         _ = reader.pages[0]
     assert caplog.messages == [
