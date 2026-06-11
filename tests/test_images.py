@@ -248,7 +248,7 @@ def test_get_inline_image_without_xobject_resources_raises_when_missing():
 def test_inline_image_with_unknown_key(caplog):
     """
     An inline image carrying a key outside the abbreviation map must not
-    crash image extraction (cf. _get_inline_images).
+    crash image extraction.
     """
     writer = PdfWriter()
     page = writer.add_blank_page(width=200, height=200)
