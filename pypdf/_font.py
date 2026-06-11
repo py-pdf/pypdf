@@ -473,6 +473,8 @@ class Font:
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
             units_per_em = header.unitsPerEm
+            if not units_per_em:
+                raise PdfReadError("Font file has an invalid unitsPerEm of 0")
             scale_factor = 1000.0 / units_per_em
 
             # Get the font descriptor

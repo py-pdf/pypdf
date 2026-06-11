@@ -133,6 +133,19 @@ def test_font_from_font_file():
                     Font.from_truetype_font_file(crippled_font_data)
 
 
+def test_font_from_font_file_zero_units_per_em():
+    reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
+    font_resource = reader.pages[0]["/Resources"]["/Font"]["/F1"]
+    font_data = font_resource["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+    crippled_font_data = BytesIO()
+    with TTFont(BytesIO(font_data)) as tt_font_object:
+        tt_font_object["head"].unitsPerEm = 0
+        tt_font_object.save(crippled_font_data)
+    crippled_font_data.seek(0)
+    with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
+        Font.from_truetype_font_file(crippled_font_data)
+
+
 def test_font_from_font_file_no_fonttools(tmp_path):
     env = os.environ.copy()
     env["COVERAGE_PROCESS_START"] = "pyproject.toml"
