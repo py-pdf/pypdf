@@ -245,6 +245,35 @@ def test_get_inline_image_without_xobject_resources_raises_when_missing():
         page._get_image("~0~")
 
 
+def test_inline_image_with_unknown_key(caplog):
+    """
+    An inline image carrying a key outside the abbreviation map must not
+    crash image extraction.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    # 2x2 RGB image with a non-standard `/Foo` key that is absent from
+    # _INLINE_IMAGE_KEY_MAPPING. A numeric value keeps value translation from
+    # bailing out first so the key lookup is reached.
+    content = (
+        b"q 20 0 0 20 0 0 cm "
+        b"BI /W 2 /H 2 /CS /RGB /BPC 8 /Foo 1 ID " + b"\x00" * 12 + b" EI Q"
+    )
+    stream = ContentStream(stream=None, pdf=writer)
+    stream.set_data(content)
+    page.replace_contents(stream)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    reader = PdfReader(buffer)
+    images = reader.pages[0].images
+    assert len(images) == 1
+    assert images[0].image is not None
+    assert "Unknown inline image key /Foo" in caplog.text
+
+
 def test_get_xobject_image_without_xobject_resources_raises():
     page = PageObject(None, None)
 
