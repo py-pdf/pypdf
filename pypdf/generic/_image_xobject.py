@@ -261,14 +261,24 @@ def _handle_flate(
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
-                arr = b"".join(
-                    b"".join(
-                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
-                        for x in range(img.size[0])
+                if nb > 0:
+                    source = img.convert("L")
+                    bands = [
+                        source.point(
+                            [low_value] * 128 + [high_value] * 128
+                        )
+                        for low_value, high_value in zip(colors_arr[0], colors_arr[1])
+                    ]
+                    img = bands[0] if nb == 1 else Image.merge(mode, bands)
+                else:
+                    arr = b"".join(
+                        b"".join(
+                            colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
+                            for x in range(img.size[0])
+                        )
+                        for y in range(img.size[1])
                     )
-                    for y in range(img.size[1])
-                )
-                img = Image.frombytes(mode, img.size, arr)
+                    img = Image.frombytes(mode, img.size, arr)
             else:
                 img = img.convert(conv)
                 if len(lookup) != (hival + 1) * nb:
