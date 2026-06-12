@@ -30,37 +30,56 @@ from pypdf._crypt_providers._base import CryptBase, CryptIdentity
 try:
     from pypdf._crypt_providers._cryptography import (
         CryptAES,
-        CryptRC4,
         aes_cbc_decrypt,
         aes_cbc_encrypt,
         aes_ecb_decrypt,
         aes_ecb_encrypt,
         crypt_provider,
-        rc4_decrypt,
-        rc4_encrypt,
     )
 except ImportError:
     try:
         from pypdf._crypt_providers._pycryptodome import (  # type: ignore[assignment]
             CryptAES,
-            CryptRC4,
             aes_cbc_decrypt,
             aes_cbc_encrypt,
             aes_ecb_decrypt,
             aes_ecb_encrypt,
             crypt_provider,
-            rc4_decrypt,
-            rc4_encrypt,
         )
     except ImportError:
         from pypdf._crypt_providers._fallback import (  # type: ignore[assignment]
             CryptAES,
-            CryptRC4,
             aes_cbc_decrypt,
             aes_cbc_encrypt,
             aes_ecb_decrypt,
             aes_ecb_encrypt,
             crypt_provider,
+        )
+
+
+try:
+    from pypdf._crypt_providers._cryptography import (
+        CryptRC4,
+        rc4_decrypt,
+        rc4_encrypt,
+    )
+    # cryptography may be available, but still without RC4 support
+    # Probe now so we can fall back before any PDF is opened.
+    from cryptography.exceptions import UnsupportedAlgorithm
+    try:
+        rc4_encrypt(b"\x00" * 5, b"test")
+    except UnsupportedAlgorithm:
+        raise ImportError
+except ImportError:
+    try:
+        from pypdf._crypt_providers._pycryptodome import (  # type: ignore
+            CryptRC4,
+            rc4_decrypt,
+            rc4_encrypt,
+        )
+    except ImportError:
+        from pypdf._crypt_providers._fallback import (  # type: ignore
+            CryptRC4,
             rc4_decrypt,
             rc4_encrypt,
         )
