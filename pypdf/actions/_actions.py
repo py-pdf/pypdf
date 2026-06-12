@@ -83,11 +83,12 @@ class Action(DictionaryObject, ABC):
             current_type = type(page["/AA"]).__name__
             if page.pdf is not None and getattr(page.pdf, "strict", False):
                 raise ParseError(
-                    f"The AA entry of the page should be a DictionaryObject. "
-                    f"It currently is a {current_type}."
+                    f"The type in a page object's additional-actions key must be a DictionaryObject: "
+                    f"received type {current_type}."
                 )
             logger_warning(
-                "The AA entry of the page should be a DictionaryObject. It currently is a %(type)s.",
+                "The type in a page object's additional-actions key must be a DictionaryObject: "
+                "received type %(type)s.",
                 source=__name__,
                 type=current_type
             )
@@ -110,7 +111,7 @@ class Action(DictionaryObject, ABC):
         if not isinstance(head, DictionaryObject):
             raise ParseError(
                 f"The type in a page object's additional-actions key must be a DictionaryObject: "
-                f"received type {type(head).__name__}"
+                f"received type {type(head).__name__}."
             )
         current = cast(DictionaryObject, current)
 
@@ -124,7 +125,7 @@ class Action(DictionaryObject, ABC):
             if not isinstance(next_node, (ArrayObject, DictionaryObject)):
                 raise TypeError(
                     f"An action dictionary’s Next entry must be an Action dictionary "
-                    f"or an array of Action dictionaries: received type {type(next_node)}"
+                    f"or an array of Action dictionaries: received type {type(next_node).__name__}."
                 )
 
             id_next = id(next_node)

@@ -80,9 +80,9 @@ def test_page_add_action__with_existing_array_object__strict():
     page[NameObject("/AA")] = ArrayObject()
     with pytest.raises(
         ParseError,
-        match = (
-            r"^The AA entry of the page should be a DictionaryObject\. "
-            r"It currently is a ArrayObject\.$"
+        match=(
+            r"^The type in a page object's additional-actions key must be a DictionaryObject: "
+            r"received type ArrayObject\.$"
         )
     ):
         page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -91,9 +91,9 @@ def test_page_add_action__with_existing_array_object__strict():
     # Add a close action with an array object as the AA entry
     with pytest.raises(
             ParseError,
-            match = (
-                r"^The AA entry of the page should be a DictionaryObject\. "
-                r"It currently is a ArrayObject\.$"
+            match=(
+                r"^The type in a page object's additional-actions key must be a DictionaryObject: "
+                r"received type ArrayObject\.$"
             )
     ):
         page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
@@ -107,8 +107,8 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     page[NameObject("/AA")] = ArrayObject()
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert caplog.messages == [
-        "The AA entry of the page should be a DictionaryObject. "
-        "It currently is a ArrayObject."
+        "The type in a page object's additional-actions key must be a DictionaryObject: "
+        "received type ArrayObject."
     ]
     assert page.get("/AA") == ArrayObject()
 
@@ -117,8 +117,8 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     caplog.clear()
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert caplog.messages == [
-        "The AA entry of the page should be a DictionaryObject. "
-        "It currently is a ArrayObject."
+        "The type in a page object's additional-actions key must be a DictionaryObject: "
+        "received type ArrayObject."
     ]
     assert page.get("/AA") == ArrayObject()
 
@@ -128,9 +128,9 @@ def test_page_add_action__edge_cases(pdf_file_writer):
 
     with pytest.raises(
             ParseError,
-            match = (
+            match=(
                 r"^The type in a page object's additional-actions key must be a DictionaryObject: "
-                r"received type NameObject$"
+                r"received type NameObject\.$"
             )
     ):
         page[NameObject("/AA")] = DictionaryObject()
@@ -142,7 +142,10 @@ def test_page_add_action__edge_cases(pdf_file_writer):
     # Add a close action where a non-dictionary object is the entry in the trigger
     with pytest.raises(
             ParseError,
-            match = "The type in a page object's additional-actions key must be a DictionaryObject"
+            match=(
+                r"^The type in a page object's additional-actions key must be a DictionaryObject: "
+                r"received type NameObject\.$"
+            )
     ):
         page[NameObject("/AA")] = DictionaryObject()
         page[NameObject("/AA")][NameObject("/C")] = NameObject("/xyzzy")
@@ -155,7 +158,10 @@ def test_page_add_action__edge_cases(pdf_file_writer):
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = NameObject("/xyzzy")
     with pytest.raises(
         TypeError,
-        match="An action dictionary’s Next entry must be an Action dictionary or an array of Action dictionaries",
+        match=(
+            r"^An action dictionary’s Next entry must be an Action dictionary or an array of Action dictionaries: "
+            r"received type NameObject\.$"
+        )
     ):
         page.add_action(PageTrigger.OPEN, JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action(PageTrigger.OPEN)
@@ -166,7 +172,10 @@ def test_page_add_action__edge_cases(pdf_file_writer):
     page[NameObject("/AA")][NameObject("/C")][NameObject("/Next")] = NameObject("/xyzzy")
     with pytest.raises(
             TypeError,
-            match="An action dictionary’s Next entry must be an Action dictionary or an array of Action dictionaries",
+            match=(
+                r"^An action dictionary’s Next entry must be an Action dictionary or an array of Action dictionaries: "
+                r"received type NameObject\.$"
+            )
     ):
         page.add_action(PageTrigger.CLOSE, JavaScript('app.alert("This is page " + this.pageNum);'))
     page.delete_action(PageTrigger.CLOSE)
@@ -276,7 +285,6 @@ def test_page_add_action__multiple(pdf_file_writer, caplog):
 def test_page_add_action__with_existing_array(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
-    page[NameObject("/AA")] = DictionaryObject()
     # The trigger events take dictionary values, not arrays, so first add an action on which to attach the array
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Action to attach an array of actions');"))
     page[NameObject("/AA")][NameObject("/O")][NameObject("/Next")] = ArrayObject(
@@ -404,7 +412,7 @@ def test_page_delete_action(pdf_file_writer, action_dictionary):
     if action_dictionary is None:
         assert page.get("/AA") is None
     else:
-        assert page.get("/AA") == DictionaryObject()
+        assert page.get("/AA") == action_dictionary
 
     page.delete_action(PageTrigger.CLOSE)
     if action_dictionary is None:
