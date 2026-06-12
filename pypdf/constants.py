@@ -86,13 +86,13 @@ class UserAccessPermissions(IntFlag):
     R31 = 2**30
     R32 = 2**31
 
-    @classmethod
-    def _is_reserved(cls, name: str) -> bool:
+    @staticmethod
+    def _is_reserved(name: str) -> bool:
         """Check if the given name corresponds to a reserved flag entry."""
         return name.startswith("R") and name[1:].isdigit()
 
-    @classmethod
-    def _is_active(cls, name: str) -> bool:
+    @staticmethod
+    def _is_active(name: str) -> bool:
         """Check if the given reserved name defaults to 1 = active."""
         return name not in {"R1", "R2"}
 
