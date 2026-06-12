@@ -23,6 +23,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Gagnon, William G.](https://github.com/williamgagnon)
 * [Gillard, James](https://github.com/jgillard)
 * [Górny, Michał](https://github.com/mgorny)
+* [Guerner, Augusto de Hollanda Vieira](https://github.com/AHVG)
 * [Grillo, Miguel](https://github.com/Ineffable22)
 * [Gutteridge, David H.](https://github.com/dhgutteridge)
 * [Hale, Joseph](https://github.com/thehale)
@@ -57,6 +58,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Roder, Thomas](https://github.com/MrTomRod)
 * [Rogmann, Sascha](https://github.com/srogmann)
 * [Röthenbacher, Thomas](https://github.com/troethe)
+* [Schardong, Frederico](https://github.com/fredericoschardong)
 * [shartzog](https://github.com/shartzog)
 * [stefan6419846](https://github.com/stefan6419846): Maintainer of pypdf since January 2025
 * [sietzeberends](https://github.com/sietzeberends)

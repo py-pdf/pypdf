@@ -60,7 +60,7 @@ from .constants import (
 from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
-from .errors import PdfReadError, PyPdfError
+from .errors import LimitReachedError, PdfReadError, PyPdfError
 from .filters import _decompress_with_limit
 from .generic import (
     ArrayObject,
@@ -448,8 +448,10 @@ class PdfDocCommon(ABC):
     ## common
     def _get_named_destinations(
         self,
+        *,
         tree: Union[TreeObject, None] = None,
         retval: Optional[dict[str, Destination]] = None,
+        visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
         """
         Retrieve the named destinations present in the document.
@@ -457,11 +459,14 @@ class PdfDocCommon(ABC):
         Args:
             tree: The current tree.
             retval: The previously retrieved destinations for nested calls.
+            visited: Already known/visited objects.
 
         Returns:
             A dictionary which maps names to destinations.
 
         """
+        if visited is None:
+            visited = set()
         if retval is None:
             retval = {}
             catalog = self.root_object
@@ -478,10 +483,16 @@ class PdfDocCommon(ABC):
             return retval
         assert tree is not None, "mypy"
 
+        tree_id = id(tree)
+        if tree_id in visited:
+            logger_warning("Detected cycle in destination tree.", source=__name__)
+            return retval
+        visited.add(tree_id)
+
         if PagesAttributes.KIDS in tree:
             # recurse down the tree
             for kid in cast(ArrayObject, tree[PagesAttributes.KIDS]):
-                self._get_named_destinations(kid.get_object(), retval)
+                self._get_named_destinations(tree=kid.get_object(), retval=retval, visited=visited)
         # §7.9.6, entries in a name tree node dictionary
         elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
             names = cast(DictionaryObject, tree[CA.NAMES])
@@ -572,13 +583,26 @@ class PdfDocCommon(ABC):
             self._build_field(tree, retval, fileobj, field_attributes, stack)
         return retval
 
-    def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
+    def _get_qualified_field_name(
+            self,
+            *,
+            parent: DictionaryObject,
+            visited: Optional[set[int]] = None
+    ) -> str:
+        if visited is None:
+            visited = set()
+        parent_id = id(parent)
+        if parent_id in visited:
+            raise LimitReachedError("Detected cycle in /Parent hierarchy when retrieving qualified field name.")
+        visited.add(parent_id)
+
         if "/TM" in parent:
             return cast(str, parent["/TM"])
         if "/Parent" in parent:
             return (
                 self._get_qualified_field_name(
-                    cast(DictionaryObject, parent["/Parent"])
+                    parent=cast(DictionaryObject, parent["/Parent"]),
+                    visited=visited,
                 )
                 + "."
                 + cast(str, parent.get("/T", ""))
@@ -595,7 +619,7 @@ class PdfDocCommon(ABC):
     ) -> None:
         if all(attr not in field for attr in ("/T", "/TM")):
             return
-        key = self._get_qualified_field_name(field)
+        key = self._get_qualified_field_name(parent=field)
         if fileobj:
             self._write_field(fileobj, field, field_attributes)
             fileobj.write("\n")
@@ -638,7 +662,7 @@ class PdfDocCommon(ABC):
             logger_warning(
                 "%(field_name)s already parsed",
                 source=__name__,
-                field_name=self._get_qualified_field_name(tree),
+                field_name=self._get_qualified_field_name(parent=tree),
             )
             return
         stack.append(tree)
@@ -1133,6 +1157,7 @@ class PdfDocCommon(ABC):
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
+        visited: Optional[set[int]] = None,
     ) -> None:
         """
         Process the document pages to ease searching.
@@ -1151,6 +1176,9 @@ class PdfDocCommon(ABC):
             pages:
             inherit:
             indirect_reference: Used recursively to flatten the /Pages object.
+            visited: Set of id() values of /Pages nodes already visited during
+                traversal. Detects multi-hop cycles such as A→B→C→A that the
+                single-parent check misses.
 
         """
         inheritable_page_attributes = (
@@ -1161,6 +1189,8 @@ class PdfDocCommon(ABC):
         )
         if inherit is None:
             inherit = {}
+        if visited is None:
+            visited = set()
         if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
@@ -1201,12 +1231,11 @@ class PdfDocCommon(ABC):
                 obj = page.get_object()
                 if obj:
                     # damaged file may have invalid child in /Pages
-                    try:
-                        self._flatten(list_only, obj, inherit, **additional_arguments)
-                    except RecursionError:
-                        raise PdfReadError(
-                            "Maximum recursion depth reached during page flattening."
-                        )
+                    obj_id = id(obj)
+                    if obj_id in visited:
+                        raise PdfReadError("Detected cyclic page references.")
+                    visited.add(obj_id)
+                    self._flatten(list_only, obj, inherit, visited=visited, **additional_arguments)
         elif t == "/Page":
             for attr_in, value in inherit.items():
                 # if the page has its own value, it does not inherit the

@@ -344,6 +344,32 @@ def test_get_encoding__encoding_value_is_none():
     )
 
 
+def _type1_font(font_file_data: bytes) -> DictionaryObject:
+    font_file = DecodedStreamObject()
+    font_file.set_data(font_file_data)
+    font_descriptor = DictionaryObject()
+    font_descriptor[NameObject("/FontFile")] = font_file
+    ft = DictionaryObject()
+    ft[NameObject("/Subtype")] = NameObject("/Type1")
+    ft[NameObject("/FontDescriptor")] = font_descriptor
+    return ft
+
+
+def test_get_encoding__type1_font_file_without_encoding():
+    # Clear part of the embedded Type1 program has no /Encoding section.
+    ft = _type1_font(b"%!PS-AdobeFont\n/FontName /Foo def\neexec\nbinary")
+    assert get_encoding(ft) == ("charmap", {})
+
+
+def test_get_encoding__type1_font_file_truncated_dup_line():
+    # A "dup" entry missing the glyph name must be skipped, not crash.
+    ft = _type1_font(
+        b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
+    )
+    _encoding, character_map = get_encoding(ft)
+    assert character_map == {"a": "a"}
+
+
 def test_parse_bfchar(caplog):
     map_dict = {}
     int_entry = []
@@ -429,6 +455,40 @@ def test_parse_bfrange__iteration_limit():
             map_dict=map_dict, int_entry=int_entry, multiline_rg=None
         )
     assert map_dict == {-1: 1, "\x01": "�", "\x02": "�", "\x03": "�", "\x04": "\uffff", "\x05": "ﾫ"}
+
+
+def test_parse_to_unicode_skips_truncated_lines(caplog):
+    """A truncated bfrange or malformed bfchar line must not crash extraction."""
+    writer = PdfWriter()
+
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<0001> <0005>\n"  # missing destination token
+        b"endbfrange\n"
+        b"beginbfchar\n"
+        b"<0001> <0041>\n"  # valid
+        b"zz <0042>\n"  # non-hex source
+        b"endbfchar\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+
+    # No exception, broken lines reported.
+    page.extract_text()
+    assert "Skipping broken line b'0001   0005': list index out of range" in caplog.text
+    assert "Skipping broken line b'zz  0042': Non-hexadecimal digit found" in caplog.text
 
 
 def test_parse_bfchar__iteration_limit():

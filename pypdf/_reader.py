@@ -970,6 +970,7 @@ class PdfReader(PdfDocCommon):
                         )
                         generation = int(f.group(1))
                         offset = f.start()
+                        entry_type_b = b"n"
 
                 if generation not in self.xref:
                     self.xref[generation] = {}
@@ -1576,14 +1577,16 @@ class PdfReader(PdfDocCommon):
 
     def _get_named_destinations(
         self,
+        *,
         tree: Union[TreeObject, None] = None,
         retval: Optional[dict[str, Destination]] = None,
+        visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
         """Override from PdfDocCommon. In the reader we can assume this is
         static, but not in the writer.
         """
         if tree or retval:
-            return super()._get_named_destinations(tree, retval)
+            return super()._get_named_destinations(tree=tree, retval=retval, visited=visited)
 
         if self._named_destinations_cache is None:
             self._named_destinations_cache = super()._get_named_destinations()
