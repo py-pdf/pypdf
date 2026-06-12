@@ -367,7 +367,7 @@ class PdfDocCommon(ABC):
         """
         if self.flattened_pages is None:
             self._flatten(self._readonly)
-        assert self.flattened_pages is not None, "hint for mypy"
+        assert self.flattened_pages is not None, "mypy"
         return self.flattened_pages[page_number]
 
     def _get_page_in_node(
