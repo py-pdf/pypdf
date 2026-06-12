@@ -1195,14 +1195,14 @@ class PdfDocCommon(ABC):
                 if getattr(page, "indirect_reference", object()) == pages_reference:
                     raise PdfReadError("Detected cyclic page references.")
 
-                indirect = {}
+                additional_arguments = {}
                 if isinstance(page, IndirectObject):
-                    indirect["indirect_reference"] = page
+                    additional_arguments["indirect_reference"] = page
                 obj = page.get_object()
                 if obj:
                     # damaged file may have invalid child in /Pages
                     try:
-                        self._flatten(list_only, obj, inherit, **indirect)
+                        self._flatten(list_only, obj, inherit, **additional_arguments)
                     except RecursionError:
                         raise PdfReadError(
                             "Maximum recursion depth reached during page flattening."
