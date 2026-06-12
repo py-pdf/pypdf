@@ -43,6 +43,7 @@ Source = "https://github.com/py-pdf/pypdf"
 # https://cryptography.io/en/latest/changelog/#v3-1
 rtl_text = [
     "arabic_reshaper",
+    "python-bidi",
 ]
 crypto = ["cryptography>3.0"]
 cryptodome = ["PyCryptodome"]
@@ -52,6 +53,7 @@ full = [
     "arabic_reshaper",
     "cryptography>3.0",
     "fonttools",
+    "python-bidi",
     "Pillow>=8.0.0"
 ]
 dev = [

@@ -12,6 +12,7 @@ pytest-socket
 pytest-timeout
 pytest-xdist
 pytest-cov
+python-bidi
 # ruff  # only take this for 3.11
 typeguard
 pyyaml

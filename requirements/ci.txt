@@ -60,6 +60,8 @@ pytest-timeout==2.3.1
     # via -r requirements/ci.in
 pytest-xdist==3.6.1
     # via -r requirements/ci.in
+python-bidi==0.6.10
+    # via -r requirements/ci.in
 pyyaml==6.0.2
     # via -r requirements/ci.in
 tomli==2.0.2
