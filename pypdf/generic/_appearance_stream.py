@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
 try:
     import arabic_reshaper
+    from bidi.algorithm import get_display
     HAS_RTL_SUPPORT = True
 except ImportError:
     HAS_RTL_SUPPORT = False
@@ -211,7 +212,8 @@ class TextStreamAppearance(BaseStreamAppearance):
             if HAS_RTL_SUPPORT:
                 # Use arabic_reshaper and python-bidi to rearrange and shape text for the PDF engine
                 reshaped_text = arabic_reshaper.reshape(text)
-                return "".join(reverse_cmap.get(char, char) for char in reshaped_text)
+                visual_text = get_display(reshaped_text, base_dir="L")
+                return "".join(reverse_cmap.get(char, char) for char in visual_text)
 
             return "".join(reverse_cmap.get(char, char) for char in text)
 
