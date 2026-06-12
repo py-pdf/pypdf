@@ -207,6 +207,27 @@ def test_handle_flate__image_mode_1_does_not_use_getpixel(
     assert get_image_data(image) == expected_data
 
 
+def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFixture) -> None:
+    """An unknown base resolves to a zero-byte lookup width: skip the lookup with a warning."""
+    image = _handle_flate_indexed_image_mode_1("/SomethingUnknown", b"\x00\xff")
+    assert image.mode == "RGB"
+    assert get_image_data(image) == (
+        (0, 0, 0),
+        (0, 0, 0),
+        (0, 0, 0),
+        (255, 255, 255),
+        (255, 255, 255),
+        (255, 255, 255),
+        (0, 0, 0),
+        (0, 0, 0),
+        (0, 0, 0),
+    )
+    assert (
+        "Cannot apply lookup for base /SomethingUnknown to image with mode 1. "
+        "Please share PDF with pypdf dev team"
+    ) in caplog.text
+
+
 def test_extended_image_frombytes_zero_data() -> None:
     mode = "RGB"
     size = (1, 1)
