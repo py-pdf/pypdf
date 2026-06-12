@@ -71,6 +71,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * [Wilson, Huon](https://github.com/huonw)
 * ztravis
+* [Harris, Samuel](https://github.com/Samuel-Harris)
 
 ## Adding a new contributor
 
