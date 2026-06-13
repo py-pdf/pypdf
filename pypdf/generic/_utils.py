@@ -67,7 +67,7 @@ def read_string_from_stream(
     stream: StreamType,
     forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
-    _ = stream.read(1)
+    stream.read(1)
     parens = 1
     txt = []
     while True:
