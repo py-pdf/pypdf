@@ -994,3 +994,35 @@ def test_xmp_information__element_limit():
             match=r"^XMP metadata exceeds limit of 100000 elements\.$"
     ):
         XmpInformation(stream)
+
+
+def test_custom_properties__malformed_escape():
+    """A pdfx key with a broken ↂ escape is kept verbatim instead of crashing.
+
+    Custom property keys encode invalid identifier characters as ``ↂ`` followed
+    by a four digit hex id (see ``custom_properties``). ``ↂ`` is itself a valid
+    XML name character, so a crafted key may carry the marker without the four
+    hex digits. Decoding such a key used to raise ``ValueError`` from ``int``.
+    """
+    rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    pdfx = "http://ns.adobe.com/pdfx/1.3/"
+
+    def properties_for(local_name: str) -> dict:
+        stream = ContentStream(pdf=None, stream=None)
+        stream.set_data(
+            (
+                '<x:xmpmeta xmlns:x="adobe:ns:meta/">'
+                f'<rdf:RDF xmlns:rdf="{rdf}">'
+                f'<rdf:Description rdf:about="" xmlns:pdfx="{pdfx}">'
+                f"<pdfx:{local_name}>val</pdfx:{local_name}>"
+                "</rdf:Description></rdf:RDF></x:xmpmeta>"
+            ).encode()
+        )
+        return XmpInformation(stream).custom_properties
+
+    # Non-hex digits, a marker at the end and a truncated escape are all kept as-is.
+    assert properties_for("fooↂzz") == {"fooↂzz": "val"}
+    assert properties_for("fooↂ") == {"fooↂ": "val"}
+    assert properties_for("fooↂ0") == {"fooↂ0": "val"}
+    # A well-formed escape is still decoded (Adobe stores "my car" this way).
+    assert properties_for("myↂ0020car") == {"my car": "val"}
