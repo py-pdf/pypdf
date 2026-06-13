@@ -1557,7 +1557,7 @@ def test_iss1723():
 
 @pytest.mark.enable_socket
 def test_iss1767():
-    # test with a PDF which is buggy because the object 389,0 exists 3 times:
+    # test with a pdf which is buggy because the object 389,0 exists 3 times:
     # twice to define catalog and one as an XObject inducing a loop when
     # cloning
     url = "https://github.com/py-pdf/pypdf/files/11138472/test.pdf"
