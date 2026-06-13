@@ -247,9 +247,12 @@ def test_get_inline_image_without_xobject_resources():
 def test_get_inline_image_without_xobject_resources_raises_when_missing():
     page = PageObject(None, None)
 
+    # Force cache population
+    _ = list(page.images)
+
     with (
-        mock.patch.object(page, "_get_inline_images", return_value=None),
-        pytest.raises(KeyError, match="No inline image can be found"),
+        mock.patch.object(page, "_parse_images_from_content_stream", return_value=None),
+        pytest.raises(KeyError, match="Image ~0~ not found"),
     ):
         page._get_image("~0~")
 
