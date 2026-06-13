@@ -853,7 +853,15 @@ class PageObject(DictionaryObject):
                     )
                 else:
                     v = self._translate_value_inline_image(k, v)
-                k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
+                if k in _INLINE_IMAGE_KEY_MAPPING:
+                    k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
+                else:
+                    logger_warning(
+                        "Unknown inline image key %(key)s, keeping it as-is.",
+                        source=__name__,
+                        key=k,
+                    )
+                    k = NameObject(k)
                 if k not in init:
                     init[k] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)

@@ -175,7 +175,6 @@ ignore = [
     "FBT002",  # Boolean default value in function definition
     "FBT003",  # Boolean positional value in function call
     "FIX002",  # TODOs should typically not be in the code, but sometimes are ok
-    "G004",    # f-string in logging statement
     "N806",    # non-lowercase-variable-in-function
     "N814",    # Camelcase `PageAttributes` imported as constant `PG`
     "N817",    # CamelCase `PagesAttributes` imported as acronym `PA`
