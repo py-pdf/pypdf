@@ -759,11 +759,16 @@ def test_inline_images_property_returns_only_inline():
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
+    # Force-populate inline images
+    _ = list(page.images)
+
     with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
         inline = page.inline_images
-    if inline is not None:
-        for image_name, image_value in inline.items():
-            assert image_value.is_inline is True, f"Image {image_name} should have is_inline=True"
+
+    assert inline is not None, "Document contains exactly 1 inline image"
+    assert len(inline) == 1, "Document contains exactly 1 inline image"
+    for image_name, image_value in inline.items():
+        assert image_value.is_inline is True, f"Image {image_name} should have is_inline=True"
 
 
 @pytest.mark.samples
@@ -823,7 +828,7 @@ def test_inline_images_skips_none_entries():
     reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
     page = reader.pages[0]
 
-    # Force cache population
+    # Force-populate inline images
     _ = list(page.images)
 
     # Access inline_images (suppress deprecation warning)
@@ -831,7 +836,7 @@ def test_inline_images_skips_none_entries():
         inline = page.inline_images
 
     assert inline is not None, "inline_images must not be None after accessing images"
-    assert len(list(inline.keys())) == 0, (
+    assert len(list(inline)) == 0, (
         "inline_images must not contain non-inline images. "
         "This document only contains one Do-referenced image."
     )
