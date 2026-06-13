@@ -10,7 +10,13 @@ from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
-from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image, bits2byte
+from pypdf.generic._image_xobject import (
+    _extended_image_from_bytes,
+    _get_mode_and_invert_color,
+    _handle_flate,
+    _xobj_to_image,
+    bits2byte,
+)
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
@@ -164,6 +170,21 @@ def test_get_mode_and_invert_color() -> None:
     for _name, image in page.images.items():  # noqa: PERF102
         assert image.image is not None
         image.image.load()
+
+
+def test_get_mode_and_invert_color__device_rgb() -> None:
+    """
+    A DeviceRGB image (8 bits per component) must resolve to the Pillow "RGB" mode.
+
+    Regression guard for #3367: the explicit ``DeviceRGB -> "RGB"`` assignment was
+    dead code (it was unconditionally overwritten by the BitsPerComponent branch
+    that follows it). The shared ``_get_image_mode`` resolver is the single source
+    of truth and already resolves DeviceRGB to "RGB" on its own.
+    """
+    x_object = StreamObject()
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject("/DeviceRGB")
+    x_object[NameObject("/BitsPerComponent")] = NumberObject(8)
+    assert _get_mode_and_invert_color(x_object, 3, "/DeviceRGB") == ("RGB", False)
 
 
 @pytest.mark.enable_socket
