@@ -164,8 +164,8 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
         cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
     if isinstance(cm, str):
         cm = cm.encode()
-    # we need to prepare cm before due to missing return line in PDF printed
-    # to PDF from Word
+    # we need to prepare cm before due to missing return line in pdf printed
+    # to pdf from word
     cm = (
         cm.strip()
         .replace(b"beginbfchar", b"\nbeginbfchar\n")
