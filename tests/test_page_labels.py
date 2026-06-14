@@ -196,3 +196,24 @@ def test_index2label__empty_kids_list():
     root[NameObject("/PageLabels")] = number_tree
 
     assert index2label(reader, 42) == "43"
+
+
+@pytest.mark.parametrize(
+    "limits",
+    [
+        None,  # /Limits key entirely absent
+        ArrayObject([NumberObject(0)]),  # truncated to a single bound
+    ],
+)
+def test_index2label__malformed_kid_limits(limits, caplog):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    kid = DictionaryObject()
+    if limits is not None:
+        kid[NameObject("/Limits")] = limits
+    kid[NameObject("/Nums")] = ArrayObject([NumberObject(0), DictionaryObject()])
+    number_tree = DictionaryObject()
+    number_tree[NameObject("/Kids")] = ArrayObject([kid])
+    reader.root_object[NameObject("/PageLabels")] = number_tree
+
+    assert index2label(reader, 5) == "6"
+    assert "Could not reliably determine page label" in caplog.text
