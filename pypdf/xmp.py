@@ -225,9 +225,12 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             doc_root: Document = _XmpBuilder().parseString(data)
         except (AttributeError, ExpatError) as e:
             raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
-        self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
-            RDF_NAMESPACE, "RDF"
-        )[0]
+        rdf_roots = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")
+        if not rdf_roots:
+            raise PdfReadError(
+                "XML in XmpInformation was invalid: missing rdf:RDF root element"
+            )
+        self.rdf_root: XmlElement = rdf_roots[0]
         self.cache: dict[Any, Any] = {}
 
     @classmethod
