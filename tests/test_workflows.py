@@ -1319,7 +1319,10 @@ def test_extract_empty_page():
     assert reader.pages[1].extract_text(extraction_mode="layout") == ""
 
 
+@pytest.mark.enable_socket
 def test_iss2815():
     """Cf #2815"""
-    reader = PdfReader(RESOURCE_ROOT / "issue-2815.pdf")
+    url = "https://github.com/user-attachments/files/16760725/crash-c1920c7a064649e1191d7879952ec252473fc7e6.pdf"
+    name = "iss2815.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert reader.pages[0].extract_text() == "test command with wrong number of args"

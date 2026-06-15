@@ -1109,9 +1109,13 @@ def test_read_not_binary_mode(caplog):
     assert normalize_warnings(caplog.text) == [msg]
 
 
+@pytest.mark.enable_socket
 @pytest.mark.skipif(not HAS_AES, reason="No AES algorithm available")
 def test_read_form_416():
-    reader = PdfReader(RESOURCE_ROOT / "issue-416.pdf")
+    url = (
+        "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
+    )
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name="issue_416.pdf")))
     fields = reader.get_form_text_fields()
     assert len(fields) > 0
 
