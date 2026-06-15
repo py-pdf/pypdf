@@ -193,11 +193,13 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
             kids = cast(list[DictionaryObject], number_tree["/Kids"])
             for kid in kids:
                 # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
-                limits = kid.get("/Limits")
-                if limits is not None:
-                    limits = limits.get_object()
+                limits = kid.get("/Limits", NullObject()).get_object()
                 if not isinstance(limits, list) or len(limits) < 2:
                     # Skip kids whose /Limits range is missing or malformed.
+                    logger_warning(
+                        "Ignoring kid with missing or malformed /Limits in /PageLabels.",
+                        source=__name__,
+                    )
                     continue
                 if limits[0] <= index <= limits[1]:
                     if not is_null_or_none(kid.get("/Kids", None)):

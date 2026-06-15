@@ -216,4 +216,5 @@ def test_index2label__malformed_kid_limits(limits, caplog):
     reader.root_object[NameObject("/PageLabels")] = number_tree
 
     assert index2label(reader, 5) == "6"
+    assert "Ignoring kid with missing or malformed /Limits" in caplog.text
     assert "Could not reliably determine page label" in caplog.text
