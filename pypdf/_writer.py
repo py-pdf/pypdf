@@ -507,7 +507,7 @@ class PdfWriter(PdfDocCommon):
     ) -> PageObject:
         if not isinstance(page, PageObject) or page.get(PagesAttributes.TYPE, None) != Core.PAGE:
             raise ValueError("Invalid page object")
-        assert self.flattened_pages is not None, "for mypy"
+        assert self.flattened_pages is not None, "mypy"
         page_org = page
         excluded_keys = list(excluded_keys)
         excluded_keys += [PagesAttributes.PARENT, "/StructParents"]
@@ -541,7 +541,7 @@ class PdfWriter(PdfDocCommon):
         current: Optional[PdfObject] = node
         recurse = 0
         while not is_null_or_none(current):
-            assert current is not None  # for mypy; guarded by is_null_or_none
+            assert current is not None, "mypy"  # guarded by is_null_or_none
             node_dict = cast(DictionaryObject, current.get_object())
             node_dict[NameObject(PagesAttributes.COUNT)] = NumberObject(cast(int, node_dict[PagesAttributes.COUNT]) + 1)
             current = node_dict.get(PagesAttributes.PARENT, None)
@@ -1237,7 +1237,7 @@ class PdfWriter(PdfDocCommon):
                 self._info_obj = cast(
                     IndirectObject, inf.clone(self).indirect_reference
                 )
-                assert isinstance(self._info, DictionaryObject), "for mypy"
+                assert isinstance(self._info, DictionaryObject), "mypy"
                 self._original_hash[
                     self._info_obj.indirect_reference.idnum - 1
                 ] = self._info.hash_bin()
