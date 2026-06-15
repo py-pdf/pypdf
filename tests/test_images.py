@@ -430,7 +430,7 @@ def test_large_compressed_image():
 
 @pytest.mark.timeout(timeout=1, method="thread")
 def test_1bit_indexed_flate_image_extraction_performance() -> None:
-    """1-bit indexed FlateDecode image extraction avoids the old per-pixel slow path."""
+    """1-bit indexed FlateDecode extraction times out on the old per-pixel path."""
     reader = PdfReader(RESOURCE_ROOT / "issue-3850-1bit-indexed-flate.pdf")
     image = reader.pages[0].images["/Im1"].image
 
