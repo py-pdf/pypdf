@@ -1002,7 +1002,7 @@ def test_custom_properties__malformed_escape():
     Custom property keys encode invalid identifier characters as ``ↂ`` followed
     by a four digit hex id (see ``custom_properties``). ``ↂ`` is itself a valid
     XML name character, so a crafted key may carry the marker without the four
-    hex digits. Decoding such a key used to raise ``ValueError`` from ``int``.
+    hex digits.
     """
     rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     pdfx = "http://ns.adobe.com/pdfx/1.3/"
