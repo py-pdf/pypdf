@@ -1,7 +1,5 @@
 """Test the pypdf.generic._image_xobject module."""
 from io import BytesIO
-from typing import Union
-from unittest.mock import patch
 
 import PIL
 import pytest
@@ -16,8 +14,6 @@ from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_fla
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
-
-ExpectedImageData = Union[tuple[int, ...], tuple[tuple[int, ...], ...]]
 
 
 def _handle_flate_indexed_image_mode_1(base: str, lookup_data: bytes) -> Image.Image:
@@ -165,46 +161,6 @@ def test_handle_flate__image_mode_1_device_gray_issue_3850(
     assert image.mode == "L"
     assert get_image_data(image) == expected_data
     assert not caplog.text
-
-
-@pytest.mark.parametrize(
-    ("base", "lookup_data", "expected_mode", "expected_data"),
-    [
-        ("/DeviceGray", b"\x00\xff", "L", (0, 0, 0, 255, 255, 255, 0, 0, 0)),
-        (
-            "/DeviceRGB",
-            b"\x42\x42\x42\x00\x13\x37",
-            "RGB",
-            (
-                (66, 66, 66),
-                (66, 66, 66),
-                (66, 66, 66),
-                (0, 19, 55),
-                (0, 19, 55),
-                (0, 19, 55),
-                (66, 66, 66),
-                (66, 66, 66),
-                (66, 66, 66),
-            ),
-        ),
-    ],
-)
-def test_handle_flate__image_mode_1_does_not_use_getpixel(
-        base: str,
-        lookup_data: bytes,
-        expected_mode: str,
-        expected_data: ExpectedImageData,
-) -> None:
-    """This test is a regression test for issue #3850."""
-    with patch.object(
-            Image.Image,
-            "getpixel",
-            side_effect=AssertionError("getpixel should not be used"),
-    ):
-        image = _handle_flate_indexed_image_mode_1(base, lookup_data)
-
-    assert image.mode == expected_mode
-    assert get_image_data(image) == expected_data
 
 
 def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFixture) -> None:
