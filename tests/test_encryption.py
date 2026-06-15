@@ -605,9 +605,28 @@ def test_encode_password_nonstrict_warns_and_falls_back(caplog) -> None:
 
 
 def test_rc4_fallback_when_cryptography_drops_rc4() -> None:
-    """pypdf falls back to pure-Python RC4 when cryptography's ARC4 is unavailable."""
+    """Fall back to pure-Python RC4 when cryptography's ARC4 is unavailable."""
     pdf_path = SAMPLE_ROOT / "005-libreoffice-writer-password" / "libreoffice-writer-password.pdf"
-    code = f"from pypdf import PdfReader; assert PdfReader({str(pdf_path)!r}).is_encrypted"
+    code = (
+        f"from pypdf import PdfReader; r = PdfReader({str(pdf_path)!r}); "
+        f"assert r.is_encrypted; r.decrypt('openpassword'); r.pages[0].extract_text()"
+    )
+
+    env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
+    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
+    assert result.returncode == 0, result.stderr
+
+
+def test_crypt_rc4_falls_back_when_cipher_rejected() -> None:
+    """CryptRC4 recovers per-instance when ARC4 is rejected at encrypt/decrypt time."""
+    # Use CryptRC4 directly so the cipher-time UnsupportedAlgorithm is hit before
+    # the module-level rc4_* helpers have had a chance to flip the support flag.
+    code = (
+        "from pypdf._crypt_providers import CryptRC4; "
+        "key = b'0123456789abcdef'; "
+        "ct = CryptRC4(key).encrypt(b'hello'); "
+        "assert CryptRC4(key).decrypt(ct) == b'hello'"
+    )
 
     env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
     result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
