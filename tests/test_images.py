@@ -434,7 +434,7 @@ def test_1bit_indexed_flate_image_extraction_performance() -> None:
     reader = PdfReader(RESOURCE_ROOT / "issue-3850-1bit-indexed-flate.pdf")
     image = reader.pages[0].images["/Im1"].image
 
-    assert image is not None
+    assert isinstance(image, Image.Image)
     image.load()
     assert image.mode == "L"
     assert image.size == (2550, 3300)
