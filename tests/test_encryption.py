@@ -604,12 +604,13 @@ def test_encode_password_nonstrict_warns_and_falls_back(caplog) -> None:
     assert any("SASLprep normalization failed" in m for m in caplog.messages)
 
 
-def test_rc4_fallback_when_cryptography_drops_rc4() -> None:
-    """Fall back to pure-Python RC4 when cryptography's ARC4 is unavailable."""
-    pdf_path = SAMPLE_ROOT / "005-libreoffice-writer-password" / "libreoffice-writer-password.pdf"
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_rc4_encrypt() -> None:
+    """The module-level rc4_encrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
     code = (
-        f"from pypdf import PdfReader; r = PdfReader({str(pdf_path)!r}); "
-        f"assert r.is_encrypted; r.decrypt('openpassword'); r.pages[0].extract_text()"
+        "from pypdf._crypt_providers import rc4_encrypt; "
+        "ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
+        "assert rc4_encrypt(b'mykey', b'Encrypted text') == ct"
     )
 
     env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
@@ -617,15 +618,41 @@ def test_rc4_fallback_when_cryptography_drops_rc4() -> None:
     assert result.returncode == 0, result.stderr
 
 
-def test_crypt_rc4_falls_back_when_cipher_rejected() -> None:
-    """CryptRC4 recovers per-instance when ARC4 is rejected at encrypt/decrypt time."""
-    # Use CryptRC4 directly so the cipher-time UnsupportedAlgorithm is hit before
-    # the module-level rc4_* helpers have had a chance to flip the support flag.
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_rc4_decrypt() -> None:
+    """The module-level rc4_decrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
+    code = (
+        "from pypdf._crypt_providers import rc4_decrypt; "
+        "ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
+        "assert rc4_decrypt(b'mykey', ct) == b'Encrypted text'"
+    )
+
+    env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
+    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_encrypt() -> None:
+    """CryptRC4.encrypt falls back to pure-Python RC4 when ARC4 is rejected."""
     code = (
         "from pypdf._crypt_providers import CryptRC4; "
-        "key = b'0123456789abcdef'; "
-        "ct = CryptRC4(key).encrypt(b'hello'); "
-        "assert CryptRC4(key).decrypt(ct) == b'hello'"
+        "ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
+        "assert CryptRC4(b'mykey').encrypt(b'Encrypted text') == ct"
+    )
+
+    env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
+    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_decrypt() -> None:
+    """CryptRC4.decrypt falls back to pure-Python RC4 when ARC4 is rejected."""
+    code = (
+        "from pypdf._crypt_providers import CryptRC4; "
+        "ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
+        "assert CryptRC4(b'mykey').decrypt(ct) == b'Encrypted text'"
     )
 
     env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
