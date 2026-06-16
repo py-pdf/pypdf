@@ -288,7 +288,7 @@ class TextExtraction:
         try:
             self.font_resource = self.font_resources[operands[0]]
             self.font = self.fonts[operands[0]]
-        except KeyError:  # font not found
+        except (KeyError, IndexError):  # font not found / operand missing
             self.font_resource = None
             font_descriptor = FontDescriptor()
             self.font = Font(
@@ -310,7 +310,8 @@ class TextExtraction:
         # A special case is a translating only tm:
         # tm = [1, 0, 0, 1, e, f]
         # i.e. tm[4] += tx, tm[5] += ty.
-        tx, ty = float(operands[0]), float(operands[1])
+        tx = float(operands[0]) if len(operands) > 0 else 0.0
+        ty = float(operands[1]) if len(operands) > 1 else 0.0
         self.tm_matrix[4] += tx * self.tm_matrix[0] + ty * self.tm_matrix[2]
         self.tm_matrix[5] += tx * self.tm_matrix[1] + ty * self.tm_matrix[3]
         str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
