@@ -335,6 +335,9 @@ class Transformation:
 class ImageFile:
     """
     Image within the PDF file. *This object is not designed to be built.*
+    
+    Metadata properties (:attr:`width`, :attr:`height`, :attr:`data_size`) are read from the PDF stream header and are always cheap to access.
+    Content properties (:attr:`data`, :attr:`image`) are decoded lazily from the stream on first access and may be expensive for large images.
 
     This object should not be modified except using :func:`ImageFile.replace` to replace the image with a new one.
     """
@@ -344,20 +347,88 @@ class ImageFile:
     Filename as identified within the PDF file.
     """
 
-    data: bytes = b""
-    """
-    Data as bytes.
-    """
-
-    image: Optional[Image] = None
-    """
-    Data as PIL image.
-    """
-
     indirect_reference: Optional[IndirectObject] = None
     """
     Reference to the object storing the stream.
     """
+    
+    def __init__(self) -> None:
+        self._data: Optional[bytes] = None
+        self._image: Optional[Image] = None
+        self._stream_obj: Optional[Any] = None  # the raw PDF stream DictionaryObject
+
+    def _attach_stream(self, stream_obj: Any) -> None:
+        """
+        Attach the raw PDF stream object for lazy metadata and data access.
+        Called internally when building the ImageFile — does NOT decode anything.
+        """
+        self._stream_obj = stream_obj
+        
+    @property
+    def width(self) -> int:
+        """Image width in pixels, read from stream header."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile.")
+        return int(self._stream_obj["/Width"])
+
+    @property
+    def height(self) -> int:
+        """Image height in pixels, read from stream header."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile.")
+        return int(self._stream_obj["/Height"])
+    
+    @property
+    def data_size(self) -> int:
+        """
+        Compressed byte length of the image stream, read from /Length in the
+        stream header. Does NOT decompress or decode the stream.
+        """
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile.")
+        return int(self._stream_obj["/Length"])
+    
+    @property
+    def data(self) -> bytes:
+        """Raw image bytes. Decoded from the stream on first access."""
+        if self._data is None:
+            self._load()
+        return self._data  # type: ignore[return-value]
+
+    @data.setter
+    def data(self, value: bytes) -> None:
+        # Allow replace() and legacy construction to set data directly
+        self._data = value
+
+    @property
+    def image(self) -> Optional[Image]:
+        """PIL Image. Decoded from the stream on first access."""
+        if self._image is None:
+            self._load()
+        return self._image
+    
+    @image.setter
+    def image(self, value: Optional[Image]) -> None:
+        # Allow replace() to set image directly after re-encoding
+        self._image = value
+
+    def _load(self) -> None:
+        """
+        Decompress and decode the attached stream. Called automatically
+        the first time .data or .image is accessed.
+        """
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile.")
+
+        from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
+        from typing import cast  # noqa: PLC0415
+        from .generic import DictionaryObject  # noqa: PLC0415
+
+        extension, byte_stream, img = _xobj_to_image(
+            cast(DictionaryObject, self._stream_obj)
+        )
+        self._data = byte_stream
+        self._image = img
 
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
@@ -415,12 +486,16 @@ class ImageFile:
         self.name = self.name[: self.name.rfind(".")] + extension
         self.data = byte_stream
         self.image = img
+        self._stream_obj = self.indirect_reference.get_object()
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
+        size_str = _human_readable_bytes(self.data_size) if self._stream_obj else _human_readable_bytes(len(self._data or b""))
+        return f"{self.__class__.__name__}(name={self.name}, data: {size_str})"
 
     def __repr__(self) -> str:
-        return self.__str__()[:-1] + f", hash: {hash(self.data)})"
+        if self._data is not None:
+            return self.__str__()[:-1] + f", hash: {hash(self._data)})"
+        return self.__str__()[:-1] + ", hash: <not loaded>)"
 
 
 class VirtualListImages(Sequence[ImageFile]):
