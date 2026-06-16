@@ -1850,7 +1850,7 @@ class PageObject(DictionaryObject):
             if operator == b"'":
                 extractor.process_operation(b"T*", [])
                 extractor.process_operation(b"Tj", operands)
-            elif operator == b'"':
+            elif operator == b'"' and len(operands) >= 3:
                 extractor.process_operation(b"Tw", [operands[0]])
                 extractor.process_operation(b"Tc", [operands[1]])
                 extractor.process_operation(b"T*", [])
@@ -1868,7 +1868,7 @@ class PageObject(DictionaryObject):
                             and extractor.text[-1] != " "
                         ):
                             extractor.process_operation(b"Tj", [" "])
-            elif operator == b"TD":
+            elif operator == b"TD" and len(operands) >= 2:
                 extractor.process_operation(b"TL", [-operands[1]])
                 extractor.process_operation(b"Td", operands)
             elif operator == b"Do":

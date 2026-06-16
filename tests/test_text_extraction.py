@@ -408,6 +408,27 @@ def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
     assert caplog.records[-1].getMessage() == msg
 
 
+def test_text_operators_with_missing_operands():
+    """Text operators carrying too few operands must not crash extraction."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    # Each malformed operator below previously raised IndexError/ValueError on
+    # the default extraction path: TD/Td with a single operand, the show-and-
+    # move " operator with fewer than three operands, and a bare Tf.
+    content = (
+        b"BT /F1 12 Tf 100 700 Td (Hello) Tj "
+        b"5 TD (A) Tj "
+        b"3 Td (B) Tj "
+        b'(C) " '
+        b"Tf (D) Tj "
+        b"ET"
+    )
+    stream = ContentStream(stream=None, pdf=writer)
+    stream.set_data(content)
+    page.replace_contents(stream)
+    assert "Hello" in page.extract_text()
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")

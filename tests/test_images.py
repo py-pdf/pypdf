@@ -440,6 +440,18 @@ def test_large_compressed_image():
     list(reader.pages[0].images)
 
 
+@pytest.mark.timeout(timeout=1, method="thread")
+def test_1bit_indexed_flate_image_extraction_performance() -> None:
+    """1-bit indexed FlateDecode extraction times out on the old per-pixel path."""
+    reader = PdfReader(RESOURCE_ROOT / "issue-3850-1bit-indexed-flate.pdf")
+    image = reader.pages[0].images["/Im1"].image
+
+    assert isinstance(image, Image.Image)
+    image.load()
+    assert image.mode == "L"
+    assert image.size == (2550, 3300)
+
+
 @pytest.mark.enable_socket
 def test_ff_fe_starting_lut():
     """Cf issue #2660"""
