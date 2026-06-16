@@ -1702,20 +1702,29 @@ class Destination(TreeObject):
                 args.append(NumberObject(0.0))
             if len(args) < 3:  # zoom is missing
                 args.append(NumberObject(0.0))
+            # surplus arguments are ignored rather than failing the unpacking
             (
                 self[NameObject(TA.LEFT)],
                 self[NameObject(TA.TOP)],
                 self[NameObject("/Zoom")],
-            ) = args
+            ) = args[:3]
         elif len(args) == 0:
             pass
         elif typ == TF.FIT_R:
-            (
-                self[NameObject(TA.LEFT)],
-                self[NameObject(TA.BOTTOM)],
-                self[NameObject(TA.RIGHT)],
-                self[NameObject(TA.TOP)],
-            ) = args
+            try:  # Prefer to be more robust against a wrong number of arguments
+                (
+                    self[NameObject(TA.LEFT)],
+                    self[NameObject(TA.BOTTOM)],
+                    self[NameObject(TA.RIGHT)],
+                    self[NameObject(TA.TOP)],
+                ) = args
+            except Exception:
+                (
+                    self[NameObject(TA.LEFT)],
+                    self[NameObject(TA.BOTTOM)],
+                    self[NameObject(TA.RIGHT)],
+                    self[NameObject(TA.TOP)],
+                ) = (NullObject(), NullObject(), NullObject(), NullObject())
         elif typ in [TF.FIT_H, TF.FIT_BH]:
             try:  # Prefer to be more robust not only to null parameters
                 (self[NameObject(TA.TOP)],) = args
