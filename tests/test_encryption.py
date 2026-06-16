@@ -604,57 +604,42 @@ def test_encode_password_nonstrict_warns_and_falls_back(caplog) -> None:
     assert any("SASLprep normalization failed" in m for m in caplog.messages)
 
 
-@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
-def test_rc4_fallback_when_cryptography_drops_rc4_rc4_encrypt() -> None:
-    """The module-level rc4_encrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
-    code = (
-        "from pypdf._crypt_providers import rc4_encrypt; "
-        "ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
-        "assert rc4_encrypt(b'mykey', b'Encrypted text') == ct"
-    )
+def _assert_rc4_fallback(operations: str) -> None:
+    """Run ``operations`` in a subprocess where cryptography's ARC4 is unavailable.
 
+    ``CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1`` makes ARC4 raise ``UnsupportedAlgorithm``.
+    Each snippet first runs the operation under test (taking the ``UnsupportedAlgorithm`` branch that activates the
+    pure-Python fallback) and then the reverse operation (taking the already-activated fallback path).
+    """
+    code = (
+        "from pypdf._crypt_providers import rc4_encrypt, rc4_decrypt, CryptRC4; "
+        "key = b'mykey'; pt = b'Encrypted text'; ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
+        + operations
+    )
     env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
     result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_rc4_encrypt() -> None:
+    """The module-level rc4_encrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert rc4_encrypt(key, pt) == ct; assert rc4_decrypt(key, ct) == pt")
 
 
 @pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
 def test_rc4_fallback_when_cryptography_drops_rc4_rc4_decrypt() -> None:
     """The module-level rc4_decrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
-    code = (
-        "from pypdf._crypt_providers import rc4_decrypt; "
-        "ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
-        "assert rc4_decrypt(b'mykey', ct) == b'Encrypted text'"
-    )
-
-    env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
-    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
-    assert result.returncode == 0, result.stderr
+    _assert_rc4_fallback("assert rc4_decrypt(key, ct) == pt; assert rc4_encrypt(key, pt) == ct")
 
 
 @pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
 def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_encrypt() -> None:
     """CryptRC4.encrypt falls back to pure-Python RC4 when ARC4 is rejected."""
-    code = (
-        "from pypdf._crypt_providers import CryptRC4; "
-        "ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
-        "assert CryptRC4(b'mykey').encrypt(b'Encrypted text') == ct"
-    )
-
-    env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
-    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
-    assert result.returncode == 0, result.stderr
+    _assert_rc4_fallback("assert CryptRC4(key).encrypt(pt) == ct; assert CryptRC4(key).decrypt(ct) == pt")
 
 
 @pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
 def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_decrypt() -> None:
     """CryptRC4.decrypt falls back to pure-Python RC4 when ARC4 is rejected."""
-    code = (
-        "from pypdf._crypt_providers import CryptRC4; "
-        "ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
-        "assert CryptRC4(b'mykey').decrypt(ct) == b'Encrypted text'"
-    )
-
-    env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
-    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
-    assert result.returncode == 0, result.stderr
+    _assert_rc4_fallback("assert CryptRC4(key).decrypt(ct) == pt; assert CryptRC4(key).encrypt(pt) == ct")
