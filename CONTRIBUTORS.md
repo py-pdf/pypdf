@@ -27,6 +27,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Grillo, Miguel](https://github.com/Ineffable22)
 * [Gutteridge, David H.](https://github.com/dhgutteridge)
 * [Hale, Joseph](https://github.com/thehale)
+* [Harris, Samuel](https://github.com/Samuel-Harris)
 * [harshhes](https://github.com/harshhes)
 * [Jackowitz, Noah](https://github.com/hackowitz-af) | [LinkedIn](https://www.linkedin.com/in/noah-jackowitz/)
 * [JianzhengLuo](https://github.com/JianzhengLuo)

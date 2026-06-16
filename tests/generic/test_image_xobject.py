@@ -16,6 +16,22 @@ from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
 
 
+def _handle_flate_indexed_image_mode_1(base: str, lookup_data: bytes) -> Image.Image:
+    lookup = DecodedStreamObject()
+    lookup.set_data(lookup_data)
+    result = _handle_flate(
+        size=(3, 3),
+        data=b"\x00\xe0\x00",
+        mode="1",
+        color_space=ArrayObject(
+            [NameObject("/Indexed"), NameObject(base), NumberObject(1), lookup]
+        ),
+        colors=2,
+        obj_as_text="dummy",
+    )
+    return result[0]
+
+
 @pytest.mark.enable_socket
 def test_get_imagemode_recursion_depth() -> None:
     """Avoid infinite recursion for nested color spaces."""
@@ -122,6 +138,50 @@ def test_handle_flate__image_mode_1(caplog: pytest.LogCaptureFixture) -> None:
     )
     assert expected_short_data == get_image_data(result[0])
     assert "Not enough lookup values: Expected 6, got 5." in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("lookup_data", "expected_data"),
+    [
+        (b"\x00\xff", (0, 0, 0, 255, 255, 255, 0, 0, 0)),
+        (b"\xff\x00", (255, 255, 255, 0, 0, 0, 255, 255, 255)),
+    ],
+)
+def test_handle_flate__image_mode_1_device_gray_issue_3850(
+        caplog: pytest.LogCaptureFixture,
+        lookup_data: bytes,
+        expected_data: tuple[int, ...],
+) -> None:
+    """
+    1-bit /Indexed DeviceGray images are extracted with the lookup applied.
+
+    This test is a regression test for issue #3850.
+    """
+    image = _handle_flate_indexed_image_mode_1("/DeviceGray", lookup_data)
+    assert image.mode == "L"
+    assert get_image_data(image) == expected_data
+    assert not caplog.text
+
+
+def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFixture) -> None:
+    """An unknown base resolves to a zero-byte lookup width: skip the lookup with a warning."""
+    image = _handle_flate_indexed_image_mode_1("/SomethingUnknown", b"\x00\xff")
+    assert image.mode == "RGB"
+    assert get_image_data(image) == (
+        (0, 0, 0),
+        (0, 0, 0),
+        (0, 0, 0),
+        (255, 255, 255),
+        (255, 255, 255),
+        (255, 255, 255),
+        (0, 0, 0),
+        (0, 0, 0),
+        (0, 0, 0),
+    )
+    assert (
+        "Cannot apply lookup for base /SomethingUnknown to image with mode 1. "
+        "Please share PDF with pypdf dev team"
+    ) in caplog.text
 
 
 def test_extended_image_frombytes_zero_data() -> None:
