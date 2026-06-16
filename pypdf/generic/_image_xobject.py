@@ -131,6 +131,12 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
 
     byte_buffer = bytearray(buffer_size)
     mask = (1 << bits) - 1
+
+    required = size[1] * ((size[0] * bits + 7) // 8)
+    if (length := len(data)) < required:
+        logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
+        data += b"\x00" * (required - length)
+
     data_index = 0
     bit = 8 - bits
     for y in range(size[1]):
@@ -218,7 +224,7 @@ def _handle_flate(
         if isinstance(lookup, str):
             lookup = lookup.encode()
         try:
-            nb, conv, mode = {  # type: ignore
+            nb, conv, mode = {  # type: ignore[assignment]
                 "1": (0, "", ""),
                 "L": (1, "P", "L"),
                 "P": (0, "", ""),
@@ -233,7 +239,16 @@ def _handle_flate(
             )
             lookup = None
         else:
-            if img.mode == "1":
+            if img.mode == "1" and nb == 0:
+                # A two-color lookup needs at least one byte per color, but the
+                # base color space resolves to a 1-bit or palette image.
+                logger_warning(
+                    "Cannot apply lookup for base %(base)s to image with mode 1. "
+                    "Please share PDF with pypdf dev team",
+                    source=__name__,
+                    base=base,
+                )
+            elif img.mode == "1":
                 # Two values ("high" and "low").
                 expected_count = 2 * nb
                 actual_count = len(lookup)
@@ -255,14 +270,14 @@ def _handle_flate(
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
-                arr = b"".join(
-                    b"".join(
-                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
-                        for x in range(img.size[0])
+                source = img.convert("L")
+                bands = [
+                    source.point(
+                        [low_value] * 128 + [high_value] * 128
                     )
-                    for y in range(img.size[1])
-                )
-                img = Image.frombytes(mode, img.size, arr)
+                    for low_value, high_value in zip(colors_arr[0], colors_arr[1])
+                ]
+                img = bands[0] if nb == 1 else Image.merge(mode, bands)
             else:
                 img = img.convert(conv)
                 if len(lookup) != (hival + 1) * nb:
@@ -475,7 +490,7 @@ def _xobj_to_image(
 
     # Get size and data
     size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
-    data = x_object.get_data()  # type: ignore
+    data = x_object.get_data()  # type: ignore[attr-defined]
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
     if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'

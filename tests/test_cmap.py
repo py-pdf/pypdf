@@ -11,12 +11,15 @@ from pypdf._font import Font
 from pypdf.errors import LimitReachedError
 from pypdf.generic import (
     ArrayObject,
+    DecodedStreamObject,
     DictionaryObject,
     EncodedStreamObject,
     IndirectObject,
     NameObject,
     NullObject,
+    NumberObject,
     StreamObject,
+    TextStringObject,
 )
 
 from . import RESOURCE_ROOT, get_data_from_url
@@ -341,6 +344,32 @@ def test_get_encoding__encoding_value_is_none():
     )
 
 
+def _type1_font(font_file_data: bytes) -> DictionaryObject:
+    font_file = DecodedStreamObject()
+    font_file.set_data(font_file_data)
+    font_descriptor = DictionaryObject()
+    font_descriptor[NameObject("/FontFile")] = font_file
+    ft = DictionaryObject()
+    ft[NameObject("/Subtype")] = NameObject("/Type1")
+    ft[NameObject("/FontDescriptor")] = font_descriptor
+    return ft
+
+
+def test_get_encoding__type1_font_file_without_encoding():
+    # Clear part of the embedded Type1 program has no /Encoding section.
+    ft = _type1_font(b"%!PS-AdobeFont\n/FontName /Foo def\neexec\nbinary")
+    assert get_encoding(ft) == ("charmap", {})
+
+
+def test_get_encoding__type1_font_file_truncated_dup_line():
+    # A "dup" entry missing the glyph name must be skipped, not crash.
+    ft = _type1_font(
+        b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
+    )
+    _encoding, character_map = get_encoding(ft)
+    assert character_map == {"a": "a"}
+
+
 def test_parse_bfchar(caplog):
     map_dict = {}
     int_entry = []
@@ -428,6 +457,40 @@ def test_parse_bfrange__iteration_limit():
     assert map_dict == {-1: 1, "\x01": "�", "\x02": "�", "\x03": "�", "\x04": "\uffff", "\x05": "ﾫ"}
 
 
+def test_parse_to_unicode_skips_truncated_lines(caplog):
+    """A truncated bfrange or malformed bfchar line must not crash extraction."""
+    writer = PdfWriter()
+
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<0001> <0005>\n"  # missing destination token
+        b"endbfrange\n"
+        b"beginbfchar\n"
+        b"<0001> <0041>\n"  # valid
+        b"zz <0042>\n"  # non-hex source
+        b"endbfchar\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+
+    # No exception, broken lines reported.
+    page.extract_text()
+    assert "Skipping broken line b'0001   0005': list index out of range" in caplog.text
+    assert "Skipping broken line b'zz  0042': Non-hexadecimal digit found" in caplog.text
+
+
 def test_parse_bfchar__iteration_limit():
     int_entry = [0] * 99_995
     map_dict = {}
@@ -439,3 +502,82 @@ def test_parse_bfchar__iteration_limit():
             map_dict=map_dict, int_entry=int_entry,
         )
     assert map_dict == {}
+
+
+def _make_japanese_cmap_pdf(cmap_name: str, encoding: str) -> bytes:
+    """Minimal PDF with a CIDFont using *cmap_name* as /Encoding, no /ToUnicode."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    cid_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/CIDFontType2"),
+        NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
+        NameObject("/CIDSystemInfo"): DictionaryObject({
+            NameObject("/Registry"): TextStringObject("Adobe"),
+            NameObject("/Ordering"): TextStringObject("Japan1"),
+            NameObject("/Supplement"): NumberObject(2),
+        }),
+        NameObject("/DW"): NumberObject(1000)
+    })
+    cid_font_ref = writer._add_object(cid_font)
+
+    type0_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
+        NameObject("/Encoding"): NameObject(cmap_name),
+        NameObject("/DescendantFonts"): ArrayObject([cid_font_ref])
+    })
+    type0_font_ref = writer._add_object(type0_font)
+
+    type1_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+    })
+    type1_font_ref = writer._add_object(type1_font)
+
+    char_hex = "日本語テスト".encode(encoding).hex().upper()
+    content_data = (
+        "BT\n/F0 14 Tf\n72 720 Td\n(Hello ASCII) Tj\n"
+        f"0 -28 Td\n/F1 14 Tf\n<{char_hex}> Tj\nET\n"
+    ).encode("latin-1")
+    content_stream = DecodedStreamObject()
+    content_stream.set_data(content_data)
+    content_ref = writer._add_object(content_stream)
+
+    page.update({
+        NameObject("/Contents"): content_ref,
+        NameObject("/Resources"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F0"): type1_font_ref,
+                NameObject("/F1"): type0_font_ref
+            })
+        })
+    })
+
+    buf = BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+@pytest.mark.parametrize(
+    ("cmap_name", "python_codec"),
+    [
+        ("/90ms-RKSJ-H", "cp932"),
+        ("/90ms-RKSJ-V", "cp932"),
+        ("/UniJIS-UTF16-H", "utf-16-be"),
+        ("/UniJIS-UTF16-V", "utf-16-be"),
+    ],
+    ids=["90ms-RKSJ-H", "90ms-RKSJ-V", "UniJIS-UTF16-H", "UniJIS-UTF16-V"],
+)
+def test_japanese_cmap_encodings(cmap_name: str, python_codec: str, caplog) -> None:
+    """Japanese predefined CMaps must be decoded correctly. Resolves #3799."""
+    pdf_bytes = _make_japanese_cmap_pdf(cmap_name, python_codec)
+    reader = PdfReader(BytesIO(pdf_bytes))
+    text = reader.pages[0].extract_text()
+    assert "日本語テスト" in text, f"Japanese text garbled for {cmap_name}"
+    assert "Hello ASCII"  in text, f"ASCII baseline broken for {cmap_name}"
+    assert "Advanced encoding" not in caplog.text

@@ -156,6 +156,13 @@ def test_read_hex_string_from_stream_exception():
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
+def test_read_hex_string_from_stream_non_hex():
+    stream = BytesIO(b"<41ZZ42>")
+    with pytest.raises(PdfStreamError) as exc:
+        read_hex_string_from_stream(stream)
+    assert "Invalid hexadecimal character" in exc.value.args[0]
+
+
 def test_read_string_from_stream_exception():
     stream = BytesIO(b"x")
     with pytest.raises(PdfStreamError) as exc:
@@ -1278,6 +1285,50 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
     ec.set_data(b)
     co = ContentStream(ec, None)
     assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
+
+
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+def test_inline_image_at_end_of_stream(tail):
+    # An inline image whose `EI` marker is the very end of the content stream
+    # (no trailing whitespace or operator) must not raise (#3468).
+    image = b"abcdefghijklmnop"  # 4 * 4 * 1 byte
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 4 /H 4 /CS /G\nID\n" + image + b"\nEI" + tail
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert inline_images[0][0]["data"] == image
+
+
+def test_inline_image_at_end_of_stream_default_extractor():
+    # An unrecognized colorspace forces extraction through
+    # `extract_inline_default`, which must also accept an `EI` marker at the
+    # very end of the stream without raising (#3468).
+    image = b"abcdefghijklmnop"  # 4 * 4 * 1 byte
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 4 /H 4 /CS /Unknown\nID\n" + image + b"\nEI"
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert image in inline_images[0][0]["data"]
+
+
+def test_inline_image_at_end_of_stream_fallback_extractor():
+    # A recognized colorspace with oversized `/W`/`/H` makes the primary
+    # dimension-based read overshoot the `EI` marker, so extraction falls back
+    # to `extract_inline_default`. With the marker at the very end of the
+    # stream the fallback `read(3)` returns only two bytes (`b"EI"`), which
+    # exercises the `len(ei) != 3` path of the fallback branch (#3468).
+    image = b"abcdefghijklmnop"  # 16 bytes; `/W 8` * `/H 4` would expect 32
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 8 /H 4 /CS /G\nID\n" + image + b"\nEI"
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert image in inline_images[0][0]["data"]
 
 
 def test_missing_hashbin():

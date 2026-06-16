@@ -29,11 +29,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import struct
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, Iterator, Mapping
 from datetime import datetime
 from typing import (
     Any,
+    NoReturn,
     Optional,
     Union,
     cast,
@@ -51,15 +52,15 @@ from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
+    Core,
     GoToActionArguments,
     PagesAttributes,
     UserAccessPermissions,
 )
-from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
-from .errors import PdfReadError, PyPdfError
+from .errors import LimitReachedError, PdfReadError, PyPdfError
 from .filters import _decompress_with_limit
 from .generic import (
     ArrayObject,
@@ -92,7 +93,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
         raise PdfReadError("Invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
-    return cast(int, struct.unpack(">q", d)[0])
+    return cast(int, struct.unpack(">Q", d)[0])
 
 
 class DocumentInformation(DictionaryObject):
@@ -130,7 +131,7 @@ class DocumentInformation(DictionaryObject):
         specified.
         """
         return (
-            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore
+            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore[union-attr]
             if self.get(DI.TITLE)
             else None
         )
@@ -255,7 +256,7 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.KEYWORDS)
 
 
-class PdfDocCommon:
+class PdfDocCommon(ABC):
     """
     Common functions from PdfWriter and PdfReader objects.
 
@@ -311,6 +312,7 @@ class PdfDocCommon:
         return retval
 
     @property
+    @abstractmethod
     def xmp_metadata(self) -> Optional[XmpInformation]:
         ...  # pragma: no cover
 
@@ -344,7 +346,7 @@ class PdfDocCommon:
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
         if self.is_encrypted:
-            return self.root_object["/Pages"]["/Count"]  # type: ignore
+            return self.root_object["/Pages"]["/Count"]  # type: ignore[no-any-return, index]
         if self.flattened_pages is None:
             self._flatten(self._readonly)
         assert self.flattened_pages is not None
@@ -365,7 +367,7 @@ class PdfDocCommon:
         """
         if self.flattened_pages is None:
             self._flatten(self._readonly)
-        assert self.flattened_pages is not None, "hint for mypy"
+        assert self.flattened_pages is not None, "mypy"
         return self.flattened_pages[page_number]
 
     def _get_page_in_node(
@@ -446,8 +448,10 @@ class PdfDocCommon:
     ## common
     def _get_named_destinations(
         self,
+        *,
         tree: Union[TreeObject, None] = None,
         retval: Optional[dict[str, Destination]] = None,
+        visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
         """
         Retrieve the named destinations present in the document.
@@ -455,11 +459,14 @@ class PdfDocCommon:
         Args:
             tree: The current tree.
             retval: The previously retrieved destinations for nested calls.
+            visited: Already known/visited objects.
 
         Returns:
             A dictionary which maps names to destinations.
 
         """
+        if visited is None:
+            visited = set()
         if retval is None:
             retval = {}
             catalog = self.root_object
@@ -476,10 +483,16 @@ class PdfDocCommon:
             return retval
         assert tree is not None, "mypy"
 
+        tree_id = id(tree)
+        if tree_id in visited:
+            logger_warning("Detected cycle in destination tree.", source=__name__)
+            return retval
+        visited.add(tree_id)
+
         if PagesAttributes.KIDS in tree:
             # recurse down the tree
             for kid in cast(ArrayObject, tree[PagesAttributes.KIDS]):
-                self._get_named_destinations(kid.get_object(), retval)
+                self._get_named_destinations(tree=kid.get_object(), retval=retval, visited=visited)
         # §7.9.6, entries in a name tree node dictionary
         elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
             names = cast(DictionaryObject, tree[CA.NAMES])
@@ -504,7 +517,7 @@ class PdfDocCommon:
                     retval[cast(str, dest["/Title"])] = dest
                     # Remain backwards-compatible.
                     retval[str(key)] = dest
-        else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF 1.1)
+        else:  # case where /Dests is in the document's catalog dictionary (PDF 1.7 specs, §2 about PDF 1.1)
             for k__, v__ in tree.items():
                 val = v__.get_object()
                 if isinstance(val, DictionaryObject):
@@ -570,13 +583,26 @@ class PdfDocCommon:
             self._build_field(tree, retval, fileobj, field_attributes, stack)
         return retval
 
-    def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
+    def _get_qualified_field_name(
+            self,
+            *,
+            parent: DictionaryObject,
+            visited: Optional[set[int]] = None
+    ) -> str:
+        if visited is None:
+            visited = set()
+        parent_id = id(parent)
+        if parent_id in visited:
+            raise LimitReachedError("Detected cycle in /Parent hierarchy when retrieving qualified field name.")
+        visited.add(parent_id)
+
         if "/TM" in parent:
             return cast(str, parent["/TM"])
         if "/Parent" in parent:
             return (
                 self._get_qualified_field_name(
-                    cast(DictionaryObject, parent["/Parent"])
+                    parent=cast(DictionaryObject, parent["/Parent"]),
+                    visited=visited,
                 )
                 + "."
                 + cast(str, parent.get("/T", ""))
@@ -593,7 +619,7 @@ class PdfDocCommon:
     ) -> None:
         if all(attr not in field for attr in ("/T", "/TM")):
             return
-        key = self._get_qualified_field_name(field)
+        key = self._get_qualified_field_name(parent=field)
         if fileobj:
             self._write_field(fileobj, field, field_attributes)
             fileobj.write("\n")
@@ -636,13 +662,13 @@ class PdfDocCommon:
             logger_warning(
                 "%(field_name)s already parsed",
                 source=__name__,
-                field_name=self._get_qualified_field_name(tree),
+                field_name=self._get_qualified_field_name(parent=tree),
             )
             return
         stack.append(tree)
         if PagesAttributes.KIDS in tree:
             # recurse down the tree
-            for kid in tree[PagesAttributes.KIDS]:  # type: ignore
+            for kid in tree[PagesAttributes.KIDS]:  # type: ignore[attr-defined]
                 kid = kid.get_object()
                 self.get_fields(kid, retval, fileobj, stack)
 
@@ -709,11 +735,11 @@ class PdfDocCommon:
             )
 
         # Retrieve document form fields
-        formfields = self.get_fields()
-        if formfields is None:
+        form_fields = self.get_fields()
+        if form_fields is None:
             return {}
         ff = {}
-        for field, value in formfields.items():
+        for field, value in form_fields.items():
             if value.get("/FT") == "/Tx":
                 if full_qualified_name:
                     ff[field] = value.get("/V")
@@ -745,7 +771,7 @@ class PdfDocCommon:
         """
         try:
             # to cope with all types
-            field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
+            field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore[union-attr]
         except Exception as exc:
             raise ValueError("Field type is invalid") from exc
         if is_null_or_none(field.get_inherited(key="/FT", default=None)):
@@ -777,7 +803,7 @@ class PdfDocCommon:
         return [
             x
             if isinstance(x, PageObject)
-            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore
+            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore[index, union-attr]
             for x in ret
         ]
 
@@ -835,8 +861,8 @@ class PdfDocCommon:
             catalog = self.root_object
 
             # get the outline dictionary and named destinations
-            if CO.OUTLINES in catalog:
-                lines = cast(DictionaryObject, catalog[CO.OUTLINES])
+            if Core.OUTLINES in catalog:
+                lines = cast(DictionaryObject, catalog[Core.OUTLINES])
 
                 if isinstance(lines, NullObject):
                     return outline
@@ -899,8 +925,8 @@ class PdfDocCommon:
         author, and creation date.
         """
         catalog = self.root_object
-        if CO.THREADS in catalog:
-            return cast("ArrayObject", catalog[CO.THREADS])
+        if Core.THREADS in catalog:
+            return cast("ArrayObject", catalog[Core.THREADS])
         return None
 
     @abstractmethod
@@ -954,9 +980,9 @@ class PdfDocCommon:
         ):
             page = NullObject()
             return Destination(title, page, Fit.fit())
-        page, typ, *array = array  # type: ignore
+        page, typ, *array = array  # type: ignore[assignment]
         try:
-            return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
+            return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore[arg-type]
         except PdfReadError:
             logger_warning("Unknown destination: %(title)r %(array)s", source=__name__, title=title, array=array)
             if self.strict:
@@ -1024,7 +1050,7 @@ class PdfDocCommon:
         if outline_item:
             if "/C" in node:
                 # Color of outline item font in (R, G, B) with values ranging 0.0-1.0
-                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
+                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore[attr-defined]
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
                 # with 1=italic, 2=bold, 3=both
@@ -1059,7 +1085,7 @@ class PdfDocCommon:
             PdfWriter.
 
         """
-        return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore
+        return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore[return-value]
 
     @property
     def page_labels(self) -> list[str]:
@@ -1121,7 +1147,7 @@ class PdfDocCommon:
              - Show attachments panel
         """
         try:
-            return self.root_object["/PageMode"]  # type: ignore
+            return self.root_object["/PageMode"]  # type: ignore[return-value]
         except KeyError:
             return None
 
@@ -1131,6 +1157,7 @@ class PdfDocCommon:
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
+        visited: Optional[set[int]] = None,
     ) -> None:
         """
         Process the document pages to ease searching.
@@ -1149,6 +1176,9 @@ class PdfDocCommon:
             pages:
             inherit:
             indirect_reference: Used recursively to flatten the /Pages object.
+            visited: Set of id() values of /Pages nodes already visited during
+                traversal. Detects multi-hop cycles such as A→B→C→A that the
+                single-parent check misses.
 
         """
         inheritable_page_attributes = (
@@ -1159,11 +1189,13 @@ class PdfDocCommon:
         )
         if inherit is None:
             inherit = {}
+        if visited is None:
+            visited = set()
         if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
             catalog = self.root_object
-            pages = catalog.get("/Pages").get_object()  # type: ignore
+            pages = catalog.get("/Pages").get_object()  # type: ignore[union-attr]
             if not isinstance(pages, DictionaryObject):
                 raise PdfReadError("Invalid object in /Pages")
             self.flattened_pages = []
@@ -1182,22 +1214,28 @@ class PdfDocCommon:
                 if attr in pages:
                     inherit[attr] = pages[attr]
             pages_reference = getattr(pages, "indirect_reference", object())
-            for page in cast(ArrayObject, pages[PagesAttributes.KIDS]):
+            kids = pages.get(PagesAttributes.KIDS, ArrayObject()).get_object()
+            if isinstance(kids, NullObject):
+                kids = ArrayObject()
+            elif not isinstance(kids, ArrayObject):
+                raise PdfReadError(
+                    f"Expected /Kids to be an array, got {type(kids).__name__}."
+                )
+            for page in kids:
                 if getattr(page, "indirect_reference", object()) == pages_reference:
                     raise PdfReadError("Detected cyclic page references.")
 
-                addt = {}
+                additional_arguments = {}
                 if isinstance(page, IndirectObject):
-                    addt["indirect_reference"] = page
+                    additional_arguments["indirect_reference"] = page
                 obj = page.get_object()
                 if obj:
                     # damaged file may have invalid child in /Pages
-                    try:
-                        self._flatten(list_only, obj, inherit, **addt)
-                    except RecursionError:
-                        raise PdfReadError(
-                            "Maximum recursion depth reached during page flattening."
-                        )
+                    obj_id = id(obj)
+                    if obj_id in visited:
+                        raise PdfReadError("Detected cyclic page references.")
+                    visited.add(obj_id)
+                    self._flatten(list_only, obj, inherit, visited=visited, **additional_arguments)
         elif t == "/Page":
             for attr_in, value in inherit.items():
                 # if the page has its own value, it does not inherit the
@@ -1209,7 +1247,7 @@ class PdfDocCommon:
                 page_obj.update(pages)
 
             # TODO: Could flattened_pages be None at this point?
-            self.flattened_pages.append(page_obj)  # type: ignore
+            self.flattened_pages.append(page_obj)  # type: ignore[union-attr]
 
     def remove_page(
         self,
@@ -1273,30 +1311,13 @@ class PdfDocCommon:
 
     def decode_permissions(
         self, permissions_code: int
-    ) -> dict[str, bool]:  # pragma: no cover
+    ) -> NoReturn:  # pragma: no cover
         """Take the permissions as an integer, return the allowed access."""
         deprecation_with_replacement(
             old_name="decode_permissions",
             new_name="user_access_permissions",
             removed_in="5.0.0",
         )
-
-        permissions_mapping = {
-            "print": UserAccessPermissions.PRINT,
-            "modify": UserAccessPermissions.MODIFY,
-            "copy": UserAccessPermissions.EXTRACT,
-            "annotations": UserAccessPermissions.ADD_OR_MODIFY,
-            "forms": UserAccessPermissions.FILL_FORM_FIELDS,
-            # Do not fix typo, as part of official, but deprecated API.
-            "accessability": UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
-            "assemble": UserAccessPermissions.ASSEMBLE_DOC,
-            "print_high_quality": UserAccessPermissions.PRINT_TO_REPRESENTATION,
-        }
-
-        return {
-            key: permissions_code & flag != 0
-            for key, flag in permissions_mapping.items()
-        }
 
     @property
     def user_access_permissions(self) -> Optional[UserAccessPermissions]:

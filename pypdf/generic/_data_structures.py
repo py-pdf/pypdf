@@ -121,7 +121,7 @@ class ArrayObject(list[Any], PdfObject):
     ) -> "ArrayObject":
         """Clone object into pdf_dest."""
         try:
-            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
+            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore[union-attr]
                 return self
         except Exception:
             pass
@@ -294,7 +294,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
     ) -> "DictionaryObject":
         """Clone object into pdf_dest."""
         try:
-            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
+            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore[union-attr]
                 return self
         except Exception:
             pass
@@ -736,7 +736,7 @@ class TreeObject(DictionaryObject):
 
             if child == last:
                 return
-            child_ref = child.get(NameObject("/Next"))  # type: ignore
+            child_ref = child.get(NameObject("/Next"))  # type: ignore[union-attr]
             if is_null_or_none(child_ref):
                 return
             child = child_ref.get_object()
@@ -846,7 +846,7 @@ class TreeObject(DictionaryObject):
                 del next_obj[NameObject("/Prev")]
                 self[NameObject("/First")] = next_ref
                 self[NameObject("/Count")] = NumberObject(
-                    self[NameObject("/Count")] - 1  # type: ignore
+                    self[NameObject("/Count")] - 1  # type: ignore[operator]
                 )
 
             else:
@@ -866,7 +866,7 @@ class TreeObject(DictionaryObject):
                 assert cur == last
                 del prev[NameObject("/Next")]
                 self[NameObject("/Last")] = prev_ref
-            self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] - 1)  # type: ignore
+            self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] - 1)  # type: ignore[operator]
 
     def remove_child(self, child: Any) -> None:
         child_obj = child.get_object()
@@ -881,7 +881,7 @@ class TreeObject(DictionaryObject):
         prev_ref = None
         prev = None
         cur_ref: Optional[Any] = self[NameObject("/First")]
-        cur: Optional[dict[str, Any]] = cur_ref.get_object()  # type: ignore
+        cur: Optional[dict[str, Any]] = cur_ref.get_object()  # type: ignore[union-attr]
         last_ref = self[NameObject("/Last")]
         last = last_ref.get_object()
         while cur is not None:
@@ -1296,7 +1296,7 @@ class ContentStream(DecodedStreamObject):
 
         """
         try:
-            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
+            if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore[union-attr]
                 return self
         except Exception:
             pass
@@ -1429,14 +1429,22 @@ class ContentStream(DecodedStreamObject):
             data = extract_inline_default(stream)
 
         ei = stream.read(3)
-        stream.seek(-1, 1)
-        if ei[:2] != b"EI" or ei[2:3] not in WHITESPACES:
+        # An `EI` at the very end of the stream yields only two bytes; rewinding
+        # unconditionally would step back into the marker (#3468).
+        if len(ei) == 3:
+            stream.seek(-1, 1)
+        ei_trailing = ei[2:3]
+        if ei[:2] != b"EI" or (ei_trailing != b"" and ei_trailing not in WHITESPACES):
             # Deal with wrong/missing `EI` tags. Example: Wrong dimensions specified above.
             stream.seek(savpos, 0)
             data = extract_inline_default(stream)
             ei = stream.read(3)
-            stream.seek(-1, 1)
-            if ei[:2] != b"EI" or ei[2:3] not in WHITESPACES:  # pragma: no cover
+            if len(ei) == 3:
+                stream.seek(-1, 1)
+            ei_trailing = ei[2:3]
+            if ei[:2] != b"EI" or (
+                ei_trailing != b"" and ei_trailing not in WHITESPACES
+            ):  # pragma: no cover
                 # Check the same condition again. This should never fail as
                 # edge cases are covered by `extract_inline_default` above,
                 # but check this ot make sure that we are behind the `EI` afterwards.

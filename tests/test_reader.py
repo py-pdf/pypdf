@@ -374,6 +374,88 @@ def test_issue297(caplog):
     reader.pages[0]
 
 
+def test_startxref_corrupt_trailing_pointer(caplog):
+    """
+    A corrupt trailing startxref keyword (e.g. ``tartxref``) must not prevent
+    reading when an earlier, intact startxref from a previous revision is still
+    present further up the file. See #3238.
+    """
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << /Root 5 0 R /Size 6 >>\n"
+        b"startxref\n"
+        b"%d\n"
+        b"%%%%EOF\n"
+        # A corrupt, trailing cross-reference pointer left behind by a broken
+        # incremental update: the keyword has lost its leading 's'.
+        b"tartxref\n"
+        b"99999\n"
+        b"%%%%EOF"
+    )
+    pdf_data = pdf_data % (
+        # - 1 below in the find because of the double % at the beginning
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"4 0 obj") - 1,
+        pdf_data.find(b"5 0 obj") - 1,
+        pdf_data.find(b"xref") - 1,
+    )
+    reader = PdfReader(io.BytesIO(pdf_data))
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox.width == 2550
+    assert normalize_warnings(caplog.text) == [
+        "found startxref pointing to a previous revision after a corrupt one",
+    ]
+
+    # Recovering from the corrupt pointer violates the standard, so it must
+    # only happen in non-strict mode; strict mode raises instead.
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(io.BytesIO(pdf_data), strict=True)
+
+
+def test_find_previous_startxref_pos_recovery_variants():
+    """Cover the backward-scan branches of _find_previous_startxref_pos (#3238)."""
+
+    def scan(data: bytes) -> int:
+        stream = io.BytesIO(data)
+        stream.seek(0, 2)
+        return PdfReader._find_previous_startxref_pos(stream)
+
+    # Offset on the line below the keyword (the usual layout)
+    assert scan(b"startxref\n12345\ngarbage\n") == 12345
+
+    # Keyword and offset share a line
+    assert scan(b"startxref 6789\ngarbage\n") == 6789
+
+    # A startxref keyword with no numeric offset above it cannot be recovered
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"startxref\nnot-a-number\n")
+
+    # No startxref keyword at all: the scan exhausts the stream and gives up
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"only some bytes\nand more\n")
+
+    # The backward scan is bounded: a long stream without a recoverable
+    # pointer hits the line cap and gives up instead of scanning forever
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"x\n" * (PdfReader._MAX_STARTXREF_RECOVERY_LINES + 100))
+
+
 @pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
     [
@@ -600,6 +682,88 @@ def test_circular_xref_prev_reference(caplog):
     )
     PdfReader(io.BytesIO(pdf_data))
     assert "Circular xref chain detected" in caplog.text
+
+
+def test_cyclic_pages_tree():
+    """Circular /Pages reference (multi-hop cycle) must raise PdfReadError, not recurse infinitely (#3847)."""
+    # Page tree: root /Pages (obj 2) -> /Pages obj 3 -> /Pages obj 4 -> /Pages obj 5 -> obj 3 (cycle)
+    # obj 6 is the only real /Page (reachable directly from root).
+    pdf_data = b"""%PDF-1.7
+
+1 0 obj
+  << /Type /Catalog
+     /Pages 2 0 R
+  >>
+endobj
+
+2 0 obj
+  << /Type /Pages
+     /Kids [6 0 R 3 0 R]
+     /Count 2
+     /MediaBox [0 0 595 842]
+  >>
+endobj
+
+3 0 obj
+  << /Type /Pages
+     /Kids [4 0 R]
+     /Count 1
+     /MediaBox [0 0 595 842]
+  >>
+endobj
+
+4 0 obj
+  << /Type /Pages
+     /Kids [5 0 R]
+     /Count 1
+     /MediaBox [0 0 595 842]
+  >>
+endobj
+
+5 0 obj
+  << /Type /Pages
+     /Kids [3 0 R]
+     /Count 1
+     /MediaBox [0 0 595 842]
+  >>
+endobj
+
+6 0 obj
+  << /Type /Page
+     /Parent 2 0 R
+     /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Courier >> >> >>
+     /Contents [7 0 R]
+  >>
+endobj
+
+7 0 obj
+  << /Length 44 >>
+stream
+  BT /F1 22 Tf 30 800 Td (Test) Tj ET
+endstream
+endobj
+
+xref
+0 8
+0000000000 65535 f\x20
+0000000010 00000 n\x20
+0000000069 00000 n\x20
+0000000176 00000 n\x20
+0000000277 00000 n\x20
+0000000378 00000 n\x20
+0000000479 00000 n\x20
+0000000744 00000 n\x20
+trailer
+  << /Root 1 0 R
+     /Size 8
+  >>
+startxref
+841
+%%EOF
+"""
+    with pytest.raises(PdfReadError, match=r"^Detected cyclic page references\.$"):
+        reader = PdfReader(io.BytesIO(pdf_data), strict=False)
+        len(reader.pages)
 
 
 def test_read_missing_startxref():
@@ -870,8 +1034,17 @@ def test_pages_attribute():
     assert exc.value.args[0] == "Sequence index out of range"
 
 
-def test_convert_to_int():
-    assert convert_to_int(b"\x01", 8) == 1
+@pytest.mark.parametrize(
+    ("d", "size", "expected"),
+    [
+        (b"\x01", 8, 1),
+        # Cross-reference stream entry fields are >= 0 (ISO 32000-2, Table 18),
+        # so a wide field with the high bit set must not decode to a negative value.
+        (b"\x80\x00\x00\x00\x00\x00\x00\x01", 8, 0x8000000000000001),
+    ],
+)
+def test_convert_to_int(d, size, expected):
+    assert convert_to_int(d, size) == expected
 
 
 def test_convert_to_int_error():
@@ -1931,6 +2104,32 @@ def test_read_standard_xref_table__two_whitespace_characters_between_offset_and_
     assert reader.pages[0].extract_text() == "Hello World!"
 
 
+def test_read_standard_xref_table__entry_invalid_but_object_found(caplog):
+    """Tests for #3841"""
+    body = (
+        b"%PDF-1.7\n"
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"
+    )
+    xref_offset = len(body)
+    corrupt_entry = b"xxxxxxxxxxxxxxxx 0\r\n"
+    assert len(corrupt_entry) == 20
+    data = body + (
+        b"xref\n1 3\n"
+        + corrupt_entry
+        + b"%010d 00000 n\r\n" % body.index(b"2 0 obj")
+        + b"%010d 00000 n\r\n" % body.index(b"3 0 obj")
+        + b"trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n"
+        + b"%d" % xref_offset
+        + b"\n%%EOF"
+    )
+
+    reader = PdfReader(BytesIO(data))
+    assert len(reader.pages) == 1
+    assert "entry 1 in Xref table invalid but object found" in caplog.text
+
+
 @pytest.mark.enable_socket
 def test_root_object_recovery_limit(caplog):
     url = "https://github.com/user-attachments/files/24525509/root_object_recovery_limit.pdf"
@@ -2293,7 +2492,7 @@ def test_get_object_from_stream__size_limit(caplog):
         _ = reader.pages[0]
     assert caplog.messages == []
 
-    with pytest.raises(PdfReadError, match=r"^Maximum recursion depth reached during page flattening\.$"):
+    with pytest.raises(PdfReadError, match=r"cyclic page references|Maximum recursion depth"):
         reader = PdfReader(BytesIO(pdf), strict=False)
         _ = reader.pages[0]
     assert caplog.messages == [

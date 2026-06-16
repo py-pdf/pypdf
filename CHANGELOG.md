@@ -1,5 +1,50 @@
 # CHANGELOG
 
+## Version 6.13.2, 2026-06-10
+
+### Security (SEC)
+- Detect multi-hop cyclic /Pages trees in _flatten to prevent SIGSEGV (#3847)
+
+### Robustness (ROB)
+- Fix UnboundLocalError in _read_standard_xref_table on a malformed entry (#3841)
+- Raise PdfStreamError on non-hexadecimal bytes in hex readers (#3832)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.1...6.13.2)
+
+## Version 6.13.1, 2026-06-08
+
+### Security (SEC)
+- Prevent infinite loops when processing threads/articles (#3839)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.0...6.13.1)
+
+## Version 6.13.0, 2026-06-05
+
+### Security (SEC)
+- Avoid infinite loops for outlines and text extraction (#3830)
+
+### New Features (ENH)
+- Add Japanese predefined CMaps (#3800)
+- Font: Collect all character widths, not only those that can be unicode mapped (#3798)
+
+### Robustness (ROB)
+- Recover a corrupt trailing startxref pointer (closes #3238) (#3826)
+- Handle /Pages node without /Kids during flattening (#3825)
+- Accept inline image EI marker at the end of a content stream (#3827)
+
+### Maintenance (MAINT)
+- Type the always-raising deprecation helpers as `NoReturn` (#3819)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.12.2...6.13.0)
+
+## Version 6.12.2, 2026-05-26
+
+### Security (SEC)
+- Optimize _decode_png_prediction regarding memory and speed (#3806)
+- Improve loop control in text extraction (#3805)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.12.1...6.12.2)
+
 ## Version 6.12.1, 2026-05-22
 
 ### Security (SEC)

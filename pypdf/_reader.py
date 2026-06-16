@@ -341,7 +341,7 @@ class PdfReader(PdfDocCommon):
         """
         if self._page_id2num is None:
             self._page_id2num = {
-                x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore
+                x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore[union-attr]
             }
 
         if is_null_or_none(indirect_reference):
@@ -360,7 +360,7 @@ class PdfReader(PdfDocCommon):
         # indirect reference to object in object stream
         # read the entire object stream into memory
         stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
+        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # Parse ALL objects in this stream in one pass and cache them.
@@ -534,7 +534,7 @@ class PdfReader(PdfDocCommon):
             if current_object in self._known_objects:
                 raise LimitReachedError(f"Detected loop with self reference for {indirect_reference!r}.")
             self._known_objects.add(current_object)
-            retval = read_object(self.stream, self)  # type: ignore
+            retval = read_object(self.stream, self)  # type: ignore[assignment]
             self._known_objects.remove(current_object)
 
             # override encryption is used for the /Encrypt dictionary
@@ -575,7 +575,7 @@ class PdfReader(PdfDocCommon):
                 self.stream.seek(m.end(0) + 1)
                 skip_over_whitespace(self.stream)
                 self.stream.seek(-1, 1)
-                retval = read_object(self.stream, self)  # type: ignore
+                retval = read_object(self.stream, self)  # type: ignore[assignment]
 
                 # override encryption is used for the /Encrypt dictionary
                 if not self._override_encryption and self._encryption is not None:
@@ -819,8 +819,66 @@ class PdfReader(PdfDocCommon):
         else:
             line = read_previous_line(stream)
             if not line.startswith(b"startxref"):
-                raise PdfReadError("startxref not found")
+                # The 'startxref' keyword expected just above the offset is
+                # missing or corrupt (for example a truncated 'tartxref').
+                # Some producers append a broken trailing cross-reference
+                # pointer while an earlier, intact 'startxref' from a previous
+                # revision is still present. Recovering from this violates the
+                # standard, so only attempt it in non-strict mode (#3238).
+                if self.strict:
+                    raise PdfReadError("startxref not found")
+                startxref = self._find_previous_startxref_pos(stream)
         return startxref
+
+    # Upper bound on the number of lines _find_previous_startxref_pos scans
+    # backwards while recovering a corrupt trailing startxref pointer. Kept
+    # fixed and non-configurable so a crafted file cannot trigger an unbounded
+    # backwards scan.
+    _MAX_STARTXREF_RECOVERY_LINES = 1000
+
+    @classmethod
+    def _find_previous_startxref_pos(cls, stream: StreamType) -> int:
+        """
+        Recover the most recent intact ``startxref`` pointer by scanning
+        backwards from the current position.
+
+        This is used as a fallback when the ``startxref`` keyword belonging to
+        the final ``%%EOF`` is corrupt (#3238). The offset always appears on
+        the line directly below the keyword, so the value read immediately
+        before encountering ``startxref`` (while moving backwards) is returned.
+        At most ``_MAX_STARTXREF_RECOVERY_LINES`` lines are inspected.
+
+        Args:
+            stream: The PDF byte stream, positioned just above the corrupt
+                trailing pointer.
+
+        Returns:
+            The bytes offset of the recovered ``startxref``.
+
+        """
+        offset: Optional[int] = None
+        for _ in range(cls._MAX_STARTXREF_RECOVERY_LINES):
+            if stream.tell() <= 0:
+                break
+            line = read_previous_line(stream)
+            if not line.startswith(b"startxref"):
+                try:
+                    offset = int(line)
+                except ValueError:
+                    offset = None
+                continue
+            if len(line) > 9:
+                # 'startxref' on the same line as the offset
+                return int(line[9:].strip())
+            if offset is not None:
+                logger_warning(
+                    "found startxref pointing to a previous revision after "
+                    "a corrupt one",
+                    source=__name__,
+                )
+                return offset
+            break
+        raise PdfReadError("startxref not found")
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
@@ -912,6 +970,7 @@ class PdfReader(PdfDocCommon):
                         )
                         generation = int(f.group(1))
                         offset = f.start()
+                        entry_type_b = b"n"
 
                 if generation not in self.xref:
                     self.xref[generation] = {}
@@ -1173,7 +1232,7 @@ class PdfReader(PdfDocCommon):
 
         def used_before(num: int, generation: Union[int, tuple[int, ...]]) -> bool:
             # We move backwards through the xrefs, don't replace any.
-            return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore
+            return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore[arg-type]
 
         # Iterate through each subsection
         self._read_xref_subsections(index_pairs, get_entry, used_before)
@@ -1358,9 +1417,9 @@ class PdfReader(PdfDocCommon):
                     byte_offset = get_entry(1)
                     generation = get_entry(2)
                     if generation not in self.xref:
-                        self.xref[generation] = {}  # type: ignore
+                        self.xref[generation] = {}  # type: ignore[index]
                     if not used_before(num, generation):
-                        self.xref[generation][num] = byte_offset  # type: ignore
+                        self.xref[generation][num] = byte_offset  # type: ignore[index]
                 elif xref_type == 2:
                     # compressed objects
                     objstr_num = get_entry(1)
@@ -1518,14 +1577,16 @@ class PdfReader(PdfDocCommon):
 
     def _get_named_destinations(
         self,
+        *,
         tree: Union[TreeObject, None] = None,
         retval: Optional[dict[str, Destination]] = None,
+        visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
         """Override from PdfDocCommon. In the reader we can assume this is
         static, but not in the writer.
         """
         if tree or retval:
-            return super()._get_named_destinations(tree, retval)
+            return super()._get_named_destinations(tree=tree, retval=retval, visited=visited)
 
         if self._named_destinations_cache is None:
             self._named_destinations_cache = super()._get_named_destinations()

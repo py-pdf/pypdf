@@ -8,7 +8,7 @@ from ._base import ByteStringObject, TextStringObject
 
 
 def hex_to_rgb(value: str) -> tuple[float, float, float]:
-    return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
+    return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
 
 
 def read_hex_string_from_stream(
@@ -24,6 +24,10 @@ def read_hex_string_from_stream(
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         if tok == b">":
             break
+        if tok not in b"0123456789abcdefABCDEF":
+            raise PdfStreamError(
+                f"Invalid hexadecimal character {tok!r} in hex string"
+            )
         x += tok
         if len(x) == 2:
             arr.append(int(x, base=16))

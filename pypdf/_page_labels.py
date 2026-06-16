@@ -133,13 +133,19 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     # analogously to the arrangement of keys in a name tree
     # as described in 7.9.6, "Name Trees."
     nums = cast(ArrayObject, dictionary_object["/Nums"])
+    nums_length = len(nums)
     i = 0
     value = None
     start_index = 0
-    while i < len(nums):
+    while i < nums_length:
+        if i + 1 >= nums_length:
+            logger_warning(
+                "Ignoring last /Nums key without a value.", source=__name__
+            )
+            break
         start_index = nums[i]
         value = nums[i + 1].get_object()
-        if i + 2 == len(nums):
+        if i + 2 == nums_length:
             break
         if nums[i + 2] > index:
             break
@@ -187,7 +193,14 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
             kids = cast(list[DictionaryObject], number_tree["/Kids"])
             for kid in kids:
                 # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
-                limits = cast(list[int], kid["/Limits"])
+                limits = kid.get("/Limits", NullObject()).get_object()
+                if not isinstance(limits, list) or len(limits) < 2:
+                    # Skip kids whose /Limits range is missing or malformed.
+                    logger_warning(
+                        "Ignoring kid with missing or malformed /Limits in /PageLabels.",
+                        source=__name__,
+                    )
+                    continue
                 if limits[0] <= index <= limits[1]:
                     if not is_null_or_none(kid.get("/Kids", None)):
                         # Recursive definition.

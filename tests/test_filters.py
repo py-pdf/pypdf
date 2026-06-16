@@ -140,6 +140,12 @@ def test_ascii_hex_decode_missing_eod(caplog):
     assert "missing EOD in ASCIIHexDecode, check if output is OK" in caplog.text
 
 
+def test_ascii_hex_decode_non_hex():
+    """ASCIIHexDecode.decode() raises a proper error on invalid bytes."""
+    with pytest.raises(PdfStreamError, match="Invalid hexadecimal character"):
+        ASCIIHexDecode.decode(b"41ZZ42>")
+
+
 @pytest.mark.enable_socket
 def test_decode_ahx():
     """
@@ -249,6 +255,18 @@ def test_ccitt_fax_decode():
         b"\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00"
         b"\x00\x00\x00\x00\x00\x00\x00\x00"
     )
+
+
+def test_ccitt_fax_decode__unsigned_columns():
+    # /Columns above 2**31 - 1 is a valid unsigned TIFF LONG and must not
+    # overflow the packed header.
+    data = b"\x00\x01\x02\x03"
+    parameters = DictionaryObject(
+        {"/K": NumberObject(-1), "/Columns": NumberObject(3_000_000_000)}
+    )
+    result = CCITTFaxDecode.decode(data, parameters, height=10)
+    assert result.endswith(data)
+    assert result[18:22] == (3_000_000_000).to_bytes(4, "little")
 
 
 @pytest.mark.enable_socket
@@ -893,6 +911,14 @@ def test_rle_decode_exception_with_corrupted_stream(caplog):
     assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
 
 
+def test_rle_decode_truncated_after_run_length(caplog):
+    # A replicate run (length byte > 128) that is not followed by the byte to
+    # repeat must be handled like any other truncated input instead of reading
+    # past the end of the data.
+    assert RunLengthDecode.decode(b"\x00A\xff") == b"A"
+    assert caplog.messages == ["Missing EOD in RunLengthDecode, check if output is OK"]
+
+
 def test_decompress():
     data = string.printable.encode("utf-8") + string.printable[::-1].encode("utf-8")
     compressed = FlateDecode.encode(data)
@@ -1130,3 +1156,18 @@ def test_lzwdecode__invalid_first_code():
             match=r"^LZW code 258 out of range with empty base at table index 258\.$"
     ):
         LZWDecode.decode(data=lzw_data)
+
+
+@pytest.mark.timeout(5)  # Has been 20 seconds before.
+def test_flatedecode__decode_png_prediction__speed():
+    columns = 4096
+    rows = 120000
+    row_length = columns + 1  # +1 for PNG filter byte
+
+    # Build raw PNG-predicted data: every row starts with filter byte 0 (PNG None)
+    raw = bytearray(rows * row_length)
+    for row in range(rows):
+        raw[row * row_length] = 0
+    data = bytes(raw)
+
+    FlateDecode._decode_png_prediction(data=data, columns=columns, row_length=row_length)

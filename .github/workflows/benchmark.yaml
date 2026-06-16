@@ -4,9 +4,11 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-  deployments: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
 
 jobs:
   benchmark:
@@ -20,13 +22,17 @@ jobs:
             name: 'CPython'
           - python-version: 'pypy3.11'
             name: 'PyPy 3.11'
+    permissions:
+      contents: write  # Write the results to the branch.
+      deployments: write  # Trigger GitHub pages deployment.
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v6
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
       with:
         submodules: 'recursive'
+        persist-credentials: false
     - name: Setup Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install requirements
@@ -39,7 +45,7 @@ jobs:
       run: |
         pytest tests/bench.py --benchmark-json output.json
     - name: Store benchmark result
-      uses: benchmark-action/github-action-benchmark@v1
+      uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba  # v1.22.1
       with:
         name: "${{ matrix.name }} Benchmark"
         tool: 'pytest'

@@ -12,8 +12,11 @@ on:
 #     branches:
 #       - main
 
-permissions:
-  contents: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
 
 env:
   HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
@@ -23,9 +26,13 @@ jobs:
     name: Publish a new version
     runs-on: ubuntu-latest
     if: "${{ startsWith(github.event.head_commit.message, 'REL: ') }}"
+    permissions:
+      contents: write  # Create the actual release.
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Extract version from commit message
         id: extract_version
@@ -36,18 +43,23 @@ jobs:
       - name: Extract tag message from commit message
         id: extract_message
         run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
+          VERSION="${STEPS_EXTRACT_VERSION_OUTPUTS_VERSION}"
           delimiter="$(openssl rand -hex 8)"
           MESSAGE=$(echo "$HEAD_COMMIT_MESSAGE" | sed "0,/REL: $VERSION/s///" )
           echo "message<<${delimiter}" >> $GITHUB_OUTPUT
           echo "$MESSAGE" >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
+        env:
+          STEPS_EXTRACT_VERSION_OUTPUTS_VERSION: ${{ steps.extract_version.outputs.version }}
 
       - name: Create Git Tag
         run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
-          MESSAGE="${{ steps.extract_message.outputs.message }}"
+          VERSION="${STEPS_EXTRACT_VERSION_OUTPUTS_VERSION}"
+          MESSAGE="${STEPS_EXTRACT_MESSAGE_OUTPUTS_MESSAGE}"
           git config user.name github-actions
           git config user.email github-actions@github.com
           git tag "$VERSION" -m "$MESSAGE"
           git push origin $VERSION
+        env:
+          STEPS_EXTRACT_VERSION_OUTPUTS_VERSION: ${{ steps.extract_version.outputs.version }}
+          STEPS_EXTRACT_MESSAGE_OUTPUTS_MESSAGE: ${{ steps.extract_message.outputs.message }}

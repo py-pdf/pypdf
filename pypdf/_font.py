@@ -125,6 +125,7 @@ class Font:
     font_descriptor: FontDescriptor = field(default_factory=FontDescriptor)
     character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
     space_width: float | int = 250
+    space_char: str = " "
     interpretable: bool = True
 
     @staticmethod
@@ -137,45 +138,22 @@ class Font:
         """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
         widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
         first_char = pdf_font_dict.get("/FirstChar", 0)
-        if not isinstance(encoding, str):
-            # This means that encoding is a dict
-            current_widths.update({
-                encoding.get(idx + first_char, chr(idx + first_char)): width
-                for idx, width in enumerate(widths_array)
-            })
-            return
-
-        # We map the character code directly to the character
-        # using the string encoding
         for idx, width in enumerate(widths_array):
-            # Often "idx == 0" will denote the .notdef character, but we add it anyway
-            char_code = idx + first_char  # This is a raw code
-            # Get the "raw" character or byte representation
-            raw_char = bytes([char_code]).decode(encoding, "surrogatepass")
-            # Translate raw_char to the REAL Unicode character using the char_map
-            unicode_char = char_map.get(raw_char)
-            if unicode_char:
-                current_widths[unicode_char] = int(width)
-            else:
-                current_widths[raw_char] = int(width)
+            current_widths[chr(idx + first_char)] = int(width)
 
     @staticmethod
     def _collect_cid_character_widths(
         d_font: DictionaryObject, char_map: dict[Any, Any], current_widths: dict[str, int]
     ) -> None:
         """Parses the /W array from a DescendantFont dictionary and updates character widths."""
-        ord_map = {
-            ord(_target): _surrogate
-            for _target, _surrogate in char_map.items()
-            if isinstance(_target, str)
-        }
         # /W width definitions have two valid formats which can be mixed and matched:
         #   (1) A character start index followed by a list of widths, e.g.
         #       `45 [500 600 700]` applies widths 500, 600, 700 to characters 45-47.
         #   (2) A character start index, a character stop index, and a width, e.g.
         #       `45 65 500` applies width 500 to characters 45-65.
         skip_count = 0
-        _w = d_font.get("/W", [])
+        _w = d_font.get("/W", ArrayObject()).get_object()
+        _w_length = len(_w)
         for idx, w_entry in enumerate(_w):
             w_entry = w_entry.get_object()
             if skip_count:
@@ -191,12 +169,12 @@ class Font:
                 )
                 continue
             # check for format (1): `int [int int int int ...]`
-            w_next_entry = _w[idx + 1].get_object()
+            w_next_entry = _w[idx + 1].get_object() if idx + 1 < _w_length else None
             if isinstance(w_next_entry, Sequence):
                 start_idx, width_list = w_entry, w_next_entry
                 current_widths.update(
                     {
-                        ord_map[_cidx]: _width
+                        chr(_cidx): _width
                         for _cidx, _width in zip(
                             range(
                                 cast(int, start_idx),
@@ -205,13 +183,14 @@ class Font:
                             ),
                             width_list,
                         )
-                        if _cidx in ord_map
                     }
                 )
                 skip_count = 1
             # check for format (2): `int int int`
-            elif isinstance(w_next_entry, (int, float)) and isinstance(
-                _w[idx + 2].get_object(), (int, float)
+            elif (
+                isinstance(w_next_entry, (int, float))
+                and idx + 2 < _w_length
+                and isinstance(_w[idx + 2].get_object(), (int, float))
             ):
                 start_idx, stop_idx, const_width = (
                     w_entry,
@@ -220,11 +199,10 @@ class Font:
                 )
                 current_widths.update(
                     {
-                        ord_map[_cidx]: const_width
+                        chr(_cidx): const_width
                         for _cidx in range(
                             cast(int, start_idx), cast(int, stop_idx + 1), 1
                         )
-                        if _cidx in ord_map
                     }
                 )
                 skip_count = 2
@@ -238,18 +216,35 @@ class Font:
                 )
 
     @staticmethod
-    def _add_default_width(current_widths: dict[str, int], flags: int) -> None:
+    def _get_space_char(
+        encoding: str | dict[int, str],
+        character_map: dict[Any, Any],
+    ) -> str:
+        space_char = " "
+        if isinstance(encoding, dict):
+            for char_code, char_str in encoding.items():
+                if char_str == space_char:
+                    return chr(char_code)
+
+        for glyph_id, char_str in character_map.items():
+            if char_str == space_char:
+                return str(glyph_id)
+
+        return space_char
+
+    @staticmethod
+    def _add_default_width(current_widths: dict[str, int], flags: int, space_char: str) -> None:
         if not current_widths:
             current_widths["default"] = 500
             return
 
-        if " " in current_widths and current_widths[" "] != 0:
+        if space_char in current_widths and current_widths[space_char] != 0:
             # Setting default to once or twice the space width, depending on fixed pitch
             if (flags & FontFlags.FIXED_PITCH) == FontFlags.FIXED_PITCH:
-                current_widths["default"] = current_widths[" "]
+                current_widths["default"] = current_widths[space_char]
                 return
 
-            current_widths["default"] = int(2 * current_widths[" "])
+            current_widths["default"] = int(2 * current_widths[space_char])
             return
 
         # Use the average width of existing glyph widths
@@ -257,8 +252,12 @@ class Font:
         current_widths["default"] = sum(valid_widths) // len(valid_widths) if valid_widths else 500
 
     @staticmethod
-    def _add_space_width(character_widths: dict[str, int], flags: int) -> int:
-        space_width = character_widths.get(" ", 0)
+    def _add_space_width(
+        character_widths: dict[str, int],
+        flags: int,
+        space_char: str
+    ) -> int:
+        space_width = character_widths.get(space_char, 0)
         if space_width != 0:
             return space_width
 
@@ -340,9 +339,19 @@ class Font:
                     cls._collect_tt_t1_character_widths(
                         pdf_font_dict, character_map, encoding, character_widths
                     )
+
                 elif name in CORE_FONT_METRICS:
                     font_descriptor = CORE_FONT_METRICS[name].font_descriptor
-                    character_widths = CORE_FONT_METRICS[name].character_widths
+                    if isinstance(encoding, dict):
+                        for code, character in encoding.items():
+                            # Look up the width using the glyph name from the encoding
+                            if character in CORE_FONT_METRICS[name].character_widths:
+                                character_widths[chr(code)] = CORE_FONT_METRICS[name].character_widths[character]
+                    else:
+                        for code in range(256):
+                            character = chr(code)
+                            if character in CORE_FONT_METRICS[name].character_widths:
+                                character_widths[character] = CORE_FONT_METRICS[name].character_widths[character]
                 if "/FontDescriptor" in pdf_font_dict:
                     font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
                     if "/MissingWidth" in font_descriptor_obj:
@@ -375,10 +384,10 @@ class Font:
         if not font_descriptor:
             font_descriptor = FontDescriptor(name=name)
 
+        space_char = cls._get_space_char(encoding, character_map)
         if character_widths.get("default", 0) == 0:
-            cls._add_default_width(character_widths, font_descriptor.flags)
-
-        space_width = cls._add_space_width(character_widths, font_descriptor.flags)
+            cls._add_default_width(character_widths, font_descriptor.flags, space_char)
+        space_width = cls._add_space_width(character_widths, font_descriptor.flags, space_char)
 
         return cls(
             name=name,
@@ -388,6 +397,7 @@ class Font:
             character_map=character_map,
             character_widths=character_widths,
             space_width=space_width,
+            space_char=space_char,
             interpretable=interpretable
         )
 
@@ -463,6 +473,8 @@ class Font:
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
             units_per_em = header.unitsPerEm
+            if not units_per_em:
+                raise PdfReadError("Font file has an invalid unitsPerEm of 0")
             scale_factor = 1000.0 / units_per_em
 
             # Get the font descriptor
@@ -522,8 +534,11 @@ class Font:
             else:
                 raise PdfReadError("Font file does not have a cmap table")
 
-            cls._add_default_width(character_widths, font_descriptor_kwargs["flags"])
-            space_width = cls._add_space_width(character_widths, font_descriptor_kwargs["flags"])
+            space_char = cls._get_space_char(encoding, character_map)
+            cls._add_default_width(character_widths, font_descriptor_kwargs["flags"], space_char)
+            space_width = cls._add_space_width(
+                character_widths, font_descriptor_kwargs["flags"], space_char
+            )
 
         return cls(
             name=font_descriptor.name,
@@ -533,8 +548,37 @@ class Font:
             character_map=character_map,
             character_widths=character_widths,
             space_width=space_width,
+            space_char=space_char,
             interpretable=True
         )
+
+    def _get_typographic_maps(self) -> tuple[dict[str, str], dict[str, bytes]]:
+        """
+        Generates maps to translate input unicode text to bytes in two steps:
+        Unicode code point -> raw_character (reverse cmap) -> PDF bytes (encoding cmap).
+        """
+        reverse_cmap = {}
+        encoding_cmap = {}
+
+        if isinstance(self.encoding, str):
+            for glyph_id, unicode_char in self.character_map.items():
+                glyph_id_str = str(glyph_id)
+                reverse_cmap[unicode_char] = glyph_id_str
+                encoding_cmap[glyph_id_str] = glyph_id_str.encode(self.encoding)
+        else:
+            for character_code, unicode_char in self.encoding.items():
+                character_str = chr(character_code)
+                reverse_cmap[unicode_char] = character_str
+                encoding_cmap[character_str] = bytes((character_code,))
+
+            unicode_to_bytes = {
+                unicode_char: bytes((character_code,)) for character_code, unicode_char in self.encoding.items()
+            }
+            for glyph_id, unicode_char in self.character_map.items():  # This code is not covered nor tested
+                reverse_cmap[unicode_char] = glyph_id
+                encoding_cmap[glyph_id] = unicode_to_bytes.get(unicode_char, bytes((glyph_id,)))
+
+        return reverse_cmap, encoding_cmap
 
     def _create_widths_list_and_unicode_stream(self) -> tuple[list[PdfObject], StreamObject]:
         widths_list = []
@@ -654,7 +698,7 @@ class Font:
         target_resource_dict[font_resource_name] = font_resource_ref
         return font_resource_ref
 
-    def text_width(self, text: str = "") -> float:
+    def get_text_width(self, text: str = "") -> float:
         """Sum of character widths specified in PDF font for the supplied text."""
         return sum(
             [self.character_widths.get(char, self.character_widths["default"]) for char in text], 0.0

@@ -16,6 +16,22 @@ from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
 
 
+def _handle_flate_indexed_image_mode_1(base: str, lookup_data: bytes) -> Image.Image:
+    lookup = DecodedStreamObject()
+    lookup.set_data(lookup_data)
+    result = _handle_flate(
+        size=(3, 3),
+        data=b"\x00\xe0\x00",
+        mode="1",
+        color_space=ArrayObject(
+            [NameObject("/Indexed"), NameObject(base), NumberObject(1), lookup]
+        ),
+        colors=2,
+        obj_as_text="dummy",
+    )
+    return result[0]
+
+
 @pytest.mark.enable_socket
 def test_get_imagemode_recursion_depth() -> None:
     """Avoid infinite recursion for nested color spaces."""
@@ -122,6 +138,50 @@ def test_handle_flate__image_mode_1(caplog: pytest.LogCaptureFixture) -> None:
     )
     assert expected_short_data == get_image_data(result[0])
     assert "Not enough lookup values: Expected 6, got 5." in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("lookup_data", "expected_data"),
+    [
+        (b"\x00\xff", (0, 0, 0, 255, 255, 255, 0, 0, 0)),
+        (b"\xff\x00", (255, 255, 255, 0, 0, 0, 255, 255, 255)),
+    ],
+)
+def test_handle_flate__image_mode_1_device_gray_issue_3850(
+        caplog: pytest.LogCaptureFixture,
+        lookup_data: bytes,
+        expected_data: tuple[int, ...],
+) -> None:
+    """
+    1-bit /Indexed DeviceGray images are extracted with the lookup applied.
+
+    This test is a regression test for issue #3850.
+    """
+    image = _handle_flate_indexed_image_mode_1("/DeviceGray", lookup_data)
+    assert image.mode == "L"
+    assert get_image_data(image) == expected_data
+    assert not caplog.text
+
+
+def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFixture) -> None:
+    """An unknown base resolves to a zero-byte lookup width: skip the lookup with a warning."""
+    image = _handle_flate_indexed_image_mode_1("/SomethingUnknown", b"\x00\xff")
+    assert image.mode == "RGB"
+    assert get_image_data(image) == (
+        (0, 0, 0),
+        (0, 0, 0),
+        (0, 0, 0),
+        (255, 255, 255),
+        (255, 255, 255),
+        (255, 255, 255),
+        (0, 0, 0),
+        (0, 0, 0),
+        (0, 0, 0),
+    )
+    assert (
+        "Cannot apply lookup for base /SomethingUnknown to image with mode 1. "
+        "Please share PDF with pypdf dev team"
+    ) in caplog.text
 
 
 def test_extended_image_frombytes_zero_data() -> None:
@@ -276,3 +336,38 @@ def test_bits2byte__limit() -> None:
             match=r"^Requested buffer size 76500000 exceeds limit of 75000000\.$"
     ):
         bits2byte(data=b"TEST", size=(9000, 8500), bits=8)
+
+
+def test_bits2byte__truncated_data(caplog: pytest.LogCaptureFixture) -> None:
+    # 4x4 image at 2 bits per sample needs 4 bytes; provide only 1.
+    result = bits2byte(data=b"\x00", size=(4, 4), bits=2)
+    assert result == bytes(16)
+    assert "Image data is not rectangular. Adding padding." in caplog.text
+
+
+def test_handle_flate__truncated_2bit_image(caplog: pytest.LogCaptureFixture) -> None:
+    # A 3x3 indexed image at 2 bits per sample needs 3 bytes; provide only 1.
+    # Padding the missing bytes lets the image still be loaded instead of
+    # raising IndexError out of bits2byte.
+    lookup = DecodedStreamObject()
+    lookup.set_data(bytes([0, 0, 0, 10, 10, 10, 20, 20, 20, 30, 30, 30]))
+    result = _handle_flate(
+        size=(3, 3),
+        data=b"\xe4",
+        mode="2bits",
+        color_space=ArrayObject(
+            [NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(3), lookup]
+        ),
+        colors=1,
+        obj_as_text="dummy",
+    )
+    image = result[0]
+    image.load()
+    assert image.mode == "RGB"
+    assert image.size == (3, 3)
+    assert get_image_data(image) == (
+        (30, 30, 30), (20, 20, 20), (10, 10, 10),
+        (0, 0, 0), (0, 0, 0), (0, 0, 0),
+        (0, 0, 0), (0, 0, 0), (0, 0, 0),
+    )
+    assert "Image data is not rectangular. Adding padding." in caplog.text
