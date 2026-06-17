@@ -180,8 +180,8 @@ class JavaScript(Action):
         js: A text string containing the ECMAScript script to be executed.
     """
 
-    def __init__(self, js: str) -> None:
+    def __init__(self, java_script: str) -> None:
         """Initialize JavaScript with a string."""
         super().__init__()
         self[NameObject("/S")] = NameObject("/JavaScript")
-        self[NameObject("/JS")] = TextStringObject(js)
+        self[NameObject("/JS")] = TextStringObject(java_script)
