@@ -3,7 +3,6 @@
 import re
 import shutil
 import subprocess
-import unicodedata
 from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
