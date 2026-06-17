@@ -1831,7 +1831,7 @@ def test_update_form_fields3(caplog, tmp_path):
 
     # Test with fonttools
     data = {
-        "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+        "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
         "localitatea": "شهرزاد",
         "strada": "Căpitan Nicolae Licăreț",
         "adresa_judet": "Конференция",
@@ -1848,7 +1848,7 @@ def test_update_form_fields3(caplog, tmp_path):
     extracted_text = reader.pages[0].extract_text()
     for expected_value in data.values():
         if expected_value != "شهرزاد":
-            assert unicodedata.normalize("NFKC", expected_value) in extracted_text
+            assert expected_value in extracted_text
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
 
