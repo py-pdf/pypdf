@@ -228,7 +228,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         rdf_roots = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")
         if not rdf_roots:
             raise PdfReadError(
-                "XML in XmpInformation was invalid: missing rdf:RDF root element"
+                "XML in XmpInformation was invalid: Missing rdf:RDF root element"
             )
         self.rdf_root: XmlElement = rdf_roots[0]
         self.cache: dict[Any, Any] = {}
