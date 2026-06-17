@@ -1,7 +1,6 @@
 """Various constants, enums, and flags to aid readability."""
 
 from enum import Enum, IntFlag, auto, unique
-from typing import NoReturn
 
 from ._utils import deprecate_with_replacement
 
@@ -639,7 +638,7 @@ class GraphicsStateParameters:
     TK = "/TK"
 
 
-def __create_old_class_instance() -> NoReturn:
+def __create_old_class_instance() -> None:
     deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
 
