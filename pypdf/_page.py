@@ -336,6 +336,12 @@ class ImageFile:
     """
     Image within the PDF file. *This object is not designed to be built.*
 
+    Metadata properties (:attr:`width`, :attr:`height`, :attr:`data_size`) are
+    read from the PDF stream header and are always cheap to access, without
+    decoding the underlying image data.
+    Content properties (:attr:`data`, :attr:`image`) are decoded lazily from
+    the stream on first access and may be expensive for large images.
+
     This object should not be modified except using :func:`ImageFile.replace` to replace the image with a new one.
     """
 
@@ -344,20 +350,103 @@ class ImageFile:
     Filename as identified within the PDF file.
     """
 
-    data: bytes = b""
-    """
-    Data as bytes.
-    """
-
-    image: Optional[Image] = None
-    """
-    Data as PIL image.
-    """
-
     indirect_reference: Optional[IndirectObject] = None
     """
     Reference to the object storing the stream.
     """
+
+    def __init__(
+        self,
+        name: str = "",
+        data: bytes = b"",
+        image: Optional[Image] = None,
+        indirect_reference: Optional[IndirectObject] = None,
+    ) -> None:
+        self.name = name
+        self.indirect_reference = indirect_reference
+        # If data/image were supplied directly (eager construction, used by
+        # all current call sites), store them immediately so .data/.image
+        # never trigger a decode. If neither is supplied, _attach_stream()
+        # can be used instead to enable lazy decoding on first access.
+        self._data: Optional[bytes] = data if data is not None else None
+        self._image: Optional[Image] = image
+        self._stream_obj: Optional[Any] = None  # the raw PDF stream object, for lazy loading
+
+    def _attach_stream(self, stream_obj: Any) -> None:
+        """
+        Attach the raw PDF stream object for lazy metadata and data access.
+        Does NOT decode anything. Enables width/height/data_size to be read
+        from the header, and defers .data/.image decoding until first access.
+        """
+        self._stream_obj = stream_obj
+
+    @property
+    def width(self) -> int:
+        """Image width in pixels, read from the stream header."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile.")
+        return int(self._stream_obj["/Width"])
+
+    @property
+    def height(self) -> int:
+        """Image height in pixels, read from the stream header."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile.")
+        return int(self._stream_obj["/Height"])
+
+    @property
+    def data_size(self) -> int:
+        """
+        Compressed byte length of the image stream, read from /Length in the
+        stream header. Does NOT decompress or decode the stream.
+        """
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile.")
+        return int(self._stream_obj["/Length"])
+
+    @property
+    def data(self) -> bytes:
+        """Raw image bytes. Decoded from the stream on first access."""
+        if self._data is None:
+            self._load()
+        return self._data  # type: ignore[return-value]
+
+    @data.setter
+    def data(self, value: bytes) -> None:
+        self._data = value
+
+    @property
+    def image(self) -> Optional[Image]:
+        """PIL Image. Decoded from the stream on first access."""
+        if self._image is None:
+            self._load()
+        return self._image
+
+    @image.setter
+    def image(self, value: Optional[Image]) -> None:
+        self._image = value
+
+    def _load(self) -> None:
+        """
+        Decompress and decode the attached stream. Called automatically
+        the first time .data or .image is accessed without prior eager data.
+
+        If the name was set without an extension (lazy construction path),
+        the resolved extension is appended once decoding determines it.
+        """
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile.")
+
+        from .generic import DictionaryObject  # noqa: PLC0415
+        from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
+
+        extension, byte_stream, img = _xobj_to_image(
+            cast(DictionaryObject, self._stream_obj)
+        )
+        self._data = byte_stream
+        self._image = img
+        if extension and "." not in self.name:
+            self.name = f"{self.name}{extension}"
 
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
@@ -415,12 +504,19 @@ class ImageFile:
         self.name = self.name[: self.name.rfind(".")] + extension
         self.data = byte_stream
         self.image = img
+        self._stream_obj = self.indirect_reference.get_object()
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
+        if self._stream_obj is not None:
+            size_str = _human_readable_bytes(self.data_size)
+        else:
+            size_str = _human_readable_bytes(len(self._data or b""))
+        return f"{self.__class__.__name__}(name={self.name}, data: {size_str})"
 
     def __repr__(self) -> str:
-        return self.__str__()[:-1] + f", hash: {hash(self.data)})"
+        if self._data is not None:
+            return self.__str__()[:-1] + f", hash: {hash(self._data)})"
+        return self.__str__()[:-1] + ", hash: <not loaded>)"
 
 
 class VirtualListImages(Sequence[ImageFile]):
@@ -663,15 +759,13 @@ class PageObject(DictionaryObject):
                 return self.inline_images[id]
 
             assert xobjs is not None
-            from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
-            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
-            extension, byte_stream = imgd[:2]
-            return ImageFile(
-                name=f"{id[1:]}{extension}",
-                data=byte_stream,
-                image=imgd[2],
+            stream_obj = cast(DictionaryObject, xobjs[id])
+            img_file = ImageFile(
+                name=f"{id[1:]}",  # extension is resolved lazily on first decode
                 indirect_reference=xobjs[id].indirect_reference,
             )
+            img_file._attach_stream(stream_obj)
+            return img_file
         # in a subobject
         assert xobjs is not None
         ids = id[1:]
@@ -698,8 +792,11 @@ class PageObject(DictionaryObject):
         The ImageFile has the following properties:
 
             * `.name` : name of the object
-            * `.data` : bytes of the object
-            * `.image` : PIL Image Object
+            * `.width` : image width in pixels (from stream metadata)
+            * `.height` : image height in pixels (from stream metadata)
+            * `.data_size` : compressed stream size in bytes
+            * `.data` : image bytes (loaded lazily)
+            * `.image` : PIL Image object (loaded lazily)
             * `.indirect_reference` : object reference
 
         and the following methods:

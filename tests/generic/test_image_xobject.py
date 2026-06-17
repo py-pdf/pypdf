@@ -11,6 +11,7 @@ from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
 from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image, bits2byte
+from unittest.mock import patch
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
@@ -210,10 +211,24 @@ def test_handle_flate__autodesk_indexed() -> None:
             PdfReadError,
             match=r"^Expected color space with 4 values, got 3: \['/Indexed', '/DeviceRGB', '\\x00\\x80\\x00\\x80\\x80耀"  # noqa: E501
     ):
-        for name, _image in page.images.items():  # noqa: PERF102
+        for name, image in page.images.items():
             assert isinstance(name, str)
             assert name.startswith("/")
+            assert image.image is not None  # forces lazy decode
 
+
+def test_imagefile_metadata_without_loading() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "AutoCad_Diagram.pdf")
+    image = reader.pages[0].images[0]
+
+    with patch.object(image, "_load") as load:
+        _ = image.width
+        _ = image.height
+        _ = image.data_size
+        load.assert_not_called()
+
+        _ = image.image
+        load.assert_called_once()
 
 @pytest.mark.enable_socket
 def test_get_mode_and_invert_color() -> None:
