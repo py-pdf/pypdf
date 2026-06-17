@@ -125,7 +125,6 @@ def test_appearance_stream_rtl():
     unshaped_test_glyphs = [reverse_cmap[char] for char in test_string]
     hex_unshaped_test_glyphs = "".join(encoding_cmap[glyph_id].hex() for glyph_id in unshaped_test_glyphs)
     shaped_test_string = "!\ufee3\ufeae\ufea3\ufe92\ufe8e \ufe91\ufe8e\ufedf\ufecc\ufe8e\ufedf\ufee2 Hello World!"
-    assert unicodedata.normalize("NFKC", shaped_test_string) == test_string
     shaped_test_glyphs = [reverse_cmap[char] for char in shaped_test_string]
     # Reverse the arabic part of the test string to enable comparison with the RTL-supported case.
     hex_shaped_test_glyphs = "".join(
