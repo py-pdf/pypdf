@@ -86,10 +86,10 @@ class TextStreamAppearance(BaseStreamAppearance):
         leading_factor: float,
         field_width: float,
         field_height: float,
-        paragraphs: list[str],
+        paragraphs: list[list[tuple[float, str, str]]],
         min_font_size: float,
         font_size_step: float = 0.2
-    ) -> tuple[list[tuple[float, str]], float]:
+    ) -> tuple[list[tuple[float, str, str]], float]:
         """
         Takes a piece of text and scales it to field_width or field_height, given font_name
         and font_size. Wraps text where necessary.
@@ -100,7 +100,8 @@ class TextStreamAppearance(BaseStreamAppearance):
             leading_factor: The line distance.
             field_width: The width of the field in which to fit the text.
             field_height: The height of the field in which to fit the text.
-            paragraphs: The text paragraphs to fit with the field.
+            paragraphs: The list of text paragraphs to fit with the field, where each paragraph is
+                a list of tuples of unscaled width, unencoded text, and glyphs (font-encoded text).
             min_font_size: The minimum font size at which to scale the text.
             font_size_step: The amount by which to decrement font size per step while scaling.
 
@@ -109,32 +110,36 @@ class TextStreamAppearance(BaseStreamAppearance):
             and its contents, and the font_size for these lines and lengths.
         """
         wrapped_lines = []
-        current_line_words: list[str] = []
+        current_line_words: list[tuple[float, str, str]] = []
         current_line_width: float = 0
         space_width = font.space_width * font_size / 1000
         for paragraph in paragraphs:
-            if not paragraph.strip():
-                wrapped_lines.append((0.0, ""))
-                continue
-            words = paragraph.split(font.space_char)
-            for i, word in enumerate(words):
-                word_width = font.get_text_width(word) * font_size / 1000
+            for i, width_word_glyphs in enumerate(paragraph):
+                word_width = width_word_glyphs[0] * font_size
                 test_width = current_line_width + word_width + (space_width if i else 0)
                 if test_width > field_width and current_line_words:
-                    wrapped_lines.append((current_line_width, font.space_char.join(current_line_words)))
-                    current_line_words = [word]
+                    wrapped_lines.append((
+                        current_line_width,
+                        " ".join([word[1] for word in current_line_words]),
+                        font.space_char.join([word[2] for word in current_line_words])
+                    ))
+                    current_line_words = [width_word_glyphs]
                     current_line_width = word_width
                 elif not current_line_words and word_width > field_width:
-                    wrapped_lines.append((word_width, word))
+                    wrapped_lines.append((word_width, width_word_glyphs[1], width_word_glyphs[2]))
                     current_line_words = []
                     current_line_width = 0
                 else:
                     if current_line_words:
                         current_line_width += space_width
-                    current_line_words.append(word)
+                    current_line_words.append(width_word_glyphs)
                     current_line_width += word_width
             if current_line_words:
-                wrapped_lines.append((current_line_width, font.space_char.join(current_line_words)))
+                wrapped_lines.append((
+                    current_line_width,
+                    " ".join([word[1] for word in current_line_words]),
+                    font.space_char.join([word[2] for word in current_line_words])
+                ))
                 current_line_words = []
                 current_line_width = 0
         # Estimate total height.
@@ -225,21 +230,31 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
-            min_font_size = 4.0       # The mininum font size
+            min_font_size = 4.0       # The minimum font size
             if selection:             # Don't wrap text when dealing with a /Ch field, in order to prevent problems
                 is_multiline = False  # with matching "selection" with "line" later on.
             if is_multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
-                glyph_paragraphs = [
-                    _unicode_to_glyph_id(paragraph, reverse_cmap) for paragraph in text.splitlines()
-                ]
+                # We create a list of paragraphs, here each paragraph is a list of tuples, where each
+                # tuple signifies an unscaled word width, the word itself, and the glyphs that encode it.
+                paragraphs: list[list[tuple[float, str, str]]] = []
+                for line in text.splitlines():
+                    if not line.strip():
+                        paragraphs.append([(0.0, "", "")])
+                        continue
+                    line_by_widths_words_glyphs: list[tuple[float, str, str]] = []
+                    words = line.split(" ")
+                    for word in words:
+                        glyph_word = _unicode_to_glyph_id(word, reverse_cmap)
+                        line_by_widths_words_glyphs.append((font.get_text_width(word) / 1000, word, glyph_word))
+                    paragraphs.append(line_by_widths_words_glyphs)
                 lines, font_size = self._scale_text(
                     font,
                     font_size,
                     leading_factor,
                     field_width,
                     field_height,
-                    glyph_paragraphs,
+                    paragraphs,
                     min_font_size
                 )
             else:
@@ -248,7 +263,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 text_width_unscaled = font.get_text_width(glyphs) / 1000
                 max_horizontal_size = field_width / (text_width_unscaled or 1)
                 font_size = round(max(min(max_vertical_size, max_horizontal_size), min_font_size), 1)
-                lines = [(text_width_unscaled * font_size, glyphs)]
+                lines = [(text_width_unscaled * font_size, text, glyphs)]
         elif is_comb:
             if max_length and len(text) > max_length:
                 logger_warning(
@@ -265,12 +280,12 @@ class TextStreamAppearance(BaseStreamAppearance):
             for index, char in enumerate(text):
                 if index < (max_length or len(text)):
                     glyphs = _unicode_to_glyph_id(char, reverse_cmap)
-                    lines.append((font.get_text_width(glyphs) * font_size / 1000, glyphs))
+                    lines.append((font.get_text_width(glyphs) * font_size / 1000, char, glyphs))
         else:
             lines = []
             for line in text.splitlines():
                 glyphs = _unicode_to_glyph_id(line, reverse_cmap)
-                lines.append((font.get_text_width(glyphs) * font_size / 1000, glyphs))
+                lines.append((font.get_text_width(glyphs) * font_size / 1000, line, glyphs))
 
         # Set the vertical offset
         if is_multiline:
@@ -285,7 +300,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         ).encode()
         current_x_pos: float = 0  # Initial virtual position within the text object.
 
-        for line_number, (line_width, line) in enumerate(lines):
+        for line_number, (line_width, _, line) in enumerate(lines):
             if selection and line in _unicode_to_glyph_id("".join(selection), reverse_cmap):
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
