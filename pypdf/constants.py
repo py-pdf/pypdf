@@ -638,43 +638,6 @@ class GraphicsStateParameters:
     TK = "/TK"
 
 
-class CatalogDictionary:
-    """§7.7.2 of the 1.7 and 2.0 references."""
-
-    TYPE = "/Type"  # name, required; must be /Catalog
-    VERSION = "/Version"  # name
-    EXTENSIONS = "/Extensions"  # dictionary, optional; ISO 32000-1
-    PAGES = "/Pages"  # dictionary, required
-    PAGE_LABELS = "/PageLabels"  # number tree, optional
-    NAMES = "/Names"  # dictionary, optional
-    DESTS = "/Dests"  # dictionary, optional
-    VIEWER_PREFERENCES = "/ViewerPreferences"  # dictionary, optional
-    PAGE_LAYOUT = "/PageLayout"  # name, optional
-    PAGE_MODE = "/PageMode"  # name, optional
-    OUTLINES = "/Outlines"  # dictionary, optional
-    THREADS = "/Threads"  # array, optional
-    OPEN_ACTION = "/OpenAction"  # array or dictionary or name, optional
-    AA = "/AA"  # dictionary, optional
-    URI = "/URI"  # dictionary, optional
-    ACRO_FORM = "/AcroForm"  # dictionary, optional
-    METADATA = "/Metadata"  # stream, optional
-    STRUCT_TREE_ROOT = "/StructTreeRoot"  # dictionary, optional
-    MARK_INFO = "/MarkInfo"  # dictionary, optional
-    LANG = "/Lang"  # text string, optional
-    SPIDER_INFO = "/SpiderInfo"  # dictionary, optional
-    OUTPUT_INTENTS = "/OutputIntents"  # array, optional
-    PIECE_INFO = "/PieceInfo"  # dictionary, optional
-    OC_PROPERTIES = "/OCProperties"  # dictionary, optional
-    PERMS = "/Perms"  # dictionary, optional
-    LEGAL = "/Legal"  # dictionary, optional
-    REQUIREMENTS = "/Requirements"  # array, optional
-    COLLECTION = "/Collection"  # dictionary, optional
-    NEEDS_RENDERING = "/NeedsRendering"  # boolean, optional
-    DSS = "/DSS"  # dictionary, optional
-    AF = "/AF"  # array of dictionaries, optional
-    D_PART_ROOT = "/DPartRoot"  # dictionary, optional
-
-
 def __create_old_class_instance() -> NoReturn:
     deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
