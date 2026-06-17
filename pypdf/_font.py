@@ -613,7 +613,7 @@ class Font:
         #    [first_cid [w1 w2 w3]] or [first last width]
         # Here we choose the first format and simply provide one array with one width for every cid.
         for gid_str, actual_char in self.character_map.items():
-            # Make sure that we do not include arabic presentation form characters and such.
+            # Make sure that we do not include characters such as arabic presentation form characters.
             # Note that, in some cases, unicodedata.normalize() might split a ligature, resulting
             # in multiple characters.
             normalized_chars = unicodedata.normalize("NFKC", actual_char)
