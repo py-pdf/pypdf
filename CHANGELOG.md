@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## Version 6.13.3, 2026-06-17
+
+### Security (SEC)
+- Apply MAX_DECLARED_STREAM_LENGTH to streams without length as well (#3871)
+
+### Performance Improvements (PI)
+- Avoid per-pixel getpixel loop for 1-bit indexed images (#3854)
+
+### Robustness (ROB)
+- Several fixes
+
+### Maintenance (MAINT)
+- Make mypy assert messages consistent (#3849)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.2...6.13.3)
+
 ## Version 6.13.2, 2026-06-10
 
 ### Security (SEC)
