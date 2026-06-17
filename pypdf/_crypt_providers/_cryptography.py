@@ -53,15 +53,13 @@ _rc4_supported = True
 
 
 def _disable_rc4() -> None:
-    """Record that OpenSSL lacks RC4 and warn once."""
     global _rc4_supported  # noqa: PLW0603
-    if _rc4_supported:
-        logger_warning(
-            "RC4 is not supported by the current OpenSSL build; "
-            "falling back to the pure-Python RC4 implementation.",
-            source=__name__,
-        )
-        _rc4_supported = False
+    logger_warning(
+        "RC4 is not supported by the current OpenSSL build; "
+        "falling back to the pure-Python RC4 implementation.",
+        source=__name__,
+    )
+    _rc4_supported = False
 
 
 class CryptRC4(CryptBase):
