@@ -4,7 +4,13 @@ from typing import Callable
 
 import pytest
 
-from pypdf.constants import PDF_KEYS, GraphicsStateParameters, UserAccessPermissions
+from pypdf.constants import (
+    CatalogDictionary,
+    GraphicsStateParameters,
+    PDF_KEYS,
+    UserAccessPermissions, 
+)
+from pypdf.errors import DeprecationError
 
 
 def test_slash_prefix():
@@ -115,3 +121,10 @@ def test_user_access_permissions__all():
     assert all_int & UserAccessPermissions.PRINT == UserAccessPermissions.PRINT
     assert all_int & UserAccessPermissions.R7 == UserAccessPermissions.R7
     assert all_int & UserAccessPermissions.R31 == UserAccessPermissions.R31
+
+def test_catalogdictionary():
+    with pytest.raises(
+        DeprecationWarning,
+        match=r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. Use CatalogAttributes instead\.$",
+    ):
+        CatalogDictionary()
