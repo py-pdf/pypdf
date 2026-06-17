@@ -5,6 +5,7 @@ from typing import NoReturn
 
 from ._utils import deprecate_with_replacement
 
+
 class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
     def __str__(self) -> str:
         return str(self.value)

@@ -8,9 +8,8 @@ from pypdf.constants import (
     PDF_KEYS,
     CatalogDictionary,
     GraphicsStateParameters,
-    UserAccessPermissions, 
+    UserAccessPermissions,
 )
-from pypdf.errors import DeprecationWarning
 
 
 def test_slash_prefix():
