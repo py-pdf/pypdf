@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements/ci.in
 #
-arabic_reshaper==3.0.0
+arabic-reshaper==3.0.0
     # via -r requirements/ci.in
 cffi==2.0.0
     # via cryptography

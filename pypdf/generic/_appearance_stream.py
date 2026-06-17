@@ -210,7 +210,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         def _unicode_to_glyph_id(text: str, reverse_cmap: dict[str, str]) -> str:
             if HAS_RTL_SUPPORT:
-                # Use arabic_reshaper and python-bidi to rearrange and shape text for the PDF engine
+                # Use arabic-reshaper and python-bidi to rearrange and shape text for the PDF engine
                 reshaped_text = arabic_reshaper.reshape(text)
                 visual_text = get_display(reshaped_text, base_dir="L")
                 return "".join(reverse_cmap.get(char, char) for char in visual_text)

@@ -178,7 +178,7 @@ def test_appearance_stream_rtl():
     assert hex_shaped_test_glyphs != hex_glyphs_rtl_enabled_fonttools_disabled
 
 
-def test_appearance_stream_no_arabic_reshaper(tmp_path):
+def test_appearance_stream__no_arabic_reshaper(tmp_path):
     env = os.environ.copy()
     env["COVERAGE_PROCESS_START"] = "pyproject.toml"
 

@@ -41,20 +41,20 @@ Source = "https://github.com/py-pdf/pypdf"
 [project.optional-dependencies]
 # This is due to the backend parameter being required back then:
 # https://cryptography.io/en/latest/changelog/#v3-1
-rtl_text = [
-    "arabic_reshaper",
-    "python-bidi",
-]
 crypto = ["cryptography>3.0"]
 cryptodome = ["PyCryptodome"]
 fonts = ["fonttools"]
 image = ["Pillow>=8.0.0"]
 full = [
-    "arabic_reshaper",
+    "arabic-reshaper",
     "cryptography>3.0",
     "fonttools",
     "python-bidi",
     "Pillow>=8.0.0"
+]
+rtl_text = [
+    "arabic-reshaper",
+    "python-bidi",
 ]
 dev = [
     "flit",
