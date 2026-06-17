@@ -3,7 +3,6 @@ import os
 import re
 import subprocess
 import sys
-import unicodedata
 from unittest import mock
 
 from pypdf import PdfWriter
