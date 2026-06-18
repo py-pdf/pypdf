@@ -10,7 +10,7 @@ from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
-from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image, bits2byte
+from pypdf.generic._image_xobject import _image_from_bytes, _handle_flate, _xobj_to_image, bits2byte
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
@@ -184,13 +184,13 @@ def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFi
     ) in caplog.text
 
 
-def test_extended_image_frombytes_zero_data() -> None:
+def test_image_frombytes_zero_data() -> None:
     mode = "RGB"
     size = (1, 1)
     data = b""
 
     with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
-        _extended_image_from_bytes(mode, size, data)
+        _image_from_bytes(mode, size, data)
 
 
 def test_handle_flate__autodesk_indexed() -> None:
