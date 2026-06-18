@@ -94,13 +94,13 @@ def test_skip_over_comment(stream, remainder):
 
 def test_read_until_regex_premature_ending_name():
     stream = io.BytesIO(b"")
-    assert read_until_regex(stream, re.compile(b".")) == b""
+    assert read_until_regex(stream=stream, regex=re.compile(b".")) == b""
 
 
 def test_read_until_regex_match_in_first_chunk():
     """Match within the first 16-byte chunk."""
     stream = io.BytesIO(b"hello world")
-    result = read_until_regex(stream, re.compile(b" "))
+    result = read_until_regex(stream=stream, regex=re.compile(b" "))
     assert result == b"hello"
     assert stream.tell() == 5
 
@@ -111,7 +111,7 @@ def test_read_until_regex_match_in_second_chunk():
     assert len(payload) == 20
     data = payload + b" rest"
     stream = io.BytesIO(data)
-    result = read_until_regex(stream, re.compile(b" "))
+    result = read_until_regex(stream=stream, regex=re.compile(b" "))
     assert result == payload
     assert stream.tell() == 20
 
@@ -122,7 +122,7 @@ def test_read_until_regex_match_at_chunk_boundary():
     assert len(payload) == 16
     data = payload + b" after"
     stream = io.BytesIO(data)
-    result = read_until_regex(stream, re.compile(b" "))
+    result = read_until_regex(stream=stream, regex=re.compile(b" "))
     assert result == payload
     assert stream.tell() == 16
 
@@ -134,7 +134,7 @@ def test_read_until_regex_multi_byte_spanning_boundary():
     assert len(payload) == 15
     data = payload + b"XYafter"
     stream = io.BytesIO(data)
-    result = read_until_regex(stream, re.compile(b"XY"))
+    result = read_until_regex(stream=stream, regex=re.compile(b"XY"))
     assert result == payload
     assert stream.tell() == 15
 
@@ -143,7 +143,7 @@ def test_read_until_regex_no_match_exhausted():
     """No match - stream is fully consumed and all data returned."""
     data = b"0123456789" * 10
     stream = io.BytesIO(data)
-    result = read_until_regex(stream, re.compile(b"ZZZ"))
+    result = read_until_regex(stream=stream, regex=re.compile(b"ZZZ"))
     assert result == data
 
 
@@ -153,7 +153,7 @@ def test_read_until_regex_exponential_chunk_growth():
     assert len(payload) == 50_000
     data = payload + b"|done"
     stream = io.BytesIO(data)
-    result = read_until_regex(stream, re.compile(rb"\|"))
+    result = read_until_regex(stream=stream, regex=re.compile(rb"\|"))
     assert result == payload
     assert stream.tell() == 50_000
 
@@ -166,7 +166,7 @@ def test_read_until_regex_match_spanning_later_boundary():
     assert len(payload) == 47
     data = payload + b"ENDrest"
     stream = io.BytesIO(data)
-    result = read_until_regex(stream, re.compile(b"END"))
+    result = read_until_regex(stream=stream, regex=re.compile(b"END"))
     assert result == payload
     assert stream.tell() == 47
 
@@ -186,7 +186,7 @@ def test_read_until_regex_tail_overlap_is_fixed():
     payload = b"x" * 47
     data = payload + pattern + b"rest"
     stream = io.BytesIO(data)
-    result = read_until_regex(stream, re.compile(re.escape(pattern)))
+    result = read_until_regex(stream=stream, regex=re.compile(re.escape(pattern)))
     assert result == payload
     assert stream.tell() == 47
 

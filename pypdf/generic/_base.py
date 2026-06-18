@@ -550,6 +550,7 @@ class FloatObject(float, PdfObject):
 
 class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b"[^+-.0-9]")
+    _LENGTH_LIMIT = 64
 
     def __new__(cls, value: Any) -> Self:
         try:
@@ -594,7 +595,7 @@ class NumberObject(int, PdfObject):
 
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
-        num = read_until_regex(stream, NumberObject.NumberPattern)
+        num = read_until_regex(stream=stream, regex=NumberObject.NumberPattern, length=NumberObject._LENGTH_LIMIT)
         if b"." in num:
             return FloatObject(num)
         return NumberObject(num)
@@ -812,6 +813,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
+    _LENGTH_LIMIT = 4096
 
     def clone(
         self,
@@ -873,7 +875,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             NameObject with sanitized name.
         """
         name = str(self).removeprefix("/")
-        name = re.sub(r"\ ", "_", name)
+        name = re.sub(r" ", "_", name)
         name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
         return NameObject("/" + name)
 
@@ -907,7 +909,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         name = stream.read(1)
         if name != NameObject.prefix:
             raise PdfReadError("Name read error")
-        name += read_until_regex(stream, NameObject.delimiter_pattern)
+        name += read_until_regex(stream=stream, regex=NameObject.delimiter_pattern, length=NameObject._LENGTH_LIMIT)
         try:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
