@@ -184,7 +184,7 @@ def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFi
     ) in caplog.text
 
 
-def test_image_frombytes_zero_data() -> None:
+def test_image_from_bytes__zero_data() -> None:
     mode = "RGB"
     size = (1, 1)
     data = b""
