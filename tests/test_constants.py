@@ -121,6 +121,7 @@ def test_user_access_permissions__all():
     assert all_int & UserAccessPermissions.R7 == UserAccessPermissions.R7
     assert all_int & UserAccessPermissions.R31 == UserAccessPermissions.R31
 
+
 def test_catalogdictionary():
     with pytest.warns(
         DeprecationWarning,
