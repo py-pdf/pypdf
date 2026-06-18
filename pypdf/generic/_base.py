@@ -874,7 +874,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         """
         name = str(self).removeprefix("/")
         name = re.sub(r" ", "_", name)
-        name = re.sub(r"[^A-Za-z0-9_-]", "_", name)
+        name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
         return NameObject("/" + name)
 
     @classproperty
