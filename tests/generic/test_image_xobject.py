@@ -10,7 +10,7 @@ from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
-from pypdf.generic._image_xobject import _image_from_bytes, _handle_flate, _xobj_to_image, bits2byte
+from pypdf.generic._image_xobject import _handle_flate, _image_from_bytes, _xobj_to_image, bits2byte
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
