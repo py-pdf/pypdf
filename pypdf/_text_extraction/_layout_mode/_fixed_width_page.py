@@ -57,14 +57,13 @@ def resolve_font(fonts: dict[str, Font], name: str) -> Font:
         Font: the matching font, or an uninterpretable placeholder font.
 
     """
-    try:
+    if name in fonts:
         return fonts[name]
-    except KeyError:
-        logger_warning(
-            "Font %(name)s is not in the page resources.",
-            name=name, source=__name__
-        )
-        return Font("Unknown", encoding={}, interpretable=False)
+    logger_warning(
+        "Font %(name)s is not in the page resources.",
+        name=name, source=__name__
+    )
+    return Font("Unknown", encoding={}, interpretable=False)
 
 
 def bt_group(tj_op: TextStateParams, rendered_text: str, displaced_tx: float) -> BTGroup:
