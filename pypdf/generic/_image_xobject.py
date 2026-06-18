@@ -113,9 +113,14 @@ def _get_image_mode(
         "4bit": "4bits",
     }
 
+    mode_values = list(mode_map.values())
     mode = (
         mode_map.get(color_space_str)
-        or list(mode_map.values())[color_components]
+        or (
+            mode_values[color_components]
+            if 0 <= color_components < len(mode_values)
+            else None
+        )
         or prev_mode
     )
 

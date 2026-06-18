@@ -10,7 +10,13 @@ from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
-from pypdf.generic._image_xobject import _handle_flate, _image_from_bytes, _xobj_to_image, bits2byte
+from pypdf.generic._image_xobject import (
+    _image_from_bytes,
+    _get_image_mode,
+    _handle_flate,
+    _xobj_to_image,
+    bits2byte,
+)
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
@@ -371,3 +377,27 @@ def test_handle_flate__truncated_2bit_image(caplog: pytest.LogCaptureFixture) ->
         (0, 0, 0), (0, 0, 0), (0, 0, 0),
     )
     assert "Image data is not rectangular. Adding padding." in caplog.text
+
+
+def test_get_imagemode__color_components_out_of_range() -> None:
+    """A component count above the known modes must not raise IndexError."""
+    # The colour space is not one of the recognised names, so the mode is
+    # otherwise picked by indexing the mode table with the component count.
+    # A crafted value larger than that table previously raised IndexError;
+    # it should now fall back to the previous mode.
+    assert _get_image_mode("/Unknown", 99, "L") == ("L", False)
+    assert _get_image_mode("/Unknown", 99, "") == ("", False)
+
+
+def test_xobj_to_image__color_components_out_of_range() -> None:
+    """An image with an out-of-range /Colors value degrades to PdfReadError."""
+    x_object = StreamObject()
+    x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    x_object[NameObject("/BitsPerComponent")] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject("/Unknown")
+    x_object[NameObject("/Colors")] = NumberObject(8)
+    x_object.set_data(b"\x00" * 16)
+
+    with pytest.raises(PdfReadError, match=r"^ColorSpace field not found in .+"):
+        _xobj_to_image(x_object)

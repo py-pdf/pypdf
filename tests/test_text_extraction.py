@@ -22,7 +22,12 @@ from pypdf._text_extraction._layout_mode._fixed_width_page import (
 from pypdf._text_extraction._layout_mode._text_state_manager import TextStateManager
 from pypdf._text_extraction._layout_mode._text_state_params import TextStateParams
 from pypdf.errors import PdfReadError
-from pypdf.generic import ContentStream, DictionaryObject, NameObject
+from pypdf.generic import (
+    ContentStream,
+    DecodedStreamObject,
+    DictionaryObject,
+    NameObject,
+)
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
@@ -226,6 +231,41 @@ def test_layout_mode_warnings(caplog):
     assert expected not in caplog.messages
     page.extract_text(extraction_mode="layout", visitor_text=dummy_visitor_text)
     assert expected in caplog.messages
+
+
+def test_layout_mode_undefined_font_name(caplog):
+    # A Tf operator may name a font that is not declared in the page resources,
+    # both inside a BT/ET block and at the top level. Layout mode should warn
+    # and continue instead of raising KeyError.
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+
+    helvetica = DictionaryObject()
+    helvetica[NameObject("/Type")] = NameObject("/Font")
+    helvetica[NameObject("/Subtype")] = NameObject("/Type1")
+    helvetica[NameObject("/BaseFont")] = NameObject("/Helvetica")
+    font_resources = DictionaryObject()
+    font_resources[NameObject("/F1")] = writer._add_object(helvetica)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+
+    # /F9 (top level) and /F2 (inside BT) are never declared; only /F1 is.
+    content = DecodedStreamObject()
+    content.set_data(
+        b"/F9 12 Tf BT /F1 12 Tf 10 150 Td (Hi) Tj ET "
+        b"BT /F2 12 Tf 10 100 Td (X) Tj ET"
+    )
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    text = PdfReader(buffer).pages[0].extract_text(extraction_mode="layout")
+    assert "Hi" in text
+    assert "Font /F9 is not in the page resources." in caplog.messages
+    assert "Font /F2 is not in the page resources." in caplog.messages
 
 
 @pytest.mark.enable_socket
