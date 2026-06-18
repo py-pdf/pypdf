@@ -1711,14 +1711,14 @@ class Destination(TreeObject):
         elif len(args) == 0:
             pass
         elif typ == TF.FIT_R:
-            try:  # Prefer to be more robust against a wrong number of arguments
+            if len(args) == 4:  # a wrong number of arguments degrades to null
                 (
                     self[NameObject(TA.LEFT)],
                     self[NameObject(TA.BOTTOM)],
                     self[NameObject(TA.RIGHT)],
                     self[NameObject(TA.TOP)],
                 ) = args
-            except Exception:
+            else:
                 (
                     self[NameObject(TA.LEFT)],
                     self[NameObject(TA.BOTTOM)],
