@@ -1051,7 +1051,7 @@ class PdfDocCommon(ABC):
             if "/C" in node:
                 # Color of outline item font in (R, G, B) with values ranging 0.0-1.0
                 color = node["/C"]
-                if isinstance(color, (list, tuple)):
+                if isinstance(color, list):
                     outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in color)
                 else:
                     logger_warning(
