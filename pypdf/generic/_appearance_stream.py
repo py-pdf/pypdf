@@ -300,7 +300,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         ).encode()
         current_x_pos: float = 0  # Initial virtual position within the text object.
 
-        for line_number, (line_width, _, line) in enumerate(lines):
+        for line_number, (line_width, original_text, line) in enumerate(lines):
             if selection and line in _unicode_to_glyph_id("".join(selection), reverse_cmap):
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
@@ -345,11 +345,25 @@ class TextStreamAppearance(BaseStreamAppearance):
             # This is the X position where the *current line* will start.
             current_x_pos = desired_abs_x_start
 
+            is_rtl = any(
+                0x0590 <= ord(char) <= 0x08FF or
+                0xFB1D <= ord(char) <= 0xFDFF or
+                0xFE70 <= ord(char) <= 0xFEFF
+                for char in line
+            )
             encoded_line = _glyph_id_to_bytes(line, encoding_cmap)
+            if is_rtl:
+                # Encode input text as UTF-16BE with a BOM, so that the input text is returned
+                # in the right direction when copying text from the resulting PDF
+                bom_text = b"\xfe\xff" + original_text.encode("utf-16-be")
+                hex_original_text = bom_text.hex().upper()
+                ap_stream += f"/Span << /ActualText <{hex_original_text}> >> BDC\n".encode()
             if any(len(c) >= 2 for c in encoded_line):
                 ap_stream += b"<" + (b"".join(encoded_line)).hex().encode() + b"> Tj\n"
             else:
                 ap_stream += b"(" + b"".join(encoded_line) + b") Tj\n"
+            if is_rtl:
+                ap_stream += b"EMC\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
 
         return ap_stream
