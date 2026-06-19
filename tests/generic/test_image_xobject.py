@@ -11,9 +11,9 @@ from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
 from pypdf.generic._image_xobject import (
-    _image_from_bytes,
     _get_image_mode,
     _handle_flate,
+    _image_from_bytes,
     _xobj_to_image,
     bits2byte,
 )
