@@ -45,16 +45,16 @@ crypto = ["cryptography>3.0"]
 cryptodome = ["PyCryptodome"]
 fonts = ["fonttools"]
 image = ["Pillow>=8.0.0"]
+rtl_text = [
+    "arabic-reshaper",
+    "python-bidi",
+]
 full = [
     "arabic-reshaper",
     "cryptography>3.0",
     "fonttools",
     "python-bidi",
     "Pillow>=8.0.0"
-]
-rtl_text = [
-    "arabic-reshaper",
-    "python-bidi",
 ]
 dev = [
     "flit",
