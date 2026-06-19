@@ -5,6 +5,8 @@ import subprocess
 import sys
 from unittest import mock
 
+import pytest
+
 from pypdf import PdfWriter
 from pypdf._font import Font
 from pypdf.generic import RectangleObject
@@ -176,19 +178,20 @@ def test_appearance_stream_rtl():
     assert hex_shaped_test_glyphs != hex_glyphs_rtl_enabled_fonttools_disabled
 
 
-def test_appearance_stream__no_arabic_reshaper(tmp_path):
+@pytest.mark.parametrize("module", ["arabic_reshaper", "bidi"])
+def test_appearance_stream__no_rtl_support(module, tmp_path):
     env = os.environ.copy()
     env["COVERAGE_PROCESS_START"] = "pyproject.toml"
 
     source_file = tmp_path / "script.py"
     source_file.write_text(
-        """
+        f"""
 import sys
 from io import BytesIO
 
 import pytest
 
-sys.modules["arabic_reshaper"] = None
+sys.modules["{module}"] = None
 from pypdf.generic._appearance_stream import TextStreamAppearance, HAS_RTL_SUPPORT
 
 assert HAS_RTL_SUPPORT is False
