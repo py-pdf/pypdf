@@ -975,7 +975,7 @@ class PdfDocCommon(ABC):
         # handle outline items with missing or invalid destination
         if (
             isinstance(array, (NullObject, str))
-            or (isinstance(array, ArrayObject) and len(array) == 0)
+            or (isinstance(array, ArrayObject) and len(array) < 2)
             or array is None
         ):
             page = NullObject()
