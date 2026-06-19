@@ -469,6 +469,26 @@ def test_text_operators_with_missing_operands():
     assert "Hello" in page.extract_text()
 
 
+def test_tm_operator_with_wrong_operand_count():
+    """A Tm operator with the wrong number of operands must not crash extraction."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    # A short Tm left the text matrix with fewer than six entries, so the next
+    # positioning operator read past its end (IndexError in mult()); a bare Tm
+    # had the same effect.
+    content = (
+        b"BT /F1 12 Tf 100 700 Td (Hello) Tj "
+        b"1 0 0 Tm (A) Tj "
+        b"T* (B) Tj "
+        b"Tm (C) Tj "
+        b"ET"
+    )
+    stream = ContentStream(stream=None, pdf=writer)
+    stream.set_data(content)
+    page.replace_contents(stream)
+    assert "Hello" in page.extract_text()
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
