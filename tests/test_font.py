@@ -7,7 +7,7 @@ from io import BytesIO
 import pytest
 from fontTools.ttLib import TTFont
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._font import Font
 from pypdf.errors import PdfReadError
 from pypdf.generic import (
@@ -139,6 +139,14 @@ def test_font_from_font_file():
                 font._get_typographic_maps()
                 with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
                     Font.from_truetype_font_file(crippled_font_data)
+
+
+def test_font_as_font_resource():
+    writer = PdfWriter(RESOURCE_ROOT / "fontsampler.pdf")
+    font_resources = writer.pages[0]["/Resources"]["/Font"]
+    font_data = font_resources["/F7"]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+    font = Font.from_truetype_font_file(BytesIO(font_data))
+    font._add_to_writer(writer, font_resources, NameObject("/" + font.name))
 
 
 def test_font_from_font_file_zero_units_per_em():
