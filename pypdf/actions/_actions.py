@@ -177,7 +177,7 @@ class JavaScript(Action):
     extensions described in ISO/DIS 21757-1 shall also be allowed.
 
     Args:
-        js: A text string containing the ECMAScript script to be executed.
+        java_script: A text string containing the ECMAScript script to be executed.
     """
 
     def __init__(self, java_script: str) -> None:
