@@ -367,8 +367,8 @@ def _apply_decode(
 ) -> Image.Image:
     # CMYK image and other color spaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
-    if ImageAttributes.DECODE in x_object_obj:
-        decode = x_object_obj[ImageAttributes.DECODE]
+    if ImageAttributes.DECODE in x_object:
+        decode = x_object[ImageAttributes.DECODE]
         # if invert_color and lfilters == FT.DCT_DECODE:
         #     decode = list(reversed(decode))
     elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
@@ -405,8 +405,8 @@ def _get_mode_and_invert_color(
     x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
     if (
-        ImageAttributes.COLOR_SPACE in x_object_obj
-        and x_object_obj[ImageAttributes.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+        ImageAttributes.COLOR_SPACE in x_object
+        and x_object[ImageAttributes.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
