@@ -71,6 +71,7 @@ from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
 from .constants import (
     CatalogDictionary,
+    Core,
     GoToActionArguments,
     ImageType,
     InteractiveFormDictEntries,
@@ -80,7 +81,6 @@ from .constants import (
     TypFitArguments,
     UserAccessPermissions,
 )
-from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
@@ -308,8 +308,8 @@ class PdfWriter(PdfDocCommon):
             self._pages = self._add_object(pages)
             self._root_object = DictionaryObject(
                 {
-                    NameObject(PagesAttributes.TYPE): NameObject(CO.CATALOG),
-                    NameObject(CO.PAGES): self._pages,
+                    NameObject(PagesAttributes.TYPE): NameObject(Core.CATALOG),
+                    NameObject(Core.PAGES): self._pages,
                 }
             )
             self._add_object(self._root_object)
@@ -505,9 +505,9 @@ class PdfWriter(PdfDocCommon):
         index: int,
         excluded_keys: Iterable[str] = (),
     ) -> PageObject:
-        if not isinstance(page, PageObject) or page.get(PagesAttributes.TYPE, None) != CO.PAGE:
+        if not isinstance(page, PageObject) or page.get(PagesAttributes.TYPE, None) != Core.PAGE:
             raise ValueError("Invalid page object")
-        assert self.flattened_pages is not None, "for mypy"
+        assert self.flattened_pages is not None, "mypy"
         page_org = page
         excluded_keys = list(excluded_keys)
         excluded_keys += [PagesAttributes.PARENT, "/StructParents"]
@@ -541,7 +541,7 @@ class PdfWriter(PdfDocCommon):
         current: Optional[PdfObject] = node
         recurse = 0
         while not is_null_or_none(current):
-            assert current is not None  # for mypy; guarded by is_null_or_none
+            assert current is not None, "mypy"  # guarded by is_null_or_none
             node_dict = cast(DictionaryObject, current.get_object())
             node_dict[NameObject(PagesAttributes.COUNT)] = NumberObject(cast(int, node_dict[PagesAttributes.COUNT]) + 1)
             current = node_dict.get(PagesAttributes.PARENT, None)
@@ -1237,7 +1237,7 @@ class PdfWriter(PdfDocCommon):
                 self._info_obj = cast(
                     IndirectObject, inf.clone(self).indirect_reference
                 )
-                assert isinstance(self._info, DictionaryObject), "for mypy"
+                assert isinstance(self._info, DictionaryObject), "mypy"
                 self._original_hash[
                     self._info_obj.indirect_reference.idnum - 1
                 ] = self._info.hash_bin()
@@ -1715,9 +1715,9 @@ class PdfWriter(PdfDocCommon):
         return ref
 
     def get_outline_root(self) -> TreeObject:
-        if CO.OUTLINES in self._root_object:
+        if Core.OUTLINES in self._root_object:
             # Entries in the catalog dictionary
-            outline = cast(TreeObject, self._root_object[CO.OUTLINES])
+            outline = cast(TreeObject, self._root_object[Core.OUTLINES])
             if not isinstance(outline, TreeObject):
                 t = TreeObject(outline)
                 self._replace_object(outline.indirect_reference.idnum, t)
@@ -1729,7 +1729,7 @@ class PdfWriter(PdfDocCommon):
             outline = TreeObject()
             outline.update({})
             outline_ref = self._add_object(outline)
-            self._root_object[NameObject(CO.OUTLINES)] = outline_ref
+            self._root_object[NameObject(Core.OUTLINES)] = outline_ref
 
         return outline
 
@@ -1744,12 +1744,12 @@ class PdfWriter(PdfDocCommon):
             and optionally information about the thread in ``/I`` or ``/Metadata`` keys.
 
         """
-        if CO.THREADS in self._root_object:
+        if Core.THREADS in self._root_object:
             # Entries in the catalog dictionary
-            threads = cast(ArrayObject, self._root_object[CO.THREADS])
+            threads = cast(ArrayObject, self._root_object[Core.THREADS])
         else:
             threads = ArrayObject()
-            self._root_object[NameObject(CO.THREADS)] = threads
+            self._root_object[NameObject(Core.THREADS)] = threads
         return threads
 
     @property
@@ -2786,9 +2786,9 @@ class PdfWriter(PdfDocCommon):
             outline_item_typ = self.get_outline_root()
 
         _ro = reader.root_object
-        if import_outline and CO.OUTLINES in _ro:
+        if import_outline and Core.OUTLINES in _ro:
             outline = self._get_filtered_outline(
-                node=_ro.get(CO.OUTLINES, None), pages=srcpages, reader=reader
+                node=_ro.get(Core.OUTLINES, None), pages=srcpages, reader=reader
             )
             self._insert_filtered_outline(
                 outline, outline_item_typ, None

@@ -267,6 +267,18 @@ def test_pdfa_xmp_metadata_without_values():
     assert xmp.pdfaid_conformance is None
 
 
+def test_xmp_information__missing_rdf_root():
+    """Well-formed XML without an rdf:RDF root raises PdfReadError, not IndexError."""
+    co = ContentStream(None, None)
+    co.set_data(
+        b'<?xml version="1.0"?>'
+        b'<x:xmpmeta xmlns:x="adobe:ns:meta/"><foo>bar</foo></x:xmpmeta>'
+    )
+    with pytest.raises(PdfReadError) as exc:
+        XmpInformation(co)
+    assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
+
+
 @pytest.mark.enable_socket
 def test_xmp_metadata__content_stream_is_dictionary_object():
     url = "https://github.com/user-attachments/files/18943249/testing.pdf"

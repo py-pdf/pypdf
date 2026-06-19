@@ -113,9 +113,14 @@ def _get_image_mode(
         "4bit": "4bits",
     }
 
+    mode_values = list(mode_map.values())
     mode = (
         mode_map.get(color_space_str)
-        or list(mode_map.values())[color_components]
+        or (
+            mode_values[color_components]
+            if 0 <= color_components < len(mode_values)
+            else None
+        )
         or prev_mode
     )
 
@@ -239,7 +244,16 @@ def _handle_flate(
             )
             lookup = None
         else:
-            if img.mode == "1":
+            if img.mode == "1" and nb == 0:
+                # A two-color lookup needs at least one byte per color, but the
+                # base color space resolves to a 1-bit or palette image.
+                logger_warning(
+                    "Cannot apply lookup for base %(base)s to image with mode 1. "
+                    "Please share PDF with pypdf dev team",
+                    source=__name__,
+                    base=base,
+                )
+            elif img.mode == "1":
                 # Two values ("high" and "low").
                 expected_count = 2 * nb
                 actual_count = len(lookup)
@@ -261,14 +275,14 @@ def _handle_flate(
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
-                arr = b"".join(
-                    b"".join(
-                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
-                        for x in range(img.size[0])
+                source = img.convert("L")
+                bands = [
+                    source.point(
+                        [low_value] * 128 + [high_value] * 128
                     )
-                    for y in range(img.size[1])
-                )
-                img = Image.frombytes(mode, img.size, arr)
+                    for low_value, high_value in zip(colors_arr[0], colors_arr[1])
+                ]
+                img = bands[0] if nb == 1 else Image.merge(mode, bands)
             else:
                 img = img.convert(conv)
                 if len(lookup) != (hival + 1) * nb:

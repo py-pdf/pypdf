@@ -156,6 +156,13 @@ def test_read_hex_string_from_stream_exception():
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
+def test_read_hex_string_from_stream_non_hex():
+    stream = BytesIO(b"<41ZZ42>")
+    with pytest.raises(PdfStreamError) as exc:
+        read_hex_string_from_stream(stream)
+    assert "Invalid hexadecimal character" in exc.value.args[0]
+
+
 def test_read_string_from_stream_exception():
     stream = BytesIO(b"x")
     with pytest.raises(PdfStreamError) as exc:
@@ -300,6 +307,22 @@ def test_destination_fit_v():
 
     # Trigger Exception
     Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
+
+
+def test_destination_malformed_fit_arguments():
+    # /XYZ with surplus arguments keeps the first three coordinates
+    d = Destination(NameObject("title"), NullObject(), Fit(fit_type="/XYZ", fit_args=(1, 2, 3, 4)))
+    assert d.left == FloatObject(1)
+    assert d.top == FloatObject(2)
+    assert d.zoom == FloatObject(3)
+
+    # /FitR with a wrong number of arguments falls back to null coordinates
+    d = Destination(NameObject("title"), NullObject(), Fit(fit_type="/FitR", fit_args=(1, 2)))
+    assert d.typ == "/FitR"
+    assert isinstance(d.left, NullObject)
+    assert isinstance(d.bottom, NullObject)
+    assert isinstance(d.right, NullObject)
+    assert isinstance(d.top, NullObject)
 
 
 def test_outline_item_write_to_stream():

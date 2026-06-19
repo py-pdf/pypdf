@@ -10,7 +10,13 @@ from fontTools.ttLib import TTFont
 from pypdf import PdfReader
 from pypdf._font import Font
 from pypdf.errors import PdfReadError
-from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    EncodedStreamObject,
+    NameObject,
+    NumberObject,
+)
 
 from . import RESOURCE_ROOT
 
@@ -54,6 +60,21 @@ def test_font_descriptor():
         "/CapHeight": 562,
         "/XHeight": 439
     }
+
+
+@pytest.mark.parametrize("w_array", [[45], [45, 65]])
+def test_collect_cid_character_widths_truncated_w(w_array):
+    # A /W array that ends mid-entry must not read past its bounds.
+    d_font = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/CIDFontType2"),
+        NameObject("/W"): ArrayObject(NumberObject(v) for v in w_array),
+    })
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/DescendantFonts"): ArrayObject([d_font]),
+    })
+    Font.from_font_resource(font_res)
 
 
 def test_font_file():
@@ -110,6 +131,19 @@ def test_font_from_font_file():
                 tt_font_object.save(crippled_font_data)
                 with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
                     Font.from_truetype_font_file(crippled_font_data)
+
+
+def test_font_from_font_file_zero_units_per_em():
+    reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
+    font_resource = reader.pages[0]["/Resources"]["/Font"]["/F1"]
+    font_data = font_resource["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+    crippled_font_data = BytesIO()
+    with TTFont(BytesIO(font_data)) as tt_font_object:
+        tt_font_object["head"].unitsPerEm = 0
+        tt_font_object.save(crippled_font_data)
+    crippled_font_data.seek(0)
+    with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
+        Font.from_truetype_font_file(crippled_font_data)
 
 
 def test_font_from_font_file_no_fonttools(tmp_path):
