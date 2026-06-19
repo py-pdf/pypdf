@@ -55,6 +55,7 @@ from ._utils import (
     TransformationMatrixType,
     _human_readable_bytes,
     deprecate,
+    deprecate_with_replacement,
     logger_warning,
     matrix_multiply,
 )
@@ -359,6 +360,16 @@ class ImageFile:
     Reference to the object storing the stream.
     """
 
+    is_inline: bool = False
+    """
+    True if this is an inline image (~0~, ~1~, etc.).
+    """
+
+    is_displayed: bool = False
+    """
+    True if this image is displayed in the page content stream.
+    """
+
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the image with a new PIL image.
@@ -512,7 +523,7 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf = pdf
-        self.inline_images: Optional[dict[str, ImageFile]] = None
+        self._content_stream_images: Optional[dict[str, Optional[ImageFile]]] = None
         self.indirect_reference = indirect_reference
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
@@ -607,8 +618,8 @@ class PageObject(DictionaryObject):
         if _i in call_stack:
             return []
         call_stack.append(_i)
-        if self.inline_images is None:
-            self.inline_images = self._get_inline_images()
+        if self._content_stream_images is None:
+            self._content_stream_images = self._parse_images_from_content_stream()
         if obj is None:
             obj = self
         if ancest is None:
@@ -619,19 +630,37 @@ class PageObject(DictionaryObject):
                 is_null_or_none(resources := obj[PG.RESOURCES]) or
                 RES.XOBJECT not in cast(DictionaryObject, resources)
         ):
-            return [] if self.inline_images is None else list(self.inline_images.keys())
+            # Forms without XObject resources have no images inside them
+            if len(ancest) > 0:
+                return []
+            # for inline images, cache dict entries are not None
+            return [image_name for image_name, image_value in self._content_stream_images.items() if image_value]
 
-        x_object = resources[RES.XOBJECT].get_object()  # type: ignore[index]
+        x_object = resources[RES.XOBJECT].get_object()  # type: ignore
+
+        # Iterate through all XObject resources
         for o in x_object:
+            # Skip non-stream objects (only process StreamObject)
             if not isinstance(x_object[o], StreamObject):
                 continue
             if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
+                # If it's an image, add it to lst for further processing
                 lst.append(o if len(ancest) == 0 else [*ancest, o])
-            else:  # is a form with possible images inside
+            else:
+                # If it's a form, recursively search for images inside it
+                # Forms may contain images that are Do-referenced in their content stream
                 lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
-        assert self.inline_images is not None
-        lst.extend(list(self.inline_images.keys()))
-        return lst
+
+        # Removes duplicates and preserves order
+        deduplicated = lst.copy()
+
+        # Add inline images from _content_stream_images
+        for object_name, object_value in self._content_stream_images.items():
+            # inline images have cache populated
+            if object_name not in deduplicated and object_value:
+                deduplicated.append(object_name)
+
+        return deduplicated
 
     def _get_image(
         self,
@@ -656,21 +685,34 @@ class PageObject(DictionaryObject):
                 ) from exc
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
-                if self.inline_images is None:
-                    self.inline_images = self._get_inline_images()
-                if self.inline_images is None:
-                    raise KeyError("No inline image can be found")
-                return self.inline_images[id]
+                if self._content_stream_images is None:
+                    self._content_stream_images = self._parse_images_from_content_stream()
+                if id not in self._content_stream_images:
+                    raise KeyError(f"Image {id} not found")
+                image_file = self._content_stream_images[id]
+                assert image_file is not None
+                return image_file
 
+            # Do-referenced image name (non-inline string keys like /Im0)
             assert xobjs is not None
+            if id not in xobjs:
+                raise KeyError(f"Image {id} not found")
+            xobj = cast(DictionaryObject, xobjs[id])
+            if xobj.get(ImageAttributes.SUBTYPE, "") != "/Image":
+                raise KeyError(f"XObject {id} is not an image")
+
+            # Check if displayed (in content stream)
+            is_displayed = self._content_stream_images is not None and id in self._content_stream_images
+
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
-            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
-            extension, byte_stream = imgd[:2]
+            extension, byte_stream, img = _xobj_to_image(xobj)
             return ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
-                image=imgd[2],
-                indirect_reference=xobjs[id].indirect_reference,
+                image=img,
+                indirect_reference=xobj.indirect_reference,
+                is_inline=False,
+                is_displayed=is_displayed,
             )
         # in a subobject
         assert xobjs is not None
@@ -693,29 +735,53 @@ class PageObject(DictionaryObject):
             * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' XObject form
             * `for img in reader.pages[0].images:` # loops through all objects
 
-        images.keys() and images.items() can be used.
-
-        The ImageFile has the following properties:
-
-            * `.name` : name of the object
-            * `.data` : bytes of the object
-            * `.image` : PIL Image Object
-            * `.indirect_reference` : object reference
-
-        and the following methods:
-            `.replace(new_image: PIL.Image.Image, **kwargs)` :
-                replace the image in the pdf with the new image
-                applying the saving parameters indicated (such as quality)
-
         Example usage:
 
-            reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
-
-        Inline images are extracted and named ~0~, ~1~, ..., with the
-        indirect_reference set to None.
+            >>> from pypdf import PdfWriter
+            >>> writer = PdfWriter()
+            >>> page = writer.add_blank_page(800, 600)
+            >>> images = page.images
 
         """
         return VirtualListImages(self._get_ids_image, self._get_image)
+
+    @property
+    def inline_images(self) -> Optional[dict[str, ImageFile]]:
+        """
+        Return only inline images from the page.
+
+        .. deprecated::
+            Use :attr:`images` and filter by :attr:`ImageFile.is_inline` instead.
+            This property will be removed in pypdf 7.0.
+
+        Examples:
+            >>> from pypdf import PdfWriter
+            >>> writer = PdfWriter()
+            >>> page = writer.add_blank_page(800,600)
+            >>> for image_name, image_file in page.images.items():
+            ...     if image_file.is_inline:
+            ...         print(f"{image_name} is inline")
+        """
+        deprecate_with_replacement(
+            "PageObject.inline_images",
+            "PageObject.images",
+            "7.0",
+        )
+        if self._content_stream_images is None:
+            return None
+        return {
+            image_name: image_file
+            for image_name, image_file in self._content_stream_images.items()
+            if image_file and image_file.is_inline  # for inline images, image_file is populated
+        }
+
+    @inline_images.setter
+    def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
+        if value is None:
+            self._content_stream_images = None
+        else:
+            assert self._content_stream_images is not None, "Can't edit inline_images before accessing images"
+            self._content_stream_images.update(value)
 
     def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
@@ -732,24 +798,47 @@ class PageObject(DictionaryObject):
                     raise PdfReadError(f"Cannot find resource entry {v} for {k}")
         return v
 
-    def _get_inline_images(self) -> dict[str, ImageFile]:
-        """Load inline images. Entries will be identified as `~1~`."""
+    def _parse_images_from_content_stream(self) -> dict[str, Optional[ImageFile]]:
+        """Load images from content stream. Includes both inline images and Do-referenced images.
+
+        This method scans the page content stream and extracts:
+
+        1. **Inline images** (~0~, ~1~...): Embedded directly in content stream via BI/EI operators
+           - is_inline=True, is_displayed=True, indirect_reference=None
+
+        2. **Do-referenced objects** (/Im0, /Im1..., /Form1...): Referenced via "Do" operator
+           - is_inline=False, is_displayed=True, indirect_reference=<image object>
+
+        3. **Pure XObject images** (/I0, /Image1...): Defined in Resources only (not in content stream)
+           - is_inline=False, is_displayed=False, indirect_reference=<image object>
+
+        Returns:
+            Dictionary mapping names to ImageFile instances (inline) or None (Do-referenced).
+        """
         content = self.get_contents()
         if is_null_or_none(content):
             return {}
         imgs_data = []
+        do_image_names: list[bytes] = []
         assert content is not None, "mypy"
         for param, ope in content.operations:
             if ope == b"INLINE IMAGE":
                 imgs_data.append(
                     {"settings": param["settings"], "__streamdata__": param["data"]}
                 )
+            elif ope == b"Do" and param:
+                do_image_names.append(param[0])  # First operand is the XObject name
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
                     f"{ope!r} operator met whereas not expected, "
                     "please share use case with pypdf dev team"
                 )
-        files = {}
+
+        files: dict[str, Optional[ImageFile]] = {}
+        # Process Do-referenced objects first (images + forms, no subtype check)
+        files = dict.fromkeys(list(map(str, do_image_names)), None)
+
+        # Then process inline images
         for num, ii in enumerate(imgs_data):
             init = {
                 "__streamdata__": ii["__streamdata__"],
@@ -783,7 +872,10 @@ class PageObject(DictionaryObject):
                 data=byte_stream,
                 image=img,
                 indirect_reference=None,
+                is_inline=True,
+                is_displayed=True,
             )
+
         return files
 
     @property
@@ -1068,8 +1160,8 @@ class PageObject(DictionaryObject):
                 # as a backup solution, we put content as an object although not in accordance with pdf ref
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
-        # forces recalculation of inline_images
-        self.inline_images = None
+        # forces recalculation of images
+        self._content_stream_images = None
 
     def merge_page(
         self, page2: "PageObject", expand: bool = False, over: bool = True

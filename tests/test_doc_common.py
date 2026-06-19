@@ -192,6 +192,22 @@ def test_viewer_preferences__indirect_reference():
     assert id(viewer_preferences) == id(reader.resolved_objects[(0, 24)])
 
 
+def test_build_destination__short_array():
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    # An array too short to hold a page reference and a fit type degrades to a
+    # null destination instead of raising on the unpacking.
+    dest = writer._build_destination("title", ArrayObject([NumberObject(0)]))
+    assert isinstance(dest["/Page"], NullObject)
+
+    # A trailing fit type with the wrong number of arguments still builds.
+    dest = writer._build_destination(
+        "title", ArrayObject([NumberObject(0), NameObject("/FitR"), NumberObject(1), NumberObject(2)])
+    )
+    assert dest["/Type"] == "/FitR"
+
+
 @pytest.mark.enable_socket
 def test_named_destinations__tree_is_null_object():
     url = "https://github.com/user-attachments/files/20885216/test.pdf"

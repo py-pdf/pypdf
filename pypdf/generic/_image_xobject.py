@@ -112,9 +112,14 @@ def _get_image_mode(
         "4bit": "4bits",
     }
 
+    mode_values = list(mode_map.values())
     mode = (
         mode_map.get(color_space_str)
-        or list(mode_map.values())[color_components]
+        or (
+            mode_values[color_components]
+            if 0 <= color_components < len(mode_values)
+            else None
+        )
         or prev_mode
     )
 
@@ -151,7 +156,7 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
     return bytes(byte_buffer)
 
 
-def _extended_image_from_bytes(
+def _image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
     try:
@@ -214,7 +219,7 @@ def _handle_flate(
     elif mode == "4bits":
         mode = "P"
         data = bits2byte(data, size, 4)
-    img = _extended_image_from_bytes(mode, size, data)
+    img = _image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -355,7 +360,7 @@ def _handle_jpx(
 
 def _apply_decode(
     img: Image.Image,
-    x_object_obj: dict[str, Any],
+    x_object: dict[str, Any],
     lfilters: FT,
     color_space: Union[str, list[Any], Any],
     invert_color: bool,
@@ -397,7 +402,7 @@ def _apply_decode(
 
 
 def _get_mode_and_invert_color(
-    x_object_obj: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
+    x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
     if (
         ImageAttributes.COLOR_SPACE in x_object_obj
@@ -405,9 +410,9 @@ def _get_mode_and_invert_color(
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
-    if x_object_obj.get("/BitsPerComponent", 8) < 8:
+    if x_object.get("/BitsPerComponent", 8) < 8:
         mode, invert_color = _get_image_mode(
-            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
+            f"{x_object.get('/BitsPerComponent', 8)}bit", 0, ""
         )
     else:
         mode, invert_color = _get_image_mode(
@@ -534,7 +539,7 @@ def _xobj_to_image(
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
-            img = _extended_image_from_bytes(mode, size, data)
+            img = _image_from_bytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
@@ -558,7 +563,7 @@ def _xobj_to_image(
         )
     elif mode == "CMYK":
         img, image_format, extension, invert_color = (
-            _extended_image_from_bytes(mode, size, data),
+            _image_from_bytes(mode, size, data),
             "TIFF",
             ".tiff",
             False,
@@ -567,7 +572,7 @@ def _xobj_to_image(
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
         img, image_format, extension, invert_color = (
-            _extended_image_from_bytes(mode, size, data),
+            _image_from_bytes(mode, size, data),
             "PNG",
             ".png",
             False,
