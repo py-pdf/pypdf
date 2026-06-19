@@ -201,8 +201,8 @@ def _handle_flate(
     Process image encoded in flateEncode
     Returns img, image_format, extension, color inversion
     """
-    extension = ".png"  # mime_type: "image/png"
     image_format = "PNG"
+    extension = ".png"  # mime_type: "image/png"
     lookup: Any
     base: Any
     hival: Any
@@ -313,8 +313,8 @@ def _handle_flate(
             if mode != mode2:
                 img = Image.frombytes(mode, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
-        extension = ".tiff"
         image_format = "TIFF"
+        extension = ".tiff"
     return img, image_format, extension, False
 
 
@@ -329,8 +329,6 @@ def _handle_jpx(
     Process image encoded as JPX/JPEG2000
     Returns img, image_format, extension, inversion
     """
-    image_format = "JPEG2000"
-    extension = ".jp2"  # mime_type: "image/x-jp2"
     img1: Image.Image = Image.open(BytesIO(data), formats=("JPEG2000",))
     mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
@@ -352,7 +350,7 @@ def _handle_jpx(
     # https://stackverflow.com/questions/38855022/
     if img.mode == "CMYK" and color_space == "/ICCBased":
         img = img.convert("RGB")
-    return img, image_format, extension, invert_color
+    return img, "JPEG2000", ".jp2", invert_color
 
 
 def _apply_decode(
@@ -491,7 +489,7 @@ def _xobj_to_image(
     data = x_object.get_data()  # type: ignore[attr-defined]
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
-    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
+    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # i.e. '\n'
         data = data[:-1]
 
     # Get color properties
