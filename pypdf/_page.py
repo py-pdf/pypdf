@@ -753,6 +753,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=xobj.indirect_reference,
                 is_inline=False,
                 is_displayed=is_displayed,
+                _stream_obj=xobj,
             )
         # in a subobject
         assert xobjs is not None
@@ -914,6 +915,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=None,
                 is_inline=True,
                 is_displayed=True,
+                _stream_obj=ii["object"],
             )
 
         return files
