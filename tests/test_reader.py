@@ -144,6 +144,20 @@ def test_iss1943():
         assert docinfo.creation_date is None
 
 
+def test_metadata_malformed_date():
+    with PdfReader(RESOURCE_ROOT / "crazyones.pdf") as reader:
+        docinfo = reader.metadata
+        docinfo.update(
+            {
+                NameObject("/CreationDate"): TextStringObject("not a date"),
+                NameObject("/ModDate"): TextStringObject("D:20210408T054711Z"),
+            }
+        )
+        assert docinfo.creation_date is None
+        assert docinfo.modification_date is None
+        assert docinfo.creation_date_raw == "not a date"
+
+
 @pytest.mark.samples
 @pytest.mark.parametrize(
     "pdf_path", [SAMPLE_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]

@@ -346,6 +346,16 @@ def test_embedded_file__modification_date_setter() -> None:
     assert embedded_file._ensure_params[NameObject("/ModDate")] == NullObject()
 
 
+def test_embedded_file__malformed_date_getter() -> None:
+    writer = PdfWriter()
+    embedded_file = writer.add_attachment("test.txt", b"content")
+
+    embedded_file._ensure_params[NameObject("/CreationDate")] = TextStringObject("not a date")
+    embedded_file._ensure_params[NameObject("/ModDate")] = TextStringObject("D:20210408T054711Z")
+    assert embedded_file.creation_date is None
+    assert embedded_file.modification_date is None
+
+
 def test_embedded_file__checksum_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")

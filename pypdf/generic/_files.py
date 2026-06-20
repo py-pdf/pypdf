@@ -4,7 +4,7 @@ import bisect
 from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
-from pypdf._utils import format_iso8824_date, parse_iso8824_date
+from pypdf._utils import format_iso8824_date, logger_warning, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
 from pypdf.constants import PageAttributes as PG
@@ -289,7 +289,11 @@ class EmbeddedFile:
     @property
     def creation_date(self) -> datetime.datetime | None:
         """Retrieve the file creation datetime."""
-        return parse_iso8824_date(self._params.get("/CreationDate"))
+        try:
+            return parse_iso8824_date(self._params.get("/CreationDate"))
+        except ValueError:
+            logger_warning("Invalid creation date in embedded file params", source=__name__)
+            return None
 
     @creation_date.setter
     def creation_date(self, value: datetime.datetime | None) -> None:
@@ -304,7 +308,11 @@ class EmbeddedFile:
     @property
     def modification_date(self) -> datetime.datetime | None:
         """Retrieve the datetime of the last file modification."""
-        return parse_iso8824_date(self._params.get("/ModDate"))
+        try:
+            return parse_iso8824_date(self._params.get("/ModDate"))
+        except ValueError:
+            logger_warning("Invalid modification date in embedded file params", source=__name__)
+            return None
 
     @modification_date.setter
     def modification_date(self, value: datetime.datetime | None) -> None:

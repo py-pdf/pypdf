@@ -208,7 +208,14 @@ class DocumentInformation(DictionaryObject):
     @property
     def creation_date(self) -> Optional[datetime]:
         """Read-only property accessing the document's creation date."""
-        return parse_iso8824_date(self._get_text(DI.CREATION_DATE))
+        try:
+            return parse_iso8824_date(self._get_text(DI.CREATION_DATE))
+        except ValueError:
+            logger_warning(
+                "Invalid creation date; use creation_date_raw for the unparsed value",
+                source=__name__,
+            )
+            return None
 
     @property
     def creation_date_raw(self) -> Optional[str]:
@@ -227,7 +234,14 @@ class DocumentInformation(DictionaryObject):
 
         The date and time the document was most recently modified.
         """
-        return parse_iso8824_date(self._get_text(DI.MOD_DATE))
+        try:
+            return parse_iso8824_date(self._get_text(DI.MOD_DATE))
+        except ValueError:
+            logger_warning(
+                "Invalid modification date; use modification_date_raw for the unparsed value",
+                source=__name__,
+            )
+            return None
 
     @property
     def modification_date_raw(self) -> Optional[str]:
