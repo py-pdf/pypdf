@@ -239,7 +239,7 @@ def test_image_file_data_size_fallback_to_length():
     image = ImageFile()
     image._stream_obj = stream_empty
     assert image.data_size == 0
-    
+
 @pytest.mark.enable_socket
 def test_get_image_keyerror_for_non_image_xobject():
     """Test that accessing an XObject which is not a image directly raises KeyError."""
