@@ -15,10 +15,4 @@ The PageObject Class
     :members:
     :undoc-members:
 
-   .. rubric:: Stream header properties (cheap — no decode)
-
-   .. autoproperty:: pypdf._page.ImageFile.width
-   .. autoproperty:: pypdf._page.ImageFile.height
-   .. autoproperty:: pypdf._page.ImageFile.data_size
-
 .. autofunction:: pypdf.mult

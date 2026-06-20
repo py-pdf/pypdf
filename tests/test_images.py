@@ -181,7 +181,65 @@ def test_image_new_property():
         reader.pages[0]._get_image(["test"], reader.pages[0])
     assert list(PageObject(None, None).images) == []
 
+def test_image_file_width_height_data_size():
+    """Cheap stream-header properties (width, height, data_size) on ImageFile."""
+    reader = PdfReader(RESOURCE_ROOT / "git.pdf")
+    image = reader.pages[0].images["/Image9"]
 
+    # Values are read straight from the stream header / raw bytes, matching
+    # what a full decode would report, but without requiring image.image.
+    assert image.width == 512
+    assert image.height == 512
+    assert image.data_size == len(image.indirect_reference.get_object()._data)
+    assert image.data_size > 0
+
+    # Inline images also expose the same cheap properties.
+    reader_inline = PdfReader(RESOURCE_ROOT / "reportlab-inline-image.pdf")
+    inline_image = reader_inline.pages[0].images["~0~"]
+    assert inline_image.width > 0
+    assert inline_image.height > 0
+    assert inline_image.data_size > 0
+
+    # An ImageFile with no attached stream (e.g. constructed directly,
+    # bypassing page.images) cannot answer these cheaply and raises.
+    bare = ImageFile()
+    with pytest.raises(ValueError, match="width is unavailable"):
+        _ = bare.width
+    with pytest.raises(ValueError, match="height is unavailable"):
+        _ = bare.height
+    with pytest.raises(ValueError, match="data_size is unavailable"):
+        _ = bare.data_size
+
+
+def test_image_file_data_size_fallback_to_length():
+    """
+    data_size falls back to reading /Length when the stream-like object
+    has no private _data cache (e.g. a plain dict-like stand-in).
+    """
+    class _StreamWithoutPrivateData(dict):
+        """Minimal stand-in exposing only a /Length entry, no ._data."""
+
+    stream = _StreamWithoutPrivateData({"/Length": 1234})
+    image = ImageFile()
+    image._stream_obj = stream
+    assert image.data_size == 1234
+
+    # /Length as an IndirectObject-like wrapper is also unwrapped.
+    class _IndirectLength:
+        def get_object(self) -> int:
+            return 5678
+
+    stream_indirect = _StreamWithoutPrivateData({"/Length": _IndirectLength()})
+    image = ImageFile()
+    image._stream_obj = stream_indirect
+    assert image.data_size == 5678
+
+    # Missing /Length entirely defaults to 0 rather than raising.
+    stream_empty = _StreamWithoutPrivateData({})
+    image = ImageFile()
+    image._stream_obj = stream_empty
+    assert image.data_size == 0
+    
 @pytest.mark.enable_socket
 def test_get_image_keyerror_for_non_image_xobject():
     """Test that accessing an XObject which is not a image directly raises KeyError."""
