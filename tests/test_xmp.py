@@ -1015,14 +1015,12 @@ def test_custom_properties__malformed_escape(local_name, expected):
     XML name character, so a crafted key may carry the marker without the four
     hex digits.
     """
-    rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-    pdfx = "http://ns.adobe.com/pdfx/1.3/"
     stream = ContentStream(pdf=None, stream=None)
     stream.set_data(
         (
             '<x:xmpmeta xmlns:x="adobe:ns:meta/">'
-            f'<rdf:RDF xmlns:rdf="{rdf}">'
-            f'<rdf:Description rdf:about="" xmlns:pdfx="{pdfx}">'
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:pdfx="{pypdf.xmp.PDFX_NAMESPACE}">'
             f"<pdfx:{local_name}>val</pdfx:{local_name}>"
             "</rdf:Description></rdf:RDF></x:xmpmeta>"
         ).encode()
