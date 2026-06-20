@@ -369,28 +369,28 @@ class ImageFile:
     """
     True if this image is displayed in the page content stream.
     """
-    
+
     _stream_obj: Optional[Any] = field(default=None, repr=False, compare=False)
     """
     Internal reference to the raw PDF stream dictionary, used only to derive
     :attr:`width`, :attr:`height`, and :attr:`data_size` cheaply. Not part of
     the public dataclass contract.
     """
-    
+
     @property
     def width(self) -> int:
         """Image width in pixels, read from the stream header (cheap, no decode)."""
         if self._stream_obj is None:
             raise ValueError("No stream attached to this ImageFile; width is unavailable.")
         return int(self._stream_obj.get(ImageAttributes.WIDTH))
- 
+
     @property
     def height(self) -> int:
         """Image height in pixels, read from the stream header (cheap, no decode)."""
         if self._stream_obj is None:
             raise ValueError("No stream attached to this ImageFile; height is unavailable.")
         return int(self._stream_obj.get(ImageAttributes.HEIGHT))
- 
+
     @property
     def data_size(self) -> int:
         """
@@ -408,7 +408,7 @@ class ImageFile:
         if hasattr(length, "get_object"):
             length = length.get_object()
         return int(length) if length is not None else 0
- 
+
 
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
