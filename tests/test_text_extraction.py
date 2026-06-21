@@ -553,10 +553,10 @@ def test_extract_text__restore_cm_stack_pop_error():
     reader = PdfReader(stream)
     page = reader.pages[10]
 
-    # There is a previous error we already omit ("pop from empty list"), thus
-    # check for the message explicitly here.
-    with pytest.raises(IndexError, match="list index out of range"):
-        page.extract_text()
+    # The cm stack pop error ("pop from empty list") is already omitted. This
+    # page also carries a short Tm operator that used to raise IndexError in
+    # mult(); it is now tolerated as well, so extraction completes.
+    page.extract_text()
 
 
 @pytest.mark.timeout(60)
