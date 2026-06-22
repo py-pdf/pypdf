@@ -2512,3 +2512,30 @@ def test_named_destinations_cache():
             reader.named_destinations.get("foo")
 
         get_mock.assert_called_once()
+
+
+@pytest.mark.timeout(10)
+def test_read_standard_xref_table__malformed__speed():
+    body = (
+        b"%PDF-1.7\n"
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"
+    )
+    xref_offset = len(body)
+    corrupt_entry = b"xxxxxxxxxxxxxxxx 0\r\n"
+    assert len(corrupt_entry) == 20
+    entry_count = 20_000
+    data = (
+        body
+        + f"xref\n1 {entry_count}\n".encode("ascii")
+        + corrupt_entry * entry_count
+        + b"trailer\n<< /Size "
+        + str(entry_count + 1).encode("ascii")
+        + b" /Root 1 0 R >>\nstartxref\n"
+        + str(xref_offset).encode("ascii")
+        + b"\n%%EOF\n"
+    )
+
+    reader = PdfReader(BytesIO(data))
+    assert len(reader.pages) == 1
