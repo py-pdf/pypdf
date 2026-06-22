@@ -381,7 +381,7 @@ def test_handle_flate__truncated_2bit_image(caplog: pytest.LogCaptureFixture) ->
 
 def test_get_imagemode__color_components_out_of_range() -> None:
     """A component count above the known modes must not raise IndexError."""
-    # The colour space is not one of the recognised names, so the mode is
+    # The color space is not one of the recognized names, so the mode is
     # otherwise picked by indexing the mode table with the component count.
     # A crafted value larger than that table previously raised IndexError;
     # it should now fall back to the previous mode.
@@ -401,3 +401,19 @@ def test_xobj_to_image__color_components_out_of_range() -> None:
 
     with pytest.raises(PdfReadError, match=r"^ColorSpace field not found in .+"):
         _xobj_to_image(x_object)
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [
+        ("1", "8000000000"),
+        ("RGB", "24000000000"),
+        ("CMYK", "32000000000"),
+    ],
+)
+def test_image_from_bytes__limit(mode: str, expected: str) -> None:
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=rf"^Requested image buffer size {expected} exceeds limit 75000000\.$"
+    ):
+        _ = _image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
