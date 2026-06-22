@@ -475,12 +475,13 @@ def test_tm_operator_with_wrong_operand_count():
     page = writer.pages[0]
     # A short Tm left the text matrix with fewer than six entries, so the next
     # positioning operator read past its end (IndexError in mult()); a bare Tm
-    # had the same effect.
+    # had the same effect. A non-numeric operand makes float() raise instead.
     content = (
         b"BT /F1 12 Tf 100 700 Td (Hello) Tj "
         b"1 0 0 Tm (A) Tj "
         b"T* (B) Tj "
         b"Tm (C) Tj "
+        b"(x) 0 0 1 0 0 Tm (D) Tj "
         b"ET"
     )
     stream = ContentStream(stream=None, pdf=writer)
