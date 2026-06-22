@@ -81,7 +81,7 @@ ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000
 FLATE_MAX_COLUMNS = 250_000
 FLATE_MAX_ROW_LENGTH = 4_000_000
-FLATE_MAX_BUFFER_SIZE = 75_000_000
+FLATE_MAX_BUFFER_SIZE = 75_000_000  # TODO: This should be IMAGE_MAX_BUFFER_SIZE.
 
 # Reuse cached 1-byte values in the fallback loop to avoid per-byte allocations.
 _SINGLE_BYTES = tuple(bytes((i,)) for i in range(256))
