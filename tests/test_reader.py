@@ -2539,3 +2539,16 @@ def test_read_standard_xref_table__malformed__speed():
 
     reader = PdfReader(BytesIO(data))
     assert len(reader.pages) == 1
+
+
+def test_load_recovery_cache():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    pdf_objects = [
+        (1, 0, 10),
+        (1, 1, 20),
+        (2, 0, 30),
+        (3, 1, 42),
+    ]
+    with mock.patch.object(reader, "_find_pdf_objects", return_value=iter(pdf_objects)):
+        assert reader._load_recovery_cache(b"") == {1: (10, 0), 2: (30, 0), 3: (42, 1)}

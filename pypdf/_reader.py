@@ -880,6 +880,15 @@ class PdfReader(PdfDocCommon):
             break
         raise PdfReadError("startxref not found")
 
+    def _load_recovery_cache(self, data: bytes) -> dict[int, tuple[int, int]]:
+        cache = {}
+        for object_number, generation_number, object_start in self._find_pdf_objects(data):
+            if object_number in cache:
+                # Always use the first match.
+                continue
+            cache[object_number] = (object_start, generation_number)
+        return cache
+
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
         ref = stream.read(3)
@@ -954,12 +963,7 @@ class PdfReader(PdfDocCommon):
                         stream.seek(p)
 
                     if recovery_cache is None:
-                        recovery_cache = {}
-                        for cache_number, cache_generation, cache_start in self._find_pdf_objects(buf):
-                            if cache_number in recovery_cache:
-                                # Always use the first match.
-                                continue
-                            recovery_cache[cache_number] = (cache_start, cache_generation)
+                        recovery_cache = self._load_recovery_cache(buf)
 
                     if num not in recovery_cache:
                         logger_warning(
