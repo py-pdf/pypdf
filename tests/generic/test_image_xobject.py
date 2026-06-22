@@ -10,10 +10,32 @@ from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
-from pypdf.generic._image_xobject import _extended_image_from_bytes, _handle_flate, _xobj_to_image, bits2byte
+from pypdf.generic._image_xobject import (
+    _get_image_mode,
+    _handle_flate,
+    _image_from_bytes,
+    _xobj_to_image,
+    bits2byte,
+)
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
+
+
+def _handle_flate_indexed_image_mode_1(base: str, lookup_data: bytes) -> Image.Image:
+    lookup = DecodedStreamObject()
+    lookup.set_data(lookup_data)
+    result = _handle_flate(
+        size=(3, 3),
+        data=b"\x00\xe0\x00",
+        mode="1",
+        color_space=ArrayObject(
+            [NameObject("/Indexed"), NameObject(base), NumberObject(1), lookup]
+        ),
+        colors=2,
+        obj_as_text="dummy",
+    )
+    return result[0]
 
 
 @pytest.mark.enable_socket
@@ -124,13 +146,57 @@ def test_handle_flate__image_mode_1(caplog: pytest.LogCaptureFixture) -> None:
     assert "Not enough lookup values: Expected 6, got 5." in caplog.text
 
 
-def test_extended_image_frombytes_zero_data() -> None:
+@pytest.mark.parametrize(
+    ("lookup_data", "expected_data"),
+    [
+        (b"\x00\xff", (0, 0, 0, 255, 255, 255, 0, 0, 0)),
+        (b"\xff\x00", (255, 255, 255, 0, 0, 0, 255, 255, 255)),
+    ],
+)
+def test_handle_flate__image_mode_1_device_gray_issue_3850(
+        caplog: pytest.LogCaptureFixture,
+        lookup_data: bytes,
+        expected_data: tuple[int, ...],
+) -> None:
+    """
+    1-bit /Indexed DeviceGray images are extracted with the lookup applied.
+
+    This test is a regression test for issue #3850.
+    """
+    image = _handle_flate_indexed_image_mode_1("/DeviceGray", lookup_data)
+    assert image.mode == "L"
+    assert get_image_data(image) == expected_data
+    assert not caplog.text
+
+
+def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFixture) -> None:
+    """An unknown base resolves to a zero-byte lookup width: skip the lookup with a warning."""
+    image = _handle_flate_indexed_image_mode_1("/SomethingUnknown", b"\x00\xff")
+    assert image.mode == "RGB"
+    assert get_image_data(image) == (
+        (0, 0, 0),
+        (0, 0, 0),
+        (0, 0, 0),
+        (255, 255, 255),
+        (255, 255, 255),
+        (255, 255, 255),
+        (0, 0, 0),
+        (0, 0, 0),
+        (0, 0, 0),
+    )
+    assert (
+        "Cannot apply lookup for base /SomethingUnknown to image with mode 1. "
+        "Please share PDF with pypdf dev team"
+    ) in caplog.text
+
+
+def test_image_from_bytes__zero_data() -> None:
     mode = "RGB"
     size = (1, 1)
     data = b""
 
     with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
-        _extended_image_from_bytes(mode, size, data)
+        _image_from_bytes(mode, size, data)
 
 
 def test_handle_flate__autodesk_indexed() -> None:
@@ -311,3 +377,27 @@ def test_handle_flate__truncated_2bit_image(caplog: pytest.LogCaptureFixture) ->
         (0, 0, 0), (0, 0, 0), (0, 0, 0),
     )
     assert "Image data is not rectangular. Adding padding." in caplog.text
+
+
+def test_get_imagemode__color_components_out_of_range() -> None:
+    """A component count above the known modes must not raise IndexError."""
+    # The colour space is not one of the recognised names, so the mode is
+    # otherwise picked by indexing the mode table with the component count.
+    # A crafted value larger than that table previously raised IndexError;
+    # it should now fall back to the previous mode.
+    assert _get_image_mode("/Unknown", 99, "L") == ("L", False)
+    assert _get_image_mode("/Unknown", 99, "") == ("", False)
+
+
+def test_xobj_to_image__color_components_out_of_range() -> None:
+    """An image with an out-of-range /Colors value degrades to PdfReadError."""
+    x_object = StreamObject()
+    x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    x_object[NameObject("/BitsPerComponent")] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject("/Unknown")
+    x_object[NameObject("/Colors")] = NumberObject(8)
+    x_object.set_data(b"\x00" * 16)
+
+    with pytest.raises(PdfReadError, match=r"^ColorSpace field not found in .+"):
+        _xobj_to_image(x_object)

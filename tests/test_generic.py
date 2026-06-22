@@ -309,6 +309,22 @@ def test_destination_fit_v():
     Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
 
 
+def test_destination_malformed_fit_arguments():
+    # /XYZ with surplus arguments keeps the first three coordinates
+    d = Destination(NameObject("title"), NullObject(), Fit(fit_type="/XYZ", fit_args=(1, 2, 3, 4)))
+    assert d.left == FloatObject(1)
+    assert d.top == FloatObject(2)
+    assert d.zoom == FloatObject(3)
+
+    # /FitR with a wrong number of arguments falls back to null coordinates
+    d = Destination(NameObject("title"), NullObject(), Fit(fit_type="/FitR", fit_args=(1, 2)))
+    assert d.typ == "/FitR"
+    assert isinstance(d.left, NullObject)
+    assert isinstance(d.bottom, NullObject)
+    assert isinstance(d.right, NullObject)
+    assert isinstance(d.top, NullObject)
+
+
 def test_outline_item_write_to_stream():
     stream = BytesIO()
     oi = OutlineItem(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))

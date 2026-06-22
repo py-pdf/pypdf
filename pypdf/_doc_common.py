@@ -52,11 +52,11 @@ from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
+    Core,
     GoToActionArguments,
     PagesAttributes,
     UserAccessPermissions,
 )
-from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
@@ -367,7 +367,7 @@ class PdfDocCommon(ABC):
         """
         if self.flattened_pages is None:
             self._flatten(self._readonly)
-        assert self.flattened_pages is not None, "hint for mypy"
+        assert self.flattened_pages is not None, "mypy"
         return self.flattened_pages[page_number]
 
     def _get_page_in_node(
@@ -517,7 +517,7 @@ class PdfDocCommon(ABC):
                     retval[cast(str, dest["/Title"])] = dest
                     # Remain backwards-compatible.
                     retval[str(key)] = dest
-        else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF 1.1)
+        else:  # case where /Dests is in the document's catalog dictionary (PDF 1.7 specs, §2 about PDF 1.1)
             for k__, v__ in tree.items():
                 val = v__.get_object()
                 if isinstance(val, DictionaryObject):
@@ -735,11 +735,11 @@ class PdfDocCommon(ABC):
             )
 
         # Retrieve document form fields
-        formfields = self.get_fields()
-        if formfields is None:
+        form_fields = self.get_fields()
+        if form_fields is None:
             return {}
         ff = {}
-        for field, value in formfields.items():
+        for field, value in form_fields.items():
             if value.get("/FT") == "/Tx":
                 if full_qualified_name:
                     ff[field] = value.get("/V")
@@ -861,8 +861,8 @@ class PdfDocCommon(ABC):
             catalog = self.root_object
 
             # get the outline dictionary and named destinations
-            if CO.OUTLINES in catalog:
-                lines = cast(DictionaryObject, catalog[CO.OUTLINES])
+            if Core.OUTLINES in catalog:
+                lines = cast(DictionaryObject, catalog[Core.OUTLINES])
 
                 if isinstance(lines, NullObject):
                     return outline
@@ -925,8 +925,8 @@ class PdfDocCommon(ABC):
         author, and creation date.
         """
         catalog = self.root_object
-        if CO.THREADS in catalog:
-            return cast("ArrayObject", catalog[CO.THREADS])
+        if Core.THREADS in catalog:
+            return cast("ArrayObject", catalog[Core.THREADS])
         return None
 
     @abstractmethod
@@ -975,7 +975,7 @@ class PdfDocCommon(ABC):
         # handle outline items with missing or invalid destination
         if (
             isinstance(array, (NullObject, str))
-            or (isinstance(array, ArrayObject) and len(array) == 0)
+            or (isinstance(array, ArrayObject) and len(array) < 2)
             or array is None
         ):
             page = NullObject()
@@ -1225,9 +1225,9 @@ class PdfDocCommon(ABC):
                 if getattr(page, "indirect_reference", object()) == pages_reference:
                     raise PdfReadError("Detected cyclic page references.")
 
-                addt = {}
+                additional_arguments = {}
                 if isinstance(page, IndirectObject):
-                    addt["indirect_reference"] = page
+                    additional_arguments["indirect_reference"] = page
                 obj = page.get_object()
                 if obj:
                     # damaged file may have invalid child in /Pages
@@ -1235,7 +1235,7 @@ class PdfDocCommon(ABC):
                     if obj_id in visited:
                         raise PdfReadError("Detected cyclic page references.")
                     visited.add(obj_id)
-                    self._flatten(list_only, obj, inherit, visited=visited, **addt)
+                    self._flatten(list_only, obj, inherit, visited=visited, **additional_arguments)
         elif t == "/Page":
             for attr_in, value in inherit.items():
                 # if the page has its own value, it does not inherit the

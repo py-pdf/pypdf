@@ -113,9 +113,14 @@ def _get_image_mode(
         "4bit": "4bits",
     }
 
+    mode_values = list(mode_map.values())
     mode = (
         mode_map.get(color_space_str)
-        or list(mode_map.values())[color_components]
+        or (
+            mode_values[color_components]
+            if 0 <= color_components < len(mode_values)
+            else None
+        )
         or prev_mode
     )
 
@@ -152,7 +157,7 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
     return bytes(byte_buffer)
 
 
-def _extended_image_from_bytes(
+def _image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
     try:
@@ -215,7 +220,7 @@ def _handle_flate(
     elif mode == "4bits":
         mode = "P"
         data = bits2byte(data, size, 4)
-    img = _extended_image_from_bytes(mode, size, data)
+    img = _image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -239,7 +244,16 @@ def _handle_flate(
             )
             lookup = None
         else:
-            if img.mode == "1":
+            if img.mode == "1" and nb == 0:
+                # A two-color lookup needs at least one byte per color, but the
+                # base color space resolves to a 1-bit or palette image.
+                logger_warning(
+                    "Cannot apply lookup for base %(base)s to image with mode 1. "
+                    "Please share PDF with pypdf dev team",
+                    source=__name__,
+                    base=base,
+                )
+            elif img.mode == "1":
                 # Two values ("high" and "low").
                 expected_count = 2 * nb
                 actual_count = len(lookup)
@@ -261,14 +275,14 @@ def _handle_flate(
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
-                arr = b"".join(
-                    b"".join(
-                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
-                        for x in range(img.size[0])
+                source = img.convert("L")
+                bands = [
+                    source.point(
+                        [low_value] * 128 + [high_value] * 128
                     )
-                    for y in range(img.size[1])
-                )
-                img = Image.frombytes(mode, img.size, arr)
+                    for low_value, high_value in zip(colors_arr[0], colors_arr[1])
+                ]
+                img = bands[0] if nb == 1 else Image.merge(mode, bands)
             else:
                 img = img.convert(conv)
                 if len(lookup) != (hival + 1) * nb:
@@ -349,15 +363,15 @@ def _handle_jpx(
 
 def _apply_decode(
     img: Image.Image,
-    x_object_obj: dict[str, Any],
+    x_object: dict[str, Any],
     lfilters: FT,
     color_space: Union[str, list[Any], Any],
     invert_color: bool,
 ) -> Image.Image:
     # CMYK image and other color spaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
-    if IA.DECODE in x_object_obj:
-        decode = x_object_obj[IA.DECODE]
+    if IA.DECODE in x_object:
+        decode = x_object[IA.DECODE]
         # if invert_color and lfilters == FT.DCT_DECODE:
         #     decode = list(reversed(decode))
     elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
@@ -391,17 +405,17 @@ def _apply_decode(
 
 
 def _get_mode_and_invert_color(
-    x_object_obj: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
+    x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
     if (
-        IA.COLOR_SPACE in x_object_obj
-        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+        IA.COLOR_SPACE in x_object
+        and x_object[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
-    if x_object_obj.get("/BitsPerComponent", 8) < 8:
+    if x_object.get("/BitsPerComponent", 8) < 8:
         mode, invert_color = _get_image_mode(
-            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
+            f"{x_object.get('/BitsPerComponent', 8)}bit", 0, ""
         )
     else:
         mode, invert_color = _get_image_mode(
@@ -529,7 +543,7 @@ def _xobj_to_image(
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
-            img = _extended_image_from_bytes(mode, size, data)
+            img = _image_from_bytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
@@ -553,7 +567,7 @@ def _xobj_to_image(
         )
     elif mode == "CMYK":
         img, image_format, extension, invert_color = (
-            _extended_image_from_bytes(mode, size, data),
+            _image_from_bytes(mode, size, data),
             "TIFF",
             ".tif",
             False,
@@ -562,7 +576,7 @@ def _xobj_to_image(
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
         img, image_format, extension, invert_color = (
-            _extended_image_from_bytes(mode, size, data),
+            _image_from_bytes(mode, size, data),
             "PNG",
             ".png",
             False,
