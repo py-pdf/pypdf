@@ -318,8 +318,8 @@ def _handle_flate(
             if mode != mode2:
                 img = Image.frombytes(mode, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
+        extension = ".tif"
         image_format = "TIFF"
-        extension = ".tiff"
     return img, image_format, extension, False
 
 
@@ -565,7 +565,7 @@ def _xobj_to_image(
         img, image_format, extension, invert_color = (
             _image_from_bytes(mode, size, data),
             "TIFF",
-            ".tiff",
+            ".tif",
             False,
         )
     elif mode == "":
