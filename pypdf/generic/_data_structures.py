@@ -1410,7 +1410,11 @@ class ContentStream(DecodedStreamObject):
         filtr = settings.get("/F", settings.get("/Filter", "not set"))
         savpos = stream.tell()
         if isinstance(filtr, list):
-            filtr = filtr[0]  # used forencoding
+            filtr = filtr[0] if filtr else "not set"  # used forencoding
+        if not isinstance(filtr, str):
+            # A valid filter is a name or an array of names; anything else
+            # cannot match the abbreviations below, so treat it as unfiltered.
+            filtr = "not set"
         if "AHx" in filtr or "ASCIIHexDecode" in filtr:
             data = extract_inline__ascii_hex_decode(stream)
         elif "A85" in filtr or "ASCII85Decode" in filtr:
@@ -1422,9 +1426,11 @@ class ContentStream(DecodedStreamObject):
         elif filtr == "not set":
             cs = settings.get("/CS", "")
             if isinstance(cs, list):
-                cs = cs[0]
+                cs = cs[0] if cs else ""
+            if not isinstance(cs, str):
+                cs = ""
             if "RGB" in cs:
-                lcs = 3
+                lcs: float = 3
             elif "CMYK" in cs:
                 lcs = 4
             else:
@@ -1432,15 +1438,19 @@ class ContentStream(DecodedStreamObject):
                     "/BPC",
                     8 if cs in {"/I", "/G", "/Indexed", "/DeviceGray"} else -1,
                 )
-                if bits > 0:
+                if isinstance(bits, (int, float)) and bits > 0:
                     lcs = bits / 8.0
                 else:
                     data = extract_inline_default(stream)
                     lcs = -1
-            if lcs > 0:
-                data = stream.read(
-                    ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
-                )
+            width = settings.get("/W")
+            height = settings.get("/H")
+            if lcs > 0 and isinstance(width, int) and isinstance(height, int):
+                data = stream.read(ceil(width * lcs) * height)
+            elif lcs > 0:
+                # Without usable dimensions the raw sample length is unknown;
+                # fall back to scanning for the `EI` marker.
+                data = extract_inline_default(stream)
             # Move to the `EI` if possible.
             ei = read_non_whitespace(stream)
             stream.seek(-1, 1)
