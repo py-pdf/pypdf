@@ -195,7 +195,7 @@ def test_get_label_from_nums__unknown_style(caplog):
     dictionary_object = DictionaryObject()
     dictionary_object[NameObject("/Nums")] = ArrayObject([NumberObject(0), value])
     assert get_label_from_nums(dictionary_object, 3) == "4"
-    assert "Ignoring unknown page label numbering style in /Nums." in caplog.text
+    assert "Ignoring unknown page label numbering style '/X' in /Nums." in caplog.text
 
 
 def test_get_label_from_nums__malformed_start(caplog):
@@ -206,7 +206,7 @@ def test_get_label_from_nums__malformed_start(caplog):
     dictionary_object = DictionaryObject()
     dictionary_object[NameObject("/Nums")] = ArrayObject([NumberObject(0), value])
     assert get_label_from_nums(dictionary_object, 3) == "4"
-    assert "Ignoring malformed page label entry in /Nums." in caplog.text
+    assert "Ignoring malformed page label entry in /Nums (/St='/bad', /P='')." in caplog.text
 
 
 def test_index2label__empty_kids_list():

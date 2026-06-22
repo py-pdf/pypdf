@@ -167,8 +167,9 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     if mapping_function is None:
         # Unknown /S numbering style; fall back to the page position.
         logger_warning(
-            "Ignoring unknown page label numbering style in /Nums.",
+            "Ignoring unknown page label numbering style %(style)r in /Nums.",
             source=__name__,
+            style=value.get("/S"),
         )
         return str(index + 1)  # Fallback
     try:
@@ -176,7 +177,10 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     except (TypeError, ValueError):
         # Malformed /St or /P value; fall back to the page position.
         logger_warning(
-            "Ignoring malformed page label entry in /Nums.", source=__name__
+            "Ignoring malformed page label entry in /Nums (/St=%(start)r, /P=%(prefix)r).",
+            source=__name__,
+            start=start,
+            prefix=prefix,
         )
         return str(index + 1)  # Fallback
 
