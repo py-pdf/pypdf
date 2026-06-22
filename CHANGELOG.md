@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 6.14.0, 2026-06-22
+
+### Security (SEC)
+- Apply general limit for requested image size (#3888)
+- Speed up recovery when reading broken cross-reference table (#3887)
+
+### New Features (ENH)
+- Check whether image is displayed on a given page (#3738)
+
+### Robustness (ROB)
+- Several fixes
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.3...6.14.0)
+
 ## Version 6.13.3, 2026-06-17
 
 ### Security (SEC)

@@ -160,18 +160,27 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
 def _image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
+    pixel_count = size[0] * size[1]
+    bytes_per_pixel = len(mode)
+    required_byte_count = pixel_count * bytes_per_pixel
+
+    from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
+    if required_byte_count > FLATE_MAX_BUFFER_SIZE:
+        raise LimitReachedError(
+            f"Requested image buffer size {required_byte_count} exceeds limit {FLATE_MAX_BUFFER_SIZE}."
+        )
+
     try:
         img = Image.frombytes(mode, size, data)
     except ValueError as exc:
-        nb_pix = size[0] * size[1]
         data_length = len(data)
         if data_length == 0:
             raise EmptyImageDataError(
                 "Data is 0 bytes, cannot process an image from empty data."
             ) from exc
-        if data_length % nb_pix != 0:
+        if data_length % pixel_count != 0:
             raise
-        k = nb_pix * len(mode) / data_length
+        k = required_byte_count / data_length
         data = b"".join(bytes((x,) * int(k)) for x in data)
         img = Image.frombytes(mode, size, data)
     return img
