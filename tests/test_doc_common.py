@@ -688,7 +688,7 @@ def test_build_outline_item__non_array_color(caplog):
     item = DictionaryObject()
     writer._add_object(item)
     item.update({
-        NameObject("/Title"): TextStringObject("Bad colour"),
+        NameObject("/Title"): TextStringObject("Bad color"),
         NameObject("/Dest"): ArrayObject(
             [writer.pages[0].indirect_reference, NameObject("/Fit")]
         ),
@@ -705,9 +705,9 @@ def test_build_outline_item__non_array_color(caplog):
     writer._root_object[NameObject("/Outlines")] = outlines.indirect_reference
 
     outline = writer.outline
-    assert outline[0]["/Title"] == "Bad colour"
+    assert outline[0]["/Title"] == "Bad color"
     assert "/C" not in outline[0]
-    assert any("outline colour" in message for message in caplog.messages)
+    assert any("outline color" in message for message in caplog.messages)
 
     # The same value is read again, unsanitised, while cloning the outline
     # during append, so that path must tolerate it too.

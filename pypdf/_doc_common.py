@@ -1055,7 +1055,7 @@ class PdfDocCommon(ABC):
                     outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in color)
                 else:
                     logger_warning(
-                        f"Ignoring non-array outline colour {color!r}", source=__name__
+                        f"Ignoring non-array outline color {color!r}", source=__name__
                     )
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
