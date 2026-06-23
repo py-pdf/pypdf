@@ -622,6 +622,8 @@ EI Q
     [
         # Empty `/Filter` array (a spec-legal way to say "no filter").
         b"q BI /W 2 /H 2 /CS /RGB /BPC 8 /F [] ID " + b"\x00" * 12 + b" EI Q",
+        # `/Filter` that is not a name.
+        b"q BI /W 2 /H 2 /CS /RGB /BPC 8 /F 5 ID " + b"\x00" * 12 + b" EI Q",
         # Empty `/ColorSpace` array.
         b"q BI /W 2 /H 2 /CS [] /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
         # `/ColorSpace` that is not a name.
