@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.14.2, 2026-06-23
+
+### Security (SEC)
+- Avoid infinite loops for incomplete ASCII85 and ASCIIHex inline images (#3892)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.1...6.14.2)
+
 ## Version 6.14.1, 2026-06-23
 
 ### Security (SEC)
