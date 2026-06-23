@@ -609,6 +609,19 @@ class PdfDocCommon(ABC):
             )
         return cast(str, parent.get("/T", ""))
 
+    @staticmethod
+    def _normal_appearance(appearance: Any) -> DictionaryObject:
+        """Return the /N normal-appearance sub-dictionary of an /AP entry."""
+        appearance = appearance.get_object()
+        if not isinstance(appearance, DictionaryObject):
+            raise PdfReadError(f"Expected appearance dictionary, got {appearance!r}")
+        normal = appearance.get("/N")
+        if normal is not None:
+            normal = normal.get_object()
+        if not isinstance(normal, DictionaryObject):
+            raise PdfReadError(f"Expected /N appearance dictionary, got {normal!r}")
+        return normal
+
     def _build_field(
         self,
         field: Union[TreeObject, DictionaryObject],
@@ -629,9 +642,8 @@ class PdfDocCommon(ABC):
             retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
         if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
             #  Checkbox
-            retval[key][NameObject("/_States_")] = ArrayObject(
-                list(obj["/AP"]["/N"].keys())
-            )
+            normal = self._normal_appearance(obj["/AP"])
+            retval[key][NameObject("/_States_")] = ArrayObject(list(normal.keys()))
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
         elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
@@ -639,7 +651,10 @@ class PdfDocCommon(ABC):
             retval[key][NameObject("/_States_")] = ArrayObject(states)
             for k in obj.get(FA.Kids, {}):
                 k = k.get_object()
-                for s in list(k["/AP"]["/N"].keys()):
+                if "/AP" not in k:
+                    raise PdfReadError(f"Button field kid missing /AP: {k!r}")
+                normal = self._normal_appearance(k["/AP"])
+                for s in list(normal.keys()):
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
