@@ -943,9 +943,8 @@ def test_extra_test_iss1541():
     reader = PdfReader(
         BytesIO(bytes(b.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
     )
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
         reader.pages[0].extract_text()
-    assert exc.value.args[0] == "Unexpected end of stream"
 
 
 @pytest.mark.enable_socket
