@@ -5,9 +5,8 @@ from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
 
 from .._utils import check_if_whitespace_only, logger_warning
-from ..constants import ColorSpaces, StreamAttributes
+from ..constants import ColorSpaces, ImageAttributes, StreamAttributes
 from ..constants import FilterTypes as FT
-from ..constants import ImageAttributes as IA
 from ..errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from ..generic import (
     ArrayObject,
@@ -216,8 +215,8 @@ def _handle_flate(
     Process image encoded in flateEncode
     Returns img, image_format, extension, color inversion
     """
-    extension = ".png"  # mime_type: "image/png"
     image_format = "PNG"
+    extension = ".png"  # mime_type: "image/png"
     lookup: Any
     base: Any
     hival: Any
@@ -344,7 +343,6 @@ def _handle_jpx(
     Process image encoded as JPX/JPEG2000
     Returns img, image_format, extension, inversion
     """
-    extension = ".jp2"  # mime_type: "image/x-jp2"
     img1: Image.Image = Image.open(BytesIO(data), formats=("JPEG2000",))
     mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
@@ -366,8 +364,7 @@ def _handle_jpx(
     # https://stackverflow.com/questions/38855022/
     if img.mode == "CMYK" and color_space == "/ICCBased":
         img = img.convert("RGB")
-    image_format = "JPEG2000"
-    return img, image_format, extension, invert_color
+    return img, "JPEG2000", ".jp2", invert_color
 
 
 def _apply_decode(
@@ -379,8 +376,8 @@ def _apply_decode(
 ) -> Image.Image:
     # CMYK image and other color spaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
-    if IA.DECODE in x_object:
-        decode = x_object[IA.DECODE]
+    if ImageAttributes.DECODE in x_object:
+        decode = x_object[ImageAttributes.DECODE]
         # if invert_color and lfilters == FT.DCT_DECODE:
         #     decode = list(reversed(decode))
     elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
@@ -417,8 +414,8 @@ def _get_mode_and_invert_color(
     x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
     if (
-        IA.COLOR_SPACE in x_object
-        and x_object[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+        ImageAttributes.COLOR_SPACE in x_object
+        and x_object[ImageAttributes.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
@@ -469,9 +466,8 @@ def _xobj_to_image(
         image_format: str,
         extension: str,
     ) -> tuple[Image.Image, str, str]:
-        alpha = None
-        if IA.S_MASK in x_object:  # add alpha channel
-            alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
+        if ImageAttributes.S_MASK in x_object:  # add alpha channel
+            alpha = _xobj_to_image(x_object[ImageAttributes.S_MASK])[2]
             if img.size != alpha.size:
                 logger_warning(
                     "image and mask size not matching: %(obj_as_text)s",
@@ -503,11 +499,11 @@ def _xobj_to_image(
     )
 
     # Get size and data
-    size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
+    size = (cast(int, x_object[ImageAttributes.WIDTH]), cast(int, x_object[ImageAttributes.HEIGHT]))
     data = x_object.get_data()  # type: ignore[attr-defined]
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
-    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
+    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # i.e. '\n'
         data = data[:-1]
 
     # Get color properties

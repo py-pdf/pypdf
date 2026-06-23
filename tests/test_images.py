@@ -675,6 +675,37 @@ EI Q
         )
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        # Empty `/Filter` array (a spec-legal way to say "no filter").
+        b"q BI /W 2 /H 2 /CS /RGB /BPC 8 /F [] ID " + b"\x00" * 12 + b" EI Q",
+        # `/Filter` that is not a name.
+        b"q BI /W 2 /H 2 /CS /RGB /BPC 8 /F 5 ID " + b"\x00" * 12 + b" EI Q",
+        # Empty `/ColorSpace` array.
+        b"q BI /W 2 /H 2 /CS [] /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
+        # `/ColorSpace` that is not a name.
+        b"q BI /W 2 /H 2 /CS 5 /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
+        # `/BitsPerComponent` that is not a number.
+        b"q BI /W 2 /H 2 /CS /DeviceGray /BPC /X ID " + b"\x00" * 12 + b" EI Q",
+        # Missing `/Height`.
+        b"q BI /W 2 /CS /RGB /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
+        # Missing `/Width`.
+        b"q BI /H 2 /CS /CMYK /BPC 8 ID " + b"\x00" * 16 + b" EI Q",
+        # `/Width` that is not a number.
+        b"q BI /W (x) /H 2 /CS /RGB /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
+    ],
+)
+def test_contentstream__read_inline_image__malformed_settings(data):
+    """A malformed inline image dictionary must not crash content stream parsing."""
+    stream = ContentStream(stream=None, pdf=None)
+    stream.set_data(data)
+
+    operations = stream.operations
+
+    assert any(operator == b"INLINE IMAGE" for _, operator in operations)
+
+
 @pytest.mark.enable_socket
 def test_inline_image_containing_ei_in_body():
     """Tests for #3107"""
