@@ -925,7 +925,57 @@ class TreeObject(DictionaryObject):
         """Remove the object from the tree it is in."""
         if NameObject("/Parent") not in self:
             raise ValueError("Removed child does not appear to be a tree item")
-        cast("TreeObject", self["/Parent"]).remove_child(self)
+        parent = self[NameObject("/Parent")]
+        if isinstance(parent, TreeObject):
+            parent.remove_child(self)
+        else:
+            # Parent may be a raw DictionaryObject (e.g. when reading outline
+            # items from a PDF).  Resolve and manually unlink from the
+            # sibling chain maintained by /First, /Last, /Next, /Prev.
+            parent_obj = parent.get_object() if hasattr(parent, "get_object") else parent
+            self_ref = self.indirect_reference
+            prev_ref = None
+            cur_ref = parent_obj.get(NameObject("/First"))
+            found = False
+            while cur_ref is not None:
+                cur_obj = cur_ref.get_object() if hasattr(cur_ref, "get_object") else cur_ref
+                cur_indirect = cur_ref if isinstance(cur_ref, IndirectObject) else getattr(cur_ref, "indirect_reference", None)
+                if cur_indirect is not None and self_ref is not None and cur_indirect == self_ref:
+                    found = True
+                    next_ref = cur_obj.get(NameObject("/Next"))
+                    if prev_ref is not None:
+                        prev_obj = prev_ref.get_object() if hasattr(prev_ref, "get_object") else prev_ref
+                        if next_ref is not None:
+                            prev_obj[NameObject("/Next")] = next_ref
+                        elif NameObject("/Next") in prev_obj:
+                            del prev_obj[NameObject("/Next")]
+                    else:
+                        if next_ref is not None:
+                            parent_obj[NameObject("/First")] = next_ref
+                        elif NameObject("/First") in parent_obj:
+                            del parent_obj[NameObject("/First")]
+                    if next_ref is not None:
+                        next_obj = next_ref.get_object() if hasattr(next_ref, "get_object") else next_ref
+                        if prev_ref is not None:
+                            next_obj[NameObject("/Prev")] = prev_ref
+                        elif NameObject("/Prev") in next_obj:
+                            del next_obj[NameObject("/Prev")]
+                    else:
+                        if prev_ref is not None:
+                            parent_obj[NameObject("/Last")] = prev_ref
+                        elif NameObject("/Last") in parent_obj:
+                            del parent_obj[NameObject("/Last")]
+                    if NameObject("/Count") in parent_obj:
+                        parent_obj[NameObject("/Count")] = NumberObject(
+                            parent_obj[NameObject("/Count")] - 1  # type: ignore[operator]
+                        )
+                    _reset_node_tree_relationship(self)
+                    break
+                next_ref = cur_obj.get(NameObject("/Next"))
+                prev_ref = cur_ref
+                cur_ref = next_ref
+            if not found:
+                raise ValueError("Removal couldn't find item in tree")
 
     def empty_tree(self) -> None:
         for child in self:
