@@ -1063,12 +1063,6 @@ class PdfDocCommon(ABC):
             outline_item[NameObject("/%is_open%")] = BooleanObject(
                 node.get("/Count", 0) >= 0
             )
-        # Copy tree-structure keys so that remove_from_tree() works on
-        # the returned Destination.  Without these, the parent tree
-        # cannot locate the child during removal.
-        for key in ("/Parent", "/Next", "/Prev"):
-            if key in node:
-                outline_item[NameObject(key)] = node[key]
         outline_item.node = node
         try:
             outline_item.indirect_reference = node.indirect_reference
