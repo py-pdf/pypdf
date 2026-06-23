@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.14.1, 2026-06-23
+
+### Security (SEC)
+- Detect end of stream during inline image end marker detection (#3891)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.0...6.14.1)
+
 ## Version 6.14.0, 2026-06-22
 
 ### Security (SEC)
