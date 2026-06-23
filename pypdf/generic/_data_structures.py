@@ -939,7 +939,10 @@ class TreeObject(DictionaryObject):
             found = False
             while cur_ref is not None:
                 cur_obj = cur_ref.get_object() if hasattr(cur_ref, "get_object") else cur_ref
-                cur_indirect = cur_ref if isinstance(cur_ref, IndirectObject) else getattr(cur_ref, "indirect_reference", None)
+                if isinstance(cur_ref, IndirectObject):
+                    cur_indirect = cur_ref
+                else:
+                    cur_indirect = getattr(cur_ref, "indirect_reference", None)
                 if cur_indirect is not None and self_ref is not None and cur_indirect == self_ref:
                     found = True
                     next_ref = cur_obj.get(NameObject("/Next"))
@@ -949,22 +952,20 @@ class TreeObject(DictionaryObject):
                             prev_obj[NameObject("/Next")] = next_ref
                         elif NameObject("/Next") in prev_obj:
                             del prev_obj[NameObject("/Next")]
-                    else:
-                        if next_ref is not None:
-                            parent_obj[NameObject("/First")] = next_ref
-                        elif NameObject("/First") in parent_obj:
-                            del parent_obj[NameObject("/First")]
+                    elif next_ref is not None:
+                        parent_obj[NameObject("/First")] = next_ref
+                    elif NameObject("/First") in parent_obj:
+                        del parent_obj[NameObject("/First")]
                     if next_ref is not None:
                         next_obj = next_ref.get_object() if hasattr(next_ref, "get_object") else next_ref
                         if prev_ref is not None:
                             next_obj[NameObject("/Prev")] = prev_ref
                         elif NameObject("/Prev") in next_obj:
                             del next_obj[NameObject("/Prev")]
-                    else:
-                        if prev_ref is not None:
-                            parent_obj[NameObject("/Last")] = prev_ref
-                        elif NameObject("/Last") in parent_obj:
-                            del parent_obj[NameObject("/Last")]
+                    elif prev_ref is not None:
+                        parent_obj[NameObject("/Last")] = prev_ref
+                    elif NameObject("/Last") in parent_obj:
+                        del parent_obj[NameObject("/Last")]
                     if NameObject("/Count") in parent_obj:
                         parent_obj[NameObject("/Count")] = NumberObject(
                             parent_obj[NameObject("/Count")] - 1  # type: ignore[operator]
