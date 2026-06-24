@@ -619,7 +619,7 @@ class Font:
             normalized_chars = unicodedata.normalize("NFKC", actual_char)
             uni_points = [ord(char) for char in normalized_chars]
             # Only deal with Basic Multilingual Plane characters.
-            # TODO: Add all characters. However, this requires widths reworking first.
+            # TODO: Add all characters.
             if all(uni_point <= 0xFFFF for uni_point in uni_points):
                 cid = ord(gid_str)
                 cid_hex = f"{cid:04X}"
