@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pypdf.generic import (
     ArrayObject,
@@ -59,6 +59,8 @@ class FontDescriptor:
     to 100.
     """
 
+    DEFAULT_BBOX: ClassVar[tuple[float, float, float, float]] = (-100.0, -200.0, 1000.0, 900.0)
+
     name: str = "Unknown"
     family: str = "Unknown"
     weight: str = "Unknown"
@@ -69,7 +71,7 @@ class FontDescriptor:
     x_height: float = 500.0
     italic_angle: float = 0.0  # Non-italic
     flags: int = 32  # Non-serif, non-symbolic, not fixed width
-    bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
+    bbox: tuple[float, float, float, float] = DEFAULT_BBOX
     font_file: StreamObject | None = None
 
     def as_font_descriptor_resource(self) -> DictionaryObject:
@@ -278,9 +280,8 @@ class Font:
         try:
             bbox = [float(value) for value in raw_bbox]
         except (TypeError, ValueError):
-            bbox = []
+            return None
         if len(bbox) != 4:
-            logger_warning(f"Ignoring invalid /FontBBox {raw_bbox!r}", source=__name__)
             return None
         return bbox[0], bbox[1], bbox[2], bbox[3]
 
@@ -379,12 +380,11 @@ class Font:
                     font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
                 elif "/FontBBox" in pdf_font_dict:
                     # For Type3 without Font Descriptor but with FontBBox, see Table 110 in the PDF specification 2.0
+                    font_descriptor_kwargs: dict[str, Any] = {"name": name}
                     bbox = cls._parse_bbox(pdf_font_dict["/FontBBox"])
-                    font_descriptor = (
-                        FontDescriptor(name=name, bbox=bbox)
-                        if bbox is not None
-                        else FontDescriptor(name=name)
-                    )
+                    if bbox is not None:
+                        font_descriptor_kwargs["bbox"] = bbox
+                    font_descriptor = FontDescriptor(**font_descriptor_kwargs)
 
         else:
             # Composite font or CID font - CID fonts have a /W array mapping character codes
