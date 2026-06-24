@@ -120,3 +120,10 @@ def test_extract_links_ignores_uri_annotation_offsets(caplog: pytest.LogCaptureF
     assert isinstance(links[0][0], DirectReferenceLink)
     assert isinstance(links[0][1], DirectReferenceLink)
     assert caplog.messages == []
+
+
+def test_direct_reference_link_empty_reference() -> None:
+    # An empty destination array has no target page to resolve.
+    assert DirectReferenceLink(ArrayObject([])).find_referenced_page() is None
+    # A populated array still resolves to its first element.
+    assert DirectReferenceLink(ArrayObject([NumberObject(7)])).find_referenced_page() == 7

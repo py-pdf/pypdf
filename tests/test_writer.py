@@ -899,6 +899,56 @@ def test_link_annotation(pdf_file_path):
         writer.write(output_stream)
 
 
+def _reader_with_link_annotation(annotation: DictionaryObject) -> PdfReader:
+    """A one-page PDF whose single page carries the given link annotation."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Annots")] = ArrayObject([writer._add_object(annotation)])
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    return PdfReader(stream)
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    [
+        # Empty /Dest array.
+        DictionaryObject({
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/Dest"): ArrayObject([]),
+        }),
+        # Empty /GoTo action destination.
+        DictionaryObject({
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/A"): DictionaryObject({
+                NameObject("/S"): NameObject("/GoTo"),
+                NameObject("/D"): ArrayObject([]),
+            }),
+        }),
+        # /Dest that is not an array at all.
+        DictionaryObject({
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/Dest"): NumberObject(5),
+        }),
+    ],
+)
+def test_malformed_link_destination_does_not_crash_transfer(annotation):
+    """A link with an empty or non-array destination must not abort page transfer."""
+    reader = _reader_with_link_annotation(annotation)
+
+    # append() routes the annotation through _insert_filtered_annotations.
+    appended = PdfWriter()
+    appended.append(reader)
+    appended.write(BytesIO())
+
+    # add_page() + write() routes it through extract_links()/_resolve_links().
+    added = PdfWriter()
+    for page in reader.pages:
+        added.add_page(page)
+    added.write(BytesIO())
+
+
 def test_io_streams():
     """This is the example from the docs ("Streaming data")."""
     filepath = RESOURCE_ROOT / "pdflatex-outline.pdf"
