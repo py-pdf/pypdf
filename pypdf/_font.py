@@ -267,6 +267,24 @@ class Font:
         return character_widths["default"] // 2
 
     @staticmethod
+    def _parse_bbox(raw_bbox: Any) -> tuple[float, float, float, float] | None:
+        """
+        Convert a raw /FontBBox value into four floats.
+
+        Returns ``None`` when the value is not a sequence of exactly four
+        numbers, so a malformed entry falls back to the default bounding box
+        rather than raising.
+        """
+        try:
+            bbox = [float(value) for value in raw_bbox]
+        except (TypeError, ValueError):
+            bbox = []
+        if len(bbox) != 4:
+            logger_warning(f"Ignoring invalid /FontBBox {raw_bbox!r}", source=__name__)
+            return None
+        return bbox[0], bbox[1], bbox[2], bbox[3]
+
+    @staticmethod
     def _parse_font_descriptor(font_descriptor_obj: DictionaryObject) -> dict[str, Any]:
         font_descriptor_kwargs: dict[Any, Any] = {}
         for source_key, target_key in [
@@ -283,11 +301,13 @@ class Font:
         ]:
             if source_key in font_descriptor_obj:
                 font_descriptor_kwargs[target_key] = font_descriptor_obj[source_key]
-        # Handle missing bbox gracefully - PDFs may have fonts without valid bounding boxes
+        # Handle missing or malformed bbox gracefully - PDFs may have fonts without valid bounding boxes
         if "bbox" in font_descriptor_kwargs:
-            bbox_tuple = tuple(map(float, font_descriptor_kwargs["bbox"]))
-            assert len(bbox_tuple) == 4, bbox_tuple
-            font_descriptor_kwargs["bbox"] = bbox_tuple
+            bbox = Font._parse_bbox(font_descriptor_kwargs["bbox"])
+            if bbox is None:
+                del font_descriptor_kwargs["bbox"]
+            else:
+                font_descriptor_kwargs["bbox"] = bbox
 
         # Find the binary stream for this font if there is one
         for source_key in ["/FontFile", "/FontFile2", "/FontFile3"]:
@@ -359,9 +379,12 @@ class Font:
                     font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
                 elif "/FontBBox" in pdf_font_dict:
                     # For Type3 without Font Descriptor but with FontBBox, see Table 110 in the PDF specification 2.0
-                    bbox_tuple = tuple(map(float, cast(ArrayObject, pdf_font_dict["/FontBBox"])))
-                    assert len(bbox_tuple) == 4, bbox_tuple
-                    font_descriptor = FontDescriptor(name=name, bbox=bbox_tuple)
+                    bbox = cls._parse_bbox(pdf_font_dict["/FontBBox"])
+                    font_descriptor = (
+                        FontDescriptor(name=name, bbox=bbox)
+                        if bbox is not None
+                        else FontDescriptor(name=name)
+                    )
 
         else:
             # Composite font or CID font - CID fonts have a /W array mapping character codes
