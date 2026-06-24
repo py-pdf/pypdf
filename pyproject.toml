@@ -53,8 +53,8 @@ full = [
     "arabic-reshaper",
     "cryptography>3.0",
     "fonttools",
-    "python-bidi",
-    "Pillow>=8.0.0"
+    "Pillow>=8.0.0",
+    "python-bidi"
 ]
 dev = [
     "flit",
