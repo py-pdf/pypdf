@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import re
 from dataclasses import dataclass
 from enum import IntEnum
@@ -477,6 +478,24 @@ class TextStreamAppearance(BaseStreamAppearance):
                     encodable = font.can_encode(text)
                 except (ImportError, PdfReadError) as e:
                     logger_warning("Unable to use embedded font for encoding: %(e)s", source=__name__, e=e)
+
+            # If it's one of the unembedded 14 Adobe Core Fonts, we can test other supported encodings
+            elif font.sub_type == "Type1" and font.name in CORE_FONT_METRICS:
+                core_font_metrics = CORE_FONT_METRICS[font.name]
+                test_encodings = {
+                    "cp1250",     # Central / Eastern European
+                    "cp1254",     # Turkish
+                    "cp1257",     # Baltic Rim
+                    "iso8859_15"  # Western European ISO Alternate
+                }
+                for encoding in test_encodings:
+                    test_font = copy.copy(font)
+                    test_font.encoding = dict(zip(range(256), fill_from_encoding(encoding)))
+                    encodable = test_font.can_encode(text)
+                    if encodable:
+                        font = test_font
+                        font_name = "/PYPDF1-" + encoding
+                        break
 
             if not encodable:
                 logger_warning(
