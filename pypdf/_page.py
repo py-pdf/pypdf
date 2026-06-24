@@ -55,6 +55,7 @@ from ._utils import (
     TransformationMatrixType,
     _human_readable_bytes,
     deprecate,
+    deprecate_no_replacement,
     deprecate_with_replacement,
     logger_warning,
     matrix_multiply,
@@ -107,14 +108,21 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
                 break
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
-    if isinstance(retval, ArrayObject) and (length := len(retval)) > 4:
-        logger_warning(
-            "Expected four values, got %(length)d: %(retval)s",
-            source=__name__,
-            length=length,
-            retval=retval,
-        )
-        retval = RectangleObject(tuple(retval[:4]))
+    if isinstance(retval, ArrayObject) and (length := len(retval)) != 4:
+        if length > 4:
+            # Keep backwards-compatibility with files previously written in a
+            # broken way by pypdf, which carried more than four values.
+            logger_warning(
+                "Expected four values, got %(length)d: %(retval)s",
+                source=__name__,
+                length=length,
+                retval=retval,
+            )
+            retval = RectangleObject(tuple(retval[:4]))
+        else:
+            raise ValueError(
+                f"Expected four values for {name}, got {length}: {retval}"
+            )
     else:
         retval = RectangleObject(retval)  # type: ignore[arg-type]
     _set_rectangle(self, name, retval)
@@ -766,7 +774,7 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement(
             "PageObject.inline_images",
             "PageObject.images",
-            "7.0",
+            "7.0.0",
         )
         if self._content_stream_images is None:
             return None
@@ -778,6 +786,10 @@ class PageObject(DictionaryObject):
 
     @inline_images.setter
     def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
+        deprecate_no_replacement(
+            "PageObject.inline_images",
+            "7.0.0",
+        )
         if value is None:
             self._content_stream_images = None
         else:

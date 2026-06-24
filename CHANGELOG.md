@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## Version 6.14.2, 2026-06-23
+
+### Security (SEC)
+- Avoid infinite loops for incomplete ASCII85 and ASCIIHex inline images (#3892)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.1...6.14.2)
+
+## Version 6.14.1, 2026-06-23
+
+### Security (SEC)
+- Detect end of stream during inline image end marker detection (#3891)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.0...6.14.1)
+
+## Version 6.14.0, 2026-06-22
+
+### Security (SEC)
+- Apply general limit for requested image size (#3888)
+- Speed up recovery when reading broken cross-reference table (#3887)
+
+### New Features (ENH)
+- Check whether image is displayed on a given page (#3738)
+
+### Robustness (ROB)
+- Several fixes
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.3...6.14.0)
+
 ## Version 6.13.3, 2026-06-17
 
 ### Security (SEC)

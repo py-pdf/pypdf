@@ -617,6 +617,37 @@ EI Q
         )
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        # Empty `/Filter` array (a spec-legal way to say "no filter").
+        b"q BI /W 2 /H 2 /CS /RGB /BPC 8 /F [] ID " + b"\x00" * 12 + b" EI Q",
+        # `/Filter` that is not a name.
+        b"q BI /W 2 /H 2 /CS /RGB /BPC 8 /F 5 ID " + b"\x00" * 12 + b" EI Q",
+        # Empty `/ColorSpace` array.
+        b"q BI /W 2 /H 2 /CS [] /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
+        # `/ColorSpace` that is not a name.
+        b"q BI /W 2 /H 2 /CS 5 /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
+        # `/BitsPerComponent` that is not a number.
+        b"q BI /W 2 /H 2 /CS /DeviceGray /BPC /X ID " + b"\x00" * 12 + b" EI Q",
+        # Missing `/Height`.
+        b"q BI /W 2 /CS /RGB /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
+        # Missing `/Width`.
+        b"q BI /H 2 /CS /CMYK /BPC 8 ID " + b"\x00" * 16 + b" EI Q",
+        # `/Width` that is not a number.
+        b"q BI /W (x) /H 2 /CS /RGB /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
+    ],
+)
+def test_contentstream__read_inline_image__malformed_settings(data):
+    """A malformed inline image dictionary must not crash content stream parsing."""
+    stream = ContentStream(stream=None, pdf=None)
+    stream.set_data(data)
+
+    operations = stream.operations
+
+    assert any(operator == b"INLINE IMAGE" for _, operator in operations)
+
+
 @pytest.mark.enable_socket
 def test_inline_image_containing_ei_in_body():
     """Tests for #3107"""
@@ -797,7 +828,8 @@ def test_inline_images_setter_clears_cache():
     assert page._content_stream_images is not None
 
     # Clear cache via setter
-    page.inline_images = None
+    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
+        page.inline_images = None
     assert page._content_stream_images is None
 
 
@@ -812,7 +844,8 @@ def test_inline_images_setter_merges():
     original_keys = set(page._content_stream_images.keys())
 
     # Merge new values
-    page.inline_images = {"new_key": page.images[0]}
+    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
+        page.inline_images = {"new_key": page.images[0]}
     assert page._content_stream_images is not None
     merged_keys = set(page._content_stream_images.keys())
     assert original_keys.issubset(merged_keys), "Original keys should be preserved"
