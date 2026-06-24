@@ -127,18 +127,22 @@ def test_font_from_font_file():
                 tt_font_object.save(crippled_font_data)
                 font = Font.from_truetype_font_file(crippled_font_data)
                 crippled_font_data.seek(0)
+
+                # Test raising AttributeError in _get_typographic_maps due to missing cmap table
                 del tt_font_object["cmap"]
                 tt_font_object.save(crippled_font_data)
                 crippled_font_data_value = crippled_font_data.getvalue()
                 font.font_descriptor.font_file.set_data(crippled_font_data_value)
-                # Raise AttributeError
                 font._get_typographic_maps()
-                garbage_bytes = b"CORRUPT_HEADER!!" + crippled_font_data_value[16:]
-                font.font_descriptor.font_file.set_data(garbage_bytes)
-                # Raise TTLibError
-                font._get_typographic_maps()
+
+                # Test raising PdfReadErros in from_truetype_font_file due to missing cmap table
                 with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
                     Font.from_truetype_font_file(crippled_font_data)
+
+                # Test raising TTLibError in _get_typographic_maps due to corrupt font data
+                garbage_bytes = b"CORRUPT_HEADER!!" + crippled_font_data_value[16:]
+                font.font_descriptor.font_file.set_data(garbage_bytes)
+                font._get_typographic_maps()
 
 
 def test_font_as_font_resource():
