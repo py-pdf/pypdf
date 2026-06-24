@@ -135,7 +135,7 @@ def test_font_from_font_file():
                 font.font_descriptor.font_file.set_data(crippled_font_data_value)
                 font._get_typographic_maps()
 
-                # Test raising PdfReadErros in from_truetype_font_file due to missing cmap table
+                # Test raising PdfReadError in from_truetype_font_file due to missing cmap table
                 with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
                     Font.from_truetype_font_file(crippled_font_data)
 
