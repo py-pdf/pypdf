@@ -77,6 +77,45 @@ def test_collect_cid_character_widths_truncated_w(w_array):
     Font.from_font_resource(font_res)
 
 
+DEFAULT_BBOX = (-100.0, -200.0, 1000.0, 900.0)
+
+
+@pytest.mark.parametrize("bbox", [
+    ArrayObject([NumberObject(0), NumberObject(0), NumberObject(100)]),  # too short
+    ArrayObject(NumberObject(v) for v in range(6)),  # too long
+    ArrayObject([NameObject("/x"), NumberObject(0), NumberObject(1), NumberObject(2)]),  # non-numeric
+    NumberObject(0),  # not a sequence
+])
+def test_font_descriptor_malformed_bbox(bbox):
+    # A /FontBBox that is not four numbers must fall back to the default
+    # bounding box instead of crashing text extraction.
+    font_res = DictionaryObject({
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/FontDescriptor"): DictionaryObject({
+            NameObject("/FontBBox"): bbox,
+        }),
+    })
+    font = Font.from_font_resource(font_res)
+    assert font.font_descriptor.bbox == DEFAULT_BBOX
+
+
+@pytest.mark.parametrize("bbox", [
+    ArrayObject([NumberObject(0), NumberObject(0)]),  # too short
+    ArrayObject([NameObject("/x"), NumberObject(0), NumberObject(1), NumberObject(2)]),  # non-numeric
+])
+def test_type3_font_malformed_bbox(bbox):
+    # Type3 font without a /FontDescriptor but carrying a malformed /FontBBox.
+    font_res = DictionaryObject({
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/Subtype"): NameObject("/Type3"),
+        NameObject("/ToUnicode"): NumberObject(0),
+        NameObject("/FontBBox"): bbox,
+    })
+    font = Font.from_font_resource(font_res)
+    assert font.font_descriptor.bbox == DEFAULT_BBOX
+
+
 def test_font_file():
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
 
