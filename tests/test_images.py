@@ -828,7 +828,8 @@ def test_inline_images_setter_clears_cache():
     assert page._content_stream_images is not None
 
     # Clear cache via setter
-    page.inline_images = None
+    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
+        page.inline_images = None
     assert page._content_stream_images is None
 
 
@@ -843,7 +844,8 @@ def test_inline_images_setter_merges():
     original_keys = set(page._content_stream_images.keys())
 
     # Merge new values
-    page.inline_images = {"new_key": page.images[0]}
+    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
+        page.inline_images = {"new_key": page.images[0]}
     assert page._content_stream_images is not None
     merged_keys = set(page._content_stream_images.keys())
     assert original_keys.issubset(merged_keys), "Original keys should be preserved"

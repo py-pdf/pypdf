@@ -55,6 +55,7 @@ from ._utils import (
     TransformationMatrixType,
     _human_readable_bytes,
     deprecate,
+    deprecate_no_replacement,
     deprecate_with_replacement,
     logger_warning,
     matrix_multiply,
@@ -772,7 +773,7 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement(
             "PageObject.inline_images",
             "PageObject.images",
-            "7.0",
+            "7.0.0",
         )
         if self._content_stream_images is None:
             return None
@@ -784,6 +785,10 @@ class PageObject(DictionaryObject):
 
     @inline_images.setter
     def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
+        deprecate_no_replacement(
+            "PageObject.inline_images",
+            "7.0.0",
+        )
         if value is None:
             self._content_stream_images = None
         else:
