@@ -8,7 +8,7 @@ import pytest
 from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader
-from pypdf._font import Font
+from pypdf._font import Font, FontDescriptor
 from pypdf.errors import PdfReadError
 from pypdf.generic import (
     ArrayObject,
@@ -75,6 +75,42 @@ def test_collect_cid_character_widths_truncated_w(w_array):
         NameObject("/DescendantFonts"): ArrayObject([d_font]),
     })
     Font.from_font_resource(font_res)
+
+
+@pytest.mark.parametrize("bbox", [
+    pytest.param(ArrayObject([NumberObject(0), NumberObject(0), NumberObject(100)]), id="too-short"),
+    pytest.param(ArrayObject(NumberObject(v) for v in range(6)), id="too-long"),
+    pytest.param(ArrayObject([NameObject("/x"), NumberObject(0), NumberObject(1), NumberObject(2)]), id="non-numeric"),
+    pytest.param(NumberObject(0), id="not-a-sequence"),
+])
+def test_font_descriptor_malformed_bbox(bbox):
+    # A /FontBBox that is not four numbers must fall back to the default
+    # bounding box instead of crashing text extraction.
+    font_res = DictionaryObject({
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/FontDescriptor"): DictionaryObject({
+            NameObject("/FontBBox"): bbox,
+        }),
+    })
+    font = Font.from_font_resource(font_res)
+    assert font.font_descriptor.bbox == FontDescriptor.DEFAULT_BBOX
+
+
+@pytest.mark.parametrize("bbox", [
+    pytest.param(ArrayObject([NumberObject(0), NumberObject(0)]), id="too-short"),
+    pytest.param(ArrayObject([NameObject("/x"), NumberObject(0), NumberObject(1), NumberObject(2)]), id="non-numeric"),
+])
+def test_type3_font_malformed_bbox(bbox):
+    # Type3 font without a /FontDescriptor but carrying a malformed /FontBBox.
+    font_res = DictionaryObject({
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/Subtype"): NameObject("/Type3"),
+        NameObject("/ToUnicode"): NumberObject(0),
+        NameObject("/FontBBox"): bbox,
+    })
+    font = Font.from_font_resource(font_res)
+    assert font.font_descriptor.bbox == FontDescriptor.DEFAULT_BBOX
 
 
 def test_font_file():
