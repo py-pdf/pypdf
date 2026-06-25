@@ -943,9 +943,8 @@ def test_extra_test_iss1541():
     reader = PdfReader(
         BytesIO(bytes(b.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
     )
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
         reader.pages[0].extract_text()
-    assert exc.value.args[0] == "Unexpected end of stream"
 
 
 @pytest.mark.enable_socket
@@ -1032,7 +1031,7 @@ def test_inline_images():
     with pytest.raises(KeyError):
         reader.pages[0].images["~999~"]
     del reader.pages[1]["/Resources"]["/ColorSpace"]["/R124"]
-    reader.pages[1].inline_images = None  # to force recalculation
+    reader.pages[1]._content_stream_images = None  # to force recalculation
     with pytest.raises(PdfReadError):
         reader.pages[1].images["~1~"]
 

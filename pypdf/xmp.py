@@ -8,6 +8,7 @@ import datetime
 import decimal
 import re
 from collections.abc import Iterator
+from string import hexdigits
 from typing import (
     Any,
     Callable,
@@ -225,9 +226,12 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             doc_root: Document = _XmpBuilder().parseString(data)
         except (AttributeError, ExpatError) as e:
             raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
-        self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
-            RDF_NAMESPACE, "RDF"
-        )[0]
+        rdf_roots = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")
+        if not rdf_roots:
+            raise PdfReadError(
+                "XML in XmpInformation was invalid: Missing rdf:RDF root element"
+            )
+        self.rdf_root: XmlElement = rdf_roots[0]
         self.cache: dict[Any, Any] = {}
 
     @classmethod
@@ -635,16 +639,20 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             self._custom_properties = {}
             for node in self.get_nodes_in_namespace("", PDFX_NAMESPACE):
                 key = node.localName
+                start = 0
                 while True:
                     # see documentation about PDFX_NAMESPACE earlier in file
-                    idx = key.find("\u2182")
+                    idx = key.find("\u2182", start)
                     if idx == -1:
                         break
-                    key = (
-                        key[:idx]
-                        + chr(int(key[idx + 1 : idx + 5], base=16))
-                        + key[idx + 5 :]
-                    )
+                    hex_id = key[idx + 1 : idx + 5]
+                    if len(hex_id) != 4 or not all(c in hexdigits for c in hex_id):
+                        # Not a well-formed escape; leave the marker untouched
+                        # and continue past it instead of crashing.
+                        start = idx + 1
+                        continue
+                    key = key[:idx] + chr(int(hex_id, base=16)) + key[idx + 5 :]
+                    start = idx + 1
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:

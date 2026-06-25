@@ -267,6 +267,18 @@ def test_pdfa_xmp_metadata_without_values():
     assert xmp.pdfaid_conformance is None
 
 
+def test_xmp_information__missing_rdf_root():
+    """Well-formed XML without an rdf:RDF root raises PdfReadError, not IndexError."""
+    co = ContentStream(None, None)
+    co.set_data(
+        b'<?xml version="1.0"?>'
+        b'<x:xmpmeta xmlns:x="adobe:ns:meta/"><foo>bar</foo></x:xmpmeta>'
+    )
+    with pytest.raises(PdfReadError) as exc:
+        XmpInformation(co)
+    assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
+
+
 @pytest.mark.enable_socket
 def test_xmp_metadata__content_stream_is_dictionary_object():
     url = "https://github.com/user-attachments/files/18943249/testing.pdf"
@@ -994,3 +1006,35 @@ def test_xmp_information__element_limit():
             match=r"^XMP metadata exceeds limit of 100000 elements\.$"
     ):
         XmpInformation(stream)
+
+
+@pytest.mark.parametrize(
+    ("local_name", "expected"),
+    [
+        # Non-hex digits, a marker at the end and a truncated escape are all kept as-is.
+        ("fooↂzz", {"fooↂzz": "val"}),
+        ("fooↂ", {"fooↂ": "val"}),
+        ("fooↂ0", {"fooↂ0": "val"}),
+        # A well-formed escape is still decoded (Adobe stores "my car" this way).
+        ("myↂ0020car", {"my car": "val"}),
+    ],
+)
+def test_custom_properties__malformed_escape(local_name, expected):
+    """A pdfx key with a broken ↂ escape is kept verbatim instead of crashing.
+
+    Custom property keys encode invalid identifier characters as ``ↂ`` followed
+    by a four digit hex id (see ``custom_properties``). ``ↂ`` is itself a valid
+    XML name character, so a crafted key may carry the marker without the four
+    hex digits.
+    """
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(
+        (
+            '<x:xmpmeta xmlns:x="adobe:ns:meta/">'
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:pdfx="{pypdf.xmp.PDFX_NAMESPACE}">'
+            f"<pdfx:{local_name}>val</pdfx:{local_name}>"
+            "</rdf:Description></rdf:RDF></x:xmpmeta>"
+        ).encode()
+    )
+    assert XmpInformation(stream).custom_properties == expected

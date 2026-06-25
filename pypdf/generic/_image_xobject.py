@@ -5,9 +5,8 @@ from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
 
 from .._utils import check_if_whitespace_only, logger_warning
-from ..constants import ColorSpaces, StreamAttributes
+from ..constants import ColorSpaces, ImageAttributes, StreamAttributes
 from ..constants import FilterTypes as FT
-from ..constants import ImageAttributes as IA
 from ..errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from ..generic import (
     ArrayObject,
@@ -113,9 +112,14 @@ def _get_image_mode(
         "4bit": "4bits",
     }
 
+    mode_values = list(mode_map.values())
     mode = (
         mode_map.get(color_space_str)
-        or list(mode_map.values())[color_components]
+        or (
+            mode_values[color_components]
+            if 0 <= color_components < len(mode_values)
+            else None
+        )
         or prev_mode
     )
 
@@ -152,21 +156,30 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
     return bytes(byte_buffer)
 
 
-def _extended_image_from_bytes(
+def _image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
+    pixel_count = size[0] * size[1]
+    bytes_per_pixel = len(mode)
+    required_byte_count = pixel_count * bytes_per_pixel
+
+    from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
+    if required_byte_count > FLATE_MAX_BUFFER_SIZE:
+        raise LimitReachedError(
+            f"Requested image buffer size {required_byte_count} exceeds limit {FLATE_MAX_BUFFER_SIZE}."
+        )
+
     try:
         img = Image.frombytes(mode, size, data)
     except ValueError as exc:
-        nb_pix = size[0] * size[1]
         data_length = len(data)
         if data_length == 0:
             raise EmptyImageDataError(
                 "Data is 0 bytes, cannot process an image from empty data."
             ) from exc
-        if data_length % nb_pix != 0:
+        if data_length % pixel_count != 0:
             raise
-        k = nb_pix * len(mode) / data_length
+        k = required_byte_count / data_length
         data = b"".join(bytes((x,) * int(k)) for x in data)
         img = Image.frombytes(mode, size, data)
     return img
@@ -202,8 +215,8 @@ def _handle_flate(
     Process image encoded in flateEncode
     Returns img, image_format, extension, color inversion
     """
-    extension = ".png"  # mime_type: "image/png"
     image_format = "PNG"
+    extension = ".png"  # mime_type: "image/png"
     lookup: Any
     base: Any
     hival: Any
@@ -215,7 +228,7 @@ def _handle_flate(
     elif mode == "4bits":
         mode = "P"
         data = bits2byte(data, size, 4)
-    img = _extended_image_from_bytes(mode, size, data)
+    img = _image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -330,7 +343,6 @@ def _handle_jpx(
     Process image encoded as JPX/JPEG2000
     Returns img, image_format, extension, inversion
     """
-    extension = ".jp2"  # mime_type: "image/x-jp2"
     img1: Image.Image = Image.open(BytesIO(data), formats=("JPEG2000",))
     mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
@@ -352,21 +364,20 @@ def _handle_jpx(
     # https://stackverflow.com/questions/38855022/
     if img.mode == "CMYK" and color_space == "/ICCBased":
         img = img.convert("RGB")
-    image_format = "JPEG2000"
-    return img, image_format, extension, invert_color
+    return img, "JPEG2000", ".jp2", invert_color
 
 
 def _apply_decode(
     img: Image.Image,
-    x_object_obj: dict[str, Any],
+    x_object: dict[str, Any],
     lfilters: FT,
     color_space: Union[str, list[Any], Any],
     invert_color: bool,
 ) -> Image.Image:
     # CMYK image and other color spaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
-    if IA.DECODE in x_object_obj:
-        decode = x_object_obj[IA.DECODE]
+    if ImageAttributes.DECODE in x_object:
+        decode = x_object[ImageAttributes.DECODE]
         # if invert_color and lfilters == FT.DCT_DECODE:
         #     decode = list(reversed(decode))
     elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
@@ -400,17 +411,17 @@ def _apply_decode(
 
 
 def _get_mode_and_invert_color(
-    x_object_obj: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
+    x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
     if (
-        IA.COLOR_SPACE in x_object_obj
-        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+        ImageAttributes.COLOR_SPACE in x_object
+        and x_object[ImageAttributes.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
-    if x_object_obj.get("/BitsPerComponent", 8) < 8:
+    if x_object.get("/BitsPerComponent", 8) < 8:
         mode, invert_color = _get_image_mode(
-            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
+            f"{x_object.get('/BitsPerComponent', 8)}bit", 0, ""
         )
     else:
         mode, invert_color = _get_image_mode(
@@ -455,9 +466,8 @@ def _xobj_to_image(
         image_format: str,
         extension: str,
     ) -> tuple[Image.Image, str, str]:
-        alpha = None
-        if IA.S_MASK in x_object:  # add alpha channel
-            alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
+        if ImageAttributes.S_MASK in x_object:  # add alpha channel
+            alpha = _xobj_to_image(x_object[ImageAttributes.S_MASK])[2]
             if img.size != alpha.size:
                 logger_warning(
                     "image and mask size not matching: %(obj_as_text)s",
@@ -489,11 +499,11 @@ def _xobj_to_image(
     )
 
     # Get size and data
-    size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
+    size = (cast(int, x_object[ImageAttributes.WIDTH]), cast(int, x_object[ImageAttributes.HEIGHT]))
     data = x_object.get_data()  # type: ignore[attr-defined]
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
-    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
+    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # i.e. '\n'
         data = data[:-1]
 
     # Get color properties
@@ -538,7 +548,7 @@ def _xobj_to_image(
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
-            img = _extended_image_from_bytes(mode, size, data)
+            img = _image_from_bytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
@@ -562,7 +572,7 @@ def _xobj_to_image(
         )
     elif mode == "CMYK":
         img, image_format, extension, invert_color = (
-            _extended_image_from_bytes(mode, size, data),
+            _image_from_bytes(mode, size, data),
             "TIFF",
             ".tif",
             False,
@@ -571,7 +581,7 @@ def _xobj_to_image(
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
         img, image_format, extension, invert_color = (
-            _extended_image_from_bytes(mode, size, data),
+            _image_from_bytes(mode, size, data),
             "PNG",
             ".png",
             False,

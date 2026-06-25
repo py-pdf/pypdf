@@ -880,6 +880,15 @@ class PdfReader(PdfDocCommon):
             break
         raise PdfReadError("startxref not found")
 
+    def _load_recovery_cache(self, data: bytes) -> dict[int, tuple[int, int]]:
+        cache = {}
+        for object_number, generation_number, object_start in self._find_pdf_objects(data):
+            if object_number in cache:
+                # Always use the first match.
+                continue
+            cache[object_number] = (object_start, generation_number)
+        return cache
+
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
         ref = stream.read(3)
@@ -888,6 +897,7 @@ class PdfReader(PdfDocCommon):
         read_non_whitespace(stream)
         stream.seek(-1, 1)
         first_time = True  # check if the first time looking at the xref table
+        recovery_cache: Optional[dict[int, tuple[int, int]]] = None
         while True:
             num = cast(int, read_object(stream, self))
             if first_time and num != 0:
@@ -952,8 +962,10 @@ class PdfReader(PdfDocCommon):
                         buf = stream.read(-1)
                         stream.seek(p)
 
-                    f = re.search(rf"{num}\s+(\d+)\s+obj".encode(), buf)
-                    if f is None:
+                    if recovery_cache is None:
+                        recovery_cache = self._load_recovery_cache(buf)
+
+                    if num not in recovery_cache:
                         logger_warning(
                             "entry %(num)d in Xref table invalid; object not found",
                             source=__name__,
@@ -968,8 +980,7 @@ class PdfReader(PdfDocCommon):
                             source=__name__,
                             num=num,
                         )
-                        generation = int(f.group(1))
-                        offset = f.start()
+                        generation, offset = recovery_cache[num]
                         entry_type_b = b"n"
 
                 if generation not in self.xref:

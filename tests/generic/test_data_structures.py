@@ -5,6 +5,7 @@ import sys
 from io import BytesIO
 from pathlib import Path
 from typing import Callable
+from unittest import mock
 
 import pytest
 
@@ -17,6 +18,7 @@ from pypdf.generic import (
     DictionaryObject,
     NameObject,
     NullObject,
+    NumberObject,
     RectangleObject,
     StreamObject,
     TextStringObject,
@@ -378,3 +380,93 @@ def test_dictionary_object__get_inherited__cyclic() -> None:
             match=r"^Detected cycle in /Parent hierarchy when retrieving value for key '/FT'\.$"
     ):
         writer.get_pages_showing_field(reference1)
+
+
+def _make_pdf__read_from_stream__limit() -> bytes:
+    offsets = []
+    pdf = bytearray(b"%PDF-1.4\n")
+
+    def add_obj(n: int, body: bytes) -> None:
+        offsets.append((n, len(pdf)))
+        pdf.extend(f"{n} 0 obj\n".encode())
+        pdf.extend(body)
+        pdf.extend(b"\nendobj\n")
+
+    add_obj(1, b"<< /Type /Catalog /Pages 2 0 R >>")
+    add_obj(2, b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    add_obj(3, b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 10 10] /Contents 4 0 R /Resources << >> >>")
+    offsets.append((4, len(pdf)))
+    pdf.extend(b"4 0 obj\n")
+    pdf.extend(b"<< >>\nstream\n")
+    pdf.extend(b"A" * 75_000_001)
+    pdf.extend(b"\nendstream\nendobj\n")
+    xref_offset = len(pdf)
+    pdf.extend(b"xref\n0 5\n0000000000 65535 f \n")
+    offset_map = dict(offsets)
+    for n in range(1, 5):
+        pdf.extend(f"{offset_map[n]:010d} 00000 n \n".encode())
+    pdf.extend(f"trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n".encode())
+    return bytes(pdf)
+
+
+@pytest.mark.timeout(5)
+def test_dictionary_object__read_from_stream__missing_length__limit() -> None:
+    reader = PdfReader(BytesIO(_make_pdf__read_from_stream__limit()))
+    page = reader.pages[0]
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Read stream length of 75000187 exceeds maximum allowed length of 75000000\.$"
+    ):
+        page.get_contents()
+
+
+def test_dictionary_object__read_from_stream__read_unsized__limit() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "issue-301.pdf")
+
+    with mock.patch.object(DictionaryObject, "_read_unsized_from_stream", return_value=b"dummy") as read_mock:
+        obj = reader.get_object(13)
+        assert obj is not None
+        assert obj == DictionaryObject({
+            NameObject("/Filter"): NameObject("/FlateDecode"),
+            NameObject("/Length1"): NumberObject(218)
+        })
+    read_mock.assert_called_once_with(stream=reader.stream, pdf=reader, length=75_000_000)
+
+
+def test_dictionary_object__read_unsized_from_stream__limit() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "issue-301.pdf")
+
+    reader.stream.seek(63101, 0)  # pstart value from the corresponding call
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Requested length of 236 exceeds maximum allowed length\.$"
+    ):
+        DictionaryObject._read_unsized_from_stream(stream=reader.stream, pdf=reader, length=137)
+
+
+def test_content_stream__parse_content_stream__limits() -> None:
+    content_stream = ContentStream(stream=None, pdf=None)
+
+    stream = BytesIO(b"/Do TESTING\n")
+    content_stream._parse_content_stream(stream)
+    assert content_stream.operations == [(["/Do"], b"TESTING")]
+
+    stream = BytesIO(f"/Do {'TESTING' * 100}\n".encode())
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Read stream length of 240 exceeds maximum allowed length of 128\.$"
+    ):
+        content_stream._parse_content_stream(stream)
+
+
+@pytest.mark.timeout(5)
+def test_content_stream__read_inline_image__end_of_stream() -> None:
+    # Broken content stream, for example due to filter errors.
+    # Specific example:
+    #   Error -3 while decompressing data: invalid distance too far back
+    #   b'q 0.1 0 0 0.1 0 0 cm\n/R7 gs\n0 g\nq 4.8 0 0 -135.6 2155.08 7150.48 cm\nBI\n/IM true\n/W001'
+    content_stream = ContentStream(stream=None, pdf=None)
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
+        content_stream._read_inline_image(BytesIO(b"\n/IM true\n/W001"))
