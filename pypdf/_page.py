@@ -30,7 +30,7 @@
 import math
 from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
@@ -379,6 +379,46 @@ class ImageFile:
     True if this image is displayed in the page content stream.
     """
 
+    _stream_obj: Optional[Any] = field(default=None, repr=False, compare=False)
+    """
+    Internal reference to the raw PDF stream dictionary, used only to derive
+    :attr:`width`, :attr:`height`, and :attr:`data_size` cheaply. Not part of
+    the public dataclass contract.
+    """
+
+    @property
+    def width(self) -> int:
+        """Image width in pixels, read from the stream header (cheap, no decode)."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile; width is unavailable.")
+        return int(self._stream_obj.get(ImageAttributes.WIDTH))
+
+    @property
+    def height(self) -> int:
+        """Image height in pixels, read from the stream header (cheap, no decode)."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile; height is unavailable.")
+        return int(self._stream_obj.get(ImageAttributes.HEIGHT))
+
+    @property
+    def data_size(self) -> int:
+        """
+        Compressed byte length of the image stream (no decompression).
+        Read directly from the raw stream bytes as stored in the PDF, which
+        is cheap since it requires no decoding of the actual image data.
+        """
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile; data_size is unavailable.")
+        raw = getattr(self._stream_obj, "_data", None)
+        if raw is not None:
+            return len(raw)
+        # Fallback for stream-like objects without a private _data cache.
+        length = self._stream_obj.get("/Length")
+        if hasattr(length, "get_object"):
+            length = length.get_object()
+        return int(length) if length is not None else 0
+
+
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the image with a new PIL image.
@@ -722,6 +762,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=xobj.indirect_reference,
                 is_inline=False,
                 is_displayed=is_displayed,
+                _stream_obj=xobj,
             )
         # in a subobject
         assert xobjs is not None
@@ -887,6 +928,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=None,
                 is_inline=True,
                 is_displayed=True,
+                _stream_obj=ii["object"],
             )
 
         return files

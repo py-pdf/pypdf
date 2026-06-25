@@ -13,7 +13,6 @@ The PageObject Class
 
 .. autoclass:: pypdf._page.ImageFile
     :members:
-    :inherited-members: File
     :undoc-members:
 
 .. autofunction:: pypdf.mult
