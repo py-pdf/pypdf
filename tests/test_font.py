@@ -8,6 +8,8 @@ import pytest
 from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader, PdfWriter
+from pypdf._codecs import fill_from_encoding
+from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS
 from pypdf._font import Font
 from pypdf.errors import PdfReadError
 from pypdf.generic import (
@@ -193,3 +195,23 @@ with pytest.raises(ImportError, match=r"^The 'fontTools' library is required to 
     )
     assert result.returncode == 0
     assert result.stdout == b""
+
+
+def test_non_winansi_type1_font_character_map():
+    encoding_list = fill_from_encoding("cp1257")
+    core_font_metrics = CORE_FONT_METRICS["Helvetica"]
+    font = Font(
+        name="Helvetica",
+        character_map={},
+        encoding=dict(zip(range(256), encoding_list)),
+        sub_type="Type1",
+        font_descriptor=core_font_metrics.font_descriptor,
+        character_widths={
+            chr(code): core_font_metrics.character_widths[value] for code, value in enumerate(
+                encoding_list
+            ) if value in core_font_metrics.character_widths
+        },
+    )
+    font.character_widths["default"] = core_font_metrics.character_widths["default"]
+    font2 = Font.from_font_resource(font.as_font_resource())
+    reverse_cmap, encoding_cmap = font2._get_typographic_maps()

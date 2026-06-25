@@ -599,7 +599,7 @@ class Font:
             unicode_to_bytes = {
                 unicode_char: bytes((character_code,)) for character_code, unicode_char in self.encoding.items()
             }
-            for character_code_str, unicode_char in self.character_map.items():  # This code is not covered nor tested
+            for character_code_str, unicode_char in self.character_map.items():
                 reverse_cmap[unicode_char] = character_code_str
                 encoding_cmap[character_code_str] = unicode_to_bytes.get(
                     unicode_char,
