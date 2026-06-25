@@ -121,15 +121,24 @@ def test_font_from_font_file():
         if font_resource == "/F6":
             crippled_font_data = BytesIO()
             with TTFont(BytesIO(font_data)) as tt_font_object:
+                # Test zero units per em
+                tt_font_object["head"].unitsPerEm = 0
+                tt_font_object.save(crippled_font_data)
+                with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
+                    Font.from_truetype_font_file(crippled_font_data)
+                tt_font_object["head"].unitsPerEm = 2048
+
+                # Test various missing tables
                 del tt_font_object["name"]
                 del tt_font_object["OS/2"]
                 del tt_font_object["post"]
+                crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
                 font = Font.from_truetype_font_file(crippled_font_data)
-                crippled_font_data.seek(0)
 
                 # Test raising AttributeError in _get_typographic_maps due to missing cmap table
                 del tt_font_object["cmap"]
+                crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
                 crippled_font_data_value = crippled_font_data.getvalue()
                 font.font_descriptor.font_file.set_data(crippled_font_data_value)
@@ -151,19 +160,6 @@ def test_font_as_font_resource():
     font_data = font_resources["/F7"]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
     font = Font.from_truetype_font_file(BytesIO(font_data))
     font._add_to_writer(writer, font_resources, NameObject("/" + font.name))
-
-
-def test_font_from_font_file_zero_units_per_em():
-    reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
-    font_resource = reader.pages[0]["/Resources"]["/Font"]["/F1"]
-    font_data = font_resource["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
-    crippled_font_data = BytesIO()
-    with TTFont(BytesIO(font_data)) as tt_font_object:
-        tt_font_object["head"].unitsPerEm = 0
-        tt_font_object.save(crippled_font_data)
-    crippled_font_data.seek(0)
-    with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
-        Font.from_truetype_font_file(crippled_font_data)
 
 
 def test_font_from_font_file_no_fonttools(tmp_path):
