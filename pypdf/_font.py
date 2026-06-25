@@ -18,6 +18,7 @@ from pypdf.generic import (
 )
 
 from ._cmap import get_encoding
+from ._codecs import fill_from_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
 from .constants import FontFlags
@@ -685,12 +686,28 @@ class Font:
             })
 
         # Fallback: Return a font resource for one of the 14 Adobe Core fonts.
+        win_ansi_encoding_list = fill_from_encoding("cp1252")
+        differences_list: list[NumberObject | NameObject] = []
+        reverse_adobe_glyphs = {value: key for key, value in adobe_glyphs.items()}
+        for idx, character_code in enumerate(win_ansi_encoding_list):
+            encoding_char = cast(dict[int, str], self.encoding).get(idx)
+            if encoding_char and encoding_char != character_code:
+                differences_list.extend([NumberObject(idx), NameObject(reverse_adobe_glyphs[encoding_char])])
+
+        if differences_list:
+            encoding: DictionaryObject | NameObject = DictionaryObject({
+                NameObject("/BaseEncoding"): NameObject("/WinAnsiEncoding"),
+                NameObject("/Differences"): ArrayObject(differences_list),
+            })
+        else:
+            encoding = NameObject("/WinAnsiEncoding")
+
         return DictionaryObject({
             NameObject("/Type"): NameObject("/Font"),
             NameObject("/Subtype"): NameObject("/Type1"),
             NameObject("/Name"): NameObject(f"/{self.name}"),
             NameObject("/BaseFont"): NameObject(f"/{self.name}"),
-            NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+            NameObject("/Encoding"): encoding
         })
 
     def _add_to_writer(
