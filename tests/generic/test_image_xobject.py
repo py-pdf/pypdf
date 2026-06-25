@@ -1,4 +1,5 @@
 """Test the pypdf.generic._image_xobject module."""
+import zlib
 from io import BytesIO
 
 import PIL
@@ -9,7 +10,15 @@ from pypdf import PdfReader
 from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
-from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
+from pypdf.generic import (
+    ArrayObject,
+    DecodedStreamObject,
+    NameObject,
+    NumberObject,
+    PdfObject,
+    StreamObject,
+    TextStringObject,
+)
 from pypdf.generic._image_xobject import (
     _get_image_mode,
     _handle_flate,
@@ -401,6 +410,33 @@ def test_xobj_to_image__color_components_out_of_range() -> None:
 
     with pytest.raises(PdfReadError, match=r"^ColorSpace field not found in .+"):
         _xobj_to_image(x_object)
+
+
+@pytest.mark.parametrize(
+    "decode",
+    [
+        ArrayObject([NumberObject(1), NumberObject(0), NumberObject(1)]),
+        ArrayObject([NumberObject(1)]),
+        NumberObject(1),
+    ],
+)
+def test_xobj_to_image__malformed_decode(
+    decode: PdfObject, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A /Decode without an even number of values must not raise IndexError."""
+    x_object = StreamObject()
+    x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(2)
+    x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(2)
+    x_object[NameObject("/BitsPerComponent")] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject("/DeviceGray")
+    x_object[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.FLATE_DECODE)
+    x_object[NameObject(ImageAttributes.DECODE)] = decode
+    x_object.set_data(zlib.compress(bytes([0, 64, 128, 255])))
+
+    _, _, image = _xobj_to_image(x_object)
+    image.load()
+    assert image.size == (2, 2)
+    assert "Ignoring malformed /Decode array" in caplog.text
 
 
 @pytest.mark.parametrize(

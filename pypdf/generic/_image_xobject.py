@@ -398,6 +398,18 @@ def _apply_decode(
         and color_space[0].get_object() == "/Separation"
     ):
         decode = [1.0, 0.0] * len(img.getbands())
+    if decode is not None and (
+        not isinstance(decode, (list, tuple)) or len(decode) % 2 != 0
+    ):
+        # /Decode is read straight from the image dictionary and must hold an
+        # even number of values (a [min max] pair per component). A malformed
+        # array would otherwise read past its end at decode[i + 1]; drop it and
+        # render the image without the remap.
+        logger_warning(
+            "Ignoring malformed /Decode array; expected an even number of values.",
+            source=__name__,
+        )
+        decode = None
     if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
         lut: list[int] = []
         for i in range(0, len(decode), 2):
