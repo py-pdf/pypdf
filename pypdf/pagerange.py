@@ -7,7 +7,7 @@ see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 """
 
 import re
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from .errors import ParseError
 
@@ -145,22 +145,28 @@ class PageRange:
         a = self._slice.start, self._slice.stop
         b = other._slice.start, other._slice.stop
 
-        if a[0] > b[0]:
+        # None start means "beginning" (-inf for ordering); None stop means "end" (+inf).
+        def _start_key(v: Optional[int]) -> float:
+            return float("-inf") if v is None else v
+
+        def _stop_key(v: Optional[int]) -> float:
+            return float("inf") if v is None else v
+
+        if _start_key(a[0]) > _start_key(b[0]):
             a, b = b, a
 
-        # Now a[0] is the smallest
-        if b[0] > a[1]:
+        # Now a has the smaller (or equal) start.
+        if _start_key(b[0]) > _stop_key(a[1]):
             # There is a gap between a and b.
             raise ValueError("Can't add PageRanges with gap")
-        return PageRange(slice(a[0], max(a[1], b[1])))
+        stop = b[1] if _stop_key(b[1]) > _stop_key(a[1]) else a[1]
+        return PageRange(slice(a[0], stop))
 
 
 PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
 
 
-def parse_filename_page_ranges(
-    args: list[Union[str, PageRange, None]]
-) -> list[tuple[str, PageRange]]:
+def parse_filename_page_ranges(args: list[Union[str, PageRange, None]]) -> list[tuple[str, PageRange]]:
     """
     Given a list of filenames and page ranges, return a list of (filename, page_range) pairs.
 
@@ -179,9 +185,7 @@ def parse_filename_page_ranges(
     for arg in [*args, None]:
         if PageRange.valid(arg):
             if not pdf_filename:
-                raise ValueError(
-                    "The first argument must be a filename, not a page range."
-                )
+                raise ValueError("The first argument must be a filename, not a page range.")
 
             assert arg is not None
             pairs.append((pdf_filename, PageRange(arg)))
