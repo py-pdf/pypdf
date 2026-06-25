@@ -5,7 +5,6 @@ from enum import Enum, IntFlag, auto, unique
 
 from ._utils import deprecate_with_replacement
 
-
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
