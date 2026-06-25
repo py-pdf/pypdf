@@ -639,7 +639,7 @@ class Font:
                 glyph_id_str = str(glyph_id)
                 reverse_cmap[unicode_char] = glyph_id_str
                 encoding_cmap[glyph_id_str] = glyph_id_str.encode(self.encoding)
-        else:
+        else:  # Encoding is a dict, which means we are dealing with a simple font
             for character_code, unicode_char in self.encoding.items():
                 character_str = chr(character_code)
                 reverse_cmap[unicode_char] = character_str
@@ -648,9 +648,12 @@ class Font:
             unicode_to_bytes = {
                 unicode_char: bytes((character_code,)) for character_code, unicode_char in self.encoding.items()
             }
-            for glyph_id, unicode_char in self.character_map.items():  # This code is not covered nor tested
-                reverse_cmap[unicode_char] = glyph_id
-                encoding_cmap[glyph_id] = unicode_to_bytes.get(unicode_char, bytes((glyph_id,)))
+            for character_code_str, unicode_char in self.character_map.items():  # This code is not covered nor tested
+                reverse_cmap[unicode_char] = character_code_str
+                encoding_cmap[character_code_str] = unicode_to_bytes.get(
+                    unicode_char,
+                    bytes((ord(character_code_str),))
+                )
 
         return reverse_cmap, encoding_cmap
 
