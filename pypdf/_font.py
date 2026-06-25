@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, cast
@@ -23,8 +24,6 @@ from .constants import FontFlags
 from .errors import PdfReadError
 
 if TYPE_CHECKING:
-    from io import BytesIO
-
     from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
     from fontTools.ttLib.tables._p_o_s_t import table__p_o_s_t
     from fontTools.ttLib.tables.O_S_2f_2 import table_O_S_2f_2
@@ -32,7 +31,9 @@ if TYPE_CHECKING:
     from ._writer import PdfWriter
 
 try:
-    from fontTools.ttLib import TTFont
+    from io import BytesIO
+
+    from fontTools.ttLib import TTFont, TTLibError
     HAS_FONTTOOLS = True
 except ImportError:
     HAS_FONTTOOLS = False
@@ -559,6 +560,29 @@ class Font:
         """
         reverse_cmap = {}
         encoding_cmap = {}
+        if (
+            HAS_FONTTOOLS
+            and getattr(self.font_descriptor, "font_file", None)
+            and isinstance(self.encoding, str)
+        ):
+            try:
+                font_file_data = cast(StreamObject, self.font_descriptor.font_file).get_data()
+                with TTFont(BytesIO(font_file_data)) as tt_font_object:
+                    tt_font_cmap_table = tt_font_object.get("cmap")
+                    best_cmap = tt_font_cmap_table.getBestCmap()
+                    for unicode_int, glyph_name in best_cmap.items():
+                        gid = tt_font_object.getGlyphID(glyph_name)
+                        gid_bytes = gid.to_bytes(2, "big")
+                        gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
+                        unicode_char = chr(unicode_int)
+                        reverse_cmap[unicode_char] = gid_key_string
+                        encoding_cmap[gid_key_string] = gid_key_string.encode(self.encoding)
+
+                return reverse_cmap, encoding_cmap
+
+            except (AttributeError, TTLibError):  # Cmap table is missing or the font is corrupt.
+                reverse_cmap.clear()
+                encoding_cmap.clear()
 
         if isinstance(self.encoding, str):
             for glyph_id, unicode_char in self.character_map.items():
@@ -589,13 +613,17 @@ class Font:
         #    [first_cid [w1 w2 w3]] or [first last width]
         # Here we choose the first format and simply provide one array with one width for every cid.
         for gid_str, actual_char in self.character_map.items():
-            uni_point = ord(actual_char)
+            # Make sure that we do not include characters such as arabic presentation form characters.
+            # Note that, in some cases, unicodedata.normalize() might split a ligature, resulting
+            # in multiple characters.
+            normalized_chars = unicodedata.normalize("NFKC", actual_char)
+            uni_points = [ord(char) for char in normalized_chars]
             # Only deal with Basic Multilingual Plane characters.
-            # TODO: Add all characters. However, this requires widths reworking first.
-            if uni_point <= 0xFFFF:
+            # TODO: Add all characters.
+            if all(uni_point <= 0xFFFF for uni_point in uni_points):
                 cid = ord(gid_str)
                 cid_hex = f"{cid:04X}"
-                uni_hex = f"{uni_point:04X}"
+                uni_hex = "".join(f"{uni_point:04X}" for uni_point in uni_points)
                 unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
 
                 width = self.character_widths.get(gid_str, self.character_widths["default"])

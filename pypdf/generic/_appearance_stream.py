@@ -27,6 +27,13 @@ if TYPE_CHECKING:
 
     from .._page import PageObject
 
+try:
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+    HAS_RTL_SUPPORT = True
+except ImportError:
+    HAS_RTL_SUPPORT = False
+
 DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
 
@@ -202,7 +209,14 @@ class TextStreamAppearance(BaseStreamAppearance):
         reverse_cmap, encoding_cmap = font._get_typographic_maps()
 
         def _unicode_to_glyph_id(text: str, reverse_cmap: dict[str, str]) -> str:
-            return "".join(reverse_cmap.get(character, character) for character in text)
+            if HAS_RTL_SUPPORT:
+                # Use arabic-reshaper and python-bidi to rearrange and shape text for the PDF engine
+                reshaped_text = arabic_reshaper.reshape(text)
+                visual_text = get_display(reshaped_text, base_dir="L")
+                return "".join(reverse_cmap.get(char, char) for char in visual_text)
+
+            return "".join(reverse_cmap.get(char, char) for char in text)
+
 
         def _glyph_id_to_bytes(glyphs: str, encoding_cmap: dict[str, bytes]) -> list[bytes]:
             return [encoding_cmap.get(

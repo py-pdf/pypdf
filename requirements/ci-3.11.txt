@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file=requirements/ci-3.11.txt requirements/ci.in
 #
+arabic-reshaper==3.0.0
+    # via -r requirements/ci.in
 cffi==2.0.0
     # via cryptography
 coverage[toml]==7.13.0
@@ -61,6 +63,8 @@ pytest-socket==0.7.0
 pytest-timeout==2.3.1
     # via -r requirements/ci.in
 pytest-xdist==3.6.1
+    # via -r requirements/ci.in
+python-bidi==0.6.10
     # via -r requirements/ci.in
 pyyaml==6.0.2
     # via -r requirements/ci.in

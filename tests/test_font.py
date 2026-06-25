@@ -7,7 +7,7 @@ from io import BytesIO
 import pytest
 from fontTools.ttLib import TTFont
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._font import Font
 from pypdf.errors import PdfReadError
 from pypdf.generic import (
@@ -127,10 +127,30 @@ def test_font_from_font_file():
                 tt_font_object.save(crippled_font_data)
                 font = Font.from_truetype_font_file(crippled_font_data)
                 crippled_font_data.seek(0)
+
+                # Test raising AttributeError in _get_typographic_maps due to missing cmap table
                 del tt_font_object["cmap"]
                 tt_font_object.save(crippled_font_data)
+                crippled_font_data_value = crippled_font_data.getvalue()
+                font.font_descriptor.font_file.set_data(crippled_font_data_value)
+                font._get_typographic_maps()
+
+                # Test raising PdfReadError in from_truetype_font_file due to missing cmap table
                 with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
                     Font.from_truetype_font_file(crippled_font_data)
+
+                # Test raising TTLibError in _get_typographic_maps due to corrupt font data
+                garbage_bytes = b"CORRUPT_HEADER!!" + crippled_font_data_value[16:]
+                font.font_descriptor.font_file.set_data(garbage_bytes)
+                font._get_typographic_maps()
+
+
+def test_font_as_font_resource():
+    writer = PdfWriter(RESOURCE_ROOT / "fontsampler.pdf")
+    font_resources = writer.pages[0]["/Resources"]["/Font"]
+    font_data = font_resources["/F7"]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+    font = Font.from_truetype_font_file(BytesIO(font_data))
+    font._add_to_writer(writer, font_resources, NameObject("/" + font.name))
 
 
 def test_font_from_font_file_zero_units_per_em():
