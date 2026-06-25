@@ -3139,11 +3139,10 @@ class PdfWriter(PdfDocCommon):
         # TODO: /SE
         if dest.node is not None:
             n_ol[NameObject("/F")] = NumberObject(dest.node.get("/F", 0))
-            n_ol[NameObject("/C")] = ArrayObject(
-                dest.node.get(
-                    "/C", [FloatObject(0.0), FloatObject(0.0), FloatObject(0.0)]
-                )
-            )
+            color = dest.node.get("/C", NullObject()).get_object()
+            if not isinstance(color, list):
+                color = [FloatObject(0.0), FloatObject(0.0), FloatObject(0.0)]
+            n_ol[NameObject("/C")] = ArrayObject(color)
         return n_ol
 
     def _insert_filtered_outline(
