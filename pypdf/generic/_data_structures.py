@@ -950,7 +950,8 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         child_obj:
 
     """
-    del child_obj[NameObject("/Parent")]
+    if NameObject("/Parent") in child_obj:
+        del child_obj[NameObject("/Parent")]
     if NameObject("/Next") in child_obj:
         del child_obj[NameObject("/Next")]
     if NameObject("/Prev") in child_obj:
@@ -1770,6 +1771,70 @@ class Destination(TreeObject):
             pass
         else:
             raise PdfReadError(f"Unknown Destination Type: {typ!r}")
+
+    def remove_from_tree(self) -> None:
+        """Remove the destination from its outline tree.
+
+        Overrides TreeObject.remove_from_tree to work with outline items
+        built by _build_outline_item, which don't carry /Parent in their
+        own dict.  Falls back to the original PDF node's tree keys.
+        """
+        # If /Parent is already present (e.g. writer-built), use the
+        # standard TreeObject path.
+        if NameObject("/Parent") in self:
+            super().remove_from_tree()
+            return
+
+        # Reader-built Destination: look up the parent via the original node.
+        node = self.node
+        if node is None or NameObject("/Parent") not in node:
+            raise ValueError("Removed child does not appear to be a tree item")
+
+        parent_ref = node[NameObject("/Parent")]
+        parent_obj: dict[str, Any] = parent_ref.get_object()  # type: ignore[assignment]
+        self_ref = self.indirect_reference
+        prev_ref: Optional[IndirectObject] = None
+        cur_ref = parent_obj.get(NameObject("/First"))
+        found = False
+        while cur_ref is not None:
+            cur_obj: dict[str, Any] = cur_ref.get_object()
+            cur_indirect: Optional[IndirectObject] = (
+                cur_ref if isinstance(cur_ref, IndirectObject) else None
+            )
+            if cur_indirect is not None and self_ref is not None and cur_indirect == self_ref:
+                found = True
+                next_ref = cur_obj.get(NameObject("/Next"))
+                if prev_ref is not None:
+                    prev_obj: dict[str, Any] = prev_ref.get_object()  # type: ignore[assignment]
+                    if next_ref is not None:
+                        prev_obj[NameObject("/Next")] = next_ref
+                    elif NameObject("/Next") in prev_obj:
+                        del prev_obj[NameObject("/Next")]
+                elif next_ref is not None:
+                    parent_obj[NameObject("/First")] = next_ref
+                elif NameObject("/First") in parent_obj:
+                    del parent_obj[NameObject("/First")]
+                if next_ref is not None:
+                    next_obj: dict[str, Any] = next_ref.get_object()
+                    if prev_ref is not None:
+                        next_obj[NameObject("/Prev")] = prev_ref
+                    elif NameObject("/Prev") in next_obj:
+                        del next_obj[NameObject("/Prev")]
+                elif prev_ref is not None:
+                    parent_obj[NameObject("/Last")] = prev_ref
+                elif NameObject("/Last") in parent_obj:
+                    del parent_obj[NameObject("/Last")]
+                if NameObject("/Count") in parent_obj:
+                    parent_obj[NameObject("/Count")] = NumberObject(
+                        parent_obj[NameObject("/Count")] - 1
+                    )
+                _reset_node_tree_relationship(self)
+                break
+            next_ref = cur_obj.get(NameObject("/Next"))
+            prev_ref = cur_ref
+            cur_ref = next_ref
+        if not found:
+            raise ValueError("Removal couldn't find item in tree")
 
     @property
     def dest_array(self) -> "ArrayObject":
