@@ -494,7 +494,13 @@ class TextStreamAppearance(BaseStreamAppearance):
                     encodable = test_font.can_encode(text)
                     if encodable:
                         font = test_font
-                        font_name = "/PYPDF1-" + encoding
+                        font.character_widths.clear()
+                        for code, character in test_font.encoding.items():
+                            # Look up the width using the glyph name from the encoding
+                            if character in core_font_metrics.character_widths:
+                                font.character_widths[chr(code)] = core_font_metrics.character_widths[character]
+                        font.character_widths["default"] = core_font_metrics.character_widths["default"]
+                        font_name = "/PYPDF1" + encoding
                         break
 
             if not encodable:
