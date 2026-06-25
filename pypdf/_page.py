@@ -55,10 +55,12 @@ from ._utils import (
     TransformationMatrixType,
     _human_readable_bytes,
     deprecate,
+    deprecate_no_replacement,
     deprecate_with_replacement,
     logger_warning,
     matrix_multiply,
 )
+from .actions import Action, PageTrigger
 from .constants import (
     _INLINE_IMAGE_KEY_MAPPING,
     _INLINE_IMAGE_VALUE_MAPPING,
@@ -813,7 +815,7 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement(
             "PageObject.inline_images",
             "PageObject.images",
-            "7.0",
+            "7.0.0",
         )
         if self._content_stream_images is None:
             return None
@@ -825,6 +827,10 @@ class PageObject(DictionaryObject):
 
     @inline_images.setter
     def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
+        deprecate_no_replacement(
+            "PageObject.inline_images",
+            "7.0.0",
+        )
         if value is None:
             self._content_stream_images = None
         else:
@@ -2337,6 +2343,47 @@ class PageObject(DictionaryObject):
             del self[NameObject("/Annots")]
         else:
             self[NameObject("/Annots")] = value
+
+    def add_action(self, trigger: PageTrigger, action: Action) -> None:
+        """
+        Add an action which will launch on the given trigger event of this page.
+
+        Args:
+            trigger: The action trigger to use.
+            action: The action to be done.
+
+        Example:
+            >>> from pypdf import PdfWriter
+            >>> from pypdf.actions import JavaScript, PageTrigger
+            >>> writer = PdfWriter()
+            >>> page = writer.add_blank_page(595, 842)
+            >>> # Display the page number when the page is opened
+            >>> page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+            >>> # Display the page number when the page is closed
+            >>> page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+        """
+        return Action._create_new(self, trigger, action)
+
+    def delete_action(self, trigger: PageTrigger) -> None:
+        """
+        Delete all actions associated with an open or close trigger event of this page.
+
+        Args:
+            trigger: An open or close trigger.
+
+        Example:
+            >>> from pypdf import PdfWriter
+            >>> from pypdf.actions import JavaScript, PageTrigger
+            >>> writer = PdfWriter()
+            >>> page = writer.add_blank_page(595, 842)
+            >>> page.add_action(PageTrigger("open"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+            >>> page.add_action(PageTrigger("close"), JavaScript("app.alert('This is page ' + this.pageNum);"))
+            >>> # Delete all actions triggered by a page open
+            >>> page.delete_action(PageTrigger("open"))
+            >>> # Delete all actions triggered by a page close
+            >>> page.delete_action(PageTrigger("close"))
+        """
+        return Action._delete(self, trigger)
 
 
 class _VirtualList(Sequence[PageObject]):
