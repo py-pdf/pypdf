@@ -694,3 +694,38 @@ def test_get_qualified_field_name__cyclic() -> None:
             match=r"^Detected cycle in /Parent hierarchy when retrieving qualified field name\.$"
     ):
         _ = writer._get_qualified_field_name(parent=dictionary1)
+
+
+def test_build_outline_item__non_array_color(caplog):
+    """A malformed outline item whose /C is not an array must not crash."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+
+    item = DictionaryObject()
+    writer._add_object(item)
+    item.update({
+        NameObject("/Title"): TextStringObject("Bad color"),
+        NameObject("/Dest"): ArrayObject(
+            [writer.pages[0].indirect_reference, NameObject("/Fit")]
+        ),
+        NameObject("/C"): NumberObject(5),  # should be an [r, g, b] array
+    })
+    outlines = DictionaryObject()
+    writer._add_object(outlines)
+    outlines.update({
+        NameObject("/Type"): NameObject("/Outlines"),
+        NameObject("/First"): item.indirect_reference,
+        NameObject("/Last"): item.indirect_reference,
+    })
+    item[NameObject("/Parent")] = outlines.indirect_reference
+    writer._root_object[NameObject("/Outlines")] = outlines.indirect_reference
+
+    outline = writer.outline
+    assert outline[0]["/Title"] == "Bad color"
+    assert "/C" not in outline[0]
+    assert any("outline color" in message for message in caplog.messages)
+
+    # The same value is read again, unsanitised, while cloning the outline
+    # during append, so that path must tolerate it too.
+    target = PdfWriter()
+    target.append(writer)
