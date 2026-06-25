@@ -34,7 +34,6 @@ from cryptography.hazmat.primitives.ciphers.base import Cipher
 from cryptography.hazmat.primitives.ciphers.modes import CBC, ECB
 from cryptography.hazmat.primitives.padding import PKCS7
 
-from pypdf._crypt_providers import _fallback
 from pypdf._crypt_providers._base import CryptBase
 from pypdf._utils import logger_warning
 from pypdf.errors import PdfStreamError
@@ -47,26 +46,29 @@ except ImportError:
 
 crypt_provider = ("cryptography", __version__)
 
-# Assume OpenSSL provides RC4; flipped to False the first time it rejects the
-# cipher (e.g. legacy provider disabled), so the failing attempt is paid once.
-_rc4_supported = True
-
-
-def _disable_rc4() -> None:
-    global _rc4_supported  # noqa: PLW0603
-    logger_warning(
-        "RC4 is not supported by the current OpenSSL build; "
-        "falling back to the pure-Python RC4 implementation.",
-        source=__name__,
-    )
-    _rc4_supported = False
-
 
 class CryptRC4(CryptBase):
+    # Assume OpenSSL provides RC4; flipped to False the first time it rejects
+    # the cipher (e.g. legacy provider disabled), so the failing attempt is
+    # paid once.
+    _rc4_supported = True
+
     def __init__(self, key: bytes) -> None:
         self._key = key
         self.cipher = Cipher(ARC4(key), mode=None)
-        self._fallback = None if _rc4_supported else _fallback.CryptRC4(key)
+        self._fallback = None
+        if not CryptRC4._rc4_supported:
+            from pypdf._crypt_providers import _fallback  # noqa: PLC0415
+            self._fallback = _fallback.CryptRC4(key)
+
+    @classmethod
+    def _disable_rc4(cls) -> None:
+        logger_warning(
+            "RC4 is not supported by the current OpenSSL build; "
+            "falling back to the pure-Python RC4 implementation.",
+            source=__name__,
+        )
+        cls._rc4_supported = False
 
     def encrypt(self, data: bytes) -> bytes:
         if self._fallback is not None:
@@ -75,7 +77,8 @@ class CryptRC4(CryptBase):
             encryptor = self.cipher.encryptor()
             return encryptor.update(data) + encryptor.finalize()
         except UnsupportedAlgorithm:
-            _disable_rc4()
+            from pypdf._crypt_providers import _fallback  # noqa: PLC0415
+            self._disable_rc4()
             self._fallback = _fallback.CryptRC4(self._key)
             return self._fallback.encrypt(data)
 
@@ -86,7 +89,8 @@ class CryptRC4(CryptBase):
             decryptor = self.cipher.decryptor()
             return decryptor.update(data) + decryptor.finalize()
         except UnsupportedAlgorithm:
-            _disable_rc4()
+            from pypdf._crypt_providers import _fallback  # noqa: PLC0415
+            self._disable_rc4()
             self._fallback = _fallback.CryptRC4(self._key)
             return self._fallback.decrypt(data, strict=strict)
 
@@ -135,22 +139,24 @@ class CryptAES(CryptBase):
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
-    if _rc4_supported:
+    if CryptRC4._rc4_supported:
         try:
             encryptor = Cipher(ARC4(key), mode=None).encryptor()
             return encryptor.update(data) + encryptor.finalize()
         except UnsupportedAlgorithm:
-            _disable_rc4()
+            CryptRC4._disable_rc4()
+    from pypdf._crypt_providers import _fallback  # noqa: PLC0415
     return _fallback.rc4_encrypt(key, data)
 
 
 def rc4_decrypt(key: bytes, data: bytes) -> bytes:
-    if _rc4_supported:
+    if CryptRC4._rc4_supported:
         try:
             decryptor = Cipher(ARC4(key), mode=None).decryptor()
             return decryptor.update(data) + decryptor.finalize()
         except UnsupportedAlgorithm:
-            _disable_rc4()
+            CryptRC4._disable_rc4()
+    from pypdf._crypt_providers import _fallback  # noqa: PLC0415
     return _fallback.rc4_decrypt(key, data)
 
 
