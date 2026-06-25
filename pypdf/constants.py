@@ -643,14 +643,14 @@ class GraphicsStateParameters:
 
 class CatalogDictionary:
     """§7.7.2 of the 1.7 and 2.0 references."""
-    def __init__(self):
+    def __init__(self) -> None:
         deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
-    def __getattr__(self, attr):
+    def __getattribute__(self, item: str) -> str:
         deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
-        return getattr(CatalogAttributes, attr)
+        return getattr(CatalogAttributes, item)
 
-    TYPE = "/Type"  # name, required; must be /Catalog
+    # TYPE = "/Type"  # name, required; must be /Catalog
     # VERSION = "/Version"  # name
     # EXTENSIONS = "/Extensions"  # dictionary, optional; ISO 32000-1
     # PAGES = "/Pages"  # dictionary, required
