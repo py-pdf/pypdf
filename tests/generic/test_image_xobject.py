@@ -8,7 +8,7 @@ from PIL import Image
 
 from pypdf import PdfReader
 from pypdf._utils import Version
-from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
+from pypdf.constants import ColorSpaces, FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
@@ -419,6 +419,7 @@ def test_xobj_to_image__color_components_out_of_range() -> None:
         ArrayObject([NumberObject(1)]),
         NumberObject(1),
     ],
+    ids=["odd-length-array", "single-value-array", "not-an-array"],
 )
 def test_xobj_to_image__malformed_decode(
     decode: PdfObject, caplog: pytest.LogCaptureFixture
@@ -427,8 +428,8 @@ def test_xobj_to_image__malformed_decode(
     x_object = StreamObject()
     x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(2)
     x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(2)
-    x_object[NameObject("/BitsPerComponent")] = NumberObject(8)
-    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject("/DeviceGray")
+    x_object[NameObject(ImageAttributes.BITS_PER_COMPONENT)] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_GRAY)
     x_object[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.FLATE_DECODE)
     x_object[NameObject(ImageAttributes.DECODE)] = decode
     x_object.set_data(zlib.compress(bytes([0, 64, 128, 255])))
