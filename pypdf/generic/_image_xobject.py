@@ -542,18 +542,23 @@ def _xobj_to_image(
             obj_as_text,
         )
     elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
-        # I'm not sure if the following logic is correct.
-        # There might not be any relationship between the filters and the
-        # extension
-        if lfilters == FT.LZW_DECODE:
-            image_format = "TIFF"
-            extension = ".tiff"  # mime_type = "image/tiff"
-        else:
-            image_format = "PNG"
-            extension = ".png"  # mime_type = "image/png"
+        # LZW-encoded image data is most commonly TIFF, and ASCII85-encoded
+        # image data is most commonly PNG, but the filter alone does not
+        # guarantee the underlying format. Try to open the data directly
+        # first and trust Pillow's own format detection; only fall back to
+        # guessing from the filter type if Pillow cannot identify the image
+        # (in which case it is interpreted as raw, undecoded pixel data).
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+            image_format = cast(str, img.format)
+            extension = "." + image_format.lower()
         except UnidentifiedImageError:
+            if lfilters == FT.LZW_DECODE:
+                image_format = "TIFF"
+                extension = ".tiff"  # mime_type = "image/tiff"
+            else:
+                image_format = "PNG"
+                extension = ".png"  # mime_type = "image/png"
             img = _image_from_bytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
