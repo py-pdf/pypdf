@@ -3035,7 +3035,8 @@ class PdfWriter(PdfDocCommon):
                         if str(d) in self.get_named_dest_root():
                             outlist.append(ano.clone(self).indirect_reference)
                     else:
-                        d = cast("ArrayObject", d)
+                        if not isinstance(d, ArrayObject) or not d:
+                            continue
                         p = self._get_cloned_page(d[0], pages, reader)
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/Dest",))
@@ -3050,7 +3051,8 @@ class PdfWriter(PdfDocCommon):
                     if str(d) in self.get_named_dest_root():
                         outlist.append(ano.clone(self).indirect_reference)
                 else:
-                    d = cast("ArrayObject", d)
+                    if not isinstance(d, ArrayObject) or not d:
+                        continue
                     p = self._get_cloned_page(d[0], pages, reader)
                     if p is not None:
                         anc = ano.clone(self, ignore_fields=("/D",))
