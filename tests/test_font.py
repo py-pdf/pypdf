@@ -8,6 +8,8 @@ import pytest
 from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader, PdfWriter
+from pypdf._codecs import fill_from_encoding
+from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS
 from pypdf._font import Font
 from pypdf.errors import PdfReadError
 from pypdf.generic import (
@@ -121,15 +123,24 @@ def test_font_from_font_file():
         if font_resource == "/F6":
             crippled_font_data = BytesIO()
             with TTFont(BytesIO(font_data)) as tt_font_object:
+                # Test zero units per em
+                tt_font_object["head"].unitsPerEm = 0
+                tt_font_object.save(crippled_font_data)
+                with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
+                    Font.from_truetype_font_file(crippled_font_data)
+                tt_font_object["head"].unitsPerEm = 2048
+
+                # Test various missing tables
                 del tt_font_object["name"]
                 del tt_font_object["OS/2"]
                 del tt_font_object["post"]
+                crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
                 font = Font.from_truetype_font_file(crippled_font_data)
-                crippled_font_data.seek(0)
 
                 # Test raising AttributeError in _get_typographic_maps due to missing cmap table
                 del tt_font_object["cmap"]
+                crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
                 crippled_font_data_value = crippled_font_data.getvalue()
                 font.font_descriptor.font_file.set_data(crippled_font_data_value)
@@ -151,19 +162,6 @@ def test_font_as_font_resource():
     font_data = font_resources["/F7"]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
     font = Font.from_truetype_font_file(BytesIO(font_data))
     font._add_to_writer(writer, font_resources, NameObject("/" + font.name))
-
-
-def test_font_from_font_file_zero_units_per_em():
-    reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
-    font_resource = reader.pages[0]["/Resources"]["/Font"]["/F1"]
-    font_data = font_resource["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
-    crippled_font_data = BytesIO()
-    with TTFont(BytesIO(font_data)) as tt_font_object:
-        tt_font_object["head"].unitsPerEm = 0
-        tt_font_object.save(crippled_font_data)
-    crippled_font_data.seek(0)
-    with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
-        Font.from_truetype_font_file(crippled_font_data)
 
 
 def test_font_from_font_file_no_fonttools(tmp_path):
@@ -197,3 +195,23 @@ with pytest.raises(ImportError, match=r"^The 'fontTools' library is required to 
     )
     assert result.returncode == 0
     assert result.stdout == b""
+
+
+def test_non_winansi_type1_font_character_map():
+    encoding_list = fill_from_encoding("cp1257")
+    core_font_metrics = CORE_FONT_METRICS["Helvetica"]
+    font = Font(
+        name="Helvetica",
+        character_map={},
+        encoding=dict(zip(range(256), encoding_list)),
+        sub_type="Type1",
+        font_descriptor=core_font_metrics.font_descriptor,
+        character_widths={
+            chr(code): core_font_metrics.character_widths[value] for code, value in enumerate(
+                encoding_list
+            ) if value in core_font_metrics.character_widths
+        },
+    )
+    font.character_widths["default"] = core_font_metrics.character_widths["default"]
+    font2 = Font.from_font_resource(font.as_font_resource())
+    reverse_cmap, encoding_cmap = font2._get_typographic_maps()

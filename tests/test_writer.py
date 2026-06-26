@@ -1746,7 +1746,7 @@ def test_update_form_fields2(caplog):
                     "MM": "04",
                     "DD": "21",
                     "YY": "24",
-                    "Initial": "RRG",
+                    "Initial": "ąčęėįšųūž. ĄČĘĖĮŠŲŪŽ.",
                     # "I DO NOT Agree": null,
                     # "Last Name": null
                 },
@@ -1785,7 +1785,7 @@ def test_update_form_fields2(caplog):
         writer = PdfWriter(clone_from=reader)
 
         writer.update_page_form_field_values(
-            None, my_files[file]["usage"]["fields"], auto_regenerate=True
+            None, my_files[file]["usage"]["fields"], auto_regenerate=True, flatten=True
         )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {
@@ -1794,7 +1794,7 @@ def test_update_form_fields2(caplog):
         "test1.MM": "04",
         "test1.DD": "21",
         "test1.YY": "24",
-        "test1.Initial": "RRG",
+        "test1.Initial": "ąčęėįšųūž. ĄČĘĖĮŠŲŪŽ.",
         "test1.I DO NOT Agree": None,
         "test1.Last Name": None,
         "test2.p2 First Name": "Joe",
@@ -1811,6 +1811,7 @@ def test_update_form_fields2(caplog):
         "test2.p3 DD": "25",
         "test2.p3 YY": "21",
     }
+    assert "/PYPDF1cp1257" in merger.pages[0]["/Resources"]["/Font"]
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
 

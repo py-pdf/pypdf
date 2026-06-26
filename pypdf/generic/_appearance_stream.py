@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import re
 from dataclasses import dataclass
 from enum import IntEnum
@@ -455,14 +456,20 @@ class TextStreamAppearance(BaseStreamAppearance):
                 )
                 font_name = "/Helvetica"
             core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
+            win_ansi_encoding=dict(zip(range(256), fill_from_encoding("cp1252")))  # WinAnsiEncoding
             font = Font(
                 name=font_name.removeprefix("/"),
                 character_map={},
-                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
+                encoding=win_ansi_encoding,
                 sub_type="Type1",
                 font_descriptor=core_font_metrics.font_descriptor,
-                character_widths=core_font_metrics.character_widths
+                character_widths={
+                    chr(code): core_font_metrics.character_widths[character]
+                    for code, character in win_ansi_encoding.items()
+                    if chr(code) in core_font_metrics.character_widths
+                }
             )
+            font.character_widths["default"] = core_font_metrics.character_widths["default"]
 
         # If we have found a font resource, it still might not be able to encode the text value we received.
         encodable = font.can_encode(text)
@@ -477,6 +484,30 @@ class TextStreamAppearance(BaseStreamAppearance):
                     encodable = font.can_encode(text)
                 except (ImportError, PdfReadError) as e:
                     logger_warning("Unable to use embedded font for encoding: %(e)s", source=__name__, e=e)
+
+            # If it's one of the unembedded 14 Adobe Core Fonts, we can test other supported encodings
+            elif font.sub_type == "Type1" and font.name in CORE_FONT_METRICS:
+                core_font_metrics = CORE_FONT_METRICS[font.name]
+                test_encodings = {
+                    "cp1250",     # Central / Eastern European
+                    "cp1254",     # Turkish
+                    "cp1257",     # Baltic Rim
+                    "iso8859_15"  # Western European ISO Alternate
+                }
+                for encoding in test_encodings:
+                    test_font = copy.copy(font)
+                    test_font.encoding = dict(zip(range(256), fill_from_encoding(encoding)))
+                    encodable = test_font.can_encode(text)
+                    if encodable:
+                        font = test_font
+                        font.character_widths.clear()
+                        for code, character in test_font.encoding.items():
+                            # Look up the width using the glyph name from the encoding
+                            if character in core_font_metrics.character_widths:
+                                font.character_widths[chr(code)] = core_font_metrics.character_widths[character]
+                        font.character_widths["default"] = core_font_metrics.character_widths["default"]
+                        font_name = "/PYPDF1" + encoding
+                        break
 
             if not encodable:
                 logger_warning(

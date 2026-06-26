@@ -18,6 +18,7 @@ from pypdf.generic import (
 )
 
 from ._cmap import get_encoding
+from ._codecs import fill_from_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
 from .constants import FontFlags
@@ -589,7 +590,7 @@ class Font:
                 glyph_id_str = str(glyph_id)
                 reverse_cmap[unicode_char] = glyph_id_str
                 encoding_cmap[glyph_id_str] = glyph_id_str.encode(self.encoding)
-        else:
+        else:  # Encoding is a dict, which means we are dealing with a simple font
             for character_code, unicode_char in self.encoding.items():
                 character_str = chr(character_code)
                 reverse_cmap[unicode_char] = character_str
@@ -598,21 +599,37 @@ class Font:
             unicode_to_bytes = {
                 unicode_char: bytes((character_code,)) for character_code, unicode_char in self.encoding.items()
             }
-            for glyph_id, unicode_char in self.character_map.items():  # This code is not covered nor tested
-                reverse_cmap[unicode_char] = glyph_id
-                encoding_cmap[glyph_id] = unicode_to_bytes.get(unicode_char, bytes((glyph_id,)))
+            for character_code_str, unicode_char in self.character_map.items():
+                reverse_cmap[unicode_char] = character_code_str
+                encoding_cmap[character_code_str] = unicode_to_bytes.get(
+                    unicode_char,
+                    bytes((ord(character_code_str),))
+                )
 
         return reverse_cmap, encoding_cmap
 
     def _create_widths_list_and_unicode_stream(self) -> tuple[list[PdfObject], StreamObject]:
+        from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
+
         widths_list = []
         unicode_map = []
-        # In the loop, char is the decoded GID string (the reverse unicode hack)
-        # and character_map[char] is the actual character.
-        # The widths (/W) array can have two formats:
-        #    [first_cid [w1 w2 w3]] or [first last width]
-        # Here we choose the first format and simply provide one array with one width for every cid.
-        for gid_str, actual_char in self.character_map.items():
+
+        # Determine if we are processing an 8-bit simple font or a 16-bit composite font
+        is_simple = isinstance(self.encoding, dict) or (isinstance(self.encoding, str) and self.encoding == "charmap")
+
+        # Simple fonts use 2-hex digits (<8A>), Composite/CID fonts use 4-hex digits (<008A>)
+        src_hex_format = "{cid:02X}" if is_simple else "{cid:04X}"
+        codespace_max = "FF" if is_simple else "FFFF"
+        cmap_name = "Custom-Simple-8Bit" if is_simple else "Adobe-Identity-UCS"
+        cmap_type = "2" # Both remain Type 2 CMaps
+
+        # If it's a simple font mapping, we iterate over self.encoding dict
+        # instead of self.character_map GIDs
+        mapping_source = cast(dict[int, str], self.encoding).items() if is_simple else self.character_map.items()
+
+        # In the loop, src_id is the decoded GID string (the reverse unicode hack) or the character code
+        # and actual_char is the actual character.
+        for src_id, actual_char in mapping_source:
             # Make sure that we do not include characters such as arabic presentation form characters.
             # Note that, in some cases, unicodedata.normalize() might split a ligature, resulting
             # in multiple characters.
@@ -621,13 +638,17 @@ class Font:
             # Only deal with Basic Multilingual Plane characters.
             # TODO: Add all characters.
             if all(uni_point <= 0xFFFF for uni_point in uni_points):
-                cid = ord(gid_str)
-                cid_hex = f"{cid:04X}"
+                cid = ord(src_id) if isinstance(src_id, str) else src_id
+                cid_hex = src_hex_format.format(cid=cid)
                 uni_hex = "".join(f"{uni_point:04X}" for uni_point in uni_points)
                 unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
-
-                width = self.character_widths.get(gid_str, self.character_widths["default"])
-                widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+                # Width mapping, but not for the 14 Adobe code fonts, which are dealt with elsewhere.
+                if self.name not in CORE_FONT_METRICS:
+                    # The widths (/W) array can have two formats:
+                    #    [first_cid [w1 w2 w3]] or [first last width]
+                    # Here we choose the first format and simply provide one array with one width for every cid.
+                    width = self.character_widths.get(cast(str, src_id), self.character_widths["default"])
+                    widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
 
         # Create the /ToUnicode CMap Stream
         to_unicode_stream = StreamObject()
@@ -636,10 +657,9 @@ class Font:
                 "/CIDInit /ProcSet findresource begin\n"
                 "12 dict begin\n"
                 "begincmap\n"
-                "/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n"
-                "/CMapName /Adobe-Identity-UCS def\n"
-                "/CMapType 2 def\n"
-                "1 begincodespacerange <0000> <FFFF> endcodespacerange\n"
+                f"/CMapName /{cmap_name} def\n"
+                f"/CMapType {cmap_type} def\n"
+                f"1 begincodespacerange <{'00' if is_simple else '0000'}> <{codespace_max}> endcodespacerange\n"
                 f"{len(unicode_map)} beginbfchar\n"
                 + "\n".join(unicode_map) + "\n"
                 "endbfchar\n"
@@ -685,13 +705,35 @@ class Font:
             })
 
         # Fallback: Return a font resource for one of the 14 Adobe Core fonts.
-        return DictionaryObject({
+        win_ansi_encoding_list = fill_from_encoding("cp1252")
+        differences_list: list[NumberObject | NameObject] = []
+        reverse_adobe_glyphs = {value: key for key, value in adobe_glyphs.items()}
+        for idx, character_code in enumerate(win_ansi_encoding_list):
+            encoding_char = cast(dict[int, str], self.encoding).get(idx)
+            if encoding_char and encoding_char != character_code:
+                differences_list.extend([NumberObject(idx), NameObject(reverse_adobe_glyphs[encoding_char])])
+
+        if differences_list:
+            encoding: DictionaryObject | NameObject = DictionaryObject({
+                NameObject("/BaseEncoding"): NameObject("/WinAnsiEncoding"),
+                NameObject("/Differences"): ArrayObject(differences_list),
+            })
+        else:
+            encoding = NameObject("/WinAnsiEncoding")
+
+        simple_font =  DictionaryObject({
             NameObject("/Type"): NameObject("/Font"),
             NameObject("/Subtype"): NameObject("/Type1"),
             NameObject("/Name"): NameObject(f"/{self.name}"),
             NameObject("/BaseFont"): NameObject(f"/{self.name}"),
-            NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+            NameObject("/Encoding"): encoding
         })
+
+        if differences_list:
+            _, to_unicode_stream = self._create_widths_list_and_unicode_stream()
+            simple_font[NameObject("/ToUnicode")] = to_unicode_stream
+
+        return simple_font
 
     def _add_to_writer(
         self,
