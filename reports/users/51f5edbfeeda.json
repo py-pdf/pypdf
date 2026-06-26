@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "user_id": "51f5edbfeeda",
+  "synced_at": "2026-06-26T20:36:59.084938+00:00",
+  "git_email_domain": "paigeurig.com",
+  "onboarding": {
+    "first_query": null,
+    "first_doctor_pass": {
+      "date": "2026-06-26T20:33:25.948928+00:00"
+    },
+    "first_customer_code": {
+      "date": "2026-06-26T16:33:31-04:00",
+      "commit": "72368a69655a"
+    },
+    "days_to_first_query": null
+  },
+  "activity": {
+    "window_7d": {
+      "query_runs": 0,
+      "query_by_library": {},
+      "skill_intents": {},
+      "symbol_checks": {
+        "runs": 0,
+        "pass_rate": null,
+        "top_violations": []
+      },
+      "sessions_ended": 1
+    },
+    "window_30d": {
+      "query_runs": 0,
+      "query_by_library": {},
+      "skill_intents": {},
+      "symbol_checks": {
+        "runs": 0,
+        "pass_rate": null,
+        "top_violations": []
+      },
+      "sessions_ended": 1
+    },
+    "all_time": {
+      "query_runs": 0,
+      "query_by_library": {},
+      "skill_intents": {},
+      "symbol_checks": {
+        "runs": 0,
+        "pass_rate": null,
+        "top_violations": []
+      },
+      "sessions_ended": 1
+    }
+  }
+}
