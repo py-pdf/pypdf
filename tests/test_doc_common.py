@@ -643,6 +643,30 @@ def test_xfa__decompression_limit():
         _ = reader.xfa
 
 
+def test_get_form_text_fields__mapping_name_without_partial_name():
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    # A text field carrying only a mapping name (/TM) and no partial name (/T)
+    # is tolerated when building the field tree, so reading the text fields by
+    # short name should fall back to the qualified name instead of raising.
+    field = DictionaryObject()
+    field[NameObject("/FT")] = NameObject("/Tx")
+    field[NameObject("/TM")] = TextStringObject("mappingname")
+    field[NameObject("/V")] = TextStringObject("hello")
+
+    acro = DictionaryObject()
+    acro[NameObject("/Fields")] = ArrayObject([writer._add_object(field)])
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acro)
+
+    data = BytesIO()
+    writer.write(data)
+    data.seek(0)
+
+    reader = PdfReader(data)
+    assert reader.get_form_text_fields() == {"mappingname": "hello"}
+
+
 @pytest.mark.timeout(5)
 def test_get_pages_showing_field__cyclic() -> None:
     writer = PdfWriter()

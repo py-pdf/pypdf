@@ -744,7 +744,7 @@ class PdfDocCommon(ABC):
                 if full_qualified_name:
                     ff[field] = value.get("/V")
                 else:
-                    ff[indexed_key(cast(str, value["/T"]), ff)] = value.get("/V")
+                    ff[indexed_key(cast(str, value.get("/T", field)), ff)] = value.get("/V")
         return ff
 
     def get_pages_showing_field(
