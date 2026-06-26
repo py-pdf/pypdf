@@ -24,6 +24,8 @@ def test_slash_prefix():
     """
     pattern = re.compile(r"^/[A-Z]+[a-zA-Z0-9]*$")
     for cls in PDF_KEYS:
+        if cls == CatalogDictionary:  # Deprecated
+            continue
         for attr in dir(cls):
             # Skip magic methods
             if attr.startswith("__") and attr.endswith("__"):
