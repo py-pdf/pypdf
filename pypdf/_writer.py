@@ -68,9 +68,8 @@ from ._utils import (
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
-from .constants import CatalogAttributes as CA
 from .constants import (
-    CatalogDictionary,
+    CatalogAttributes,
     Core,
     GoToActionArguments,
     ImageType,
@@ -578,13 +577,13 @@ class PdfWriter(PdfDocCommon):
         # https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         try:
             # get the AcroForm tree
-            if CatalogDictionary.ACRO_FORM not in self._root_object:
+            if CatalogAttributes.ACRO_FORM not in self._root_object:
                 self._root_object[
-                    NameObject(CatalogDictionary.ACRO_FORM)
+                    NameObject(CatalogAttributes.ACRO_FORM)
                 ] = self._add_object(DictionaryObject())
 
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
-            cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])[
+            cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])[
                 need_appearances
             ] = BooleanObject(state)
         except Exception as exc:  # pragma: no cover
@@ -598,7 +597,7 @@ class PdfWriter(PdfDocCommon):
     def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
         self._root_object[
-            NameObject(CatalogDictionary.VIEWER_PREFERENCES)
+            NameObject(CatalogAttributes.VIEWER_PREFERENCES)
         ] = self._add_object(o)
         return o
 
@@ -787,8 +786,8 @@ class PdfWriter(PdfDocCommon):
         """
         # Names / JavaScript preferred to be able to add multiple scripts
         if "/Names" not in self._root_object:
-            self._root_object[NameObject(CA.NAMES)] = DictionaryObject()
-        names = cast(DictionaryObject, self._root_object[CA.NAMES])
+            self._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
+        names = cast(DictionaryObject, self._root_object[CatalogAttributes.NAMES])
         if "/JavaScript" not in names:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}
@@ -977,9 +976,9 @@ class PdfWriter(PdfDocCommon):
                 annotation itself.
 
         """
-        if CatalogDictionary.ACRO_FORM not in self._root_object:
+        if CatalogAttributes.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
-        acro_form = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        acro_form = cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])
         if InteractiveFormDictEntries.Fields not in acro_form:
             raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
@@ -1103,10 +1102,10 @@ class PdfWriter(PdfDocCommon):
             return lst
 
         try:
-            af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+            af = cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])
         except KeyError:
             af = DictionaryObject()
-            self._root_object[NameObject(CatalogDictionary.ACRO_FORM)] = af
+            self._root_object[NameObject(CatalogAttributes.ACRO_FORM)] = af
         try:
             fields = cast(ArrayObject, af[InteractiveFormDictEntries.Fields])
         except KeyError:
@@ -3318,15 +3317,15 @@ class PdfWriter(PdfDocCommon):
         if start != 0:
             new_page_label[NameObject("/St")] = NumberObject(start)
 
-        if NameObject(CatalogDictionary.PAGE_LABELS) not in self._root_object:
+        if NameObject(CatalogAttributes.PAGE_LABELS) not in self._root_object:
             nums = ArrayObject()
             nums_insert(NumberObject(0), default_page_label, nums)
             page_labels = TreeObject()
             page_labels[NameObject("/Nums")] = nums
-            self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+            self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)] = page_labels
 
         page_labels = cast(
-            TreeObject, self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
+            TreeObject, self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)]
         )
         nums = cast(ArrayObject, page_labels[NameObject("/Nums")])
 
@@ -3337,7 +3336,7 @@ class PdfWriter(PdfDocCommon):
             nums_insert(NumberObject(page_index_to + 1), default_page_label, nums)
 
         page_labels[NameObject("/Nums")] = nums
-        self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+        self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)] = page_labels
 
     def _repr_mimebundle_(
         self,

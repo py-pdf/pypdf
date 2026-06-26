@@ -49,7 +49,6 @@ from ._utils import (
     parse_iso8824_date,
 )
 from .constants import CatalogAttributes as CA
-from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
     Core,
@@ -319,7 +318,7 @@ class PdfDocCommon(ABC):
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
         """Returns the existing ViewerPreferences as an overloaded dictionary."""
-        o = self.root_object.get(CD.VIEWER_PREFERENCES, None)
+        o = self.root_object.get(CA.VIEWER_PREFERENCES, None)
         if o is None:
             return None
         o = o.get_object()
@@ -328,7 +327,7 @@ class PdfDocCommon(ABC):
             if hasattr(o, "indirect_reference") and o.indirect_reference is not None:
                 self._replace_object(o.indirect_reference, o)
             else:
-                self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
+                self.root_object[NameObject(CA.VIEWER_PREFERENCES)] = o
         return o
 
     def get_num_pages(self) -> int:
@@ -566,8 +565,8 @@ class PdfDocCommon(ABC):
             catalog = self.root_object
             stack = []
             # get the AcroForm tree
-            if CD.ACRO_FORM in catalog:
-                tree = cast(Optional[TreeObject], catalog[CD.ACRO_FORM])
+            if CA.ACRO_FORM in catalog:
+                tree = cast(Optional[TreeObject], catalog[CA.ACRO_FORM])
             else:
                 return None
         if tree is None:
@@ -1129,7 +1128,7 @@ class PdfDocCommon(ABC):
              - Show two pages at a time, odd-numbered pages on the right
         """
         try:
-            return cast(NameObject, self.root_object[CD.PAGE_LAYOUT])
+            return cast(NameObject, self.root_object[CA.PAGE_LAYOUT])
         except KeyError:
             return None
 

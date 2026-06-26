@@ -530,7 +530,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         writer: PdfWriter,
         page: PageObject,
         flatten: bool,
-        acro_form: DictionaryObject,  # _root_object[CatalogDictionary.ACRO_FORM])
+        acro_form: DictionaryObject,  # _root_object[CatalogAttributes.ACRO_FORM])
         field: DictionaryObject,
         annotation: DictionaryObject,
         user_font_name: str = "",
