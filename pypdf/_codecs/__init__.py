@@ -10,7 +10,7 @@ def fill_from_encoding(enc: str) -> list[str]:
     for x in range(256):
         try:
             lst += (bytes((x,)).decode(enc),)
-        except Exception:
+        except UnicodeDecodeError:
             lst += (chr(x),)
     return lst
 
