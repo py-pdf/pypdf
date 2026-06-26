@@ -144,12 +144,10 @@ def test_appearance_stream_rtl():
         font_color="0 g",
         is_multiline=False
     )
-    # The regex returns two groups. The first matches the text in /Span << /ActualText <[group 0]> >> BDC
-    # The second matches the encoded text data.
-    decoded_data = re.findall("<([a-zA-Z0-9]+?)> ", appearance.get_data().decode())
-    actual_text = bytes.fromhex(decoded_data[0]).decode("utf-16-be")
-    assert actual_text == "\ufeff" + test_string
-    hex_glyphs_rtl_enabled = decoded_data[1]
+    # The regex returns two matches. The first matches the text in /Span << /ActualText <[group 0]> >> BDC
+    # The second match concerns the encoded text data.
+    [hex_actual_text, hex_glyphs_rtl_enabled] = re.findall("<([a-zA-Z0-9]+?)> ", appearance.get_data().decode())
+    assert bytes.fromhex(hex_actual_text).decode("utf-16-be") == "\ufeff" + test_string
     assert hex_shaped_test_glyphs == hex_glyphs_rtl_enabled
 
     # RTL support disabled
@@ -164,7 +162,7 @@ def test_appearance_stream_rtl():
             font_color="0 g",
             is_multiline=False
         )
-        hex_glyphs_rtl_disabled = re.findall("<(.+?)>", appearance.get_data().decode())[1]
+        [hex_glyphs_rtl_disabled] = re.findall("^<(.+?)>", appearance.get_data().decode(), re.MULTILINE)
     assert hex_unshaped_test_glyphs == hex_glyphs_rtl_disabled
     # The hex glyph sequences should be different when RTL support is enabled vs disabled
     assert hex_glyphs_rtl_enabled != hex_glyphs_rtl_disabled
@@ -181,7 +179,9 @@ def test_appearance_stream_rtl():
             font_color="0 g",
             is_multiline=False
         )
-        hex_glyphs_rtl_enabled_fonttools_disabled  = re.findall("<(.+?)>", appearance.get_data().decode())[0]
+        [hex_glyphs_rtl_enabled_fonttools_disabled] = re.findall(
+            "^<(.+?)>", appearance.get_data().decode(), re.MULTILINE
+        )
     assert hex_shaped_test_glyphs != hex_glyphs_rtl_enabled_fonttools_disabled
 
 
