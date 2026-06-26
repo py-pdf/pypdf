@@ -899,17 +899,6 @@ def test_link_annotation(pdf_file_path):
         writer.write(output_stream)
 
 
-def _reader_with_link_annotation(annotation: DictionaryObject) -> PdfReader:
-    """A one-page PDF whose single page carries the given link annotation."""
-    writer = PdfWriter()
-    writer.add_blank_page(width=72, height=72)
-    writer.pages[0][NameObject("/Annots")] = ArrayObject([writer._add_object(annotation)])
-    stream = BytesIO()
-    writer.write(stream)
-    stream.seek(0)
-    return PdfReader(stream)
-
-
 @pytest.mark.parametrize(
     "annotation",
     [
@@ -932,10 +921,17 @@ def _reader_with_link_annotation(annotation: DictionaryObject) -> PdfReader:
             NameObject("/Dest"): NumberObject(5),
         }),
     ],
+    ids=["empty-dest-array", "empty-goto-action-dest", "non-array-dest"],
 )
 def test_malformed_link_destination_does_not_crash_transfer(annotation):
     """A link with an empty or non-array destination must not abort page transfer."""
-    reader = _reader_with_link_annotation(annotation)
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Annots")] = ArrayObject([writer._add_object(annotation)])
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    reader = PdfReader(stream)
 
     # append() routes the annotation through _insert_filtered_annotations.
     appended = PdfWriter()
