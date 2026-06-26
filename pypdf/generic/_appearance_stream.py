@@ -456,14 +456,20 @@ class TextStreamAppearance(BaseStreamAppearance):
                 )
                 font_name = "/Helvetica"
             core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
+            win_ansi_encoding=dict(zip(range(256), fill_from_encoding("cp1252")))  # WinAnsiEncoding
             font = Font(
                 name=font_name.removeprefix("/"),
                 character_map={},
-                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
+                encoding=win_ansi_encoding,
                 sub_type="Type1",
                 font_descriptor=core_font_metrics.font_descriptor,
-                character_widths=core_font_metrics.character_widths
+                character_widths={
+                    chr(code): core_font_metrics.character_widths[character]
+                    for code, character in win_ansi_encoding.items()
+                    if chr(code) in core_font_metrics.character_widths
+                }
             )
+            font.character_widths["default"] = core_font_metrics.character_widths["default"]
 
         # If we have found a font resource, it still might not be able to encode the text value we received.
         encodable = font.can_encode(text)
