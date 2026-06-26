@@ -1,0 +1,55 @@
+---
+description: Route user intent to the correct skill, command, or agent
+alwaysApply: true
+---
+
+# Routing
+
+Match the user's request to a skill, command, or agent and **read that asset immediately** before acting. Do not improvise the workflow.
+
+## Skills
+
+| User intent (examples) | Skill | Read first |
+|------------------------|-------|------------|
+| new file, scaffold, start a, write code, generate, create a script | **nb-generate** | `.cursor/skills/nb-generate/SKILL.md` |
+| review, check, validate, does this follow, is this correct, audit my code | **nb-validate** | `.cursor/skills/nb-validate/SKILL.md` |
+| test, coverage, edge case, missing test, weak test, test plan | **nb-test** | `.cursor/skills/nb-test/SKILL.md` |
+| add library, reindex, update index, refresh index, crawl, index a library | **nb-crawl** | `.cursor/skills/nb-crawl/SKILL.md` |
+| onboarding metrics, usage report, executive summary, sync metrics, per-user stats, team benefit, nb-report | **nb-report** | `.cursor/skills/nb-report/SKILL.md` |
+
+## Commands
+
+| User intent (examples) | Command |
+|------------------------|---------|
+| init, set up newbie, thin config, plugin only, first time setup | **nb-init** |
+| onboard, new hire, first week, ramp, getting started | **nb-onboard** |
+| renewal, ADM readout, executive summary, defend renewal, champion evidence | **nb-renewal-report** |
+| verify imports, pre-PR check, symbol check, before I open a PR | **nb-verify-imports** |
+
+## Agents
+
+| User intent (examples) | Agent |
+|------------------------|-------|
+| guided onboarding, newbie mode, teach me the workflow, first sprint | **newbie-onboarding** |
+| user story, acceptance criteria, sprint, stakeholder, PM summary | **pm-planning** |
+| test plan, QA review, coverage gaps, regression, pre-merge quality | **qa-reviewer** |
+| CI, manifest, reindex, deploy, pipeline, index version, DevOps | **devops-guardian** |
+
+## How to route
+
+1. Scan the user's message for intent — keyword matches are hints, not hard requirements; infer from context when obvious.
+2. If one skill, command, or agent clearly fits, read its definition and follow it step by step.
+3. If multiple apply, run in order: **nb-onboard** or **newbie-onboarding** → **nb-generate** → **nb-validate** → **nb-test** → **nb-verify-imports** for new code.
+4. Cross-functional requests: combine **pm-planning** + **qa-reviewer** + **devops-guardian** with KYA formatting.
+5. If nothing fits (project setup, debugging scripts, docs), proceed normally without forcing a skill.
+
+## Examples
+
+- "Start a script that merges two PDFs" → **nb-generate**
+- "I'm a new hire — walk me through my first library task" → **nb-onboard** or **newbie-onboarding**
+- "Does this follow pypdf conventions?" → **nb-validate**
+- "What tests am I missing for merge_pdfs?" → **nb-test**
+- "Add requests to the index" → **nb-crawl** (after updating `config/libraries.yaml`)
+- "Regenerate the executive onboarding summary" → **nb-report** or **nb-renewal-report**
+- "Check my imports before I open a PR" → **nb-verify-imports**
+- "Draft AC for the onboarding epic" → **pm-planning**

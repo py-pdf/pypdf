@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "bash .cursor/hooks/run.sh .cursor/hooks/session_health.py",
+        "timeout": 120
+      },
+      {
+        "command": "bash .cursor/hooks/run.sh .cursor/hooks/log_nb_event.py sessionStart"
+      }
+    ],
+    "afterShellExecution": [
+      {
+        "command": "bash .cursor/hooks/run.sh .cursor/hooks/log_nb_event.py afterShellExecution"
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "bash .cursor/hooks/run.sh .cursor/hooks/nudge_nb_generate.py",
+        "matcher": "UserPromptSubmit"
+      },
+      {
+        "command": "bash .cursor/hooks/run.sh .cursor/hooks/log_nb_event.py beforeSubmitPrompt"
+      }
+    ],
+    "stop": [
+      {
+        "command": "bash .cursor/hooks/run.sh .cursor/hooks/log_nb_event.py stop"
+      }
+    ]
+  }
+}

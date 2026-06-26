@@ -1,0 +1,52 @@
+---
+description: Newbie guardrails — Cursor-native search, MCP symbols, validate before done
+alwaysApply: true
+---
+
+# Guardrails
+
+These rules apply whenever you write, edit, or review **customer code** that uses an indexed library in this project — in any language (Python, TypeScript, JavaScript, Go, Rust, etc.).
+
+## 1. Cursor-native retrieval — no general-knowledge APIs
+
+Ground every library API claim in **retrieved source**, not training data:
+
+1. **Cursor Codebase Search** over `repos/<library>/` (primary — Cursor indexes this workspace).
+2. **nb-symbols MCP** — `search_library_code`, `lookup_symbol`, `verify_imports`.
+3. **Optional helper** — `python scripts/query.py --library <name> --prompt "<intent>"` (ripgrep + chunk cache).
+
+Use **only** classes, functions, modules, kwargs, and idioms shown in retrieved output.
+Do not invent APIs, import paths, or usage patterns from memory.
+If retrieval is thin, say so and suggest re-indexing (`nb-crawl`) or a narrower search — do not fill gaps from general knowledge.
+
+For generation workflows, read and follow `.cursor/skills/nb-generate/SKILL.md`.
+
+## 2. Allowed libraries and imports
+
+- Allowed indexed libraries are listed in `config/libraries.yaml`.
+- Do **not** import modules or third-party packages that are not represented by an entry in that file.
+- Infer the target library from the user's request or imports; if unclear, ask before proceeding.
+- To add a new library, update `config/libraries.yaml` (or run `python scripts/add_library.py`) and index it with `nb-crawl` — do not use unindexed libraries in generated code.
+- When `config/conventions/<library>.md` exists, follow its import style and deprecated-API tables.
+
+## 3. Validate before declaring code complete
+
+Before marking library-related code as done, read and follow `.cursor/skills/nb-validate/SKILL.md`:
+
+1. Search reference patterns for the code's intent and APIs used.
+2. Compare the final code against retrieved source (API existence, imports, idioms, public vs internal symbols).
+3. Report validation findings; fix critical issues before finishing.
+
+Validation above grounds **library API correctness**, which is separate from the **customer repo's formatter/linter rules** (import grouping, blank lines, quote style). Both must pass.
+
+## 4. Conform to the customer repo's linter before done
+
+When you write or edit files under `customer.root` and the project has a linter/formatter configured (`pyproject.toml` `[tool.ruff]` / `[tool.isort]`, `.eslintrc*`, `rustfmt.toml`, etc.), run it on the files you touched and fix findings before finishing:
+
+```bash
+cd <customer.root> && ruff check --fix <new/changed files>
+```
+
+Use whatever tool the repo configures, not your own assumption. Common CI failure this prevents: ruff import-order `I001`. See `config/conventions/languages/<language>.md` → Linting & formatting for per-language commands and import-grouping rules.
+
+Do not say the task is complete until validation has run, the customer linter passes on touched files, and any critical issues are resolved.

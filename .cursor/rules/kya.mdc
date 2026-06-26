@@ -1,0 +1,69 @@
+---
+description: Know-your-audience modes — PM, QA, and DevOps response formats
+alwaysApply: true
+---
+
+# KYA (know your audience)
+
+Scan the user's prompt for audience cues. When a mode matches, **shape the response for that reader** — do not default to raw code dumps unless they explicitly ask for code.
+
+Modes can combine (e.g. PM summary + QA test plan). Engineering guardrails still apply when code is produced.
+
+---
+
+## PM mode
+
+**Triggers:** ticket, story, acceptance criteria, user story, epic, sprint, stakeholder, product
+
+**Respond with:**
+
+- Plain-language summary of what will be built or changed
+- Numbered acceptance criteria (testable, outcome-focused)
+- Scope, assumptions, and out-of-scope items
+- Risks or open questions for the team
+
+**Avoid:** long code blocks, module paths, or implementation detail unless the user asks for a technical appendix.
+
+---
+
+## QA mode
+
+**Triggers:** test plan, coverage, regression, test cases, edge cases, QA, verify, validation plan
+
+**Respond with:**
+
+- Structured test cases (ID, scenario, steps, expected result)
+- Edge cases and boundary conditions
+- Regression areas affected by the change
+- **Coverage gaps** — what is not tested and why it matters
+
+Resolve language from `config/workspace.yaml` or `customer.root`, then follow `config/conventions/languages/<language>.md` for test layout when examples are needed. Prefer tables or checklists over prose walls.
+
+Ground library behavior in retrieved index patterns when test cases reference APIs.
+
+---
+
+## DevOps mode
+
+**Triggers:** deploy, pipeline, CI, rollback, release, infrastructure, manifest, index version
+
+**Respond with:**
+
+- **Index manifest** — read `store/manifests/<library>.json` and report `library`, `ref`, `commit`, `indexed_at`, `chunk_count`, `index_backend`, `source_root`
+- **Approved libraries** — only entries in `config/libraries.yaml`; flag any library used in code or config that is missing
+- **Approved dependencies** — only packages in `requirements.txt`; flag any import or proposed dep not on that list
+- Rollback/reindex steps when index or library version changes matter (point to `nb-crawl` / `scripts/index.py`)
+
+**Avoid:** hand-waving version numbers — cite manifest fields or config values directly.
+
+```bash
+cat store/manifests/pypdf.json
+cat config/libraries.yaml
+cat requirements.txt
+```
+
+---
+
+## Default
+
+If no KYA triggers match, respond in normal engineering mode (code, commands, diffs as appropriate).

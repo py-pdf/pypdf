@@ -1,0 +1,9 @@
+{
+  "library": "pypdf",
+  "ref": "efc511b91913306087f700984550f8dcedd6860b",
+  "commit": "efc511b91913306087f700984550f8dcedd6860b",
+  "chunk_count": 1114,
+  "index_backend": "cursor-codebase",
+  "source_root": "repos/pypdf",
+  "indexed_at": "2026-06-26T20:33:24.153641+00:00"
+}

@@ -1,0 +1,53 @@
+name: Metrics report
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/metrics/**"
+      - "scripts/report_metrics.py"
+      - ".cursor/hooks/**"
+      - ".cursor/hooks.json"
+      - "config/metrics.yaml.example"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: metrics-report
+  cancel-in-progress: true
+
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate metrics report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/report_metrics.py --write
+
+      - name: Commit updated reports
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/
+          if git diff --staged --quiet; then
+            echo "No report changes to commit."
+          else
+            git commit -m "chore: refresh onboarding metrics report [skip ci]"
+            git push
+          fi

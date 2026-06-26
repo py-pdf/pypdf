@@ -1,0 +1,100 @@
+name: Metrics report (PR)
+
+# Regenerate team reports when engineers push PRs (after their user snapshots
+# land via the pre-push git hook). Cloud Agents can run the same step; this
+# workflow is the CI fallback that needs no dashboard setup.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: metrics-report-pr-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate metrics report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/report_metrics.py --write
+
+      - name: Post PR summary comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- nb-metrics-autogen -->";
+            let headline = "_(report generated)_";
+            try {
+              const md = fs.readFileSync("reports/executive-summary.md", "utf8");
+              const match = md.match(/^#\s+(.+)/m) || md.match(/\*\*Headline:\*\*\s*(.+)/);
+              if (match) headline = match[1].trim();
+            } catch (e) {}
+
+            let synced = "?";
+            let active = "?";
+            try {
+              const json = JSON.parse(fs.readFileSync("reports/onboarding-metrics.json", "utf8"));
+              synced = json.users?.synced_count ?? "?";
+              active = json.users?.active_30d ?? "?";
+            } catch (e) {}
+
+            const body = [
+              marker,
+              "## Newbie onboarding metrics",
+              "",
+              `**Headline:** ${headline}`,
+              "",
+              "| Metric | Value |",
+              "|--------|-------|",
+              `| Synced engineers | ${synced} |`,
+              `| Active (30d) | ${active} |`,
+              "",
+              "Full reports: `reports/executive-summary.md` (updated on this branch).",
+            ].join("\n");
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.data.find((c) => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body,
+              });
+            }
+
+      - name: Commit updated reports on PR branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/
+          if git diff --staged --quiet; then
+            echo "No report changes to commit."
+          else
+            git commit -m "chore(metrics): refresh reports on PR [skip ci]"
+            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          fi

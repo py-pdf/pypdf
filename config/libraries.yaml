@@ -1,0 +1,11 @@
+libraries:
+- name: pypdf
+  repo: https://github.com/pgill843/customer_pypdf
+  ref: efc511b91913306087f700984550f8dcedd6860b
+  language: python
+  include:
+  - pypdf/*.py
+  - pypdf/**/*.py
+  exclude:
+  - '**/tests/**'
+  - '**/__pycache__/**'

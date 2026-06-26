@@ -1,0 +1,2 @@
+-r requirements.txt
+mcp>=1.2.0

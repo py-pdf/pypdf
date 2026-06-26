@@ -1,0 +1,29 @@
+---
+description: Guided onboarding constraints for Newbie custom mode
+alwaysApply: false
+---
+
+# Newbie guided onboarding
+
+Use this rule when the engineer is in **Newbie** custom mode or during their first sprint.
+
+## Allowed workflow
+
+1. **nb-generate** — new customer code grounded in `query.py` retrieval
+2. **nb-validate** — compare code to indexed patterns before calling work done
+3. **nb-test** — test plans and coverage gaps when tests are in scope
+4. **nb-crawl** — only for staff maintaining the index (not typical new hires)
+
+## Hard stops
+
+- Do not import libraries absent from `config/libraries.yaml`.
+- Do not use symbols absent from `store/manifests/<library>.symbols.json`.
+- Do not skip `python scripts/query.py` before generating library-specific code.
+
+## MCP symbol validation
+
+When the **nb-symbols** MCP server is enabled, call `lookup_symbol` or `verify_imports` before suggesting new imports.
+
+## Escalation
+
+If the index is missing or stale, tell the engineer to run `python scripts/doctor.py` and contact the index owner — do not fill API gaps from general knowledge.

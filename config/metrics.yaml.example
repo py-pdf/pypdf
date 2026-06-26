@@ -1,0 +1,33 @@
+# Newbie metrics configuration — copy to metrics.yaml and edit for your customer repo.
+# Paths are relative to the Newbie workspace root unless absolute.
+
+# Store SHA-256 hash of query prompts instead of raw text (recommended).
+redact_prompts: true
+
+# How much shell command detail hooks log: minimal | full
+log_command_args: minimal
+
+# Drop local hook events older than this many days when aggregating.
+event_retention_days: 365
+
+# Git default branch for milestone deltas (optional).
+default_branch: main
+
+# GitHub Actions workflow name for CI success-rate stats.
+ci_workflow_name: CI
+
+# Customer application root for first_customer_code milestone.
+# If omitted, falls back to config/workspace.yaml customer.root.
+# customer_root: ../customer_pypdf
+
+# Executive summary thresholds (on_track vs at_risk in reports/executive-summary.md)
+executive:
+  targets:
+    days_to_first_index: 7
+    symbol_pass_rate_30d: 0.90
+    ci_success_rate_30d: 0.95
+
+# Optional — map hashed user_id to display name for reports (manager-maintained).
+# Find user_id by running: python scripts/sync_metrics.py --show-id
+# user_aliases:
+#   a1b2c3d4e5f6: "Alice"

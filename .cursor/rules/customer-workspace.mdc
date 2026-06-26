@@ -1,0 +1,61 @@
+---
+description: Place customer deliverable code in the repo's existing layout, not Newbie infrastructure folders
+alwaysApply: true
+---
+
+# Customer workspace layout
+
+In the standard install, Newbie is materialized **into the customer repo** (plugin + `/nb-init`). One repo holds both:
+
+| Concern | Role | Examples |
+|---------|------|----------|
+| **Newbie infrastructure** | Indexing, skills, rules, `query.py`, manifests | `scripts/`, `.cursor/`, `config/libraries.yaml`, `store/` |
+| **Customer deliverables** | Application code you build for the customer | Scripts, modules, tests, configs — **any language** |
+
+`config/workspace.yaml` is **optional** — create it only to override what auto-detection gets wrong (see `config/workspace.yaml.example`). Do **not** require it before writing code.
+
+## Before writing customer code
+
+1. **Resolve the deliverable root.** Default to the repo root. Use `customer.root` from `config/workspace.yaml` only if set — that's the legacy multi-root layout where Newbie lives in a separate folder from the app.
+2. **Discover the layout** (next section) — do not assume a folder named `scripts/`.
+3. **Resolve language/test framework** from `customer.language` / `customer.test_framework` if set, otherwise infer from the repo (see `config/conventions/languages/<language>.md`).
+
+## Discover the deliverable layout — don't assume `scripts/`
+
+Customers keep new code in repo-specific places. Detect the convention before creating files:
+
+1. **If `customer.paths` is set in `config/workspace.yaml`, use it** (e.g. `paths.scripts: cmd`). It always wins over discovery.
+2. Otherwise **inspect the repo** for the dominant convention. Common roots, by ecosystem:
+   - executables/CLI: `cmd/`, `bin/`, `tools/`, `scripts/`
+   - source/library: `src/`, `lib/`, `internal/`, `pkg/`, `app/`, `packages/<name>/`, or a top-level package dir (e.g. `mylib/`)
+   - tests: `tests/`, `test/`, `__tests__/`, or alongside source (`*_test.go`, `*.test.ts`)
+3. **Match the dominant existing convention.** Put new code where the repo already keeps similar code.
+4. **Ask only when it's genuinely ambiguous** (no existing equivalent, multiple equally-plausible roots).
+
+## Where files go
+
+- New scripts, modules, packages → the repo's existing equivalent location (discovered above), **not** Newbie infra folders.
+- Customer tests → the repo's existing test location.
+- Customer configs, fixtures, data → the appropriate existing subfolder.
+
+**Do not** place customer deliverables inside Newbie infrastructure (`scripts/` for the indexing pipeline, `.cursor/`, `config/`, `store/`) unless the user explicitly asks to change scaffold, examples, or indexing infrastructure. When the customer repo's own code convention is also `scripts/`, that's fine — just don't mix deliverables into the Newbie indexing `scripts/` package.
+
+**Newbie infrastructure** stays in the repo that owns `config/libraries.yaml`:
+
+- Indexing, manifests, conventions, crawl scripts
+- Run `python scripts/query.py` from that repo's root
+
+## Placement workflow
+
+1. List or read directories at the deliverable root before adding files.
+2. Match the naming, imports, and folder conventions already used there.
+3. Read `config/conventions/languages/<language>.md` for file extensions and test layout.
+4. Prefer editing existing modules over creating parallel paths.
+5. When the user names a file or path, interpret it relative to the deliverable root.
+
+## Examples
+
+- "Write a script to merge two PDFs" → discover where the repo keeps entrypoints (`cmd/`, `bin/`, `tools/`, or `scripts/`) and create it there.
+- "Add a TypeScript API route" → under the repo's source root (`src/`, `app/`, or equivalent), following `config/conventions/languages/typescript.md`.
+- "Add tests for merge_pdfs" → under the repo's existing test location (`tests/`, `test/`, `__tests__/`, or beside source).
+- "Re-index pypdf" → run nb-crawl from the Newbie workspace; no new customer application files.

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "nb-symbols": {
+      "command": "python3",
+      "args": ["${workspaceFolder}/scripts/mcp_launcher.py"],
+      "env": {
+        "NB_PROJECT_ROOT": "${workspaceFolder}",
+        "NB_MCP_TRANSPORT": "stdio"
+      }
+    }
+  }
+}

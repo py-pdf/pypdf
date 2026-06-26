@@ -1,0 +1,11 @@
+{
+  "$schema": "https://cursor.com/schemas/environment.json",
+  "install": "bash scripts/cloud_bootstrap.sh",
+  "start": "true",
+  "terminals": [
+    {
+      "name": "nb-symbols (http)",
+      "command": ". .venv/bin/activate && NB_MCP_TRANSPORT=http NB_MCP_HOST=127.0.0.1 NB_MCP_PORT=8848 python scripts/mcp_symbols_server.py --transport http"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# Optional overrides for Newbie. EVERYTHING below is INFERRED by default —
+# create config/workspace.yaml only to correct what auto-detection gets wrong.
+# Paths are relative to this repo root (the folder that contains config/libraries.yaml).
+#
+# In the standard single-repo model (plugin + /nb-init), you usually need NONE of
+# this: customer code lives in this repo, the language is read from the repo, and
+# Newbie discovers the existing deliverable layout. Leave the whole file commented.
+
+# customer:
+#   # Where customer deliverable code lives. Defaults to this repo root.
+#   # Set this ONLY for the legacy multi-root layout, where Newbie is installed in
+#   # a separate folder from the customer application (e.g. a sibling ../customer-app).
+#   root: ../customer-app
+#
+#   # Target language for generated code. Inferred from repo files by default.
+#   # Supported convention files: config/conventions/languages/<language>.md
+#   # language: python | typescript | javascript | go | rust
+#
+#   # Test runner/framework. Inferred from the repo or language default by default.
+#   # test_framework: pytest | vitest | jest | go test | cargo test
+#
+#   # Where new deliverables go. By default Newbie DISCOVERS the repo's existing
+#   # layout (e.g. cmd/, bin/, tools/, app/, lib/, src/, scripts/, tests/, test/) and
+#   # matches the dominant convention. Set these ONLY to override discovery when the
+#   # repo keeps new code somewhere non-obvious.
+#   paths:
+#     scripts: cmd       # e.g. CLI entrypoints live in cmd/, not scripts/
+#     src: internal
+#     tests: test

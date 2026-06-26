@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Newbie pre-push — refresh and commit your metrics snapshot before your push.
+#
+# Runs on every ``git push``. Updates reports/users/<user_id>.json from local
+# hook events, commits it if changed, then lets your push continue (metrics ride
+# along with your code). Never blocks the push if metrics fail.
+set +e
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$ROOT" || exit 0
+
+PY="python3"
+if [ -x "$ROOT/.venv/bin/python" ]; then
+  PY="$ROOT/.venv/bin/python"
+fi
+
+if [ -f "$ROOT/scripts/sync_metrics.py" ]; then
+  "$PY" "$ROOT/scripts/sync_metrics.py" --write --commit
+  exit 0
+fi
+
+NB_CLI="${NB_CLI:-}"
+if [ -z "$NB_CLI" ] && [ -f "${HOME}/.cursor/plugins/local/newbie/scripts/nb_cli.py" ]; then
+  NB_CLI="${HOME}/.cursor/plugins/local/newbie/scripts/nb_cli.py"
+fi
+if [ -z "$NB_CLI" ]; then
+  NB_CLI="$(find "${HOME}/.cursor/plugins/local" -path '*/newbie/scripts/nb_cli.py' 2>/dev/null | head -1)"
+fi
+if [ -n "$NB_CLI" ] && [ -f "$NB_CLI" ]; then
+  "$PY" "$NB_CLI" sync-metrics --write --commit
+fi
+
+exit 0

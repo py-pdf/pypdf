@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+
+jobs:
+  boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run chunk tests
+        run: pytest tests/chunk/
+
+      - name: Validate library manifests match config
+        run: python scripts/check_manifests.py
+
+      - name: Verify indexed-library symbols in changed Python files
+        run: python scripts/verify_symbols.py --git-diff

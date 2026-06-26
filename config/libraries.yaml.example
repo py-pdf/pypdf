@@ -1,0 +1,36 @@
+# Copy to config/libraries.yaml and pin one entry per indexed library.
+# Each customer repo should list only that customer's libraries — not demo entries
+# from other projects (e.g. pypdf from the template repo).
+#
+# Scaffold a new entry:
+#   python scripts/add_library.py --name <name> --repo <url> --ref <tag-or-sha>
+#
+# Or uncomment and edit the block below, then run:
+#   python scripts/index.py --library <name>
+
+libraries: []
+
+# Example (remove comments and empty list above when using):
+# libraries:
+#   - name: requests
+#     repo: https://github.com/psf/requests
+#     ref: "v2.32.3"
+#     language: python
+#     include:
+#       - "src/requests/*.py"
+#       - "src/requests/**/*.py"
+#     exclude:
+#       - "**/tests/**"
+#       - "**/__pycache__/**"
+#
+#   - name: zod
+#     repo: https://github.com/colinhacks/zod
+#     ref: "v3.24.1"
+#     language: typescript
+#     include:
+#       - "src/*.ts"
+#       - "src/**/*.ts"
+#     exclude:
+#       - "**/tests/**"
+#       - "**/node_modules/**"
+#       - "**/dist/**"

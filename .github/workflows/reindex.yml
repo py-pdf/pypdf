@@ -1,0 +1,68 @@
+name: Reindex libraries
+
+on:
+  schedule:
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      library:
+        description: "Library name (leave blank to reindex all)"
+        required: false
+        type: string
+      reset:
+        description: "Delete and recreate chunk cache before indexing"
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - config/libraries.yaml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reindex-libraries
+  cancel-in-progress: false
+
+
+jobs:
+  reindex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Reindex configured libraries
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.library }}" ]; then
+            ARGS="--library ${{ github.event.inputs.library }}"
+          fi
+          if [ "${{ github.event.inputs.reset }}" = "true" ]; then
+            ARGS="$ARGS --reset"
+          fi
+          python scripts/reindex_all.py $ARGS
+
+      - name: Validate manifests
+        run: python scripts/check_manifests.py
+
+      - name: Commit updated manifests
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add store/manifests/ store/chunks/
+          if git diff --staged --quiet; then
+            echo "No manifest changes to commit."
+          else
+            git commit -m "chore: refresh library manifests and chunk cache [skip ci]"
+            git push
+          fi

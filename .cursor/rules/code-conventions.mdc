@@ -1,0 +1,65 @@
+---
+description: Per-library and per-language code conventions — naming, tests, deprecated APIs
+alwaysApply: true
+---
+
+# Code conventions
+
+Apply these when generating or reviewing customer code that uses an indexed library. Ground library API conventions in retrieved index patterns first; use per-library and per-language files when retrieval is silent.
+
+Check `store/manifests/<library>.json` for the indexed version (`ref`, `commit`) before citing conventions.
+
+## Resolve the target language
+
+Before generating or reviewing customer deliverables:
+
+1. **Infer the language from the repo by default** (see **Infer when workspace.yaml is silent** in each language file below). `config/workspace.yaml` is optional — read `customer.language` / `customer.test_framework` only as overrides when set.
+2. Read `config/conventions/languages/<language>.md` for file naming, module/import style, and test layout.
+3. If no language file exists, match conventions already used in the customer project; ask if unclear.
+
+Supported language convention files: `config/conventions/languages/python.md`, `typescript.md`, `javascript.md`, `go.md`, `rust.md`. Scaffold new languages from `config/conventions/languages/_template.md`.
+
+## Resolve the target library
+
+1. Infer from imports or the user's request.
+2. Confirm the name exists in `config/libraries.yaml`.
+3. If `config/conventions/<library>.md` exists, read it for that library's API rules.
+4. If no convention file exists, discover everything from the index (queries below).
+
+Do not assume rules from one library (e.g. pypdf) apply to another.
+
+## Discover library conventions
+
+1. **Cursor Codebase Search** over `repos/<name>/` for import style, docstrings, deprecations.
+2. **nb-symbols MCP** — `search_library_code(library, "deprecated removed replacement")`.
+3. **Optional CLI**:
+   ```bash
+   python scripts/query.py --library <name> --prompt "module docstring Args public import style"
+   python scripts/query.py --library <name> --prompt "deprecated removed replacement do not use"
+   ```
+
+Prefer retrieved source over convention files when they conflict. Test layout comes from the language convention file; ground behavior from library source under `repos/<name>/`.
+
+## Per-library convention files
+
+| Library | File |
+|---------|------|
+| _(each indexed library)_ | `config/conventions/<library>.md` |
+
+Scaffold a new library's conventions from `config/conventions/_template.md` after first index.
+
+## Per-language convention files
+
+| Language | File |
+|----------|------|
+| Python | `config/conventions/languages/python.md` |
+| TypeScript | `config/conventions/languages/typescript.md` |
+| JavaScript | `config/conventions/languages/javascript.md` |
+| Go | `config/conventions/languages/go.md` |
+| Rust | `config/conventions/languages/rust.md` |
+
+## Deprecated APIs
+
+Always query the index for deprecation markers before generating code. Also check the **Deprecated APIs** table in `config/conventions/<library>.md` when present.
+
+If retrieval surfaces `@deprecate` / `deprecation_with_replacement` on a symbol, treat it as blocked for new code.
