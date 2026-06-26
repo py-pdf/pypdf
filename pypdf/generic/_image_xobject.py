@@ -300,9 +300,15 @@ def _handle_flate(
                     # gray lookup does not work: it is converted to a similar RGB lookup
                     lookup = b"".join([bytes([b, b, b]) for b in lookup])
                     mode = "RGB"
-                # TODO: https://github.com/py-pdf/pypdf/pull/2039
-                # this is a work around until PIL is able to process CMYK images
                 elif mode == "CMYK":
+                    # Pillow could not unpack CMYK palettes until 10.1.0
+                    # (https://github.com/python-pillow/Pillow/issues/7309,
+                    # fixed by https://github.com/python-pillow/Pillow/pull/7310).
+                    # pypdf currently supports Pillow>=8.0.0, so this manual
+                    # CMYK -> RGB conversion needs to stay until that floor is
+                    # raised to 10.1.0. Note: this rounds slightly differently
+                    # than Pillow's native unpacker (off-by-one on some channels),
+                    # so output is not byte-identical between Pillow versions.
                     _rgb = []
                     for _c, _m, _y, _k in (
                         lookup[n : n + 4] for n in range(0, 4 * (len(lookup) // 4), 4)
