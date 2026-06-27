@@ -222,11 +222,16 @@ def _reader_with_button_field(field: DictionaryObject) -> PdfReader:
 
 
 def test_build_field__checkbox_missing_normal_appearance():
-    # A checkbox whose /AP has no /N sub-dictionary raises a clean PdfReadError
+    # A checkbox whose /AP is not a dictionary raises a clean PdfReadError
     # instead of an uncaught KeyError.
     field = DictionaryObject()
     field[NameObject("/T")] = TextStringObject("CheckBox")
     field[NameObject("/FT")] = NameObject("/Btn")
+    field[NameObject("/AP")] = ArrayObject()
+    with pytest.raises(PdfReadError, match="Expected appearance dictionary"):
+        _reader_with_button_field(field).get_fields()
+
+    # A checkbox whose /AP has no /N sub-dictionary raises likewise.
     field[NameObject("/AP")] = DictionaryObject()
     with pytest.raises(PdfReadError, match="Expected /N appearance dictionary"):
         _reader_with_button_field(field).get_fields()
