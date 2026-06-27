@@ -59,7 +59,7 @@ class FontDescriptor:
     to 100.
     """
 
-    DEFAULT_BBOX: ClassVar[tuple[float, float, float, float]] = (-100.0, -200.0, 1000.0, 900.0)
+    _DEFAULT_BBOX: ClassVar[tuple[float, float, float, float]] = (-100.0, -200.0, 1000.0, 900.0)
 
     name: str = "Unknown"
     family: str = "Unknown"
@@ -71,7 +71,7 @@ class FontDescriptor:
     x_height: float = 500.0
     italic_angle: float = 0.0  # Non-italic
     flags: int = 32  # Non-serif, non-symbolic, not fixed width
-    bbox: tuple[float, float, float, float] = DEFAULT_BBOX
+    bbox: tuple[float, float, float, float] = _DEFAULT_BBOX
     font_file: StreamObject | None = None
 
     def as_font_descriptor_resource(self) -> DictionaryObject:

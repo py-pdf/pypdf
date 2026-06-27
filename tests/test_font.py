@@ -94,7 +94,7 @@ def test_font_descriptor_malformed_bbox(bbox):
         }),
     })
     font = Font.from_font_resource(font_res)
-    assert font.font_descriptor.bbox == FontDescriptor.DEFAULT_BBOX
+    assert font.font_descriptor.bbox == FontDescriptor._DEFAULT_BBOX
 
 
 @pytest.mark.parametrize("bbox", [
@@ -110,7 +110,7 @@ def test_type3_font_malformed_bbox(bbox):
         NameObject("/FontBBox"): bbox,
     })
     font = Font.from_font_resource(font_res)
-    assert font.font_descriptor.bbox == FontDescriptor.DEFAULT_BBOX
+    assert font.font_descriptor.bbox == FontDescriptor._DEFAULT_BBOX
 
 
 def test_font_file():
