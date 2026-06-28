@@ -143,7 +143,7 @@ class FreeText(MarkupAnnotation):
         font_color: str = "000000",
         border_color: Optional[str] = "000000",
         background_color: Optional[str] = "ffffff",
-        align: str = "center",
+        align: str = "left",
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
