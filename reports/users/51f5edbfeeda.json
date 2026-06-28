@@ -1,10 +1,12 @@
 {
   "schema_version": 1,
   "user_id": "51f5edbfeeda",
-  "synced_at": "2026-06-28T16:19:13.917671+00:00",
+  "synced_at": "2026-06-28T17:03:49.356008+00:00",
   "git_email_domain": "paigeurig.com",
   "onboarding": {
-    "first_query": null,
+    "first_query": {
+      "date": "2026-06-28T17:03:04.251078+00:00"
+    },
     "first_doctor_pass": {
       "date": "2026-06-26T20:33:25.948928+00:00"
     },
@@ -12,41 +14,56 @@
       "date": "2026-06-26T16:33:31-04:00",
       "commit": "72368a69655a"
     },
-    "days_to_first_query": null
+    "days_to_first_query": 1
   },
   "activity": {
     "window_7d": {
-      "query_runs": 0,
-      "query_by_library": {},
-      "skill_intents": {},
+      "query_runs": 1,
+      "query_by_library": {
+        "pypdf": 1
+      },
+      "skill_intents": {
+        "nb-validate": 1,
+        "nb-test": 1
+      },
       "symbol_checks": {
         "runs": 0,
         "pass_rate": null,
         "top_violations": []
       },
-      "sessions_ended": 1
+      "sessions_ended": 4
     },
     "window_30d": {
-      "query_runs": 0,
-      "query_by_library": {},
-      "skill_intents": {},
+      "query_runs": 1,
+      "query_by_library": {
+        "pypdf": 1
+      },
+      "skill_intents": {
+        "nb-validate": 1,
+        "nb-test": 1
+      },
       "symbol_checks": {
         "runs": 0,
         "pass_rate": null,
         "top_violations": []
       },
-      "sessions_ended": 1
+      "sessions_ended": 4
     },
     "all_time": {
-      "query_runs": 0,
-      "query_by_library": {},
-      "skill_intents": {},
+      "query_runs": 1,
+      "query_by_library": {
+        "pypdf": 1
+      },
+      "skill_intents": {
+        "nb-validate": 1,
+        "nb-test": 1
+      },
       "symbol_checks": {
         "runs": 0,
         "pass_rate": null,
         "top_violations": []
       },
-      "sessions_ended": 1
+      "sessions_ended": 4
     }
   }
 }
