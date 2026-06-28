@@ -1,5 +1,9 @@
 {
   "$schema": "https://cursor.com/schemas/environment.json",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
   "install": "bash scripts/cloud_bootstrap.sh",
   "start": "true",
   "terminals": [
