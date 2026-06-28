@@ -143,6 +143,7 @@ class FreeText(MarkupAnnotation):
         font_color: str = "000000",
         border_color: Optional[str] = "000000",
         background_color: Optional[str] = "ffffff",
+        align: str = "center",
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -160,7 +161,7 @@ class FreeText(MarkupAnnotation):
         else:
             font_str = f"{font_str}normal "
         font_str = f"{font_str}{font_size} {font}"
-        font_str = f"{font_str};text-align:left;color:#{font_color}"
+        font_str = f"{font_str};text-align:{align};color:#{font_color}"
 
         default_appearance_string = ""
         if border_color:
