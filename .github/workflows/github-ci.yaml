@@ -46,7 +46,7 @@ jobs:
           cache-downloaded-files
         enableCrossOsArchive: true
     - name: Restore Downloaded Files
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref != 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
@@ -99,7 +99,7 @@ jobs:
           cache-downloaded-files-main-
           cache-downloaded-files
     - name: Restore Downloaded Files
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref != 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
@@ -169,7 +169,7 @@ jobs:
           cache-downloaded-files-main-
           cache-downloaded-files
     - name: Restore Downloaded Files
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref != 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
