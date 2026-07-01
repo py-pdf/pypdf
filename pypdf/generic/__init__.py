@@ -57,7 +57,6 @@ from ._data_structures import (
 )
 from ._files import EmbeddedFile
 from ._fit import Fit
-from ._link import DirectReferenceLink, NamedReferenceLink, ReferenceLink, extract_links
 from ._outline import OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
@@ -81,7 +80,6 @@ __all__ = [
     "DecodedStreamObject",
     "Destination",
     "DictionaryObject",
-    "DirectReferenceLink",
     "EmbeddedFile",
     "EncodedStreamObject",
     "Field",
@@ -89,14 +87,12 @@ __all__ = [
     "FloatObject",
     "IndirectObject",
     "NameObject",
-    "NamedReferenceLink",
     "NullObject",
     "NumberObject",
     "OutlineFontFlag",
     "OutlineItem",
     "PdfObject",
     "RectangleObject",
-    "ReferenceLink",
     "StreamObject",
     "TextStringObject",
     "TreeObject",
@@ -105,7 +101,6 @@ __all__ = [
     "create_string_object",
     "decode_pdfdocencoding",
     "encode_pdfdocencoding",
-    "extract_links",
     "hex_to_rgb",
     "is_null_or_none",
     "read_hex_string_from_stream",

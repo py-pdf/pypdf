@@ -7,12 +7,11 @@ from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
-    DirectReferenceLink,
     NameObject,
     NullObject,
     NumberObject,
-    extract_links,
 )
+from pypdf.generic._link import DirectReferenceLink, extract_links
 from tests import get_data_from_url
 
 
