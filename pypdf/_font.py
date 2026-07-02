@@ -593,7 +593,7 @@ class Font:
 
         return cls(
             name=font_descriptor.name,
-            sub_type="TrueType",
+            sub_type="Type0",
             encoding=encoding,
             font_descriptor=font_descriptor,
             character_map=character_map,
@@ -706,7 +706,8 @@ class Font:
 
     def as_font_resource(self) -> DictionaryObject:
         # If we have an embedded Truetype font, we assume that we need to produce a Type 2 CID font resource.
-        if self.font_descriptor.font_file and self.sub_type == "TrueType":
+        # We check that we are 16-bit encoded, that is, Type0.
+        if self.font_descriptor.font_file and self.sub_type == "Type0":
             # Begin with creating the widths array (part of the descendant font) and the unicode cmap (part
             # of the Type 0 font object).
             widths_list, to_unicode_stream = self._create_widths_list_and_unicode_stream()

@@ -546,7 +546,8 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         if not encodable:
             # If we have a font file, we can try to produce a new font resource with an encoding
-            # that does include the necessary characters.
+            # that does include the necessary characters. We only try this for a TrueType font, meaning
+            # that, in PDF terms, it is a simple, 8-bit encoded font.
             if font.font_descriptor.font_file and font.sub_type == "TrueType":
                 try:
                     font = font.from_truetype_font_file(BytesIO(font.font_descriptor.font_file.get_data()))
