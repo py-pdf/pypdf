@@ -1897,6 +1897,7 @@ def test_update_form_fields3(caplog, tmp_path):
     assert new_font_resource in writer.pages[0]["/Annots"][0]["/DA"]
     assert new_font_resource in writer.pages[0]["/Resources"]["/Font"]
     assert new_font_resource in writer._root_object["/AcroForm"]["/DR"]["/Font"]
+    # Assert that we couldn't encode the data with this font
     writer.write(output)
     output.seek(0)
     reader = PdfReader(output)
@@ -1905,6 +1906,8 @@ def test_update_form_fields3(caplog, tmp_path):
         if expected_value != "شهرزاد":
             assert expected_value in extracted_text
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+    # Retry with the new font right away, to increase coverage in _appearance_stream.py
+    writer.update_page_form_field_values(writer.pages[0], {"localitatea": ("شهرزاد", "/PYPDF1", 0)}, flatten=True)
 
 
 @pytest.mark.enable_socket
