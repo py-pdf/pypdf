@@ -188,6 +188,27 @@ def test_get_label_from_nums__truncated_pair(caplog):
     assert "Ignoring last /Nums key without a value." in caplog.text
 
 
+def test_get_label_from_nums__unknown_style(caplog):
+    # /S carries a numbering style that is not part of the specification.
+    value = DictionaryObject()
+    value[NameObject("/S")] = NameObject("/X")
+    dictionary_object = DictionaryObject()
+    dictionary_object[NameObject("/Nums")] = ArrayObject([NumberObject(0), value])
+    assert get_label_from_nums(dictionary_object, 3) == "4"
+    assert "Ignoring unknown page label numbering style '/X' in /Nums." in caplog.text
+
+
+def test_get_label_from_nums__malformed_start(caplog):
+    # /St is not an integer, so the label arithmetic cannot be performed.
+    value = DictionaryObject()
+    value[NameObject("/S")] = NameObject("/D")
+    value[NameObject("/St")] = NameObject("/bad")
+    dictionary_object = DictionaryObject()
+    dictionary_object[NameObject("/Nums")] = ArrayObject([NumberObject(0), value])
+    assert get_label_from_nums(dictionary_object, 3) == "4"
+    assert "Ignoring malformed page label entry in /Nums (/St='/bad', /P='')." in caplog.text
+
+
 def test_index2label__empty_kids_list():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     number_tree = DictionaryObject()

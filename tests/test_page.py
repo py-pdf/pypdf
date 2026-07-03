@@ -1572,3 +1572,11 @@ def test_get_rectangle__size_handling(caplog):
     page[NameObject("/MediaBox")] = ArrayObject([0, 0, 13, 37, 0, 0, 13, 37])
     assert page.mediabox == RectangleObject((0, 0, 13, 37))
     assert "Expected four values, got 8: [0, 0, 13, 37, 0, 0, 13, 37]\n" in caplog.text
+
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    page[NameObject("/MediaBox")] = ArrayObject([0, 0, 13])
+    with pytest.raises(
+        ValueError, match=r"Expected four values for /MediaBox, got 3: \[0, 0, 13\]"
+    ):
+        _ = page.mediabox

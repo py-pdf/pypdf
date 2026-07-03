@@ -721,7 +721,8 @@ def test_flate_decode__image_is_none_due_to_size_limit(caplog):
     url = "https://github.com/user-attachments/files/19464256/file.pdf"
     name = "issue3220.pdf"
 
-    with mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", 0):
+    with mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", 0), \
+            mock.patch("pypdf.filters.FLATE_MAX_BUFFER_SIZE", sys.maxsize):
         reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
         images = reader.pages[0].images
         assert len(images) == 1

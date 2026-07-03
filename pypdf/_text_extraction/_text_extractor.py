@@ -320,7 +320,14 @@ class TextExtraction:
 
     def _handle_tm(self, operands: list[Any]) -> float:
         """Handle Tm (Set text matrix) operation - Table 5.5 page 406."""
-        self.tm_matrix = [float(operand) for operand in operands[:6]]
+        try:
+            tm_matrix = [float(operand) for operand in operands[:6]]
+        except (TypeError, ValueError):
+            tm_matrix = []
+        # Fall back to the identity matrix when Tm carries the wrong number of
+        # operands, mirroring _handle_cm, so the text matrix stays a six-element
+        # list and later positioning operators do not read past its end.
+        self.tm_matrix = tm_matrix if len(tm_matrix) == 6 else [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
         self._actual_str_size["str_widths"] = 0.0
         return str_widths

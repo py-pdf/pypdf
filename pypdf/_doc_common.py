@@ -975,7 +975,7 @@ class PdfDocCommon(ABC):
         # handle outline items with missing or invalid destination
         if (
             isinstance(array, (NullObject, str))
-            or (isinstance(array, ArrayObject) and len(array) == 0)
+            or (isinstance(array, ArrayObject) and len(array) < 2)
             or array is None
         ):
             page = NullObject()
@@ -1050,7 +1050,15 @@ class PdfDocCommon(ABC):
         if outline_item:
             if "/C" in node:
                 # Color of outline item font in (R, G, B) with values ranging 0.0-1.0
-                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore[attr-defined]
+                color = node["/C"]
+                if isinstance(color, list):
+                    outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in color)
+                else:
+                    logger_warning(
+                        "Ignoring non-array outline color %(color)r",
+                        source=__name__,
+                        color=color,
+                    )
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
                 # with 1=italic, 2=bold, 3=both

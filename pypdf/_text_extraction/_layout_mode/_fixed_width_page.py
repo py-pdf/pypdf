@@ -41,6 +41,31 @@ class BTGroup(TypedDict):
     flip_sort: Literal[-1, 1]
 
 
+def resolve_font(fonts: dict[str, Font], name: str) -> Font:
+    """
+    Resolve a Tf font name to a layout mode Font.
+
+    A content stream may select a font name that is not declared in the page
+    resources. Fall back to an uninterpretable font so extraction degrades to
+    the existing incomplete-output path instead of raising KeyError.
+
+    Args:
+        fonts: font dictionary as returned by PageObject._layout_mode_fonts()
+        name: font name supplied by a Tf operator
+
+    Returns:
+        Font: the matching font, or an uninterpretable placeholder font.
+
+    """
+    if name in fonts:
+        return fonts[name]
+    logger_warning(
+        "Font %(name)s is not in the page resources.",
+        name=name, source=__name__
+    )
+    return Font("Unknown", encoding={}, interpretable=False)
+
+
 def bt_group(tj_op: TextStateParams, rendered_text: str, displaced_tx: float) -> BTGroup:
     """
     BTGroup constructed from a TextStateParams instance, rendered text, and
@@ -203,7 +228,7 @@ def recurse_to_target_op(
                 operands = [0, -text_state_mgr.TL]
             text_state_mgr.add_tm(operands)
         elif op == b"Tf":
-            text_state_mgr.set_font(fonts[operands[0]], operands[1])
+            text_state_mgr.set_font(resolve_font(fonts, operands[0]), operands[1])
         else:  # handle Tc, Tw, Tz, TL, and Ts operators
             text_state_mgr.set_state_param(op, operands)
     else:
@@ -293,7 +318,7 @@ def text_show_operations(
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
         elif op == b"Tf":
-            state_mgr.set_font(fonts[operands[0]], operands[1])
+            state_mgr.set_font(resolve_font(fonts, operands[0]), operands[1])
         else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
             state_mgr.set_state_param(op, operands)
 

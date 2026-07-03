@@ -163,8 +163,26 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
         return str(index + 1)  # Fallback
     start = value.get("/St", 1)
     prefix = cast(str, value.get("/P", ""))
-    mapping_function = m[value.get("/S")]
-    return prefix + mapping_function(index - start_index + start)
+    mapping_function = m.get(value.get("/S"))
+    if mapping_function is None:
+        # Unknown /S numbering style; fall back to the page position.
+        logger_warning(
+            "Ignoring unknown page label numbering style %(style)r in /Nums.",
+            source=__name__,
+            style=value.get("/S"),
+        )
+        return str(index + 1)  # Fallback
+    try:
+        return prefix + mapping_function(index - start_index + start)
+    except (TypeError, ValueError):
+        # Malformed /St or /P value; fall back to the page position.
+        logger_warning(
+            "Ignoring malformed page label entry in /Nums (/St=%(start)r, /P=%(prefix)r).",
+            source=__name__,
+            start=start,
+            prefix=prefix,
+        )
+        return str(index + 1)  # Fallback
 
 
 def index2label(reader: PdfCommonDocProtocol, index: int) -> str:

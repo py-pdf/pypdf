@@ -24,11 +24,14 @@ The following general stream length limits apply, defaulting to 75 MB as well:
 * `pypdf.filters.MAX_DECLARED_STREAM_LENGTH` for the `/Length` field of streams.
 * `pypdf.filters.MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH` for the maximum allowed output length of array-based streams.
 
+The following general limits apply to images:
+
+* `pypdf.filters.IMAGE_MAX_BUFFER_SIZE` for the maximum buffer size to allocate for images, defaulting to 75 MB
+
 For the *JBIG2Decode* filter, calling the external *jbig2dec* tool can be disabled by setting `pypdf.filters.JBIG2DEC_BINARY = None`.
 
 For the *FlateDecode* filter, the following additional limits apply:
 
-* `pypdf.filters.FLATE_MAX_BUFFER_SIZE` for the maximum buffer size to allocate for images, defaulting to 75 MB
 * `pypdf.filters.FLATE_MAX_COLUMNS` for the maximum number of columns, defaulting to 250 000
 * `pypdf.filters.FLATE_MAX_ROW_LENGTH` for the maximum row length, defaulting to 4 MB
 
