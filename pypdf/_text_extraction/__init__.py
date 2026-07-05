@@ -179,17 +179,14 @@ def get_text_operands(
                 if isinstance(operands[0], str)
                 else operands[0]
             )
-            if isinstance(font.encoding, str):
+            if isinstance(font.encoding, str):  # apply str encoding
                 try:
-                    t = tt.decode(font.encoding, "surrogatepass")  # apply str encoding
+                    t = tt.decode(font.encoding, "surrogatepass")
                 except Exception:
-                    # the data does not match the expectation,
+                    # The data does not match the expectation,
                     # we use the alternative ;
-                    # text extraction may not be good
-                    t = tt.decode(
-                        "utf-16-be" if font.encoding == "charmap" else "charmap",
-                        "surrogatepass",
-                    )  # apply str encoding
+                    # text extraction may not be good.
+                    t = tt.decode("charmap", "surrogatepass")
             else:  # apply dict encoding
                 t = "".join(
                     [font.encoding[x] if x in font.encoding else bytes((x,)).decode() for x in tt]
