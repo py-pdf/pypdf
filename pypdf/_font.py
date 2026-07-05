@@ -804,17 +804,14 @@ class Font:
 
     def can_encode(self, text: str) -> bool:
         """Check whether the font is able to encode a text string."""
-        try:
-            if self.character_map:
-                supported_chars = set(self.character_map.values())
-                return all(char in supported_chars for char in text)
-            if isinstance(self.encoding, str):
-                text.encode(self.encoding, "surrogatepass")
-            else:
-                supported_chars = set(self.encoding.values())
-                return all(char in supported_chars for char in text)
+        if self.character_map:
+            supported_chars = set(self.character_map.values())
+            return all(char in supported_chars for char in text)
 
-        except UnicodeEncodeError:
-            return False
+        if isinstance(self.encoding, dict):
+            supported_chars = set(self.encoding.values())
+            return all(char in supported_chars for char in text)
 
-        return True
+        # Not a simple font (encoding is not a dict), and missing ToUnicode cmap (no character_map).
+        # Assume we cannot use this font for text encoding.
+        return False

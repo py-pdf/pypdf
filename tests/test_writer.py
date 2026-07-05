@@ -19,6 +19,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
+from pypdf._font import Font
 from pypdf.annotations import Link
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -1908,6 +1909,10 @@ def test_update_form_fields3(caplog, tmp_path):
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
     # Retry with the new font right away, to increase coverage in _appearance_stream.py
     writer.update_page_form_field_values(writer.pages[0], {"localitatea": ("شهرزاد", "/PYPDF1", 0)}, flatten=True)
+    # Cripple the font's ToUnicode cmap, to increase can_encode coverage in _font.py
+    del (writer.pages[0]["/Resources"]["/Font"]["/PYPDF1"]["/ToUnicode"])
+    font = Font.from_font_resource(writer.pages[0]["/Resources"]["/Font"]["/PYPDF1"])
+    assert not font.can_encode("Whatever text")
 
 
 @pytest.mark.enable_socket
