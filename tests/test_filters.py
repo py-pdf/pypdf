@@ -1095,6 +1095,28 @@ def test_runlengthdecode__decode_limit():
         assert RunLengthDecode.decode(encoded) == b"A" * uncompressed_size
 
 
+@pytest.mark.parametrize(
+    "decode_parms",
+    [
+        None,
+        ArrayObject([DictionaryObject(), DictionaryObject()]),
+        ArrayObject([DictionaryObject()]),
+        ArrayObject([]),
+    ],
+)
+def test_decode_stream_data__short_decode_parms_array(decode_parms):
+    data = b"Hello World!"
+    stream = StreamObject()
+    stream._data = zlib.compress(data).hex().encode("ascii") + b">"
+    stream[NameObject("/Filter")] = ArrayObject(
+        [NameObject("/ASCIIHexDecode"), NameObject("/FlateDecode")]
+    )
+    if decode_parms is not None:
+        stream[NameObject("/DecodeParms")] = decode_parms
+
+    assert decode_stream_data(stream) == data
+
+
 @pytest.mark.timeout(10)
 def test_asciihexdecode__speed():
     encoded = (b"41" * 1_200_000) + b">"
