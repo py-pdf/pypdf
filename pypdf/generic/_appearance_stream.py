@@ -292,11 +292,11 @@ class TextStreamAppearance(BaseStreamAppearance):
             (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
         )
 
-        # Set margins based on border width and style, but never less than 1 point
+        # Set margins based on border width and style
         factor = 2 if self._layout.border_style in {"/B", "/I"} else 1
-        margin = max(self._layout.border_width * factor, 1)
+        margin = self._layout.border_width * factor
         field_height = rectangle.height - 2 * margin
-        field_width = rectangle.width - 4 * margin
+        field_width = rectangle.width - 4 * max(margin, 1)
 
         reverse_cmap, encoding_cmap = font._get_typographic_maps()
 
@@ -395,7 +395,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         # Set the vertical offset
         if is_multiline:
             y_offset = (
-                rectangle.height + margin - font.font_descriptor.bbox[3] * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
+                field_height + margin - font.font_descriptor.bbox[3] * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
             )
         else:
             y_offset = margin + (
@@ -404,7 +404,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         default_appearance = f"{font_name} {font_size} Tf {font_color}"
 
         ap_stream = (
-            f"q\n/Tx BMC \nq\n{2 * margin} {margin} {field_width} {field_height} "
+            f"q\n/Tx BMC \nq\n{2 * max(margin, 1)} {margin} {field_width} {field_height} "
             f"re\nW\nBT\n{default_appearance}\n"
         ).encode()
         current_x_pos: float = 0  # Initial virtual position within the text object.
@@ -429,11 +429,11 @@ class TextStreamAppearance(BaseStreamAppearance):
                 # Absolute start X = (Cell Index, i.e., line_number * Cell Width) + Centering Offset
                 desired_abs_x_start = (line_number * cell_width) + centering_offset_in_cell
             elif alignment == TextAlignment.RIGHT:
-                desired_abs_x_start = rectangle.width - margin * 2 - line_width
+                desired_abs_x_start = rectangle.width - max(margin, 1) * 2 - line_width
             elif alignment == TextAlignment.CENTER:
                 desired_abs_x_start = (rectangle.width - line_width) / 2
             else:  # Left aligned; default
-                desired_abs_x_start = margin * 2
+                desired_abs_x_start = max(margin, 1) * 2
             # Calculate x_rel_offset: how much to move from the current_x_pos
             # to reach the desired_abs_x_start.
             x_rel_offset = desired_abs_x_start - current_x_pos
