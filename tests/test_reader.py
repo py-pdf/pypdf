@@ -1852,7 +1852,7 @@ def test_iss2761():
 
 @pytest.mark.enable_socket
 def test_iss2817():
-    """Test for rebuiling Xref_ObjStm"""
+    """Test for rebuilding Xref_ObjStm"""
     url = "https://github.com/user-attachments/files/16764070/crash-7e1356f1179b4198337f282304cb611aea26a199.pdf"
     name = "iss2817.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))

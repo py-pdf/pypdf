@@ -1705,7 +1705,7 @@ def test_merge_content_stream_to_page():
     """Test that new content data is correctly added to page contents
     in the form of an ArrayObject or StreamObject. The
     test_add_apstream_object code already correctly checks that
-    _merge_content_stream_to_page works for an emtpy page.
+    _merge_content_stream_to_page works for an empty page.
     """
     writer = PdfWriter()
     page = writer.add_blank_page(100, 100)
