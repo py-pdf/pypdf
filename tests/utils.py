@@ -195,7 +195,10 @@ def get_image_data(
     image: Image.Image, band: Union[int, None] = None
 ) -> Union[tuple[tuple[int, ...], ...], tuple[float, ...]]:
     try:
-        return image.get_flattened_data(band=band)  # type: ignore[attr-defined, no-any-return]
+        get_flattened_data = getattr(image, "get_flattened_data", None)
+        if get_flattened_data is not None:
+            return cast("Union[tuple[tuple[int, ...], ...], tuple[float, ...]]", get_flattened_data(band=band))
+        raise AttributeError("get_flattened_data not available")
     except AttributeError:
         # For Pillow < 12.1.0
         return cast("Union[tuple[tuple[int, ...], ...], tuple[float, ...]]", tuple(image.getdata(band=band)))
