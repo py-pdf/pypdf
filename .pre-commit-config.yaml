@@ -34,7 +34,7 @@ repos:
     rev: v1.17.1
     hooks:
       - id: mypy
-        files: ^pypdf/.*
+        files: ^(pypdf|tests)/.*
         additional_dependencies:
           - cryptography
           - pycryptodome
