@@ -1,4 +1,5 @@
 """Test the pypdf.generic._image_xobject module."""
+import zlib
 from io import BytesIO
 
 import PIL
@@ -9,7 +10,15 @@ from pypdf import PdfReader
 from pypdf._utils import Version
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
-from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
+from pypdf.generic import (
+    ArrayObject,
+    DecodedStreamObject,
+    EncodedStreamObject,
+    NameObject,
+    NumberObject,
+    StreamObject,
+    TextStringObject,
+)
 from pypdf.generic._image_xobject import (
     _get_image_mode,
     _handle_flate,
@@ -387,6 +396,58 @@ def test_get_imagemode__color_components_out_of_range() -> None:
     # it should now fall back to the previous mode.
     assert _get_image_mode("/Unknown", 99, "L") == ("L", False)
     assert _get_image_mode("/Unknown", 99, "") == ("", False)
+
+
+def test_get_imagemode__devicen_single_colorant() -> None:
+    """
+    A single-colorant /DeviceN with a /DeviceCMYK alternate is derived through
+    that alternate space, the same way /Separation is handled above it.
+
+    Regression test for issue #3302, where e.g. a lone /Cyan colorant was
+    always flattened to grayscale.
+    """
+    color_space = ArrayObject([
+        NameObject("/DeviceN"),
+        ArrayObject([NameObject("/Cyan")]),
+        NameObject("/DeviceCMYK"),
+        NameObject("/Identity"),
+    ])
+    assert _get_image_mode(color_space, 1, "") == ("CMYK", True)
+
+    # A lone /Black colorant is the one case that maps onto grayscale exactly,
+    # so it keeps its dedicated shortcut.
+    color_space[1] = ArrayObject([NameObject("/Black")])
+    assert _get_image_mode(color_space, 1, "") == ("L", True)
+
+
+def test_xobj_to_image__devicen_single_colorant(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Extracting a single-colorant /DeviceN image no longer collapses to a flat
+    gray image or warns about it; darker tint now means darker pixels.
+
+    Regression test for issue #3302.
+    """
+    color_space = ArrayObject([
+        NameObject("/DeviceN"),
+        ArrayObject([NameObject("/Cyan")]),
+        NameObject("/DeviceCMYK"),
+        NameObject("/Identity"),
+    ])
+    x_object = EncodedStreamObject()
+    x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(3)
+    x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
+    x_object[NameObject("/BitsPerComponent")] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = color_space
+    x_object[NameObject("/Colors")] = NumberObject(1)
+    x_object[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.FLATE_DECODE)
+    x_object._data = zlib.compress(bytes([0, 128, 255]))  # no, half, full tint
+
+    _extension, _data, img = _xobj_to_image(x_object)
+
+    assert img.mode == "CMYK"
+    no_tint, half_tint, full_tint = (img.convert("RGB").getpixel((x, 0)) for x in range(3))
+    assert no_tint > half_tint > full_tint
+    assert "converted to Gray" not in caplog.text
 
 
 def test_xobj_to_image__color_components_out_of_range() -> None:

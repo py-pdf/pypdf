@@ -89,13 +89,12 @@ def _get_image_mode(
         original_color_space = color_space
         color_components = len(color_space[1])
         color_space_str = color_space[2].get_object()
-        if color_space_str == "/DeviceCMYK" and color_components == 1:
-            if original_color_space[1][0] != "/Black":
-                logger_warning(
-                    "Color %(color)s converted to Gray. Please share PDF with pypdf dev team",
-                    source=__name__,
-                    color=original_color_space[1][0],
-                )
+        if (
+            color_space_str == "/DeviceCMYK"
+            and color_components == 1
+            and original_color_space[1][0] == "/Black"
+        ):
+            # A lone /Black colorant maps directly onto grayscale.
             return "L", True
         mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
