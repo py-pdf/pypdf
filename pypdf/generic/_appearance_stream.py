@@ -11,12 +11,15 @@ from typing import TYPE_CHECKING, Any, NamedTuple, cast
 from .._codecs import encoding_dict_from_named_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
 from .._font import Font
+from .._page import Transformation
 from .._utils import is_char_rtl, logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes, PageAttributes
 from ..errors import PdfReadError
 from ..generic import (
+    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    FloatObject,
     IndirectObject,
     NameObject,
     NumberObject,
@@ -49,6 +52,7 @@ class BaseStreamConfig:
     rectangle: RectangleObject = field(default_factory=lambda: RectangleObject((0.0, 0.0, 0.0, 0.0)))
     border_width: int = 1  # The width of the border in points
     border_style: str = BorderStyles.SOLID
+    rotation: int = 0
 
 
 class BaseStreamAppearance(DecodedStreamObject):
@@ -66,6 +70,29 @@ class BaseStreamAppearance(DecodedStreamObject):
         self[NameObject("/Type")] = NameObject("/XObject")
         self[NameObject("/Subtype")] = NameObject("/Form")
         self[NameObject("/BBox")] = self._layout.rectangle
+
+        # Define the rotation matrix
+        rotation = self._layout.rotation % 360
+        if rotation:
+            matrix = Transformation().rotate(rotation)
+
+            # Rotation goes counterclockwise. We want to know the furthest points to which we rotated left and down.
+            # These will serve as our X and Y offsets to translate the entire object origin back to (0, 0).
+            # If a corner rotates into negative space, that is our offset. If none does, the minimum is 0.0.
+            bottom_right_corner = (self._layout.rectangle.width, 0.0)
+            top_left_corner = (0.0, self._layout.rectangle.height)
+            top_right_corner = (self._layout.rectangle.width, self._layout.rectangle.height)
+            rotated_bottom_right_corner = matrix.apply_on(bottom_right_corner)
+            rotated_top_left_corner = matrix.apply_on(top_left_corner)
+            rotated_top_right_corner = matrix.apply_on(top_right_corner)
+            translation_x_offset = -min(
+                0.0, rotated_bottom_right_corner[0], rotated_top_left_corner[0], rotated_top_right_corner[0]
+            )
+            translation_y_offset = -min(
+                0.0, rotated_bottom_right_corner[1], rotated_top_left_corner[1], rotated_top_right_corner[1]
+            )
+            matrix = matrix.translate(translation_x_offset, translation_y_offset)
+            self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
 
 
 class TextAlignment(IntEnum):
