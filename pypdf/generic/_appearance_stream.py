@@ -588,7 +588,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         """
         # Calculate rectangle dimensions
         _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
-        rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
+        # Normalize the rectangle, apply page rotation if applicable
+        if page.get_inherited("/Rotate") in {90, 270}:
+            rectangle = RectangleObject((0, 0, abs(_rectangle[3] - _rectangle[1]), abs(_rectangle[2] - _rectangle[0])))
+        else:
+            rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
 
         # Get default appearance dictionary from annotation
         default_appearance = annotation.get_inherited(
