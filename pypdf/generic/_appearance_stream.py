@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
 from io import BytesIO
 from operator import attrgetter
@@ -46,7 +46,7 @@ TEXT_SPACE_TO_GLYPH_SPACE_FACTOR = 1000
 @dataclass
 class BaseStreamConfig:
     """A container representing the basic layout of an appearance stream."""
-    rectangle: RectangleObject | tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
+    rectangle: RectangleObject = field(default_factory=lambda: RectangleObject((0.0, 0.0, 0.0, 0.0)))
     border_width: int = 1  # The width of the border in points
     border_style: str = BorderStyles.SOLID
 
@@ -65,7 +65,7 @@ class BaseStreamAppearance(DecodedStreamObject):
         self._layout = layout or BaseStreamConfig()
         self[NameObject("/Type")] = NameObject("/XObject")
         self[NameObject("/Subtype")] = NameObject("/Form")
-        self[NameObject("/BBox")] = RectangleObject(self._layout.rectangle)
+        self[NameObject("/BBox")] = self._layout.rectangle
 
 
 class TextAlignment(IntEnum):
@@ -223,8 +223,6 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         """
         rectangle = self._layout.rectangle
-        if isinstance(rectangle, tuple):
-            rectangle = RectangleObject(rectangle)
         leading_factor = (
             (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
         )

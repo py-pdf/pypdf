@@ -16,7 +16,7 @@ from . import RESOURCE_ROOT
 
 
 def test_comb():
-    layout=BaseStreamConfig(rectangle=(0.0, 0.0, 197.285, 18.455))
+    layout=BaseStreamConfig(rectangle=RectangleObject((0.0, 0.0, 197.285, 18.455)))
     font_size = 10.0
     text = "01234567"
     max_length = 10
@@ -36,7 +36,7 @@ def test_comb():
         b"19.728499999999997 0.0 Td\n(7) Tj\nET\nQ\nEMC\nQ\n"
     )
 
-    layout.rectangle = (0.0, 0.0, 20.852, 20.84)
+    layout.rectangle = RectangleObject((0.0, 0.0, 20.852, 20.84))
     text = "AA"
     max_length = 1
     appearance_stream = TextStreamAppearance(
@@ -48,7 +48,7 @@ def test_comb():
 
 
 def test_scale_text():
-    layout=BaseStreamConfig(rectangle=(0, 0, 9.1, 55.4))
+    layout=BaseStreamConfig(rectangle=RectangleObject((0, 0, 9.1, 55.4)))
     font_size = 10.1
     text = "Hello World"
     is_multiline = False
@@ -64,7 +64,7 @@ def test_scale_text():
     )
     assert b"4.0 Tf" in appearance_stream.get_data()
 
-    layout.rectangle = (0, 0, 160, 360)
+    layout.rectangle = RectangleObject((0, 0, 160, 360))
     font_size = 0.0
     text = """Welcome to pypdf!
 أهلاً بكم في pypdf!
@@ -82,13 +82,13 @@ See pdfly for a CLI application that uses pypdf to interact with PDFs.
     assert b"pypdf is a free and open" in appearance_stream.get_data()
     assert b"/Span << /ActualText" in appearance_stream.get_data()
 
-    layout.rectangle = (0, 0, 160, 160)
+    layout.rectangle = RectangleObject((0, 0, 160, 160))
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_multiline=is_multiline
     )
     assert b"9.6 Tf" in appearance_stream.get_data()
 
-    layout.rectangle = (0, 0, 160, 12)
+    layout.rectangle = RectangleObject((0, 0, 160, 12))
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_multiline=is_multiline
     )
@@ -106,7 +106,7 @@ Option D
     )
     assert b"7.3 Tf" in appearance_stream.get_data()
 
-    layout.rectangle = (0, 0, 10, 100)
+    layout.rectangle = RectangleObject((0, 0, 10, 100))
     text = "OneWord"
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_multiline=is_multiline
