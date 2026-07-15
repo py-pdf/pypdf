@@ -994,6 +994,15 @@ def test_pdf_header():
     assert writer.pdf_header == "%PDF-1.6"
 
 
+def test_pdf_header_keep_initial_header():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(clone_from=reader)
+    assert writer.pdf_header == "%PDF-1.3"
+
+    writer = PdfWriter(clone_from=reader, keep_initial_header=True)
+    assert writer.pdf_header == reader.pdf_header
+
+
 def test_write_dict_stream_object(pdf_file_path):
     stream = (
         b"BT "
