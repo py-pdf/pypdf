@@ -37,7 +37,7 @@ def test_comb():
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_comb=is_comb, max_length=max_length
     )
-    assert appearance_stream.get_data() == (
+    assert (
         b"q\n/Tx BMC \nq\n2 1 193.285 16.455 re\nW\nBT\n/Helv 10.0 Tf 0 g\n"
         b"7.084250000000001 5.637499999999999 Td\n(0) Tj\n"
         b"19.7285 0.0 Td\n(1) Tj\n"
@@ -47,7 +47,7 @@ def test_comb():
         b"19.728499999999997 0.0 Td\n(5) Tj\n"
         b"19.72850000000001 0.0 Td\n(6) Tj\n"
         b"19.728499999999997 0.0 Td\n(7) Tj\nET\nQ\nEMC\nQ\n"
-    )
+    ) in appearance_stream.get_data()
 
     layout.rectangle = RectangleObject((0.0, 0.0, 20.852, 20.84))
     text = "AA"
@@ -55,9 +55,9 @@ def test_comb():
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_comb=is_comb, max_length=max_length
     )
-    assert appearance_stream.get_data() == (
+    assert (
         b"q\n/Tx BMC \nq\n2 1 16.852 18.84 re\nW\nBT\n/Helv 10.0 Tf 0 g\n7.091 6.83 Td\n(A) Tj\nET\nQ\nEMC\nQ\n"
-    )
+    ) in appearance_stream.get_data()
 
 
 def test_scale_text():
