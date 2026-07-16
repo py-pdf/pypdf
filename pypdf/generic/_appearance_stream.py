@@ -98,6 +98,9 @@ class BaseStreamAppearance(DecodedStreamObject):
         if rotation:
             self._add_matrix(rotation)
 
+        ap_stream_parts = []
+        self._ap_stream_data = "".join(ap_stream_parts).encode()
+
 
 class TextAlignment(IntEnum):
     """Defines the alignment options for text within a form field's appearance stream."""
@@ -493,7 +496,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             font = Font.from_core_font_name()
             font_resource = font.as_font_resource()
 
-        ap_stream_data = self._generate_appearance_stream_data(
+        self._ap_stream_data += self._generate_appearance_stream_data(
             text,
             selection,
             font,
@@ -506,8 +509,8 @@ class TextStreamAppearance(BaseStreamAppearance):
             max_length=max_length
         )
 
-        self.set_data(ByteStringObject(ap_stream_data))
-        self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
+        self.set_data(ByteStringObject(self._ap_stream_data))
+        self[NameObject("/Length")] = NumberObject(len(self._ap_stream_data))
         # Update Resources with font information
         self[NameObject("/Resources")] = DictionaryObject({
             NameObject("/Font"): DictionaryObject({
