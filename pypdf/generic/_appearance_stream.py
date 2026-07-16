@@ -27,6 +27,7 @@ from ..generic import (
     StreamObject,
 )
 from ..generic._base import ByteStringObject, TextStringObject
+from ._color import Color
 
 if TYPE_CHECKING:
     from pypdf._writer import PdfWriter
@@ -53,6 +54,8 @@ class BaseStreamConfig:
     rectangle: RectangleObject = field(default_factory=lambda: RectangleObject((0.0, 0.0, 0.0, 0.0)))
     border_width: int = 1  # The width of the border in points
     border_style: str = BorderStyles.SOLID
+    border_color: Color | None = None
+    background_color: Color | None = None
     rotation: int = 0
 
 
@@ -99,6 +102,32 @@ class BaseStreamAppearance(DecodedStreamObject):
             self._add_matrix(rotation)
 
         ap_stream_parts = []
+        # Only add a background color when color is defined and not transparent
+        if isinstance(self._layout.background_color, Color):
+            ap_stream_parts.append(
+                f"0 0 {self._layout.rectangle.width} {self._layout.rectangle.height} re\n"
+                f"{self._layout.background_color.as_operator()}\n"
+                "f\n"
+            )
+        # Only add a border when border width is larger than 0, border
+        # color is defined, and border color is not set to transparent.
+        if self._layout.border_width > 0:
+            if isinstance(self._layout.border_color, Color):
+                ap_stream_parts.append(
+                    f"{self._layout.border_width} "
+                    f"{self._layout.border_width} "
+                    f"{self._layout.rectangle.width - 2 * self._layout.border_width} "
+                    f"{self._layout.rectangle.height - 2 * self._layout.border_width} re\n"
+                    f"{self._layout.border_color.as_operator(stroke=True)}\n"
+                    "s\n"
+                )
+            else:
+                # If we aren't drawing a border, then set border_width to 0. This means less margin to
+                # take into account and results in larger font sizes.
+                self._layout.border_width = 0
+        if ap_stream_parts:
+            ap_stream_parts.insert(0, "q\n")
+            ap_stream_parts.append("Q\n")
         self._ap_stream_data = "".join(ap_stream_parts).encode()
 
 
