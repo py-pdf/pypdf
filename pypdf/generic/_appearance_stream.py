@@ -793,15 +793,22 @@ class TextStreamAppearance(BaseStreamAppearance):
             border_style = cast(DictionaryObject, field["/BS"]).get("/S", border_style)
 
         rotation = 0
+        border_color: Color | None = None
+        background_color: Color | None = None
         appearance_characteristics = field.get_inherited("/MK", None)
         if isinstance(appearance_characteristics, DictionaryObject):
             rotation = int(appearance_characteristics.get("/R", 0))
+            # Color.from_tuple([]) results in None for a "/BC" or "/BG" value of []
+            border_color = Color.from_tuple(appearance_characteristics.get("/BC"))
+            background_color = Color.from_tuple(appearance_characteristics.get("/BG"))
 
         # Create the TextStreamAppearance instance
         layout = BaseStreamConfig(
             rectangle=rectangle,
             border_width=border_width,
             border_style=border_style,
+            border_color=border_color,
+            background_color=background_color,
             rotation=rotation
         )
 
