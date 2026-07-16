@@ -24,6 +24,7 @@ from pypdf.generic._appearance_stream import (
     BaseStreamConfig,
     TextStreamAppearance,
 )
+from pypdf.generic._color import Color
 
 from . import RESOURCE_ROOT
 
@@ -442,3 +443,21 @@ def test_merge_transformed_page_annotation_with_multi_state_appearance():
     for state in merged_states.values():
         matrix = tuple(round(float(x), 6) for x in state.get_object()["/Matrix"])
         assert matrix == (0.0, 1.0, -1.0, 0.0, 200.0, 0.0)
+
+
+def test_base_stream_appearance():
+    layout = BaseStreamConfig(
+        rectangle=RectangleObject([0, 0, 400, 20]),
+        border_width=3,
+        rotation=90,
+        border_color=Color.from_tuple((.2, .3, .5)),
+        background_color=Color.from_tuple((.8, .5, .2))
+    )
+    appearance = BaseStreamAppearance(
+        layout=layout,
+    )
+    assert appearance["/Matrix"] == [0.0, 1, -1, 0.0, 20, 0.0]
+    assert appearance._ap_stream_data == (
+        b"q\n0 0 400.0 20.0 re\n0.8 0.5 0.2 rg\nf\n"
+        b"3 3 394.0 14.0 re\n3 w\n0.2 0.3 0.5 RG\ns\nQ\n"
+    )
