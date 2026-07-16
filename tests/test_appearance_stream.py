@@ -158,7 +158,6 @@ def test_appearance_stream_rtl():
         font=font,
         font_name=font_name,
         font_size=12.0,
-        font_color="0 g",
         is_multiline=False
     )
     # The regex returns two matches. The first matches the text in /Span << /ActualText <[group 0]> >> BDC
@@ -176,7 +175,6 @@ def test_appearance_stream_rtl():
             font=font,
             font_name=font_name,
             font_size=12.0,
-            font_color="0 g",
             is_multiline=False
         )
         [hex_glyphs_rtl_disabled] = re.findall("^<(.+?)>", appearance.get_data().decode(), re.MULTILINE)
@@ -193,7 +191,6 @@ def test_appearance_stream_rtl():
             font=font,
             font_name=font_name,
             font_size=12.0,
-            font_color="0 g",
             is_multiline=False
         )
         [hex_glyphs_rtl_enabled_fonttools_disabled] = re.findall(

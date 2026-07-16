@@ -27,7 +27,7 @@ from ..generic import (
     StreamObject,
 )
 from ..generic._base import ByteStringObject, TextStringObject
-from ._color import Color
+from ._color import Color, GrayscaleColor
 
 if TYPE_CHECKING:
     from pypdf._writer import PdfWriter
@@ -254,7 +254,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         font: Font,
         font_name: str = "/Helv",
         font_size: float = 0.0,
-        font_color: str = "0 g",
+        font_color: Color | None = None,
         is_multiline: bool = False,
         alignment: TextAlignment = TextAlignment.LEFT,
         is_comb: bool = False,
@@ -274,8 +274,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             font_name: The name of the font resource to use (e.g., "/Helv").
             font_size: The font size. If 0, it is automatically calculated
                 based on whether the field is multiline or not.
-            font_color: The color to apply to the font, represented as a PDF
-                graphics state string (e.g., "0 g" for black).
+            font_color: The color to apply to the font, represented as a class Color
             is_multiline: A boolean indicating if the text field is multiline.
             alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
             is_comb: Boolean that designates fixed-length fields, where every character
@@ -287,6 +286,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             A byte string containing the PDF content stream data.
 
         """
+        font_color = font_color or GrayscaleColor()
         rectangle = self._layout.rectangle
         leading_factor = (
             (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
@@ -401,7 +401,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             y_offset = margin + (
                 (field_height - font.font_descriptor.ascent * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR) / 2
             )
-        default_appearance = f"{font_name} {font_size} Tf {font_color}"
+        default_appearance = f"{font_name} {font_size} Tf {font_color.as_operator()}"
 
         ap_stream = (
             f"q\n/Tx BMC \nq\n{2 * max(margin, 1)} {margin} {field_width} {field_height} "
@@ -489,7 +489,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         font_resource: DictionaryObject | IndirectObject | None = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
-        font_color: str = "0 g",
+        font_color: Color | None = None,
         is_multiline: bool = False,
         alignment: TextAlignment = TextAlignment.LEFT,
         is_comb: bool = False,
@@ -533,7 +533,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             font,
             font_name=font_name,
             font_size=font_size,
-            font_color=font_color,
+            font_color=font_color or GrayscaleColor(),
             is_multiline=is_multiline,
             alignment=alignment,
             is_comb=is_comb,
@@ -751,7 +751,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         da_font_name = font_properties.pop(font_properties.index("Tf") - 2)
         font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
         font_properties.remove("Tf")
-        font_color = " ".join(font_properties)
+        font_color = Color.from_tuple(tuple(float(val) for val in font_properties[:-1]))
         # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name
