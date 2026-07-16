@@ -499,8 +499,8 @@ class TextStreamAppearance(BaseStreamAppearance):
         Initializes a TextStreamAppearance object.
 
         This constructor creates a new PDF stream object configured as an XObject
-        of subtype Form. It uses the `_appearance_stream_data` method to generate
-        the content for the stream.
+        of subtype Form. It uses the `_generate_appearance_stream_data` method to
+        generate the content for the stream.
 
         Args:
             layout: The basic layout parameters.
