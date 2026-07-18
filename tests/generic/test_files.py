@@ -4,6 +4,7 @@ import shutil
 import subprocess
 from io import BytesIO
 from pathlib import Path
+from typing import Any, cast  #to resolve error in line 295
 
 import pytest
 
@@ -291,8 +292,9 @@ def test_embedded_file__content_setter() -> None:
     embedded_file.content = b"Hello World!"
     assert embedded_file.content == b"Hello World!"
 
-    embedded_file.content = "Lorem ipsum dolor sit amet"
+    embedded_file.content = cast(Any, "Lorem ipsum dolor sit amet")
     assert embedded_file.content == b"Lorem ipsum dolor sit amet"
+    #imported from typing Any and cast to fix error for type mismatch between string and bytes
 
 
 def test_embedded_file__size_setter() -> None:

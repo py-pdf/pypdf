@@ -1,6 +1,7 @@
 """Test the `make_release.py` script."""
 import sys
 from pathlib import Path
+from typing import Any  #to fix line 44 "commits" type determining
 from unittest import mock
 
 import pytest
@@ -41,10 +42,11 @@ def test_strip_header(data: str, expected: str) -> None:
 def test_get_git_commits_since_tag() -> None:
     make_release = pytest.importorskip("make_release")
 
-    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
-        "urllib.request.urlopen", side_effect=lambda _: commits
+    with open(COMMITS__VERSION_4_0_1, mode="rb") as _file, mock.patch(
+        "urllib.request.urlopen", side_effect=lambda _: _file
     ), mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
-        commits = make_release.get_git_commits_since_tag("4.0.1")
+        commits: Any = make_release.get_git_commits_since_tag("4.0.1")
+    #replaced as commits with as _file and added Any for type mismatches
     assert commits == [
         make_release.Change(
             commit_hash="b7bfd0d7eddfd0865a94cc9e7027df6596242cf7",

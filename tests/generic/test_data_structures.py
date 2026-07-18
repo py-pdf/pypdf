@@ -229,11 +229,14 @@ def _prepare_test_dictionary_object__read_from_stream__no_limit(
         env["PYTHONPATH"] = "."
 
     def limit_virtual_memory() -> None:
+        if sys.platform == "win32":
+            return
         limit_kb = 1_000_000
         limit_bytes = limit_kb * 1024
         resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, limit_bytes))
 
     return pdf_path_str, env, limit_virtual_memory
+#required to check for windows as resource makes unix only calls, this way the test is terminated on windows
 
 
 @pytest.mark.enable_socket
