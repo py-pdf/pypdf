@@ -113,11 +113,13 @@ class BaseStreamAppearance(DecodedStreamObject):
         # color is defined, and border color is not set to transparent.
         if self._layout.border_width > 0:
             if isinstance(self._layout.border_color, Color):
+                border_width_string = f"{self._layout.border_width} w\n" if self._layout.border_width != 1 else ""
                 ap_stream_parts.append(
                     f"{self._layout.border_width} "
                     f"{self._layout.border_width} "
                     f"{self._layout.rectangle.width - 2 * self._layout.border_width} "
                     f"{self._layout.rectangle.height - 2 * self._layout.border_width} re\n"
+                    f"{border_width_string}"
                     f"{self._layout.border_color.as_operator(stroke=True)}\n"
                     "s\n"
                 )
