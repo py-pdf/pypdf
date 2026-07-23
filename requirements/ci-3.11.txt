@@ -34,7 +34,7 @@ packaging==24.1
     # via pytest
 pathspec==1.0.4
     # via mypy
-pillow==12.2.0
+pillow==12.3.0
     # via
     #   -r requirements/ci.in
     #   fpdf2
