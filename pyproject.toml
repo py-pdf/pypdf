@@ -161,6 +161,7 @@ ignore = [
     "B905",    # `zip()` without an explicit `strict=` parameter
     "BLE001",  # Do not catch blind exception: `Exception`
     "COM812",  # Yes, they make the diff smaller
+    "CPY001",  # We do not have a policy for copyrights per file at the moment
     "D101",    # Missing docstring in public class
     "D102",    # Missing docstring in public method
     "D105",    # Missing docstring in magic method
