@@ -1830,7 +1830,7 @@ def test_update_form_fields3(caplog, tmp_path):
 
     # Test with fonttools
     data = {
-        "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+        "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
         "localitatea": "شهرزاد",
         "strada": "Căpitan Nicolae Licăreț",
         "adresa_judet": "Конференция",

@@ -809,7 +809,7 @@ class PdfDocCommon(ABC):
     @property
     def open_destination(
         self,
-    ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
+    ) -> Union[Destination, TextStringObject, ByteStringObject, None]:
         """
         Property to access the opening destination (``/OpenAction`` entry in
         the PDF catalog). It returns ``None`` if the entry does not exist
@@ -837,7 +837,7 @@ class PdfDocCommon(ABC):
             return None
 
     @open_destination.setter
-    def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
+    def open_destination(self, dest: Union[str, Destination, PageObject, None]) -> None:
         raise NotImplementedError("No setter for open_destination")
 
     @property
@@ -930,7 +930,7 @@ class PdfDocCommon(ABC):
 
     @abstractmethod
     def _get_page_number_by_indirect(
-        self, indirect_reference: Union[None, int, NullObject, IndirectObject]
+        self, indirect_reference: Union[int, NullObject, IndirectObject, None]
     ) -> Optional[int]:
         ...  # pragma: no cover
 
@@ -966,7 +966,7 @@ class PdfDocCommon(ABC):
         title: Union[str, bytes],
         array: Optional[
             list[
-                Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
+                Union[NumberObject, IndirectObject, NullObject, DictionaryObject, None]
             ]
         ],
     ) -> Destination:
@@ -1049,7 +1049,15 @@ class PdfDocCommon(ABC):
         if outline_item:
             if "/C" in node:
                 # Color of outline item font in (R, G, B) with values ranging 0.0-1.0
-                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore[attr-defined]
+                color = node["/C"]
+                if isinstance(color, list):
+                    outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in color)
+                else:
+                    logger_warning(
+                        "Ignoring non-array outline color %(color)r",
+                        source=__name__,
+                        color=color,
+                    )
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
                 # with 1=italic, 2=bold, 3=both
@@ -1153,7 +1161,7 @@ class PdfDocCommon(ABC):
     def _flatten(
         self,
         list_only: bool = False,
-        pages: Union[None, DictionaryObject, PageObject] = None,
+        pages: Union[DictionaryObject, PageObject, None] = None,
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
         visited: Optional[set[int]] = None,
@@ -1470,8 +1478,8 @@ class PdfDocCommon(ABC):
     @abstractmethod
     def _repr_mimebundle_(
         self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
+        include: Union[Iterable[str], None] = None,
+        exclude: Union[Iterable[str], None] = None,
     ) -> dict[str, Any]:
         """
         Integration into Jupyter Notebooks.

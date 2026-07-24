@@ -98,7 +98,7 @@ MERGE_CROP_BOX = "cropbox"  # pypdf <= 3.4.0 used "trimbox"
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: Union[None, RectangleObject, ArrayObject, IndirectObject] = self.get(name)
+    retval: Union[RectangleObject, ArrayObject, IndirectObject, None] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
@@ -1114,7 +1114,7 @@ class PageObject(DictionaryObject):
         return None
 
     def replace_contents(
-        self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]
+        self, content: Union[ContentStream, EncodedStreamObject, ArrayObject, None]
     ) -> None:
         """
         Replace the page contents with the new content and nullify old objects

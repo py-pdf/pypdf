@@ -260,8 +260,10 @@ def test_get_images(src, expected_images):
             False,
             [
                 "startxref on same line as offset",
-                "Xref table not zero-indexed. "
-                "ID numbers for objects will be corrected.",
+                (
+                    "Xref table not zero-indexed. "
+                    "ID numbers for objects will be corrected."
+                ),
             ],
         ),  # all nominal => no fail
         (True, True, -1, True, ""),  # Prev=0 => fail expected
