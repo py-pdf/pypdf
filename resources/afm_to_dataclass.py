@@ -169,8 +169,10 @@ class Parser:
 
     def get_font_data(self) -> str:
         data = [
-            "from pypdf._font import CoreFontMetrics, FontDescriptor\n\n"
-            "CORE_FONT_METRICS: dict[str, CoreFontMetrics] = {",
+            (
+                "from pypdf._font import CoreFontMetrics, FontDescriptor\n\n"
+                "CORE_FONT_METRICS: dict[str, CoreFontMetrics] = {"
+            ),
         ]
         for name, font_data in self.files.items():
             data.extend(self._handle_font(name, font_data))

@@ -635,7 +635,7 @@ class CCITTFaxDecode:
 
     @staticmethod
     def _get_parameters(
-        parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
+        parameters: Union[ArrayObject, DictionaryObject, IndirectObject, None],
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
         ccitt_parameters = CCITTParameters(rows=int(rows))
