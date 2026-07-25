@@ -404,8 +404,9 @@ class TextStreamAppearance(BaseStreamAppearance):
         default_appearance = f"{font_name} {font_size} Tf {font_color.as_operator()}"
 
         ap_stream = (
-            f"q\n/Tx BMC \nq\n{2 * max(margin, 1)} {margin} {field_width} {field_height} "
-            f"re\nW\nBT\n{default_appearance}\n"
+            f"q\n/Tx BMC \nq\n"
+            f"{2 * max(margin, 1)} {margin} {field_width - 2 * max(margin, 1)} {field_height - margin} re\n"
+            f"W\nBT\n{default_appearance}\n"
         ).encode()
         current_x_pos: float = 0  # Initial virtual position within the text object.
 
