@@ -440,9 +440,21 @@ def _get_mode_and_invert_color(
     return mode, invert_color
 
 
+def _xobject_identity(x_object: Any) -> Any:
+    """
+    Return a stable key identifying an XObject, for cycle detection.
+
+    Indirect objects are keyed by their reference so that two resolutions of the
+    same object compare equal; direct objects fall back to their identity.
+    """
+    reference = getattr(x_object, "indirect_reference", None)
+    return reference if reference is not None else id(x_object)
+
+
 def _xobj_to_image(
         x_object: dict[str, Any],
-        pillow_parameters: Union[dict[str, Any], None] = None
+        pillow_parameters: Union[dict[str, Any], None] = None,
+        _visited: Optional[set[Any]] = None,
 ) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
@@ -454,11 +466,16 @@ def _xobj_to_image(
         x_object:
         pillow_parameters: parameters provided to Pillow Image.save() method,
             cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
+        _visited: XObjects already being converted higher up the /SMask chain.
+            Internal, used to stop a cyclic soft mask from recursing forever.
 
     Returns:
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
+    visited = set() if _visited is None else _visited
+    visited.add(_xobject_identity(x_object))
+
     def _apply_alpha(
         img: Image.Image,
         x_object: dict[str, Any],
@@ -467,7 +484,19 @@ def _xobj_to_image(
         extension: str,
     ) -> tuple[Image.Image, str, str]:
         if ImageAttributes.S_MASK in x_object:  # add alpha channel
-            alpha = _xobj_to_image(x_object[ImageAttributes.S_MASK])[2]
+            s_mask = x_object[ImageAttributes.S_MASK]
+            if _xobject_identity(s_mask) in visited:
+                # A soft mask that refers back to an image already being
+                # converted would recurse until the interpreter runs out of
+                # stack. Such a chain cannot describe a real alpha channel, so
+                # drop the mask and keep the image we have.
+                logger_warning(
+                    "Ignoring cyclic /SMask reference in %(obj_as_text)s",
+                    source=__name__,
+                    obj_as_text=obj_as_text,
+                )
+                return img, extension, image_format
+            alpha = _xobj_to_image(s_mask, _visited=visited)[2]
             if img.size != alpha.size:
                 logger_warning(
                     "image and mask size not matching: %(obj_as_text)s",
