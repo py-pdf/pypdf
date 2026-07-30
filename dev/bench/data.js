@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785137092292,
+  "lastUpdate": 1785395028187,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -102503,6 +102503,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004168072037810609",
             "extra": "mean: 659.4078462000084 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d2acf62f125789ee1a354989ab5009b2c35e7e79",
+          "message": "DEV: Bump zizmorcore/zizmor-action from 0.6.0 to 0.6.1 (#3934)\n\nBumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.0 to 0.6.1.\n- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)\n- [Commits](https://github.com/zizmorcore/zizmor-action/compare/6599ee8b7a49aef6a770f63d261d214911a7ce02...6fc4b006235f201fdab3722e17240ab420d580e5)\n\n---\nupdated-dependencies:\n- dependency-name: zizmorcore/zizmor-action\n  dependency-version: 0.6.1\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-30T09:00:47+02:00",
+          "tree_id": "2653be7a402a186adccc186a6d22b2b94b62a23c",
+          "url": "https://github.com/py-pdf/pypdf/commit/d2acf62f125789ee1a354989ab5009b2c35e7e79"
+        },
+        "date": 1785395021146,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9433445485710044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008630414850862073",
+            "extra": "mean: 339.74955479999807 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.231060766253847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014001917553732163",
+            "extra": "mean: 51.9992117000001 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2795408187839708,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01988989139966356",
+            "extra": "mean: 3.577295095400004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.740759227531544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005656489242371262",
+            "extra": "mean: 53.35963115789498 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07134708432538875,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07458762538898105",
+            "extra": "mean: 14.015989713599993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5143861306339457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001584797236751857",
+            "extra": "mean: 660.3335700000002 msec\nrounds: 5"
           }
         ]
       }
