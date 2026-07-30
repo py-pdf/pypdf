@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785421498387,
+  "lastUpdate": 1785421510383,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -102569,6 +102569,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001584797236751857",
             "extra": "mean: 660.3335700000002 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "baa62ed5b08fbe04a040f6890f15383c65f322ca",
+          "message": "MAINT: Update charset mappings (#3935)\n\nThis updates the character mappings to the current third-party state and\nfixes some issue which might be related to the previous manual conversion.\n\nThe Symbol and ZapfDingbats encodings have been generated automatically\nfrom the upstream Unicode files and now include a proper license header.\nThere is a small diff which I assume is due to issues in the manual\nmigration process for the initial files.\n\nThe Adobe Glyphs have undergone much larger changes and now include proper\nattribution as well. Where existing mappings were available, they have\nbeen used to automatically generate our mapping - this covers the Adobe\nGlyph List and the Glyph Name Formatted Unicode List (which is based on\nUnicode data). I have avoided mixing them together again for easier\nupdates. This data now uses Unicode 16.0.0 as the basis and has been\nfixed to correctly deal with multi-byte and UTF-32 target values\n(which mostly affects emojis).\n\nFurther characters have been compiled from other public sources and\nmapped manually. This includes (valid) characters from the old mapping,\nalthough they might have been remapped.\n\nSome unclear characters, as well as non-mappable characters and target\ncharacters in the Unicode private use area have been omitted. If this\nbreaks existing use cases, we should carefully review the corresponding\ncharacters and re-add appropriate mappings.\n\nThe existing tests are not affected by this, as well as the core font\nmetrics.",
+          "timestamp": "2026-07-30T16:22:06+02:00",
+          "tree_id": "66ee467c6cc2678d78fe6321715af8515e3d1822",
+          "url": "https://github.com/py-pdf/pypdf/commit/baa62ed5b08fbe04a040f6890f15383c65f322ca"
+        },
+        "date": 1785421502754,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0306197116954636,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012390702804120309",
+            "extra": "mean: 329.9655170000051 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.02511706323409,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002290023717244578",
+            "extra": "mean: 52.56209444999911 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28034185256225524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01098314757184748",
+            "extra": "mean: 3.567073524199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.478885113508262,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014150763512878123",
+            "extra": "mean: 57.21188699999904 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07239036455486213,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1542202326504597",
+            "extra": "mean: 13.813993148800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6736218838502264,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020611800462030433",
+            "extra": "mean: 597.506527400003 msec\nrounds: 5"
           }
         ]
       }
