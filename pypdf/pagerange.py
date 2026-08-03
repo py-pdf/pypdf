@@ -155,7 +155,7 @@ class PageRange:
         if _start_key(a[0]) > _start_key(b[0]):
             a, b = b, a
 
-        # Now a has the smaller (or equal) start.
+        # Now `a` has the smaller (or equal) start.
         if _start_key(b[0]) > _stop_key(a[1]):
             # There is a gap between a and b.
             raise ValueError("Can't add PageRanges with gap")
