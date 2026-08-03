@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785762487242,
+  "lastUpdate": 1785762657350,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -119203,6 +119203,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008264225235946693",
             "extra": "mean: 669.9044506000007 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "11a0f77b3bec7a3ae6e2755c81f9d5fbf6889783",
+          "message": "ROB: Guard empty link destination arrays during page transfer (#3896)\n\n\n---------\n\nSigned-off-by: Sayed Kaif <metsw24@gmail.com>",
+          "timestamp": "2026-08-03T15:04:18+02:00",
+          "tree_id": "6cf9c1b953856fde1757d4db91b551a77e9202cc",
+          "url": "https://github.com/py-pdf/pypdf/commit/11a0f77b3bec7a3ae6e2755c81f9d5fbf6889783"
+        },
+        "date": 1785762649005,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 10.612170865723142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037437547165899867",
+            "extra": "mean: 94.23142659999542 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.109599204583784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010332332904397935",
+            "extra": "mean: 39.82540668420741 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0716111849202283,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008522725639530262",
+            "extra": "mean: 933.1742837999968 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3343127276985944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03795090997312483",
+            "extra": "mean: 2.9912112735999927 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4683838489325337,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020968089322289704",
+            "extra": "mean: 2.135001030199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5149636936254163,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004126782287504627",
+            "extra": "mean: 660.081825200001 msec\nrounds: 5"
           }
         ]
       }
