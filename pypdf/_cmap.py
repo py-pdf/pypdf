@@ -136,7 +136,7 @@ def _parse_to_unicode(
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
-        None, tuple[int, int]
+        tuple[int, int], None
     ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
@@ -199,10 +199,10 @@ def process_cm_line(
     line: bytes,
     process_rg: bool,
     process_char: bool,
-    multiline_rg: Union[None, tuple[int, int]],
+    multiline_rg: Union[tuple[int, int], None],
     map_dict: dict[Any, Any],
     int_entry: list[int],
-) -> tuple[bool, bool, Union[None, tuple[int, int]]]:
+) -> tuple[bool, bool, Union[tuple[int, int], None]]:
     if line == b"" or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
     line = line.replace(b"\t", b" ")
@@ -240,8 +240,8 @@ def parse_bfrange(
     line: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
-    multiline_rg: Union[None, tuple[int, int]],
-) -> Union[None, tuple[int, int]]:
+    multiline_rg: Union[tuple[int, int], None],
+) -> Union[tuple[int, int], None]:
     lst = [x for x in line.split(b" ") if x]
     closure_found = False
     entry_count = len(int_entry)

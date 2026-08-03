@@ -208,6 +208,55 @@ def test_build_destination__short_array():
     assert dest["/Type"] == "/FitR"
 
 
+def _reader_with_button_field(field: DictionaryObject) -> PdfReader:
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    reference = writer._add_object(field)
+    acroform = DictionaryObject()
+    acroform[NameObject("/Fields")] = ArrayObject([reference])
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acroform)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    return PdfReader(stream)
+
+
+def test_build_field__checkbox_missing_normal_appearance():
+    # A checkbox whose /AP is not a dictionary raises a clean PdfReadError
+    # instead of an uncaught KeyError.
+    field = DictionaryObject()
+    field[NameObject("/T")] = TextStringObject("CheckBox")
+    field[NameObject("/FT")] = NameObject("/Btn")
+    field[NameObject("/AP")] = ArrayObject()
+    with pytest.raises(PdfReadError, match="Expected appearance dictionary"):
+        _reader_with_button_field(field).get_fields()
+
+    # A checkbox whose /AP has no /N sub-dictionary raises likewise.
+    field[NameObject("/AP")] = DictionaryObject()
+    with pytest.raises(PdfReadError, match="Expected /N appearance dictionary"):
+        _reader_with_button_field(field).get_fields()
+
+    # A well-formed /AP /N still collects the appearance states.
+    normal = DictionaryObject()
+    normal[NameObject("/Yes")] = NumberObject(1)
+    appearance = DictionaryObject()
+    appearance[NameObject("/N")] = normal
+    field[NameObject("/AP")] = appearance
+    fields = _reader_with_button_field(field).get_fields()
+    assert list(fields["CheckBox"]["/_States_"]) == ["/Yes", "/Off"]
+
+
+def test_build_field__radio_kid_missing_appearance():
+    # A radio kid lacking /AP raises a clean PdfReadError instead of a KeyError.
+    field = DictionaryObject()
+    field[NameObject("/T")] = TextStringObject("Radio")
+    field[NameObject("/FT")] = NameObject("/Btn")
+    field[NameObject("/Ff")] = NumberObject(1 << 15)
+    field[NameObject("/Kids")] = ArrayObject([DictionaryObject()])
+    with pytest.raises(PdfReadError, match="missing /AP"):
+        _reader_with_button_field(field).get_fields()
+
+
 @pytest.mark.enable_socket
 def test_named_destinations__tree_is_null_object():
     url = "https://github.com/user-attachments/files/20885216/test.pdf"
@@ -641,6 +690,30 @@ def test_xfa__decompression_limit():
             expected_exception=LimitReachedError, match=r"^Limit reached while decompressing. 902 bytes remaining.$"
     ):
         _ = reader.xfa
+
+
+def test_get_form_text_fields__mapping_name_without_partial_name():
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    # A text field carrying only a mapping name (/TM) and no partial name (/T)
+    # is tolerated when building the field tree, so reading the text fields by
+    # short name should fall back to the qualified name instead of raising.
+    field = DictionaryObject()
+    field[NameObject("/FT")] = NameObject("/Tx")
+    field[NameObject("/TM")] = TextStringObject("mappingname")
+    field[NameObject("/V")] = TextStringObject("hello")
+
+    acro = DictionaryObject()
+    acro[NameObject("/Fields")] = ArrayObject([writer._add_object(field)])
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acro)
+
+    data = BytesIO()
+    writer.write(data)
+    data.seek(0)
+
+    reader = PdfReader(data)
+    assert reader.get_form_text_fields() == {"mappingname": "hello"}
 
 
 @pytest.mark.timeout(5)

@@ -247,7 +247,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         return cls(stream)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
     ) -> None:
         deprecate_with_replacement(
             "XmpInformation.write_to_stream",

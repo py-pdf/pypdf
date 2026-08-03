@@ -43,7 +43,7 @@ packaging==24.1
     #   build
     #   pytest
     #   wheel
-pillow==12.2.0
+pillow==12.3.0
     # via -r dev.in
 pip-tools==7.4.1
     # via -r dev.in
