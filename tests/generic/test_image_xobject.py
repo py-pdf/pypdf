@@ -457,6 +457,9 @@ def test_xobj_to_image__two_node_smask_cycle(
     extension, _, img = _xobj_to_image(first)
 
     assert extension == ".png"
+    # The outer image still gets its mask: the cycle is only broken one level
+    # deeper, when the mask's own /SMask points back at an image being converted.
+    assert img.mode == "LA"
     assert "Ignoring cyclic /SMask reference" in caplog.text
 
 
