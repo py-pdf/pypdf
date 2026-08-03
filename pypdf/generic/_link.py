@@ -65,7 +65,9 @@ class DirectReferenceLink:
         """reference: an ArrayObject whose first element is the Page indirect object"""
         self._reference = reference
 
-    def find_referenced_page(self) -> IndirectObject:
+    def find_referenced_page(self) -> Union[IndirectObject, None]:
+        if not self._reference:
+            return None
         return cast(IndirectObject, self._reference[0])
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
