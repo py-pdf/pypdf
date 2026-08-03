@@ -234,6 +234,21 @@ def check_if_whitespace_only(value: bytes) -> bool:
     return all(b in WHITESPACES_AS_BYTES for b in value)
 
 
+RTL_CHARACTER_RANGES = (
+    ("\u0590", "\u08FF"),  # Hebrew, Arabic, Syriac, Thaana, N'Ko, etc.
+    ("\uFB1D", "\uFDFF"),  # Hebrew & Arabic Presentation Forms-A
+    ("\uFE70", "\uFEFF"),  # Arabic Presentation Forms-B
+)
+
+
+def is_char_rtl(char: str, custom_rtl_min: str = "", custom_rtl_max: str = "") -> bool:
+    """Check if a character is part of RTL character ranges"""
+    if any(start <= char <= end for start, end in RTL_CHARACTER_RANGES):
+        return True
+
+    return bool(custom_rtl_min and custom_rtl_max and (custom_rtl_min <= char <= custom_rtl_max))
+
+
 def skip_over_comment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
