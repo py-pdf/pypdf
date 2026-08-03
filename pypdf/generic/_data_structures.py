@@ -228,7 +228,7 @@ class ArrayObject(list[Any], PdfObject):
         return self
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -244,7 +244,7 @@ class ArrayObject(list[Any], PdfObject):
     def read_from_stream(
         stream: StreamType,
         pdf: Optional[PdfReaderProtocol],
-        forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
+        forced_encoding: Union[str, list[str], dict[int, str], None] = None,
     ) -> "ArrayObject":
         arr = ArrayObject()
         tmp = stream.read(1)
@@ -516,7 +516,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         return XmpInformation(metadata)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -579,7 +579,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
     def read_from_stream(
         stream: StreamType,
         pdf: Optional[PdfReaderProtocol],
-        forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
+        forced_encoding: Union[str, list[str], dict[int, str], None] = None,
     ) -> "DictionaryObject":
         tmp = stream.read(2)
         if tmp != b"<<":
@@ -761,7 +761,7 @@ class TreeObject(DictionaryObject):
         self.insert_child(child, None, pdf)
 
     def inc_parent_counter_default(
-        self, parent: Union[None, IndirectObject, "TreeObject"], n: int
+        self, parent: Union[IndirectObject, "TreeObject", None], n: int
     ) -> None:
         if is_null_or_none(parent):
             return
@@ -774,7 +774,7 @@ class TreeObject(DictionaryObject):
             self.inc_parent_counter_default(parent.get("/Parent", None), n)
 
     def inc_parent_counter_outline(
-        self, parent: Union[None, IndirectObject, "TreeObject"], n: int
+        self, parent: Union[IndirectObject, "TreeObject", None], n: int
     ) -> None:
         if is_null_or_none(parent):
             return
@@ -1042,7 +1042,7 @@ class StreamObject(DictionaryObject):
         return data
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -1212,7 +1212,7 @@ class ContentStream(DecodedStreamObject):
         self,
         stream: Any,
         pdf: Any,
-        forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
+        forced_encoding: Union[str, list[str], dict[int, str], None] = None,
     ) -> None:
         self.pdf = pdf
         self._operations: list[tuple[Any, bytes]] = []
@@ -1532,7 +1532,7 @@ class ContentStream(DecodedStreamObject):
 
     # This overrides the parent method
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
     ) -> None:
         if not self._data and self._operations:
             self.get_data()  # this ensures ._data is rebuilt
@@ -1542,7 +1542,7 @@ class ContentStream(DecodedStreamObject):
 def read_object(
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
-    forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
+    forced_encoding: Union[str, list[str], dict[int, str], None] = None,
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
@@ -1783,7 +1783,7 @@ class Destination(TreeObject):
         )
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(

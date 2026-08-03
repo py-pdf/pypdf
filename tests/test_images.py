@@ -637,6 +637,10 @@ EI Q
         # `/Width` that is not a number.
         b"q BI /W (x) /H 2 /CS /RGB /BPC 8 ID " + b"\x00" * 12 + b" EI Q",
     ],
+    ids=[
+        "Empty filter array", "Non-name filter", "Empty color space", "Non-name color space",
+        "Non-number bits per component", "Missing height", "Missing width", "Non-number width"
+    ]
 )
 def test_contentstream__read_inline_image__malformed_settings(data):
     """A malformed inline image dictionary must not crash content stream parsing."""
