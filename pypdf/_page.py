@@ -98,7 +98,7 @@ MERGE_CROP_BOX = "cropbox"  # pypdf <= 3.4.0 used "trimbox"
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: Union[None, RectangleObject, ArrayObject, IndirectObject] = self.get(name)
+    retval: Union[RectangleObject, ArrayObject, IndirectObject, None] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
@@ -380,44 +380,33 @@ class ImageFile:
     """
 
     _stream_obj: Optional[Any] = field(default=None, repr=False, compare=False)
-    """
-    Internal reference to the raw PDF stream dictionary, used only to derive
-    :attr:`width`, :attr:`height`, and :attr:`data_size` cheaply. Not part of
-    the public dataclass contract.
-    """
+    """Internal reference to the raw stream, used to derive width/height/data_size."""
 
     @property
     def width(self) -> int:
-        """Image width in pixels, read from the stream header (cheap, no decode)."""
+        """Image width in pixels, read from the stream's /Width."""
         if self._stream_obj is None:
             raise ValueError("No stream attached to this ImageFile; width is unavailable.")
-        return int(self._stream_obj.get(ImageAttributes.WIDTH))
+        return self._stream_obj.get(ImageAttributes.WIDTH)
 
     @property
     def height(self) -> int:
-        """Image height in pixels, read from the stream header (cheap, no decode)."""
+        """Image height in pixels, read from the stream's /Height."""
         if self._stream_obj is None:
             raise ValueError("No stream attached to this ImageFile; height is unavailable.")
-        return int(self._stream_obj.get(ImageAttributes.HEIGHT))
+        return self._stream_obj.get(ImageAttributes.HEIGHT)
 
     @property
     def data_size(self) -> int:
-        """
-        Compressed byte length of the image stream (no decompression).
-        Read directly from the raw stream bytes as stored in the PDF, which
-        is cheap since it requires no decoding of the actual image data.
-        """
+        """Compressed size in bytes of the raw stream data, without decoding."""
         if self._stream_obj is None:
             raise ValueError("No stream attached to this ImageFile; data_size is unavailable.")
         raw = getattr(self._stream_obj, "_data", None)
         if raw is not None:
             return len(raw)
         # Fallback for stream-like objects without a private _data cache.
-        length = self._stream_obj.get("/Length")
-        if hasattr(length, "get_object"):
-            length = length.get_object()
-        return int(length) if length is not None else 0
-
+        length = self._stream_obj.get("/Length", NullObject()).get_object()
+        return int(length) if not is_null_or_none(length) else 0
 
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
@@ -1156,7 +1145,7 @@ class PageObject(DictionaryObject):
         return None
 
     def replace_contents(
-        self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]
+        self, content: Union[ContentStream, EncodedStreamObject, ArrayObject, None]
     ) -> None:
         """
         Replace the page contents with the new content and nullify old objects
