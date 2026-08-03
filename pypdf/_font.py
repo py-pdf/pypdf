@@ -655,7 +655,7 @@ class Font:
         # If we have an embedded Truetype font, we assume that we need to produce a Type 2 CID font resource.
         if self.font_descriptor.font_file and self.sub_type == "TrueType":
             # Begin with creating the widths array (part of the descendant font) and the unicode cmap (part
-            # of the Type 0 font obect).
+            # of the Type 0 font object).
             widths_list, to_unicode_stream = self._create_widths_list_and_unicode_stream()
 
             # Create the descendant font object

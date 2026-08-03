@@ -27,7 +27,7 @@ It is also possible to run it locally:
    ```
 
 3. Run `doctest` build. It uses indirectly `sphinx-build` command line tool
-    installed with docs requrements. See
+    installed with docs requirements. See
    [Sphinx's docs](https://www.sphinx-doc.org/en/master/usage/quickstart.html#running-the-build)
    for details.
 
