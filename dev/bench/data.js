@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785757797760,
+  "lastUpdate": 1785757803220,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -118807,6 +118807,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04499870885854108",
             "extra": "mean: 872.7642189999926 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "651bfdf6b988d0c384bc9af39da2008005748566",
+          "message": "ROB: Guard missing /AP appearance state in button form fields (#3893)",
+          "timestamp": "2026-08-03T13:46:56+02:00",
+          "tree_id": "1b839161099fefb4d9c47ad226e2bd005c5f7e7d",
+          "url": "https://github.com/py-pdf/pypdf/commit/651bfdf6b988d0c384bc9af39da2008005748566"
+        },
+        "date": 1785757795427,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.429952921143812,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018183182718633256",
+            "extra": "mean: 74.46042483333078 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.730481089920644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01704973272475904",
+            "extra": "mean: 67.88644538461487 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0223010970773345,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030734832957677923",
+            "extra": "mean: 978.1853925999968 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.43557352970130164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049374142381747727",
+            "extra": "mean: 2.295823625199995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3591518119505492,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013384045491805992",
+            "extra": "mean: 2.7843378948000064 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1646802141821957,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028866364196754535",
+            "extra": "mean: 858.6047807999989 msec\nrounds: 5"
           }
         ]
       }
