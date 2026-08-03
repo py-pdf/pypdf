@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785779927615,
+  "lastUpdate": 1785779934612,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -102965,6 +102965,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0020480333313247037",
             "extra": "mean: 670.2669548000017 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ea00497a849f17f1dfb926d7268077fc92ea0c0a",
+          "message": "BUG: Correctly handle IndirectObject in FlateDecode.decode DecodeParms (#3937)\n\nCloses #3912.",
+          "timestamp": "2026-08-03T19:55:50+02:00",
+          "tree_id": "92868bcbd81c0864f1ca379b797172872a2fd2d9",
+          "url": "https://github.com/py-pdf/pypdf/commit/ea00497a849f17f1dfb926d7268077fc92ea0c0a"
+        },
+        "date": 1785779927273,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9349890802645118,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009618762339365792",
+            "extra": "mean: 340.7167702000024 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.109294587088698,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002173894250148112",
+            "extra": "mean: 52.33055544999843 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.277137694722758,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017013635099813355",
+            "extra": "mean: 3.6083146357999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.976164001077567,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005429360624584272",
+            "extra": "mean: 58.9061227222195 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07064114544390718,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03842675986833342",
+            "extra": "mean: 14.156055847000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5069624428629411,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002118947752562938",
+            "extra": "mean: 663.586544399999 msec\nrounds: 5"
           }
         ]
       }
