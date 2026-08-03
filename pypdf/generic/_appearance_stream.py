@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple, cast
 from .._codecs import fill_from_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
 from .._font import Font
-from .._utils import logger_warning
+from .._utils import is_char_rtl, logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes, PageAttributes
 from ..errors import PdfReadError
 from ..generic import (
@@ -390,12 +390,8 @@ class TextStreamAppearance(BaseStreamAppearance):
             # This is the X position where the *current line* will start.
             current_x_pos = desired_abs_x_start
 
-            is_rtl = any(
-                0x0590 <= ord(char) <= 0x08FF or
-                0xFB1D <= ord(char) <= 0xFDFF or
-                0xFE70 <= ord(char) <= 0xFEFF
-                for char in line
-            )
+            is_rtl = any(is_char_rtl(char) for char in line)
+
             encoded_line = _glyph_id_to_bytes(line, encoding_cmap)
             if is_rtl:
                 # Encode input text as UTF-16BE with a BOM, so that the input text is returned
