@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785760991840,
+  "lastUpdate": 1785760997493,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -118939,6 +118939,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028866364196754535",
             "extra": "mean: 858.6047807999989 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f7c64dd6a9bcaff1b023c15523303b57894ca681",
+          "message": "ROB: Guard text field without /T in get_form_text_fields (#3903)",
+          "timestamp": "2026-08-03T14:40:08+02:00",
+          "tree_id": "61384ed68848c1250543afe2e8649fe2f66ee4e8",
+          "url": "https://github.com/py-pdf/pypdf/commit/f7c64dd6a9bcaff1b023c15523303b57894ca681"
+        },
+        "date": 1785760989332,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.641240475227207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01805933779891114",
+            "extra": "mean: 73.30711615384408 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.221649235579907,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011182000023049601",
+            "extra": "mean: 49.451950647057224 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.196158474380824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02393492348789731",
+            "extra": "mean: 836.0096269999985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5568254774151892,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04182217099491072",
+            "extra": "mean: 1.795894837000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3666776435066013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0071509076279442346",
+            "extra": "mean: 2.7271910838000055 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1547748418061916,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032755620336690904",
+            "extra": "mean: 865.969679799997 msec\nrounds: 5"
           }
         ]
       }
