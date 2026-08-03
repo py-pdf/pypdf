@@ -37,6 +37,10 @@ except ImportError:
 
 DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
+# "The glyph widths shall be measured in units in which 1000 units correspond to 1 unit in text space"
+# (Table 111, PDF Specification 2.0)
+TEXT_SPACE_TO_GLYPH_SPACE_FACTOR = 1000
+
 
 @dataclass
 class BaseStreamConfig:
@@ -121,7 +125,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         wrapped_lines = []
         current_line_words: list[WidthWordGlyphs] = []
         current_line_width: float = 0
-        space_width = font.space_width * font_size / 1000
+        space_width = font.space_width * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
         for paragraph in paragraphs:
             for i, width_word_glyphs in enumerate(paragraph):
                 word_width = width_word_glyphs.width * font_size
@@ -220,7 +224,9 @@ class TextStreamAppearance(BaseStreamAppearance):
         rectangle = self._layout.rectangle
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
-        leading_factor = (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / 1000.0
+        leading_factor = (
+            (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
+        )
 
         # Set margins based on border width and style, but never less than 1 point
         factor = 2 if self._layout.border_style in {"/B", "/I"} else 1
@@ -264,7 +270,11 @@ class TextStreamAppearance(BaseStreamAppearance):
                     for word in words:
                         glyph_word = _unicode_to_glyph_id(word, reverse_cmap)
                         line_by_widths_words_glyphs.append(
-                            WidthWordGlyphs(width=font.get_text_width(word) / 1000, word=word, glyphs=glyph_word)
+                            WidthWordGlyphs(
+                                width=font.get_text_width(word) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR,
+                                word=word,
+                                glyphs=glyph_word
+                            )
                         )
                     paragraphs.append(line_by_widths_words_glyphs)
                 lines, font_size = self._scale_text(
@@ -279,7 +289,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             else:
                 max_vertical_size = field_height / leading_factor
                 glyphs = _unicode_to_glyph_id(text, reverse_cmap)
-                text_width_unscaled = font.get_text_width(glyphs) / 1000
+                text_width_unscaled = font.get_text_width(glyphs) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
                 max_horizontal_size = field_width / (text_width_unscaled or 1)
                 font_size = round(max(min(max_vertical_size, max_horizontal_size), min_font_size), 1)
                 lines = [WidthWordGlyphs(width=text_width_unscaled * font_size, word=text, glyphs=glyphs)]
@@ -300,21 +310,33 @@ class TextStreamAppearance(BaseStreamAppearance):
                 if index < (max_length or len(text)):
                     glyphs = _unicode_to_glyph_id(char, reverse_cmap)
                     lines.append(
-                        WidthWordGlyphs(width=font.get_text_width(glyphs) * font_size / 1000, word=char, glyphs=glyphs)
+                        WidthWordGlyphs(
+                            width=font.get_text_width(glyphs) * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR,
+                            word=char,
+                            glyphs=glyphs
+                        )
                     )
         else:
             lines = []
             for line in text.splitlines():
                 glyphs = _unicode_to_glyph_id(line, reverse_cmap)
                 lines.append(
-                    WidthWordGlyphs(width=font.get_text_width(glyphs) * font_size / 1000, word=line, glyphs=glyphs)
+                    WidthWordGlyphs(
+                        width=font.get_text_width(glyphs) * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR,
+                        word=line,
+                        glyphs=glyphs
+                    )
                 )
 
         # Set the vertical offset
         if is_multiline:
-            y_offset = rectangle.height + margin - font.font_descriptor.bbox[3] * font_size / 1000.0
+            y_offset = (
+                rectangle.height + margin - font.font_descriptor.bbox[3] * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
+            )
         else:
-            y_offset = margin + ((field_height - font.font_descriptor.ascent * font_size / 1000) / 2)
+            y_offset = margin + (
+                (field_height - font.font_descriptor.ascent * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR) / 2
+            )
         default_appearance = f"{font_name} {font_size} Tf {font_color}"
 
         ap_stream = (
