@@ -8,12 +8,12 @@ import math
 from typing import Any, Callable, Optional, Union
 
 from .._font import Font
-from .._utils import is_char_rtl
+from .._utils import is_char_neutral, is_char_rtl
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 
 CUSTOM_RTL_MIN: str = ""
 CUSTOM_RTL_MAX: str = ""
-CUSTOM_RTL_SPECIAL_CHARS: list[int] = []
+CUSTOM_RTL_SPECIAL_CHARS: str = ""
 LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
 
 
@@ -25,7 +25,7 @@ def set_custom_rtl(
     _min: Union[str, int, None] = "",
     _max: Union[str, int, None] = "",
     specials: Union[str, list[int], None] = None,
-) -> tuple[str, str, list[int]]:
+) -> tuple[str, str, str]:
     """
     Change the Right-To-Left and special characters custom parameters.
 
@@ -61,9 +61,9 @@ def set_custom_rtl(
     elif isinstance(_max, str):
         CUSTOM_RTL_MAX = _max
     if isinstance(specials, str):
-        CUSTOM_RTL_SPECIAL_CHARS = [ord(x) for x in specials]
-    elif isinstance(specials, list):
         CUSTOM_RTL_SPECIAL_CHARS = specials
+    elif isinstance(specials, list):
+        CUSTOM_RTL_SPECIAL_CHARS = "".join(chr(char) for char in specials if 0 <= char <= 0x10FFFF)
     return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
 
@@ -209,36 +209,30 @@ def get_display_str(
     for raw_character in text_operands:
         widths += font.space_width if raw_character == font.space_char else font.get_text_width(raw_character)
         x = font.character_map.get(raw_character, raw_character)
-        # x can be a sequence of bytes ; ex: habibi.pdf
+        # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
-            xx = ord(x)
+            if (
+                # cases where the current inserting order is kept
+                is_char_neutral(x, CUSTOM_RTL_SPECIAL_CHARS)
+            ):
+                text = x + text if rtl_dir else text + x
+            elif (  # right-to-left characters set
+                is_char_rtl(x, CUSTOM_RTL_MIN, CUSTOM_RTL_MAX)
+            ):
+                if not rtl_dir:
+                    rtl_dir = True
+                    if visitor_text is not None:
+                        visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
+                    text = ""
+                text = x + text
+            else:  # left-to-right
+                if rtl_dir:
+                    rtl_dir = False
+                    if visitor_text is not None:
+                        visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
+                    text = ""
+                text = text + x
         else:
-            xx = 1
-        # fmt: off
-        if (
-            # cases where the current inserting order is kept
-            (xx <= 0x2F)                        # punctuations but...
-            or 0x3A <= xx <= 0x40               # numbers (x30-39)
-            or 0x2000 <= xx <= 0x206F           # upper punctuations..
-            or 0x20A0 <= xx <= 0x21FF           # but (numbers) indices/exponents
-            or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
-        ):
+            # Treat a sequence of bytes as a neutral character.
             text = x + text if rtl_dir else text + x
-        elif (  # right-to-left characters set
-            len(x) == 1 and is_char_rtl(x, CUSTOM_RTL_MIN, CUSTOM_RTL_MAX)
-        ):
-            if not rtl_dir:
-                rtl_dir = True
-                if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
-                text = ""
-            text = x + text
-        else:  # left-to-right
-            if rtl_dir:
-                rtl_dir = False
-                if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
-                text = ""
-            text = text + x
-        # fmt: on
     return text, rtl_dir, widths
