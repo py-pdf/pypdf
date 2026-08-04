@@ -212,16 +212,9 @@ def _handle_flate(
     obj_as_text: str,
 ) -> tuple[Image.Image, str, str, bool]:
     """
-    Process image encoded in flateEncode
+    Process image encoded using the zlib/deflate compression method, corresponds to the FlateDecode filter
     Returns img, image_format, extension, color inversion
     """
-    image_format = "PNG"
-    extension = ".png"  # mime_type: "image/png"
-    lookup: Any
-    base: Any
-    hival: Any
-    if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
-        color_space, base, hival, lookup = __handle_flate__indexed(color_space)
     if mode == "2bits":
         mode = "P"
         data = bits2byte(data, size, 2)
@@ -229,6 +222,11 @@ def _handle_flate(
         mode = "P"
         data = bits2byte(data, size, 4)
     img = _image_from_bytes(mode, size, data)
+    base: Any
+    hival: Any
+    lookup: Any
+    if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
+        color_space, base, hival, lookup = __handle_flate__indexed(color_space)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -327,8 +325,11 @@ def _handle_flate(
             if mode != mode2:
                 img = Image.frombytes(mode, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
-        extension = ".tif"
         image_format = "TIFF"
+        extension = ".tif"
+    else:
+        image_format = "PNG"
+        extension = ".png"  # mime_type: "image/png"
     return img, image_format, extension, False
 
 
