@@ -8,10 +8,11 @@ import math
 from typing import Any, Callable, Optional, Union
 
 from .._font import Font
+from .._utils import is_char_rtl
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 
-CUSTOM_RTL_MIN: int = -1
-CUSTOM_RTL_MAX: int = -1
+CUSTOM_RTL_MIN: str = ""
+CUSTOM_RTL_MAX: str = ""
 CUSTOM_RTL_SPECIAL_CHARS: list[int] = []
 LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
 
@@ -21,10 +22,10 @@ class OrientationNotFoundError(Exception):
 
 
 def set_custom_rtl(
-    _min: Union[str, int, None] = None,
-    _max: Union[str, int, None] = None,
+    _min: Union[str, int, None] = "",
+    _max: Union[str, int, None] = "",
     specials: Union[str, list[int], None] = None,
-) -> tuple[int, int, list[int]]:
+) -> tuple[str, str, list[int]]:
     """
     Change the Right-To-Left and special characters custom parameters.
 
@@ -32,13 +33,13 @@ def set_custom_rtl(
         _min: The new minimum value for the range of custom characters that
             will be written right to left.
             If set to ``None``, the value will not be changed.
-            If set to an integer or string, it will be converted to its ASCII code.
-            The default value is -1, which sets no additional range to be converted.
+            If set to a valid integer, it will be converted to its corresponding character.
+            The default value is "", which sets no additional range to be converted.
         _max: The new maximum value for the range of custom characters that will
             be written right to left.
             If set to ``None``, the value will not be changed.
-            If set to an integer or string, it will be converted to its ASCII code.
-            The default value is -1, which sets no additional range to be converted.
+            If set to a valid integer, it will be converted to its corresponding character.
+            The default value is "", which sets no additional range to be converted.
         specials: The new list of special characters to be inserted in the
             current insertion order.
             If set to ``None``, the current value will not be changed.
@@ -52,13 +53,13 @@ def set_custom_rtl(
     """
     global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
     if isinstance(_min, int):
-        CUSTOM_RTL_MIN = _min
+        CUSTOM_RTL_MIN = chr(_min) if 0 <= _min <= 0x10FFFF else ""
     elif isinstance(_min, str):
-        CUSTOM_RTL_MIN = ord(_min)
+        CUSTOM_RTL_MIN = _min
     if isinstance(_max, int):
-        CUSTOM_RTL_MAX = _max
+        CUSTOM_RTL_MAX = chr(_max) if 0 <= _max <= 0x10FFFF else ""
     elif isinstance(_max, str):
-        CUSTOM_RTL_MAX = ord(_max)
+        CUSTOM_RTL_MAX = _max
     if isinstance(specials, str):
         CUSTOM_RTL_SPECIAL_CHARS = [ord(x) for x in specials]
     elif isinstance(specials, list):
@@ -224,10 +225,7 @@ def get_display_str(
         ):
             text = x + text if rtl_dir else text + x
         elif (  # right-to-left characters set
-            0x0590 <= xx <= 0x08FF
-            or 0xFB1D <= xx <= 0xFDFF
-            or 0xFE70 <= xx <= 0xFEFF
-            or CUSTOM_RTL_MIN <= xx <= CUSTOM_RTL_MAX
+            len(x) == 1 and is_char_rtl(x, CUSTOM_RTL_MIN, CUSTOM_RTL_MAX)
         ):
             if not rtl_dir:
                 rtl_dir = True
