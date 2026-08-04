@@ -18,7 +18,14 @@ from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf._page import ImageFile
 from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
-from pypdf.generic import ContentStream, NameObject, NullObject
+from pypdf.generic import (
+    ContentStream,
+    DecodedStreamObject,
+    DictionaryObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+)
 from pypdf.generic._image_xobject import _handle_flate
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -597,6 +604,37 @@ def test_low_bit_devicergb_image_mode():
     # A single-component space must still map to a palette image ("P").
     gray = _handle_flate((2, 2), bytes([0xF0, 0x0F]), "4bits", "/DeviceGray", 1, "")[0]
     assert gray.mode == "P"
+
+
+def test_low_bit_devicergb_image_without_filter():
+    """Low-bit /DeviceRGB images decode even without a filter (#3367)."""
+    # Same 2x2 4-bit DeviceRGB samples as above, but stored uncompressed:
+    # images without a filter never reach the FlateDecode handler.
+    writer = PdfWriter()
+    image = DecodedStreamObject()
+    image.set_data(bytes([0xF0, 0x00, 0xF0, 0x00, 0xFF, 0xFF]))
+    image[NameObject("/Type")] = NameObject("/XObject")
+    image[NameObject("/Subtype")] = NameObject("/Image")
+    image[NameObject("/Width")] = NumberObject(2)
+    image[NameObject("/Height")] = NumberObject(2)
+    image[NameObject("/BitsPerComponent")] = NumberObject(4)
+    image[NameObject("/ColorSpace")] = NameObject("/DeviceRGB")
+    image[NameObject("/Colors")] = NumberObject(3)
+
+    page = writer.add_blank_page(20, 20)
+    page[NameObject("/Resources")] = DictionaryObject()
+    page["/Resources"][NameObject("/XObject")] = DictionaryObject()
+    page["/Resources"]["/XObject"][NameObject("/Im0")] = writer._add_object(image)
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    img = PdfReader(output).pages[0].images[0].image
+    assert img.mode == "RGB"
+    assert img.tobytes() == bytes(
+        [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
+    )
 
 
 @pytest.mark.enable_socket
