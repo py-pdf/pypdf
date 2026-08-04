@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785857791007,
+  "lastUpdate": 1785857918492,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -119995,6 +119995,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004434999603130299",
             "extra": "mean: 485.73824300000297 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3fa890e042a30b3a249e803c7ad731538d02b8d3",
+          "message": "BUG: Decode low-bit DeviceRGB images as RGB instead of palette (#3929)\n\n4-bit and 2-bit /DeviceRGB images were forced to mode 'P', which left an\nunrecognized '4bits'/'2bits' Pillow mode and produced broken extraction.\nTreat multi-component DeviceRGB samples as interleaved color components:\nunpack them per row across all components and scale up to 8-bit, giving a\nproper RGB image. Single-component spaces still map to 'P'.",
+          "timestamp": "2026-08-04T17:33:31+02:00",
+          "tree_id": "a0d8257c9b93efe2a445cdf389d3c8de875049d4",
+          "url": "https://github.com/py-pdf/pypdf/commit/3fa890e042a30b3a249e803c7ad731538d02b8d3"
+        },
+        "date": 1785857908659,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.575428715459324,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019303329411155007",
+            "extra": "mean: 73.66249869230484 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.55195172649484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015094706728291673",
+            "extra": "mean: 48.65717929411229 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1751821053023972,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026843836563874256",
+            "extra": "mean: 850.9319495999989 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5125453314901035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035186101734531613",
+            "extra": "mean: 1.9510469388000047 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36010979819481076,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0801285298166095",
+            "extra": "mean: 2.776930827799981 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1521216681478543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03028063741562722",
+            "extra": "mean: 867.9638858000089 msec\nrounds: 5"
           }
         ]
       }
