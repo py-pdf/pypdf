@@ -274,9 +274,14 @@ class Font:
         """
         Convert a raw /FontBBox value into four floats.
 
-        Returns ``None`` when the value is not a sequence of exactly four
-        numbers, so a malformed entry falls back to the default bounding box
-        rather than raising.
+        Args:
+            raw_bbox: The raw /FontBBox value read from the PDF.
+
+        Returns:
+            The four bounding box values, or ``None`` when the value is not
+            a sequence of exactly four numbers, so that a malformed entry
+            falls back to the default bounding box rather than raising.
+
         """
         try:
             bbox = [float(value) for value in raw_bbox]
