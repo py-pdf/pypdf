@@ -234,6 +234,22 @@ def check_if_whitespace_only(value: bytes) -> bool:
     return all(b in WHITESPACES_AS_BYTES for b in value)
 
 
+NEUTRAL_CHARACTER_RANGES = (
+    ("\x00", "\x2F"),      # punctuations but...
+    ("\x3A", "\x40"),      # numbers (x30-39)
+    ("\u2000", "\u206F"),  # upper punctuations..
+    ("\u20A0", "\u21FF"),  # but (numbers) indices/exponents
+)
+
+
+def is_char_neutral(char: str, custom_special_characters: str = "") -> bool:
+    """Check if a character is part of neutral character ranges"""
+    if any(start <= char <= end for start, end in NEUTRAL_CHARACTER_RANGES):
+        return True
+
+    return bool(custom_special_characters and char in custom_special_characters)
+
+
 RTL_CHARACTER_RANGES = (
     ("\u0590", "\u08FF"),  # Hebrew, Arabic, Syriac, Thaana, N'Ko, etc.
     ("\uFB1D", "\uFDFF"),  # Hebrew & Arabic Presentation Forms-A
