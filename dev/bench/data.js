@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785849118014,
+  "lastUpdate": 1785849120400,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -103163,6 +103163,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0015267371314490199",
             "extra": "mean: 459.9544822000098 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hellorahul@google.com",
+            "name": "RAHUL KUMAR",
+            "username": "pctablet505"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3d66ed7cec51475fc25dd6625d83a803b2b6f41f",
+          "message": "ENH: Allow keeping original PDF header in non-incremental clone mode (#3918)\n\nAdd a keep_initial_header parameter to PdfWriter.__init__ that\npreserves the source document's header when using clone_from.\n\nCloses #3386.",
+          "timestamp": "2026-08-04T15:08:53+02:00",
+          "tree_id": "cb5a75994220bc772569b4df30e9d7f85ae2c4d3",
+          "url": "https://github.com/py-pdf/pypdf/commit/3d66ed7cec51475fc25dd6625d83a803b2b6f41f"
+        },
+        "date": 1785849111636,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9841161162981695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01535625432405621",
+            "extra": "mean: 335.1076034000016 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.081950203881586,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0049773089870161795",
+            "extra": "mean: 55.30376915789391 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27827675517817574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04630564135369765",
+            "extra": "mean: 3.5935448483999948 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.310128487004672,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015484301926619285",
+            "extra": "mean: 57.76964629411824 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07163847585219986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11372070312602682",
+            "extra": "mean: 13.958979279000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6502114560662096,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017445776542341354",
+            "extra": "mean: 605.9829462000039 msec\nrounds: 5"
           }
         ]
       }
