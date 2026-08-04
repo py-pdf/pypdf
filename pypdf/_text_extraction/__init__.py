@@ -216,11 +216,12 @@ def get_display_str(
         # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
             if (
-                # cases where the current inserting order is kept
+                # Cases where the current inserting order is kept
                 is_char_neutral(x, CUSTOM_RTL_SPECIAL_CHARS)
             ):
                 text = x + text if rtl_dir else text + x
-            elif (  # right-to-left characters set
+            elif (
+                # Right-to-left characters
                 is_char_rtl(x, CUSTOM_RTL_MIN, CUSTOM_RTL_MAX)
             ):
                 if not rtl_dir:
@@ -229,7 +230,8 @@ def get_display_str(
                         visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                     text = ""
                 text = x + text
-            else:  # left-to-right
+            else:
+                # Left-to-right characters
                 if rtl_dir:
                     rtl_dir = False
                     if visitor_text is not None:

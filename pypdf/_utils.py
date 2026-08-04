@@ -235,10 +235,10 @@ def check_if_whitespace_only(value: bytes) -> bool:
 
 
 NEUTRAL_CHARACTER_RANGES = (
-    ("\x00", "\x2F"),      # punctuations but...
-    ("\x3A", "\x40"),      # numbers (x30-39)
-    ("\u2000", "\u206F"),  # upper punctuations..
-    ("\u20A0", "\u21FF"),  # but (numbers) indices/exponents
+    ("\x00", "\x2F"),      # ASCII control codes, space, and early punctuation (!"#$%)
+    ("\x3A", "\x40"),      # ASCII operators and punctuation between digits & A (:;<=>?@)
+    ("\u2000", "\u206F"),  # General punctuation
+    ("\u20A0", "\u21FF"),  # Currency symbols, diacritical marks, letter-like symbols, number forms, arrows
 )
 
 
