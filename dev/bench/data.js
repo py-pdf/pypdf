@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785845843200,
+  "lastUpdate": 1785845880067,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -119599,6 +119599,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04444623625431625",
             "extra": "mean: 826.3043373999949 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "3242828+arpitjain099@users.noreply.github.com",
+            "name": "Arpit Jain",
+            "username": "arpitjain099"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e415cb87731ac4a376c6240b72ef9437b892716f",
+          "message": "ROB: Ignore cyclic /SMask references when extracting images (#3932)\n\n_xobj_to_image recurses into the soft mask of an image XObject without\ntracking which objects it has already visited, so an image whose /SMask\nrefers back to itself, or any cycle in that chain, recurses until Python\nraises RecursionError.\n\nThread a set of already-visited XObjects through the recursion and skip\nthe mask when one repeats. Indirect objects are keyed by their reference\nso that two resolutions of the same object compare equal; direct objects\nfall back to their identity. A cyclic chain cannot describe a real alpha\nchannel, so the mask is dropped with a warning and the base image is\nstill returned rather than aborting the extraction.\n\nReported via GHSA-jg66-3v3w-cvmh.\n\nSigned-off-by: Arpit Jain <arpitjain099@gmail.com>\n\n---------\n\nSigned-off-by: Arpit Jain <arpitjain099@gmail.com>",
+          "timestamp": "2026-08-04T14:15:04+02:00",
+          "tree_id": "9edf6e855e06630c7be6e7a2d8fca8be9fa8a142",
+          "url": "https://github.com/py-pdf/pypdf/commit/e415cb87731ac4a376c6240b72ef9437b892716f"
+        },
+        "date": 1785845872685,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.269300290156218,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020824994913422188",
+            "extra": "mean: 75.3619240000052 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.84495841513469,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008302599169746972",
+            "extra": "mean: 56.03823650000095 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1412438698276737,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02559302786833201",
+            "extra": "mean: 876.2369081999964 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4797964945394657,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024347219472703286",
+            "extra": "mean: 2.084216978200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3528366877459628,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016983567074101126",
+            "extra": "mean: 2.834172393999984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1489894458122063,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039453815041586016",
+            "extra": "mean: 870.3300136000053 msec\nrounds: 5"
           }
         ]
       }
