@@ -455,7 +455,8 @@ def _get_mode_and_invert_color(
 
 def _xobj_to_image(
         x_object: dict[str, Any],
-        pillow_parameters: Union[dict[str, Any], None] = None
+        pillow_parameters: Union[dict[str, Any], None] = None,
+        visited: Optional[set[int]] = None,
 ) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
@@ -467,11 +468,17 @@ def _xobj_to_image(
         x_object:
         pillow_parameters: parameters provided to Pillow Image.save() method,
             cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
+        visited: Set of id() values of XObjects already being converted higher
+            up the /SMask chain, used to detect cyclic soft masks.
 
     Returns:
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
+    if visited is None:
+        visited = set()
+    visited.add(id(x_object))
+
     def _apply_alpha(
         img: Image.Image,
         x_object: dict[str, Any],
@@ -480,7 +487,19 @@ def _xobj_to_image(
         extension: str,
     ) -> tuple[Image.Image, str, str]:
         if ImageAttributes.S_MASK in x_object:  # add alpha channel
-            alpha = _xobj_to_image(x_object[ImageAttributes.S_MASK])[2]
+            s_mask = x_object[ImageAttributes.S_MASK]
+            if id(s_mask) in visited:
+                # A soft mask that refers back to an image already being
+                # converted would recurse until the interpreter runs out of
+                # stack. Such a chain cannot describe a real alpha channel, so
+                # drop the mask and keep the image we have.
+                logger_warning(
+                    "Ignoring cyclic /SMask reference in %(obj_as_text)s",
+                    source=__name__,
+                    obj_as_text=obj_as_text,
+                )
+                return img, extension, image_format
+            alpha = _xobj_to_image(s_mask, visited=visited)[2]
             if img.size != alpha.size:
                 logger_warning(
                     "image and mask size not matching: %(obj_as_text)s",
