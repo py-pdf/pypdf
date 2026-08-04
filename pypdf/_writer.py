@@ -168,6 +168,9 @@ class PdfWriter(PdfDocCommon):
             If false, pypdf will try to be forgiving and do something reasonable, but it will log
             a warning message. It is a best-effort approach.
 
+        keep_initial_header: If true, the PDF header of the cloned document is kept
+            when using ``clone_from`` in non-incremental mode.
+
     """
 
     def __init__(
@@ -178,6 +181,7 @@ class PdfWriter(PdfDocCommon):
         full: bool = False,
         strict: bool = False,
         *,
+        keep_initial_header: bool = False,
         incremental_clone_object_count_limit: Optional[int] = 500_000,
         incremental_clone_object_id_limit: Optional[int] = 1_000_000,
     ) -> None:
@@ -303,6 +307,8 @@ class PdfWriter(PdfDocCommon):
                 clone_from = PdfReader(clone_from)
             self.clone_document_from_reader(clone_from)
             self._cloned = True
+            if keep_initial_header and not self.incremental:
+                self._header = clone_from.pdf_header.encode()
         else:
             self._pages = self._add_object(pages)
             self._root_object = DictionaryObject(

@@ -212,16 +212,9 @@ def _handle_flate(
     obj_as_text: str,
 ) -> tuple[Image.Image, str, str, bool]:
     """
-    Process image encoded in flateEncode
+    Process image encoded using the zlib/deflate compression method, corresponds to the FlateDecode filter
     Returns img, image_format, extension, color inversion
     """
-    image_format = "PNG"
-    extension = ".png"  # mime_type: "image/png"
-    lookup: Any
-    base: Any
-    hival: Any
-    if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
-        color_space, base, hival, lookup = __handle_flate__indexed(color_space)
     if mode == "2bits":
         mode = "P"
         data = bits2byte(data, size, 2)
@@ -229,6 +222,11 @@ def _handle_flate(
         mode = "P"
         data = bits2byte(data, size, 4)
     img = _image_from_bytes(mode, size, data)
+    base: Any
+    hival: Any
+    lookup: Any
+    if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
+        color_space, base, hival, lookup = __handle_flate__indexed(color_space)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -327,8 +325,11 @@ def _handle_flate(
             if mode != mode2:
                 img = Image.frombytes(mode, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
-        extension = ".tif"
         image_format = "TIFF"
+        extension = ".tif"
+    else:
+        image_format = "PNG"
+        extension = ".png"  # mime_type: "image/png"
     return img, image_format, extension, False
 
 
@@ -455,7 +456,8 @@ def _get_mode_and_invert_color(
 
 def _xobj_to_image(
         x_object: dict[str, Any],
-        pillow_parameters: Union[dict[str, Any], None] = None
+        pillow_parameters: Union[dict[str, Any], None] = None,
+        visited: Optional[set[int]] = None,
 ) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
@@ -467,11 +469,17 @@ def _xobj_to_image(
         x_object:
         pillow_parameters: parameters provided to Pillow Image.save() method,
             cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
+        visited: Set of id() values of XObjects already being converted higher
+            up the /SMask chain, used to detect cyclic soft masks.
 
     Returns:
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
+    if visited is None:
+        visited = set()
+    visited.add(id(x_object))
+
     def _apply_alpha(
         img: Image.Image,
         x_object: dict[str, Any],
@@ -480,7 +488,19 @@ def _xobj_to_image(
         extension: str,
     ) -> tuple[Image.Image, str, str]:
         if ImageAttributes.S_MASK in x_object:  # add alpha channel
-            alpha = _xobj_to_image(x_object[ImageAttributes.S_MASK])[2]
+            s_mask = x_object[ImageAttributes.S_MASK]
+            if id(s_mask) in visited:
+                # A soft mask that refers back to an image already being
+                # converted would recurse until the interpreter runs out of
+                # stack. Such a chain cannot describe a real alpha channel, so
+                # drop the mask and keep the image we have.
+                logger_warning(
+                    "Ignoring cyclic /SMask reference in %(obj_as_text)s",
+                    source=__name__,
+                    obj_as_text=obj_as_text,
+                )
+                return img, extension, image_format
+            alpha = _xobj_to_image(s_mask, visited=visited)[2]
             if img.size != alpha.size:
                 logger_warning(
                     "image and mask size not matching: %(obj_as_text)s",
