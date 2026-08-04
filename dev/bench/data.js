@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785858176519,
+  "lastUpdate": 1785858541045,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -103361,6 +103361,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0066752880453288315",
             "extra": "mean: 606.9647439999926 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8b6f6fdd1478b142c688501a0d3a093cca539ba8",
+          "message": "ENH: Add ActualText tag when we produce RTL appearance stream (#3901)\n\nWhen copying text from a PDF, it will return the characters in the\norder that they are encoded. Withe RTL text, this actually is in\nreverse. Add /ActualText to enable copying text in the correct\ndirection.",
+          "timestamp": "2026-08-04T17:46:30+02:00",
+          "tree_id": "a5d9d76cb9a71336b1f5c63a828de786fdb1a483",
+          "url": "https://github.com/py-pdf/pypdf/commit/8b6f6fdd1478b142c688501a0d3a093cca539ba8"
+        },
+        "date": 1785858534514,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.861456301427769,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007942589748037304",
+            "extra": "mean: 258.9696534000012 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.98510328600009,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0087153966139352",
+            "extra": "mean: 41.69254507999938 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.35243671488508704,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024369975720120982",
+            "extra": "mean: 2.837388835400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.307114760076722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001000659853575281",
+            "extra": "mean: 44.828746826089336 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09330310805048975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03454717573400012",
+            "extra": "mean: 10.717756577400007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.108405926462709,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002919580509386311",
+            "extra": "mean: 474.2919698000037 msec\nrounds: 5"
           }
         ]
       }
