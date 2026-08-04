@@ -30,7 +30,7 @@
 import math
 from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
@@ -379,6 +379,35 @@ class ImageFile:
     True if this image is displayed in the page content stream.
     """
 
+    _stream_obj: Optional[Any] = field(default=None, repr=False, compare=False)
+    """Internal reference to the raw stream, used to derive width/height/data_size."""
+
+    @property
+    def width(self) -> int:
+        """Image width in pixels, read from the stream's /Width."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile; width is unavailable.")
+        return self._stream_obj.get(ImageAttributes.WIDTH)
+
+    @property
+    def height(self) -> int:
+        """Image height in pixels, read from the stream's /Height."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile; height is unavailable.")
+        return self._stream_obj.get(ImageAttributes.HEIGHT)
+
+    @property
+    def data_size(self) -> int:
+        """Compressed size in bytes of the raw stream data, without decoding."""
+        if self._stream_obj is None:
+            raise ValueError("No stream attached to this ImageFile; data_size is unavailable.")
+        raw = getattr(self._stream_obj, "_data", None)
+        if raw is not None:
+            return len(raw)
+        # Fallback for stream-like objects without a private _data cache.
+        length = self._stream_obj.get("/Length", NullObject()).get_object()
+        return int(length) if not is_null_or_none(length) else 0
+
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the image with a new PIL image.
@@ -722,6 +751,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=xobj.indirect_reference,
                 is_inline=False,
                 is_displayed=is_displayed,
+                _stream_obj=xobj,
             )
         # in a subobject
         assert xobjs is not None
@@ -887,6 +917,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=None,
                 is_inline=True,
                 is_displayed=True,
+                _stream_obj=ii["object"],
             )
 
         return files

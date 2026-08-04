@@ -18,7 +18,7 @@ from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf._page import ImageFile
 from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
-from pypdf.generic import ContentStream, NameObject, NullObject
+from pypdf.generic import ContentStream, DictionaryObject, NameObject, NullObject, NumberObject
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 from .utils import get_image_data
@@ -234,6 +234,56 @@ def test_image_extraction(src, page_index, image_key, expected):
         with open(f"page-{page_index}-{actual_image.name}", "wb") as fp:
             fp.write(actual_image.data)
     assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
+
+
+class _StreamWithoutPrivateData:
+    """
+    Minimal stream-like stand-in with no private `_data` cache, used to
+    exercise the `/Length`-based fallback branch of `ImageFile.data_size`.
+    """
+
+    def __init__(self, mapping):
+        self._mapping = mapping
+
+    def get(self, key, default=None):
+        return self._mapping.get(key, default)
+
+
+def test_image_file_width_height_data_size():
+    stream = DictionaryObject()
+    stream[NameObject("/Width")] = NumberObject(100)
+    stream[NameObject("/Height")] = NumberObject(50)
+    stream._data = b"0123456789"
+
+    image = ImageFile(_stream_obj=stream)
+
+    assert image.width == 100
+    assert image.height == 50
+    assert image.data_size == 10
+
+
+def test_image_file_width_height_data_size_without_stream():
+    image = ImageFile()
+
+    with pytest.raises(ValueError, match="width is unavailable"):
+        _ = image.width
+    with pytest.raises(ValueError, match="height is unavailable"):
+        _ = image.height
+    with pytest.raises(ValueError, match="data_size is unavailable"):
+        _ = image.data_size
+
+
+def test_image_file_data_size_falls_back_to_length():
+    """When there is no private `_data` cache, data_size falls back to /Length."""
+    stream = _StreamWithoutPrivateData({"/Length": NumberObject(42)})
+    image = ImageFile(_stream_obj=stream)
+    assert image.data_size == 42
+
+
+def test_image_file_data_size_falls_back_to_zero_when_length_missing():
+    stream_empty = _StreamWithoutPrivateData({})
+    image = ImageFile(_stream_obj=stream_empty)
+    assert image.data_size == 0
 
 
 def test_get_inline_image_without_xobject_resources():
