@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785834387731,
+  "lastUpdate": 1785834390491,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -103031,6 +103031,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002118947752562938",
             "extra": "mean: 663.586544399999 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gaobing1230@gmail.com",
+            "name": "Vincent Gao",
+            "username": "gaoflow"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c6f073a5223cc37fcd6d298e93baa8abdc733cd8",
+          "message": "BUG: Fix PageRange.__add__ crashing with TypeError when start or stop is None (#3898)\n\nPageRange.__add__ compared slice bounds with `>` directly, which raises\nTypeError when either bound is None. Slices with None start (\":5\") or\nNone stop (\"5:\") are perfectly valid and common, so adding two such\nranges could crash instead of returning the correct union.\n\nFix: introduce two small key functions that map None start to -inf and\nNone stop to +inf before all comparisons and the max-stop selection.\nAll existing tests continue to pass; new cases like\n\n    PageRange(\"0:5\") + PageRange(\"3:\")  # => PageRange(\"0:\")\n    PageRange(\":5\")  + PageRange(\":3\")  # => PageRange(\":5\")\n\nnow work correctly.",
+          "timestamp": "2026-08-04T11:03:27+02:00",
+          "tree_id": "9362af9bbb08a461beb8b6a229232251c4bf12a6",
+          "url": "https://github.com/py-pdf/pypdf/commit/c6f073a5223cc37fcd6d298e93baa8abdc733cd8"
+        },
+        "date": 1785834382455,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.888455358826816,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010273926939151455",
+            "extra": "mean: 346.20580060000066 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.97365570518618,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001704689552239376",
+            "extra": "mean: 52.70465615788866 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2736366035745196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01486487024956881",
+            "extra": "mean: 3.654481845400005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.954917231736253,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002454004917714614",
+            "extra": "mean: 55.69504927777934 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06990964882885735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0952366082681913",
+            "extra": "mean: 14.304177130799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.502965963101431,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013597343032160408",
+            "extra": "mean: 665.3510622000113 msec\nrounds: 5"
           }
         ]
       }
