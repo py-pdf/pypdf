@@ -15,6 +15,8 @@ CUSTOM_RTL_MIN: str = ""
 CUSTOM_RTL_MAX: str = ""
 CUSTOM_RTL_SPECIAL_CHARS: str = ""
 LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
+UNICODE_LOWER_LIMIT = 0
+UNICODE_UPPER_LIMIT = 0x10FFFF
 
 
 class OrientationNotFoundError(Exception):
@@ -53,17 +55,19 @@ def set_custom_rtl(
     """
     global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
     if isinstance(_min, int):
-        CUSTOM_RTL_MIN = chr(_min) if 0 <= _min <= 0x10FFFF else ""
+        CUSTOM_RTL_MIN = chr(_min) if UNICODE_LOWER_LIMIT <= _min <= UNICODE_UPPER_LIMIT else ""
     elif isinstance(_min, str):
         CUSTOM_RTL_MIN = _min
     if isinstance(_max, int):
-        CUSTOM_RTL_MAX = chr(_max) if 0 <= _max <= 0x10FFFF else ""
+        CUSTOM_RTL_MAX = chr(_max) if UNICODE_LOWER_LIMIT <= _max <= UNICODE_UPPER_LIMIT else ""
     elif isinstance(_max, str):
         CUSTOM_RTL_MAX = _max
     if isinstance(specials, str):
         CUSTOM_RTL_SPECIAL_CHARS = specials
     elif isinstance(specials, list):
-        CUSTOM_RTL_SPECIAL_CHARS = "".join(chr(char) for char in specials if 0 <= char <= 0x10FFFF)
+        CUSTOM_RTL_SPECIAL_CHARS = "".join(
+            chr(char) for char in specials if UNICODE_LOWER_LIMIT <= char <= UNICODE_UPPER_LIMIT
+        )
     return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
 
