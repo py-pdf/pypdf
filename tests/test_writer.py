@@ -994,7 +994,7 @@ def test_pdf_header():
     assert writer.pdf_header == "%PDF-1.6"
 
 
-def test_pdf_header_keep_initial_header():
+def test_pdf_header__keep_initial_header():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     writer = PdfWriter(clone_from=reader)
     assert writer.pdf_header == "%PDF-1.3"
