@@ -191,7 +191,8 @@ def __handle_flate__indexed(color_space: ArrayObject) -> tuple[Any, Any, Any, An
         color_space, base, hival, lookup = (value.get_object() for value in color_space)
         return color_space, base, hival, lookup
 
-    # Deal with strange AutoDesk files where `base` and `hival` look like this: /DeviceRGB\x00255
+    # Deal with strange AutoDesk files where `base` and `hival` look like this:
+    #   /DeviceRGB\x00255
     element1 = color_space[1]
     element1 = element1 if isinstance(element1, str) else element1.get_object()
     if count == 3 and "\x00" in element1:
@@ -211,7 +212,7 @@ def _handle_flate(
     obj_as_text: str,
 ) -> tuple[Image.Image, str, str, bool]:
     """
-    Process image encoded in FlateEncode
+    Process image encoded using the zlib/deflate compression method, corresponds to the FlateDecode filter
     Returns img, image_format, extension, color inversion
     """
     if mode == "2bits":
