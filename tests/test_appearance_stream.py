@@ -66,7 +66,8 @@ def test_scale_text():
 
     layout.rectangle = (0, 0, 160, 360)
     font_size = 0.0
-    text = """Welcome to pypdf
+    text = """Welcome to pypdf!
+أهلاً بكم في pypdf!
 pypdf is a free and open source pure-python PDF library capable of splitting, merging, cropping, and
 transforming the pages of PDF files. It can also add custom data, viewing options, and passwords to PDF
 files. pypdf can retrieve text and metadata from PDFs as well.
@@ -79,12 +80,13 @@ See pdfly for a CLI application that uses pypdf to interact with PDFs.
     )
     assert b"12 Tf" in appearance_stream.get_data()
     assert b"pypdf is a free and open" in appearance_stream.get_data()
+    assert b"/Span << /ActualText" in appearance_stream.get_data()
 
     layout.rectangle = (0, 0, 160, 160)
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_multiline=is_multiline
     )
-    assert b"9.8 Tf" in appearance_stream.get_data()
+    assert b"9.6 Tf" in appearance_stream.get_data()
 
     layout.rectangle = (0, 0, 160, 12)
     appearance_stream = TextStreamAppearance(
@@ -142,7 +144,10 @@ def test_appearance_stream_rtl():
         font_color="0 g",
         is_multiline=False
     )
-    hex_glyphs_rtl_enabled = re.findall("<(.+?)>", appearance.get_data().decode())[0]
+    # The regex returns two matches. The first matches the text in /Span << /ActualText <[group 0]> >> BDC
+    # The second match concerns the encoded text data.
+    [hex_actual_text, hex_glyphs_rtl_enabled] = re.findall("<([a-zA-Z0-9]+?)> ", appearance.get_data().decode())
+    assert bytes.fromhex(hex_actual_text).decode("utf-16-be") == "\ufeff" + test_string
     assert hex_shaped_test_glyphs == hex_glyphs_rtl_enabled
 
     # RTL support disabled
@@ -157,7 +162,7 @@ def test_appearance_stream_rtl():
             font_color="0 g",
             is_multiline=False
         )
-        hex_glyphs_rtl_disabled = re.findall("<(.+?)>", appearance.get_data().decode())[0]
+        [hex_glyphs_rtl_disabled] = re.findall("^<(.+?)>", appearance.get_data().decode(), re.MULTILINE)
     assert hex_unshaped_test_glyphs == hex_glyphs_rtl_disabled
     # The hex glyph sequences should be different when RTL support is enabled vs disabled
     assert hex_glyphs_rtl_enabled != hex_glyphs_rtl_disabled
@@ -174,7 +179,9 @@ def test_appearance_stream_rtl():
             font_color="0 g",
             is_multiline=False
         )
-        hex_glyphs_rtl_enabled_fonttools_disabled  = re.findall("<(.+?)>", appearance.get_data().decode())[0]
+        [hex_glyphs_rtl_enabled_fonttools_disabled] = re.findall(
+            "^<(.+?)>", appearance.get_data().decode(), re.MULTILINE
+        )
     assert hex_shaped_test_glyphs != hex_glyphs_rtl_enabled_fonttools_disabled
 
 

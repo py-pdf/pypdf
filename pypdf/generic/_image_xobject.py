@@ -126,17 +126,29 @@ def _get_image_mode(
     return mode, mode == "CMYK"
 
 
-def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
+def bits2byte(
+    data: bytes,
+    size: tuple[int, int],
+    bits: int,
+    colors: int = 1,
+    scale: bool = False,
+) -> bytes:
     from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
 
-    buffer_size = size[0] * size[1]
+    # Number of samples per row = pixels per row * components per pixel.
+    samples_per_row = size[0] * colors
+    buffer_size = samples_per_row * size[1]
     if buffer_size > FLATE_MAX_BUFFER_SIZE:
         raise LimitReachedError(f"Requested buffer size {buffer_size} exceeds limit of {FLATE_MAX_BUFFER_SIZE}.")
 
     byte_buffer = bytearray(buffer_size)
     mask = (1 << bits) - 1
+    # Scale a b-bit sample up to the full 0-255 range (e.g. 4-bit 15 -> 255)
+    # when the output is consumed directly as color (RGB) rather than as a
+    # palette index.
+    factor = 255 // mask if scale and mask else 1
 
-    required = size[1] * ((size[0] * bits + 7) // 8)
+    required = size[1] * ((samples_per_row * bits + 7) // 8)
     if (length := len(data)) < required:
         logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
         data += b"\x00" * (required - length)
@@ -147,8 +159,10 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
         if bit != 8 - bits:
             data_index += 1
             bit = 8 - bits
-        for x in range(size[0]):
-            byte_buffer[x + y * size[0]] = (data[data_index] >> bit) & mask
+        for x in range(samples_per_row):
+            byte_buffer[x + y * samples_per_row] = (
+                ((data[data_index] >> bit) & mask) * factor
+            )
             bit -= bits
             if bit < 0:
                 data_index += 1
@@ -215,18 +229,25 @@ def _handle_flate(
     Process image encoded using the zlib/deflate compression method, corresponds to the FlateDecode filter
     Returns img, image_format, extension, color inversion
     """
-    if mode == "2bits":
-        mode = "P"
-        data = bits2byte(data, size, 2)
-    elif mode == "4bits":
-        mode = "P"
-        data = bits2byte(data, size, 4)
-    img = _image_from_bytes(mode, size, data)
     base: Any
     hival: Any
     lookup: Any
     if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
         color_space, base, hival, lookup = __handle_flate__indexed(color_space)
+    if mode in ("2bits", "4bits"):
+        bits = int(mode[0])
+        # For a single-component color space these low-bit samples are a
+        # palette/grayscale image ("P"). For a multi-component space such as
+        # /DeviceRGB the samples are interleaved color components, so once
+        # expanded (and scaled) to bytes they form a full "RGB" image; forcing
+        # "P" here produced an unrecognized "4bits"/"2bits" Pillow mode (#3924).
+        if color_space == "/DeviceRGB":
+            data = bits2byte(data, size, bits, colors=3, scale=True)
+            mode = "RGB"
+        else:
+            data = bits2byte(data, size, bits)
+            mode = "P"
+    img = _image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()

@@ -19,6 +19,7 @@ from pypdf._page import ImageFile
 from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import ContentStream, NameObject, NullObject
+from pypdf.generic._image_xobject import _handle_flate
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 from .utils import get_image_data
@@ -579,6 +580,23 @@ def test_4bits_images(caplog):
     name = "iss2411.png"
     img = Image.open(BytesIO(get_data_from_url(url=url, name=name)))
     assert image_similarity(reader.pages[0].images[1].image, img) == 1.0
+
+
+def test_low_bit_devicergb_image_mode():
+    """Low-bit (2/4) /DeviceRGB images decode to RGB, not palette (#3924)."""
+    # 2x2, 4-bit DeviceRGB: red, green / blue, white.
+    # Samples are 3 interleaved 4-bit components per pixel, high nibble first.
+    data = bytes([0xF0, 0x00, 0xF0, 0x00, 0xFF, 0xFF])
+    img = _handle_flate((2, 2), data, "4bits", "/DeviceRGB", 3, "")[0]
+    assert img.mode == "RGB"
+    assert img.size == (2, 2)
+    assert img.tobytes() == bytes(
+        [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
+    )
+
+    # A single-component space must still map to a palette image ("P").
+    gray = _handle_flate((2, 2), bytes([0xF0, 0x0F]), "4bits", "/DeviceGray", 1, "")[0]
+    assert gray.mode == "P"
 
 
 @pytest.mark.enable_socket

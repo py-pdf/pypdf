@@ -234,6 +234,37 @@ def check_if_whitespace_only(value: bytes) -> bool:
     return all(b in WHITESPACES_AS_BYTES for b in value)
 
 
+NEUTRAL_CHARACTER_RANGES = (
+    ("\x00", "\x2F"),      # ASCII control codes, space, and early punctuation (!"#$%)
+    ("\x3A", "\x40"),      # ASCII operators and punctuation between digits & A (:;<=>?@)
+    ("\u2000", "\u206F"),  # General punctuation
+    ("\u20A0", "\u21FF"),  # Currency symbols, diacritical marks, letter-like symbols, number forms, arrows
+)
+
+
+def is_char_neutral(char: str, custom_special_characters: str = "") -> bool:
+    """Check if a character is part of neutral character ranges"""
+    if any(start <= char <= end for start, end in NEUTRAL_CHARACTER_RANGES):
+        return True
+
+    return bool(custom_special_characters and char in custom_special_characters)
+
+
+RTL_CHARACTER_RANGES = (
+    ("\u0590", "\u08FF"),  # Hebrew, Arabic, Syriac, Thaana, N'Ko, etc.
+    ("\uFB1D", "\uFDFF"),  # Hebrew & Arabic Presentation Forms-A
+    ("\uFE70", "\uFEFF"),  # Arabic Presentation Forms-B
+)
+
+
+def is_char_rtl(char: str, custom_rtl_min: str = "", custom_rtl_max: str = "") -> bool:
+    """Check if a character is part of RTL character ranges"""
+    if any(start <= char <= end for start, end in RTL_CHARACTER_RANGES):
+        return True
+
+    return bool(custom_rtl_min and custom_rtl_max and (custom_rtl_min <= char <= custom_rtl_max))
+
+
 def skip_over_comment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
