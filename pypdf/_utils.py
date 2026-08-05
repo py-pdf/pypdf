@@ -158,29 +158,29 @@ WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
 WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
 
-def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
+def read_until_whitespace(stream: StreamType, max_bytes: Optional[int] = None) -> bytes:
     """
     Read non-whitespace characters and return them.
 
-    Stops upon encountering whitespace or when maxchars is reached.
+    Stops upon encountering whitespace or when max_bytes is reached.
 
     Args:
         stream: The data stream from which was read.
-        maxchars: The maximum number of bytes returned; by default unlimited.
+        max_bytes: The maximum number of bytes returned; by default unlimited.
 
     Returns:
         The data which was read.
 
     """
-    txt = b""
+    txt = bytearray()
     while True:
         tok = stream.read(1)
         if tok.isspace() or not tok:
             break
         txt += tok
-        if len(txt) == maxchars:
+        if len(txt) == max_bytes:
             break
-    return txt
+    return bytes(txt)
 
 
 def read_non_whitespace(stream: BinaryStreamType) -> bytes:
