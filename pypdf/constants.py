@@ -650,7 +650,8 @@ class _CatalogDictionaryMeta(type):
 
 
 class CatalogDictionary(CatalogAttributes, metaclass=_CatalogDictionaryMeta):
-    pass
+    def __init__():
+        deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
 
 def __create_old_class_instance() -> None:
