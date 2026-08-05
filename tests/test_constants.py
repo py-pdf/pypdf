@@ -140,3 +140,9 @@ def test_catalog_dictionary():
               r"Use CatalogAttributes instead\.$",
     ):
         assert CatalogDictionary.TYPE == "/Type"
+
+    with pytest.raises(
+        AttributeError,
+        match="type object \'CatalogDictionary\' has no attribute \'__test\'"
+    ):
+        CatalogDictionary.__test
