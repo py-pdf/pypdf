@@ -3,7 +3,7 @@ from binascii import unhexlify
 from functools import partial
 from typing import Any, Union, cast
 
-from ._codecs import adobe_glyphs, charset_encoding, encoding_dict_from_named_encoding
+from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
 from .errors import LimitReachedError
 from .generic import (
@@ -69,11 +69,15 @@ def _parse_encoding(
     if "/Encoding" not in ft:
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
             # This will match Symbol and ZapfDingBats
-            return encoding_dict_from_named_encoding(charset_encoding[cast(str, ft["/BaseFont"])])
+            return dict(
+                zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
+            )
 
         # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
         # to overwrite this, which we do for Type1 fonts in _type1_alternative.
-        return encoding_dict_from_named_encoding(charset_encoding["/StandardEncoding"])
+        return dict(
+            zip(range(256), charset_encoding["/StandardEncoding"].copy())
+        )
 
     enc: Union[str, DictionaryObject, NullObject] = cast(
         Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
