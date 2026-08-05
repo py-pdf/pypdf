@@ -30,7 +30,7 @@
 import math
 from typing import Any, Callable, Optional, Union
 
-from .._codecs import fill_from_encoding
+from .._codecs import encoding_dict_from_named_encoding
 from .._font import Font, FontDescriptor
 from ..generic import DictionaryObject, TextStringObject
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
@@ -87,7 +87,7 @@ class TextExtraction:
         self.font = Font(
             name = "NotInitialized",
             sub_type="Unknown",
-            encoding=dict(zip(range(256),  fill_from_encoding("cp1252"))),  # WinAnsiEncoding
+            encoding=encoding_dict_from_named_encoding("cp1252"),  # WinAnsiEncoding
             font_descriptor=FontDescriptor(),
             )
         self.orientations: tuple[int, ...] = (0, 90, 180, 270)
