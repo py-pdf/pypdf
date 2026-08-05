@@ -354,7 +354,7 @@ class ImageFile:
     Filename as identified within the PDF file.
 
     .. warning::
-        
+
         This value can contain arbitrary characters. Please make sure to sanitize it before
         using it to write the file content to the disk for example.
     """
