@@ -603,6 +603,30 @@ class Font:
             interpretable=True
         )
 
+    @classmethod
+    def from_core_font_name(cls, core_font_name: str = "/Helvetica") -> Font:
+        from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
+
+        font_name = core_font_name.removeprefix("/")
+        core_font_metrics = CORE_FONT_METRICS[font_name]
+        win_ansi_encoding = encoding_dict_from_named_encoding("cp1252")  # WinAnsiEncoding
+
+        font = cls(
+            name=font_name,
+            character_map={},
+            encoding=win_ansi_encoding,
+            sub_type="Type1",
+            font_descriptor=core_font_metrics.font_descriptor,
+            character_widths={
+                char: core_font_metrics.character_widths[character]
+                for code, character in win_ansi_encoding.items()
+                if (char := chr(code)) in core_font_metrics.character_widths
+            }
+        )
+        font.character_widths["default"] = core_font_metrics.character_widths["default"]
+
+        return font
+
     def _get_typographic_maps(self) -> tuple[dict[str, str], dict[str, bytes]]:
         """
         Generates maps to translate input unicode text to bytes in two steps:

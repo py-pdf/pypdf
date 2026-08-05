@@ -454,21 +454,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         if not font or not font_resource:
             font_name = "/Helv"
-            core_font_metrics = CORE_FONT_METRICS["Helvetica"]
-            win_ansi_encoding = encoding_dict_from_named_encoding("cp1252")  # WinAnsiEncoding
-            font = Font(
-                name="Helvetica",
-                character_map={},
-                encoding=win_ansi_encoding,
-                sub_type="Type1",
-                font_descriptor=core_font_metrics.font_descriptor,
-                character_widths={
-                    char: core_font_metrics.character_widths[character]
-                    for code, character in win_ansi_encoding.items()
-                    if (char := chr(code)) in core_font_metrics.character_widths
-                }
-            )
-            font.character_widths["default"] = core_font_metrics.character_widths["default"]
+            font = Font.from_core_font_name()
             font_resource = font.as_font_resource()
 
         ap_stream_data = self._generate_appearance_stream_data(
@@ -525,21 +511,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                     font_name=font_name,
                 )
                 font_name = "/Helvetica"
-            core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
-            win_ansi_encoding = encoding_dict_from_named_encoding("cp1252")  # WinAnsiEncoding
-            font = Font(
-                name=font_name.removeprefix("/"),
-                character_map={},
-                encoding=win_ansi_encoding,
-                sub_type="Type1",
-                font_descriptor=core_font_metrics.font_descriptor,
-                character_widths={
-                    char: core_font_metrics.character_widths[character]
-                    for code, character in win_ansi_encoding.items()
-                    if (char := chr(code)) in core_font_metrics.character_widths
-                }
-            )
-            font.character_widths["default"] = core_font_metrics.character_widths["default"]
+            font = Font.from_core_font_name(font_name)
 
         # If we have found a font resource, it still might not be able to encode the text value we received.
         encodable = font.can_encode(text)
