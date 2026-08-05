@@ -651,7 +651,7 @@ class _CatalogDictionaryMeta(type):
 
 
 class CatalogDictionary(CatalogAttributes, metaclass=_CatalogDictionaryMeta):
-    def __init__():
+    def __init__() -> None:
         deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
 
