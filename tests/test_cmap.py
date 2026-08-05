@@ -5,7 +5,7 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import get_encoding, parse_bfchar, parse_bfrange
+from pypdf._cmap import _check_token_length, get_encoding, parse_bfchar, parse_bfrange
 from pypdf._codecs import charset_encoding
 from pypdf._font import Font
 from pypdf.errors import LimitReachedError
@@ -455,6 +455,92 @@ def test_parse_bfrange__iteration_limit():
             map_dict=map_dict, int_entry=int_entry, multiline_rg=None
         )
     assert map_dict == {-1: 1, "\x01": "�", "\x02": "�", "\x03": "�", "\x04": "\uffff", "\x05": "ﾫ"}
+
+
+def test_parse_bfrange__entry_size_limit():
+    writer = PdfWriter()
+
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<00000000> <0000FFFF> <00000000>\n"
+        b"endbfrange\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+
+    # multiline_rg
+    int_entry = []
+    map_dict = {-1: 1}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1200 > 1024\.$"
+    ):
+        line = "0020  0021  0022  0023  0024  0025  0026  " + "1234567890" * 120 + " 9876543210" * 100
+        _ = parse_bfrange(line=line.encode("utf-8"), map_dict=map_dict, int_entry=int_entry, multiline_rg=(32, 251))
+    assert map_dict == {-1: 1, " ": " ", "!": "!", '"': '"', "#": "#", "$": "$", "%": "%", "&": "&"}
+
+    # No multiline_rg with early failure.
+    int_entry = []
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 30 > 16\.$"
+    ):
+        _ = parse_bfrange(
+            line=("21" * 15 + " BBBB").encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {}
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 32 > 16\.$"
+    ):
+        _ = parse_bfrange(
+            line=("BBBB " + "12" * 16).encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {}
+
+    # No multiline_rg, but list.
+    int_entry = []
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1337 > 1024\.$"
+    ):
+        _ = parse_bfrange(
+            line=("01 8A [ " + "1" * 1337 + " BBBB").encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {-1: 1}
+
+    # No multiline_rg and no list.
+    int_entry = []
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1337 > 1024\.$"
+    ):
+        _ = parse_bfrange(
+            line=("01 8A  " + "1" * 1337 + " BBBB").encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {-1: 1}
+
+
+def test_check_token_length__unknown_limit():
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode token length exceeded: 5 > 1\.$"
+    ):
+        _check_token_length(token=b"ABCDE", limit=1)
 
 
 def test_parse_to_unicode_skips_truncated_lines(caplog):
