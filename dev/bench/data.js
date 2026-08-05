@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785916014295,
+  "lastUpdate": 1785916039021,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -120457,6 +120457,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02430964706876974",
             "extra": "mean: 840.0954875999957 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4807cb48dcdfe8e851fa6ca9e9a406025ee7a7b5",
+          "message": "ROB: Tolerate malformed /FontBBox when building font descriptors (#3895)",
+          "timestamp": "2026-08-05T09:44:08+02:00",
+          "tree_id": "d578e5e0e4faa044dead28fd7c9a76a5ce8f0faf",
+          "url": "https://github.com/py-pdf/pypdf/commit/4807cb48dcdfe8e851fa6ca9e9a406025ee7a7b5"
+        },
+        "date": 1785916030777,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.549115197652133,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020982592220064517",
+            "extra": "mean: 79.68689300000165 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.450219684239034,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016964886348360905",
+            "extra": "mean: 60.78946173333482 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0528729186994574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038708594238716164",
+            "extra": "mean: 949.7822407999934 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4685507618640139,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08231787560594986",
+            "extra": "mean: 2.1342404737999914 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36242979854132307,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010624928410552953",
+            "extra": "mean: 2.759155025399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1693399140943248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02118278135584796",
+            "extra": "mean: 855.1833285999805 msec\nrounds: 5"
           }
         ]
       }
