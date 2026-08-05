@@ -132,8 +132,7 @@ def test_catalog_dictionary():
             r"Use CatalogAttributes instead\.$"
         ),
     ):
-        cd = CatalogDictionary()
-        assert isinstance(cd, CatalogDictionary)
+        assert isinstance(CatalogDictionary(), CatalogDictionary)
 
     with pytest.warns(
         DeprecationWarning,

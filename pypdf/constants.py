@@ -641,7 +641,7 @@ class GraphicsStateParameters:
 
 
 class _CatalogDictionaryMeta(type):
-    def __getattribute__(cls, name):
+    def __getattribute__(cls, name: str) -> str:
         value = super().__getattribute__(name)
 
         if not name.startswith("__"):
