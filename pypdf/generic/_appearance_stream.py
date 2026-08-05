@@ -463,9 +463,9 @@ class TextStreamAppearance(BaseStreamAppearance):
                 sub_type="Type1",
                 font_descriptor=core_font_metrics.font_descriptor,
                 character_widths={
-                    chr(code): core_font_metrics.character_widths[character]
+                    char: core_font_metrics.character_widths[character]
                     for code, character in win_ansi_encoding.items()
-                    if chr(code) in core_font_metrics.character_widths
+                    if (char := chr(code)) in core_font_metrics.character_widths
                 }
             )
             font.character_widths["default"] = core_font_metrics.character_widths["default"]
@@ -534,9 +534,9 @@ class TextStreamAppearance(BaseStreamAppearance):
                 sub_type="Type1",
                 font_descriptor=core_font_metrics.font_descriptor,
                 character_widths={
-                    chr(code): core_font_metrics.character_widths[character]
+                    char: core_font_metrics.character_widths[character]
                     for code, character in win_ansi_encoding.items()
-                    if chr(code) in core_font_metrics.character_widths
+                    if (char := chr(code)) in core_font_metrics.character_widths
                 }
             )
             font.character_widths["default"] = core_font_metrics.character_widths["default"]
