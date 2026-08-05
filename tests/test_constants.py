@@ -132,11 +132,11 @@ def test_catalog_dictionary():
             r"Use CatalogAttributes instead\.$"
         ),
     ):
-        CatalogDictionary()
+        CatalogDictionary.TYPE == '/Type'
 
     with pytest.warns(
         DeprecationWarning,
         match=r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
               r"Use CatalogAttributes instead\.$",
     ):
-        CatalogDictionary.TYPE
+        CatalogDictionary.TYPE == '/Type'

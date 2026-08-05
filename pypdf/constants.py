@@ -2,7 +2,6 @@
 
 import sys
 from enum import Enum, IntFlag, auto, unique
-from typing import Optional, TypeVar
 
 from ._utils import deprecate_with_replacement
 
@@ -641,50 +640,18 @@ class GraphicsStateParameters:
     TK = "/TK"
 
 
+class _CatalogDictionaryMeta(type):
+    def __getattribute__(cls, name):
+        value = super().__getattribute__(name)
 
-class CatalogDictionary:
-    """§7.7.2 of the 1.7 and 2.0 references."""
-    def __init__(self) -> None:
-        deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
-
-    T = TypeVar("T")
-
-    class Descriptor:
-        def __get__(self, instance: Optional[T], owner: type[T]) -> None:
+        if not name.startswith("__"):
             deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
+        return value
 
-    TYPE = Descriptor()  # name, required; must be /Catalog
-    VERSION = Descriptor()  # name
-    EXTENSIONS = Descriptor()  # dictionary, optional; ISO 32000-1
-    PAGES = Descriptor()  # dictionary, required
-    PAGE_LABELS = Descriptor()  # number tree, optional
-    NAMES = Descriptor()  # dictionary, optional
-    DESTS = Descriptor()  # dictionary, optional
-    VIEWER_PREFERENCES = Descriptor()  # dictionary, optional
-    PAGE_LAYOUT = Descriptor()  # name, optional
-    PAGE_MODE = Descriptor()  # name, optional
-    OUTLINES = Descriptor()  # dictionary, optional
-    THREADS = Descriptor()  # array, optional
-    OPEN_ACTION = Descriptor()  # array or dictionary or name, optional
-    AA = Descriptor()  # dictionary, optional
-    URI = Descriptor()  # dictionary, optional
-    ACRO_FORM = Descriptor()  # dictionary, optional
-    METADATA = Descriptor()  # stream, optional
-    STRUCT_TREE_ROOT = Descriptor()  # dictionary, optional
-    MARK_INFO = Descriptor()  # dictionary, optional
-    LANG = Descriptor()  # text string, optional
-    SPIDER_INFO = Descriptor()  # dictionary, optional
-    OUTPUT_INTENTS = Descriptor()  # array, optional
-    PIECE_INFO = Descriptor()  # dictionary, optional
-    OC_PROPERTIES = Descriptor()  # dictionary, optional
-    PERMS = Descriptor()  # dictionary, optional
-    LEGAL = Descriptor()  # dictionary, optional
-    REQUIREMENTS = Descriptor()  # array, optional
-    COLLECTION = Descriptor()  # dictionary, optional
-    NEEDS_RENDERING = Descriptor()  # boolean, optional
-    DSS = Descriptor()  # dictionary, optional
-    AF = Descriptor()  # array of dictionaries, optional
-    D_PART_ROOT = Descriptor()  # dictionary, optional
+
+class CatalogDictionary(CatalogAttributes, metaclass=_CatalogDictionaryMeta):
+    pass
+
 
 def __create_old_class_instance() -> None:
     deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
