@@ -8,7 +8,7 @@ from io import BytesIO
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
-from .._codecs import fill_from_encoding
+from .._codecs import encoding_dict_from_named_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
 from .._font import Font
 from .._utils import is_char_rtl, logger_warning
@@ -455,18 +455,18 @@ class TextStreamAppearance(BaseStreamAppearance):
         if not font or not font_resource:
             font_name = "/Helv"
             core_font_metrics = CORE_FONT_METRICS["Helvetica"]
-            win_ansi_encoding_list = fill_from_encoding("cp1252")  # WinAnsiEncoding
+            win_ansi_encoding = encoding_dict_from_named_encoding("cp1252")  # WinAnsiEncoding
             font = Font(
                 name="Helvetica",
                 character_map={},
-                encoding=dict(zip(range(256), win_ansi_encoding_list)),
+                encoding=win_ansi_encoding,
                 sub_type="Type1",
                 font_descriptor=core_font_metrics.font_descriptor,
                 character_widths={
-                    chr(code): core_font_metrics.character_widths[value] for code, value in enumerate(
-                        win_ansi_encoding_list
-                    ) if value in core_font_metrics.character_widths
-                },
+                    chr(code): core_font_metrics.character_widths[character]
+                    for code, character in win_ansi_encoding.items()
+                    if chr(code) in core_font_metrics.character_widths
+                }
             )
             font.character_widths["default"] = core_font_metrics.character_widths["default"]
             font_resource = font.as_font_resource()
@@ -526,7 +526,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 )
                 font_name = "/Helvetica"
             core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
-            win_ansi_encoding=dict(zip(range(256), fill_from_encoding("cp1252")))  # WinAnsiEncoding
+            win_ansi_encoding = encoding_dict_from_named_encoding("cp1252")  # WinAnsiEncoding
             font = Font(
                 name=font_name.removeprefix("/"),
                 character_map={},
@@ -568,7 +568,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 }
                 for encoding in test_encodings:
                     test_font = copy.copy(font)
-                    test_font.encoding = dict(zip(range(256), fill_from_encoding(encoding)))
+                    test_font.encoding = encoding_dict_from_named_encoding(encoding)
                     encodable = test_font.can_encode(text)
                     if encodable:
                         font = test_font
