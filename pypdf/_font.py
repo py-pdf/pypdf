@@ -766,8 +766,9 @@ class Font:
         win_ansi_encoding = encoding_dict_from_named_encoding("cp1252")
         differences_list: list[NumberObject | NameObject] = []
         reverse_adobe_glyphs = {value: key for key, value in adobe_glyphs.items()}
+        own_encoding: dict[int, str] = cast(dict[int, str], self.encoding)
         for idx, character_code in win_ansi_encoding.items():
-            encoding_char = cast(dict[int, str], self.encoding).get(idx)
+            encoding_char = own_encoding.get(idx)
             if encoding_char and encoding_char != character_code:
                 differences_list.extend([NumberObject(idx), NameObject(reverse_adobe_glyphs[encoding_char])])
 
