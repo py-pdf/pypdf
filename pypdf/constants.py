@@ -655,10 +655,6 @@ class CatalogDictionary(CatalogAttributes, metaclass=_CatalogDictionaryMeta):
         deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
 
-def __create_old_class_instance() -> None:
-    deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
-
-
 class OutlineFontFlag(IntFlag):
     """A class used as an enumerable flag for formatting an outline font."""
 
