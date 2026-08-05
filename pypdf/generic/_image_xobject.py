@@ -170,6 +170,33 @@ def bits2byte(
     return bytes(byte_buffer)
 
 
+def _expand_low_bit_samples(
+    mode: mode_str_type,
+    size: tuple[int, int],
+    data: bytes,
+    color_space: Union[str, ArrayObject],
+) -> tuple[mode_str_type, bytes]:
+    """
+    Expand 2- or 4-bit-per-component samples to one byte per component.
+
+    Pillow has no mode for sub-byte samples, so the packed data has to be
+    unpacked before an image can be built from it. For a single-component
+    color space the samples are palette/grayscale indices ("P"). For a
+    multi-component space such as /DeviceRGB they are interleaved color
+    components, so they are also scaled to the full 0-255 range and become
+    an "RGB" image.
+
+    Returns the resulting mode and data, unchanged when the mode is not a
+    low-bit one.
+    """
+    if mode not in ("2bits", "4bits"):
+        return mode, data
+    bits = int(mode[0])
+    if color_space == "/DeviceRGB":
+        return "RGB", bits2byte(data, size, bits, colors=3, scale=True)
+    return "P", bits2byte(data, size, bits)
+
+
 def _image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
@@ -234,19 +261,7 @@ def _handle_flate(
     lookup: Any
     if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
         color_space, base, hival, lookup = __handle_flate__indexed(color_space)
-    if mode in ("2bits", "4bits"):
-        bits = int(mode[0])
-        # For a single-component color space these low-bit samples are a
-        # palette/grayscale image ("P"). For a multi-component space such as
-        # /DeviceRGB the samples are interleaved color components, so once
-        # expanded (and scaled) to bytes they form a full "RGB" image; forcing
-        # "P" here produced an unrecognized "4bits"/"2bits" Pillow mode (#3924).
-        if color_space == "/DeviceRGB":
-            data = bits2byte(data, size, bits, colors=3, scale=True)
-            mode = "RGB"
-        else:
-            data = bits2byte(data, size, bits)
-            mode = "P"
+    mode, data = _expand_low_bit_samples(mode, size, data, color_space)
     img = _image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
@@ -602,7 +617,10 @@ def _xobj_to_image(
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
-            img = _image_from_bytes(mode, size, data)
+            fallback_mode, fallback_data = _expand_low_bit_samples(
+                mode, size, data, color_space
+            )
+            img = _image_from_bytes(fallback_mode, size, fallback_data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
@@ -634,6 +652,9 @@ def _xobj_to_image(
     elif mode == "":
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
+        # Images without a filter (for example inline images) reach Pillow
+        # directly, so low-bit samples have to be expanded here as well.
+        mode, data = _expand_low_bit_samples(mode, size, data, color_space)
         img, image_format, extension, invert_color = (
             _image_from_bytes(mode, size, data),
             "PNG",
