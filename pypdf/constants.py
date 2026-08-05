@@ -2,7 +2,6 @@
 
 import sys
 from enum import Enum, IntFlag, auto, unique
-from typing import Any
 
 from ._utils import deprecate_with_replacement
 
@@ -642,7 +641,7 @@ class GraphicsStateParameters:
 
 
 class _CatalogDictionaryMeta(type):
-    def __getattribute__(cls, name: Any) -> str:
+    def __getattribute__(cls, name: str) -> str:
         value = super().__getattribute__(name)
 
         if not name.startswith("__"):
@@ -651,7 +650,7 @@ class _CatalogDictionaryMeta(type):
 
 
 class CatalogDictionary(CatalogAttributes, metaclass=_CatalogDictionaryMeta):
-    def __init__() -> None:
+    def __init__(self) -> None:
         deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
 
