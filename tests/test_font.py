@@ -17,6 +17,7 @@ from pypdf.generic import (
     NameObject,
     NumberObject,
 )
+from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 
 from . import RESOURCE_ROOT
 
@@ -304,3 +305,36 @@ def test_font__collect_cid_character_widths__limits():
     ):
         Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
     assert current_widths == {}
+
+
+def test_simple_font_reverse_cmap_from_character_map():
+    pdf_path = RESOURCE_ROOT / "side-by-side-subfig.pdf"
+    reader = PdfReader(pdf_path)
+    extracted_text = reader.pages[0].extract_text()
+    font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F33"])
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    writer.pages[0]["/Resources"][NameObject("/Font")] = DictionaryObject()
+    font._add_to_writer(writer, writer.pages[0]["/Resources"]["/Font"], NameObject(f"/{font.name}"))
+    appearance_stream = TextStreamAppearance(
+        layout=BaseStreamConfig(rectangle=(0.0, 0.0, 512, 692)),
+        text=extracted_text,
+        font=font,
+        font_resource=writer.pages[0]["/Resources"]["/Font"][f"/{font.name}"],
+        is_multiline=True
+    )
+    writer._add_apstream_object(
+        page,
+        appearance_stream,
+        "LoremIpsum",
+        x_offset=100,
+        y_offset=692
+    )
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    reader2 = PdfReader(stream)
+    assert extracted_text == reader2.pages[0].extract_text()
