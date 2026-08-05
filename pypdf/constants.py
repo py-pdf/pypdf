@@ -641,17 +641,17 @@ class GraphicsStateParameters:
     TK = "/TK"
 
 
-T = TypeVar("T")
-
-class Descriptor:
-    def __get__(self, instance: Optional[T], owner: type[T]) -> None:
-        deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
-
 
 class CatalogDictionary:
     """§7.7.2 of the 1.7 and 2.0 references."""
     def __init__(self) -> None:
         deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
+
+    T = TypeVar("T")
+
+    class Descriptor:
+        def __get__(self, instance: Optional[T], owner: type[T]) -> None:
+            deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
     TYPE = Descriptor()  # name, required; must be /Catalog
     VERSION = Descriptor()  # name
