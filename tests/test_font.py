@@ -9,7 +9,7 @@ from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._font import Font, FontDescriptor
-from pypdf.errors import PdfReadError
+from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
@@ -233,3 +233,78 @@ with pytest.raises(ImportError, match=r"^The 'fontTools' library is required to 
     )
     assert result.returncode == 0
     assert result.stdout == b""
+
+
+def test_font__collect_cid_character_widths__limits():
+    # Format 1 exceeding length.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), ArrayObject([NumberObject(42)] * 100_000),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^CID width range too large: 100000 > 65536\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {}
+
+    # Format 1 exceeding entry count.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), ArrayObject([NumberObject(42)] * 55_000),
+            NumberObject(1), ArrayObject([NumberObject(13)] * 60_000),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Too many character widths: 115000 > 100000\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {
+        chr(character_index): 42
+        for character_index in range(1, 55_001, 1)
+    }
+
+    # Format 2 exceeding length.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), NumberObject(100_000), NumberObject(42),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^CID width range too large: 100000 > 65536\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {}
+
+    # Format 2 exceeding entry count.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), NumberObject(55_000), NumberObject(42),
+            NumberObject(1), NumberObject(60_000), NumberObject(13),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Too many character widths: 115000 > 100000\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {
+        chr(character_index): 42
+        for character_index in range(1, 55_001, 1)
+    }
+
+    # Inverted range.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(13), NumberObject(1), NumberObject(42),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Invalid CID width range: 13\.\.2\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {}
