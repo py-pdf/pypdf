@@ -76,7 +76,7 @@ def _parse_encoding(
         # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
         # to overwrite this, which we do for Type1 fonts in _type1_alternative.
         return dict(
-            zip(range(256), charset_encoding["/StandardEncoding"].copy())
+            zip(range(256), charset_encoding["/StandardEncoding"])
         )
 
     enc: Union[str, DictionaryObject, NullObject] = cast(
