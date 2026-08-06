@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786015519856,
+  "lastUpdate": 1786015522068,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -121117,6 +121117,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02458253196685438",
             "extra": "mean: 855.747587999997 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "51cb6acf9e8a35b77e90b4d87d28fe3e1416d7d7",
+          "message": "SEC: Limit CID width range and width count when loading fonts (#3946)",
+          "timestamp": "2026-08-06T13:22:13+02:00",
+          "tree_id": "f15dc7f62c47a4bbad55b4f95b9f0fadf2c7830a",
+          "url": "https://github.com/py-pdf/pypdf/commit/51cb6acf9e8a35b77e90b4d87d28fe3e1416d7d7"
+        },
+        "date": 1786015511149,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.149295155482944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018070613367265956",
+            "extra": "mean: 76.04970366666564 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.01057664859838,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01115034857991513",
+            "extra": "mean: 66.61969246154015 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.037271542280891,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0434365068494997",
+            "extra": "mean: 964.0677096000019 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5020499721532663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043484783937802814",
+            "extra": "mean: 1.991833593199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3607704419463711,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020729619006406186",
+            "extra": "mean: 2.7718457049999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1918530543125812,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017304287688171195",
+            "extra": "mean: 839.0296071999956 msec\nrounds: 5"
           }
         ]
       }
