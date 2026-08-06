@@ -349,6 +349,23 @@ def test_cmyk_no_filter():
 
 
 @pytest.mark.enable_socket
+def test_cmyk_dct_with_identity_decode_is_not_inverted():
+    """Cf #2931"""
+    url = "https://github.com/user-attachments/files/17602693/example.pdf"
+    name = "iss2931.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    image = reader.pages[0].images[0].image
+
+    # Adobe CMYK JPEGs store inverted values. This one also carries an explicit
+    # identity /Decode array, which must not cancel out that inversion.
+    assert image.mode == "CMYK"
+    top_left = image.convert("RGB").getpixel((0, 0))
+    assert all(90 < channel < 150 for channel in top_left), (
+        f"expected a light grey background, got {top_left} (image inverted?)"
+    )
+
+
+@pytest.mark.enable_socket
 def test_separation_1byte_to_rgb_inverted():
     """Cf #2343"""
     url = "https://github.com/py-pdf/pypdf/files/13679585/test2_P038-038.pdf"

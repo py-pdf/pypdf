@@ -415,8 +415,19 @@ def _apply_decode(
     # requires reverting scale (cf p243,2§ last sentence)
     if ImageAttributes.DECODE in x_object:
         decode = x_object[ImageAttributes.DECODE]
-        # if invert_color and lfilters == FT.DCT_DECODE:
-        #     decode = list(reversed(decode))
+        if img.mode == "CMYK" and lfilters == FT.DCT_DECODE and len(decode) % 2 == 0:
+            # Adobe writes CMYK JPEGs with inverted component values, which is
+            # what the [1 0] remap below compensates for. An explicit /Decode
+            # array is expressed in terms of the true values, so it has to be
+            # combined with that inversion instead of replacing it — otherwise
+            # an identity /Decode leaves the image inverted (#2931).
+            # Substituting the inversion into the /Decode mapping is the same
+            # as swapping each [min max] pair.
+            decode = [
+                value
+                for index in range(0, len(decode), 2)
+                for value in (decode[index + 1], decode[index])
+            ]
     elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
         decode = [1.0, 0.0] if not invert_color else [0.0, 1.0]
         decode = decode * len(img.getbands())
