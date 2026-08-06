@@ -1437,3 +1437,69 @@ def test_dictionaryobject__length_0_stream():
     output = BytesIO()
     writer.write(output)
     assert b"\n8 0 obj\n<<\n/Length 0\n>>\nstream\n\nendstream\nendobj\n" in output.getvalue()
+
+
+def _outlined_pdf(nested: bool = False) -> BytesIO:
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(200, 200)
+    cover = writer.add_outline_item("Cover", 0)
+    writer.add_outline_item("Body", 1)
+    if nested:
+        writer.add_outline_item("Sub", 2, parent=cover)
+    writer.add_outline_item("End", 3)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    return stream
+
+
+def _outline_titles(outline: list) -> list:
+    return [
+        [item.title for item in entry] if isinstance(entry, list) else entry.title
+        for entry in outline
+    ]
+
+
+@pytest.mark.parametrize(
+    ("index", "expected"),
+    [(0, ["Body", "End"]), (1, ["Cover", "End"]), (2, ["Cover", "Body"])],
+)
+def test_remove_from_tree_on_outline_item(index, expected):
+    """
+    `reader.outline` and `writer.outline` yield detached copies which never carry
+    /Parent, so removal has to act on the node they were built from.
+    """
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+
+    list(writer.outline)[index].remove_from_tree()
+
+    assert _outline_titles(writer.outline) == expected
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    assert _outline_titles(PdfReader(stream).outline) == expected
+
+
+def test_remove_from_tree_on_outline_item_without_clone():
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(200, 200)
+    for page_number, title in enumerate(["Cover", "Body", "End"]):
+        writer.add_outline_item(title, page_number)
+
+    next(iter(writer.outline)).remove_from_tree()
+
+    assert _outline_titles(writer.outline) == ["Body", "End"]
+
+
+def test_remove_from_tree_on_nested_outline_item():
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf(nested=True)))
+    assert _outline_titles(writer.outline) == ["Cover", ["Sub"], "Body", "End"]
+
+    for entry in writer.outline:
+        if isinstance(entry, list):
+            entry[0].remove_from_tree()
+            break
+
+    assert _outline_titles(writer.outline) == ["Cover", "Body", "End"]

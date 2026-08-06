@@ -923,9 +923,21 @@ class TreeObject(DictionaryObject):
 
     def remove_from_tree(self) -> None:
         """Remove the object from the tree it is in."""
-        if NameObject("/Parent") not in self:
+        node = self._tree_node()
+        if NameObject("/Parent") not in node:
             raise ValueError("Removed child does not appear to be a tree item")
-        cast("TreeObject", self["/Parent"]).remove_child(self)
+        parent = node[NameObject("/Parent")]
+        if not isinstance(parent, TreeObject):
+            # Outline nodes read from an existing document arrive as plain
+            # DictionaryObjects. TreeObject adds methods and no state, so this
+            # keeps the same dictionary, identity and indirect reference while
+            # making the tree operations reachable.
+            parent.__class__ = TreeObject
+        cast("TreeObject", parent).remove_child(node)
+
+    def _tree_node(self) -> "DictionaryObject":
+        """The dictionary that actually lives in the tree. Overridden by Destination."""
+        return self
 
     def empty_tree(self) -> None:
         for child in self:
@@ -1708,6 +1720,15 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
+
+    def _tree_node(self) -> DictionaryObject:
+        """
+        The outline item dictionary this destination was built from.
+
+        ``reader.outline`` and ``writer.outline`` yield detached copies, so tree
+        operations have to act on ``node``, which is the object in the document.
+        """
+        return self if self.node is None else self.node
 
     def __init__(
         self,
