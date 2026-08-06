@@ -7,7 +7,7 @@ and/or the actual image data with the expected value.
 
 from io import BytesIO
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 from unittest import mock
 from zipfile import ZipFile
 
@@ -242,10 +242,10 @@ class _StreamWithoutPrivateData:
     exercise the `/Length`-based fallback branch of `ImageFile.data_size`.
     """
 
-    def __init__(self, mapping):
+    def __init__(self, mapping: dict) -> None:
         self._mapping = mapping
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
         return self._mapping.get(key, default)
 
 
