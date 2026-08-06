@@ -130,7 +130,7 @@ def test_catalog_dictionary():
         match=(
             r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
             r"Use CatalogAttributes instead\.$",
-        ),
+        )
     ):
         assert isinstance(CatalogDictionary(), CatalogDictionary)
 
@@ -139,7 +139,7 @@ def test_catalog_dictionary():
         match=(
             r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
             r"Use CatalogAttributes instead\.$",
-        ),
+        )
     ):
         assert CatalogDictionary.TYPE == "/Type"
 
