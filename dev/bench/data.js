@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786022373734,
+  "lastUpdate": 1786022399518,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -104021,6 +104021,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00270369405489453",
             "extra": "mean: 609.1367125999966 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f6287fada2a2f7954c70911ac29445e3bdd36a2b",
+          "message": "DEV: Update cryptography to 50.0.0",
+          "timestamp": "2026-08-06T15:16:27+02:00",
+          "tree_id": "6fe54ad92619d3b2d5590bcc699280538ac575e1",
+          "url": "https://github.com/py-pdf/pypdf/commit/f6287fada2a2f7954c70911ac29445e3bdd36a2b"
+        },
+        "date": 1786022390565,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.8492801782169175,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01453720723619938",
+            "extra": "mean: 259.7888315999967 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.94620189549269,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03631567571371516",
+            "extra": "mean: 47.74135210714192 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3570969560276635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020883792164500644",
+            "extra": "mean: 2.8003599110000037 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 23.023561999790868,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013258105940149602",
+            "extra": "mean: 43.4337658095252 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09727188592588144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.16500495064220122",
+            "extra": "mean: 10.280462751200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8422463636187556,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006068788794042942",
+            "extra": "mean: 542.8155645999936 msec\nrounds: 5"
           }
         ]
       }
