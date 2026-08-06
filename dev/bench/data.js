@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786020317251,
+  "lastUpdate": 1786021200592,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -121315,6 +121315,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.1880818777347155",
             "extra": "mean: 937.070886600003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "7f226a2771da4b71ed0b72d414f0e59d76a3dae9",
+          "message": "REL: 6.15.0\n\n## What's new\n\n### Security (SEC)\n- Improve performance of read_until_whitespace (#3947) by @stefan6419846\n- Limit CID width range and width count when loading fonts (#3946) by @stefan6419846\n- Limit token length for ToUnicode entries (#3944) by @stefan6419846\n\n### Deprecations (DEP)\n- Deprecate previously missed inline_images setter as well (#3897) by @stefan6419846\n\n### New Features (ENH)\n- Add ActualText tag when we produce RTL appearance stream (#3901) by @PJBrs\n- Allow keeping original PDF header in non-incremental clone mode (#3918) by @pctablet505\n- AppearanceStream: Add support for RTL appearance streams with Arabic characters (#3831) by @PJBrs\n- Add actions base class (#3552) by @j-t-1\n\n### Bug Fixes (BUG)\n- Expand low-bit samples for images without a filter (#3938) by @RavSinghChandan\n- Decode low-bit DeviceRGB images as RGB instead of palette (#3929) by @RavSinghChandan\n- Correctly handle IndirectObject in FlateDecode.decode DecodeParms (#3937) by @stefan6419846\n\n### Documentation (DOC)\n- Image and attachment filenames are unsanitized (#3942) by @stefan6419846\n\n### Maintenance (MAINT)\n- Update charset mappings (#3935) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.2...6.15.0)",
+          "timestamp": "2026-08-06T14:49:54+02:00",
+          "tree_id": "9ed1154ff6468515a03e34a25c5bb49b9df30f2c",
+          "url": "https://github.com/py-pdf/pypdf/commit/7f226a2771da4b71ed0b72d414f0e59d76a3dae9"
+        },
+        "date": 1786021192420,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.455937240528232,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026765684250501062",
+            "extra": "mean: 87.29098099998757 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.186887564513135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013310997982690824",
+            "extra": "mean: 61.778399090898844 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0584223226756415,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03671625138272562",
+            "extra": "mean: 944.8024465999993 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4473274065562357,
+            "unit": "iter/sec",
+            "range": "stddev: 0.058169234977180705",
+            "extra": "mean: 2.235499067000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3675061133113116,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01845752936345488",
+            "extra": "mean: 2.721043171200006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2152332273276807,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03399049613860497",
+            "extra": "mean: 822.8873087999887 msec\nrounds: 5"
           }
         ]
       }
