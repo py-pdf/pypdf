@@ -136,8 +136,10 @@ def test_catalog_dictionary():
 
     with pytest.warns(
         DeprecationWarning,
-        match=r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
-              r"Use CatalogAttributes instead\.$",
+        match=(
+            r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"Use CatalogAttributes instead\.$",
+        ),
     ):
         assert CatalogDictionary.TYPE == "/Type"
 
@@ -145,4 +147,4 @@ def test_catalog_dictionary():
         AttributeError,
         match="type object 'CatalogDictionary' has no attribute '__test'"
     ):
-        CatalogDictionary.__test
+        assert CatalogDictionary.__Type__ != "/__Type__"

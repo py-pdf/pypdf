@@ -647,6 +647,8 @@ class _CatalogDictionaryMeta(type):
 
         if not name.startswith("__"):
             deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
+        else:
+            pass  # For coverage
         return value
 
 
