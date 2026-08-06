@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## Version 6.15.0, 2026-08-06
+
+### Security (SEC)
+- Improve performance of read_until_whitespace (#3947)
+- Limit CID width range and width count when loading fonts (#3946)
+- Limit token length for ToUnicode entries (#3944)
+
+### Deprecations (DEP)
+- Deprecate previously missed inline_images setter as well (#3897)
+
+### New Features (ENH)
+- Add ActualText tag when we produce RTL appearance stream (#3901)
+- Allow keeping original PDF header in non-incremental clone mode (#3918)
+- AppearanceStream: Add support for RTL appearance streams with Arabic characters (#3831)
+- Add actions base class (#3552)
+
+### Bug Fixes (BUG)
+- Expand low-bit samples for images without a filter (#3938)
+- Decode low-bit DeviceRGB images as RGB instead of palette (#3929)
+- Correctly handle IndirectObject in FlateDecode.decode DecodeParms (#3937)
+
+### Documentation (DOC)
+- Image and attachment filenames are unsanitized (#3942)
+
+### Maintenance (MAINT)
+- Update charset mappings (#3935)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.2...6.15.0)
+
 ## Version 6.14.2, 2026-06-23
 
 ### Security (SEC)
