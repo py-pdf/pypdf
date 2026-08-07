@@ -41,6 +41,7 @@ from os import SEEK_CUR
 from re import Pattern
 from typing import (
     IO,
+    TYPE_CHECKING,
     Any,
     NoReturn,
     Optional,
@@ -57,6 +58,18 @@ if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
+
+# PEP 702 @deprecated decorator.
+# For type checking (TYPE_CHECKING), we import from typing_extensions unconditionally so that
+# type checkers always have full type info.
+# At runtime, we use the standard warnings.deprecated in Python 3.13+, or fallback to typing_extensions.
+# The redundant 'as deprecated' alias is required by PEP 484 to explicitly re-export the symbol.
+if TYPE_CHECKING:
+    from typing_extensions import deprecated as deprecated  # noqa: PLC0414
+elif sys.version_info >= (3, 13):
+    from warnings import deprecated as deprecated  # noqa: PLC0414
+else:
+    from typing_extensions import deprecated as deprecated  # noqa: PLC0414
 
 from .errors import (
     STREAM_TRUNCATED_PREMATURELY,
