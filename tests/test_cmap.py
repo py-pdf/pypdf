@@ -384,6 +384,35 @@ def test_parse_bfchar(caplog):
         assert caplog.messages == ["Got invalid hex string: Odd-length string (b'1f310')"]
 
 
+def test_parse_bfrange__multibyte_source_codes():
+    """Source codes are decoded straight from their integer value.
+
+    Guards the ``int.to_bytes`` fast path against a regression versus the
+    previous hex round-trip (see #3945).
+    """
+    # Range without list: <0041>..<0043> -> <0061>..
+    map_dict = {}
+    int_entry = []
+    result = parse_bfrange(line=b"0041 0043 0061", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
+    assert result is None  # closure found
+    assert map_dict == {-1: 2, "A": "a", "B": "b", "C": "c"}
+    assert int_entry == [0x41, 0x42, 0x43]
+
+    # Range with an explicit list of destinations.
+    map_dict = {}
+    int_entry = []
+    parse_bfrange(line=b"0041 0042 [ 0078 0079 ]", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
+    assert map_dict == {-1: 2, "A": "x", "B": "y"}
+    assert int_entry == [0x41, 0x42]
+
+    # Single-byte source codes are decoded via the charmap branch.
+    map_dict = {}
+    int_entry = []
+    parse_bfrange(line=b"20 22 0061", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
+    assert map_dict == {-1: 1, " ": "a", "!": "b", '"': "c"}
+    assert int_entry == [0x20, 0x21, 0x22]
+
+
 def test_parse_bfrange__iteration_limit():
     writer = PdfWriter()
 
