@@ -1075,10 +1075,13 @@ class PdfReader(PdfDocCommon):
             else:
                 startxref = self._read_xref_other_error(stream, startxref)
 
+    # The trailer keys a PDF 1.5+ cross-reference stream carries in place of a
+    # `trailer` keyword (PDF 2.0 specification, table 17).
+    _XREF_STREAM_TRAILER_KEYS = (TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE)
+
     def _process_xref_stream(self, xrefstream: DictionaryObject) -> None:
         """Process and handle the xref stream."""
-        trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE
-        for key in trailer_keys:
+        for key in self._XREF_STREAM_TRAILER_KEYS:
             if key in xrefstream and key not in self.trailer:
                 self.trailer[NameObject(key)] = xrefstream.raw_get(key)
         if "/XRefStm" in xrefstream:
@@ -1357,14 +1360,27 @@ class PdfReader(PdfDocCommon):
             self.xref[generation_number][object_number] = object_start
 
         logger_warning("parsing for Object Streams", source=__name__)
+        # PDF 1.5+ files may carry the trailer keys inside a cross-reference
+        # stream instead of behind a `trailer` keyword. Collect them here,
+        # keyed by their offset, to merge them below in file order.
+        xref_stream_trailers: list[tuple[int, DictionaryObject]] = []
         for generation_number in self.xref:
             for object_number in self.xref[generation_number]:
                 # get_object in manual
-                stream.seek(self.xref[generation_number][object_number], 0)
+                object_start = self.xref[generation_number][object_number]
+                stream.seek(object_start, 0)
                 try:
                     _ = self.read_object_header(stream)
                     obj = cast(StreamObject, read_object(stream, self))
-                    if obj.get("/Type", "") != "/ObjStm":
+                    object_type = obj.get("/Type", "")
+                    if object_type == "/XRef":
+                        trailer = DictionaryObject()
+                        for key in self._XREF_STREAM_TRAILER_KEYS:
+                            if key in obj:
+                                trailer[NameObject(key)] = obj.raw_get(key)
+                        xref_stream_trailers.append((object_start, trailer))
+                        continue
+                    if object_type != "/ObjStm":
                         continue
                     object_stream = BytesIO(obj.get_data())
                     actual_count = 0
@@ -1399,10 +1415,12 @@ class PdfReader(PdfDocCommon):
                     pass
 
         stream.seek(0, 0)
+        trailers: list[tuple[int, dict[Any, Any]]] = list(xref_stream_trailers)
         for position in self._find_pdf_trailers(stream_data):
             stream.seek(position, 0)
-            new_trailer = cast(dict[Any, Any], read_object(stream, self))
-            # Here, we are parsing the file from start to end, the new data have to erase the existing.
+            trailers.append((position, cast(dict[Any, Any], read_object(stream, self))))
+        # Here, we are parsing the file from start to end, the new data have to erase the existing.
+        for _, new_trailer in sorted(trailers, key=lambda item: item[0]):
             for key, value in new_trailer.items():
                 self.trailer[key] = value
 

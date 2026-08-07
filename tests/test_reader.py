@@ -2191,6 +2191,62 @@ def test_rebuild_xref_table__speed():
         _ = list(reader.pages)
 
 
+def test_rebuild_xref_table_with_cross_reference_stream(caplog):
+    """
+    A PDF 1.5+ file may keep the trailer keys inside its cross-reference stream
+    instead of behind a ``trailer`` keyword. Rebuilding the xref table has to
+    pick them up from there as well, otherwise the trailer stays empty and
+    ``/Root`` cannot be resolved. See #3925.
+    """
+    objects = {
+        1: b"<< /Pages 2 0 R /Type /Catalog >>",
+        2: b"<< /Count 1 /Kids [3 0 R] /Type /Pages >>",
+        3: (
+            b"<< /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 2 0 R"
+            b" /Resources << >> /Rotate 0 /Type /Page >>"
+        ),
+    }
+    pdf_data = bytearray(b"%PDF-1.5\n")
+    offsets = {}
+    for number, obj in objects.items():
+        offsets[number] = len(pdf_data)
+        pdf_data += b"%d 0 obj " % number + obj + b" endobj\n"
+
+    # The cross-reference stream, uncompressed, with /W [1 4 1] entries.
+    xref_offset = len(pdf_data)
+    entries = b"".join(
+        [struct.pack(">BIB", 0, 0, 255)]
+        + [struct.pack(">BIB", 1, offsets[number], 0) for number in objects]
+        + [struct.pack(">BIB", 1, xref_offset, 0)]
+    )
+    pdf_data += (
+        b"4 0 obj << /Type /XRef /Size 5 /Root 1 0 R /W [1 4 1] /Length %d >>\nstream\n"
+        % len(entries)
+    )
+    pdf_data += entries + b"\nendstream endobj\n"
+    pdf_data += b"startxref\n%d\n%%%%EOF\n" % xref_offset
+    # /Root is reachable through the cross-reference stream only.
+    assert b"trailer" not in pdf_data
+
+    reader = PdfReader(io.BytesIO(bytes(pdf_data)))
+    assert len(reader.pages) == 1
+    assert caplog.text == ""
+
+    # Garbage bytes around the document shift every stored offset, so the xref
+    # table has to be rebuilt by scanning the file for the objects.
+    garbage = b"PK\x03\x04\x14" + b"0123456789" * 6
+    reader = PdfReader(io.BytesIO(garbage + bytes(pdf_data) + garbage))
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox.width == 2550
+    assert reader.trailer["/Size"] == 5
+    assert reader.root_object["/Type"] == "/Catalog"
+    assert normalize_warnings(caplog.text) == [
+        "invalid pdf header: b'PK\\x03\\x04\\x14'",
+        "incorrect startxref pointer(1)",
+        "parsing for Object Streams",
+    ]
+
+
 def test_find_pdf_objects():
     data = (
         b"     \n"
