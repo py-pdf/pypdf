@@ -1,4 +1,5 @@
 """Utility functions and classes for testing."""
+
 import logging
 from typing import Callable, Optional, Union, cast
 
@@ -49,14 +50,11 @@ class Rectangle:
         self.h = h.as_numeric()
 
     def contains(self, x: float, y: float) -> bool:
-        return (
-                self.x <= x <= (self.x + self.w)
-                and self.y <= y <= (self.y + self.h)
-        )
+        return self.x <= x <= (self.x + self.w) and self.y <= y <= (self.y + self.h)
 
 
 def extract_text_and_rectangles(
-        page: PageObject, rect_filter: Optional[Callable[[Rectangle], bool]] = None
+    page: PageObject, rect_filter: Optional[Callable[[Rectangle], bool]] = None
 ) -> tuple[list[PositionedText], list[Rectangle]]:
     """
     Extracts texts and rectangles of a page of type pypdf._page.PageObject.
@@ -87,29 +85,27 @@ def extract_text_and_rectangles(
                 rectangles.append(r)
 
     def print_visi(
-        text: str, cm_matrix: list[float],
-        tm_matrix: list[float], font_dict: Optional[DictionaryObject],
-        font_size: float
+        text: str,
+        cm_matrix: list[float],
+        tm_matrix: list[float],
+        font_dict: Optional[DictionaryObject],
+        font_size: float,
     ) -> None:
         if text.strip() != "":
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("at %s, %s, font size=%f", cm_matrix, tm_matrix, font_size)
-            texts.append(
-                PositionedText(text, tm_matrix[4], tm_matrix[5], font_dict, font_size)
-            )
+            texts.append(PositionedText(text, tm_matrix[4], tm_matrix[5], font_dict, font_size))
 
     visitor_before = print_op_b
     visitor_text = print_visi
 
-    page.extract_text(
-        visitor_operand_before=visitor_before, visitor_text=visitor_text
-    )
+    page.extract_text(visitor_operand_before=visitor_before, visitor_text=visitor_text)
 
     return texts, rectangles
 
 
 def extract_table(
-        texts: list[PositionedText], rectangles: list[Rectangle]
+    texts: list[PositionedText], rectangles: list[Rectangle]
 ) -> list[list[Union[str, list[PositionedText]]]]:
     """
     Extracts a table containing text.
@@ -196,13 +192,16 @@ def extract_cell_text(cell_texts: list[PositionedText]) -> str:
 
 
 def get_image_data(
-        image: Image.Image, band: Union[int, None] = None
+    image: Image.Image, band: Union[int, None] = None
 ) -> Union[tuple[tuple[int, ...], ...], tuple[float, ...]]:
     try:
-        return image.get_flattened_data(band=band)
+        get_flattened_data = getattr(image, "get_flattened_data", None)
+        if get_flattened_data is not None:
+            return cast("Union[tuple[tuple[int, ...], ...], tuple[float, ...]]", get_flattened_data(band=band))
+        raise AttributeError("get_flattened_data not available")
     except AttributeError:
         # For Pillow < 12.1.0
-        return tuple(image.getdata(band=band))
+        return cast("Union[tuple[tuple[int, ...], ...], tuple[float, ...]]", tuple(image.getdata(band=band)))
 
 
 class ReaderDummy:
