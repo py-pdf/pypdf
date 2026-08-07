@@ -206,6 +206,45 @@ def extract_inline__dct_decode(stream: BinaryStreamType) -> bytes:
     return bytes(data_out)
 
 
+def _is_preceded_by_whitespace(stream_out: BytesIO, position: int) -> bool:
+    """
+    Check whether the byte in front of `position` is a whitespace.
+
+    Returns False if there is no such byte, as the `EI` marker then is at the very
+    beginning of the image data and thus not delimited by anything.
+    """
+    if position <= 0:
+        return False
+    saved_position = stream_out.tell()
+    # Avoid exporting the BytesIO buffer: PyPy may keep the view alive,
+    # preventing later writes from resizing the output stream.
+    stream_out.seek(position - 1)
+    is_whitespace = stream_out.read(1) in WHITESPACES
+    stream_out.seek(saved_position)
+    return is_whitespace
+
+
+def _is_followed_by_closing_operator(stream: StreamType, first_byte: bytes) -> bool:
+    """
+    Check whether `first_byte` starts an exact `Q` or `EMC` operator.
+
+    `first_byte` has already been consumed from the stream, which is restored to its
+    current position afterwards. Looking at this byte alone is not sufficient, as
+    binary image data can easily be mistaken for one of these operators.
+    """
+    position = stream.tell()
+    if first_byte == b"Q":
+        suffix = stream.read(1)
+        is_closing_operator = suffix == b"" or suffix in WHITESPACES
+    elif first_byte == b"E":
+        suffix = stream.read(3)
+        is_closing_operator = suffix[:2] == b"MC" and (suffix[2:3] == b"" or suffix[2:3] in WHITESPACES)
+    else:
+        is_closing_operator = False
+    stream.seek(position, 0)
+    return is_closing_operator
+
+
 def extract_inline_default(stream: StreamType) -> bytes:
     """Legacy method, used by default"""
     stream_out = BytesIO()
@@ -245,10 +284,12 @@ def extract_inline_default(stream: StreamType) -> bytes:
                 continue
             while tok3 in WHITESPACES:
                 tok3 = stream.read(1)
-            if data_buffered[pos_ei - 1 : pos_ei] not in WHITESPACES and tok3 not in {
-                b"Q",
-                b"E",
-            }:  # for Q or EMC
+            # The `EI` marker should be delimited by whitespace on both sides. Preserve the
+            # legacy tolerance for a missing leading delimiter only when it is followed by an
+            # exact closing operator, as binary image data would match otherwise.
+            if not _is_preceded_by_whitespace(stream_out, sav_pos_ei) and not _is_followed_by_closing_operator(
+                stream, tok3
+            ):
                 stream.seek(saved_pos, 0)
                 continue
             if is_followed_by_binary_data(stream):
