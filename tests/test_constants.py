@@ -1,10 +1,16 @@
 """Test the pypdf.constants module."""
 import re
+import warnings
 from typing import Callable
 
 import pytest
 
-from pypdf.constants import PDF_KEYS, GraphicsStateParameters, UserAccessPermissions
+from pypdf.constants import (
+    PDF_KEYS,
+    CatalogDictionary,
+    GraphicsStateParameters,
+    UserAccessPermissions,
+)
 
 
 def test_slash_prefix():
@@ -19,6 +25,8 @@ def test_slash_prefix():
     """
     pattern = re.compile(r"^/[A-Z]+[a-zA-Z0-9]*$")
     for cls in PDF_KEYS:
+        if cls == CatalogDictionary:  # Deprecated
+            continue
         for attr in dir(cls):
             # Skip magic methods
             if attr.startswith("__") and attr.endswith("__"):
@@ -115,3 +123,39 @@ def test_user_access_permissions__all():
     assert all_int & UserAccessPermissions.PRINT == UserAccessPermissions.PRINT
     assert all_int & UserAccessPermissions.R7 == UserAccessPermissions.R7
     assert all_int & UserAccessPermissions.R31 == UserAccessPermissions.R31
+
+
+def test_catalog_dictionary():
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"Use CatalogAttributes instead\.$"
+        )
+    ):
+        assert isinstance(CatalogDictionary(), CatalogDictionary)
+
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"Use CatalogAttributes instead\.$"
+        )
+    ):
+        assert CatalogDictionary.TYPE == "/Type"
+
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        assert CatalogDictionary.__name__ == "CatalogDictionary"
+
+    assert not [
+        warning
+        for warning in caught_warnings
+        if issubclass(warning.category, DeprecationWarning)
+    ]
+
+    with pytest.raises(
+        AttributeError,
+        match="type object 'CatalogDictionary' has no attribute 'INVALID'"
+    ):
+        assert CatalogDictionary.INVALID != "/INVALID"
