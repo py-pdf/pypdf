@@ -32,6 +32,7 @@ import re
 import sys
 from collections.abc import Iterable
 from io import BytesIO, UnsupportedOperation
+from operator import itemgetter
 from pathlib import Path
 from types import TracebackType
 from typing import (
@@ -1420,7 +1421,7 @@ class PdfReader(PdfDocCommon):
             stream.seek(position, 0)
             trailers.append((position, cast(dict[Any, Any], read_object(stream, self))))
         # Here, we are parsing the file from start to end, the new data have to erase the existing.
-        for _, new_trailer in sorted(trailers, key=lambda item: item[0]):
+        for _, new_trailer in sorted(trailers, key=itemgetter(0)):
             for key, value in new_trailer.items():
                 self.trailer[key] = value
 

@@ -2191,7 +2191,8 @@ def test_rebuild_xref_table__speed():
         _ = list(reader.pages)
 
 
-def test_rebuild_xref_table_with_cross_reference_stream(caplog):
+@pytest.mark.parametrize("strict", [False, True])
+def test_rebuild_xref_table_with_cross_reference_stream(caplog, strict):
     """
     A PDF 1.5+ file may keep the trailer keys inside its cross-reference stream
     instead of behind a ``trailer`` keyword. Rebuilding the xref table has to
@@ -2228,14 +2229,25 @@ def test_rebuild_xref_table_with_cross_reference_stream(caplog):
     # /Root is reachable through the cross-reference stream only.
     assert b"trailer" not in pdf_data
 
-    reader = PdfReader(io.BytesIO(bytes(pdf_data)))
+    # The trailer keys live in the cross-reference stream; this reads the same
+    # way in strict and non-strict mode.
+    reader = PdfReader(io.BytesIO(bytes(pdf_data)), strict=strict)
     assert len(reader.pages) == 1
+    assert reader.trailer["/Size"] == 5
+    assert reader.root_object["/Type"] == "/Catalog"
     assert caplog.text == ""
 
     # Garbage bytes around the document shift every stored offset, so the xref
-    # table has to be rebuilt by scanning the file for the objects.
+    # table has to be rebuilt by scanning the file for the objects. In strict
+    # mode the invalid header is rejected outright, so the rebuild path (and the
+    # trailer recovered from the cross-reference stream) only applies otherwise.
     garbage = b"PK\x03\x04\x14" + b"0123456789" * 6
-    reader = PdfReader(io.BytesIO(garbage + bytes(pdf_data) + garbage))
+    data = io.BytesIO(garbage + bytes(pdf_data) + garbage)
+    if strict:
+        with pytest.raises(PdfReadError, match="but '%PDF-' expected"):
+            PdfReader(data, strict=True)
+        return
+    reader = PdfReader(data)
     assert len(reader.pages) == 1
     assert reader.pages[0].mediabox.width == 2550
     assert reader.trailer["/Size"] == 5
