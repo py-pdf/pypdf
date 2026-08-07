@@ -156,6 +156,6 @@ def test_catalog_dictionary():
 
     with pytest.raises(
         AttributeError,
-        match="type object 'CatalogDictionary' has no attribute '__Type__'"
+        match="type object 'CatalogDictionary' has no attribute 'INVALID'"
     ):
         assert CatalogDictionary.INVALID != "/INVALID"
