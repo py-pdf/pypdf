@@ -2986,6 +2986,16 @@ class PdfWriter(PdfDocCommon):
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
+        if isinstance(page, int) and not isinstance(page, bool):
+            # An explicit destination may reference the target page by its
+            # (zero-based) index in the source document rather than by an
+            # indirect reference; this is what ``Link(target_page_index=...)``
+            # produces. Resolve the index through the reader's page list so it
+            # can be remapped like a regular page reference.
+            try:
+                page = reader.pages[page].indirect_reference
+            except (IndexError, AttributeError):
+                return None
         if isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):

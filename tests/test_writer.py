@@ -899,6 +899,54 @@ def test_link_annotation(pdf_file_path):
         writer.write(output_stream)
 
 
+def test_append_preserves_internal_link_annotation():
+    """
+    ``append()``/``merge()`` must keep internal ``Link`` annotations whose
+    destination references the target page by index (as produced by
+    ``Link(target_page_index=...)``) and remap that index to the cloned page.
+
+    Tests https://github.com/py-pdf/pypdf/issues/3953
+    """
+    source = PdfWriter()
+    for _ in range(3):
+        source.add_blank_page(width=595, height=842)
+    source.add_annotation(
+        page_number=1,
+        annotation=Link(
+            rect=(57, 700, 500, 720),
+            target_page_index=2,
+            fit=Fit(fit_type="/Fit"),
+        ),
+    )
+    source_buffer = BytesIO()
+    source.write(source_buffer)
+    source_buffer.seek(0)
+    reader = PdfReader(source_buffer)
+
+    # Two pre-existing pages so the appended pages (and the destination page
+    # index) are shifted, exercising the remapping.
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    writer.add_blank_page(width=100, height=100)
+    writer.append(reader)
+
+    result_buffer = BytesIO()
+    writer.write(result_buffer)
+    result_buffer.seek(0)
+    result = PdfReader(result_buffer)
+
+    link_page = result.pages[3]
+    assert "/Annots" in link_page
+    annotation = link_page["/Annots"][0].get_object()
+    assert annotation["/Subtype"] == "/Link"
+    destination = annotation["/Dest"]
+    # The bare page index must have been resolved to an indirect page reference
+    # pointing at the correctly offset cloned page (index 4).
+    target = destination[0].get_object()
+    assert result.pages[4].indirect_reference.idnum == destination[0].idnum
+    assert target["/Type"] == "/Page"
+
+
 @pytest.mark.parametrize(
     "annotation",
     [
