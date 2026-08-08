@@ -359,16 +359,22 @@ def test_cmyk_dct_with_identity_decode_is_not_inverted():
     # Adobe CMYK JPEGs store inverted values. This one also carries an explicit
     # identity /Decode array, which must not cancel out that inversion.
     #
-    # The raw CMYK samples are asserted rather than an RGB conversion: they are
-    # produced by pypdf itself, so they do not move with Pillow's colour
-    # management. Without the fix each channel comes back as its 255-complement,
-    # which is what the second assertion pins.
+    # The exact samples come out of the JPEG decoder, so they are not asserted
+    # directly: they can shift by a step or two between libjpeg builds. What
+    # the fix changes is far larger than that - every channel comes back as its
+    # 255-complement when the inversion is dropped - so the assertions below
+    # pin the sample against that complement with a tolerance.
     assert image.mode == "CMYK"
-    assert image.getpixel((0, 0)) == (121, 102, 114, 42)        # light grey wall
-    assert image.getpixel((449, 629)) == (153, 137, 74, 82)     # dark suit
-    # Sanity check that these are the non-inverted samples: without the fix the
-    # same pixel decodes to roughly the 255-complement, (134, 151, 142, 214).
-    assert image.getpixel((0, 0))[3] < 128
+    for xy, expected in (
+        ((0, 0), (121, 102, 114, 42)),        # light grey wall
+        ((449, 629), (153, 137, 74, 82)),     # dark suit
+    ):
+        actual = image.getpixel(xy)
+        assert all(abs(a - e) <= 8 for a, e in zip(actual, expected)), (
+            f"pixel {xy}: got {actual}, expected close to {expected}. "
+            f"Without the fix this decodes to roughly "
+            f"{tuple(255 - value for value in expected)}."
+        )
 
 
 @pytest.mark.enable_socket
