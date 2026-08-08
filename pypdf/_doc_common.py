@@ -1228,6 +1228,18 @@ class PdfDocCommon(ABC):
             t = cast(str, pages[PagesAttributes.TYPE])
         # if the page tree node has no /Type, consider as a page if /Kids is also missing
         elif PagesAttributes.KIDS not in pages:
+            # A page tree node is required to carry /Type (ISO 32000-1 7.7.3.2/7.7.3.3);
+            # tolerating a missing /Type is a leniency for real pages, which practically
+            # always carry at least one structural page key. A keys-only dictionary with
+            # neither /Type nor any such key (e.g. a linearization parameter dictionary
+            # reachable through /Kids in a damaged file) is not a page. In strict mode,
+            # reject it rather than yield a phantom page.
+            if self.strict and not any(
+                key in pages for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)
+            ):
+                raise PdfReadError(
+                    f"Non-page object reached through /Kids: keys={sorted(pages.keys())}"
+                )
             t = "/Page"
         else:
             t = "/Pages"
