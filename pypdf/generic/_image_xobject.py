@@ -622,7 +622,13 @@ def _xobj_to_image(
             image_format = cast(str, img.format)
             extension = "." + image_format.lower()
         except UnidentifiedImageError:
-
+            if lfilters == FT.LZW_DECODE:
+                image_format = "TIFF"
+                extension = ".tiff"  # mime_type = "image/tiff"
+            else:
+                image_format = "PNG"
+                extension = ".png"  # mime_type = "image/png"
+            img = _image_from_bytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
