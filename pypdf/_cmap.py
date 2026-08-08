@@ -1,6 +1,6 @@
 from binascii import Error as BinasciiError
 from binascii import unhexlify
-from math import ceil
+from functools import partial
 from typing import Any, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
@@ -136,7 +136,7 @@ def _parse_to_unicode(
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
-        None, tuple[int, int]
+        tuple[int, int], None
     ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
@@ -199,10 +199,10 @@ def process_cm_line(
     line: bytes,
     process_rg: bool,
     process_char: bool,
-    multiline_rg: Union[None, tuple[int, int]],
+    multiline_rg: Union[tuple[int, int], None],
     map_dict: dict[Any, Any],
     int_entry: list[int],
-) -> tuple[bool, bool, Union[None, tuple[int, int]]]:
+) -> tuple[bool, bool, Union[tuple[int, int], None]]:
     if line == b"" or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
     line = line.replace(b"\t", b" ")
@@ -230,22 +230,51 @@ def process_cm_line(
 # Usual values should be up to 65_536.
 MAPPING_DICTIONARY_SIZE_LIMIT = 100_000
 
+# Typical /ToUnicode CMaps use 1-4 byte source codes.
+# This is intentionally generous.
+# The actual limit is doubled, as each byte is represented by two hex characters.
+MAX_CMAP_CODE_BYTES = 8
+MAX_CMAP_STRING_BYTES = 512
+MAX_CMAP_CODE_BYTES_LIMIT = MAX_CMAP_CODE_BYTES * 2
+MAX_CMAP_STRING_BYTES_LIMIT = MAX_CMAP_STRING_BYTES * 2
+
 
 def _check_mapping_size(size: int) -> None:
     if size > MAPPING_DICTIONARY_SIZE_LIMIT:
         raise LimitReachedError(f"Maximum /ToUnicode size limit reached: {size} > {MAPPING_DICTIONARY_SIZE_LIMIT}.")
 
 
+def _check_token_length(token: bytes, limit: int) -> None:
+    token_length = len(token)
+    if token_length > limit:
+        description = {
+            MAX_CMAP_CODE_BYTES_LIMIT: "code",
+            MAX_CMAP_STRING_BYTES_LIMIT: "string",
+        }.get(limit, "token")
+
+        raise LimitReachedError(
+            f"Maximum /ToUnicode {description} length exceeded: {token_length} > {limit}."
+        )
+
+
+def __parse_bfrange__decode(map_dict: dict[Any, Any], fmt: bytes, code: int) -> str:
+    return unhexlify(fmt % code).decode(
+        "charmap" if map_dict[-1] == 1 else "utf-16-be",
+        "surrogatepass",
+    )
+
+
 def parse_bfrange(
     line: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
-    multiline_rg: Union[None, tuple[int, int]],
-) -> Union[None, tuple[int, int]]:
-    lst = [x for x in line.split(b" ") if x]
+    multiline_rg: Union[tuple[int, int], None],
+) -> Union[tuple[int, int], None]:
+    lst = line.split()
     closure_found = False
     entry_count = len(int_entry)
     _check_mapping_size(entry_count)
+    decode_utf16 = partial(bytes.decode, encoding="utf-16-be", errors="surrogatepass")
     if multiline_rg is not None:
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
@@ -254,50 +283,48 @@ def parse_bfrange(
             if sq == b"]":
                 closure_found = True
                 break
+            _check_token_length(sq, limit=MAX_CMAP_STRING_BYTES_LIMIT)
             entry_count += 1
             _check_mapping_size(entry_count)
             map_dict[
-                unhexlify(fmt % a).decode(
-                    "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                    "surrogatepass",
-                )
-            ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
+                __parse_bfrange__decode(map_dict=map_dict, fmt=fmt, code=a)
+            ] = decode_utf16(unhexlify(sq))
             int_entry.append(a)
             a += 1
     else:
+        _check_token_length(lst[0], limit=MAX_CMAP_CODE_BYTES_LIMIT)
+        _check_token_length(lst[1], limit=MAX_CMAP_CODE_BYTES_LIMIT)
         a = int(lst[0], 16)
         b = int(lst[1], 16)
         nbi = max(len(lst[0]), len(lst[1]))
-        map_dict[-1] = ceil(nbi / 2)
+        map_dict[-1] = (nbi + 1) // 2
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         if lst[2] == b"[":
             for sq in lst[3:]:
                 if sq == b"]":
                     closure_found = True
                     break
+                _check_token_length(sq, limit=MAX_CMAP_STRING_BYTES_LIMIT)
                 entry_count += 1
                 _check_mapping_size(entry_count)
                 map_dict[
-                    unhexlify(fmt % a).decode(
-                        "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                        "surrogatepass",
-                    )
-                ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
+                    __parse_bfrange__decode(map_dict=map_dict, fmt=fmt, code=a)
+                ] = decode_utf16(unhexlify(sq))
                 int_entry.append(a)
                 a += 1
         else:  # case without list
+            _check_token_length(lst[2], limit=MAX_CMAP_STRING_BYTES_LIMIT)
             c = int(lst[2], 16)
             fmt2 = b"%%0%dX" % max(4, len(lst[2]))
             closure_found = True
             range_size = max(0, b - a + 1)
             _check_mapping_size(entry_count + range_size)  # This can be checked beforehand.
             while a <= b:
+                destination = unhexlify(fmt2 % c)
+                _check_token_length(destination, limit=MAX_CMAP_CODE_BYTES_LIMIT)
                 map_dict[
-                    unhexlify(fmt % a).decode(
-                        "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                        "surrogatepass",
-                    )
-                ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
+                    __parse_bfrange__decode(map_dict=map_dict, fmt=fmt, code=a)
+                ] = decode_utf16(destination)
                 int_entry.append(a)
                 a += 1
                 c += 1

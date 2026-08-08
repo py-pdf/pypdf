@@ -28,7 +28,7 @@ class PdfObjectProtocol(Protocol):
         ...  # pragma: no cover
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
     ) -> None:
         ...  # pragma: no cover
 

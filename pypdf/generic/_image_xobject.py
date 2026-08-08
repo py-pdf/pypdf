@@ -126,17 +126,29 @@ def _get_image_mode(
     return mode, mode == "CMYK"
 
 
-def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
+def bits2byte(
+    data: bytes,
+    size: tuple[int, int],
+    bits: int,
+    colors: int = 1,
+    scale: bool = False,
+) -> bytes:
     from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
 
-    buffer_size = size[0] * size[1]
+    # Number of samples per row = pixels per row * components per pixel.
+    samples_per_row = size[0] * colors
+    buffer_size = samples_per_row * size[1]
     if buffer_size > FLATE_MAX_BUFFER_SIZE:
         raise LimitReachedError(f"Requested buffer size {buffer_size} exceeds limit of {FLATE_MAX_BUFFER_SIZE}.")
 
     byte_buffer = bytearray(buffer_size)
     mask = (1 << bits) - 1
+    # Scale a b-bit sample up to the full 0-255 range (e.g. 4-bit 15 -> 255)
+    # when the output is consumed directly as color (RGB) rather than as a
+    # palette index.
+    factor = 255 // mask if scale and mask else 1
 
-    required = size[1] * ((size[0] * bits + 7) // 8)
+    required = size[1] * ((samples_per_row * bits + 7) // 8)
     if (length := len(data)) < required:
         logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
         data += b"\x00" * (required - length)
@@ -147,13 +159,42 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
         if bit != 8 - bits:
             data_index += 1
             bit = 8 - bits
-        for x in range(size[0]):
-            byte_buffer[x + y * size[0]] = (data[data_index] >> bit) & mask
+        for x in range(samples_per_row):
+            byte_buffer[x + y * samples_per_row] = (
+                ((data[data_index] >> bit) & mask) * factor
+            )
             bit -= bits
             if bit < 0:
                 data_index += 1
                 bit = 8 - bits
     return bytes(byte_buffer)
+
+
+def _expand_low_bit_samples(
+    mode: mode_str_type,
+    size: tuple[int, int],
+    data: bytes,
+    color_space: Union[str, ArrayObject],
+) -> tuple[mode_str_type, bytes]:
+    """
+    Expand 2- or 4-bit-per-component samples to one byte per component.
+
+    Pillow has no mode for sub-byte samples, so the packed data has to be
+    unpacked before an image can be built from it. For a single-component
+    color space the samples are palette/grayscale indices ("P"). For a
+    multi-component space such as /DeviceRGB they are interleaved color
+    components, so they are also scaled to the full 0-255 range and become
+    an "RGB" image.
+
+    Returns the resulting mode and data, unchanged when the mode is not a
+    low-bit one.
+    """
+    if mode not in ("2bits", "4bits"):
+        return mode, data
+    bits = int(mode[0])
+    if color_space == "/DeviceRGB":
+        return "RGB", bits2byte(data, size, bits, colors=3, scale=True)
+    return "P", bits2byte(data, size, bits)
 
 
 def _image_from_bytes(
@@ -212,22 +253,15 @@ def _handle_flate(
     obj_as_text: str,
 ) -> tuple[Image.Image, str, str, bool]:
     """
-    Process image encoded in flateEncode
+    Process image encoded using the zlib/deflate compression method, corresponds to the FlateDecode filter
     Returns img, image_format, extension, color inversion
     """
-    image_format = "PNG"
-    extension = ".png"  # mime_type: "image/png"
-    lookup: Any
     base: Any
     hival: Any
+    lookup: Any
     if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
         color_space, base, hival, lookup = __handle_flate__indexed(color_space)
-    if mode == "2bits":
-        mode = "P"
-        data = bits2byte(data, size, 2)
-    elif mode == "4bits":
-        mode = "P"
-        data = bits2byte(data, size, 4)
+    mode, data = _expand_low_bit_samples(mode, size, data, color_space)
     img = _image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
@@ -333,8 +367,11 @@ def _handle_flate(
             if mode != mode2:
                 img = Image.frombytes(mode, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
-        extension = ".tif"
         image_format = "TIFF"
+        extension = ".tif"
+    else:
+        image_format = "PNG"
+        extension = ".png"  # mime_type: "image/png"
     return img, image_format, extension, False
 
 
@@ -404,6 +441,19 @@ def _apply_decode(
         and color_space[0].get_object() == "/Separation"
     ):
         decode = [1.0, 0.0] * len(img.getbands())
+    if decode is not None and (
+        not isinstance(decode, list) or len(decode) % 2 != 0
+    ):
+        # /Decode is read straight from the image dictionary and must hold an
+        # even number of values (a [min max] pair per component). A malformed
+        # array would otherwise read past its end at decode[i + 1]; drop it and
+        # render the image without the remap.
+        logger_warning(
+            "Ignoring malformed /Decode array %(decode)s; expected an even number of values.",
+            source=__name__,
+            decode=decode,
+        )
+        decode = None
     if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
         lut: list[int] = []
         for i in range(0, len(decode), 2):
@@ -448,7 +498,8 @@ def _get_mode_and_invert_color(
 
 def _xobj_to_image(
         x_object: dict[str, Any],
-        pillow_parameters: Union[dict[str, Any], None] = None
+        pillow_parameters: Union[dict[str, Any], None] = None,
+        visited: Optional[set[int]] = None,
 ) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
@@ -460,11 +511,17 @@ def _xobj_to_image(
         x_object:
         pillow_parameters: parameters provided to Pillow Image.save() method,
             cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
+        visited: Set of id() values of XObjects already being converted higher
+            up the /SMask chain, used to detect cyclic soft masks.
 
     Returns:
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
+    if visited is None:
+        visited = set()
+    visited.add(id(x_object))
+
     def _apply_alpha(
         img: Image.Image,
         x_object: dict[str, Any],
@@ -473,7 +530,19 @@ def _xobj_to_image(
         extension: str,
     ) -> tuple[Image.Image, str, str]:
         if ImageAttributes.S_MASK in x_object:  # add alpha channel
-            alpha = _xobj_to_image(x_object[ImageAttributes.S_MASK])[2]
+            s_mask = x_object[ImageAttributes.S_MASK]
+            if id(s_mask) in visited:
+                # A soft mask that refers back to an image already being
+                # converted would recurse until the interpreter runs out of
+                # stack. Such a chain cannot describe a real alpha channel, so
+                # drop the mask and keep the image we have.
+                logger_warning(
+                    "Ignoring cyclic /SMask reference in %(obj_as_text)s",
+                    source=__name__,
+                    obj_as_text=obj_as_text,
+                )
+                return img, extension, image_format
+            alpha = _xobj_to_image(s_mask, visited=visited)[2]
             if img.size != alpha.size:
                 logger_warning(
                     "image and mask size not matching: %(obj_as_text)s",
@@ -553,13 +622,7 @@ def _xobj_to_image(
             image_format = cast(str, img.format)
             extension = "." + image_format.lower()
         except UnidentifiedImageError:
-            if lfilters == FT.LZW_DECODE:
-                image_format = "TIFF"
-                extension = ".tiff"  # mime_type = "image/tiff"
-            else:
-                image_format = "PNG"
-                extension = ".png"  # mime_type = "image/png"
-            img = _image_from_bytes(mode, size, data)
+
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
@@ -591,6 +654,9 @@ def _xobj_to_image(
     elif mode == "":
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
+        # Images without a filter (for example inline images) reach Pillow
+        # directly, so low-bit samples have to be expanded here as well.
+        mode, data = _expand_low_bit_samples(mode, size, data, color_space)
         img, image_format, extension, invert_color = (
             _image_from_bytes(mode, size, data),
             "PNG",

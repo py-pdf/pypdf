@@ -3,7 +3,7 @@ from __future__ import annotations
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pypdf.generic import (
     ArrayObject,
@@ -21,7 +21,7 @@ from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
 from .constants import FontFlags
-from .errors import PdfReadError
+from .errors import LimitReachedError, PdfReadError
 
 if TYPE_CHECKING:
     from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
@@ -37,6 +37,11 @@ try:
     HAS_FONTTOOLS = True
 except ImportError:
     HAS_FONTTOOLS = False
+
+
+# Limits.
+MAX_CID_WIDTH_ENTRY_COUNT = 65_536
+MAX_WIDTH_ENTRY_COUNT = 100_000
 
 
 # Some constants from truetype font tables that we use:
@@ -60,6 +65,8 @@ class FontDescriptor:
     to 100.
     """
 
+    _DEFAULT_BBOX: ClassVar[tuple[float, float, float, float]] = (-100.0, -200.0, 1000.0, 900.0)
+
     name: str = "Unknown"
     family: str = "Unknown"
     weight: str = "Unknown"
@@ -70,7 +77,7 @@ class FontDescriptor:
     x_height: float = 500.0
     italic_angle: float = 0.0  # Non-italic
     flags: int = 32  # Non-serif, non-symbolic, not fixed width
-    bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
+    bbox: tuple[float, float, float, float] = _DEFAULT_BBOX
     font_file: StreamObject | None = None
 
     def as_font_descriptor_resource(self) -> DictionaryObject:
@@ -143,9 +150,23 @@ class Font:
             current_widths[chr(idx + first_char)] = int(width)
 
     @staticmethod
-    def _collect_cid_character_widths(
-        d_font: DictionaryObject, char_map: dict[Any, Any], current_widths: dict[str, int]
-    ) -> None:
+    def __check_range_length(start: int, end: int) -> None:
+        if end < start:
+            raise LimitReachedError(
+                f"Invalid CID width range: {start}..{end}."
+            )
+
+        count = end - start
+        if count > MAX_CID_WIDTH_ENTRY_COUNT:
+            raise LimitReachedError(f"CID width range too large: {count} > {MAX_CID_WIDTH_ENTRY_COUNT}.")
+
+    @staticmethod
+    def __check_entry_count(count: int) -> None:
+        if count > MAX_WIDTH_ENTRY_COUNT:
+            raise LimitReachedError(f"Too many character widths: {count} > {MAX_WIDTH_ENTRY_COUNT}.")
+
+    @staticmethod
+    def _collect_cid_character_widths(d_font: DictionaryObject, current_widths: dict[str, int]) -> None:
         """Parses the /W array from a DescendantFont dictionary and updates character widths."""
         # /W width definitions have two valid formats which can be mixed and matched:
         #   (1) A character start index followed by a list of widths, e.g.
@@ -153,13 +174,14 @@ class Font:
         #   (2) A character start index, a character stop index, and a width, e.g.
         #       `45 65 500` applies width 500 to characters 45-65.
         skip_count = 0
+        entry_count = 0
         _w = d_font.get("/W", ArrayObject()).get_object()
         _w_length = len(_w)
         for idx, w_entry in enumerate(_w):
-            w_entry = w_entry.get_object()
             if skip_count:
                 skip_count -= 1
                 continue
+            w_entry = w_entry.get_object()
             if not isinstance(w_entry, (int, float)):
                 # We should never get here due to skip_count above. But
                 # sometimes we do.
@@ -172,16 +194,16 @@ class Font:
             # check for format (1): `int [int int int int ...]`
             w_next_entry = _w[idx + 1].get_object() if idx + 1 < _w_length else None
             if isinstance(w_next_entry, Sequence):
-                start_idx, width_list = w_entry, w_next_entry
+                start_idx, width_list = int(w_entry), w_next_entry
+                stop_idx = start_idx + len(width_list)
+                Font.__check_range_length(start_idx, stop_idx)
+                entry_count += (stop_idx - start_idx)
+                Font.__check_entry_count(entry_count)
                 current_widths.update(
                     {
                         chr(_cidx): _width
                         for _cidx, _width in zip(
-                            range(
-                                cast(int, start_idx),
-                                cast(int, start_idx) + len(width_list),
-                                1,
-                            ),
+                            range(start_idx, stop_idx, 1),
                             width_list,
                         )
                     }
@@ -194,15 +216,18 @@ class Font:
                 and isinstance(_w[idx + 2].get_object(), (int, float))
             ):
                 start_idx, stop_idx, const_width = (
-                    w_entry,
-                    w_next_entry,
+                    int(w_entry),
+                    int(w_next_entry),
                     _w[idx + 2].get_object(),
                 )
+                Font.__check_range_length(start_idx, stop_idx + 1)
+                entry_count += (stop_idx - start_idx + 1)
+                Font.__check_entry_count(entry_count)
                 current_widths.update(
                     {
                         chr(_cidx): const_width
                         for _cidx in range(
-                            cast(int, start_idx), cast(int, stop_idx + 1), 1
+                            start_idx, stop_idx + 1, 1
                         )
                     }
                 )
@@ -268,6 +293,28 @@ class Font:
         return character_widths["default"] // 2
 
     @staticmethod
+    def _parse_bbox(raw_bbox: Any) -> tuple[float, float, float, float] | None:
+        """
+        Convert a raw /FontBBox value into four floats.
+
+        Args:
+            raw_bbox: The raw /FontBBox value read from the PDF.
+
+        Returns:
+            The four bounding box values, or ``None`` when the value is not
+            a sequence of exactly four numbers, so that a malformed entry
+            falls back to the default bounding box rather than raising.
+
+        """
+        try:
+            bbox = [float(value) for value in raw_bbox]
+        except (TypeError, ValueError):
+            return None
+        if len(bbox) != 4:
+            return None
+        return bbox[0], bbox[1], bbox[2], bbox[3]
+
+    @staticmethod
     def _parse_font_descriptor(font_descriptor_obj: DictionaryObject) -> dict[str, Any]:
         font_descriptor_kwargs: dict[Any, Any] = {}
         for source_key, target_key in [
@@ -284,11 +331,13 @@ class Font:
         ]:
             if source_key in font_descriptor_obj:
                 font_descriptor_kwargs[target_key] = font_descriptor_obj[source_key]
-        # Handle missing bbox gracefully - PDFs may have fonts without valid bounding boxes
+        # Handle missing or malformed bbox gracefully - PDFs may have fonts without valid bounding boxes
         if "bbox" in font_descriptor_kwargs:
-            bbox_tuple = tuple(map(float, font_descriptor_kwargs["bbox"]))
-            assert len(bbox_tuple) == 4, bbox_tuple
-            font_descriptor_kwargs["bbox"] = bbox_tuple
+            bbox = Font._parse_bbox(font_descriptor_kwargs["bbox"])
+            if bbox is None:
+                del font_descriptor_kwargs["bbox"]
+            else:
+                font_descriptor_kwargs["bbox"] = bbox
 
         # Find the binary stream for this font if there is one
         for source_key in ["/FontFile", "/FontFile2", "/FontFile3"]:
@@ -360,9 +409,11 @@ class Font:
                     font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
                 elif "/FontBBox" in pdf_font_dict:
                     # For Type3 without Font Descriptor but with FontBBox, see Table 110 in the PDF specification 2.0
-                    bbox_tuple = tuple(map(float, cast(ArrayObject, pdf_font_dict["/FontBBox"])))
-                    assert len(bbox_tuple) == 4, bbox_tuple
-                    font_descriptor = FontDescriptor(name=name, bbox=bbox_tuple)
+                    font_descriptor_kwargs: dict[str, Any] = {"name": name}
+                    bbox = cls._parse_bbox(pdf_font_dict["/FontBBox"])
+                    if bbox is not None:
+                        font_descriptor_kwargs["bbox"] = bbox
+                    font_descriptor = FontDescriptor(**font_descriptor_kwargs)
 
         else:
             # Composite font or CID font - CID fonts have a /W array mapping character codes
@@ -374,9 +425,7 @@ class Font:
             ):
                 d_font = cast(DictionaryObject, d_font.get_object())
                 cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
-                cls._collect_cid_character_widths(
-                    d_font, character_map, character_widths
-                )
+                cls._collect_cid_character_widths(d_font=d_font, current_widths=character_widths)
                 if "/DW" in d_font:
                     character_widths["default"] = cast(int, d_font["/DW"].get_object())
                 font_descriptor_obj = d_font.get("/FontDescriptor", DictionaryObject()).get_object()
@@ -655,7 +704,7 @@ class Font:
         # If we have an embedded Truetype font, we assume that we need to produce a Type 2 CID font resource.
         if self.font_descriptor.font_file and self.sub_type == "TrueType":
             # Begin with creating the widths array (part of the descendant font) and the unicode cmap (part
-            # of the Type 0 font obect).
+            # of the Type 0 font object).
             widths_list, to_unicode_stream = self._create_widths_list_and_unicode_stream()
 
             # Create the descendant font object

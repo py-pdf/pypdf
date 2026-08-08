@@ -50,7 +50,14 @@ class EmbeddedFile:
 
     @property
     def name(self) -> str:
-        """The (primary) name of the embedded file as provided in the name tree."""
+        """
+        The (primary) name of the embedded file as provided in the name tree.
+
+        .. warning::
+
+            This value can contain arbitrary characters. Please make sure to sanitize it before
+            using it to write the file content to the disk for example.
+        """
         return self._name
 
     @classmethod
@@ -165,7 +172,14 @@ class EmbeddedFile:
 
     @property
     def alternative_name(self) -> str | None:
-        """Retrieve the alternative name (file specification)."""
+        """
+        Retrieve the alternative name (as per the file specification dictionary).
+
+        .. warning::
+
+            This value can contain arbitrary characters. Please make sure to sanitize it before
+            using it to write the file content to the disk for example.
+        """
         for key in [FileSpecificationDictionaryEntries.UF, FileSpecificationDictionaryEntries.F]:
             # PDF 2.0 reference, table 43:
             #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
@@ -177,7 +191,7 @@ class EmbeddedFile:
 
     @alternative_name.setter
     def alternative_name(self, value: TextStringObject | None) -> None:
-        """Set the alternative name (file specification)."""
+        """Set the alternative name (as per the file specification dictionary)."""
         if value is None:
             if FileSpecificationDictionaryEntries.UF in self.pdf_object:
                 self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = NullObject()

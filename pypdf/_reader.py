@@ -121,7 +121,7 @@ class PdfReader(PdfDocCommon):
         self,
         stream: Union[StrByteType, Path],
         strict: bool = False,
-        password: Union[None, str, bytes] = None,
+        password: Union[str, bytes, None] = None,
         *,
         root_object_recovery_limit: Optional[int] = 10_000,
     ) -> None:
@@ -327,7 +327,7 @@ class PdfReader(PdfDocCommon):
             self._override_encryption = False
 
     def _get_page_number_by_indirect(
-        self, indirect_reference: Union[None, int, NullObject, IndirectObject]
+        self, indirect_reference: Union[int, NullObject, IndirectObject, None]
     ) -> Optional[int]:
         """
         Retrieve the page number from an indirect reference.
@@ -1557,8 +1557,8 @@ class PdfReader(PdfDocCommon):
 
     def _repr_mimebundle_(
         self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
+        include: Union[Iterable[str], None] = None,
+        exclude: Union[Iterable[str], None] = None,
     ) -> dict[str, Any]:
         """
         Integration into Jupyter Notebooks.

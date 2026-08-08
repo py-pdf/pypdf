@@ -1,4 +1,5 @@
 """Test the pypdf.generic._image_xobject module."""
+import zlib
 from io import BytesIO
 
 import PIL
@@ -7,9 +8,17 @@ from PIL import Image
 
 from pypdf import PdfReader
 from pypdf._utils import Version
-from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
+from pypdf.constants import ColorSpaces, FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
-from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
+from pypdf.generic import (
+    ArrayObject,
+    DecodedStreamObject,
+    NameObject,
+    NumberObject,
+    PdfObject,
+    StreamObject,
+    TextStringObject,
+)
 from pypdf.generic._image_xobject import (
     _get_image_mode,
     _handle_flate,
@@ -404,6 +413,34 @@ def test_xobj_to_image__color_components_out_of_range() -> None:
 
 
 @pytest.mark.parametrize(
+    "decode",
+    [
+        ArrayObject([NumberObject(1), NumberObject(0), NumberObject(1)]),
+        ArrayObject([NumberObject(1)]),
+        NumberObject(1),
+    ],
+    ids=["odd-length-array", "single-value-array", "not-an-array"],
+)
+def test_xobj_to_image__malformed_decode(
+    decode: PdfObject, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A /Decode without an even number of values must not raise IndexError."""
+    x_object = StreamObject()
+    x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(2)
+    x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(2)
+    x_object[NameObject(ImageAttributes.BITS_PER_COMPONENT)] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_GRAY)
+    x_object[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.FLATE_DECODE)
+    x_object[NameObject(ImageAttributes.DECODE)] = decode
+    x_object.set_data(zlib.compress(bytes([0, 64, 128, 255])))
+
+    _, _, image = _xobj_to_image(x_object)
+    image.load()
+    assert image.size == (2, 2)
+    assert "Ignoring malformed /Decode array" in caplog.text
+
+
+@pytest.mark.parametrize(
     ("mode", "expected"),
     [
         ("1", "8000000000"),
@@ -417,3 +454,58 @@ def test_image_from_bytes__limit(mode: str, expected: str) -> None:
             match=rf"^Requested image buffer size {expected} exceeds limit 75000000\.$"
     ):
         _ = _image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
+
+
+def _minimal_image_xobject() -> StreamObject:
+    """Build the smallest image XObject _xobj_to_image will decode."""
+    stream = StreamObject()
+    stream[NameObject("/Subtype")] = NameObject("/Image")
+    stream[NameObject("/Width")] = NumberObject(1)
+    stream[NameObject("/Height")] = NumberObject(1)
+    stream[NameObject("/ColorSpace")] = NameObject("/DeviceGray")
+    stream[NameObject("/BitsPerComponent")] = NumberObject(8)
+    stream.set_data(b"\x00")
+    return stream
+
+
+def test_xobj_to_image__self_referential_smask(
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """A soft mask pointing at its own image must not recurse."""
+    image = _minimal_image_xobject()
+    image[NameObject("/SMask")] = image
+
+    extension, _, img = _xobj_to_image(image)
+
+    assert extension == ".png"
+    assert img.mode == "L"
+    assert "Ignoring cyclic /SMask reference" in caplog.text
+
+
+def test_xobj_to_image__two_node_smask_cycle(
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """A -> B -> A soft mask chains must not recurse either."""
+    first = _minimal_image_xobject()
+    second = _minimal_image_xobject()
+    first[NameObject("/SMask")] = second
+    second[NameObject("/SMask")] = first
+
+    extension, _, img = _xobj_to_image(first)
+
+    assert extension == ".png"
+    # The outer image still gets its mask: the cycle is only broken one level
+    # deeper, when the mask's own /SMask points back at an image being converted.
+    assert img.mode == "LA"
+    assert "Ignoring cyclic /SMask reference" in caplog.text
+
+
+def test_xobj_to_image__acyclic_smask_still_applied() -> None:
+    """The guard must not stop a legitimate soft mask being applied."""
+    image = _minimal_image_xobject()
+    image[NameObject("/SMask")] = _minimal_image_xobject()
+
+    extension, _, img = _xobj_to_image(image)
+
+    assert extension == ".png"
+    assert img.mode == "LA"

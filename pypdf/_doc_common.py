@@ -609,6 +609,19 @@ class PdfDocCommon(ABC):
             )
         return cast(str, parent.get("/T", ""))
 
+    @staticmethod
+    def _normal_appearance(appearance: Any) -> DictionaryObject:
+        """Return the /N normal-appearance sub-dictionary of an /AP entry."""
+        appearance = appearance.get_object()
+        if not isinstance(appearance, DictionaryObject):
+            raise PdfReadError(f"Expected appearance dictionary, got {appearance!r}")
+        normal = appearance.get("/N")
+        if normal is not None:
+            normal = normal.get_object()
+        if not isinstance(normal, DictionaryObject):
+            raise PdfReadError(f"Expected /N appearance dictionary, got {normal!r}")
+        return normal
+
     def _build_field(
         self,
         field: Union[TreeObject, DictionaryObject],
@@ -629,9 +642,8 @@ class PdfDocCommon(ABC):
             retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
         if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
             #  Checkbox
-            retval[key][NameObject("/_States_")] = ArrayObject(
-                list(obj["/AP"]["/N"].keys())
-            )
+            normal = self._normal_appearance(obj["/AP"])
+            retval[key][NameObject("/_States_")] = ArrayObject(list(normal.keys()))
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
         elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
@@ -639,7 +651,10 @@ class PdfDocCommon(ABC):
             retval[key][NameObject("/_States_")] = ArrayObject(states)
             for k in obj.get(FA.Kids, {}):
                 k = k.get_object()
-                for s in list(k["/AP"]["/N"].keys()):
+                if "/AP" not in k:
+                    raise PdfReadError(f"Button field kid missing /AP: {k!r}")
+                normal = self._normal_appearance(k["/AP"])
+                for s in list(normal.keys()):
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
@@ -744,7 +759,7 @@ class PdfDocCommon(ABC):
                 if full_qualified_name:
                     ff[field] = value.get("/V")
                 else:
-                    ff[indexed_key(cast(str, value["/T"]), ff)] = value.get("/V")
+                    ff[indexed_key(cast(str, value.get("/T", field)), ff)] = value.get("/V")
         return ff
 
     def get_pages_showing_field(
@@ -810,7 +825,7 @@ class PdfDocCommon(ABC):
     @property
     def open_destination(
         self,
-    ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
+    ) -> Union[Destination, TextStringObject, ByteStringObject, None]:
         """
         Property to access the opening destination (``/OpenAction`` entry in
         the PDF catalog). It returns ``None`` if the entry does not exist
@@ -838,7 +853,7 @@ class PdfDocCommon(ABC):
             return None
 
     @open_destination.setter
-    def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
+    def open_destination(self, dest: Union[str, Destination, PageObject, None]) -> None:
         raise NotImplementedError("No setter for open_destination")
 
     @property
@@ -931,7 +946,7 @@ class PdfDocCommon(ABC):
 
     @abstractmethod
     def _get_page_number_by_indirect(
-        self, indirect_reference: Union[None, int, NullObject, IndirectObject]
+        self, indirect_reference: Union[int, NullObject, IndirectObject, None]
     ) -> Optional[int]:
         ...  # pragma: no cover
 
@@ -967,7 +982,7 @@ class PdfDocCommon(ABC):
         title: Union[str, bytes],
         array: Optional[
             list[
-                Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
+                Union[NumberObject, IndirectObject, NullObject, DictionaryObject, None]
             ]
         ],
     ) -> Destination:
@@ -1162,7 +1177,7 @@ class PdfDocCommon(ABC):
     def _flatten(
         self,
         list_only: bool = False,
-        pages: Union[None, DictionaryObject, PageObject] = None,
+        pages: Union[DictionaryObject, PageObject, None] = None,
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
         visited: Optional[set[int]] = None,
@@ -1479,8 +1494,8 @@ class PdfDocCommon(ABC):
     @abstractmethod
     def _repr_mimebundle_(
         self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
+        include: Union[Iterable[str], None] = None,
+        exclude: Union[Iterable[str], None] = None,
     ) -> dict[str, Any]:
         """
         Integration into Jupyter Notebooks.

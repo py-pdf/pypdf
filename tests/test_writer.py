@@ -899,6 +899,52 @@ def test_link_annotation(pdf_file_path):
         writer.write(output_stream)
 
 
+@pytest.mark.parametrize(
+    "annotation",
+    [
+        # Empty /Dest array.
+        DictionaryObject({
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/Dest"): ArrayObject([]),
+        }),
+        # Empty /GoTo action destination.
+        DictionaryObject({
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/A"): DictionaryObject({
+                NameObject("/S"): NameObject("/GoTo"),
+                NameObject("/D"): ArrayObject([]),
+            }),
+        }),
+        # /Dest that is not an array at all.
+        DictionaryObject({
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/Dest"): NumberObject(5),
+        }),
+    ],
+    ids=["empty-dest-array", "empty-goto-action-dest", "non-array-dest"],
+)
+def test_malformed_link_destination_does_not_crash_transfer(annotation):
+    """A link with an empty or non-array destination must not abort page transfer."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Annots")] = ArrayObject([writer._add_object(annotation)])
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    reader = PdfReader(stream)
+
+    # append() routes the annotation through _insert_filtered_annotations.
+    appended = PdfWriter()
+    appended.append(reader)
+    appended.write(BytesIO())
+
+    # add_page() + write() routes it through extract_links()/_resolve_links().
+    added = PdfWriter()
+    for page in reader.pages:
+        added.add_page(page)
+    added.write(BytesIO())
+
+
 def test_io_streams():
     """This is the example from the docs ("Streaming data")."""
     filepath = RESOURCE_ROOT / "pdflatex-outline.pdf"
@@ -992,6 +1038,15 @@ def test_pdf_header():
 
     writer.pdf_header = b"%PDF-1.6"
     assert writer.pdf_header == "%PDF-1.6"
+
+
+def test_pdf_header__keep_initial_header():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(clone_from=reader)
+    assert writer.pdf_header == "%PDF-1.3"
+
+    writer = PdfWriter(clone_from=reader, keep_initial_header=True)
+    assert writer.pdf_header == "%PDF-1.5"
 
 
 def test_write_dict_stream_object(pdf_file_path):
@@ -1705,7 +1760,7 @@ def test_merge_content_stream_to_page():
     """Test that new content data is correctly added to page contents
     in the form of an ArrayObject or StreamObject. The
     test_add_apstream_object code already correctly checks that
-    _merge_content_stream_to_page works for an emtpy page.
+    _merge_content_stream_to_page works for an empty page.
     """
     writer = PdfWriter()
     page = writer.add_blank_page(100, 100)

@@ -75,7 +75,13 @@ def test_check_if_whitespace_only(value, expected):
 
 
 def test_read_until_whitespace():
-    assert read_until_whitespace(io.BytesIO(b"foo"), maxchars=1) == b"f"
+    assert read_until_whitespace(io.BytesIO(b"foo"), max_bytes=1) == b"f"
+
+
+@pytest.mark.timeout(5)
+def test_read_until_whitespace__performance():
+    data = b"A" * 1_000_000
+    assert read_until_whitespace(io.BytesIO(data)) == data
 
 
 @pytest.mark.parametrize(

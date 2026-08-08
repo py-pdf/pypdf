@@ -107,8 +107,10 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     page[NameObject("/AA")] = ArrayObject()
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert caplog.messages == [
-        "The type in a page object's additional-actions key must be a DictionaryObject: "
-        "received type ArrayObject."
+        (
+            "The type in a page object's additional-actions key must be a DictionaryObject: "
+            "received type ArrayObject."
+        )
     ]
     assert page.get("/AA") == ArrayObject()
 
@@ -117,8 +119,10 @@ def test_page_add_action__with_existing_array_object(pdf_file_writer, caplog):
     caplog.clear()
     page.add_action(PageTrigger.CLOSE, JavaScript("app.alert('This is page ' + this.pageNum);"))
     assert caplog.messages == [
-        "The type in a page object's additional-actions key must be a DictionaryObject: "
-        "received type ArrayObject."
+        (
+            "The type in a page object's additional-actions key must be a DictionaryObject: "
+            "received type ArrayObject."
+        )
     ]
     assert page.get("/AA") == ArrayObject()
 
