@@ -19,6 +19,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
+from pypdf._font import Font
 from pypdf.annotations import Link
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -1801,7 +1802,7 @@ def test_update_form_fields2(caplog):
                     "MM": "04",
                     "DD": "21",
                     "YY": "24",
-                    "Initial": "RRG",
+                    "Initial": "ąčęėįšųūž. ĄČĘĖĮŠŲŪŽ.",
                     # "I DO NOT Agree": null,
                     # "Last Name": null
                 },
@@ -1840,7 +1841,7 @@ def test_update_form_fields2(caplog):
         writer = PdfWriter(clone_from=reader)
 
         writer.update_page_form_field_values(
-            None, my_files[file]["usage"]["fields"], auto_regenerate=True
+            None, my_files[file]["usage"]["fields"], auto_regenerate=True, flatten=True
         )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {
@@ -1849,7 +1850,7 @@ def test_update_form_fields2(caplog):
         "test1.MM": "04",
         "test1.DD": "21",
         "test1.YY": "24",
-        "test1.Initial": "RRG",
+        "test1.Initial": "ąčęėįšųūž. ĄČĘĖĮŠŲŪŽ.",
         "test1.I DO NOT Agree": None,
         "test1.Last Name": None,
         "test2.p2 First Name": "Joe",
@@ -1866,6 +1867,7 @@ def test_update_form_fields2(caplog):
         "test2.p3 DD": "25",
         "test2.p3 YY": "21",
     }
+    assert "/PYPDF1cp1257" in merger.pages[0]["/Resources"]["/Font"]
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
 
@@ -1896,6 +1898,7 @@ def test_update_form_fields3(caplog, tmp_path):
     assert new_font_resource in writer.pages[0]["/Annots"][0]["/DA"]
     assert new_font_resource in writer.pages[0]["/Resources"]["/Font"]
     assert new_font_resource in writer._root_object["/AcroForm"]["/DR"]["/Font"]
+    # Assert that we couldn't encode the data with this font
     writer.write(output)
     output.seek(0)
     reader = PdfReader(output)
@@ -1904,6 +1907,12 @@ def test_update_form_fields3(caplog, tmp_path):
         if expected_value != "شهرزاد":
             assert expected_value in extracted_text
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+    # Retry with the new font right away, to increase coverage in _appearance_stream.py
+    writer.update_page_form_field_values(writer.pages[0], {"localitatea": ("شهرزاد", "/PYPDF1", 0)}, flatten=True)
+    # Cripple the font's ToUnicode cmap, to increase can_encode coverage in _font.py
+    del (writer.pages[0]["/Resources"]["/Font"]["/PYPDF1"]["/ToUnicode"])
+    font = Font.from_font_resource(writer.pages[0]["/Resources"]["/Font"]["/PYPDF1"])
+    assert not font.can_encode("Whatever text")
 
 
 @pytest.mark.enable_socket

@@ -18,6 +18,7 @@ from pypdf.generic import (
 )
 
 from ._cmap import get_encoding
+from ._codecs import encoding_dict_from_named_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
 from .constants import FontFlags
@@ -53,6 +54,10 @@ OS2_PANOSE_BFAMILYTYPE_PICTORIAL = 5
 OS2_PANOSE_BPROPORTION_MONOSPACED = 9
 OS2_SFAMILYSCLASS_SCRIPTS = 10
 OS2_SFAMILYSCLASS_SYMBOLIC = 12
+
+
+# Groups of CMap mappings cannot exceed 100 entries (Adobe CMap and CIDFont Files Specification 1.0, p. 49).
+CMAP_MAX_ENTRIES_PER_GROUP = 100
 
 
 @dataclass(frozen=True)
@@ -592,7 +597,7 @@ class Font:
 
         return cls(
             name=font_descriptor.name,
-            sub_type="TrueType",
+            sub_type="Type0",
             encoding=encoding,
             font_descriptor=font_descriptor,
             character_map=character_map,
@@ -601,6 +606,30 @@ class Font:
             space_char=space_char,
             interpretable=True
         )
+
+    @classmethod
+    def from_core_font_name(cls, core_font_name: str = "/Helvetica") -> Font:
+        from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
+
+        font_name = core_font_name.removeprefix("/")
+        core_font_metrics = CORE_FONT_METRICS[font_name]
+        win_ansi_encoding = encoding_dict_from_named_encoding("cp1252")  # WinAnsiEncoding
+
+        font = cls(
+            name=font_name,
+            character_map={},
+            encoding=win_ansi_encoding,
+            sub_type="Type1",
+            font_descriptor=core_font_metrics.font_descriptor,
+            character_widths={
+                char: core_font_metrics.character_widths[character]
+                for code, character in win_ansi_encoding.items()
+                if (char := chr(code)) in core_font_metrics.character_widths
+            }
+        )
+        font.character_widths["default"] = core_font_metrics.character_widths["default"]
+
+        return font
 
     def _get_typographic_maps(self) -> tuple[dict[str, str], dict[str, bytes]]:
         """
@@ -638,7 +667,7 @@ class Font:
                 glyph_id_str = str(glyph_id)
                 reverse_cmap[unicode_char] = glyph_id_str
                 encoding_cmap[glyph_id_str] = glyph_id_str.encode(self.encoding)
-        else:
+        else:  # Encoding is a dict, which means we are dealing with a simple font
             for character_code, unicode_char in self.encoding.items():
                 character_str = chr(character_code)
                 reverse_cmap[unicode_char] = character_str
@@ -647,21 +676,69 @@ class Font:
             unicode_to_bytes = {
                 unicode_char: bytes((character_code,)) for character_code, unicode_char in self.encoding.items()
             }
-            for glyph_id, unicode_char in self.character_map.items():  # This code is not covered nor tested
-                reverse_cmap[unicode_char] = glyph_id
-                encoding_cmap[glyph_id] = unicode_to_bytes.get(unicode_char, bytes((glyph_id,)))
+            for character_code_str, unicode_char in self.character_map.items():
+                reverse_cmap[unicode_char] = character_code_str
+                encoding_cmap[character_code_str] = unicode_to_bytes.get(
+                    unicode_char,
+                    bytes((ord(character_code_str),))
+                )
 
         return reverse_cmap, encoding_cmap
 
     def _create_widths_list_and_unicode_stream(self) -> tuple[list[PdfObject], StreamObject]:
+        from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
+
         widths_list = []
-        unicode_map = []
-        # In the loop, char is the decoded GID string (the reverse unicode hack)
-        # and character_map[char] is the actual character.
-        # The widths (/W) array can have two formats:
-        #    [first_cid [w1 w2 w3]] or [first last width]
-        # Here we choose the first format and simply provide one array with one width for every cid.
-        for gid_str, actual_char in self.character_map.items():
+        unicode_map: list[str] = []
+
+        tmp_list: list[tuple[int, list[int]]] = []
+        previous_unipoint_plus_one: int | None = None
+        previous_cid_plus_one: int |  None = None
+        bfchar_map: list[str] = []
+        bfrange_map: list[str] = []
+        current_bfrange: bool = False  # Set to True when finding two sequential cid-unicode pairs
+        previous_bfrange: bool = False  # Set to True when the previous was also a range.
+        # Composite/CID fonts use 4-hex digits, simple fonts use 2-hex digits
+        src_hex_format = "{cid:04X}" if self.sub_type == "Type0" else "{cid:02X}"
+        codespace_min = "0000" if self.sub_type == "Type0" else "00"
+        codespace_max = "FFFF" if self.sub_type == "Type0" else "FF"
+
+        def _append_mapping(unicode_map_list: list[str], appended_list: list[str], bf_type: str) -> None:
+            while partial_list := appended_list[:CMAP_MAX_ENTRIES_PER_GROUP]:
+                del appended_list[:CMAP_MAX_ENTRIES_PER_GROUP]
+                unicode_map_list.append(f"{len(partial_list)} beginbf{bf_type}")
+                unicode_map_list.extend(partial_list)
+                unicode_map_list.append(f"endbf{bf_type}")
+
+        def _append_bfrange_line(bfrange_map_list: list[str], map_list: list[tuple[int, list[int]]]) -> None:
+            bfrange_start, [bfrange_start_unipoint] = map_list[0]
+            bfrange_end = map_list[-1][0]
+            bfrange_start_hex = src_hex_format.format(cid=bfrange_start)
+            bfrange_end_hex = src_hex_format.format(cid=bfrange_end)
+            bfrange_start_unipoint_hex = f"{bfrange_start_unipoint:04X}"
+            bfrange_map_list.append(f"<{bfrange_start_hex}> <{bfrange_end_hex}> <{bfrange_start_unipoint_hex}>")
+            map_list.clear()
+
+        def _append_bfchar_line(bfchar_map_list: list[str], map_list: list[tuple[int, list[int]]]) -> None:
+            # We add bfchar lines one by one, so map_list always has only one entry when it is passed here
+            bfchar_cid, bfchar_unipoints = map_list[0]
+            bfchar_cid_hex = src_hex_format.format(cid=bfchar_cid)
+            bfchar_unipoints_hex = "".join(f"{uni_point:04X}" for uni_point in bfchar_unipoints)
+            bfchar_map_list.append(f"<{bfchar_cid_hex}> <{bfchar_unipoints_hex}>")
+            map_list.clear()
+
+        cmap_name = "Adobe-Identity-UCS" if self.sub_type == "Type0" else "Custom-Simple-8Bit"
+        cid_system_info = (
+            "/CIDSystemInfo <<\n/Registry (Adobe)\n/Ordering (UCS)\n/Supplement 0\n>> def\n"
+            if self.sub_type == "Type0" else ""
+        )
+
+        # If we have self.character_map then use that. Otherwise fall back to self.encoding.
+        mapping_source = (self.character_map or cast(dict[int, str], self.encoding)).items()
+
+        # In the loop, src_id is the decoded GID string (the reverse unicode hack) or the character code
+        # and actual_char is the actual character.
+        for src_id, actual_char in mapping_source:
             # Make sure that we do not include characters such as arabic presentation form characters.
             # Note that, in some cases, unicodedata.normalize() might split a ligature, resulting
             # in multiple characters.
@@ -670,13 +747,56 @@ class Font:
             # Only deal with Basic Multilingual Plane characters.
             # TODO: Add all characters.
             if all(uni_point <= 0xFFFF for uni_point in uni_points):
-                cid = ord(gid_str)
-                cid_hex = f"{cid:04X}"
-                uni_hex = "".join(f"{uni_point:04X}" for uni_point in uni_points)
-                unicode_map.append(f"<{cid_hex}> <{uni_hex}>")
+                cid = ord(src_id) if isinstance(src_id, str) else src_id
+                current_bfrange = (
+                    len(uni_points) == 1 and
+                    uni_points[0] == previous_unipoint_plus_one and
+                    cid == previous_cid_plus_one
+                )
+                if not current_bfrange:
+                    if previous_bfrange:
+                        if bfchar_map:
+                            # Append the lines in bfchar_map to unicode_map
+                            _append_mapping(unicode_map, bfchar_map, "char")
+                        # Write out tmp_dict to a new bfrange line
+                        _append_bfrange_line(bfrange_map, tmp_list)
+                    elif tmp_list:
+                        if bfrange_map:
+                            # Append the lines in bfrange_map to unicode_map
+                            _append_mapping(unicode_map, bfrange_map, "range")
+                        # Write our tmp_dict to a new bf_char line
+                        _append_bfchar_line(bfchar_map, tmp_list)
 
-                width = self.character_widths.get(gid_str, self.character_widths["default"])
-                widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+                # Temporarily store current value until we know whether to put it in bfrange or bfchar
+                tmp_list.append((cid, uni_points))
+
+                if len(uni_points) == 1:
+                    previous_unipoint_plus_one = uni_points[0] + 1
+                else:
+                    previous_unipoint_plus_one = None
+                previous_cid_plus_one = cid + 1
+                if current_bfrange:
+                    previous_bfrange = True
+                else:
+                    previous_bfrange = False
+
+                # Width mapping, but not for the 14 Adobe code fonts, which are dealt with elsewhere.
+                if self.name not in CORE_FONT_METRICS:
+                    # The widths (/W) array can have two formats:
+                    #    [first_cid [w1 w2 w3]] or [first last width]
+                    # Here we choose the first format and simply provide one array with one width for every cid.
+                    width = self.character_widths.get(cast(str, src_id), self.character_widths["default"])
+                    widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+
+        # Deal with whatever was left in tmp_list
+        if previous_bfrange:  # The last item belonged to a range and sits in tmp_list
+            _append_bfrange_line(bfrange_map, tmp_list)
+            _append_mapping(unicode_map, bfrange_map, "range")
+        elif tmp_list:  # Final run was a single character
+            if bfrange_map:
+                _append_mapping(unicode_map, bfrange_map, "range")
+            _append_bfchar_line(bfchar_map, tmp_list)
+            _append_mapping(unicode_map, bfchar_map, "char")
 
         # Create the /ToUnicode CMap Stream
         to_unicode_stream = StreamObject()
@@ -685,13 +805,11 @@ class Font:
                 "/CIDInit /ProcSet findresource begin\n"
                 "12 dict begin\n"
                 "begincmap\n"
-                "/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n"
-                "/CMapName /Adobe-Identity-UCS def\n"
-                "/CMapType 2 def\n"
-                "1 begincodespacerange <0000> <FFFF> endcodespacerange\n"
-                f"{len(unicode_map)} beginbfchar\n"
+                f"{cid_system_info}"
+                f"/CMapName /{cmap_name} def\n"
+                f"/CMapType 2 def\n"
+                f"1 begincodespacerange <{codespace_min}> <{codespace_max}> endcodespacerange\n"
                 + "\n".join(unicode_map) + "\n"
-                "endbfchar\n"
                 "endcmap\n"
                 "CMapName currentdict /CMap defineresource pop\n"
                 "end end"
@@ -702,7 +820,8 @@ class Font:
 
     def as_font_resource(self) -> DictionaryObject:
         # If we have an embedded Truetype font, we assume that we need to produce a Type 2 CID font resource.
-        if self.font_descriptor.font_file and self.sub_type == "TrueType":
+        # We check that we are 16-bit encoded, that is, Type0.
+        if self.font_descriptor.font_file and self.sub_type == "Type0":
             # Begin with creating the widths array (part of the descendant font) and the unicode cmap (part
             # of the Type 0 font object).
             widths_list, to_unicode_stream = self._create_widths_list_and_unicode_stream()
@@ -734,13 +853,36 @@ class Font:
             })
 
         # Fallback: Return a font resource for one of the 14 Adobe Core fonts.
-        return DictionaryObject({
+        win_ansi_encoding = encoding_dict_from_named_encoding("cp1252")
+        differences_list: list[NumberObject | NameObject] = []
+        reverse_adobe_glyphs = {value: key for key, value in adobe_glyphs.items()}
+        own_encoding: dict[int, str] = cast(dict[int, str], self.encoding)
+        for idx, character_code in win_ansi_encoding.items():
+            encoding_char = own_encoding.get(idx)
+            if encoding_char and encoding_char != character_code:
+                differences_list.extend([NumberObject(idx), NameObject(reverse_adobe_glyphs[encoding_char])])
+
+        if differences_list:
+            encoding: DictionaryObject | NameObject = DictionaryObject({
+                NameObject("/BaseEncoding"): NameObject("/WinAnsiEncoding"),
+                NameObject("/Differences"): ArrayObject(differences_list),
+            })
+        else:
+            encoding = NameObject("/WinAnsiEncoding")
+
+        simple_font =  DictionaryObject({
             NameObject("/Type"): NameObject("/Font"),
             NameObject("/Subtype"): NameObject("/Type1"),
             NameObject("/Name"): NameObject(f"/{self.name}"),
             NameObject("/BaseFont"): NameObject(f"/{self.name}"),
-            NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+            NameObject("/Encoding"): encoding
         })
+
+        if differences_list:
+            _, to_unicode_stream = self._create_widths_list_and_unicode_stream()
+            simple_font[NameObject("/ToUnicode")] = to_unicode_stream
+
+        return simple_font
 
     def _add_to_writer(
         self,
@@ -783,17 +925,14 @@ class Font:
 
     def can_encode(self, text: str) -> bool:
         """Check whether the font is able to encode a text string."""
-        try:
-            if self.character_map:
-                supported_chars = set(self.character_map.values())
-                return all(char in supported_chars for char in text)
-            if isinstance(self.encoding, str):
-                text.encode(self.encoding, "surrogatepass")
-            else:
-                supported_chars = set(self.encoding.values())
-                return all(char in supported_chars for char in text)
+        if self.character_map:
+            supported_chars = set(self.character_map.values())
+            return all(char in supported_chars for char in text)
 
-        except UnicodeEncodeError:
-            return False
+        if isinstance(self.encoding, dict):
+            supported_chars = set(self.encoding.values())
+            return all(char in supported_chars for char in text)
 
-        return True
+        # Not a simple font (encoding is not a dict), and missing ToUnicode cmap (no character_map).
+        # Assume we cannot use this font for text encoding.
+        return False
