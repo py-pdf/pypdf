@@ -689,44 +689,13 @@ class Font:
         from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
 
         widths_list = []
-        unicode_map: list[str] = []
-
-        tmp_list: list[tuple[int, list[int]]] = []
-        previous_unipoint_plus_one: int | None = None
-        previous_cid_plus_one: int |  None = None
+        unicode_map = []
         bfchar_map: list[str] = []
-        bfrange_map: list[str] = []
-        current_bfrange: bool = False  # Set to True when finding two sequential cid-unicode pairs
-        previous_bfrange: bool = False  # Set to True when the previous was also a range.
+
         # Composite/CID fonts use 4-hex digits, simple fonts use 2-hex digits
         src_hex_format = "{cid:04X}" if self.sub_type == "Type0" else "{cid:02X}"
         codespace_min = "0000" if self.sub_type == "Type0" else "00"
         codespace_max = "FFFF" if self.sub_type == "Type0" else "FF"
-
-        def _append_mapping(unicode_map_list: list[str], appended_list: list[str], bf_type: str) -> None:
-            while partial_list := appended_list[:CMAP_MAX_ENTRIES_PER_GROUP]:
-                del appended_list[:CMAP_MAX_ENTRIES_PER_GROUP]
-                unicode_map_list.append(f"{len(partial_list)} beginbf{bf_type}")
-                unicode_map_list.extend(partial_list)
-                unicode_map_list.append(f"endbf{bf_type}")
-
-        def _append_bfrange_line(bfrange_map_list: list[str], map_list: list[tuple[int, list[int]]]) -> None:
-            bfrange_start, [bfrange_start_unipoint] = map_list[0]
-            bfrange_end = map_list[-1][0]
-            bfrange_start_hex = src_hex_format.format(cid=bfrange_start)
-            bfrange_end_hex = src_hex_format.format(cid=bfrange_end)
-            bfrange_start_unipoint_hex = f"{bfrange_start_unipoint:04X}"
-            bfrange_map_list.append(f"<{bfrange_start_hex}> <{bfrange_end_hex}> <{bfrange_start_unipoint_hex}>")
-            map_list.clear()
-
-        def _append_bfchar_line(bfchar_map_list: list[str], map_list: list[tuple[int, list[int]]]) -> None:
-            # We add bfchar lines one by one, so map_list always has only one entry when it is passed here
-            bfchar_cid, bfchar_unipoints = map_list[0]
-            bfchar_cid_hex = src_hex_format.format(cid=bfchar_cid)
-            bfchar_unipoints_hex = "".join(f"{uni_point:04X}" for uni_point in bfchar_unipoints)
-            bfchar_map_list.append(f"<{bfchar_cid_hex}> <{bfchar_unipoints_hex}>")
-            map_list.clear()
-
         cmap_name = "Adobe-Identity-UCS" if self.sub_type == "Type0" else "Custom-Simple-8Bit"
         cid_system_info = (
             "/CIDSystemInfo <<\n/Registry (Adobe)\n/Ordering (UCS)\n/Supplement 0\n>> def\n"
@@ -748,37 +717,9 @@ class Font:
             # TODO: Add all characters.
             if all(uni_point <= 0xFFFF for uni_point in uni_points):
                 cid = ord(src_id) if isinstance(src_id, str) else src_id
-                current_bfrange = (
-                    len(uni_points) == 1 and
-                    uni_points[0] == previous_unipoint_plus_one and
-                    cid == previous_cid_plus_one
-                )
-                if not current_bfrange:
-                    if previous_bfrange:
-                        if bfchar_map:
-                            # Append the lines in bfchar_map to unicode_map
-                            _append_mapping(unicode_map, bfchar_map, "char")
-                        # Write out tmp_dict to a new bfrange line
-                        _append_bfrange_line(bfrange_map, tmp_list)
-                    elif tmp_list:
-                        if bfrange_map:
-                            # Append the lines in bfrange_map to unicode_map
-                            _append_mapping(unicode_map, bfrange_map, "range")
-                        # Write our tmp_dict to a new bf_char line
-                        _append_bfchar_line(bfchar_map, tmp_list)
-
-                # Temporarily store current value until we know whether to put it in bfrange or bfchar
-                tmp_list.append((cid, uni_points))
-
-                if len(uni_points) == 1:
-                    previous_unipoint_plus_one = uni_points[0] + 1
-                else:
-                    previous_unipoint_plus_one = None
-                previous_cid_plus_one = cid + 1
-                if current_bfrange:
-                    previous_bfrange = True
-                else:
-                    previous_bfrange = False
+                cid_hex = src_hex_format.format(cid=cid)
+                uni_hex = "".join(f"{uni_point:04X}" for uni_point in uni_points)
+                bfchar_map.append(f"<{cid_hex}> <{uni_hex}>")
 
                 # Width mapping, but not for the 14 Adobe code fonts, which are dealt with elsewhere.
                 if self.name not in CORE_FONT_METRICS:
@@ -788,15 +729,11 @@ class Font:
                     width = self.character_widths.get(cast(str, src_id), self.character_widths["default"])
                     widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
 
-        # Deal with whatever was left in tmp_list
-        if previous_bfrange:  # The last item belonged to a range and sits in tmp_list
-            _append_bfrange_line(bfrange_map, tmp_list)
-            _append_mapping(unicode_map, bfrange_map, "range")
-        elif tmp_list:  # Final run was a single character
-            if bfrange_map:
-                _append_mapping(unicode_map, bfrange_map, "range")
-            _append_bfchar_line(bfchar_map, tmp_list)
-            _append_mapping(unicode_map, bfchar_map, "char")
+        while partial_list := bfchar_map[:CMAP_MAX_ENTRIES_PER_GROUP]:
+            del bfchar_map[:CMAP_MAX_ENTRIES_PER_GROUP]
+            unicode_map.append(f"{len(partial_list)} beginbfchar")
+            unicode_map.extend(partial_list)
+            unicode_map.append("endbfchar")
 
         # Create the /ToUnicode CMap Stream
         to_unicode_stream = StreamObject()
