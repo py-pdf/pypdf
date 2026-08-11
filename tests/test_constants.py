@@ -1,6 +1,6 @@
 """Test the pypdf.constants module."""
 import re
-import warnings
+from typing import Callable
 
 import pytest
 
