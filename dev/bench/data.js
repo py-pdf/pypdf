@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786440606792,
+  "lastUpdate": 1786441405703,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -121843,6 +121843,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006226002242625979",
             "extra": "mean: 604.4958868000094 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "276309f61c31c4026c30292f22047f9e7b70ae2d",
+          "message": "BUG: Keep the Adobe CMYK inversion when an explicit /Decode is present (#3943)\n\nAdobe writes CMYK JPEGs with inverted component values, which _apply_decode\ncompensates for with a [1 0] remap. That branch was only reached when the\nimage had no /Decode array, so an image carrying an explicit identity /Decode\nskipped the inversion entirely and was extracted with inverted colours.\n\n/Decode is expressed in terms of the true component values, so it has to be\ncomposed with the inversion rather than replace it. Substituting the inversion\ninto the mapping works out to swapping each [min max] pair.\n\nCloses #2931.",
+          "timestamp": "2026-08-11T11:40:26+02:00",
+          "tree_id": "24d3dccc41cf63992e7758a2bb9d3eae8dfa92d3",
+          "url": "https://github.com/py-pdf/pypdf/commit/276309f61c31c4026c30292f22047f9e7b70ae2d"
+        },
+        "date": 1786441398369,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.160175963880006,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021375490655619583",
+            "extra": "mean: 75.9868259166628 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.929022859192559,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017067719527737602",
+            "extra": "mean: 62.77848985714181 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0519543083957517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03375239841589208",
+            "extra": "mean: 950.611630200001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.44418580590753537,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024183981041113894",
+            "extra": "mean: 2.251310120000022 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.37282848777333033,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012111797042865115",
+            "extra": "mean: 2.6821984713999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2304142000142109,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03294479703770659",
+            "extra": "mean: 812.7344433999951 msec\nrounds: 5"
           }
         ]
       }
