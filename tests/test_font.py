@@ -1,13 +1,16 @@
 """Test font-related functionality."""
 import os
+import re
 import subprocess
 import sys
+import unicodedata
 from io import BytesIO
 
 import pytest
 from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader, PdfWriter
+from pypdf._cmap import _parse_to_unicode
 from pypdf._font import Font, FontDescriptor
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
@@ -338,3 +341,23 @@ def test_simple_font_reverse_cmap_from_character_map():
 
     reader2 = PdfReader(stream)
     assert extracted_text == reader2.pages[0].extract_text()
+
+
+def test__create_widths_list_and_unicode_stream():
+    font = Font.from_core_font_name("Helvetica")
+    # Make sure that we have some encoding difference so that we will include a
+    # ToUnicode CMap in a font resource.
+    font.encoding[255] = font.encoding[0]
+    # Assert that the ToUnicode CMap can be parsed and reflects the original encoding.
+    map_dict, _ = _parse_to_unicode(font.as_font_resource())
+    assert all(
+        map_dict[chr(chr_code)] == unicodedata.normalize("NFKC", unipoint)
+        for chr_code, unipoint in font.encoding.items()
+    )
+    # Test that we observe CMAP_MAX_ENTRIES_PER_GROUP; we're using a core font which
+    # has 256 characters. Hence, we should have two groups of 100 bfchar lines
+    # and one group with the remaining 56 bfchar lines.
+    _widths_list, to_unicode_stream = font._create_widths_list_and_unicode_stream()
+    assert all(
+        val in ("56", "100") for val in re.findall(r"([0-9]*) beginbfchar", to_unicode_stream.get_data().decode())
+    )
