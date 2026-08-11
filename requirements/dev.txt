@@ -24,9 +24,9 @@ exceptiongroup==1.2.2
     # via pytest
 filelock==3.20.3
     # via virtualenv
-flit==3.11.0
+flit==4.0.2
     # via -r dev.in
-flit-core==3.11.0
+flit-core==4.0.2
     # via flit
 identify==2.6.1
     # via pre-commit
