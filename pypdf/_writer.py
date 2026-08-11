@@ -2980,21 +2980,22 @@ class PdfWriter(PdfDocCommon):
 
     def _get_cloned_page(
         self,
-        page: Union[IndirectObject, PageObject, NullObject, None],
+        page: Union[IndirectObject, PageObject, NullObject, int, None],
         pages: dict[int, PageObject],
         reader: PdfReader,
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
-        if isinstance(page, int) and not isinstance(page, bool):
+        if isinstance(page, int):
             # An explicit destination may reference the target page by its
             # (zero-based) index in the source document rather than by an
-            # indirect reference; this is what ``Link(target_page_index=...)``
+            # indirect reference; this is what `Link(target_page_index=...)`
             # produces. Resolve the index through the reader's page list so it
-            # can be remapped like a regular page reference.
+            # can be remapped like a regular page reference. A destination that
+            # points past the end of the source document is dropped.
             try:
                 page = reader.pages[page].indirect_reference
-            except (IndexError, AttributeError):
+            except IndexError:
                 return None
         if isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference

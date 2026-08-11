@@ -905,7 +905,7 @@ def test_append_preserves_internal_link_annotation():
     destination references the target page by index (as produced by
     ``Link(target_page_index=...)``) and remap that index to the cloned page.
 
-    Tests https://github.com/py-pdf/pypdf/issues/3953
+    Tests #3953
     """
     source = PdfWriter()
     for _ in range(3):
@@ -945,6 +945,26 @@ def test_append_preserves_internal_link_annotation():
     target = destination[0].get_object()
     assert result.pages[4].indirect_reference.idnum == destination[0].idnum
     assert target["/Type"] == "/Page"
+
+
+def test_get_cloned_page_out_of_range_index_is_dropped():
+    """
+    A destination index that points past the end of the source document
+    resolves to ``None`` instead of raising ``IndexError``.
+
+    Tests #3953
+    """
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source_buffer = BytesIO()
+    source.write(source_buffer)
+    source_buffer.seek(0)
+    reader = PdfReader(source_buffer)
+
+    writer = PdfWriter()
+    writer.append(reader)
+    # The source document has a single page, so index 5 is out of range.
+    assert writer._get_cloned_page(5, {}, reader) is None
 
 
 @pytest.mark.parametrize(
