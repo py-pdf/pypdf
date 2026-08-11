@@ -5,7 +5,13 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import _check_token_length, get_encoding, parse_bfchar, parse_bfrange
+from pypdf._cmap import (
+    __parse_bfrange__decode,
+    _check_token_length,
+    get_encoding,
+    parse_bfchar,
+    parse_bfrange,
+)
 from pypdf._codecs import charset_encoding
 from pypdf._font import Font
 from pypdf.errors import LimitReachedError
@@ -411,6 +417,20 @@ def test_parse_bfrange__multibyte_source_codes():
     parse_bfrange(line=b"20 22 0061", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
     assert map_dict == {-1: 1, " ": "a", "!": "b", '"': "c"}
     assert int_entry == [0x20, 0x21, 0x22]
+
+
+def test_parse_bfrange__decode_out_of_range_code():
+    """A source code that exceeds its declared byte width raises OverflowError.
+
+    ``map_dict[-1]`` records how many bytes each source code occupies, so a
+    malformed ``/ToUnicode`` map whose code does not fit that width cannot be
+    represented. The previous hex round-trip raised ``binascii.Error`` here;
+    the ``int.to_bytes`` path raises ``OverflowError`` (see #3945). Either way
+    the malformed entry is rejected rather than silently mis-decoded.
+    """
+    # 0x100 needs two bytes but the declared width is one.
+    with pytest.raises(OverflowError):
+        __parse_bfrange__decode(map_dict={-1: 1}, code=0x100)
 
 
 def test_parse_bfrange__iteration_limit():
