@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786347781564,
+  "lastUpdate": 1786440584075,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -104153,6 +104153,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011239674285887598",
             "extra": "mean: 476.07171259999745 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "aa64a369707878b370c01d08b2e885f433e5c2e1",
+          "message": "ROB: Recover the trailer from a cross-reference stream when rebuilding the xref (#3950)\n\nA PDF 1.5+ file may store the trailer keys inside its cross-reference stream\nrather than behind a `trailer` keyword. `_rebuild_xref_table` only scanned for\nthe `trailer` keyword, so for such a file `self.trailer` stayed empty and\n`root_object` raised `Cannot find Root object in pdf` -- its `/Catalog` search\nloops over `trailer[\"/Size\"]`, which is 0 when no trailer was found, so the\nfallback silently did nothing.\n\nCollect the trailer keys from `/Type /XRef` objects during the object scan that\nalready runs, and merge them together with the `trailer` keyword hits in file\norder so the newest revision still wins.\n\nCloses #3925.",
+          "timestamp": "2026-08-11T11:27:13+02:00",
+          "tree_id": "9f128d703ae66cca7031a9f06fe77f4107c032df",
+          "url": "https://github.com/py-pdf/pypdf/commit/aa64a369707878b370c01d08b2e885f433e5c2e1"
+        },
+        "date": 1786440575676,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.997204115609302,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009530572962886842",
+            "extra": "mean: 250.17486499999964 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.277251705148384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006811744679718171",
+            "extra": "mean: 36.66058482758574 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.36180827402106774,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027169179726505135",
+            "extra": "mean: 2.763894780199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 24.27946098005906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008901348049921266",
+            "extra": "mean: 41.187075809521026 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.10077387484263388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03270190645026357",
+            "extra": "mean: 9.923206799000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.0067327392464502,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0050321914962646805",
+            "extra": "mean: 498.32246240000586 msec\nrounds: 5"
           }
         ]
       }
