@@ -1204,9 +1204,9 @@ class PdfDocCommon(ABC):
             pages:
             inherit:
             indirect_reference: Used recursively to flatten the /Pages object.
-            visited: Set of id() values of /Pages nodes already visited during
-                traversal. Detects multi-hop cycles such as A→B→C→A that the
-                single-parent check misses.
+            visited: Set of id() values on the active page-tree traversal path.
+                Detects multi-hop cycles such as A→B→C→A that the single-parent
+                check misses.
 
         """
         inheritable_page_attributes = (
@@ -1263,7 +1263,16 @@ class PdfDocCommon(ABC):
                     if obj_id in visited:
                         raise PdfReadError("Detected cyclic page references.")
                     visited.add(obj_id)
-                    self._flatten(list_only, obj, inherit, visited=visited, **additional_arguments)
+                    try:
+                        self._flatten(
+                            list_only,
+                            obj,
+                            inherit,
+                            visited=visited,
+                            **additional_arguments,
+                        )
+                    finally:
+                        visited.remove(obj_id)
         elif t == "/Page":
             for attr_in, value in inherit.items():
                 # if the page has its own value, it does not inherit the

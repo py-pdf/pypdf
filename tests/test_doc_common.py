@@ -542,6 +542,20 @@ def test_flatten__cyclic_references():
         reader._flatten()
 
 
+def test_flatten__repeated_page_reference():
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    pages = writer.root_object["/Pages"].get_object()
+    kids = pages["/Kids"]
+    kids.append(kids[0])
+    pages[NameObject("/Count")] = NumberObject(2)
+    pdf = BytesIO()
+    writer.write(pdf)
+    pdf.seek(0)
+
+    assert len(PdfReader(pdf).pages) == 2
+
+
 def test_flatten__pages_without_kids():
     # A malformed /Pages node may advertise "/Count 0" without providing any
     # /Kids entry. Flattening such a page tree used to raise a bare
