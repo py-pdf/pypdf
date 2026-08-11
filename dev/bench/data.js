@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786474643679,
+  "lastUpdate": 1786476117602,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -104351,6 +104351,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004129068634571068",
             "extra": "mean: 668.4919328000092 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cefea4b7f39da8980b5fb68ab5afe9523bacc734",
+          "message": "STY: Type pages as a Sequence rather than a list (#3957)\n\nPdfDocCommon.pages is annotated list[PageObject] but returns a\n_VirtualList, which is a Sequence and looks pages up on demand. The\nmismatch was suppressed with a type: ignore[return-value].\n\nA type checker therefore accepts reader.pages + [page] and\nreader.pages.append(page); both raise TypeError/AttributeError at\nruntime. It is also 16 of the typeguard failures under make testtype.\n\nAnnotate the property and the corresponding protocol member as\nSequence, drop the ignore, and cast at the one call site that deletes\na page - _VirtualList implements __delitem__, but Sequence does not\ndeclare it.",
+          "timestamp": "2026-08-11T21:18:56+02:00",
+          "tree_id": "702474e46e53fb9b435b3a04bc3302afe30915ce",
+          "url": "https://github.com/py-pdf/pypdf/commit/cefea4b7f39da8980b5fb68ab5afe9523bacc734"
+        },
+        "date": 1786476108628,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.753381324766145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011267528410767096",
+            "extra": "mean: 363.189795400001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.12791800087083,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023714482751359504",
+            "extra": "mean: 55.16353284210364 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2507053936834563,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01948716200379868",
+            "extra": "mean: 3.9887454565999976 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.68016397008388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005173210602149454",
+            "extra": "mean: 56.56056141176477 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07355196851150879,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029098902682156598",
+            "extra": "mean: 13.595829183600008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5115738826934522,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002668460300033515",
+            "extra": "mean: 661.5621051999881 msec\nrounds: 5"
           }
         ]
       }
