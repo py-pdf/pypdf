@@ -30,7 +30,7 @@
 
 import struct
 from abc import ABC, abstractmethod
-from collections.abc import Generator, Iterable, Iterator, Mapping
+from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from datetime import datetime
 from typing import (
     Any,
@@ -1094,10 +1094,15 @@ class PdfDocCommon(ABC):
         return outline_item
 
     @property
-    def pages(self) -> list[PageObject]:
+    def pages(self) -> Sequence[PageObject]:
         """
         Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
         This property allows to get a page or a range of pages.
+
+        The returned object supports indexing, slicing, ``len()``, iteration and
+        (for PdfWriter) ``del``, but it is not a :class:`list` - pages are looked
+        up on demand rather than materialised up front, so list-only operations
+        such as ``append()`` or concatenation with ``+`` are not available.
 
         Note:
             For PdfWriter only: Provides the capability to remove a page/range of
@@ -1108,7 +1113,7 @@ class PdfDocCommon(ABC):
             PdfWriter.
 
         """
-        return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore[return-value]
+        return _VirtualList(self.get_num_pages, self.get_page)
 
     @property
     def page_labels(self) -> list[str]:
@@ -1312,7 +1317,9 @@ class PdfDocCommon(ABC):
             return
 
         ind = self.pages[page].indirect_reference
-        del self.pages[page]
+        # `pages` is typed as a Sequence because it is not a list, but the
+        # concrete _VirtualList does implement deletion.
+        del cast(_VirtualList, self.pages)[page]
         if clean and ind is not None:
             self._replace_object(ind, NullObject())
 
