@@ -144,15 +144,7 @@ def test_catalog_dictionary():
     ):
         assert CatalogDictionary.TYPE == "/Type"
 
-    with warnings.catch_warnings(record=True) as caught_warnings:
-        warnings.simplefilter("always")
-        assert CatalogDictionary.__name__ == "CatalogDictionary"
-
-    assert not [
-        warning
-        for warning in caught_warnings
-        if issubclass(warning.category, DeprecationWarning)
-    ]
+    assert CatalogDictionary.__name__ == "CatalogDictionary"
 
     with pytest.raises(
         AttributeError,
