@@ -2555,74 +2555,37 @@ def test_load_recovery_cache():
     with mock.patch.object(reader, "_find_pdf_objects", return_value=iter(pdf_objects)):
         assert reader._load_recovery_cache(b"") == {1: (10, 0), 2: (30, 0), 3: (42, 1)}
 
-
-def _build_pdf(objs, root) -> bytes:
-    """Assemble a minimal PDF from a list of object bodies (1-indexed)."""
-    out = io.BytesIO()
-    out.write(b"%PDF-1.7\n")
-    offsets = []
-    for i, obj in enumerate(objs, start=1):
-        offsets.append(out.tell())
-        out.write(b"%d 0 obj\n%s\nendobj\n" % (i, obj))
-    xref = out.tell()
-    out.write(b"xref\n0 %d\n" % (len(objs) + 1))
-    out.write(b"0000000000 65535 f \n")
-    for off in offsets:
-        out.write(b"%010d 00000 n \n" % off)
-    out.write(
-        b"trailer\n<< /Size %d /Root %d 0 R >>\nstartxref\n%d\n%%%%EOF\n"
-        % (len(objs) + 1, root, xref)
-    )
-    return out.getvalue()
-
-
 def test_flatten_rejects_typeless_non_page_kid_strict():
-    """A /Kids entry resolving to a typeless non-page dictionary (e.g. a
+    """A /Kids entry resolving to a typeless non-page dictionary (here a
     linearization parameter dictionary) must not be counted as a page in strict
     mode (#3949).
     """
-    content = b"BT /F1 12 Tf 72 720 Td (Hello) Tj ET"
-    data = _build_pdf(
-        [
-            # 1: linearization parameter dictionary: no /Type, no /Kids
-            b"<< /Linearized 1 /L 1234 /H [ 0 0 ] /O 3 /E 1234 /N 1 /T 1234 >>",
-            b"<< /Type /Catalog /Pages 3 0 R >>",
-            # 3: page tree root -- one real page, but the second kid resolves to
-            #    the linearization dictionary
-            b"<< /Type /Pages /Kids [4 0 R 1 0 R] /Count 1 >>",
-            (
-                b"<< /Type /Page /Parent 3 0 R /MediaBox [0 0 612 792]"
-                b" /Resources << /Font << /F1 6 0 R >> >> /Contents 5 0 R >>"
-            ),
-            b"<< /Length %d >>\nstream\n%s\nendstream" % (len(content), content),
-            b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        ],
-        root=2,
+    writer = PdfWriter()
+    writer.add_blank_page(612, 792)
+    linearization = writer._add_object(
+        DictionaryObject({
+            NameObject("/Linearized"): NumberObject(1),
+            NameObject("/N"): NumberObject(1),
+        })
     )
-    with pytest.raises(PdfReadError) as exc:
-        len(PdfReader(io.BytesIO(data), strict=True).pages)
-    assert "Non-page object reached through /Kids" in exc.value.args[0]
+    writer._pages.get_object()[NameObject("/Kids")].append(linearization)
+    output = BytesIO()
+    writer.write(output)
+
+    with pytest.raises(PdfReadError, match=r"^Non-page object reached through /Kids: "):
+        list(PdfReader(output, strict=True).pages)
 
 
 def test_flatten_keeps_typeless_real_page_strict():
     """A real page that merely omits the spec-required /Type but carries a
     structural page key must still be counted, even in strict mode (#3949).
     """
-    content = b"BT /F1 12 Tf 72 720 Td (Hi) Tj ET"
-    data = _build_pdf(
-        [
-            b"<< /Type /Catalog /Pages 2 0 R >>",
-            b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            # 3: no /Type key, but has /MediaBox + /Contents
-            (
-                b"<< /Parent 2 0 R /MediaBox [0 0 612 792]"
-                b" /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
-            ),
-            b"<< /Length %d >>\nstream\n%s\nendstream" % (len(content), content),
-            b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        ],
-        root=1,
-    )
-    reader = PdfReader(io.BytesIO(data), strict=True)
+    writer = PdfWriter()
+    page = writer.add_blank_page(612, 792)
+    del page[NameObject("/Type")]
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, strict=True)
     assert len(reader.pages) == 1
-    assert reader.pages[0].extract_text() == "Hi"
+    assert reader.pages[0].mediabox.width == 612
