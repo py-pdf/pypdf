@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786474633130,
+  "lastUpdate": 1786474643679,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -104285,6 +104285,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004196390388247448",
             "extra": "mean: 666.2284170000476 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c6ea45876ba9b68fc97522a081c0b973e8fab45a",
+          "message": "DEV: Update flit-core to version 4.0.2 (#3958)",
+          "timestamp": "2026-08-11T20:54:13+02:00",
+          "tree_id": "3d8e92433af86281cdab6b88babe30f40d8f15a2",
+          "url": "https://github.com/py-pdf/pypdf/commit/c6ea45876ba9b68fc97522a081c0b973e8fab45a"
+        },
+        "date": 1786474635554,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.905664107046986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009491488537235446",
+            "extra": "mean: 344.1554024000027 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.242969791697053,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017043615493568726",
+            "extra": "mean: 51.967030600000186 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26354137855439225,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04942128150376547",
+            "extra": "mean: 3.7944705513999963 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.211997687900464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007467538268547594",
+            "extra": "mean: 54.90885827776992 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07091243307902906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043735234860997035",
+            "extra": "mean: 14.101899435399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4959043646367638,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004129068634571068",
+            "extra": "mean: 668.4919328000092 msec\nrounds: 5"
           }
         ]
       }
