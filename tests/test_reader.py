@@ -2555,6 +2555,7 @@ def test_load_recovery_cache():
     with mock.patch.object(reader, "_find_pdf_objects", return_value=iter(pdf_objects)):
         assert reader._load_recovery_cache(b"") == {1: (10, 0), 2: (30, 0), 3: (42, 1)}
 
+
 def test_flatten_rejects_typeless_non_page_kid_strict():
     """A /Kids entry resolving to a typeless non-page dictionary (here a
     linearization parameter dictionary) must not be counted as a page in strict
