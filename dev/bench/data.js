@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786476119743,
+  "lastUpdate": 1786527773641,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -104417,6 +104417,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002668460300033515",
             "extra": "mean: 661.5621051999881 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "11d92f2e34d101b73eccd7350e4eaabc10ecb6d7",
+          "message": "BUG: Apply character spacing (Tc) per glyph in layout-mode extraction (#3951)\n\nIn layout-mode text extraction, TextStateParams.word_tx added the\ncharacter-spacing amount Tc exactly once per shown string, regardless of\nhow many glyphs the string contained. PDF 32000-1 (9.3.2, 9.4.4) defines\nTc as a per-glyph quantity: showing an N-glyph string advances the text\nmatrix by N * Tc, and a TJ numeric adjustment (which shows no glyph)\ncontributes no Tc at all.\n\nThe once-per-call term left every multi-glyph TJ string element short by\n(N - 1) * Tc, shifting everything after it in the array, and added a\nspurious +Tc for the empty TextStateParams used to advance a leading TJ\nnumeric adjustment. Multiply Tc by len(word), consistent with the\nper-glyph width loop directly above and the existing per-space-glyph\nTw term; len(\"\") == 0 drops the spurious term for pure adjustments.\n\nCloses #3948.",
+          "timestamp": "2026-08-12T11:40:22+02:00",
+          "tree_id": "f6bf7cdbdf144fcbb6c76bdf95f45d81f0355f32",
+          "url": "https://github.com/py-pdf/pypdf/commit/11d92f2e34d101b73eccd7350e4eaabc10ecb6d7"
+        },
+        "date": 1786527766163,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.8901092286887473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010053528393913738",
+            "extra": "mean: 257.06219059999853 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.97601729155556,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008014208210455207",
+            "extra": "mean: 41.70834496153803 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.35654511519116877,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01727053987750958",
+            "extra": "mean: 2.8046941533999985 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.82597225032828,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007253661239875148",
+            "extra": "mean: 45.8169738571421 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09326650628684592,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07360793427830264",
+            "extra": "mean: 10.7219626832 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.126179171101438,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00565492193571155",
+            "extra": "mean: 470.3272487999982 msec\nrounds: 5"
           }
         ]
       }
