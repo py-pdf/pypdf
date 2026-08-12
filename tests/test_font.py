@@ -13,13 +13,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import _parse_to_unicode
 from pypdf._font import Font, FontDescriptor
 from pypdf.errors import LimitReachedError, PdfReadError
-from pypdf.generic import (
-    ArrayObject,
-    DictionaryObject,
-    EncodedStreamObject,
-    NameObject,
-    NumberObject,
-)
+from pypdf.generic import ArrayObject, DictionaryObject, EncodedStreamObject, NameObject, NumberObject, RectangleObject
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 
 from . import RESOURCE_ROOT
@@ -321,7 +315,7 @@ def test_simple_font_reverse_cmap_from_character_map():
     writer.pages[0]["/Resources"][NameObject("/Font")] = DictionaryObject()
     font._add_to_writer(writer, writer.pages[0]["/Resources"]["/Font"], NameObject(f"/{font.name}"))
     appearance_stream = TextStreamAppearance(
-        layout=BaseStreamConfig(rectangle=(0.0, 0.0, 512, 692)),
+        layout=BaseStreamConfig(rectangle=RectangleObject((0.0, 0.0, 512, 692))),
         text=extracted_text,
         font=font,
         font_resource=writer.pages[0]["/Resources"]["/Font"][f"/{font.name}"],

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
 from io import BytesIO
 from operator import attrgetter
@@ -11,12 +11,15 @@ from typing import TYPE_CHECKING, Any, NamedTuple, cast
 from .._codecs import encoding_dict_from_named_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
 from .._font import Font
+from .._page import Transformation
 from .._utils import is_char_rtl, logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes, PageAttributes
 from ..errors import PdfReadError
 from ..generic import (
+    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    FloatObject,
     IndirectObject,
     NameObject,
     NumberObject,
@@ -46,13 +49,35 @@ TEXT_SPACE_TO_GLYPH_SPACE_FACTOR = 1000
 @dataclass
 class BaseStreamConfig:
     """A container representing the basic layout of an appearance stream."""
-    rectangle: RectangleObject | tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
+    rectangle: RectangleObject = field(default_factory=lambda: RectangleObject((0.0, 0.0, 0.0, 0.0)))
     border_width: int = 1  # The width of the border in points
     border_style: str = BorderStyles.SOLID
+    rotation: int = 0
 
 
 class BaseStreamAppearance(DecodedStreamObject):
     """A class representing the very base of an appearance stream, that is, a rectangle and a border."""
+
+    def _add_matrix(self, rotation: int) -> None:
+        # We need to rotate our rectangle while keeping its origin to (0, 0).
+        # Rotation goes counterclockwise. We want to know the furthest points to which we rotated left and down.
+        # These will serve as our X and Y offsets to translate the entire object origin back to (0, 0).
+        # If a corner rotates into negative space, that is our offset. If none does, the minimum is 0.0.
+        matrix = Transformation().rotate(rotation)
+        bottom_right_corner = (self._layout.rectangle.width, 0.0)
+        top_left_corner = (0.0, self._layout.rectangle.height)
+        top_right_corner = (self._layout.rectangle.width, self._layout.rectangle.height)
+        rotated_bottom_right_corner = matrix.apply_on(bottom_right_corner)
+        rotated_top_left_corner = matrix.apply_on(top_left_corner)
+        rotated_top_right_corner = matrix.apply_on(top_right_corner)
+        translation_x_offset = -min(
+            0.0, rotated_bottom_right_corner[0], rotated_top_left_corner[0], rotated_top_right_corner[0]
+        )
+        translation_y_offset = -min(
+            0.0, rotated_bottom_right_corner[1], rotated_top_left_corner[1], rotated_top_right_corner[1]
+        )
+        matrix = matrix.translate(translation_x_offset, translation_y_offset)
+        self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
 
     def __init__(self, layout: BaseStreamConfig | None) -> None:
         """
@@ -65,7 +90,12 @@ class BaseStreamAppearance(DecodedStreamObject):
         self._layout = layout or BaseStreamConfig()
         self[NameObject("/Type")] = NameObject("/XObject")
         self[NameObject("/Subtype")] = NameObject("/Form")
-        self[NameObject("/BBox")] = RectangleObject(self._layout.rectangle)
+        self[NameObject("/BBox")] = self._layout.rectangle
+
+        # Define the rotation matrix
+        rotation = self._layout.rotation % 360
+        if rotation:
+            self._add_matrix(rotation)
 
 
 class TextAlignment(IntEnum):
@@ -223,8 +253,6 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         """
         rectangle = self._layout.rectangle
-        if isinstance(rectangle, tuple):
-            rectangle = RectangleObject(rectangle)
         leading_factor = (
             (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
         )
@@ -638,7 +666,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         """
         # Calculate rectangle dimensions
         _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
-        rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
+        # Normalize the rectangle, apply page rotation if applicable
+        if page.get_inherited("/Rotate") in {90, 270}:
+            rectangle = RectangleObject((0, 0, abs(_rectangle[3] - _rectangle[1]), abs(_rectangle[2] - _rectangle[0])))
+        else:
+            rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
 
         # Get default appearance dictionary from annotation
         default_appearance = annotation.get_inherited(
@@ -721,8 +753,19 @@ class TextStreamAppearance(BaseStreamAppearance):
             border_width = cast(DictionaryObject, field["/BS"]).get("/W", border_width)
             border_style = cast(DictionaryObject, field["/BS"]).get("/S", border_style)
 
+        rotation = 0
+        appearance_characteristics = field.get_inherited("/MK", None)
+        if isinstance(appearance_characteristics, DictionaryObject):
+            rotation = int(appearance_characteristics.get("/R", 0))
+
         # Create the TextStreamAppearance instance
-        layout = BaseStreamConfig(rectangle=rectangle, border_width=border_width, border_style=border_style)
+        layout = BaseStreamConfig(
+            rectangle=rectangle,
+            border_width=border_width,
+            border_style=border_style,
+            rotation=rotation
+        )
+
         new_appearance_stream = cls(
             layout,
             text,
