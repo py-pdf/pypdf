@@ -1,13 +1,16 @@
 """Test font-related functionality."""
 import os
+import re
 import subprocess
 import sys
+import unicodedata
 from io import BytesIO
 
 import pytest
 from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader, PdfWriter
+from pypdf._cmap import _parse_to_unicode
 from pypdf._font import Font, FontDescriptor
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
@@ -17,6 +20,7 @@ from pypdf.generic import (
     NameObject,
     NumberObject,
 )
+from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 
 from . import RESOURCE_ROOT
 
@@ -157,15 +161,24 @@ def test_font_from_font_file():
         if font_resource == "/F6":
             crippled_font_data = BytesIO()
             with TTFont(BytesIO(font_data)) as tt_font_object:
+                # Test zero units per em
+                tt_font_object["head"].unitsPerEm = 0
+                tt_font_object.save(crippled_font_data)
+                with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
+                    Font.from_truetype_font_file(crippled_font_data)
+                tt_font_object["head"].unitsPerEm = 2048
+
+                # Test various missing tables
                 del tt_font_object["name"]
                 del tt_font_object["OS/2"]
                 del tt_font_object["post"]
+                crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
                 font = Font.from_truetype_font_file(crippled_font_data)
-                crippled_font_data.seek(0)
 
                 # Test raising AttributeError in _get_typographic_maps due to missing cmap table
                 del tt_font_object["cmap"]
+                crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
                 crippled_font_data_value = crippled_font_data.getvalue()
                 font.font_descriptor.font_file.set_data(crippled_font_data_value)
@@ -187,19 +200,6 @@ def test_font_as_font_resource():
     font_data = font_resources["/F7"]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
     font = Font.from_truetype_font_file(BytesIO(font_data))
     font._add_to_writer(writer, font_resources, NameObject("/" + font.name))
-
-
-def test_font_from_font_file_zero_units_per_em():
-    reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
-    font_resource = reader.pages[0]["/Resources"]["/Font"]["/F1"]
-    font_data = font_resource["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
-    crippled_font_data = BytesIO()
-    with TTFont(BytesIO(font_data)) as tt_font_object:
-        tt_font_object["head"].unitsPerEm = 0
-        tt_font_object.save(crippled_font_data)
-    crippled_font_data.seek(0)
-    with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
-        Font.from_truetype_font_file(crippled_font_data)
 
 
 def test_font_from_font_file_no_fonttools(tmp_path):
@@ -308,3 +308,56 @@ def test_font__collect_cid_character_widths__limits():
     ):
         Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
     assert current_widths == {}
+
+
+def test_simple_font_reverse_cmap_from_character_map():
+    pdf_path = RESOURCE_ROOT / "side-by-side-subfig.pdf"
+    reader = PdfReader(pdf_path)
+    extracted_text = reader.pages[0].extract_text()
+    font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F33"])
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    writer.pages[0]["/Resources"][NameObject("/Font")] = DictionaryObject()
+    font._add_to_writer(writer, writer.pages[0]["/Resources"]["/Font"], NameObject(f"/{font.name}"))
+    appearance_stream = TextStreamAppearance(
+        layout=BaseStreamConfig(rectangle=(0.0, 0.0, 512, 692)),
+        text=extracted_text,
+        font=font,
+        font_resource=writer.pages[0]["/Resources"]["/Font"][f"/{font.name}"],
+        is_multiline=True
+    )
+    writer._add_apstream_object(
+        page,
+        appearance_stream,
+        "LoremIpsum",
+        x_offset=100,
+        y_offset=692
+    )
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    reader2 = PdfReader(stream)
+    assert extracted_text == reader2.pages[0].extract_text()
+
+
+def test__create_widths_list_and_unicode_stream():
+    font = Font.from_core_font_name("Helvetica")
+    # Make sure that we have some encoding difference so that we will include a
+    # ToUnicode CMap in a font resource.
+    font.encoding[255] = font.encoding[0]
+    # Assert that the ToUnicode CMap can be parsed and reflects the original encoding.
+    map_dict, _ = _parse_to_unicode(font.as_font_resource())
+    assert all(
+        map_dict[chr(chr_code)] == unicodedata.normalize("NFKC", unipoint)
+        for chr_code, unipoint in font.encoding.items()
+    )
+    # Test that we observe CMAP_MAX_ENTRIES_PER_GROUP; we're using a core font which
+    # has 256 characters. Hence, we should have two groups of 100 bfchar lines
+    # and one group with the remaining 56 bfchar lines.
+    _widths_list, to_unicode_stream = font._create_widths_list_and_unicode_stream()
+    assert all(
+        val in ("56", "100") for val in re.findall(r"([0-9]*) beginbfchar", to_unicode_stream.get_data().decode())
+    )

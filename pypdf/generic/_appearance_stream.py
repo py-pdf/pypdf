@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import re
 from dataclasses import dataclass
 from enum import IntEnum
@@ -7,7 +8,7 @@ from io import BytesIO
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
-from .._codecs import fill_from_encoding
+from .._codecs import encoding_dict_from_named_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
 from .._font import Font
 from .._utils import is_char_rtl, logger_warning
@@ -453,21 +454,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         if not font or not font_resource:
             font_name = "/Helv"
-            core_font_metrics = CORE_FONT_METRICS["Helvetica"]
-            win_ansi_encoding_list = fill_from_encoding("cp1252")  # WinAnsiEncoding
-            font = Font(
-                name="Helvetica",
-                character_map={},
-                encoding=dict(zip(range(256), win_ansi_encoding_list)),
-                sub_type="Type1",
-                font_descriptor=core_font_metrics.font_descriptor,
-                character_widths={
-                    chr(code): core_font_metrics.character_widths[value] for code, value in enumerate(
-                        win_ansi_encoding_list
-                    ) if value in core_font_metrics.character_widths
-                },
-            )
-            font.character_widths["default"] = core_font_metrics.character_widths["default"]
+            font = Font.from_core_font_name()
             font_resource = font.as_font_resource()
 
         ap_stream_data = self._generate_appearance_stream_data(
@@ -524,22 +511,15 @@ class TextStreamAppearance(BaseStreamAppearance):
                     font_name=font_name,
                 )
                 font_name = "/Helvetica"
-            core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
-            font = Font(
-                name=font_name.removeprefix("/"),
-                character_map={},
-                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
-                sub_type="Type1",
-                font_descriptor=core_font_metrics.font_descriptor,
-                character_widths=core_font_metrics.character_widths
-            )
+            font = Font.from_core_font_name(font_name)
 
         # If we have found a font resource, it still might not be able to encode the text value we received.
         encodable = font.can_encode(text)
 
         if not encodable:
             # If we have a font file, we can try to produce a new font resource with an encoding
-            # that does include the necessary characters.
+            # that does include the necessary characters. We only try this for a TrueType font, meaning
+            # that, in PDF terms, it is a simple, 8-bit encoded font.
             if font.font_descriptor.font_file and font.sub_type == "TrueType":
                 try:
                     font = font.from_truetype_font_file(BytesIO(font.font_descriptor.font_file.get_data()))
@@ -547,6 +527,31 @@ class TextStreamAppearance(BaseStreamAppearance):
                     encodable = font.can_encode(text)
                 except (ImportError, PdfReadError) as e:
                     logger_warning("Unable to use embedded font for encoding: %(e)s", source=__name__, e=e)
+
+            # If it's one of the unembedded 14 Adobe Core Fonts, we can test other supported encodings
+            elif font.sub_type == "Type1" and font.name in CORE_FONT_METRICS:
+                core_font_metrics = CORE_FONT_METRICS[font.name]
+                test_encodings = {
+                    "cp1250",     # Central / Eastern European
+                    "cp1252",     # Western European
+                    "cp1254",     # Turkish
+                    "cp1257",     # Baltic Rim
+                    "iso8859_15"  # Western European ISO Alternate
+                }
+                for encoding in test_encodings:
+                    test_font = copy.copy(font)
+                    test_font.encoding = encoding_dict_from_named_encoding(encoding)
+                    encodable = test_font.can_encode(text)
+                    if encodable:
+                        font = test_font
+                        font.character_widths.clear()
+                        for code, character in test_font.encoding.items():
+                            # Look up the width using the glyph name from the encoding
+                            if character in core_font_metrics.character_widths:
+                                font.character_widths[chr(code)] = core_font_metrics.character_widths[character]
+                        font.character_widths["default"] = core_font_metrics.character_widths["default"]
+                        font_name = "/PYPDF1" + encoding
+                        break
 
             if not encodable:
                 logger_warning(

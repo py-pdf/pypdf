@@ -64,14 +64,21 @@ def _parse_encoding(
     ft: DictionaryObject
 ) -> Union[str, dict[int, str]]:
     encoding: Union[str, list[str], dict[int, str]] = []
+    # If ft["/Encoding"] exists, then use that for encoding. Otherwise, use StandardEncoding as a basis,
+    # and add what the embedded font file says, if present. See Table 114, PDF Reference 1.7 / 2.0
     if "/Encoding" not in ft:
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
-            encoding = dict(
+            # This will match Symbol and ZapfDingBats
+            return dict(
                 zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
             )
-        else:
-            encoding = "charmap"
-        return encoding
+
+        # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
+        # to overwrite this, which we do for Type1 fonts in _type1_alternative.
+        return dict(
+            zip(range(256), charset_encoding["/StandardEncoding"])
+        )
+
     enc: Union[str, DictionaryObject, NullObject] = cast(
         Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
     )

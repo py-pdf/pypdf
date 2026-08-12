@@ -358,7 +358,10 @@ def _type1_font(font_file_data: bytes) -> DictionaryObject:
 def test_get_encoding__type1_font_file_without_encoding():
     # Clear part of the embedded Type1 program has no /Encoding section.
     ft = _type1_font(b"%!PS-AdobeFont\n/FontName /Foo def\neexec\nbinary")
-    assert get_encoding(ft) == ("charmap", {})
+    assert get_encoding(ft) == (
+        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        {}
+    )
 
 
 def test_get_encoding__type1_font_file_truncated_dup_line():
