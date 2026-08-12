@@ -1267,21 +1267,21 @@ class PdfDocCommon(ABC):
                         self._flatten(
                             list_only,
                             obj,
-                            inherit,
+                            inherit.copy(),
                             visited=visited,
                             **additional_arguments,
                         )
                     finally:
                         visited.remove(obj_id)
         elif t == "/Page":
-            for attr_in, value in inherit.items():
-                # if the page has its own value, it does not inherit the
-                # parent's value
-                if attr_in not in pages:
-                    pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
             if not list_only:
                 page_obj.update(pages)
+                for attr_in, value in inherit.items():
+                    # if the page has its own value, it does not inherit the
+                    # parent's value
+                    if attr_in not in page_obj:
+                        page_obj[attr_in] = value
 
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj)  # type: ignore[union-attr]

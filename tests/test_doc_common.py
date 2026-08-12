@@ -21,6 +21,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    RectangleObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
@@ -554,6 +555,46 @@ def test_flatten__repeated_page_reference():
     pdf.seek(0)
 
     assert len(PdfReader(pdf).pages) == 2
+
+
+def test_flatten__repeated_page_reference_with_different_inheritance():
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    pages = writer.root_object["/Pages"].get_object()
+    page = pages["/Kids"][0]
+    del page.get_object()[NameObject("/MediaBox")]
+
+    first_pages = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([page]),
+                NameObject("/Count"): NumberObject(1),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 100, 100]),
+            }
+        )
+    )
+    second_pages = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([page]),
+                NameObject("/Count"): NumberObject(1),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 200, 200]),
+            }
+        )
+    )
+    pages[NameObject("/Kids")] = ArrayObject([first_pages, second_pages])
+    pages[NameObject("/Count")] = NumberObject(2)
+    pdf = BytesIO()
+    writer.write(pdf)
+    pdf.seek(0)
+
+    reader = PdfReader(pdf)
+
+    assert len(reader.pages) == 2
+    assert reader.pages[0]["/MediaBox"] == RectangleObject([0, 0, 100, 100])
+    assert reader.pages[1]["/MediaBox"] == RectangleObject([0, 0, 200, 200])
 
 
 def test_flatten__pages_without_kids():
