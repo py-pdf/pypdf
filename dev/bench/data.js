@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786529203899,
+  "lastUpdate": 1786539716080,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -122503,6 +122503,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03053285354432149",
             "extra": "mean: 858.527248200005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a2a05a0def247c49fc9b2f5f267f456d283ee6a6",
+          "message": "BUG: Reject typeless non-page /Kids entries in strict mode (#3955)\n\nPdfReader.pages is built by _flatten, which classifies each node reached\nthrough the page tree's /Kids arrays. A dictionary with neither /Type nor\n/Kids was unconditionally treated as a page, so a keys-only object such as\na linearization parameter dictionary (ISO 32000-1 Annex F: no /Type, no\n/Kids) reachable through /Kids in a damaged file was yielded as a phantom\npage: len(reader.pages) inflated, no /Contents or /MediaBox, and\n.mediabox raising an opaque TypeError.\n\nKeep the existing leniency for real pages that merely omit the\nspec-required /Type (they virtually always carry /Contents, /MediaBox or\n/Parent), but in strict mode reject a typeless dictionary that shows no\nstructural page key instead of counting it. Non-strict behaviour is\nunchanged.\n\nCloses #3949.",
+          "timestamp": "2026-08-12T14:58:48+02:00",
+          "tree_id": "f70128c78b5510914a491e78802582b7adf87364",
+          "url": "https://github.com/py-pdf/pypdf/commit/a2a05a0def247c49fc9b2f5f267f456d283ee6a6"
+        },
+        "date": 1786539707316,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.270829158298753,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01855528280562589",
+            "extra": "mean: 75.35324191666366 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.916984282008546,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011024778087017116",
+            "extra": "mean: 55.812964071423366 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9934938843453267,
+            "unit": "iter/sec",
+            "range": "stddev: 0.056394957122187575",
+            "extra": "mean: 1.006548722399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.45854769353923175,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10438905776132998",
+            "extra": "mean: 2.1807982333999973 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.35420273412307957,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035052435921269234",
+            "extra": "mean: 2.8232418998000073 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.144978614716883,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03521410001001861",
+            "extra": "mean: 873.3787575999997 msec\nrounds: 5"
           }
         ]
       }
