@@ -19,6 +19,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
+from pypdf._font import Font
 from pypdf.annotations import Link
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -897,6 +898,74 @@ def test_link_annotation(pdf_file_path):
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
+
+
+def test_append_preserves_internal_link_annotation():
+    """
+    `append()`/`merge()` must keep internal `Link` annotations whose
+    destination references the target page by index (as produced by
+    `Link(target_page_index=...)`) and remap that index to the cloned page.
+
+    Tests #3953
+    """
+    source = PdfWriter()
+    for _ in range(3):
+        source.add_blank_page(width=595, height=842)
+    source.add_annotation(
+        page_number=1,
+        annotation=Link(
+            rect=(57, 700, 500, 720),
+            target_page_index=2,
+            fit=Fit(fit_type="/Fit"),
+        ),
+    )
+    source_buffer = BytesIO()
+    source.write(source_buffer)
+    source_buffer.seek(0)
+    reader = PdfReader(source_buffer)
+
+    # Two pre-existing pages so the appended pages (and the destination page
+    # index) are shifted, exercising the remapping.
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    writer.add_blank_page(width=100, height=100)
+    writer.append(reader)
+
+    result_buffer = BytesIO()
+    writer.write(result_buffer)
+    result_buffer.seek(0)
+    result = PdfReader(result_buffer)
+
+    link_page = result.pages[3]
+    assert "/Annots" in link_page
+    annotation = link_page["/Annots"][0].get_object()
+    assert annotation["/Subtype"] == "/Link"
+    destination = annotation["/Dest"]
+    # The bare page index must have been resolved to an indirect page reference
+    # pointing at the correctly offset cloned page (index 4).
+    target = destination[0].get_object()
+    assert result.pages[4].indirect_reference.idnum == destination[0].idnum
+    assert target["/Type"] == "/Page"
+
+
+def test_get_cloned_page_out_of_range_index_is_dropped():
+    """
+    A destination index that points past the end of the source document
+    resolves to `None` instead of raising `IndexError`.
+
+    Tests #3953
+    """
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source_buffer = BytesIO()
+    source.write(source_buffer)
+    source_buffer.seek(0)
+    reader = PdfReader(source_buffer)
+
+    writer = PdfWriter()
+    writer.append(reader)
+    # The source document has a single page, so index 5 is out of range.
+    assert writer._get_cloned_page(5, {}, reader) is None
 
 
 @pytest.mark.parametrize(
@@ -1801,7 +1870,7 @@ def test_update_form_fields2(caplog):
                     "MM": "04",
                     "DD": "21",
                     "YY": "24",
-                    "Initial": "RRG",
+                    "Initial": "ąčęėįšųūž. ĄČĘĖĮŠŲŪŽ.",
                     # "I DO NOT Agree": null,
                     # "Last Name": null
                 },
@@ -1840,7 +1909,7 @@ def test_update_form_fields2(caplog):
         writer = PdfWriter(clone_from=reader)
 
         writer.update_page_form_field_values(
-            None, my_files[file]["usage"]["fields"], auto_regenerate=True
+            None, my_files[file]["usage"]["fields"], auto_regenerate=True, flatten=True
         )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {
@@ -1849,7 +1918,7 @@ def test_update_form_fields2(caplog):
         "test1.MM": "04",
         "test1.DD": "21",
         "test1.YY": "24",
-        "test1.Initial": "RRG",
+        "test1.Initial": "ąčęėįšųūž. ĄČĘĖĮŠŲŪŽ.",
         "test1.I DO NOT Agree": None,
         "test1.Last Name": None,
         "test2.p2 First Name": "Joe",
@@ -1866,6 +1935,7 @@ def test_update_form_fields2(caplog):
         "test2.p3 DD": "25",
         "test2.p3 YY": "21",
     }
+    assert "/PYPDF1cp1257" in merger.pages[0]["/Resources"]["/Font"]
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
 
@@ -1896,6 +1966,7 @@ def test_update_form_fields3(caplog, tmp_path):
     assert new_font_resource in writer.pages[0]["/Annots"][0]["/DA"]
     assert new_font_resource in writer.pages[0]["/Resources"]["/Font"]
     assert new_font_resource in writer._root_object["/AcroForm"]["/DR"]["/Font"]
+    # Assert that we couldn't encode the data with this font
     writer.write(output)
     output.seek(0)
     reader = PdfReader(output)
@@ -1904,6 +1975,12 @@ def test_update_form_fields3(caplog, tmp_path):
         if expected_value != "شهرزاد":
             assert expected_value in extracted_text
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
+    # Retry with the new font right away, to increase coverage in _appearance_stream.py
+    writer.update_page_form_field_values(writer.pages[0], {"localitatea": ("شهرزاد", "/PYPDF1", 0)}, flatten=True)
+    # Cripple the font's ToUnicode cmap, to increase can_encode coverage in _font.py
+    del (writer.pages[0]["/Resources"]["/Font"]["/PYPDF1"]["/ToUnicode"])
+    font = Font.from_font_resource(writer.pages[0]["/Resources"]["/Font"]["/PYPDF1"])
+    assert not font.can_encode("Whatever text")
 
 
 @pytest.mark.enable_socket

@@ -23,10 +23,12 @@ from pypdf._text_extraction._layout_mode._text_state_manager import TextStateMan
 from pypdf._text_extraction._layout_mode._text_state_params import TextStateParams
 from pypdf.errors import PdfReadError
 from pypdf.generic import (
+    ArrayObject,
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
     NameObject,
+    NumberObject,
 )
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -187,6 +189,51 @@ def test_layout_mode_uncommon_operators():
     reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
     expected = (RESOURCE_ROOT / "toy.layout.txt").read_text(encoding="utf-8")
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
+
+
+def test_layout_mode_character_spacing_per_glyph():
+    """Tc advances the text matrix once per glyph, not once per shown string.
+
+    Regression test for #3948. Both content streams place the same glyphs at
+    the same positions per PDF 32000-1: with Courier 12pt and Tc=36 the
+    ten-glyph run advances 10 * (600/1000 * 12) + 10 * 36 = 432pt, so ``BB``
+    starts at x = 72 + 432 in both, abutting the run. Before the fix the TJ
+    form only added Tc once (advancing the run by 9 * Tc too little), so the
+    two forms disagreed.
+    """
+
+    def build(content: bytes) -> str:
+        writer = PdfWriter()
+        page = writer.add_blank_page(width=612, height=792)
+
+        font = DictionaryObject()
+        font[NameObject("/Type")] = NameObject("/Font")
+        font[NameObject("/Subtype")] = NameObject("/Type1")
+        font[NameObject("/BaseFont")] = NameObject("/Courier")
+        font[NameObject("/FirstChar")] = NumberObject(32)
+        font[NameObject("/LastChar")] = NumberObject(90)
+        font[NameObject("/Widths")] = ArrayObject([NumberObject(600)] * 59)
+        font_resources = DictionaryObject()
+        font_resources[NameObject("/F1")] = writer._add_object(font)
+        resources = DictionaryObject()
+        resources[NameObject("/Font")] = font_resources
+        page[NameObject("/Resources")] = resources
+
+        stream = DecodedStreamObject()
+        stream.set_data(content)
+        page[NameObject("/Contents")] = writer._add_object(stream)
+
+        buffer = BytesIO()
+        writer.write(buffer)
+        buffer.seek(0)
+        return PdfReader(buffer).pages[0].extract_text(extraction_mode="layout")
+
+    tj_form = build(b"BT /F1 12 Tf 36 Tc 72 720 Td [(AAAAAAAAAA) 0 (BB)] TJ ET")
+    td_form = build(b"BT /F1 12 Tf 36 Tc 72 720 Td (AAAAAAAAAA) Tj 432 0 Td (BB) Tj ET")
+
+    # The run ends exactly where BB begins, so BB abuts it in both streams.
+    assert "AAAAAAAAAABB" in tj_form.replace(" ", "")
+    assert tj_form == td_form
 
 
 @pytest.mark.enable_socket

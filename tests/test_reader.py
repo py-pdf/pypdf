@@ -2622,3 +2622,39 @@ def test_load_recovery_cache():
     ]
     with mock.patch.object(reader, "_find_pdf_objects", return_value=iter(pdf_objects)):
         assert reader._load_recovery_cache(b"") == {1: (10, 0), 2: (30, 0), 3: (42, 1)}
+
+
+def test_flatten_rejects_typeless_non_page_kid_strict():
+    """A /Kids entry resolving to a typeless non-page dictionary (here a
+    linearization parameter dictionary) must not be counted as a page in strict
+    mode (#3949).
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(612, 792)
+    linearization = writer._add_object(
+        DictionaryObject({
+            NameObject("/Linearized"): NumberObject(1),
+            NameObject("/N"): NumberObject(1),
+        })
+    )
+    writer._pages.get_object()[NameObject("/Kids")].append(linearization)
+    output = BytesIO()
+    writer.write(output)
+
+    with pytest.raises(PdfReadError, match=r"^Non-page object reached through /Kids: "):
+        list(PdfReader(output, strict=True).pages)
+
+
+def test_flatten_keeps_typeless_real_page_strict():
+    """A real page that merely omits the spec-required /Type but carries a
+    structural page key must still be counted, even in strict mode (#3949).
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(612, 792)
+    del page[NameObject("/Type")]
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, strict=True)
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox.width == 612
