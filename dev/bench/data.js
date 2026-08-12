@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786527807703,
+  "lastUpdate": 1786529191561,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -104483,6 +104483,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00565492193571155",
             "extra": "mean: 470.3272487999982 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1d92adf667418adc590d9f3c7ce7ae1a12c33eda",
+          "message": "ENH: AppearanceStream: Consider more encodings for Type1 core fonts (#3905)\n\nThe unembedded Adobe core fonts contain around 315 characters and therefore\nsupport more encodings than only cp1252 (WinAnsi). I've found that the\nfollowing encodings appear to be supported:\n    \"cp1252\",       # Western European (WinAnsi base)\n    \"cp1250\",       # Central / Eastern European\n    \"cp1254\",       # Turkish\n    \"cp1257\",       # Baltic Rim\n    \"iso8859_15\",   # Western European ISO Alternate\n\nTest:\n\nimport unicodedata\n\nfrom pypdf._codecs import fill_from_encoding\nfrom pypdf._codecs.core_font_metrics import CORE_FONT_METRICS\n\ntest_encodings = (\n    \"cp1250\", \"cp1252\", \"cp1254\", \"cp1257\", \"iso8859_15\",\n)\n\nfor encoding in test_encodings:\n    encoding_list = fill_from_encoding(encoding)\n    for font in CORE_FONT_METRICS:\n        if CORE_FONT_METRICS[font].font_descriptor.name not in {\"Symbol\", \"ZapfDingbats\"}:\n            for char in encoding_list:\n                if unicodedata.category(char).startswith(\"C\") or char.isspace():\n                    continue\n                if char not in CORE_FONT_METRICS[font].character_widths.keys():\n                    print (f\"Unmatched: {encoding}: {char} ({ascii(char)})\")\n\n* ENH: AppearanceStream: Add widths when changing Type1 font encoding\n\n* ENH: Font: Encoding differences for Type1 font resources\n\nWhen generating a font resource for one of the 14 Type1 fonts,\nadd a Differences encoding when applicable.\n\n* MAINT: Tests: Integrate zero units per em test in test_font_from_font_file\n\ntest_font_from_font_file performs a series of tests that mimic a damaged\nfont file in some way or other. One such test was the test for zero units\nper em. Just integrate it with the others.\n\n* ENH: Font: Fix the code branch that deals with simple font ToUnicode CMaps\n\n* ENH: Tests: Writer: Assert that non-WinAnsi-encoded fonts are added\n\n* MAINT: AppearanceStream: Fix character widths in fallback font\n\n* MAINT: Be more correct about font subtypes\n\nThe PDF specification of font subtypes can be somewhat confusing,\nbecause the font subtypes do not align exactly with font file types.\n\nFirst, the specification uses \"Simple Fonts\", which can consist of\nType1 or TrueType font files (or Type3 fonts where \"glyphs\" are PDF\nobjects). These fonts are 8-bit encoded. Then there are composite\nfonts (Type0), which are 16-bit encoded.\n\nWhen we initialise a font from a font file, we should set font.sub_type\nin line with the PDF font type, not with the file type. This patch\ntherefore uses Type0 for fonts that we initialise from TrueType font\nfiles, in accordance with the fact the we 16-bit encode them.\n\n* ENH: Tests: test_writer.py: Increase coverage in AppearanceStream\n\n* ROB: _cmap.py: Always fall back to StandardEncoding\n\n* MAINT: Font: Let can_encode return False for Type0 font without ToUnicode cmap\n\n* MAINT: _text_extraction: Font.encoding is never \"charmap\"\n\n* MAINT: _text_extraction: Don't set \"charmap\" as encoding for a simple font\n\n* ENH: TextExtraction: Clarify a couple of comments\n\n* ENH: _codecs: Add method that returns encoding dict from named encoding\n\n* ENH: AppearanceStream: Use encoding_dict_from_named_encoding where applicable\n\n* ENH: _cmap.py: Use encoding_dict_from_named_encoding where applicable\n\n* ENH: AppearanceStream: Add walrus operator to reduce calling chr(code)\n\n* ENH: Font: Use encoding_dict_from_named_encoding where applicable\n\n* ENH: Font: Add Font class factory method for default /Helvetice font\n\n* Revert \"ENH: _cmap.py: Use encoding_dict_from_named_encoding where applicable\"\n\nThis reverts commit 9765304e38a8a896e02c9c0bc5a1a05c2904c9dc.\n\n* ENH: Font: Remove cast from loop\n\n* ENH: tests: add test for uncovered code in _get_typographic_maps\n\nThis patch adds a test to cover the case in _get_typographic_maps for\na simple font that does have a ToUnicode CMap.\n\n* ENH: text extraction: Move fill_from_encoding to encoding_dict_from_named_encoding\n\n* ENH: Font: Create a ToUnicode CMap stream for 8-bit fonts\n\nThis patch makes sure that we create a ToUnicode CMap stream\nfor 8-bit fonts when we generate a PDF font resource.\n\n* MAINT: _cmap.py: Remove redundant .copy()\n\n* MAINT: Font: Remove obsolete comment\n\n* ENH: Font: More compact and complete ToUnicode CMap\n\nPreviously, the ToUnicode CMap that we generated contained a bug,\nin the sense that groups of mappings in a CMap can not exceed\n100 entries.\n\nFurthermore, we previously added only mappings in single bfchar\nlines, while using bfrange can result in much shorter CMaps.\n\nThis patch corrects the bug and uses bfrange for mapping entries\nwhere possible.",
+          "timestamp": "2026-08-12T12:03:42+02:00",
+          "tree_id": "e5496c8a9bb8045644d0e6a7d9ab0528a1b4bec4",
+          "url": "https://github.com/py-pdf/pypdf/commit/1d92adf667418adc590d9f3c7ce7ae1a12c33eda"
+        },
+        "date": 1786529182373,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6673442053301786,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014006270574254525",
+            "extra": "mean: 272.6768866000043 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.790541747458413,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011510915699944627",
+            "extra": "mean: 42.03351107407345 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3322721415293808,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01506969764787106",
+            "extra": "mean: 3.009581228799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 23.19442665407401,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011852510575679697",
+            "extra": "mean: 43.11380552380905 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09504318031098213,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17705645018671798",
+            "extra": "mean: 10.5215334412 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8032358070449872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011507872022199588",
+            "extra": "mean: 554.5586418000028 msec\nrounds: 5"
           }
         ]
       }
