@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786547418682,
+  "lastUpdate": 1786547464164,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -104813,6 +104813,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003808704619873514",
             "extra": "mean: 469.3453496000018 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b8f19e6883383bc215ef487bd424b436fe3b90b",
+          "message": "ENH: AppearanceStream: Allow arbitrary rotations and apply rotations for annotation appearance streams (#3917)\n\nNow that we need BaseStreamConfig.rectangle in more places, just\nhave it always be a RectangleObject. This is more accurate and it\nprevents code coverage / mypy problems where lines needed to check\nwhether rectangle is a RectangleObject are either detected as missing\nby mypy or untested by coverage.\n\n* ENH: AppearanceStream: Add rotation to BaseStreamAppearance\n\nThis patch adds rotation to BaseStreamConfig and applies it\nto BaseStreamAppearance by adding a \"/Matrix\" key when rotation\nis 90, 180 or 270 degrees.\n\n* ENH: AppearanceStream: Parse rotation for annotations\n\nWhen an annotation includes a [\"/MK\"][\"/R\"] field for rotation,\ndetect it and rotate the appearance stream accordingly.\n\n* ENH: AppearanceStream: Address page rotation for annotations\n\nWhen a page has a rotation set of 90 or 270 degrees (for instance,\nportrait to landscape), also rotate the axes of the annotation's\nappearance stream rectangle.\n\n* ENH: Factor out the rotation matrix code\n\n* ENH: test_appearance_stream: Test BaseStreamAppearance rotations",
+          "timestamp": "2026-08-12T17:07:43+02:00",
+          "tree_id": "613f5cc70332c60a91401b4afab3c679c3ad29bb",
+          "url": "https://github.com/py-pdf/pypdf/commit/5b8f19e6883383bc215ef487bd424b436fe3b90b"
+        },
+        "date": 1786547455840,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.882356049271947,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00992645471439963",
+            "extra": "mean: 346.93840139998997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.230363252109168,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018350228792573969",
+            "extra": "mean: 52.00109778947212 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2578929660607736,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025888419876750793",
+            "extra": "mean: 3.8775776450000023 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.18751015892197,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006179608691357612",
+            "extra": "mean: 54.982787157891714 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07099034729870814,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03555564580562672",
+            "extra": "mean: 14.0864221412 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.528718713530599,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005084761138071247",
+            "extra": "mean: 654.1425777999962 msec\nrounds: 5"
           }
         ]
       }
