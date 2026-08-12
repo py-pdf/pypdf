@@ -1233,6 +1233,11 @@ class PdfDocCommon(ABC):
             t = cast(str, pages[PagesAttributes.TYPE])
         # if the page tree node has no /Type, consider as a page if /Kids is also missing
         elif PagesAttributes.KIDS not in pages:
+            # Without /Type, only accept it as a page if it carries a structural page key.
+            if self.strict and not any(
+                key in pages for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)
+            ):
+                raise PdfReadError(f"Non-page object reached through /Kids: {pages!r}")
             t = "/Page"
         else:
             t = "/Pages"
