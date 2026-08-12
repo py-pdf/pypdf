@@ -428,9 +428,9 @@ class TextStreamAppearance(BaseStreamAppearance):
                 bom_text = b"\xfe\xff" + original_text.encode("utf-16-be")
                 hex_original_text = bom_text.hex().upper()
                 ap_stream += f"/Span << /ActualText <{hex_original_text}> >> BDC\n".encode()
-            if any(len(c) >= 2 for c in encoded_line):
+            if font.sub_type == "Type0":  # 16-bit font
                 ap_stream += b"<" + (b"".join(encoded_line)).hex().encode() + b"> Tj\n"
-            else:
+            else:  # Simple font, 8-bit encoded.
                 # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
                 line_as_bytes = (
                     b"".join(encoded_line)
