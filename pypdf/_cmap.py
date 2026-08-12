@@ -258,9 +258,9 @@ def _check_token_length(token: bytes, limit: int) -> None:
 
 
 def __parse_bfrange__decode(map_dict: dict[Any, Any], code: int) -> str:
-    # ``map_dict[-1]`` is the number of bytes each source code occupies. Building
-    # the bytes directly with ``int.to_bytes`` avoids the hex round-trip of
-    # ``unhexlify(b"%%0%dX" % (map_dict[-1] * 2) % code)`` (format to hex, parse
+    # `map_dict[-1]` is the number of bytes each source code occupies. Building
+    # the bytes directly with `int.to_bytes` avoids the hex round-trip of
+    # `unhexlify(b"%%0%dX" % (map_dict[-1] * 2) % code)` (format to hex, parse
     # the hex back to bytes), which is measurably cheaper for large maps.
     return code.to_bytes(map_dict[-1], "big").decode(
         "charmap" if map_dict[-1] == 1 else "utf-16-be",

@@ -391,11 +391,7 @@ def test_parse_bfchar(caplog):
 
 
 def test_parse_bfrange__multibyte_source_codes():
-    """Source codes are decoded straight from their integer value.
-
-    Guards the ``int.to_bytes`` fast path against a regression versus the
-    previous hex round-trip (see #3945).
-    """
+    """Source codes are decoded straight from their integer value."""
     # Range without list: <0041>..<0043> -> <0061>..
     map_dict = {}
     int_entry = []
@@ -420,14 +416,7 @@ def test_parse_bfrange__multibyte_source_codes():
 
 
 def test_parse_bfrange__decode_out_of_range_code():
-    """A source code that exceeds its declared byte width raises OverflowError.
-
-    ``map_dict[-1]`` records how many bytes each source code occupies, so a
-    malformed ``/ToUnicode`` map whose code does not fit that width cannot be
-    represented. The previous hex round-trip raised ``binascii.Error`` here;
-    the ``int.to_bytes`` path raises ``OverflowError`` (see #3945). Either way
-    the malformed entry is rejected rather than silently mis-decoded.
-    """
+    """A source code that exceeds its declared byte width raises OverflowError."""
     # 0x100 needs two bytes but the declared width is one.
     with pytest.raises(OverflowError):
         __parse_bfrange__decode(map_dict={-1: 1}, code=0x100)
