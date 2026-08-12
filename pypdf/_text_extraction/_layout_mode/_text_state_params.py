@@ -151,7 +151,7 @@ class TextStateParams:
 
         return (
             (self.font_size * ((width - td_offset) / 1000.0))
-            + self.Tc
+            + len(word) * self.Tc
             + word.count(self.font.space_char) * self.Tw
         ) * (self.Tz / 100.0)
 
