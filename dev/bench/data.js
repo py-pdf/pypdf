@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786546525051,
+  "lastUpdate": 1786546544952,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -122965,6 +122965,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025732794632977837",
             "extra": "mean: 899.0438885999936 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "53bfbc600bcae5e82f20293d6260019892ea887b",
+          "message": "PI: Build /ToUnicode source-code bytes directly in parse_bfrange (#3952)\n\nReplace the hex round-trip in __parse_bfrange__decode (format int to hex,\nunhexlify, decode) with int.to_bytes, which is about 25% faster on the\nper-glyph ToUnicode decode step and lets the format-string construction be\ndropped entirely. Output is byte-identical for all valid source codes.\n\nCloses #3945.",
+          "timestamp": "2026-08-12T16:52:51+02:00",
+          "tree_id": "4eb62f301d90d16c39b1b87702e95d9ebeb1ce35",
+          "url": "https://github.com/py-pdf/pypdf/commit/53bfbc600bcae5e82f20293d6260019892ea887b"
+        },
+        "date": 1786546537126,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.544131811524283,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018743159260858247",
+            "extra": "mean: 73.8327132307684 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.441047992554342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0078082392210636125",
+            "extra": "mean: 51.43755626666765 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0473830625990705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028273458472790877",
+            "extra": "mean: 954.7605223999994 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5585032985455592,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01612060366249674",
+            "extra": "mean: 1.7904997205999962 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.37077860868696333,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013535363883484797",
+            "extra": "mean: 2.6970272193999962 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1786989807828372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022471731491631775",
+            "extra": "mean: 848.3930301999976 msec\nrounds: 5"
           }
         ]
       }
