@@ -76,7 +76,9 @@ class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _id_translated: dict[int, dict[int, int]]
 
     incremental: bool
-    _reader: Any  # PdfReader
+    # Only populated in incremental mode; ``None`` otherwise. Every read of it
+    # in the writer is already guarded by ``if self.incremental``.
+    _reader: Optional[Any]  # PdfReader
 
     @abstractmethod
     def write(self, stream: Union[Path, StrByteType]) -> tuple[bool, IO[Any]]:
