@@ -10,7 +10,7 @@ import pytest
 from pypdf import PdfWriter
 from pypdf._font import Font
 from pypdf.generic import RectangleObject
-from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
+from pypdf.generic._appearance_stream import BaseStreamAppearance, BaseStreamConfig, TextStreamAppearance
 
 from . import RESOURCE_ROOT
 
@@ -216,3 +216,23 @@ assert HAS_RTL_SUPPORT is False
     )
     assert result.returncode == 0
     assert result.stdout == b""
+
+
+@pytest.mark.parametrize(
+    ("rotation", "outcome"),
+    [
+        (0, None),
+        (90, [0.0, 1, -1, 0.0, 20, 0.0]),
+        (180, [-1, 0.0, 0.0, -1, 400, 20]),
+        (270, [0.0, -1, 1, 0.0, 0.0, 400]),
+        (360, None),
+    ]
+)
+def test_base_stream_config_rotation(rotation, outcome):
+    layout = BaseStreamConfig(
+        rectangle=RectangleObject([0, 0, 400, 20]),
+        border_width=1,
+        rotation=rotation,
+    )
+    appearance = BaseStreamAppearance(layout=layout)
+    assert appearance.get("/Matrix", None) == outcome
