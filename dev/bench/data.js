@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786545079627,
+  "lastUpdate": 1786545084752,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -122833,6 +122833,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04001914722882527",
             "extra": "mean: 852.7173409999989 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0d8e9aa301d34a8fae5a1b39edbe4e50fa362dfb",
+          "message": "BUG: Preserve internal Link annotations when appending/merging (#3953) (#3954)\n\n`PdfWriter.append()`/`merge()` silently dropped internal `Link`\nannotations whose destination references the target page by index\n(the form produced by `Link(target_page_index=...)`, i.e. `/Dest`\n`[<int>, /Fit]`).\n\n`_insert_filtered_annotations()` remaps such destinations through\n`_get_cloned_page()`, but that helper only handled `NullObject`,\npage dictionaries and `IndirectObject`. A bare integer page index\nmatched none of those branches, so the local `_i` was never bound;\nthe resulting `UnboundLocalError` was swallowed by the surrounding\n`except`, `_get_cloned_page()` returned `None`, and the annotation\nwas discarded.\n\nResolve an integer destination through the reader's page list so it\nis remapped to the (correctly offset) cloned page like any other\npage reference.\n\nCloses #3953.",
+          "timestamp": "2026-08-12T16:28:06+02:00",
+          "tree_id": "03e94fcc39e4550e565eb9ec9e3b8c010c9e2a09",
+          "url": "https://github.com/py-pdf/pypdf/commit/0d8e9aa301d34a8fae5a1b39edbe4e50fa362dfb"
+        },
+        "date": 1786545075057,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.051842942702528,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029532222883948776",
+            "extra": "mean: 90.48264666666246 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.846270657368857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020181057388342468",
+            "extra": "mean: 77.84360353846208 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9416954515814023,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03548939464850363",
+            "extra": "mean: 1.0619144419999968 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4045333826404505,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15575922759717634",
+            "extra": "mean: 2.471983878000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.34480066478925336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023991761905037476",
+            "extra": "mean: 2.9002264267999975 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1122927508658305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025732794632977837",
+            "extra": "mean: 899.0438885999936 msec\nrounds: 5"
           }
         ]
       }
