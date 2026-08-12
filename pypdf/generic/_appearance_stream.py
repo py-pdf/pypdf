@@ -58,6 +58,27 @@ class BaseStreamConfig:
 class BaseStreamAppearance(DecodedStreamObject):
     """A class representing the very base of an appearance stream, that is, a rectangle and a border."""
 
+    def _add_matrix(self, rotation: int) -> None:
+        # We need to rotate our rectangle while keeping its origin to (0, 0).
+        # Rotation goes counterclockwise. We want to know the furthest points to which we rotated left and down.
+        # These will serve as our X and Y offsets to translate the entire object origin back to (0, 0).
+        # If a corner rotates into negative space, that is our offset. If none does, the minimum is 0.0.
+        matrix = Transformation().rotate(rotation)
+        bottom_right_corner = (self._layout.rectangle.width, 0.0)
+        top_left_corner = (0.0, self._layout.rectangle.height)
+        top_right_corner = (self._layout.rectangle.width, self._layout.rectangle.height)
+        rotated_bottom_right_corner = matrix.apply_on(bottom_right_corner)
+        rotated_top_left_corner = matrix.apply_on(top_left_corner)
+        rotated_top_right_corner = matrix.apply_on(top_right_corner)
+        translation_x_offset = -min(
+            0.0, rotated_bottom_right_corner[0], rotated_top_left_corner[0], rotated_top_right_corner[0]
+        )
+        translation_y_offset = -min(
+            0.0, rotated_bottom_right_corner[1], rotated_top_left_corner[1], rotated_top_right_corner[1]
+        )
+        matrix = matrix.translate(translation_x_offset, translation_y_offset)
+        self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
+
     def __init__(self, layout: BaseStreamConfig | None) -> None:
         """
         Takes the appearance stream layout as an argument.
@@ -74,25 +95,7 @@ class BaseStreamAppearance(DecodedStreamObject):
         # Define the rotation matrix
         rotation = self._layout.rotation % 360
         if rotation:
-            matrix = Transformation().rotate(rotation)
-
-            # Rotation goes counterclockwise. We want to know the furthest points to which we rotated left and down.
-            # These will serve as our X and Y offsets to translate the entire object origin back to (0, 0).
-            # If a corner rotates into negative space, that is our offset. If none does, the minimum is 0.0.
-            bottom_right_corner = (self._layout.rectangle.width, 0.0)
-            top_left_corner = (0.0, self._layout.rectangle.height)
-            top_right_corner = (self._layout.rectangle.width, self._layout.rectangle.height)
-            rotated_bottom_right_corner = matrix.apply_on(bottom_right_corner)
-            rotated_top_left_corner = matrix.apply_on(top_left_corner)
-            rotated_top_right_corner = matrix.apply_on(top_right_corner)
-            translation_x_offset = -min(
-                0.0, rotated_bottom_right_corner[0], rotated_top_left_corner[0], rotated_top_right_corner[0]
-            )
-            translation_y_offset = -min(
-                0.0, rotated_bottom_right_corner[1], rotated_top_left_corner[1], rotated_top_right_corner[1]
-            )
-            matrix = matrix.translate(translation_x_offset, translation_y_offset)
-            self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
+            self._add_matrix(rotation)
 
 
 class TextAlignment(IntEnum):
