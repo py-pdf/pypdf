@@ -901,9 +901,9 @@ def test_link_annotation(pdf_file_path):
 
 def test_append_preserves_internal_link_annotation():
     """
-    ``append()``/``merge()`` must keep internal ``Link`` annotations whose
+    `append()`/`merge()` must keep internal `Link` annotations whose
     destination references the target page by index (as produced by
-    ``Link(target_page_index=...)``) and remap that index to the cloned page.
+    `Link(target_page_index=...)`) and remap that index to the cloned page.
 
     Tests #3953
     """
@@ -950,7 +950,7 @@ def test_append_preserves_internal_link_annotation():
 def test_get_cloned_page_out_of_range_index_is_dropped():
     """
     A destination index that points past the end of the source document
-    resolves to ``None`` instead of raising ``IndexError``.
+    resolves to `None` instead of raising `IndexError`.
 
     Tests #3953
     """
