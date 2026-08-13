@@ -1739,7 +1739,7 @@ def test_update_form_fields(caplog, tmp_path):
     del writer.pages[0]["/Resources"]["/Font"]
     writer.update_page_form_field_values(
         writer.pages[0],
-        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        {"Text1": "my \\ your (Text1)", "Text2": "ligne1\nligne2\nligne3"},
         auto_regenerate=False,
     )
     writer.update_page_form_field_values(
@@ -1755,7 +1755,7 @@ def test_update_form_fields(caplog, tmp_path):
     assert flds["CheckBox1"]["/V"] == "/Yes"
     assert flds["CheckBox1"].indirect_reference.get_object()["/AS"] == "/Yes"
     assert (
-        b"(my Text1)"
+        rb"(my \\ your \(Text1\))"
         in flds["Text1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
     )
     assert flds["Text2"]["/V"] == "ligne1\nligne2\nligne3"
