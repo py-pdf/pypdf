@@ -415,7 +415,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             if selection and line in _unicode_to_glyph_id("".join(selection), reverse_cmap):
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
-                    f"1 {y_offset - (line_number * font_size * leading_factor) - 1} "
+                    f"1 {round(y_offset - (line_number * font_size * leading_factor) - 1, 3)} "
                     f"{rectangle.width - 2} {font_size + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{default_appearance}\n"
                 ).encode()
