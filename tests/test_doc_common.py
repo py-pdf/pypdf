@@ -557,7 +557,8 @@ def test_flatten__repeated_page_reference():
     assert len(PdfReader(pdf).pages) == 2
 
 
-def test_flatten__repeated_page_reference_with_different_inheritance():
+@pytest.mark.parametrize("list_only", [False, True])
+def test_flatten__repeated_page_reference_with_different_inheritance(list_only: bool):
     writer = PdfWriter()
     writer.add_blank_page(width=100, height=100)
     pages = writer.root_object["/Pages"].get_object()
@@ -591,6 +592,7 @@ def test_flatten__repeated_page_reference_with_different_inheritance():
     pdf.seek(0)
 
     reader = PdfReader(pdf)
+    reader._flatten(list_only=list_only)
 
     assert len(reader.pages) == 2
     assert reader.pages[0]["/MediaBox"] == RectangleObject([0, 0, 100, 100])
