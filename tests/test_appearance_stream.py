@@ -40,13 +40,13 @@ def test_comb():
     )
     assert (
         b"q\n/Tx BMC \nq\n2 0 191.285 18.455 re\nW\nBT\n/Helv 10.0 Tf 0 g\n"
-        b"7.084250000000001 5.637499999999999 Td\n(0) Tj\n"
-        b"19.7285 0.0 Td\n(1) Tj\n19.728500000000004 0.0 Td\n(2) Tj\n"
-        b"19.728499999999997 0.0 Td\n(3) Tj\n"
-        b"19.728499999999997 0.0 Td\n(4) Tj\n"
-        b"19.728499999999997 0.0 Td\n(5) Tj\n"
-        b"19.72850000000001 0.0 Td\n(6) Tj\n"
-        b"19.728499999999997 0.0 Td\n(7) Tj\nET\nQ\nEMC\nQ\n"
+        b"7.084 5.637 Td\n(0) Tj\n"
+        b"19.729 0.0 Td\n(1) Tj\n19.729 0.0 Td\n(2) Tj\n"
+        b"19.728 0.0 Td\n(3) Tj\n"
+        b"19.728 0.0 Td\n(4) Tj\n"
+        b"19.728 0.0 Td\n(5) Tj\n"
+        b"19.729 0.0 Td\n(6) Tj\n"
+        b"19.728 0.0 Td\n(7) Tj\nET\nQ\nEMC\nQ\n"
     ) in appearance_stream.get_data()
 
     layout.rectangle = RectangleObject((0.0, 0.0, 20.852, 20.84))
