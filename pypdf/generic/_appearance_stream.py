@@ -1,21 +1,25 @@
 from __future__ import annotations
 
+import copy
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
 from io import BytesIO
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
-from .._codecs import fill_from_encoding
+from .._codecs import encoding_dict_from_named_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
 from .._font import Font
+from .._page import Transformation
 from .._utils import is_char_rtl, logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes, PageAttributes
 from ..errors import PdfReadError
 from ..generic import (
+    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    FloatObject,
     IndirectObject,
     NameObject,
     NumberObject,
@@ -45,13 +49,35 @@ TEXT_SPACE_TO_GLYPH_SPACE_FACTOR = 1000
 @dataclass
 class BaseStreamConfig:
     """A container representing the basic layout of an appearance stream."""
-    rectangle: RectangleObject | tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
+    rectangle: RectangleObject = field(default_factory=lambda: RectangleObject((0.0, 0.0, 0.0, 0.0)))
     border_width: int = 1  # The width of the border in points
     border_style: str = BorderStyles.SOLID
+    rotation: int = 0
 
 
 class BaseStreamAppearance(DecodedStreamObject):
     """A class representing the very base of an appearance stream, that is, a rectangle and a border."""
+
+    def _add_matrix(self, rotation: int) -> None:
+        # We need to rotate our rectangle while keeping its origin to (0, 0).
+        # Rotation goes counterclockwise. We want to know the furthest points to which we rotated left and down.
+        # These will serve as our X and Y offsets to translate the entire object origin back to (0, 0).
+        # If a corner rotates into negative space, that is our offset. If none does, the minimum is 0.0.
+        matrix = Transformation().rotate(rotation)
+        bottom_right_corner = (self._layout.rectangle.width, 0.0)
+        top_left_corner = (0.0, self._layout.rectangle.height)
+        top_right_corner = (self._layout.rectangle.width, self._layout.rectangle.height)
+        rotated_bottom_right_corner = matrix.apply_on(bottom_right_corner)
+        rotated_top_left_corner = matrix.apply_on(top_left_corner)
+        rotated_top_right_corner = matrix.apply_on(top_right_corner)
+        translation_x_offset = -min(
+            0.0, rotated_bottom_right_corner[0], rotated_top_left_corner[0], rotated_top_right_corner[0]
+        )
+        translation_y_offset = -min(
+            0.0, rotated_bottom_right_corner[1], rotated_top_left_corner[1], rotated_top_right_corner[1]
+        )
+        matrix = matrix.translate(translation_x_offset, translation_y_offset)
+        self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
 
     def __init__(self, layout: BaseStreamConfig | None) -> None:
         """
@@ -64,7 +90,12 @@ class BaseStreamAppearance(DecodedStreamObject):
         self._layout = layout or BaseStreamConfig()
         self[NameObject("/Type")] = NameObject("/XObject")
         self[NameObject("/Subtype")] = NameObject("/Form")
-        self[NameObject("/BBox")] = RectangleObject(self._layout.rectangle)
+        self[NameObject("/BBox")] = self._layout.rectangle
+
+        # Define the rotation matrix
+        rotation = self._layout.rotation % 360
+        if rotation:
+            self._add_matrix(rotation)
 
 
 class TextAlignment(IntEnum):
@@ -222,8 +253,6 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         """
         rectangle = self._layout.rectangle
-        if isinstance(rectangle, tuple):
-            rectangle = RectangleObject(rectangle)
         leading_factor = (
             (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
         )
@@ -399,10 +428,17 @@ class TextStreamAppearance(BaseStreamAppearance):
                 bom_text = b"\xfe\xff" + original_text.encode("utf-16-be")
                 hex_original_text = bom_text.hex().upper()
                 ap_stream += f"/Span << /ActualText <{hex_original_text}> >> BDC\n".encode()
-            if any(len(c) >= 2 for c in encoded_line):
+            if font.sub_type == "Type0":  # 16-bit font
                 ap_stream += b"<" + (b"".join(encoded_line)).hex().encode() + b"> Tj\n"
-            else:
-                ap_stream += b"(" + b"".join(encoded_line) + b") Tj\n"
+            else:  # Simple font, 8-bit encoded.
+                # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
+                line_as_bytes = (
+                    b"".join(encoded_line)
+                    .replace(b"\\", b"\\\\")
+                    .replace(b"(", br"\(")
+                    .replace(b")", br"\)")
+                )
+                ap_stream += b"(" + line_as_bytes + b") Tj\n"
             if is_rtl:
                 ap_stream += b"EMC\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
@@ -453,21 +489,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         if not font or not font_resource:
             font_name = "/Helv"
-            core_font_metrics = CORE_FONT_METRICS["Helvetica"]
-            win_ansi_encoding_list = fill_from_encoding("cp1252")  # WinAnsiEncoding
-            font = Font(
-                name="Helvetica",
-                character_map={},
-                encoding=dict(zip(range(256), win_ansi_encoding_list)),
-                sub_type="Type1",
-                font_descriptor=core_font_metrics.font_descriptor,
-                character_widths={
-                    chr(code): core_font_metrics.character_widths[value] for code, value in enumerate(
-                        win_ansi_encoding_list
-                    ) if value in core_font_metrics.character_widths
-                },
-            )
-            font.character_widths["default"] = core_font_metrics.character_widths["default"]
+            font = Font.from_core_font_name()
             font_resource = font.as_font_resource()
 
         ap_stream_data = self._generate_appearance_stream_data(
@@ -524,22 +546,15 @@ class TextStreamAppearance(BaseStreamAppearance):
                     font_name=font_name,
                 )
                 font_name = "/Helvetica"
-            core_font_metrics = CORE_FONT_METRICS[font_name.removeprefix("/")]
-            font = Font(
-                name=font_name.removeprefix("/"),
-                character_map={},
-                encoding=dict(zip(range(256), fill_from_encoding("cp1252"))),  # WinAnsiEncoding
-                sub_type="Type1",
-                font_descriptor=core_font_metrics.font_descriptor,
-                character_widths=core_font_metrics.character_widths
-            )
+            font = Font.from_core_font_name(font_name)
 
         # If we have found a font resource, it still might not be able to encode the text value we received.
         encodable = font.can_encode(text)
 
         if not encodable:
             # If we have a font file, we can try to produce a new font resource with an encoding
-            # that does include the necessary characters.
+            # that does include the necessary characters. We only try this for a TrueType font, meaning
+            # that, in PDF terms, it is a simple, 8-bit encoded font.
             if font.font_descriptor.font_file and font.sub_type == "TrueType":
                 try:
                     font = font.from_truetype_font_file(BytesIO(font.font_descriptor.font_file.get_data()))
@@ -547,6 +562,31 @@ class TextStreamAppearance(BaseStreamAppearance):
                     encodable = font.can_encode(text)
                 except (ImportError, PdfReadError) as e:
                     logger_warning("Unable to use embedded font for encoding: %(e)s", source=__name__, e=e)
+
+            # If it's one of the unembedded 14 Adobe Core Fonts, we can test other supported encodings
+            elif font.sub_type == "Type1" and font.name in CORE_FONT_METRICS:
+                core_font_metrics = CORE_FONT_METRICS[font.name]
+                test_encodings = {
+                    "cp1250",     # Central / Eastern European
+                    "cp1252",     # Western European
+                    "cp1254",     # Turkish
+                    "cp1257",     # Baltic Rim
+                    "iso8859_15"  # Western European ISO Alternate
+                }
+                for encoding in test_encodings:
+                    test_font = copy.copy(font)
+                    test_font.encoding = encoding_dict_from_named_encoding(encoding)
+                    encodable = test_font.can_encode(text)
+                    if encodable:
+                        font = test_font
+                        font.character_widths.clear()
+                        for code, character in test_font.encoding.items():
+                            # Look up the width using the glyph name from the encoding
+                            if character in core_font_metrics.character_widths:
+                                font.character_widths[chr(code)] = core_font_metrics.character_widths[character]
+                        font.character_widths["default"] = core_font_metrics.character_widths["default"]
+                        font_name = "/PYPDF1" + encoding
+                        break
 
             if not encodable:
                 logger_warning(
@@ -600,7 +640,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         writer: PdfWriter,
         page: PageObject,
         flatten: bool,
-        acro_form: DictionaryObject,  # _root_object[CatalogDictionary.ACRO_FORM])
+        acro_form: DictionaryObject,  # _root_object[CatalogAttributes.ACRO_FORM])
         field: DictionaryObject,
         annotation: DictionaryObject,
         user_font_name: str = "",
@@ -633,7 +673,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         """
         # Calculate rectangle dimensions
         _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
-        rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
+        # Normalize the rectangle, apply page rotation if applicable
+        if page.get_inherited("/Rotate") in {90, 270}:
+            rectangle = RectangleObject((0, 0, abs(_rectangle[3] - _rectangle[1]), abs(_rectangle[2] - _rectangle[0])))
+        else:
+            rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
 
         # Get default appearance dictionary from annotation
         default_appearance = annotation.get_inherited(
@@ -659,9 +703,6 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:  # /Tx
             text = field.get("/V", "")
             selection = []
-
-        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
-        text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
 
         # Derive font name, size and color from the default appearance. Also set
         # user-provided font name and font size in the default appearance, if given.
@@ -716,8 +757,19 @@ class TextStreamAppearance(BaseStreamAppearance):
             border_width = cast(DictionaryObject, field["/BS"]).get("/W", border_width)
             border_style = cast(DictionaryObject, field["/BS"]).get("/S", border_style)
 
+        rotation = 0
+        appearance_characteristics = field.get_inherited("/MK", None)
+        if isinstance(appearance_characteristics, DictionaryObject):
+            rotation = int(appearance_characteristics.get("/R", 0))
+
         # Create the TextStreamAppearance instance
-        layout = BaseStreamConfig(rectangle=rectangle, border_width=border_width, border_style=border_style)
+        layout = BaseStreamConfig(
+            rectangle=rectangle,
+            border_width=border_width,
+            border_style=border_style,
+            rotation=rotation
+        )
+
         new_appearance_stream = cls(
             layout,
             text,

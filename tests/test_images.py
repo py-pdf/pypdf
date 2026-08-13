@@ -349,6 +349,35 @@ def test_cmyk_no_filter():
 
 
 @pytest.mark.enable_socket
+def test_cmyk_dct_with_identity_decode_is_not_inverted():
+    """Cf #2931"""
+    url = "https://github.com/user-attachments/files/17602693/example.pdf"
+    name = "iss2931.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    image = reader.pages[0].images[0].image
+
+    # Adobe CMYK JPEGs store inverted values. This one also carries an explicit
+    # identity /Decode array, which must not cancel out that inversion.
+    #
+    # The exact samples come out of the JPEG decoder, so they are not asserted
+    # directly: they can shift by a step or two between libjpeg builds. What
+    # the fix changes is far larger than that - every channel comes back as its
+    # 255-complement when the inversion is dropped - so the assertions below
+    # pin the sample against that complement with a tolerance.
+    assert image.mode == "CMYK"
+    for xy, expected in (
+        ((0, 0), (121, 102, 114, 42)),        # light grey wall
+        ((449, 629), (153, 137, 74, 82)),     # dark suit
+    ):
+        actual = image.getpixel(xy)
+        assert all(abs(a - e) <= 8 for a, e in zip(actual, expected)), (
+            f"pixel {xy}: got {actual}, expected close to {expected}. "
+            f"Without the fix this decodes to roughly "
+            f"{tuple(255 - value for value in expected)}."
+        )
+
+
+@pytest.mark.enable_socket
 def test_separation_1byte_to_rgb_inverted():
     """Cf #2343"""
     url = "https://github.com/py-pdf/pypdf/files/13679585/test2_P038-038.pdf"

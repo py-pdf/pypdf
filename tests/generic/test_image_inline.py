@@ -6,8 +6,10 @@ import pytest
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 from pypdf.generic._image_inline import (
+    BUFFER_SIZE,
     extract_inline__ascii85_decode,
     extract_inline__ascii_hex_decode,
+    extract_inline_default,
     is_followed_by_binary_data,
 )
 from tests import get_data_from_url
@@ -68,6 +70,41 @@ def test_is_followed_by_binary_data() -> None:
 
     stream = BytesIO(b"1234.56 42 13 37 10 20 c\n")
     assert not is_followed_by_binary_data(stream)
+
+
+@pytest.mark.parametrize("following_operator", [b"E", b"Q"])
+def test_extract_inline_default_ignores_unbounded_ei(following_operator: bytes) -> None:
+    image_data = b"pixels\x0bEI\x00\x09" + following_operator * 2 + b"\x00\x08more-pixels\n"
+    stream = BytesIO(image_data + b"EI\nQ")
+
+    assert extract_inline_default(stream) == image_data
+    assert stream.read(2) == b"EI"
+
+
+def test_extract_inline_default_ignores_ei_without_closing_operator() -> None:
+    """An `EI` without leading delimiter is no end marker if no closing operator follows."""
+    image_data = b"pixels\x0bEI\nBT\n"
+    stream = BytesIO(image_data + b"EI\nQ")
+
+    assert extract_inline_default(stream) == image_data
+    assert stream.read(2) == b"EI"
+
+
+@pytest.mark.parametrize("following_operator", [b"Q", b"EMC"])
+def test_extract_inline_default_empty_image_data(following_operator: bytes) -> None:
+    """The `EI` marker has no leading delimiter at all if the image data is empty."""
+    stream = BytesIO(b"EI\n" + following_operator + b"\nBT\n")
+
+    assert extract_inline_default(stream) == b""
+    assert stream.read(2) == b"EI"
+
+
+def test_extract_inline_default_finds_ei_across_buffer_boundary() -> None:
+    image_data = b"A" * (BUFFER_SIZE - 1) + b"\n"
+    stream = BytesIO(image_data + b"EI\nQ")
+
+    assert extract_inline_default(stream) == image_data
+    assert stream.read(2) == b"EI"
 
 
 @pytest.mark.enable_socket

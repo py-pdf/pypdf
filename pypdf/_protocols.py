@@ -1,6 +1,7 @@
 """Helpers for working with PDF types."""
 
 from abc import abstractmethod
+from collections.abc import Sequence
 from pathlib import Path
 from typing import IO, Any, Optional, Protocol, Union
 
@@ -43,7 +44,7 @@ class PdfCommonDocProtocol(Protocol):
         ...  # pragma: no cover
 
     @property
-    def pages(self) -> list[Any]:
+    def pages(self) -> Sequence[Any]:
         ...  # pragma: no cover
 
     @property
@@ -75,7 +76,8 @@ class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _id_translated: dict[int, dict[int, int]]
 
     incremental: bool
-    _reader: Any  # PdfReader
+    # Only populated in incremental mode, None otherwise.
+    _reader: Optional[Any]  # PdfReader
 
     @abstractmethod
     def write(self, stream: Union[Path, StrByteType]) -> tuple[bool, IO[Any]]:

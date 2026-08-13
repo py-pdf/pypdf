@@ -470,3 +470,26 @@ def test_content_stream__read_inline_image__end_of_stream() -> None:
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
         content_stream._read_inline_image(BytesIO(b"\n/IM true\n/W001"))
+
+
+def test_tree_object__insert_child__cycle() -> None:
+    writer = PdfWriter()
+
+    previous1 = TreeObject()
+    previous2 = TreeObject()
+    previous3 = TreeObject()
+    previous1[NameObject("/Next")] = writer._add_object(previous2)
+    previous2[NameObject("/Next")] = writer._add_object(previous3)
+    previous3[NameObject("/Next")] = writer._add_object(previous1)
+
+    tree = TreeObject()
+    tree[NameObject("/Last")] = writer._add_object(previous1)
+    tree[NameObject("/First")] = writer._add_object(DictionaryObject())
+    writer._add_object(tree)
+
+    with pytest.raises(LimitReachedError, match=r"^Detected cycle in tree structure\.$"):
+        tree.insert_child(
+            child=writer._add_object(DictionaryObject()),
+            before=None,
+            pdf=writer,
+        )
