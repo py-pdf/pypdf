@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786615439388,
+  "lastUpdate": 1786615451480,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -104879,6 +104879,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005084761138071247",
             "extra": "mean: 654.1425777999962 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "34ccd144fe4bbf2def848441c3697bb239dea5fc",
+          "message": "MAINT: Deduplicate CatalogAttributes and CatalogDictionary (#3940)\n\nCurrently these classes represent the same thing.\nTo simplify, CatalogDictionary is deprecated with replacement\nCatalogAttributes.\n\nCloses #3866.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-08-13T12:01:03+02:00",
+          "tree_id": "a2eaedf1273e0970e511b9b11940b8f16c621625",
+          "url": "https://github.com/py-pdf/pypdf/commit/34ccd144fe4bbf2def848441c3697bb239dea5fc"
+        },
+        "date": 1786615443336,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8494608231138856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010257267733096",
+            "extra": "mean: 350.9435862000032 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.829280170066173,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018372470542482807",
+            "extra": "mean: 53.10877478947649 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2525757399536936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01925617392867659",
+            "extra": "mean: 3.9592084346000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.411310028473274,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010005765540028646",
+            "extra": "mean: 54.31444033333261 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07066363513429041,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04400319146981567",
+            "extra": "mean: 14.151550484200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5310328563371411,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002625247732930645",
+            "extra": "mean: 653.1538469999987 msec\nrounds: 5"
           }
         ]
       }
