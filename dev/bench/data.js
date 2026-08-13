@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786632487626,
+  "lastUpdate": 1786632494290,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -105209,6 +105209,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003248862722474945",
             "extra": "mean: 606.5255920000027 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "2b60c99973df8d7f959cd46658604d881be3de3a",
+          "message": "REL: 6.16.0\n\n## What's new\n\n### Security (SEC)\n- Detect cycles in TreeObject.insert_child (#3964) by @stefan6419846\n\n### New Features (ENH)\n- AppearanceStream: Allow arbitrary rotations and apply rotations for annotation appearance streams (#3917) by @PJBrs\n- AppearanceStream: Consider more encodings for Type1 core fonts (#3905) by @PJBrs\n\n### Performance Improvements (PI)\n- Build /ToUnicode source-code bytes directly in parse_bfrange (#3952) by @Anai-Guo\n\n### Bug Fixes (BUG)\n- Preserve internal Link annotations when appending/merging (#3953) (#3954) by @Anai-Guo\n- Fix false inline image end markers (#3922) by @ciphercom\n- Reject typeless non-page /Kids entries in strict mode (#3955) by @Anai-Guo\n- Apply character spacing (Tc) per glyph in layout-mode extraction (#3951) by @Anai-Guo\n- Keep the Adobe CMYK inversion when an explicit /Decode is present (#3943) by @RavSinghChandan\n\n### Robustness (ROB)\n- AppearanceStream: Only escape parentheses for 8-bit fonts (#3961) by @PJBrs\n- Recover the trailer from a cross-reference stream when rebuilding the xref (#3950) by @Anai-Guo\n\n### Maintenance (MAINT)\n- Deduplicate CatalogAttributes and CatalogDictionary (#3940) by @j-t-1\n\n### Code Style (STY)\n- Type pages as a Sequence rather than a list (#3957) by @RavSinghChandan\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.15.0...6.16.0)",
+          "timestamp": "2026-08-13T16:29:58+02:00",
+          "tree_id": "0779bfcc2da4c5ef1e8ddbcf68797d024e82bb5c",
+          "url": "https://github.com/py-pdf/pypdf/commit/2b60c99973df8d7f959cd46658604d881be3de3a"
+        },
+        "date": 1786632484956,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0068662428112343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012510813577926598",
+            "extra": "mean: 332.57215959997666 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.985366003944616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002216928620175851",
+            "extra": "mean: 52.672147578942045 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26146209749350086,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03153739441063763",
+            "extra": "mean: 3.824646132599992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.000581878922016,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023363002140194874",
+            "extra": "mean: 58.82151605880261 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07268209703401182,
+            "unit": "iter/sec",
+            "range": "stddev: 0.061384073832975124",
+            "extra": "mean: 13.758546338199995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6835353893539464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005741532193635996",
+            "extra": "mean: 593.988107600012 msec\nrounds: 5"
           }
         ]
       }
