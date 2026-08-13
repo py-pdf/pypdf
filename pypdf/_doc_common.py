@@ -49,7 +49,6 @@ from ._utils import (
     parse_iso8824_date,
 )
 from .constants import CatalogAttributes as CA
-from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
     Core,
@@ -319,7 +318,7 @@ class PdfDocCommon(ABC):
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
         """Returns the existing ViewerPreferences as an overloaded dictionary."""
-        o = self.root_object.get(CD.VIEWER_PREFERENCES, None)
+        o = self.root_object.get(CA.VIEWER_PREFERENCES, None)
         if o is None:
             return None
         o = o.get_object()
@@ -328,7 +327,7 @@ class PdfDocCommon(ABC):
             if hasattr(o, "indirect_reference") and o.indirect_reference is not None:
                 self._replace_object(o.indirect_reference, o)
             else:
-                self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
+                self.root_object[NameObject(CA.VIEWER_PREFERENCES)] = o
         return o
 
     def get_num_pages(self) -> int:
@@ -379,25 +378,30 @@ class PdfDocCommon(ABC):
         If page_number is greater than the number of pages, it returns the top node, -1.
         """
         top = cast(DictionaryObject, self.root_object["/Pages"])
+        visited: set[int] = set()
 
         def recursive_call(
-            node: DictionaryObject, mi: int
+            _node: DictionaryObject, mi: int
         ) -> tuple[Optional[PdfObject], int]:
-            ma = cast(int, node.get("/Count", 1))  # default 1 for /Page types
-            if node["/Type"] == "/Page":  # type: ignore[comparison-overlap]
+            _node_id = id(_node)
+            if _node_id in visited:
+                raise LimitReachedError("Detected cycle in /Pages hierarchy when retrieving page.")
+            visited.add(_node_id)
+            ma = cast(int, _node.get("/Count", 1))  # default 1 for /Page types
+            if _node.get("/Type") == "/Page":
                 if page_number == mi:
-                    return node, -1
+                    return _node, -1
                 return None, mi + 1
             if (page_number - mi) >= ma:  # not in nodes below
-                if node == top:
+                if _node == top:
                     return top, -1
                 return None, mi + ma
-            for idx, kid in enumerate(cast(ArrayObject, node["/Kids"])):
+            for _idx, kid in enumerate(cast(ArrayObject, _node["/Kids"])):
                 kid = cast(DictionaryObject, kid.get_object())
                 n, i = recursive_call(kid, mi)
                 if n is not None:  # page has just been found ...
                     if i < 0:  # ... just below!
-                        return node, idx
+                        return _node, _idx
                     # ... at lower levels
                     return n, i
                 mi = i
@@ -566,8 +570,8 @@ class PdfDocCommon(ABC):
             catalog = self.root_object
             stack = []
             # get the AcroForm tree
-            if CD.ACRO_FORM in catalog:
-                tree = cast(Optional[TreeObject], catalog[CD.ACRO_FORM])
+            if CA.ACRO_FORM in catalog:
+                tree = cast(Optional[TreeObject], catalog[CA.ACRO_FORM])
             else:
                 return None
         if tree is None:
@@ -1149,7 +1153,7 @@ class PdfDocCommon(ABC):
              - Show two pages at a time, odd-numbered pages on the right
         """
         try:
-            return cast(NameObject, self.root_object[CD.PAGE_LAYOUT])
+            return cast(NameObject, self.root_object[CA.PAGE_LAYOUT])
         except KeyError:
             return None
 

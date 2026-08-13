@@ -428,10 +428,17 @@ class TextStreamAppearance(BaseStreamAppearance):
                 bom_text = b"\xfe\xff" + original_text.encode("utf-16-be")
                 hex_original_text = bom_text.hex().upper()
                 ap_stream += f"/Span << /ActualText <{hex_original_text}> >> BDC\n".encode()
-            if any(len(c) >= 2 for c in encoded_line):
+            if font.sub_type == "Type0":  # 16-bit font
                 ap_stream += b"<" + (b"".join(encoded_line)).hex().encode() + b"> Tj\n"
-            else:
-                ap_stream += b"(" + b"".join(encoded_line) + b") Tj\n"
+            else:  # Simple font, 8-bit encoded.
+                # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
+                line_as_bytes = (
+                    b"".join(encoded_line)
+                    .replace(b"\\", b"\\\\")
+                    .replace(b"(", br"\(")
+                    .replace(b")", br"\)")
+                )
+                ap_stream += b"(" + line_as_bytes + b") Tj\n"
             if is_rtl:
                 ap_stream += b"EMC\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
@@ -633,7 +640,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         writer: PdfWriter,
         page: PageObject,
         flatten: bool,
-        acro_form: DictionaryObject,  # _root_object[CatalogDictionary.ACRO_FORM])
+        acro_form: DictionaryObject,  # _root_object[CatalogAttributes.ACRO_FORM])
         field: DictionaryObject,
         annotation: DictionaryObject,
         user_font_name: str = "",
@@ -696,9 +703,6 @@ class TextStreamAppearance(BaseStreamAppearance):
         else:  # /Tx
             text = field.get("/V", "")
             selection = []
-
-        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
-        text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
 
         # Derive font name, size and color from the default appearance. Also set
         # user-provided font name and font size in the default appearance, if given.
