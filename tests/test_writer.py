@@ -3035,6 +3035,24 @@ def test_insert_filtered_annotations__annotations_are_none():
     ) == []
 
 
+def test_writer_reader_attribute_always_present():
+    """
+    `PdfWriterProtocol` declares `_reader`, but it used to be assigned only in
+    the incremental branch, so a plain `PdfWriter()` did not satisfy the
+    protocol it is passed as. It is `None` outside incremental mode.
+    """
+    writer = PdfWriter()
+    assert writer._reader is None
+
+    writer.add_blank_page(72, 72)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    incremental = PdfWriter(stream, incremental=True)
+    assert incremental._reader is not None
+
+
 def test_incremental_read():
     """Test for #3116"""
     writer = PdfWriter()

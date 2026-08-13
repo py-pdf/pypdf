@@ -224,6 +224,9 @@ class PdfWriter(PdfDocCommon):
         """The PDF files's document information dictionary,
         defined by Info in the PDF file's trailer dictionary."""
 
+        self._reader: Optional[PdfReader] = None
+        """The document being appended to, in incremental mode only."""
+
         self._ID: Union[ArrayObject, None] = None
         """The PDF file identifier,
         defined by the ID in the PDF file's trailer dictionary."""
@@ -1375,6 +1378,7 @@ class PdfWriter(PdfDocCommon):
         self._resolve_links()
 
         if self.incremental:
+            assert self._reader is not None, "mypy"
             self._reader.stream.seek(0)
             stream.write(self._reader.stream.read(-1))
             if len(self.list_objects_in_increment()) > 0:
@@ -1443,6 +1447,8 @@ class PdfWriter(PdfDocCommon):
         ]
 
     def _write_increment(self, stream: StreamType) -> None:
+        # Only reached from `write()` inside `if self.incremental`.
+        assert self._reader is not None, "mypy"
         object_positions = {}
         object_blocks = []
         current_start = -1
