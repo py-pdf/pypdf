@@ -450,7 +450,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
             # Td is a relative translation (Tx and Ty).
             # It updates the current text position.
-            ap_stream += f"{x_rel_offset} {y_rel_offset} Td\n".encode()
+            ap_stream += f"{round(x_rel_offset, 3)} {round(y_rel_offset, 3)} Td\n".encode()
             # Update current_x_pos based on the Td operation for the next iteration.
             # This is the X position where the *current line* will start.
             current_x_pos = desired_abs_x_start
