@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786629286269,
+  "lastUpdate": 1786629299493,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -105077,6 +105077,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0015355666376012606",
             "extra": "mean: 654.5858479999936 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c8e1c726fae3a29b243d6e53f45f2fed0d00d0b0",
+          "message": "BUG: Always define PdfWriter._reader (#3960)\n\nPdfWriterProtocol declares `_reader`, but PdfWriter only assigned it in\nthe incremental branch of __init__. A writer created the normal way has\nno such attribute, so it does not satisfy the protocol it gets passed\nas -- `isinstance(writer, PdfWriterProtocol)` is False, and typeguard\nfails 62 checks across the test suite on that one attribute.\n\nDeclare it as Optional[PdfReader] defaulting to None. The three reads\nare all inside `if self.incremental`, so behaviour is unchanged; they\nget an assert to narrow the type, matching the existing style in this\nfile.",
+          "timestamp": "2026-08-13T15:51:42+02:00",
+          "tree_id": "4f99705053d2335a139b7ac1033e1aa4d816b950",
+          "url": "https://github.com/py-pdf/pypdf/commit/c8e1c726fae3a29b243d6e53f45f2fed0d00d0b0"
+        },
+        "date": 1786629290416,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.844003835696595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01427349109919041",
+            "extra": "mean: 351.6169660000003 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.719933655924645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002072976421738249",
+            "extra": "mean: 53.41899273684186 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2520722042220019,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014273250289381569",
+            "extra": "mean: 3.967117291199995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.92340260041692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006851282355144542",
+            "extra": "mean: 55.79297761111156 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07032619538493456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033223240065246934",
+            "extra": "mean: 14.2194525742 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4585016088680294,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006496066715386277",
+            "extra": "mean: 685.6351709999956 msec\nrounds: 5"
           }
         ]
       }
