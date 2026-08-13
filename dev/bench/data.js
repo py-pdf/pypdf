@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786615451480,
+  "lastUpdate": 1786619422017,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -123295,6 +123295,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030314568329328664",
             "extra": "mean: 796.6237870000043 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "20512f411474e622bf16d45c375ab8c68ac8059a",
+          "message": "ROB: AppearanceStream: Only escape parentheses for 8-bit fonts (#3961)\n\nThe current implementation of escaping parentheses has two problems. First, it operates\non any text, regardless of whether it will be 8-bit encoded or not. However, when we\nhex-encode text, for instance with Type0 / composite fonts, we erroneously will actually\nadd the escape characters to the encoded text. Second, the parentheses-escaping code\noperates on un-encoded text. However, an 8-bit font with differences encoding might\nactually change a parenthesis to a different character, and it might also re-encode the\nbackslash itself.\n\nPostpone escaping parentheses until the last moment, where we operate on encoded text,\nand only with 8-bit encoding.",
+          "timestamp": "2026-08-13T13:07:27+02:00",
+          "tree_id": "83b226841adeb05118705e3b312b3be94be1b831",
+          "url": "https://github.com/py-pdf/pypdf/commit/20512f411474e622bf16d45c375ab8c68ac8059a"
+        },
+        "date": 1786619413841,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.751610895624326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017692853320072147",
+            "extra": "mean: 72.71875328571095 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.23179442958263,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009166783117805943",
+            "extra": "mean: 49.42715306249923 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0609203650476666,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02880269448651621",
+            "extra": "mean: 942.5778154 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.566660545055464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03177442560200296",
+            "extra": "mean: 1.7647249464000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.352739366900306,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007627147267173359",
+            "extra": "mean: 2.834954342600008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1711523172226326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01969004642091235",
+            "extra": "mean: 853.8598995999791 msec\nrounds: 5"
           }
         ]
       }
