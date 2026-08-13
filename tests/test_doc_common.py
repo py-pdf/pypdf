@@ -802,3 +802,23 @@ def test_build_outline_item__non_array_color(caplog):
     # during append, so that path must tolerate it too.
     target = PdfWriter()
     target.append(writer)
+
+
+def test_get_page_in_node__cycle():
+    writer = PdfWriter()
+    page1 = DictionaryObject({
+        NameObject("/Count"): NumberObject(100)
+    })
+    page2 = DictionaryObject({
+        NameObject("/Count"): NumberObject(100)
+    })
+    page3 = DictionaryObject({
+        NameObject("/Count"): NumberObject(100),
+        NameObject("/Kids"): ArrayObject([writer._add_object(page1)])
+    })
+    page1[NameObject("/Kids")] = ArrayObject([writer._add_object(page2)])
+    page2[NameObject("/Kids")] = ArrayObject([writer._add_object(page3)])
+    writer.root_object[NameObject("/Pages")] = writer._add_object(page1)
+
+    with pytest.raises(LimitReachedError, match=r"^Detected cycle in /Pages hierarchy when retrieving page\.$"):
+        writer._get_page_in_node(42)
