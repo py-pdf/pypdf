@@ -226,8 +226,7 @@ class PdfWriter(PdfDocCommon):
         defined by Info in the PDF file's trailer dictionary."""
 
         self._reader: Optional[PdfReader] = None
-        """The document being appended to, in incremental mode only.
-        ``None`` for a writer that starts from scratch."""
+        """The document being appended to, in incremental mode only."""
 
         self._ID: Union[ArrayObject, None] = None
         """The PDF file identifier,
