@@ -2781,7 +2781,7 @@ def test_field_box_upside_down():
     writer = PdfWriter(BytesIO(get_data_from_url(url=url, name=name)))
     writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
     assert  (
-        b"q\n/Tx BMC \nq\n2 0 100.29520000000001 11.835000000000036 re\n"
+        b"q\n/Tx BMC \nq\n2 0 100.295 11.835 re\n"
         b"W\nBT\n/Arial 8.0 Tf 0 g\n2 3.046 Td\n(0) Tj\nET\n"
         b"Q\nEMC\nQ\n"
     ) in writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data()
