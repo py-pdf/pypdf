@@ -547,14 +547,19 @@ def test_flatten__repeated_page_reference():
     writer = PdfWriter()
     writer.add_blank_page(width=612, height=792)
     pages = writer.root_object["/Pages"].get_object()
+    pages[NameObject("/Rotate")] = NumberObject(180)
     kids = pages["/Kids"]
+    kids[0].get_object()[NameObject("/Rotate")] = NumberObject(90)
     kids.append(kids[0])
     pages[NameObject("/Count")] = NumberObject(2)
     pdf = BytesIO()
     writer.write(pdf)
     pdf.seek(0)
 
-    assert len(PdfReader(pdf).pages) == 2
+    reader = PdfReader(pdf)
+
+    assert len(reader.pages) == 2
+    assert [page.rotation for page in reader.pages] == [90, 90]
 
 
 @pytest.mark.parametrize("list_only", [False, True])
