@@ -44,6 +44,7 @@ from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
+    _TraversalState,
     deprecation_with_replacement,
     logger_warning,
     parse_iso8824_date,
@@ -85,6 +86,10 @@ from .generic import (
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
+
+# TODO: Make configurable.
+OUTLINE_MAX_ENTRIES = 100_000
+OUTLINE_MAX_DEPTH = 100
 
 
 def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
@@ -234,7 +239,7 @@ class DocumentInformation(DictionaryObject):
         The "raw" version of modification date; can return a
         ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
+        Typically, in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
         return self.get(DI.MOD_DATE)
@@ -871,10 +876,16 @@ class PdfDocCommon(ABC):
 
     def _get_outline(
         self,
+        *,
         node: Optional[DictionaryObject] = None,
         outline: Optional[Any] = None,
         visited: Optional[set[int]] = None,
+        depth: int = 0,
+        traversal_state: Optional[_TraversalState] = None
     ) -> OutlineType:
+        if traversal_state is None:
+            traversal_state = _TraversalState()
+
         if outline is None:
             outline = []
             catalog = self.root_object
@@ -894,6 +905,9 @@ class PdfDocCommon(ABC):
         if node is None:
             return outline
 
+        if depth > OUTLINE_MAX_DEPTH:
+            raise LimitReachedError(f"Maximum outline depth reached: {depth} > {OUTLINE_MAX_DEPTH}.")
+
         # see if there are any more outline items
         if visited is None:
             visited = set()
@@ -903,6 +917,11 @@ class PdfDocCommon(ABC):
                 logger_warning("Detected cycle in outline structure for %(node)s", source=__name__, node=node)
                 break
             visited.add(node_id)
+            traversal_state.entry_count += 1
+            if traversal_state.entry_count > OUTLINE_MAX_ENTRIES:
+                raise LimitReachedError(
+                    f"Maximum outline entry limit reached: {traversal_state.entry_count} > {OUTLINE_MAX_ENTRIES}."
+                )
 
             outline_obj = self._build_outline_item(node)
             if outline_obj:
@@ -917,6 +936,8 @@ class PdfDocCommon(ABC):
                     node=cast(DictionaryObject, node["/First"]),
                     outline=sub_outline,
                     visited=inner_visited,
+                    depth=depth + 1,
+                    traversal_state=traversal_state,
                 )
                 if sub_outline:
                     outline.append(sub_outline)

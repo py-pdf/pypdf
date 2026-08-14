@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.16.1, 2026-08-14
+
+### Security (SEC)
+- Limit iterations for outline retrieval and XForm text extraction (#3966)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.0...6.16.1)
+
 ## Version 6.16.0, 2026-08-13
 
 ### Security (SEC)

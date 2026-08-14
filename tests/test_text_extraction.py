@@ -7,6 +7,7 @@ The tested code might be in _page.py.
 import re
 from dataclasses import asdict
 from io import BytesIO
+from unittest import mock
 
 import pytest
 
@@ -29,6 +30,8 @@ from pypdf.generic import (
     DictionaryObject,
     NameObject,
     NumberObject,
+    RectangleObject,
+    StreamObject,
 )
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -807,3 +810,123 @@ def test_page_object__layout_mode_fonts__cyclic(caplog) -> None:
 
     assert page._layout_mode_fonts() == fonts
     assert caplog.messages == ["Detected cycle in /Parent hierarchy when retrieving fonts."]
+
+
+def _generate_dag_with_forms(depth: int) -> bytes:
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    font = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        }
+    )
+    font_ref = writer._add_object(font)
+
+    # There are only depth + 1 actual Form objects:
+    #
+    #   F0 -> F1 -> F2 -> ... -> Fdepth
+    #
+    # But each form invokes its child twice:
+    #
+    #   F0
+    #   ├── F1
+    #   │   ├── F2
+    #   │   │   └── ...
+    #   │   └── F2
+    #   └── F1
+    #       ├── F2
+    #       └── F2
+    #
+    # This gives a DAG with exponentially many traversal paths while
+    # keeping the PDF itself linear in size.
+    num_forms = depth + 1
+    forms: list[StreamObject] = []
+
+    for _ in range(num_forms):
+        form = StreamObject()
+        forms.append(form)
+
+    # Register all forms first so that their indirect references are
+    # available when constructing their resource dictionaries.
+    form_refs = [writer._add_object(form) for form in forms]
+
+    for k, form in enumerate(forms):
+        if k < depth:
+            next_name = NameObject(f"/F{k + 1}")
+            form_content = (
+                f"q\n"
+                f"{next_name} Do\n"
+                f"{next_name} Do\n"
+                f"Q\n"
+            ).encode("ascii")
+            xobjects = DictionaryObject({
+                next_name: form_refs[k + 1],
+            })
+        else:
+            # Leaf form: emit a single character.
+            form_content = (
+                b"BT\n"
+                b"/F1 12 Tf\n"
+                b"100 700 Td\n"
+                b"(.) Tj\n"
+                b"ET\n"
+            )
+            xobjects = DictionaryObject()
+
+        resources = DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F1"): font_ref,
+            }),
+        })
+        if xobjects:
+            resources[NameObject("/XObject")] = xobjects
+
+        form.update({
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Form"),
+            NameObject("/FormType"): NumberObject(1),
+            NameObject("/BBox"): RectangleObject([0, 0, 612, 792]),
+            NameObject("/Resources"): resources,
+        })
+        form.set_data(form_content)
+
+    # Invoke the root form twice.
+    page_content = StreamObject()
+    page_content.set_data(
+        b"q\n"
+        b"/F0 Do\n"
+        b"/F0 Do\n"
+        b"Q\n"
+    )
+    page_content_ref = writer._add_object(page_content)
+
+    page_resources = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/F0"): form_refs[0],
+        }),
+    })
+
+    page[NameObject("/Resources")] = page_resources
+    page[NameObject("/Contents")] = page_content_ref
+    page[NameObject("/MediaBox")] = ArrayObject(list(map(NumberObject, [0, 0, 612, 792])))
+
+    data = BytesIO()
+    writer.write(data)
+    return data.getvalue()
+
+
+@pytest.mark.timeout(5)
+def test_extract_text__form_xobject__limit(caplog) -> None:
+    # Takes about 15 seconds without fix.
+    reader = PdfReader(BytesIO(_generate_dag_with_forms(12)))
+    page = reader.pages[0]
+    with mock.patch("pypdf._page.MAX_XFORM_INVOCATIONS_PER_EXTRACTION", 100):
+        text = page.extract_text()
+    assert len(text) == 92
+    assert text == ".\n" * 46
+    assert caplog.messages == [
+        "Exceeded 100 form XObject invocations while extracting text; further form content is skipped."
+    ]
