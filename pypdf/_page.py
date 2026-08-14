@@ -1398,6 +1398,44 @@ class PageObject(DictionaryObject):
                         + trsf.apply_on((q[4], q[5]), True)
                         + trsf.apply_on((q[6], q[7]), True)
                     )
+                # The /Rect update above only repositions and resizes the
+                # annotation's bounding box. Per the appearance-stream
+                # algorithm (PDF 2.0, 12.5.5), a viewer fits the appearance's
+                # /BBox (as mapped by its own /Matrix) into /Rect using an
+                # axis-aligned scale, never a rotation. Left alone, rotating
+                # or shearing a page therefore stretches/skews the untouched
+                # appearance content into the new, differently-shaped /Rect
+                # instead of rotating it. Composing our transform into the
+                # appearance's own /Matrix keeps the rendered content
+                # consistent with the rest of the transformed page.
+                try:
+                    ap = cast(DictionaryObject, aa["/AP"])
+                    normal_ap = ap["/N"].get_object()
+                    # /N is a single appearance stream for most annotations,
+                    # but for widgets with multiple states (checkboxes, radio
+                    # buttons) it is instead a dict of named sub-streams, one
+                    # per state. Only a stream carries its own /BBox/Matrix.
+                    state_aps = (
+                        normal_ap.values()
+                        if isinstance(normal_ap, DictionaryObject)
+                        and not isinstance(normal_ap, StreamObject)
+                        else [normal_ap]
+                    )
+                    for state_ap in state_aps:
+                        state_obj = (
+                            state_ap.get_object()
+                            if isinstance(state_ap, IndirectObject)
+                            else state_ap
+                        )
+                        if not isinstance(state_obj, StreamObject):
+                            continue
+                        old_matrix = tuple(state_obj.get("/Matrix", (1, 0, 0, 1, 0, 0)))
+                        state_obj[NameObject("/Matrix")] = ArrayObject(
+                            FloatObject(x)
+                            for x in Transformation(old_matrix).transform(trsf).ctm
+                        )
+                except KeyError:
+                    pass
                 try:
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
                 except KeyError:
