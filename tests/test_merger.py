@@ -569,4 +569,3 @@ def test_merge_outline_ordering_position():
 
     titles = [el.title for el in reader.outline if isinstance(el, Destination)]
     assert titles == ["A1", "B1", "B2", "A2", "A3"]
-
