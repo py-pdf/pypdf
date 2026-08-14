@@ -475,16 +475,21 @@ def test_content_stream__read_inline_image__end_of_stream() -> None:
 def test_tree_object__insert_child__cycle() -> None:
     writer = PdfWriter()
 
+    # Build a cyclic /Next chain reachable from /First:
+    # previous1 -> previous2 -> previous3 -> previous1
     previous1 = TreeObject()
     previous2 = TreeObject()
     previous3 = TreeObject()
-    previous1[NameObject("/Next")] = writer._add_object(previous2)
-    previous2[NameObject("/Next")] = writer._add_object(previous3)
-    previous3[NameObject("/Next")] = writer._add_object(previous1)
+    prev1_ref = writer._add_object(previous1)
+    prev2_ref = writer._add_object(previous2)
+    prev3_ref = writer._add_object(previous3)
+    previous1[NameObject("/Next")] = prev2_ref
+    previous2[NameObject("/Next")] = prev3_ref
+    previous3[NameObject("/Next")] = prev1_ref  # cycle back to previous1
 
     tree = TreeObject()
-    tree[NameObject("/Last")] = writer._add_object(previous1)
-    tree[NameObject("/First")] = writer._add_object(DictionaryObject())
+    tree[NameObject("/First")] = prev1_ref
+    tree[NameObject("/Last")] = writer._add_object(DictionaryObject())
     writer._add_object(tree)
 
     with pytest.raises(LimitReachedError, match=r"^Detected cycle in tree structure\.$"):
