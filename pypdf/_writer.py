@@ -3215,7 +3215,8 @@ class PdfWriter(PdfDocCommon):
                 )
                 continue
             if pn is not None and pn >= page_number:
-                return child.indirect_reference if child.indirect_reference is not None else child
+                ir = child.indirect_reference
+                return cast(IndirectObject, ir) if ir is not None else child
         return None
 
     def _insert_filtered_outline(

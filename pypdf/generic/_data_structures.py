@@ -838,7 +838,7 @@ class TreeObject(DictionaryObject):
         # Found the node to insert before (`prev`)
         if "/Prev" in prev:
             # Inserting in the middle: prev's predecessor points to new child
-            prev_prev = prev["/Prev"]
+            prev_prev = cast("DictionaryObject", prev["/Prev"])
             prev_prev[NameObject("/Next")] = child_reference
             child_obj[NameObject("/Prev")] = prev_prev.indirect_reference
         else:
