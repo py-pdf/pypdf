@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786709520984,
+  "lastUpdate": 1786709552997,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -124021,6 +124021,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025026848121250406",
             "extra": "mean: 831.6509035999843 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d91ab705fd81ed1a9cec175c6958600dea1a4942",
+          "message": "SEC: Limit iterations for outline retrieval and XForm text extraction (#3966)\n\nPlease note that for now, there is no official way to change the limits,\nas the goal is to have a better way to configure such limits first.",
+          "timestamp": "2026-08-14T14:09:34+02:00",
+          "tree_id": "7ebd0deeae6c2ad0629543afb208ee6ad4d5f728",
+          "url": "https://github.com/py-pdf/pypdf/commit/d91ab705fd81ed1a9cec175c6958600dea1a4942"
+        },
+        "date": 1786709543907,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.653116211649396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01801428112829281",
+            "extra": "mean: 73.24335224999838 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.33630633415974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021724751906797353",
+            "extra": "mean: 61.2133477142852 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0307110813990363,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03194617826940986",
+            "extra": "mean: 970.2039864 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4847697416486248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03046936675587554",
+            "extra": "mean: 2.062835020600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36342591484294967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009565628463459371",
+            "extra": "mean: 2.751592440600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1777611803223056,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030243358136445908",
+            "extra": "mean: 849.0685689999907 msec\nrounds: 5"
           }
         ]
       }
