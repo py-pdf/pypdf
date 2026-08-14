@@ -822,3 +822,58 @@ def test_get_page_in_node__cycle():
 
     with pytest.raises(LimitReachedError, match=r"^Detected cycle in /Pages hierarchy when retrieving page\.$"):
         writer._get_page_in_node(42)
+
+
+def test_get_outline__depth():
+    writer = PdfWriter()
+    outlines = [
+        DictionaryObject({NameObject("/Title"): TextStringObject(f"Title{i}")})
+        for i in range(3)
+    ]
+    writer.root_object[NameObject("/Outlines")] = DictionaryObject({
+        NameObject("/First"): writer._add_object(outlines[0])
+    })
+    for index, outline in enumerate(outlines[:-1]):
+        outline[NameObject("/First")] = writer._add_object(outlines[index + 1])
+        outline[NameObject("/Next")] = writer._add_object(outlines[index + 1])
+        writer._add_object(outline)
+
+    assert writer._get_outline() == [
+        {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title0", "/Type": "/Fit"},
+        [
+            {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title1", "/Type": "/Fit"},
+            [
+                {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title2", "/Type": "/Fit"}
+            ],
+            {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title2", "/Type": "/Fit"}
+        ],
+        {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title1", "/Type": "/Fit"},
+        [
+            {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title2", "/Type": "/Fit"}
+        ],
+        {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title2", "/Type": "/Fit"}
+    ]
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum outline depth reached: 101 > 100\.$"):
+        writer._get_outline(depth=99)
+
+
+def test_get_outline__entry_count():
+    writer = PdfWriter()
+    outlines = [
+        DictionaryObject({NameObject("/Title"): TextStringObject(f"Title{i}")})
+        for i in range(10)
+    ]
+    writer.root_object[NameObject("/Outlines")] = DictionaryObject({
+        NameObject("/First"): writer._add_object(outlines[0])
+    })
+    for index, outline in enumerate(outlines[:-1]):
+        outline[NameObject("/First")] = writer._add_object(outlines[index + 1])
+        outline[NameObject("/Next")] = writer._add_object(outlines[index + 1])
+        writer._add_object(outline)
+
+    with mock.patch("pypdf._doc_common.OUTLINE_MAX_ENTRIES", 1000), \
+            pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Maximum outline entry limit reached: 1001 > 1000\.$"
+            ):
+        writer._get_outline()
