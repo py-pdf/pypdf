@@ -478,15 +478,21 @@ def _apply_decode(
 def _get_mode_and_invert_color(
     x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
+    bits = x_object.get("/BitsPerComponent", 8)
+    # /DeviceRGB with a full-width sample is RGB. Keep that assignment:
+    # the generic path below used to overwrite it unconditionally (#3367).
+    # Sub-byte samples still go through the low-bit branch so
+    # _expand_low_bit_samples() can unpack them.
     if (
         ImageAttributes.COLOR_SPACE in x_object
         and x_object[ImageAttributes.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+        and bits >= 8
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: mode_str_type = "RGB"
-    if x_object.get("/BitsPerComponent", 8) < 8:
+        return "RGB", False
+    if bits < 8:
         mode, invert_color = _get_image_mode(
-            f"{x_object.get('/BitsPerComponent', 8)}bit", 0, ""
+            f"{bits}bit", 0, ""
         )
     else:
         mode, invert_color = _get_image_mode(
