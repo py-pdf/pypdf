@@ -604,6 +604,69 @@ def test_flatten__repeated_page_reference_with_different_inheritance(list_only: 
     assert reader.pages[1]["/MediaBox"] == RectangleObject([0, 0, 200, 200])
 
 
+def test_flatten__depth_limit():
+    writer = PdfWriter()
+    page = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Page"),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 100, 100]),
+            }
+        )
+    )
+    child = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([page]),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+    writer.root_object[NameObject("/Pages")] = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([child]),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+
+    with mock.patch("pypdf._doc_common.PAGE_TREE_MAX_DEPTH", 1), pytest.raises(
+        LimitReachedError, match=r"^Maximum page tree depth reached: 2 > 1\.$"
+    ):
+        writer._flatten()
+
+
+def test_flatten__entry_limit_for_reused_paths():
+    writer = PdfWriter()
+    child = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Page"),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 100, 100]),
+            }
+        )
+    )
+    for _ in range(8):
+        child = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Pages"),
+                    NameObject("/Kids"): ArrayObject([child, child]),
+                    NameObject("/Count"): NumberObject(2),
+                }
+            )
+        )
+    writer.root_object[NameObject("/Pages")] = child
+
+    with mock.patch("pypdf._doc_common.PAGE_TREE_MAX_ENTRIES", 100), pytest.raises(
+        LimitReachedError, match=r"^Maximum page tree entry limit reached: 101 > 100\.$"
+    ):
+        writer._flatten()
+
+
 def test_flatten__pages_without_kids():
     # A malformed /Pages node may advertise "/Count 0" without providing any
     # /Kids entry. Flattening such a page tree used to raise a bare

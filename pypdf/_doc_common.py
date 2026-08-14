@@ -90,6 +90,8 @@ from .xmp import XmpInformation
 # TODO: Make configurable.
 OUTLINE_MAX_ENTRIES = 100_000
 OUTLINE_MAX_DEPTH = 100
+PAGE_TREE_MAX_ENTRIES = 100_000
+PAGE_TREE_MAX_DEPTH = 100
 
 
 def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
@@ -1211,6 +1213,8 @@ class PdfDocCommon(ABC):
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
         visited: Optional[set[int]] = None,
+        depth: int = 0,
+        traversal_state: Optional[_TraversalState] = None,
     ) -> None:
         """
         Process the document pages to ease searching.
@@ -1232,6 +1236,8 @@ class PdfDocCommon(ABC):
             visited: Set of id() values on the active page-tree traversal path.
                 Detects multi-hop cycles such as A→B→C→A that the single-parent
                 check misses.
+            depth: Current page-tree traversal depth.
+            traversal_state: State shared across the complete traversal.
 
         """
         inheritable_page_attributes = (
@@ -1244,6 +1250,10 @@ class PdfDocCommon(ABC):
             inherit = {}
         if visited is None:
             visited = set()
+        if traversal_state is None:
+            traversal_state = _TraversalState()
+        if depth > PAGE_TREE_MAX_DEPTH:
+            raise LimitReachedError(f"Maximum page tree depth reached: {depth} > {PAGE_TREE_MAX_DEPTH}.")
         if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
@@ -1292,6 +1302,12 @@ class PdfDocCommon(ABC):
                     obj_id = id(obj)
                     if obj_id in visited:
                         raise PdfReadError("Detected cyclic page references.")
+                    traversal_state.entry_count += 1
+                    if traversal_state.entry_count > PAGE_TREE_MAX_ENTRIES:
+                        raise LimitReachedError(
+                            "Maximum page tree entry limit reached: "
+                            f"{traversal_state.entry_count} > {PAGE_TREE_MAX_ENTRIES}."
+                        )
                     visited.add(obj_id)
                     try:
                         self._flatten(
@@ -1299,6 +1315,8 @@ class PdfDocCommon(ABC):
                             obj,
                             inherit.copy(),
                             visited=visited,
+                            depth=depth + 1,
+                            traversal_state=traversal_state,
                             **additional_arguments,
                         )
                     finally:
