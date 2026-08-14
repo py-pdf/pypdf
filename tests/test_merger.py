@@ -534,3 +534,39 @@ def test_merge__null_destination():
 
     writer.merge(position=1, fileobj=data)
     assert writer.pages[0].annotations is None
+
+
+def test_merge_outline_ordering_position():
+    """Verify bookmarks are inserted in correct order when merging at specific position."""
+    writer_a = PdfWriter()
+    writer_a.add_blank_page(200, 200)
+    writer_a.add_blank_page(200, 200)
+    writer_a.add_blank_page(200, 200)
+    writer_a.add_outline_item("A1", 0)
+    writer_a.add_outline_item("A2", 1)
+    writer_a.add_outline_item("A3", 2)
+    buf_a = BytesIO()
+    writer_a.write(buf_a)
+
+    writer_b = PdfWriter()
+    writer_b.add_blank_page(200, 200)
+    writer_b.add_blank_page(200, 200)
+    writer_b.add_outline_item("B1", 0)
+    writer_b.add_outline_item("B2", 1)
+    buf_b = BytesIO()
+    writer_b.write(buf_b)
+
+    merged = PdfWriter()
+    buf_a.seek(0)
+    merged.append(buf_a)
+    buf_b.seek(0)
+    merged.merge(1, buf_b)
+
+    buf_merged = BytesIO()
+    merged.write(buf_merged)
+    buf_merged.seek(0)
+    reader = PdfReader(buf_merged)
+
+    titles = [el.title for el in reader.outline if isinstance(el, Destination)]
+    assert titles == ["A1", "B1", "B2", "A2", "A3"]
+

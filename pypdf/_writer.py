@@ -682,8 +682,18 @@ class PdfWriter(PdfDocCommon):
         assert indirect_reference is not None, "mypy"
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
+        target_id = getattr(indirect_reference, "idnum", None)
+        if target_id is not None:
+            for idx, page in enumerate(self.pages):
+                if page.indirect_reference is not None and page.indirect_reference.idnum == target_id:
+                    return idx
         obj = indirect_reference.get_object()
         if isinstance(obj, PageObject):
+            if obj.indirect_reference is not None:
+                target_id = obj.indirect_reference.idnum
+                for idx, page in enumerate(self.pages):
+                    if page.indirect_reference is not None and page.indirect_reference.idnum == target_id:
+                        return idx
             return obj.page_number
         return None
 
@@ -2745,6 +2755,7 @@ class PdfWriter(PdfDocCommon):
                 '"pages" must be a tuple of (start, stop[, step]) or a list'
             )
 
+        initial_position = position
         srcpages = {}
         for page in pages:
             if isinstance(page, PageObject):
@@ -2792,9 +2803,14 @@ class PdfWriter(PdfDocCommon):
             outline = self._get_filtered_outline(
                 node=_ro.get(Core.OUTLINES, None), pages=srcpages, reader=reader
             )
+            before = None
+            if outline_item is None and initial_position is not None:
+                before = self._find_outline_item_before_page(
+                    initial_position, outline_item_typ
+                )
             self._insert_filtered_outline(
-                outline, outline_item_typ, None
-            )  # TODO: use before parameter
+                outline, outline_item_typ, before
+            )
 
         if "/Annots" not in excluded_fields:
             for pag in srcpages.values():
@@ -3159,6 +3175,43 @@ class PdfWriter(PdfDocCommon):
                 color = [FloatObject(0.0), FloatObject(0.0), FloatObject(0.0)]
             n_ol[NameObject("/C")] = ArrayObject(color)
         return n_ol
+
+    def _find_outline_item_before_page(
+        self,
+        page_number: int,
+        parent: TreeObject,
+    ) -> Union[TreeObject, IndirectObject, None]:
+        """
+        Find the first top-level outline child of *parent* whose destination
+        page index is >= *page_number*.
+
+        Returns the child's ``IndirectObject`` (suitable for
+        ``TreeObject.insert_child``'s *before* parameter), or ``None`` if no
+        such child exists.
+        """
+        for child in parent.children():
+            page_ref = None
+            if "/Dest" in child:
+                dest = child["/Dest"].get_object()
+                if isinstance(dest, ArrayObject) and len(dest) > 0:
+                    page_ref = dest[0]
+            elif "/A" in child:
+                action = child["/A"].get_object()
+                if isinstance(action, DictionaryObject) and action.get("/S") == "/GoTo":
+                    d = action.get("/D")
+                    if d is not None:
+                        d = d.get_object()
+                    if isinstance(d, ArrayObject) and len(d) > 0:
+                        page_ref = d[0]
+            if page_ref is None:
+                continue
+            try:
+                pn = self._get_page_number_by_indirect(page_ref)
+            except Exception:
+                continue
+            if pn is not None and pn >= page_number:
+                return child.indirect_reference if child.indirect_reference is not None else child
+        return None
 
     def _insert_filtered_outline(
         self,
