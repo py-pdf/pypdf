@@ -2261,7 +2261,7 @@ class PageObject(DictionaryObject):
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
         *,
         known_ids: Optional[set[int]] = None,
-        traversal_state: Optional[_TraversalState] = None
+        traversal_state: Optional[Any] = None
     ) -> str:
         """
         Extract text from an XObject.
@@ -2273,11 +2273,15 @@ class PageObject(DictionaryObject):
             visitor_operand_before:
             visitor_operand_after:
             visitor_text:
+            known_ids:
+            traversal_state:
 
         Returns:
             The extracted text
 
         """
+        # The type hint would have to use an internal type otherwise, which is not desired.
+        assert traversal_state is None or isinstance(traversal_state, _TraversalState)
         return self._extract_text(
             xform,
             self.pdf,
