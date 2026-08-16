@@ -73,7 +73,10 @@ class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):
 
 class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _objects: list[Any]
-    _id_translated: dict[int, dict[int, int]]
+    # Maps id(source pdf) -> {source idnum: new idnum}. Each inner mapping also
+    # carries a "PreventGC" entry holding the source document itself, which keeps
+    # it alive while the translation table is in use -- hence the wider types.
+    _id_translated: dict[int, dict[Union[int, str], Any]]
 
     incremental: bool
     # Only populated in incremental mode, None otherwise.
