@@ -1069,6 +1069,32 @@ def test_deprecate_inline_image_filters():
     assert decode_stream_data(stream).startswith(b"II*")
 
 
+def test_decode_stream_data__default_parms_are_dictionary_objects():
+    """
+    A stream without /DecodeParms still has to hand the decoders a
+    DictionaryObject; a plain {} is not an instance of one.
+    """
+    captured = []
+
+    class RecordingFlate(FlateDecode):
+        @staticmethod
+        def decode(data, decode_parms=None, **kwargs) -> bytes:  # noqa: ANN003
+            captured.append(decode_parms)
+            return FlateDecode.decode(data, decode_parms, **kwargs)
+
+    stream = DecodedStreamObject()
+    stream.set_data(b"hello")
+    stream[NameObject("/Filter")] = NameObject("/FlateDecode")
+    encoded = zlib.compress(b"hello")
+    stream._data = encoded
+
+    with mock.patch("pypdf.filters.FlateDecode", RecordingFlate):
+        assert decode_stream_data(stream) == b"hello"
+
+    assert captured, "the filter should have been invoked"
+    assert isinstance(captured[0], DictionaryObject)
+
+
 def test_flatedecode__columns_is_zero():
     data = b"Hello World!"
     parameters = DictionaryObject({
