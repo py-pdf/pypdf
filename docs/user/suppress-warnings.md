@@ -85,3 +85,46 @@ defines six log levels:
 * INFO
 * DEBUG
 * NOTSET
+
+Because pypdf emits log messages with Python's standard
+[`logging`](https://docs.python.org/3/library/logging.html) module, you can
+attach handlers, filters, or formatters in the same way as for any other Python
+library:
+
+```{testcode}
+import logging
+
+logger = logging.getLogger("pypdf")
+handler = logging.StreamHandler()
+handler.setLevel(logging.WARNING)
+handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
+logger.addHandler(handler)
+logger.setLevel(logging.WARNING)
+```
+
+If you do not want pypdf log messages to propagate to the root logger, disable
+propagation:
+
+```{testcode}
+import logging
+
+logger = logging.getLogger("pypdf")
+logger.propagate = False
+```
+
+pypdf uses module names as logging sources. For example, messages emitted while
+reading a PDF might come from `pypdf._reader`, and messages emitted while
+decoding streams might come from `pypdf.filters`. Configure the `pypdf` logger
+to affect all pypdf log messages, or configure a more specific logger if you
+only want to handle messages from one module:
+
+```{testcode}
+import logging
+
+logging.getLogger("pypdf.filters").setLevel(logging.ERROR)
+```
+
+Avoid overwriting internal helpers such as `pypdf._utils.logger_warning`.
+Those helpers are imported directly by pypdf modules, so patching one location
+does not reliably affect every existing import. Configuring the `logging`
+module is the supported way to customize pypdf log records.
