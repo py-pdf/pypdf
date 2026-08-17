@@ -832,8 +832,6 @@ def decode_stream_data(stream: StreamObject) -> bytes:
     if not isinstance(filters, ArrayObject):
         # We have a single filter instance
         filters = (filters,)
-    # The decoders are typed for a DictionaryObject, so the default has to be
-    # one too -- a plain {} is not an instance of it.
     decode_parms = stream.get(StreamAttributes.DECODE_PARMS, (DictionaryObject(),) * len(filters))
     if not isinstance(decode_parms, (list, tuple)):
         decode_parms = (decode_parms,)
