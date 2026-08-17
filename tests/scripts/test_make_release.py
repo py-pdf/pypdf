@@ -191,10 +191,19 @@ def test_get_formatted_changes__other() -> None:
         ("\n### Deprecations (DEP)\n- Deprecate a thing\n", True),
         ("\n### Bug Fixes (BUG)\n- Fix a thing\n", False),
         ("", False),
-        # The prefix only counts inside a section header, not in a message.
+        # The prefix only counts inside a section header, not in a message,
+        # including when it appears parenthesised exactly as the header spells it.
         ("\n### Bug Fixes (BUG)\n- Mention ENH here\n", False),
+        ("\n### Bug Fixes (BUG)\n- Revert the (ENH) from #123\n", False),
     ],
-    ids=["enhancement", "deprecation", "regular-changes", "no-changes", "prefix-inside-message"],
+    ids=[
+        "enhancement",
+        "deprecation",
+        "regular-changes",
+        "no-changes",
+        "prefix-inside-message",
+        "parenthesised-prefix-inside-message",
+    ],
 )
 def test_has_minor_changes(changes: str, expected: bool) -> None:
     """Enhancements and deprecations are the sections that warrant a minor bump."""
