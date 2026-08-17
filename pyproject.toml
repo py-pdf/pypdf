@@ -263,3 +263,15 @@ ignore_errors = false
 [[tool.mypy.overrides]]
 module = "tests.scripts.*"
 ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "tests.conftest"
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "tests.utils"
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "tests.__init__"
+ignore_errors = false
