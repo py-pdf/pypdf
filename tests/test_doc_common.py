@@ -209,6 +209,39 @@ def test_build_destination__short_array():
     assert dest["/Type"] == "/FitR"
 
 
+def test_build_destination__non_array():
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    # A destination that is not an array at all, such as the bare number that
+    # can appear as a value in a malformed name tree, degrades to a null
+    # destination instead of raising a TypeError on the unpacking.
+    dest = writer._build_destination("title", NumberObject(5))
+    assert isinstance(dest["/Page"], NullObject)
+
+
+def test_named_destinations__non_array_value():
+    # A name tree whose /Names array holds a bare number where a destination
+    # array is expected used to crash reader.named_destinations with a raw
+    # TypeError instead of skipping the malformed entry.
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    names = DictionaryObject()
+    names[NameObject("/Names")] = ArrayObject(
+        [TextStringObject("foo"), NumberObject(5)]
+    )
+    dests = DictionaryObject()
+    dests[NameObject("/Dests")] = names
+    writer.root_object[NameObject("/Names")] = dests
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    reader = PdfReader(stream)
+
+    assert "foo" in reader.named_destinations
+
+
 def _reader_with_button_field(field: DictionaryObject) -> PdfReader:
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
