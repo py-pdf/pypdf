@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786960007409,
+  "lastUpdate": 1786960020609,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -124417,6 +124417,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.041074165156392596",
             "extra": "mean: 822.0311883999784 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d421a45f67393c12d0b2655d9153a5627611bbf7",
+          "message": "MAINT: Move _apply_alpha out of _xobj_to_image and improve logging (#3974)\n\nHaving nested functions like this just decreases readability, thus move\nthe internal alpha handling to a dedicated function. While doing so, the\nfunction has been improved further by introducing an early exit if no\nmask is available. Additionally, for mismatching sizes, we now log the\ncorresponding sizes as well, which IMHO is the most important part of\nthe log output.",
+          "timestamp": "2026-08-17T11:43:59+02:00",
+          "tree_id": "60058c6b949238a2397f62df517e1c53cb4fe90f",
+          "url": "https://github.com/py-pdf/pypdf/commit/d421a45f67393c12d0b2655d9153a5627611bbf7"
+        },
+        "date": 1786960011940,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.623295023799978,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01743823468808639",
+            "extra": "mean: 73.40368084615315 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.750643533886997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01835458310868371",
+            "extra": "mean: 63.48946935714293 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0368206341997492,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024142278832270193",
+            "extra": "mean: 964.4869778000043 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.48148181213822383,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07495114337762014",
+            "extra": "mean: 2.076921650600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.35052710041265595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12939881597916597",
+            "extra": "mean: 2.8528464670000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0731884167635295,
+            "unit": "iter/sec",
+            "range": "stddev: 0.19240196689117342",
+            "extra": "mean: 931.802826400002 msec\nrounds: 5"
           }
         ]
       }
