@@ -24,6 +24,7 @@ from ..generic import (
     NameObject,
     NumberObject,
     RectangleObject,
+    StreamObject,
 )
 from ..generic._base import ByteStringObject, TextStringObject
 
@@ -802,3 +803,48 @@ class TextStreamAppearance(BaseStreamAppearance):
                     new_appearance_stream[key] = value
 
         return new_appearance_stream
+
+
+def transform_annotation_appearance(annotation_obj: DictionaryObject, trsf: Transformation) -> None:
+    """
+    Compose `trsf` into an annotation's /AP /N appearance stream(s), in place.
+
+    Repositioning/resizing an annotation's /Rect alone is not enough: per
+    the appearance-stream algorithm (PDF 2.0, 12.5.5), a viewer fits the
+    appearance's /BBox (as mapped by its own /Matrix) into /Rect using an
+    axis-aligned scale, never a rotation. Left alone, rotating or shearing
+    a page therefore stretches/skews the untouched appearance content into
+    the new, differently-shaped /Rect instead of rotating it. Composing the
+    transform into /Matrix (rather than overwriting it) keeps the rendered
+    content consistent with the rest of the transformed page while
+    preserving whatever the annotation already had. Handles both a single
+    appearance stream and the multi-state /AP /N dict used by
+    checkbox/radio-button widgets.
+    """
+    if "/AP" not in annotation_obj:
+        return
+    ap = cast(DictionaryObject, annotation_obj["/AP"])
+    if "/N" not in ap:
+        return
+    normal_ap = ap["/N"].get_object()
+    if normal_ap is None:
+        return
+    # /N is a single appearance stream for most annotations, but for
+    # widgets with multiple states (checkboxes, radio buttons) it is
+    # instead a dict of named sub-streams, one per state. Only a stream
+    # carries its own /BBox/Matrix.
+    state_aps = (
+        normal_ap.values()
+        if isinstance(normal_ap, DictionaryObject) and not isinstance(normal_ap, StreamObject)
+        else [normal_ap]
+    )
+    for state_ap in state_aps:
+        # get_object() is always safe to call: PdfObject.get_object() just
+        # returns self when the object is already resolved.
+        state_obj = state_ap.get_object()
+        if not isinstance(state_obj, StreamObject):
+            continue
+        old_matrix = tuple(state_obj.get("/Matrix", (1, 0, 0, 1, 0, 0)))
+        state_obj[NameObject("/Matrix")] = ArrayObject(
+            FloatObject(x) for x in Transformation(old_matrix).transform(trsf).ctm
+        )

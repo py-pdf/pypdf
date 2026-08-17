@@ -30,6 +30,7 @@ from pypdf.generic import (
     IndirectObject,
     NameObject,
     NullObject,
+    NumberObject,
     RectangleObject,
     TextStringObject,
 )
@@ -856,6 +857,49 @@ def test_merge_page_with_annotations():
 
     page0.merge_page(page1)
     assert len(page0.annotations) == 1
+
+
+def test_merge_transformed_page_annotation_with_ap_but_no_normal_state():
+    """/AP present but missing /N (malformed, but must not raise) is a no-op
+    for the appearance transform -- /Rect still moves normally.
+    """
+    src_writer = PdfWriter()
+    src_page = src_writer.add_blank_page(width=200, height=200)
+    annotation = DictionaryObject()
+    annotation[NameObject("/Type")] = NameObject("/Annot")
+    annotation[NameObject("/Subtype")] = NameObject("/Square")
+    annotation[NameObject("/Rect")] = RectangleObject((20, 20, 120, 70))
+    annotation[NameObject("/AP")] = DictionaryObject()  # no /N key
+    src_writer.add_annotation(0, annotation)
+
+    dest_writer = PdfWriter()
+    dest_page = dest_writer.add_blank_page(width=200, height=200)
+    dest_page.merge_transformed_page(src_page, Transformation().translate(10, 5))
+
+    merged = dest_page["/Annots"][0].get_object()
+    assert tuple(round(float(x), 6) for x in merged["/Rect"]) == (30.0, 25.0, 130.0, 75.0)
+
+
+def test_merge_transformed_page_annotation_with_malformed_normal_state():
+    """/N resolving to something other than a stream or a state dict (a
+    malformed PDF) must be skipped, not raise.
+    """
+    src_writer = PdfWriter()
+    src_page = src_writer.add_blank_page(width=200, height=200)
+    annotation = DictionaryObject()
+    annotation[NameObject("/Type")] = NameObject("/Annot")
+    annotation[NameObject("/Subtype")] = NameObject("/Square")
+    annotation[NameObject("/Rect")] = RectangleObject((20, 20, 120, 70))
+    annotation[NameObject("/AP")] = DictionaryObject({NameObject("/N"): NumberObject(5)})
+    src_writer.add_annotation(0, annotation)
+
+    dest_writer = PdfWriter()
+    dest_page = dest_writer.add_blank_page(width=200, height=200)
+    dest_page.merge_transformed_page(src_page, Transformation().translate(10, 5))
+
+    merged = dest_page["/Annots"][0].get_object()
+    assert tuple(round(float(x), 6) for x in merged["/Rect"]) == (30.0, 25.0, 130.0, 75.0)
+    assert merged["/AP"]["/N"] == 5
 
 
 def test_merge_transformed_page_updates_annotation_appearance_matrix():
