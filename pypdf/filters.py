@@ -839,9 +839,10 @@ def decode_stream_data(stream: StreamObject) -> bytes:
     # If there is no data to decode, we should not try to decode it.
     if not data:
         return data
-    for filter_name, params in zip(filters, decode_parms):
+    for i, filter_name in enumerate(filters):
+        params = decode_parms[i] if i < len(decode_parms) else DictionaryObject()
         if isinstance(params, NullObject):
-            params = {}
+            params = DictionaryObject()
         if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.AHx, new_name=FT.ASCII_HEX_DECODE)
             data = ASCIIHexDecode.decode(data)
