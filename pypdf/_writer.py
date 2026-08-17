@@ -44,6 +44,7 @@ from typing import (
     IO,
     Any,
     Callable,
+    Literal,
     Optional,
     Union,
     cast,
@@ -215,7 +216,7 @@ class PdfWriter(PdfDocCommon):
         This is used for compression.
         """
 
-        self._id_translated: dict[int, dict[Union[int, str], Any]] = {}
+        self._id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]] = {}
         """List of already translated IDs.
            dict[id(pdf)][(idnum, generation)]
         """
