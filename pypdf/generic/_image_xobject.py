@@ -505,6 +505,60 @@ def _get_mode_and_invert_color(
     return mode, invert_color
 
 
+def _apply_alpha(
+    *,
+    img: Image.Image,
+    x_object: dict[str, Any],
+    obj_as_text: str,
+    image_format: str,
+    extension: str,
+    visited: set[int],
+) -> tuple[Image.Image, str, str]:
+    if ImageAttributes.S_MASK not in x_object:
+        return img, extension, image_format
+
+    s_mask = x_object[ImageAttributes.S_MASK]
+    if id(s_mask) in visited:
+        # A soft mask that refers back to an image already being
+        # converted would recurse until the interpreter runs out of
+        # stack. Such a chain cannot describe a real alpha channel, so
+        # drop the mask and keep the image we have.
+        logger_warning(
+            "Ignoring cyclic /SMask reference in %(obj_as_text)s",
+            source=__name__,
+            obj_as_text=obj_as_text,
+        )
+        return img, extension, image_format
+
+    alpha = _xobj_to_image(s_mask, visited=visited)[2]
+    if img.size != alpha.size:
+        logger_warning(
+            "Image and mask size not matching: %(image_size)s vs. %(alpha_size)s %(obj_as_text)s",
+            source=__name__,
+            image_size=img.size,
+            alpha_size=alpha.size,
+            obj_as_text=obj_as_text,
+        )
+    else:
+        # TODO: implement mask
+        if alpha.mode != "L":
+            alpha = alpha.convert("L")
+        if img.mode == "P":
+            img = img.convert("RGB")
+        elif img.mode == "1":
+            img = img.convert("L")
+        img.putalpha(alpha)
+
+    if "JPEG" in image_format:
+        image_format = "JPEG2000"
+        extension = ".jp2"
+    else:
+        image_format = "PNG"
+        extension = ".png"
+
+    return img, extension, image_format
+
+
 def _xobj_to_image(
         x_object: dict[str, Any],
         pillow_parameters: Union[dict[str, Any], None] = None,
@@ -530,50 +584,6 @@ def _xobj_to_image(
     if visited is None:
         visited = set()
     visited.add(id(x_object))
-
-    def _apply_alpha(
-        img: Image.Image,
-        x_object: dict[str, Any],
-        obj_as_text: str,
-        image_format: str,
-        extension: str,
-    ) -> tuple[Image.Image, str, str]:
-        if ImageAttributes.S_MASK in x_object:  # add alpha channel
-            s_mask = x_object[ImageAttributes.S_MASK]
-            if id(s_mask) in visited:
-                # A soft mask that refers back to an image already being
-                # converted would recurse until the interpreter runs out of
-                # stack. Such a chain cannot describe a real alpha channel, so
-                # drop the mask and keep the image we have.
-                logger_warning(
-                    "Ignoring cyclic /SMask reference in %(obj_as_text)s",
-                    source=__name__,
-                    obj_as_text=obj_as_text,
-                )
-                return img, extension, image_format
-            alpha = _xobj_to_image(s_mask, visited=visited)[2]
-            if img.size != alpha.size:
-                logger_warning(
-                    "image and mask size not matching: %(obj_as_text)s",
-                    source=__name__,
-                    obj_as_text=obj_as_text,
-                )
-            else:
-                # TODO: implement mask
-                if alpha.mode != "L":
-                    alpha = alpha.convert("L")
-                if img.mode == "P":
-                    img = img.convert("RGB")
-                elif img.mode == "1":
-                    img = img.convert("L")
-                img.putalpha(alpha)
-            if "JPEG" in image_format:
-                image_format = "JPEG2000"
-                extension = ".jp2"
-            else:
-                image_format = "PNG"
-                extension = ".png"
-        return img, extension, image_format
 
     # For error reporting
     obj_as_text = (
@@ -679,7 +689,8 @@ def _xobj_to_image(
 
     img = _apply_decode(img, x_object, lfilters, color_space, invert_color)
     img, extension, image_format = _apply_alpha(
-        img, x_object, obj_as_text, image_format, extension
+        img=img, x_object=x_object, obj_as_text=obj_as_text, image_format=image_format, extension=extension,
+        visited=visited,
     )
 
     if pillow_parameters is None:
