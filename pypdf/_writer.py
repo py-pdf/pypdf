@@ -2856,8 +2856,8 @@ class PdfWriter(PdfDocCommon):
         if source_id not in translateDict:
             return None
         return IndirectObject(translateDict[source_id], 0, self)
-    # This function maps an array of OCG indirect objects from the reader to the writer 
-    # using the provided "translateDict" dictionary. It ensures that only unique 
+    # This function maps an array of OCG indirect objects from the reader to the writer
+    # using the provided "translateDict" dictionary. It ensures that only unique
     # references are added to the mapped array.
     def _map_ocg_array(
         self, values: Any, translateDict: dict[int, int]
@@ -2929,8 +2929,8 @@ class PdfWriter(PdfDocCommon):
             return mapped_dict if len(mapped_dict) > 0 else None
         return None
 
-    # This function maps the RBGroups dictionary from the reader to the writer, 
-    # so radio button groups are preserved. It translates OCG references within 
+    # This function maps the RBGroups dictionary from the reader to the writer,
+    # so radio button groups are preserved. It translates OCG references within
     # the RBGroups to their writer equivalents.
     def _map_rbgroups(self, rbgroups: Any, translateDict: dict[int, int]) -> Optional[DictionaryObject]:
         """Map RBGroups dictionary, translating OCG references to their writer equivalents."""
@@ -2965,8 +2965,7 @@ class PdfWriter(PdfDocCommon):
                 # Copy scalar properties as-is
                 mapped[key] = value
         return mapped if len(mapped) > 0 else None
-    
-    # Goal here is to copy out the OCG properties from the reader to the writer, 
+    # Goal here is to copy out the OCG properties from the reader to the writer,
     # so the OCGs in the reader are preserved in the output PDF. This is done by mapping
     # the OCG references in the reader to the corresponding references in the writer,
     # and then merging the OCG properties into the writer's root object.
@@ -3052,30 +3051,9 @@ class PdfWriter(PdfDocCommon):
         target_oc_properties[NameObject("/D")] = target_default
 
         # Merge /RBGroups if present (radio-button groups define mutually exclusive OCG sets)
-        if "/RBGroups" in source_oc_properties:
-            mapped_rbgroups = self._map_rbgroups(source_oc_properties.get("/RBGroups"), translateDict)
-            if mapped_rbgroups is not None:
-                if "/RBGroups" not in target_oc_properties:
-                    target_oc_properties[NameObject("/RBGroups")] = mapped_rbgroups
-                else:
-                    # Merge into existing RBGroups
-                    existing_rbgroups = cast(DictionaryObject, target_oc_properties["/RBGroups"])
-                    for key, value in mapped_rbgroups.items():
-                        if key not in existing_rbgroups:
-                            existing_rbgroups[key] = value
-                        else:
-                            # Merge the arrays, avoiding duplicates
-                            existing_array = cast(ArrayObject, existing_rbgroups[key])
-                            for item in value:
-                                if all(
-                                    not isinstance(existing_item, IndirectObject)
-                                    or not isinstance(item, IndirectObject)
-                                    or existing_item.idnum != item.idnum
-                                    for existing_item in existing_array
-                                ):
-                                    existing_array.append(item)
-        
-        # Merge /Configs if present 
+        self._merge_rb_properties(source_oc_properties, target_oc_properties, translateDict)
+
+        # Merge /Configs if present
         if "/Configs" in source_oc_properties:
             source_configs = source_oc_properties.get("/Configs")
             if isinstance(source_configs, ArrayObject):
@@ -3103,6 +3081,32 @@ class PdfWriter(PdfDocCommon):
                                 for existing_config in existing_configs
                             ):
                                 existing_configs.append(mapped_config)
+
+    # Merge /RBGroups if present (radio-button groups define mutually exclusive OCG sets)
+    def _merge_rb_properties(self, source_oc_properties: DictionaryObject, target_oc_properties: DictionaryObject,
+                             translateDict: dict[int, int]) -> None:
+        if "/RBGroups" in source_oc_properties:
+                    mapped_rbgroups = self._map_rbgroups(source_oc_properties.get("/RBGroups"), translateDict)
+                    if mapped_rbgroups is not None:
+                        if "/RBGroups" not in target_oc_properties:
+                            target_oc_properties[NameObject("/RBGroups")] = mapped_rbgroups
+                        else:
+                            # Merge into existing RBGroups
+                            existing_rbgroups = cast(DictionaryObject, target_oc_properties["/RBGroups"])
+                            for key, value in mapped_rbgroups.items():
+                                if key not in existing_rbgroups:
+                                    existing_rbgroups[key] = value
+                                else:
+                                    # Merge the arrays, avoiding duplicates
+                                    existing_array = cast(ArrayObject, existing_rbgroups[key])
+                                    for item in value:
+                                        if all(
+                                            not isinstance(existing_item, IndirectObject)
+                                            or not isinstance(item, IndirectObject)
+                                            or existing_item.idnum != item.idnum
+                                            for existing_item in existing_array
+                                        ):
+                                            existing_array.append(item)
 
     def _merge__process_named_dests(self, dest: Any, reader: PdfDocCommon, srcpages: dict[int, PageObject]) -> None:
         arr: Any = dest.dest_array

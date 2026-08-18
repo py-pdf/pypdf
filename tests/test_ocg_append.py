@@ -1,49 +1,26 @@
 """Test the pypdf._writer module."""
 
-import re
 import shutil
-import subprocess
 from io import BytesIO
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import Any
-from unittest import mock
-
-import pytest
 
 from pypdf import (
-    ImageType,
-    ObjectDeletionFlag,
-    PageObject,
     PdfReader,
     PdfWriter,
-    Transformation,
 )
-from pypdf.annotations import Link
-from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
-    ByteStringObject,
-    ContentStream,
     DecodedStreamObject,
-    Destination,
     DictionaryObject,
-    Fit,
     IndirectObject,
     NameObject,
-    NullObject,
-    NumberObject,
-    RectangleObject,
-    StreamObject,
     TextStringObject,
 )
 
-from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, is_sublist
-from .test_images import image_similarity
+from . import SAMPLE_ROOT
 
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
-def test_OCG():
+def test_ocg():
     # Trying to get OCGs to append while preserving the OCGs in the original document
     reader = PdfReader(SAMPLE_ROOT / "MP_Saipan.pdf")
     writer = PdfWriter()
@@ -54,7 +31,7 @@ def test_OCG():
 
     # Trigger the append with the modified merge code that include the OCGs
     writer.append(readerAppend)
-    
+
     # 2. Add or change metadata values
     # Note: Keys must start with a forward slash (/)
     writer.add_metadata({
@@ -66,10 +43,8 @@ def test_OCG():
         "/Creator": "Test Creator",
         "/CustomField": "Test CustomField",
     })
-
     writer.write(SAMPLE_ROOT / "output-Saipan-Anchorage-test.pdf")
-    
-def test_OCG_2():
+def test_ocg_2():
     # Trying to get OCGs to append while preserving the OCGs in the original document
     reader = PdfReader(SAMPLE_ROOT / "MT_Elk_Creek.pdf")
     writer = PdfWriter()
