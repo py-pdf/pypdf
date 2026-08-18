@@ -67,6 +67,7 @@ from ._utils import (
     deprecation_no_replacement,
     logger_warning,
 )
+from .actions import Action
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import (
     CatalogAttributes,
@@ -793,6 +794,8 @@ class PdfWriter(PdfDocCommon):
             >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         """
+        deprecate_with_replacement("add_js", "add_action", "7.0.0")
+
         # Names / JavaScript preferred to be able to add multiple scripts
         if "/Names" not in self._root_object:
             self._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
@@ -816,6 +819,35 @@ class PdfWriter(PdfDocCommon):
             }
         )
         js_list.append(self._add_object(js))
+
+    def add_action(self, action: Action) -> None:
+        """
+        Add an action to the document-level JavaScript name tree.
+        Args:
+            action: The action to be done.
+        Example:
+            This will launch the print window when the PDF is opened.
+            >>> from pypdf import PdfWriter
+            >>> from pypdf.actions import JavaScript
+            >>> output = PdfWriter()
+            >>> output.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
+        """
+        if "/Names" not in self._root_object:
+            self._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
+
+        names = cast(DictionaryObject, self._root_object[CatalogAttributes.NAMES])
+        if "/JavaScript" not in names:
+            names[NameObject("/JavaScript")] = DictionaryObject(
+                {NameObject("/Names"): ArrayObject()}
+            )
+
+        js = cast(
+            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
+        )
+
+        # We need a name for parameterized JavaScript in the PDF file, but it can be anything
+        js.append(create_string_object(str(uuid.uuid4())))
+        js.append(self._add_object(action))
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> "EmbeddedFile":
         """
