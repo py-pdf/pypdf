@@ -823,10 +823,13 @@ class PdfWriter(PdfDocCommon):
     def add_action(self, action: Action) -> None:
         """
         Add an action to the document-level JavaScript name tree.
+
         Args:
             action: The action to be done.
+
         Example:
             This will launch the print window when the PDF is opened.
+
             >>> from pypdf import PdfWriter
             >>> from pypdf.actions import JavaScript
             >>> output = PdfWriter()
