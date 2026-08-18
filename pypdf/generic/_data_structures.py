@@ -826,26 +826,31 @@ class TreeObject(DictionaryObject):
             visited.add(prev_id)
             if "/Next" in prev:
                 prev = cast("TreeObject", prev["/Next"])
-            else:  # `before` not found; append at the end
-                prev[NameObject("/Next")] = cast("TreeObject", child_reference)
-                child_obj[NameObject("/Prev")] = prev.indirect_reference
-                child_obj[NameObject("/Parent")] = self.indirect_reference
-                if "/Next" in child_obj:
-                    del child_obj["/Next"]
-                self[NameObject("/Last")] = child_reference
-                inc_parent_counter(self, child_obj.get("/Count", 1))
-                return child_reference
+                continue
+            # `before` not found; append at the end
+            prev[NameObject("/Next")] = cast("TreeObject", child_reference)
+            child_obj[NameObject("/Prev")] = prev.indirect_reference
+            child_obj[NameObject("/Parent")] = self.indirect_reference
+            if "/Next" in child_obj:
+                del child_obj["/Next"]
+            self[NameObject("/Last")] = child_reference
+            inc_parent_counter(self, child_obj.get("/Count", 1))
+            return child_reference
         # Found the node to insert before (`prev`)
-        if "/Prev" in prev:
-            # Inserting in the middle: prev's predecessor points to new child
-            prev_prev = cast("DictionaryObject", prev["/Prev"])
-            prev_prev[NameObject("/Next")] = child_reference
-            child_obj[NameObject("/Prev")] = prev_prev.indirect_reference
-        else:
+        if "/Prev" not in prev:
             # Inserting at the first position
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
             self[NameObject("/First")] = child_reference
+            child_obj[NameObject("/Next")] = prev.indirect_reference
+            prev[NameObject("/Prev")] = child_reference
+            child_obj[NameObject("/Parent")] = self.indirect_reference
+            inc_parent_counter(self, child_obj.get("/Count", 1))
+            return child_reference
+        # Inserting in the middle: prev's predecessor points to new child
+        prev_prev = cast("DictionaryObject", prev["/Prev"])
+        prev_prev[NameObject("/Next")] = child_reference
+        child_obj[NameObject("/Prev")] = prev_prev.indirect_reference
         child_obj[NameObject("/Next")] = prev.indirect_reference
         prev[NameObject("/Prev")] = child_reference
         child_obj[NameObject("/Parent")] = self.indirect_reference
