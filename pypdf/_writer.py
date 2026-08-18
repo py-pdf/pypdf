@@ -2819,15 +2819,15 @@ class PdfWriter(PdfDocCommon):
                     ArrayObject,
                     cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
                 )
-            trslat = self._id_translated[id(reader)]
+            translateDict = self._id_translated[id(reader)]
             try:
                 for f in reader.root_object["/AcroForm"]["/Fields"]:  # type: ignore[index]
                     try:
-                        ind = IndirectObject(trslat[f.idnum], 0, self)
+                        ind = IndirectObject(translateDict[f.idnum], 0, self)
                         if ind not in arr:
                             arr.append(ind)
                     except KeyError:
-                        # for trslat[] which mean the field has not be copied
+                        # for translateDict[] which mean the field has not be copied
                         # through the page
                         pass
             except KeyError:  # for /Acroform or /Fields are not existing
@@ -2836,8 +2836,273 @@ class PdfWriter(PdfDocCommon):
                 NameObject("/Fields")
             ] = arr
 
+        # Preserve OCG Code
+        # Feed in reader with PDF pages to append
+        self._merge_oc_properties(reader)
+
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)
+
+    # Translate OCG indirect objects and arrays for the writer
+    def _translate_ocg_indirect_object(
+        self, obj: Any, translateDict: dict[int, int]
+    ) -> Optional[IndirectObject]:
+        if isinstance(obj, IndirectObject):
+            source_id = obj.idnum
+        elif isinstance(obj, DictionaryObject) and getattr(obj, "indirect_reference", None):
+            source_id = cast(IndirectObject, obj.indirect_reference).idnum
+        else:
+            return None
+        if source_id not in translateDict:
+            return None
+        return IndirectObject(translateDict[source_id], 0, self)
+    # This function maps an array of OCG indirect objects from the reader to the writer 
+    # using the provided "translateDict" dictionary. It ensures that only unique 
+    # references are added to the mapped array.
+    def _map_ocg_array(
+        self, values: Any, translateDict: dict[int, int]
+    ) -> ArrayObject:
+        mapped = ArrayObject()
+        if not isinstance(values, ArrayObject):
+            return mapped
+        for value in values:
+            mapped_ref = self._translate_ocg_indirect_object(value, translateDict)
+            if mapped_ref is None:
+                continue
+            if all(
+                not isinstance(existing, IndirectObject) or existing.idnum != mapped_ref.idnum
+                for existing in mapped
+            ):
+                mapped.append(mapped_ref)
+        return mapped
+    # This function recursively maps the order of OCGs from the reader to the writer,
+    # handling both indirect objects and arrays.
+    def _map_ocg_order(self, value: Any, translateDict: dict[int, int]) -> Optional[PdfObject]:
+        mapped_ref = self._translate_ocg_indirect_object(value, translateDict)
+        if mapped_ref is not None:
+            return mapped_ref
+        if isinstance(value, IndirectObject):
+            # Some PDFs store deep /Order branches as indirect arrays or dictionaries.
+            # Resolve and map recursively so nested layer trees are preserved.
+            try:
+                return self._map_ocg_order(value.get_object(), translateDict)
+            except Exception:
+                return None
+        if isinstance(value, ArrayObject):
+            mapped = ArrayObject()
+            for item in value:
+                mapped_item = self._map_ocg_order(item, translateDict)
+                if mapped_item is not None:
+                    mapped.append(mapped_item)
+            return mapped if len(mapped) > 0 else None
+        if isinstance(
+            value,
+            (
+                TextStringObject,
+                ByteStringObject,
+                NameObject,
+                NumberObject,
+                FloatObject,
+                BooleanObject,
+                NullObject,
+            ),
+        ):
+            return value
+        # Handle OCMDs (Optional Content Membership Dictionaries) which are DictionaryObjects
+        # These can appear in the Order hierarchy to define visibility logic
+        if isinstance(value, DictionaryObject):
+            mapped_dict = DictionaryObject()
+            for key, val in value.items():
+                if key == "/OCGs":
+                    # Map the OCG references array inside the OCMD
+                    mapped_array = self._map_ocg_array(val, translateDict)
+                    if len(mapped_array) > 0:
+                        mapped_dict[key] = mapped_array
+                elif isinstance(val, (ArrayObject, DictionaryObject, IndirectObject)):
+                    # Recursively map nested structures
+                    mapped_val = self._map_ocg_order(val, translateDict)
+                    if mapped_val is not None:
+                        mapped_dict[key] = mapped_val
+                else:
+                    # Copy scalar properties (names, strings, etc.) as-is
+                    mapped_dict[key] = val
+            return mapped_dict if len(mapped_dict) > 0 else None
+        return None
+
+    # This function maps the RBGroups dictionary from the reader to the writer, 
+    # so radio button groups are preserved. It translates OCG references within 
+    # the RBGroups to their writer equivalents.
+    def _map_rbgroups(self, rbgroups: Any, translateDict: dict[int, int]) -> Optional[DictionaryObject]:
+        """Map RBGroups dictionary, translating OCG references to their writer equivalents."""
+        if not isinstance(rbgroups, DictionaryObject):
+            return None
+        mapped = DictionaryObject()
+        for key, value in rbgroups.items():
+            if isinstance(value, ArrayObject):
+                # Each RBGroup entry is an array of OCG references
+                mapped_array = self._map_ocg_array(value, translateDict)
+                if len(mapped_array) > 0:
+                    mapped[key] = mapped_array
+        return mapped if len(mapped) > 0 else None
+
+    def _map_config_dict(self, config: Any, translateDict: dict[int, int]) -> Optional[DictionaryObject]:
+        """Map a configuration dictionary, translating OCG references."""
+        if not isinstance(config, DictionaryObject):
+            return None
+        mapped = DictionaryObject()
+        for key, value in config.items():
+            if key in ("/ON", "/OFF", "/Locked"):
+                # These are arrays of OCG references
+                mapped_array = self._map_ocg_array(value, translateDict)
+                if len(mapped_array) > 0:
+                    mapped[key] = mapped_array
+            elif key == "/Order":
+                # Order can be nested arrays and names
+                mapped_order = self._map_ocg_order(value, translateDict)
+                if mapped_order is not None:
+                    mapped[key] = mapped_order
+            elif isinstance(value, (TextStringObject, NameObject, NumberObject, FloatObject, BooleanObject)):
+                # Copy scalar properties as-is
+                mapped[key] = value
+        return mapped if len(mapped) > 0 else None
+    
+    # Goal here is to copy out the OCG properties from the reader to the writer, 
+    # so the OCGs in the reader are preserved in the output PDF. This is done by mapping
+    # the OCG references in the reader to the corresponding references in the writer,
+    # and then merging the OCG properties into the writer's root object.
+    def _merge_oc_properties(self, reader: PdfDocCommon) -> None:
+        # Get access to /Root via root_object
+        source_root = reader.root_object
+        # Using the "OC_PROPERTIES" defined in constants.py
+        # if no OCGs then skip this
+        if (
+            CatalogAttributes.OC_PROPERTIES not in source_root
+            or is_null_or_none(source_root[CatalogAttributes.OC_PROPERTIES])
+        ):
+            return
+        translateDict = self._id_translated.get(id(reader), {})
+        source_oc_properties = cast(
+            DictionaryObject, source_root[CatalogAttributes.OC_PROPERTIES].get_object()
+        )
+
+        # Get both OCGs and OCMDs from the reader and map them to the writer's references
+        source_ocgs = self._map_ocg_array(source_oc_properties.get("/OCGs"), translateDict)
+        if len(source_ocgs) == 0:
+            return
+        if CatalogAttributes.OC_PROPERTIES not in self._root_object or is_null_or_none(
+            self._root_object[CatalogAttributes.OC_PROPERTIES]
+        ):
+            target_oc_properties = DictionaryObject()
+            target_oc_properties[NameObject("/OCGs")] = source_ocgs
+            self._root_object[NameObject(CatalogAttributes.OC_PROPERTIES)] = self._add_object(
+                target_oc_properties
+            )
+        else:
+            target_oc_properties = cast(
+                DictionaryObject,
+                cast(IndirectObject, self._root_object[CatalogAttributes.OC_PROPERTIES]).get_object(),
+            )
+            if "/OCGs" not in target_oc_properties:
+                target_oc_properties[NameObject("/OCGs")] = ArrayObject()
+            target_ocgs = cast(ArrayObject, target_oc_properties["/OCGs"])
+            for source_ref in source_ocgs:
+                if all(
+                    not isinstance(existing_ref, IndirectObject)
+                    or existing_ref.idnum != source_ref.idnum
+                    for existing_ref in target_ocgs
+                ):
+                    target_ocgs.append(source_ref)
+        source_default = source_oc_properties.get("/D")
+        if not isinstance(source_default, DictionaryObject):
+            return
+        target_oc_properties = cast(
+            DictionaryObject,
+            self._root_object[CatalogAttributes.OC_PROPERTIES].get_object(),
+        )
+        target_default = cast(
+            DictionaryObject,
+            target_oc_properties.get("/D", DictionaryObject()),
+        )
+        for key in ("/ON", "/OFF", "/Locked"):
+            mapped = self._map_ocg_array(source_default.get(key), translateDict)
+            if len(mapped) == 0:
+                continue
+            existing = cast(ArrayObject, target_default.get(key, ArrayObject()))
+            for mapped_ref in mapped:
+                if all(
+                    not isinstance(existing_ref, IndirectObject)
+                    or existing_ref.idnum != mapped_ref.idnum
+                    for existing_ref in existing
+                ):
+                    existing.append(mapped_ref)
+            target_default[NameObject(key)] = existing
+        if "/Order" in source_default:
+            mapped_order = self._map_ocg_order(source_default["/Order"], translateDict)
+            if mapped_order is not None:
+                if "/Order" not in target_default:
+                    target_default[NameObject("/Order")] = ArrayObject()
+                target_order = cast(ArrayObject, target_default["/Order"])
+                if isinstance(mapped_order, ArrayObject):
+                    target_order.extend(mapped_order)
+                else:
+                    target_order.append(mapped_order)
+        for key in ("/BaseState", "/Intent", "/ListMode", "/Name", "/Creator"):
+            if key in source_default and key not in target_default:
+                target_default[NameObject(key)] = source_default[key]
+        target_oc_properties[NameObject("/D")] = target_default
+
+        # Merge /RBGroups if present (radio-button groups define mutually exclusive OCG sets)
+        if "/RBGroups" in source_oc_properties:
+            mapped_rbgroups = self._map_rbgroups(source_oc_properties.get("/RBGroups"), translateDict)
+            if mapped_rbgroups is not None:
+                if "/RBGroups" not in target_oc_properties:
+                    target_oc_properties[NameObject("/RBGroups")] = mapped_rbgroups
+                else:
+                    # Merge into existing RBGroups
+                    existing_rbgroups = cast(DictionaryObject, target_oc_properties["/RBGroups"])
+                    for key, value in mapped_rbgroups.items():
+                        if key not in existing_rbgroups:
+                            existing_rbgroups[key] = value
+                        else:
+                            # Merge the arrays, avoiding duplicates
+                            existing_array = cast(ArrayObject, existing_rbgroups[key])
+                            for item in value:
+                                if all(
+                                    not isinstance(existing_item, IndirectObject)
+                                    or not isinstance(item, IndirectObject)
+                                    or existing_item.idnum != item.idnum
+                                    for existing_item in existing_array
+                                ):
+                                    existing_array.append(item)
+        
+        # Merge /Configs if present 
+        if "/Configs" in source_oc_properties:
+            source_configs = source_oc_properties.get("/Configs")
+            if isinstance(source_configs, ArrayObject):
+                mapped_configs = ArrayObject()
+                for config in source_configs:
+                    if isinstance(config, IndirectObject):
+                        config_obj = config.get_object()
+                    else:
+                        config_obj = config
+                    if isinstance(config_obj, DictionaryObject):
+                        mapped_config = self._map_config_dict(config_obj, translateDict)
+                        if mapped_config is not None:
+                            mapped_configs.append(self._add_object(mapped_config))
+                if len(mapped_configs) > 0:
+                    if "/Configs" not in target_oc_properties:
+                        target_oc_properties[NameObject("/Configs")] = mapped_configs
+                    else:
+                        # Append new configs, avoiding duplicates
+                        existing_configs = cast(ArrayObject, target_oc_properties["/Configs"])
+                        for mapped_config in mapped_configs:
+                            if all(
+                                not isinstance(mapped_config, IndirectObject)
+                                or not isinstance(existing_config, IndirectObject)
+                                or mapped_config.idnum != existing_config.idnum
+                                for existing_config in existing_configs
+                            ):
+                                existing_configs.append(mapped_config)
 
     def _merge__process_named_dests(self, dest: Any, reader: PdfDocCommon, srcpages: dict[int, PageObject]) -> None:
         arr: Any = dest.dest_array
