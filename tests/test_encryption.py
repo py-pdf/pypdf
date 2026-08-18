@@ -643,3 +643,25 @@ def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_encrypt() -> None:
 def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_decrypt() -> None:
     """CryptRC4.decrypt falls back to pure-Python RC4 when ARC4 is rejected."""
     _assert_rc4_fallback("assert CryptRC4(key).decrypt(ct) == pt; assert CryptRC4(key).encrypt(pt) == ct")
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
+    """Ciphers constructed before the fallback latches warn only once between them."""
+    from cryptography.exceptions import UnsupportedAlgorithm  # noqa: PLC0415
+
+    class _RejectingCipher:
+        def encryptor(self) -> NoReturn:
+            raise UnsupportedAlgorithm("cipher RC4 in None mode is not supported")
+
+        def decryptor(self) -> NoReturn:
+            raise UnsupportedAlgorithm("cipher RC4 in None mode is not supported")
+
+    monkeypatch.setattr(CryptRC4, "_is_rc4_supported", True)  # restored on teardown
+    first, second = CryptRC4(b"mykey"), CryptRC4(b"mykey")
+    first.cipher = second.cipher = _RejectingCipher()
+
+    plaintext, ciphertext = b"Encrypted text", bytes.fromhex("1308e61c0d34c903eef093fd2478")
+    assert first.encrypt(plaintext) == ciphertext
+    assert second.decrypt(ciphertext) == plaintext  # already latched: no second warning
+    assert CryptRC4._is_rc4_supported is False
+    assert sum("RC4 is not supported" in message for message in caplog.messages) == 1
