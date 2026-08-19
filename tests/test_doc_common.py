@@ -209,20 +209,18 @@ def test_build_destination__short_array():
 
 
 def test_build_destination__non_array():
+    """A non-array destination degrades to a null destination rather than
+    raising TypeError while unpacking."""
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
 
-    # A destination that is not an array at all, such as the bare number that
-    # can appear as a value in a malformed name tree, degrades to a null
-    # destination instead of raising a TypeError on the unpacking.
     dest = writer._build_destination("title", NumberObject(5))
     assert isinstance(dest["/Page"], NullObject)
 
 
 def test_named_destinations__non_array_value():
-    # A name tree whose /Names array holds a bare number where a destination
-    # array is expected used to crash reader.named_destinations with a raw
-    # TypeError instead of skipping the malformed entry.
+    """A bare number where a destination array is expected is skipped instead
+    of crashing named_destinations with a TypeError."""
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
     names = DictionaryObject()
