@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786960020609,
+  "lastUpdate": 1787136369478,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -124483,6 +124483,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.19240196689117342",
             "extra": "mean: 931.802826400002 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1856f9e02e615506ed3f6a27d3203b87379211b2",
+          "message": "BUG: Type _id_translated to match what it holds (#3970)\n\n`_id_translated` is declared `dict[int, dict[int, int]]`, but each inner\nmapping also stores the source document under a `\"PreventGC\"` key so it\nis not garbage collected while the translation table is live. The two\nwrites needed `# type: ignore[index]` to get past that, and a runtime\nprotocol check on `PdfWriterProtocol` fails on the string key.\n\nWiden the declaration to `dict[int, dict[Union[int, str], Any]]`, which\nis what the dictionary actually contains, and drop the two ignores that\nare then unnecessary. Every reader looks entries up by idnum rather than\niterating, so behaviour is unchanged.\n\nUnder `make testtype` this accounts for 55 failures across test_generic\nand test_writer; they go to 0. mypy reports the same 11 pre-existing\nerrors before and after, none in these files.\n\n* Use Literal[\"PreventGC\"] instead of a broad str\n\nIt is the only string key the mapping ever holds, so the narrower type\nis the accurate one.",
+          "timestamp": "2026-08-19T12:43:40+02:00",
+          "tree_id": "fa13dc6d4c33e7b372bdc79cd6bd5e3ab3a57a66",
+          "url": "https://github.com/py-pdf/pypdf/commit/1856f9e02e615506ed3f6a27d3203b87379211b2"
+        },
+        "date": 1787136361679,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 19.70012782697426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030330506529014415",
+            "extra": "mean: 50.76109194737087 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 39.24789235339301,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005982634788961181",
+            "extra": "mean: 25.47907518181799 msec\nrounds: 33"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.7136803421141042,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06670434856315674",
+            "extra": "mean: 583.539400799998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4209746097932169,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010542381128152712",
+            "extra": "mean: 2.3754401731999963 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5520304796695817,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021429149492709503",
+            "extra": "mean: 1.8114941780000096 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7456543013237196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011013824075882183",
+            "extra": "mean: 572.8511076000018 msec\nrounds: 5"
           }
         ]
       }
