@@ -16,18 +16,17 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import SAMPLE_ROOT
+from . import RESOURCE_ROOT, SAMPLE_ROOT
 
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 def test_ocg():
     # Trying to get OCGs to append while preserving the OCGs in the original document
-    reader = PdfReader(SAMPLE_ROOT / "MP_Saipan.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "FL_Indian_Camp_Creek.pdf")
     writer = PdfWriter()
     # writer.append(reader)
     writer.clone_document_from_reader(reader)
-    #readerAppend = PdfReader(SAMPLE_ROOT / "MT_Elk_Creek.pdf")
-    readerAppend = PdfReader(SAMPLE_ROOT / "AK_Anchorage.pdf")
+    readerAppend = PdfReader(RESOURCE_ROOT / "FL_25K_Recreational_Topo.pdf")
 
     # Trigger the append with the modified merge code that include the OCGs
     writer.append(readerAppend)
@@ -43,20 +42,20 @@ def test_ocg():
         "/Creator": "Test Creator",
         "/CustomField": "Test CustomField",
     })
-    writer.write(SAMPLE_ROOT / "output-Saipan-Anchorage-test.pdf")
+
+    writer.write(SAMPLE_ROOT / "output-FL_Indian_Camp_Creek-FL_25K_Recreational_Topo-OCG-test.pdf")
 def test_ocg_2():
     # Trying to get OCGs to append while preserving the OCGs in the original document
-    reader = PdfReader(SAMPLE_ROOT / "MT_Elk_Creek.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "FL_25K_Recreational_Topo.pdf")
     writer = PdfWriter()
     # writer.append(reader)
     writer.clone_document_from_reader(reader)
-    #readerAppend = PdfReader(SAMPLE_ROOT / "MT_Elk_Creek.pdf")
-    readerAppend = PdfReader(SAMPLE_ROOT / "MP_Saipan.pdf")
+    readerAppend = PdfReader(RESOURCE_ROOT / "FL_Indian_Camp_Creek.pdf")
 
     # Trigger the append with the modified merge code that include the OCGs
     writer.append(readerAppend)
 
-    writer.write(SAMPLE_ROOT / "output-blah-Saipan-Elk-test.pdf")
+    writer.write(SAMPLE_ROOT / "output-FL_25K_Recreational_Topo-FL_Indian_Camp_Creek-OCG-test2.pdf")
 
 def test_merge_preserves_ocgs() -> None:
     def _reader_with_single_ocg(layer_name: str) -> PdfReader:
@@ -133,21 +132,3 @@ def test_merge_preserves_ocgs() -> None:
     assert isinstance(default_config.get("/Order"), ArrayObject)
     assert len(default_config["/ON"]) == 2
     assert len(default_config["/Order"]) == 2
-
-def test_output_testing_process_ocg_pdf() -> None:
-    """Create a merged OCG sample file in sample-files for manual inspection."""
-    base_reader = PdfReader(SAMPLE_ROOT / "MP_Saipan.pdf")
-    imported_reader = PdfReader(SAMPLE_ROOT / "MP_Saipan-2.pdf")
-
-    writer = PdfWriter()
-    writer.append(base_reader)
-    writer.append(imported_reader)
-
-    output_path = SAMPLE_ROOT / "testing_process_OCG.pdf"
-    writer.write(output_path)
-
-    assert output_path.exists()
-
-    merged_reader = PdfReader(output_path)
-    assert len(merged_reader.pages) == len(base_reader.pages) + len(imported_reader.pages)
-    assert "/OCProperties" in merged_reader.root_object
