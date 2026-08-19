@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787139149659,
+  "lastUpdate": 1787139160659,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -124879,6 +124879,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028359318890056086",
             "extra": "mean: 854.2025783999975 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bb62d06b993cb3d3e90c031c35f399f48b3b3c3e",
+          "message": "DEV: Detect minor version bumps in make_release.py (#3969)\n\nCloses #3963.\n\n`version_bump` always increased the patch version -- \"just assume a patch\nversion change\" -- so every release with an enhancement had to be corrected\nby hand at the interactive prompt.\n\nThe formatted changes already carry the answer: `get_formatted_changes`\nemits an `### New Features (ENH)` or `### Deprecations (DEP)` section\nexactly when the release warrants a minor bump. Pass the changes into\n`version_bump` and key off those two section headers.\n\nChecked against the changelog: this rule holds for all 39 releases\nrecorded there, and the function reproduces all 38 version transitions\nbetween them. Major bumps stay manual, and the interactive prompt still\nlets the release manager override the suggestion.",
+          "timestamp": "2026-08-19T13:29:55+02:00",
+          "tree_id": "6748e1df9153818dd9bcd46eb63b89927a61a1f7",
+          "url": "https://github.com/py-pdf/pypdf/commit/bb62d06b993cb3d3e90c031c35f399f48b3b3c3e"
+        },
+        "date": 1787139152806,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.42500405880734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005548492045113019",
+            "extra": "mean: 69.32407061538672 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.285213429543305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06642842205858335",
+            "extra": "mean: 46.98097124137956 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.287986984600951,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0852443399013731",
+            "extra": "mean: 776.4053611999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3887828449466402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02426235905851562",
+            "extra": "mean: 2.572129951200003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5364952252553724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04673737634112237",
+            "extra": "mean: 1.8639494872 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7472128072543622,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035692556013819936",
+            "extra": "mean: 572.3401270000068 msec\nrounds: 5"
           }
         ]
       }
