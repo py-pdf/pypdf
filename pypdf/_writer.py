@@ -3014,7 +3014,7 @@ class PdfWriter(PdfDocCommon):
 
     def _insert_filtered_annotations(
         self,
-        annots: Union[IndirectObject, list[DictionaryObject], None],
+        annots: Union[IndirectObject, list[PdfObject], None],
         page: PageObject,
         pages: dict[int, PageObject],
         reader: PdfReader,
