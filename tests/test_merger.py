@@ -534,3 +534,80 @@ def test_merge__null_destination():
 
     writer.merge(position=1, fileobj=data)
     assert writer.pages[0].annotations is None
+
+
+@pytest.mark.enable_socket
+def test_merge_direct_link_preserved(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a direct link from p1 to p2
+    merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
+    for page in merger.pages:
+        # we are deliberately merging into a blank page first, to
+        # verify that links are preserved even when we are not adding
+        # the source page directly
+        new_page = page.create_blank_page(
+            writer, width = page.mediabox.width, height = page.mediabox.height
+        )
+        new_page.merge_page(page)
+        writer.add_page(new_page)
+
+    writer.write(pdf_file_path)
+
+    check = PdfReader(pdf_file_path)
+    page3 = check.pages[2]
+    link = page3["/Annots"][0].get_object()
+    assert link["/Subtype"] == "/Link"
+    destination = link["/Dest"][0]  # indirect reference of page referred to
+
+    page4 = check.flattened_pages[3]
+    assert destination == page4.indirect_reference, "Link from page 3 to page 4 is broken"
+
+
+@pytest.mark.enable_socket
+def test_merged_named_reference_preserved(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a named reference from from p3 to p5
+    merger = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
+    for page in merger.pages:
+        # we are deliberately merging into a blank page first, to
+        # verify that links are preserved even when we are not adding
+        # the source page directly
+        new_page = page.create_blank_page(
+            writer, width = page.mediabox.width, height = page.mediabox.height
+        )
+        new_page.merge_page(page)
+        writer.add_page(new_page)
+
+    writer.write(pdf_file_path)
+
+    check = PdfReader(pdf_file_path)
+    page5 = check.pages[4]
+    page7 = check.flattened_pages[6]
+    for link in page5["/Annots"]:
+        action = link["/A"]
+        assert action.get("/S") == "/GoTo"
+        destination = str(action["/D"])
+        assert destination in check.named_destinations
+        referenced_page = check.named_destinations[destination].page
+
+        assert referenced_page == page7.indirect_reference, "Link from page 5 to page 7 is broken"
+
+
+@pytest.mark.enable_socket
+def test_copy_to_writer():
+    # this PDF has a named reference from from p3 to p5. test verifies
+    # that merging in the pages of a file with a named reference doesn't
+    # crash
+    reader = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
+
+    writer = PdfWriter()
+    for page in reader.pages:
+        writer.add_page(page)
+
+    assert len(writer.pages) == len(reader.pages)
