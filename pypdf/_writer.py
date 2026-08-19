@@ -2071,7 +2071,7 @@ class PdfWriter(PdfDocCommon):
                 text_filters=text_filters
             )
             page.replace_contents(content)
-        return [], []  # type: ignore[return-value]
+        return None
 
     def _remove_objects_from_page__clean(
             self,
