@@ -1237,6 +1237,12 @@ def test_reset_translation():
     assert len(writer.pages) == nb + 2
 
 
+def test_reset_translation_invalid_parameter():
+    writer = PdfWriter()
+    with pytest.raises(Exception, match=r"^invalid parameter not-a-reader$"):
+        writer.reset_translation("not-a-reader")
+
+
 def test_threads_empty():
     writer = PdfWriter()
     thr = writer.threads

@@ -3220,7 +3220,7 @@ class PdfWriter(PdfDocCommon):
             except Exception:
                 pass
         else:
-            raise Exception("invalid parameter {reader}")
+            raise Exception(f"invalid parameter {reader}")
 
     def set_page_label(
         self,
