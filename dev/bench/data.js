@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787144870725,
+  "lastUpdate": 1787144878695,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -105737,6 +105737,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007566546135045622",
             "extra": "mean: 466.332630200003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b45aeba7b1ffd93d3a2414d1ce8c5115370be965",
+          "message": "BUG: Default decode_parms to a DictionaryObject (#3971)\n\n`decode_stream_data` defaults the per-filter decode parameters to\n`({},) * len(filters)`. The decoders take\n`Optional[Union[DictionaryObject, IndirectObject]]`, and a plain `{}` is\nnot a `DictionaryObject`, so any stream without an explicit\n`/DecodeParms` hands them the wrong type. A runtime protocol check\nrejects it; static checking never noticed because the value flows\nthrough `stream.get`, which returns `Any`.\n\n`DictionaryObject()` is an empty mapping and satisfies the annotation, so\nthe substitution is behaviour-neutral. The same pattern is already used a\nfew lines above in `decode`.\n\nAccounts for 5 of the failures in test_generic under `make testtype`;\nthey go to 0. Added a test that fails on main.",
+          "timestamp": "2026-08-19T15:04:41+02:00",
+          "tree_id": "9869b2d7dd351e2baea7e19b5d2788b9c4873ce4",
+          "url": "https://github.com/py-pdf/pypdf/commit/b45aeba7b1ffd93d3a2414d1ce8c5115370be965"
+        },
+        "date": 1787144867926,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.734025745512256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017228364134887913",
+            "extra": "mean: 365.7610034000015 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.287518533942688,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022836538114519513",
+            "extra": "mean: 54.68210452631626 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.245050691554121,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025985631493623335",
+            "extra": "mean: 4.080788320400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.15681133403029,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010180476355059719",
+            "extra": "mean: 58.285888941176054 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07338537380316343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040583155730013205",
+            "extra": "mean: 13.626693551800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5068893245488584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037386037423205896",
+            "extra": "mean: 663.6187434000078 msec\nrounds: 5"
           }
         ]
       }
