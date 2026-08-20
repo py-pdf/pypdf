@@ -1608,7 +1608,7 @@ class PdfReader(PdfDocCommon):
     def _get_named_destinations(
         self,
         *,
-        tree: Union[TreeObject, None] = None,
+        tree: Union[TreeObject, DictionaryObject, None] = None,
         retval: Optional[dict[str, Destination]] = None,
         visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
