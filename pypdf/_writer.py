@@ -34,7 +34,7 @@ import re
 import struct
 import sys
 import uuid
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
@@ -2285,7 +2285,7 @@ class PdfWriter(PdfDocCommon):
         page_number: int,
         uri: str,
         rect: RectangleObject,
-        border: Optional[ArrayObject] = None,
+        border: Optional[Sequence[Any]] = None,
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
