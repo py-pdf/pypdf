@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787222534096,
+  "lastUpdate": 1787222557968,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -105803,6 +105803,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0037386037423205896",
             "extra": "mean: 663.6187434000078 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f98acfdc9702499c837575ba0c9fea69063c17ca",
+          "message": "BUG: Collect the fonts declared in the AcroForm /DR dictionary (#3983)\n\n`_get_fonts_walk` iterates the /DR font dictionary directly:\n\n    for f in cast(DictionaryObject, cast(DictionaryObject, obj[\"/DR\"])[\"/Font\"]):\n        process_font(f)\n\nIterating a DictionaryObject yields its keys, so `process_font` receives\nthe font *names* rather than the font dictionaries. `/BaseFont` is never\nfound on a name, so every font that a form declares only in its default\nresources is silently dropped from `_get_fonts()`. The /Resources branch\na few lines below already uses `.values()`.\n\nAlso widened the `process_font` annotation from DictionaryObject to\nPdfObject. The entries can be indirect references, which is why the\nfunction starts by resolving its argument with `get_object()`, and a\nruntime protocol check rejects them as declared.\n\nAdded an offline test that builds an AcroForm carrying one /DR font; it\nfails on main because the collected set comes back empty.",
+          "timestamp": "2026-08-20T12:39:38+02:00",
+          "tree_id": "0833a79d94f41767ae843b9bdcf5e9d7a1bb72fc",
+          "url": "https://github.com/py-pdf/pypdf/commit/f98acfdc9702499c837575ba0c9fea69063c17ca"
+        },
+        "date": 1787222549486,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9477733532650303,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019437243053255712",
+            "extra": "mean: 339.2391069999917 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.034825164378883,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001973925496102115",
+            "extra": "mean: 52.53528684210694 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26268212151878156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02713691776915125",
+            "extra": "mean: 3.8068826085999943 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.226819590290997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013733836311241362",
+            "extra": "mean: 58.04902029412313 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07155803152351047,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06120687275181639",
+            "extra": "mean: 13.974671727400004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6674850377526504,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003746250649418617",
+            "extra": "mean: 599.7055309999951 msec\nrounds: 5"
           }
         ]
       }
