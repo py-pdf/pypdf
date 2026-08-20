@@ -1069,6 +1069,18 @@ def test_deprecate_inline_image_filters():
     assert decode_stream_data(stream).startswith(b"II*")
 
 
+def test_decode_stream_data__default_parms_are_dictionary_objects():
+    """A stream without /DecodeParms hands the decoders a DictionaryObject."""
+    stream = DecodedStreamObject()
+    stream[NameObject("/Filter")] = NameObject("/FlateDecode")
+    stream._data = zlib.compress(b"hello")
+
+    with mock.patch.object(FlateDecode, "decode", return_value=b"hello") as decode:
+        assert decode_stream_data(stream) == b"hello"
+
+    assert isinstance(decode.call_args.args[1], DictionaryObject)
+
+
 def test_flatedecode__columns_is_zero():
     data = b"Hello World!"
     parameters = DictionaryObject({
