@@ -2527,7 +2527,7 @@ def _get_fonts_walk(
     """
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
 
-    def process_font(f: DictionaryObject) -> None:
+    def process_font(f: PdfObject) -> None:
         nonlocal fnt, emb
         f = cast(DictionaryObject, f.get_object())  # to be sure
         if "/BaseFont" in f:
@@ -2568,7 +2568,9 @@ def _get_fonts_walk(
                 emb.add("(" + cast(str, f["/Subtype"]) + ")")
 
     if "/DR" in obj and "/Font" in cast(DictionaryObject, obj["/DR"]):
-        for f in cast(DictionaryObject, cast(DictionaryObject, obj["/DR"])["/Font"]):
+        for f in cast(
+            DictionaryObject, cast(DictionaryObject, obj["/DR"])["/Font"]
+        ).values():
             process_font(f)
     if "/Resources" in obj:
         if "/Font" in cast(DictionaryObject, obj["/Resources"]):
