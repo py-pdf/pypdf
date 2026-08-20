@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787226996360,
+  "lastUpdate": 1787228253592,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125605,6 +125605,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002816719057439743",
             "extra": "mean: 791.3915275999898 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "136870655+BashfulHippo@users.noreply.github.com",
+            "name": "BashfulHippo",
+            "username": "BashfulHippo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7595da3201604309ab8d96afdc6f2e8bc661b3cd",
+          "message": "BUG: Update annotation appearance stream matrix on page transform (#3968)\n\nmerge_transformed_page() already repositions and resizes an\nannotation's /Rect under the merge transform, but left its /AP /N\nappearance stream's /Matrix untouched.\n\nPer the appearance-stream algorithm (PDF 2.0, 12.5.5), a viewer fits\nthe appearance's /BBox (as mapped by /Matrix) into /Rect using an\naxis-aligned scale only, never a rotation. With /Matrix left alone, a\nrotating or shearing merge transform stretches the original,\nunrotated appearance content into the new, differently-shaped /Rect\ninstead of rotating it -- verified by rendering a Square annotation\nwith a hand-built appearance stream through a 90-degree rotation:\nbefore this change, a square marker in the appearance became a thin\nstretched rectangle; after, it stays a square.\n\nComposes the merge transform into the appearance's own /Matrix,\nhandling both single-stream appearances and the multi-state /AP /N\ndict used by checkbox/radio-button widgets. Annotations without an\n/AP are unaffected.\n\n* Address review feedback on #3968\n\n- Move the annotation appearance-transform logic out of _page.py and\n  into pypdf/generic/_appearance_stream.py as\n  transform_annotation_appearance(), the module already dedicated to\n  appearance-stream handling. _page.py calls it via a local import\n  (matching the existing circular-import pattern already used by\n  replace_contents() for the same reason: this module depends on\n  _page.py, so _page.py cannot import it back at module load time).\n- Replace the try/except KeyError with explicit checks (no /AP, no\n  /N, /N resolves to None) -- avoids silently swallowing an\n  unrelated KeyError from deeper in the block, and is easier to\n  follow.\n- Drop the isinstance(state_ap, IndirectObject) check before calling\n  .get_object() -- PdfObject.get_object() already returns self when\n  the object is not an indirect reference, so the check was\n  unnecessary.\n- Add tests for two of the three newly-explicit branches (missing\n  /N key, /N resolving to a non-stream/non-dict value): both were\n  previously implicit in the try/except and untested. The third\n  (/N resolving to None) is a real but PdfReader-specific edge case\n  -- confirmed empirically that it cannot occur via PdfWriter (an\n  out-of-range reference raises IndexError instead) -- left as an\n  unforced defensive guard rather than an artificially constructed\n  test.\n\n* Address second round of review feedback on #3968\n\n- Rename the transform parameter from trsf to transformation for\n  readability, per review.\n- Drop the redundant ap[\"/N\"].get_object() call:\n  DictionaryObject.__getitem__ already resolves indirect references\n  and returns a plain PdfObject (never None), so the None guard\n  added for the previous round was genuinely dead code, exactly as\n  flagged. Removing the redundant resolution removes the need for\n  the guard entirely rather than working around the type checker.\n- Move the six annotation-appearance tests from test_page.py to\n  test_appearance_stream.py, matching where the function they test\n  now lives.",
+          "timestamp": "2026-08-20T14:15:29+02:00",
+          "tree_id": "399ce80aa28e480d95fb09213ff3ff28c6b2ce28",
+          "url": "https://github.com/py-pdf/pypdf/commit/7595da3201604309ab8d96afdc6f2e8bc661b3cd"
+        },
+        "date": 1787228247595,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 22.533056914593793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01648461048048918",
+            "extra": "mean: 44.37924262962912 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 34.92537770456579,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011042565281799348",
+            "extra": "mean: 28.63247488571241 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.6766204403096627,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032818106688940994",
+            "extra": "mean: 596.4379151999992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.1039509180843008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05319617861074816",
+            "extra": "mean: 905.8373733999986 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.58497460041104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016200596338637283",
+            "extra": "mean: 1.7094759315999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.0020866163149296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004001163832515884",
+            "extra": "mean: 499.47888959999887 msec\nrounds: 5"
           }
         ]
       }
