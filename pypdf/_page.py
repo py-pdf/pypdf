@@ -1398,6 +1398,14 @@ class PageObject(DictionaryObject):
                         + trsf.apply_on((q[4], q[5]), True)
                         + trsf.apply_on((q[6], q[7]), True)
                     )
+                # The /Rect update above only repositions and resizes the
+                # annotation's bounding box; it does not touch the
+                # appearance stream's own coordinate system. See
+                # transform_annotation_appearance for why that matters.
+                from pypdf.generic._appearance_stream import (  # noqa: PLC0415
+                    transform_annotation_appearance,
+                )
+                transform_annotation_appearance(aa, trsf)
                 try:
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
                 except KeyError:
