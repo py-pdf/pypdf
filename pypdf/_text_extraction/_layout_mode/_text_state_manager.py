@@ -199,5 +199,5 @@ class TextStateManager:
         """Current effective transform accounting for cm, tm, and trm transforms"""
         eff_transform = [*self.transform_stack.maps[0].values()]
         for transform in self.transform_stack.maps[1:]:
-            eff_transform = mult(eff_transform, transform)  # type: ignore[arg-type]  # dict has int keys 0-5
+            eff_transform = mult(eff_transform, transform)
         return eff_transform
