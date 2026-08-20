@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787224171992,
+  "lastUpdate": 1787226987688,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125473,6 +125473,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030380774265629292",
             "extra": "mean: 857.2453550000091 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a548e4126ddd96711e05c6017d97f393d45e3765",
+          "message": "STY: Type the annotation list as holding PdfObject (#3986)\n\n`_insert_filtered_annotations` declares its `annots` argument as holding\nDictionaryObject entries, but a page's /Annots array holds indirect\nreferences. The function resolves each one itself:\n\n    for an in annots:\n        ano = cast(\"DictionaryObject\", an.get_object())\n\nso an IndirectObject is what it expects, and a runtime protocol check\nrejects the array the reader produces.\n\nType the elements as PdfObject, the common base that both the resolved\ndictionaries and the references share, and which provides the\n`get_object` call above.\n\nUnder `make testtype` this is 4 failures in test_writer; they go to 0.\nmypy reports the same 11 pre-existing errors before and after.",
+          "timestamp": "2026-08-20T13:53:36+02:00",
+          "tree_id": "1b94f6fd9e131bc3646b203d5e83c7fd2fcbb700",
+          "url": "https://github.com/py-pdf/pypdf/commit/a548e4126ddd96711e05c6017d97f393d45e3765"
+        },
+        "date": 1787226977597,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.882777863607329,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016454874140918653",
+            "extra": "mean: 72.03169350000375 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 24.412049139876178,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009664060016598214",
+            "extra": "mean: 40.96337813635387 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1817554126215766,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07024350026513776",
+            "extra": "mean: 846.1987898000189 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.474294506441259,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020001985577628213",
+            "extra": "mean: 2.1083946502 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3960288525534237,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04641172709619821",
+            "extra": "mean: 2.525068548799993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2635970504165566,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002816719057439743",
+            "extra": "mean: 791.3915275999898 msec\nrounds: 5"
           }
         ]
       }
