@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787223080516,
+  "lastUpdate": 1787224150671,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -105935,6 +105935,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018363836086122218",
             "extra": "mean: 463.0152399999986 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ae37f1d9e7e50c07b153185b77c82e4b81962aea",
+          "message": "STY: Return None from remove_objects_from_page (#3985)\n\n`remove_objects_from_page` is declared `-> None` and documented as\nreturning nothing, but its last line is:\n\n    return [], []  # type: ignore[return-value]\n\nThe tuple is never used. All four internal callers discard it, as do the\ntests, and every other exit from the function returns None or delegates\nto `_remove_annots_from_page`, which is itself `-> None`. A runtime\nprotocol check rejects it, since the value does not match the signature.\n\nReturn None instead and drop the ignore.",
+          "timestamp": "2026-08-20T13:06:02+02:00",
+          "tree_id": "e825c4ad7c9c9e74f72037ecb60a9c4d2c42bc6c",
+          "url": "https://github.com/py-pdf/pypdf/commit/ae37f1d9e7e50c07b153185b77c82e4b81962aea"
+        },
+        "date": 1787224141452,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.780632852806447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01313955379804095",
+            "extra": "mean: 359.63036219999935 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.48725512859437,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017968356488045258",
+            "extra": "mean: 54.091318210527255 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2496762947712161,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01811507817500266",
+            "extra": "mean: 4.005185998599996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.622393536754746,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008509342402909163",
+            "extra": "mean: 56.74598049999938 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07378658225904737,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013966870980665754",
+            "extra": "mean: 13.552599529400004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5027360235135245,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002500748789557315",
+            "extra": "mean: 665.4528701999936 msec\nrounds: 5"
           }
         ]
       }
