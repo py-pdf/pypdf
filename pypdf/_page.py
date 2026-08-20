@@ -619,7 +619,7 @@ class PageObject(DictionaryObject):
             else:
                 raise PageSizeNotDefinedError
         page.__setitem__(
-            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore[arg-type]
+            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))
         )
 
         return page
