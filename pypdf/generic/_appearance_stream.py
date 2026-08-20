@@ -805,9 +805,9 @@ class TextStreamAppearance(BaseStreamAppearance):
         return new_appearance_stream
 
 
-def transform_annotation_appearance(annotation_obj: DictionaryObject, trsf: Transformation) -> None:
+def transform_annotation_appearance(annotation_obj: DictionaryObject, transformation: Transformation) -> None:
     """
-    Compose `trsf` into an annotation's /AP /N appearance stream(s), in place.
+    Compose `transformation` into an annotation's /AP /N appearance stream(s), in place.
 
     Repositioning/resizing an annotation's /Rect alone is not enough: per
     the appearance-stream algorithm (PDF 2.0, 12.5.5), a viewer fits the
@@ -826,9 +826,8 @@ def transform_annotation_appearance(annotation_obj: DictionaryObject, trsf: Tran
     ap = cast(DictionaryObject, annotation_obj["/AP"])
     if "/N" not in ap:
         return
-    normal_ap = ap["/N"].get_object()
-    if normal_ap is None:
-        return
+    # __getitem__ already resolves indirect references, so this is never None.
+    normal_ap = ap["/N"]
     # /N is a single appearance stream for most annotations, but for
     # widgets with multiple states (checkboxes, radio buttons) it is
     # instead a dict of named sub-streams, one per state. Only a stream
@@ -846,5 +845,5 @@ def transform_annotation_appearance(annotation_obj: DictionaryObject, trsf: Tran
             continue
         old_matrix = tuple(state_obj.get("/Matrix", (1, 0, 0, 1, 0, 0)))
         state_obj[NameObject("/Matrix")] = ArrayObject(
-            FloatObject(x) for x in Transformation(old_matrix).transform(trsf).ctm
+            FloatObject(x) for x in Transformation(old_matrix).transform(transformation).ctm
         )
