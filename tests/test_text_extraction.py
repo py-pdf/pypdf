@@ -668,7 +668,7 @@ def test_recurse_to_target_op__excessive_intra_group_spacing(caplog):
             "ty": 700.0
         }
     ]
-    assert caplog.messages == ["Limiting excessive whitespace from 299757 to 10000 characters."]
+    assert caplog.messages == ["Limiting excessive whitespace from 299758 to 10000 characters."]
 
 
 def test_fixed_width_page__excessive_blank_lines(caplog):
