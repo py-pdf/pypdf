@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787236914833,
+  "lastUpdate": 1787236950086,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125935,6 +125935,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0016553836075752114",
             "extra": "mean: 636.4481047999789 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "msylwester@gmail.com",
+            "name": "Michał Sylwester",
+            "username": "msylw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c646ef24857f152afdf84f8b5f8a9d4097bae258",
+          "message": "ROB: Improve RC4 fallback when cryptography can't provide it (#3853)\n\nCloses #3398.\n\n---------\n\nCo-authored-by: Michał Sylwester <michal.sylwester@contact-software.com>",
+          "timestamp": "2026-08-20T16:39:15+02:00",
+          "tree_id": "72082106c766a142fccb780018427a42205a5b36",
+          "url": "https://github.com/py-pdf/pypdf/commit/c646ef24857f152afdf84f8b5f8a9d4097bae258"
+        },
+        "date": 1787236922022,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.16345635767321,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018096701363871447",
+            "extra": "mean: 70.60423492308351 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.540299937561034,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014398092417709455",
+            "extra": "mean: 53.936559999986144 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0458139783895373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02819504114933782",
+            "extra": "mean: 956.1929948000056 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4650156013752669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03263559154075572",
+            "extra": "mean: 2.1504654833999894 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.37877274543934436,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007496758998580315",
+            "extra": "mean: 2.640105477599991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2351176957312715,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028827219831381548",
+            "extra": "mean: 809.6394403999966 msec\nrounds: 5"
           }
         ]
       }
