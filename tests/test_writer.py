@@ -1239,7 +1239,7 @@ def test_reset_translation():
 
 def test_reset_translation_invalid_parameter():
     writer = PdfWriter()
-    with pytest.raises(Exception, match=r"^invalid parameter not-a-reader$"):
+    with pytest.raises(TypeError, match=r"^Invalid parameter not-a-reader$"):
         writer.reset_translation("not-a-reader")
 
 
