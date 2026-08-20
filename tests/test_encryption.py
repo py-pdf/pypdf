@@ -644,6 +644,7 @@ def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_decrypt() -> None:
     """CryptRC4.decrypt falls back to pure-Python RC4 when ARC4 is rejected."""
     _assert_rc4_fallback("assert CryptRC4(key).decrypt(ct) == pt; assert CryptRC4(key).encrypt(pt) == ct")
 
+
 @pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
 def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
     """Ciphers constructed before the fallback latches warn only once between them."""
