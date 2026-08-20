@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787228283344,
+  "lastUpdate": 1787233737289,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -106133,6 +106133,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012688489170149744",
             "extra": "mean: 474.9859717999982 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matthew@epoq.co.uk",
+            "name": "matthewkogan",
+            "username": "matthewkogan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "31b32980f85a68c821349b006d7258044717a75e",
+          "message": "BUG: Do not scale the text leading by the font size (#3987)\n\nThe TL operand is a distance in unscaled text space units (PDF 32000-1,\n9.3.5) and T* already applies the text matrix to it, so scaling it by the\nfont size moved the text matrix by TL * font size per line. This showed up\nin the text matrix reported to visitor_text: with 14 TL and a 12 pt font,\nthe lines were 168 units apart instead of 14.\n\nThe scaling was added for #2262, where line breaks were missing. The\nactual cause there is in crlf_space_check: the vertical delta is computed\nfrom text matrix x CTM, but was compared against a threshold scaled by the\ntext matrix alone, so any page whose CTM scales the text down lost its line\nbreaks. Take the scaling factors from the combined matrices instead, which\nfixes #2262 without distorting the leading -- and fixes it for text\npositioned by Tm or Td as well, which the TL scaling never covered.\n\nCloses #3982.\n\nCo-authored-by: matthewkogan <3594657+matthewkogan@users.noreply.github.com>",
+          "timestamp": "2026-08-20T15:45:56+02:00",
+          "tree_id": "02093c2786e84641634d6a36c0fc82dd51601a7c",
+          "url": "https://github.com/py-pdf/pypdf/commit/31b32980f85a68c821349b006d7258044717a75e"
+        },
+        "date": 1787233728448,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9621648530631663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01749459743871503",
+            "extra": "mean: 337.5909342 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.825189253063396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036080394523806433",
+            "extra": "mean: 53.120315899999326 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2672534250963378,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025552553131609618",
+            "extra": "mean: 3.741766825399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.617218674907182,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009074745254403998",
+            "extra": "mean: 56.76264899999992 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07266458992145493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06123795655337167",
+            "extra": "mean: 13.761861190999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.644425278689751,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010125115710296128",
+            "extra": "mean: 608.1151955999985 msec\nrounds: 5"
           }
         ]
       }
