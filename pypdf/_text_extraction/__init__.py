@@ -119,9 +119,13 @@ def crlf_space_check(
     delta_x = m[4] - m_prev[4]
     delta_y = m[5] - m_prev[5]
     # Table 108 of the 1.7 reference ("Text positioning operators")
-    scale_prev_x = math.sqrt(tm_prev[0]**2 + tm_prev[1]**2)
-    scale_prev_y = math.sqrt(tm_prev[2]**2 + tm_prev[3]**2)
-    scale_y = math.sqrt(tm_matrix[2]**2 + tm_matrix[3]**2)
+    # delta_x/delta_y are expressed in the coordinate system produced by
+    # text matrix x current transformation matrix, so the scaling factors
+    # they get compared against have to be taken from the same combined
+    # matrices instead of the text matrices alone.
+    scale_prev_x = math.sqrt(m_prev[0]**2 + m_prev[1]**2)
+    scale_prev_y = math.sqrt(m_prev[2]**2 + m_prev[3]**2)
+    scale_y = math.sqrt(m[2]**2 + m[3]**2)
     cm_prev = m
 
     if orientation not in orientations:
