@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787222557968,
+  "lastUpdate": 1787223066071,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -105869,6 +105869,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003746250649418617",
             "extra": "mean: 599.7055309999951 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d8809f2b49fe07a5513bda480a291fd26563b336",
+          "message": "BUG: Accept an ArrayObject when constructing a RectangleObject (#3984)\n\n`RectangleObject.__init__` declares its argument as a RectangleObject or\na four-tuple, but the boxes read out of a PDF are ArrayObjects, which are\nneither. Three call sites in _page.py needed\n`# type: ignore[arg-type]` to get past it, and a runtime protocol check\nrejects the values the library itself produces.\n\nThe implementation only requires something of length four that can be\niterated, so the argument is now typed `Sequence[Any]`. The elements stay\n`Any` because `_ensure_is_number` accepts whatever it is handed and\nconverts it.\n\nOne of the three ignores is dead with the wider type and is removed. The\nother two stay: those callers pass `IndirectObject | None` and\n`PdfObject`, which really are not sequences.\n\nUnder `make testtype` this is 13 failures in test_page; they go to 0.\nmypy reports the same 11 pre-existing errors before and after.",
+          "timestamp": "2026-08-20T12:48:29+02:00",
+          "tree_id": "d180bf840557729c7e5445a7a1bde781767d6b4a",
+          "url": "https://github.com/py-pdf/pypdf/commit/d8809f2b49fe07a5513bda480a291fd26563b336"
+        },
+        "date": 1787223057996,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.829797177173809,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013863781047399814",
+            "extra": "mean: 261.1104332000025 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.27207869021873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008318928137088377",
+            "extra": "mean: 42.96994751999961 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3434989141659261,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019316929694295822",
+            "extra": "mean: 2.911217353999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.401973500362427,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009421818327859212",
+            "extra": "mean: 44.63892433333258 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0925264524055208,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03285611003818473",
+            "extra": "mean: 10.807720106000009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1597561237941174,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018363836086122218",
+            "extra": "mean: 463.0152399999986 msec\nrounds: 5"
           }
         ]
       }
