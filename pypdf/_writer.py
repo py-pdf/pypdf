@@ -1805,9 +1805,7 @@ class PdfWriter(PdfDocCommon):
             page_destination_ref,
             before,
             self,
-            page_destination.inc_parent_counter_outline
-            if is_open
-            else (lambda x, y: 0),  # noqa: ARG005
+            page_destination.inc_parent_counter_outline,
         )
         if "/Count" not in page_destination:
             page_destination[NameObject("/Count")] = NumberObject(0)
