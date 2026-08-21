@@ -185,7 +185,7 @@ class _XmpBuilder(ExpatBuilderNS):
     def custom_entity_declaration_handler(
             self,
             entity_name: str,
-            is_parameter_entity: bool,
+            is_parameter_entity: int,
             value: Optional[str],
             base: Optional[str],
             system_id: str,
