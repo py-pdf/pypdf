@@ -5,7 +5,8 @@ Some parts are still in _page.py. In doubt, they will stay there.
 """
 
 import math
-from typing import Any, Callable, Optional, Union
+from collections.abc import Mapping
+from typing import Any, Callable, Literal, Optional, Union
 
 from .._font import Font
 from .._utils import is_char_neutral, is_char_rtl
@@ -71,7 +72,13 @@ def set_custom_rtl(
     return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
 
-def mult(m: list[float], n: list[float]) -> list[float]:
+def mult(
+    m: list[float],
+    n: Union[
+        list[float],
+        Mapping[Union[int, Literal["is_text", "is_render"]], Union[float, bool]],
+    ],
+) -> list[float]:
     return [
         m[0] * n[0] + m[1] * n[2],
         m[0] * n[1] + m[1] * n[3],
