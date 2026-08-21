@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787304243041,
+  "lastUpdate": 1787306514965,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126529,6 +126529,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0228675509758315",
             "extra": "mean: 855.5594713999994 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4c8f707f3378928dd352c908d4e4fe3c6716af9b",
+          "message": "STY: Accept any sequence of fit arguments in Fit (#3990)\n\nFit was annotated to take a tuple, but _build_destination unpacks the\ndestination array and hands the remainder over as a list, and _writer passes\nthe list stored under `fit_args`. The constructor only iterates over the\nargument, so a list satisfies it as well as a tuple.\n\nTyped as the sequence it consumes, which clears four typeguard failures in the\nannotation and outline tests.",
+          "timestamp": "2026-08-21T11:58:54+02:00",
+          "tree_id": "685b6bf1513992bad1a695d4923c1a6ee9666af2",
+          "url": "https://github.com/py-pdf/pypdf/commit/4c8f707f3378928dd352c908d4e4fe3c6716af9b"
+        },
+        "date": 1787306505729,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.473726736444926,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016076577336069202",
+            "extra": "mean: 74.2185157499975 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.120417666094298,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005424668062547761",
+            "extra": "mean: 55.186365923073204 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0345179728990226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036924953366165206",
+            "extra": "mean: 966.6337620000036 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5001649335382049,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04040195653765814",
+            "extra": "mean: 1.9993404833999933 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3659403684281975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01304429723452032",
+            "extra": "mean: 2.7326856676000033 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1856063870475124,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023377565616387642",
+            "extra": "mean: 843.4502469999984 msec\nrounds: 5"
           }
         ]
       }
