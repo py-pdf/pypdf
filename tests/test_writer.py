@@ -736,12 +736,31 @@ def test_add_outline_item(pdf_file_path):
         writer.write(output_stream)
         output_stream.seek(0)
         reader = PdfReader(output_stream)
-        assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 3
+        assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 4
         assert reader.outline[0]["/Count"] == -2
         assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
         assert reader.outline[2]["/Count"] == 2
         assert reader.outline[2]["/%is_open%"] == True  # noqa: E712
         assert reader.outline[1][0]["/Count"] == 0
+
+
+def test_add_outline_item_collapsed(pdf_file_path):
+    # Issue #2994: is_open=False must produce a collapsed outline item.
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        writer.add_page(page)
+
+    parent = writer.add_outline_item("Parent Item", 0, is_open=False)
+    writer.add_outline_item("Child Item", 0, parent=parent, is_open=False)
+
+    with open(pdf_file_path, "w+b") as output_stream:
+        writer.write(output_stream)
+        output_stream.seek(0)
+        reader = PdfReader(output_stream)
+        assert reader.outline[0]["/Count"] == -1
+        assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
 
 
 def test_add_named_destination(pdf_file_path):
