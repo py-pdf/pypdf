@@ -210,7 +210,8 @@ def test_build_destination__short_array():
 
 def test_build_destination__non_array():
     """A non-array destination degrades to a null destination rather than
-    raising TypeError while unpacking."""
+    raising TypeError while unpacking.
+    """
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
 
@@ -220,7 +221,8 @@ def test_build_destination__non_array():
 
 def test_named_destinations__non_array_value():
     """A bare number where a destination array is expected is skipped instead
-    of crashing named_destinations with a TypeError."""
+    of crashing named_destinations with a TypeError.
+    """
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
     names = DictionaryObject()
