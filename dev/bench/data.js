@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787313335433,
+  "lastUpdate": 1787313340066,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -106661,6 +106661,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02441186760601139",
             "extra": "mean: 670.6291232000012 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c6d38af1c561c629cd6965f611e8afad9b445ab0",
+          "message": "BUG: Type character widths as float (#3996)\n\nThe /W array in a CIDFont may hold real numbers, and both parsing branches\nstore the entry as read rather than converting it, so a font with a width of\n443.35938 puts a float into a mapping annotated dict[str, int]. The code\nalready tests for int or float when deciding which format an entry uses.\n\n_add_space_width returns those values straight back, so its return type\nfollows.",
+          "timestamp": "2026-08-21T13:52:35+02:00",
+          "tree_id": "bbc9c3df736e169353e5c891f759781448898042",
+          "url": "https://github.com/py-pdf/pypdf/commit/c6d38af1c561c629cd6965f611e8afad9b445ab0"
+        },
+        "date": 1787313331596,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.796124205000391,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011249064576450784",
+            "extra": "mean: 357.6379039999978 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.942213292983286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001511770693522371",
+            "extra": "mean: 52.792141263155735 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25267318088124296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02450402173053649",
+            "extra": "mean: 3.957681604800007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.62501735697043,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007257448455958803",
+            "extra": "mean: 56.73753277777709 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07387745694288846,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02959221249133938",
+            "extra": "mean: 13.5359288392 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5011703045633682,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013153127321822122",
+            "extra": "mean: 666.1469367999928 msec\nrounds: 5"
           }
         ]
       }
