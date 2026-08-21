@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787300280965,
+  "lastUpdate": 1787302145944,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -106397,6 +106397,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002664597146785653",
             "extra": "mean: 370.43826700000295 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "tadej.j@nez.si",
+            "name": "Tadej Janež",
+            "username": "tjanez"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2dcab8de11d5bb0a52f359d8244d2c748cefb2f7",
+          "message": "MAINT: Skip test_appearance_stream_rtl when RTL support is unavailable (#3993)\n\nThe RTL support already degrades gracefully if arabic-reshaper and\npython-bidi optional dependencies are not installed.\nUse HAS_RTL_SUPPORT for test_appearance_stream_rtl as well.",
+          "timestamp": "2026-08-21T10:46:37+02:00",
+          "tree_id": "5b2a3c9d0e053ca7772f02fb360dd97c95652d09",
+          "url": "https://github.com/py-pdf/pypdf/commit/2dcab8de11d5bb0a52f359d8244d2c748cefb2f7"
+        },
+        "date": 1787302138674,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.10195089010371,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014006833886503006",
+            "extra": "mean: 196.00345466666624 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 30.003899109332398,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017562064997407274",
+            "extra": "mean: 33.32900155263356 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.45507195401418815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03946104087500591",
+            "extra": "mean: 2.1974546908000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 30.53272163358569,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006644796701427498",
+            "extra": "mean: 32.75174784615368 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.13009010065739107,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09487429768632666",
+            "extra": "mean: 7.686979984999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.2838086152521866,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01853123919238893",
+            "extra": "mean: 437.8650615999959 msec\nrounds: 5"
           }
         ]
       }
