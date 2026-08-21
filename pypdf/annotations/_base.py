@@ -22,7 +22,7 @@ class AnnotationDictionary(DictionaryObject, ABC):
         return AnnotationFlag(self.get(NameObject("/F"), 0))
 
     @flags.setter
-    def flags(self, value: int) -> None:
+    def flags(self, value: AnnotationFlag) -> None:
         self[NameObject("/F")] = NumberObject(value)
 
 
