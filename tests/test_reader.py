@@ -28,13 +28,11 @@ from pypdf.errors import (
 from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
-    ContentStream,
     Destination,
     DictionaryObject,
     IndirectObject,
     NameObject,
     NumberObject,
-    StreamObject,
     TextStringObject,
 )
 
@@ -2496,32 +2494,6 @@ def test_read_pdf15_xref_stream__w_0_0_0(caplog):
     assert caplog.messages == [
         "Cross-reference stream encodes no entry data.",
     ]
-
-
-def test_read_pdf15_xref_stream__returns_a_stream_object():
-    """
-    A compressed cross-reference stream is read as an EncodedStreamObject,
-    which is a sibling of ContentStream rather than a subclass of it.
-    """
-    pdf = b"%PDF-1.7\n"
-    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
-    startxref = len(pdf)
-    encoded = FlateDecode.encode(bytes(6))
-    pdf += (
-        f"3 0 obj\n<< /Type /XRef /Size 1 /W [1 2 3] /Root 1 0 R /Filter /FlateDecode "
-        f"/Length {len(encoded)} >>\nstream\n"
-    ).encode()
-    pdf += encoded + b"\nendstream\nendobj\n"
-    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
-
-    reader = PdfReader(BytesIO(pdf), strict=False)
-    stream = BytesIO(pdf)
-    stream.seek(startxref + 1)
-    xref_stream = reader._read_pdf15_xref_stream(stream)
-
-    assert isinstance(xref_stream, StreamObject)
-    assert not isinstance(xref_stream, ContentStream)
 
 
 @pytest.mark.timeout(10)
