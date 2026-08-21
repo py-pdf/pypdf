@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787304240149,
+  "lastUpdate": 1787304243041,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126463,6 +126463,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024136605967324753",
             "extra": "mean: 860.6593830000065 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "245032144187de4f05d4a4821f86020cdcfd9154",
+          "message": "STY: Accept any sequence as the annotation border (#3991)\n\nThe Link annotation and add_link both declare border as an ArrayObject, but\nthe argument is only sliced and indexed, and the documented usage is a plain\nlist: the tests pass [1, 0, 6, [3, 2]] and [50, 10, 4], and the docstring asks\nfor an array describing the border-drawing properties rather than a specific\npypdf type.\n\nTyped as the sequence both functions consume, which clears the two typeguard\nfailures in the annotation tests.",
+          "timestamp": "2026-08-21T11:20:57+02:00",
+          "tree_id": "1cf8905c2037a566c8b205b70f49eef14385134b",
+          "url": "https://github.com/py-pdf/pypdf/commit/245032144187de4f05d4a4821f86020cdcfd9154"
+        },
+        "date": 1787304232215,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.374971685881258,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017641150565233053",
+            "extra": "mean: 74.76651341666833 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.638586195179595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005794329550680834",
+            "extra": "mean: 53.65213807142867 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0395935417130784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03163806958034725",
+            "extra": "mean: 961.9144020000022 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4935156740183751,
+            "unit": "iter/sec",
+            "range": "stddev: 0.050292280109467735",
+            "extra": "mean: 2.0262780953999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3640659307737055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008789952898344123",
+            "extra": "mean: 2.7467552316000026 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.168825819160934,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0228675509758315",
+            "extra": "mean: 855.5594713999994 msec\nrounds: 5"
           }
         ]
       }
