@@ -460,7 +460,7 @@ class PdfDocCommon(ABC):
     def _get_named_destinations(
         self,
         *,
-        tree: Union[TreeObject, DictionaryObject, None] = None,
+        tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[str, Destination]] = None,
         visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
@@ -546,7 +546,7 @@ class PdfDocCommon(ABC):
 
     def get_fields(
         self,
-        tree: Union[TreeObject, DictionaryObject, None] = None,
+        tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
         stack: Optional[list[PdfObject]] = None,

@@ -85,7 +85,6 @@ from .generic import (
     PdfObject,
     StreamObject,
     TextStringObject,
-    TreeObject,
     is_null_or_none,
     read_object,
 )
@@ -1608,7 +1607,7 @@ class PdfReader(PdfDocCommon):
     def _get_named_destinations(
         self,
         *,
-        tree: Union[TreeObject, DictionaryObject, None] = None,
+        tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[str, Destination]] = None,
         visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
