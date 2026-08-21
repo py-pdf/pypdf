@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787312754069,
+  "lastUpdate": 1787312762895,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -106595,6 +106595,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0029911361554310167",
             "extra": "mean: 664.7440766000159 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "882b3b2bda29ab6f1f877d896f42efbaffd92015",
+          "message": "STY: Type the XMP stream as StreamObject rather than ContentStream (#3995)\n\nXmpInformation is constructed from the /Metadata stream, which is a\nDecodedStreamObject. ContentStream is a sibling of that class rather than a\nparent, so the annotation could never hold.\n\nThe class only calls get_data, set_data and write_to_stream, all of which\nStreamObject provides.",
+          "timestamp": "2026-08-21T13:42:58+02:00",
+          "tree_id": "e20f33996aced4d6bc1a4f819eba8a6f8d666dac",
+          "url": "https://github.com/py-pdf/pypdf/commit/882b3b2bda29ab6f1f877d896f42efbaffd92015"
+        },
+        "date": 1787312753759,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7611956519913843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014183073205171754",
+            "extra": "mean: 362.16194939999866 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.943768378795493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015709701442345203",
+            "extra": "mean: 52.78780757894714 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2520708269914401,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030597290874567497",
+            "extra": "mean: 3.9671389661999967 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.104538887906802,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010248173840637332",
+            "extra": "mean: 58.46401394117773 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07380199115865395,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06252569862063688",
+            "extra": "mean: 13.549769922200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.491137150782178,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02441186760601139",
+            "extra": "mean: 670.6291232000012 msec\nrounds: 5"
           }
         ]
       }
