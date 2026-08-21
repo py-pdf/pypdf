@@ -460,7 +460,7 @@ class PdfDocCommon(ABC):
     def _get_named_destinations(
         self,
         *,
-        tree: Union[TreeObject, None] = None,
+        tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[str, Destination]] = None,
         visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
@@ -484,11 +484,11 @@ class PdfDocCommon(ABC):
 
             # get the name tree
             if CA.DESTS in catalog:
-                tree = cast(TreeObject, catalog[CA.DESTS])
+                tree = cast(DictionaryObject, catalog[CA.DESTS])
             elif CA.NAMES in catalog:
                 names = cast(DictionaryObject, catalog[CA.NAMES])
                 if CA.DESTS in names:
-                    tree = cast(TreeObject, names[CA.DESTS])
+                    tree = cast(DictionaryObject, names[CA.DESTS])
 
         if is_null_or_none(tree):
             return retval
@@ -546,7 +546,7 @@ class PdfDocCommon(ABC):
 
     def get_fields(
         self,
-        tree: Optional[TreeObject] = None,
+        tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
         stack: Optional[list[PdfObject]] = None,
@@ -578,7 +578,7 @@ class PdfDocCommon(ABC):
             stack = []
             # get the AcroForm tree
             if CA.ACRO_FORM in catalog:
-                tree = cast(Optional[TreeObject], catalog[CA.ACRO_FORM])
+                tree = cast(Optional[DictionaryObject], catalog[CA.ACRO_FORM])
             else:
                 return None
         if tree is None:
