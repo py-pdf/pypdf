@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787323159938,
+  "lastUpdate": 1787323163226,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -106727,6 +106727,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013153127321822122",
             "extra": "mean: 666.1469367999928 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "contact.rishikkasula@gmail.com",
+            "name": "Rishik Kasula",
+            "username": "RISHIKKASULA"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f6853ccd3ff492309c84060186aabc88ed472ffd",
+          "message": "BUG: Make remove_from_tree() work on outline items (#3939)\n\nreader.outline and writer.outline do not yield the live outline nodes. Each item\nis a fresh Destination built by _build_outline_item from the node's fields, and a\ndetached copy never has /Parent. Destination inherits remove_from_tree() from\nTreeObject, which checks self for that /Parent, so the call fails on every PDF and\nevery outline item. Destination.node already points at the node in the document,\nbut that node is a plain DictionaryObject, so removing through it is not possible\neither. There is currently no way to remove an outline item through the public API.\n\nDestination now overrides remove_from_tree() and acts on node, the dictionary in\nthe document, so TreeObject is left unaware of the subclass. Outline parents read\nfrom a document are plain DictionaryObjects unless PdfWriter.get_outline_root() has\nupgraded them, so remove_child is bound explicitly rather than reached through the\nparent, and the single internal call it makes to _remove_node_from_tree is bound the\nsame way.\n\nCloses #3878.",
+          "timestamp": "2026-08-21T16:36:20+02:00",
+          "tree_id": "fdcfa787fc6049e5ca52d651d2364a1b8c952760",
+          "url": "https://github.com/py-pdf/pypdf/commit/f6853ccd3ff492309c84060186aabc88ed472ffd"
+        },
+        "date": 1787323152198,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.789246124270177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012492147984507748",
+            "extra": "mean: 358.51981339999384 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.730950998685515,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016606774461577986",
+            "extra": "mean: 53.387572263158305 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25074875073940855,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03239411229926374",
+            "extra": "mean: 3.988055761199996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.474222312485626,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013382786631723435",
+            "extra": "mean: 57.227153352941095 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0740669217167387,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04078884587952114",
+            "extra": "mean: 13.501303643 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5183988107006563,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004706099267439481",
+            "extra": "mean: 658.5885031999965 msec\nrounds: 5"
           }
         ]
       }
