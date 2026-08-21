@@ -18,7 +18,12 @@ from pypdf.generic import (
     NumberObject,
     RectangleObject,
 )
-from pypdf.generic._appearance_stream import BaseStreamAppearance, BaseStreamConfig, TextStreamAppearance
+from pypdf.generic._appearance_stream import (
+    HAS_RTL_SUPPORT,
+    BaseStreamAppearance,
+    BaseStreamConfig,
+    TextStreamAppearance,
+)
 
 from . import RESOURCE_ROOT
 
@@ -121,7 +126,7 @@ Option D
     )
     assert b"OneWord" in appearance_stream.get_data()
 
-
+@pytest.mark.skipif(not HAS_RTL_SUPPORT, reason="Requires arabic-reshaper and python-bidi")
 def test_appearance_stream_rtl():
     writer = PdfWriter(RESOURCE_ROOT / "fontsampler.pdf")
     layout = BaseStreamConfig(
