@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787299251567,
+  "lastUpdate": 1787299257060,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126067,6 +126067,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028827219831381548",
             "extra": "mean: 809.6394403999966 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ddbfea942cadd1594cb3902a27289a53ca637204",
+          "message": "BUG: Interpolate the reader in the reset_translation error message (#3981)\n\nThe message was a plain string literal containing {reader}, so it was\nreported verbatim instead of naming the offending argument.",
+          "timestamp": "2026-08-21T09:57:50+02:00",
+          "tree_id": "ff1f9900a1cdc14590fcd7bfedd0e887843cf946",
+          "url": "https://github.com/py-pdf/pypdf/commit/ddbfea942cadd1594cb3902a27289a53ca637204"
+        },
+        "date": 1787299248871,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.68018991027457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021494657717603123",
+            "extra": "mean: 78.86317216666565 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.974073366938274,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00956868106815986",
+            "extra": "mean: 62.60144028571395 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9384220829814895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02751881397885026",
+            "extra": "mean: 1.0656185719999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4391759231830893,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043442021714462056",
+            "extra": "mean: 2.276991855 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3582835826011334,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012398604851774632",
+            "extra": "mean: 2.7910851865999975 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1837903077033538,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004482085055215505",
+            "extra": "mean: 844.7442030000047 msec\nrounds: 5"
           }
         ]
       }
