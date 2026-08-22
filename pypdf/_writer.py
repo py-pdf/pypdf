@@ -33,7 +33,6 @@ import hashlib
 import re
 import struct
 import sys
-import uuid
 from collections.abc import Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
 from itertools import compress

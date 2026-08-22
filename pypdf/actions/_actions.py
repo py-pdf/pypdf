@@ -8,8 +8,8 @@ from typing import (
     cast,
 )
 
-from ..constants import CatalogAttributes
 from .._utils import logger_warning
+from ..constants import CatalogAttributes
 from ..errors import ParseError
 from ..generic import (
     ArrayObject,
