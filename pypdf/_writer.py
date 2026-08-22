@@ -33,7 +33,6 @@ import hashlib
 import re
 import struct
 import sys
-import uuid
 from collections.abc import Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
@@ -68,6 +67,7 @@ from ._utils import (
     deprecation_no_replacement,
     logger_warning,
 )
+from .actions import Action, JavaScript
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import (
     CatalogAttributes,
@@ -794,29 +794,25 @@ class PdfWriter(PdfDocCommon):
             >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         """
-        # Names / JavaScript preferred to be able to add multiple scripts
-        if "/Names" not in self._root_object:
-            self._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
-        names = cast(DictionaryObject, self._root_object[CatalogAttributes.NAMES])
-        if "/JavaScript" not in names:
-            names[NameObject("/JavaScript")] = DictionaryObject(
-                {NameObject("/Names"): ArrayObject()}
-            )
-        js_list = cast(
-            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
-        )
-        # We need a name for parameterized JavaScript in the PDF file,
-        # but it can be anything.
-        js_list.append(create_string_object(str(uuid.uuid4())))
+        deprecate_with_replacement("add_js", "add_action", "7.0.0")
+        self.add_action(JavaScript(javascript))
 
-        js = DictionaryObject(
-            {
-                NameObject(PagesAttributes.TYPE): NameObject("/Action"),
-                NameObject("/S"): NameObject("/JavaScript"),
-                NameObject("/JS"): TextStringObject(f"{javascript}"),
-            }
-        )
-        js_list.append(self._add_object(js))
+    def add_action(self, action: Action) -> None:
+        """
+        Add an action to the document-level JavaScript name tree.
+
+        Args:
+            action: The action to be done.
+
+        Example:
+            This will launch the print window when the PDF is opened.
+
+            >>> from pypdf import PdfWriter
+            >>> from pypdf.actions import JavaScript
+            >>> output = PdfWriter()
+            >>> output.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
+        """
+        return Action._create_open_action(self, action)
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> "EmbeddedFile":
         """

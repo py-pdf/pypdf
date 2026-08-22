@@ -17,6 +17,7 @@ from PIL import __version__ as pil_version
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._utils import Version
+from pypdf.actions import JavaScript
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
@@ -66,7 +67,7 @@ def test_basic_features(tmp_path):
     # add some Javascript to launch the print window on opening this PDF.
     # the password dialog may prevent the print dialog from being shown,
     # comment the encryption lines, if that's the case, to try this out
-    writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
+    writer.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
 
     # encrypt your new PDF and add a password
     password = "secret"
