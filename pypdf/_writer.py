@@ -33,7 +33,6 @@ import hashlib
 import re
 import struct
 import sys
-import uuid
 from collections.abc import Iterable, Mapping
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
@@ -812,22 +811,7 @@ class PdfWriter(PdfDocCommon):
             >>> output = PdfWriter()
             >>> output.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
         """
-        if "/Names" not in self._root_object:
-            self._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
-
-        names = cast(DictionaryObject, self._root_object[CatalogAttributes.NAMES])
-        if "/JavaScript" not in names:
-            names[NameObject("/JavaScript")] = DictionaryObject(
-                {NameObject("/Names"): ArrayObject()}
-            )
-
-        js = cast(
-            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
-        )
-
-        # We need a name for parameterized JavaScript in the PDF file, but it can be anything
-        js.append(create_string_object(str(uuid.uuid4())))
-        js.append(self._add_object(action))
+        return Action._create_open_action(self, action)
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> "EmbeddedFile":
         """
