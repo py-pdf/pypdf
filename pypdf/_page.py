@@ -619,7 +619,7 @@ class PageObject(DictionaryObject):
             else:
                 raise PageSizeNotDefinedError
         page.__setitem__(
-            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore[arg-type]
+            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))
         )
 
         return page
@@ -1398,6 +1398,14 @@ class PageObject(DictionaryObject):
                         + trsf.apply_on((q[4], q[5]), True)
                         + trsf.apply_on((q[6], q[7]), True)
                     )
+                # The /Rect update above only repositions and resizes the
+                # annotation's bounding box; it does not touch the
+                # appearance stream's own coordinate system. See
+                # transform_annotation_appearance for why that matters.
+                from pypdf.generic._appearance_stream import (  # noqa: PLC0415
+                    transform_annotation_appearance,
+                )
+                transform_annotation_appearance(aa, trsf)
                 try:
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
                 except KeyError:
@@ -2527,7 +2535,7 @@ def _get_fonts_walk(
     """
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
 
-    def process_font(f: DictionaryObject) -> None:
+    def process_font(f: PdfObject) -> None:
         nonlocal fnt, emb
         f = cast(DictionaryObject, f.get_object())  # to be sure
         if "/BaseFont" in f:
@@ -2568,7 +2576,9 @@ def _get_fonts_walk(
                 emb.add("(" + cast(str, f["/Subtype"]) + ")")
 
     if "/DR" in obj and "/Font" in cast(DictionaryObject, obj["/DR"]):
-        for f in cast(DictionaryObject, cast(DictionaryObject, obj["/DR"])["/Font"]):
+        for f in cast(
+            DictionaryObject, cast(DictionaryObject, obj["/DR"])["/Font"]
+        ).values():
             process_font(f)
     if "/Resources" in obj:
         if "/Font" in cast(DictionaryObject, obj["/Resources"]):

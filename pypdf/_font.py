@@ -108,7 +108,7 @@ class FontDescriptor:
 @dataclass(frozen=True)
 class CoreFontMetrics:
     font_descriptor: FontDescriptor
-    character_widths: dict[str, int]
+    character_widths: dict[str, float]
 
 
 @dataclass
@@ -136,7 +136,7 @@ class Font:
     character_map: dict[Any, Any] = field(default_factory=dict)
     sub_type: str = "Unknown"
     font_descriptor: FontDescriptor = field(default_factory=FontDescriptor)
-    character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
+    character_widths: dict[str, float] = field(default_factory=lambda: {"default": 500})
     space_width: float | int = 250
     space_char: str = " "
     interpretable: bool = True
@@ -146,7 +146,7 @@ class Font:
         pdf_font_dict: DictionaryObject,
         char_map: dict[Any, Any],
         encoding: str | dict[int, str],
-        current_widths: dict[str, int]
+        current_widths: dict[str, float]
     ) -> None:
         """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
         widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
@@ -171,7 +171,7 @@ class Font:
             raise LimitReachedError(f"Too many character widths: {count} > {MAX_WIDTH_ENTRY_COUNT}.")
 
     @staticmethod
-    def _collect_cid_character_widths(d_font: DictionaryObject, current_widths: dict[str, int]) -> None:
+    def _collect_cid_character_widths(d_font: DictionaryObject, current_widths: dict[str, float]) -> None:
         """Parses the /W array from a DescendantFont dictionary and updates character widths."""
         # /W width definitions have two valid formats which can be mixed and matched:
         #   (1) A character start index followed by a list of widths, e.g.
@@ -264,7 +264,7 @@ class Font:
         return space_char
 
     @staticmethod
-    def _add_default_width(current_widths: dict[str, int], flags: int, space_char: str) -> None:
+    def _add_default_width(current_widths: dict[str, float], flags: int, space_char: str) -> None:
         if not current_widths:
             current_widths["default"] = 500
             return
@@ -284,10 +284,10 @@ class Font:
 
     @staticmethod
     def _add_space_width(
-        character_widths: dict[str, int],
+        character_widths: dict[str, float],
         flags: int,
         space_char: str
-    ) -> int:
+    ) -> float:
         space_width = character_widths.get(space_char, 0)
         if space_width != 0:
             return space_width
@@ -375,7 +375,7 @@ class Font:
         sub_type = pdf_font_dict.get("/Subtype", "Unknown").removeprefix("/")
         encoding, character_map = get_encoding(pdf_font_dict)
         font_descriptor = None
-        character_widths: dict[str, int] = {}
+        character_widths: dict[str, float] = {}
         interpretable = True
 
         # Deal with fonts by type; Type1, TrueType and certain Type3
@@ -566,7 +566,7 @@ class Font:
             font_descriptor = FontDescriptor(**font_descriptor_kwargs)
             encoding = "utf_16_be"  # Assume unicode
 
-            character_widths: dict[str, int] = {}
+            character_widths: dict[str, float] = {}
             character_map: dict[str, str] = {}
 
             glyph_order = tt_font_object.getGlyphOrder()

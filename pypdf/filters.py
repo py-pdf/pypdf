@@ -832,7 +832,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
     if not isinstance(filters, ArrayObject):
         # We have a single filter instance
         filters = (filters,)
-    decode_parms = stream.get(StreamAttributes.DECODE_PARMS, ({},) * len(filters))
+    decode_parms = stream.get(StreamAttributes.DECODE_PARMS, (DictionaryObject(),) * len(filters))
     if not isinstance(decode_parms, (list, tuple)):
         decode_parms = (decode_parms,)
     data: bytes = stream._data
@@ -841,7 +841,9 @@ def decode_stream_data(stream: StreamObject) -> bytes:
         return data
     for filter_name, params in zip(filters, decode_parms):
         if isinstance(params, NullObject):
-            params = {}
+            # The decoders are typed for a DictionaryObject; a plain {} is not
+            # one, so a null /DecodeParms entry would hand them the wrong type.
+            params = DictionaryObject()
         if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.AHx, new_name=FT.ASCII_HEX_DECODE)
             data = ASCIIHexDecode.decode(data)

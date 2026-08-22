@@ -90,6 +90,8 @@ from .xmp import XmpInformation
 # TODO: Make configurable.
 OUTLINE_MAX_ENTRIES = 100_000
 OUTLINE_MAX_DEPTH = 100
+PAGE_TREE_MAX_ENTRIES = 100_000
+PAGE_TREE_MAX_DEPTH = 100
 
 
 def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
@@ -1211,6 +1213,8 @@ class PdfDocCommon(ABC):
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
         visited: Optional[set[int]] = None,
+        depth: int = 0,
+        traversal_state: Optional[_TraversalState] = None,
     ) -> None:
         """
         Process the document pages to ease searching.
@@ -1229,9 +1233,11 @@ class PdfDocCommon(ABC):
             pages:
             inherit:
             indirect_reference: Used recursively to flatten the /Pages object.
-            visited: Set of id() values of /Pages nodes already visited during
-                traversal. Detects multi-hop cycles such as A→B→C→A that the
-                single-parent check misses.
+            visited: Set of id() values on the active page-tree traversal path.
+                Detects multi-hop cycles such as A→B→C→A that the single-parent
+                check misses.
+            depth: Current page-tree traversal depth.
+            traversal_state: State shared across the complete traversal.
 
         """
         inheritable_page_attributes = (
@@ -1244,6 +1250,10 @@ class PdfDocCommon(ABC):
             inherit = {}
         if visited is None:
             visited = set()
+        if traversal_state is None:
+            traversal_state = _TraversalState()
+        if depth > PAGE_TREE_MAX_DEPTH:
+            raise LimitReachedError(f"Maximum page tree depth reached: {depth} > {PAGE_TREE_MAX_DEPTH}.")
         if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
@@ -1292,17 +1302,34 @@ class PdfDocCommon(ABC):
                     obj_id = id(obj)
                     if obj_id in visited:
                         raise PdfReadError("Detected cyclic page references.")
+                    traversal_state.entry_count += 1
+                    if traversal_state.entry_count > PAGE_TREE_MAX_ENTRIES:
+                        raise LimitReachedError(
+                            "Maximum page tree entry limit reached: "
+                            f"{traversal_state.entry_count} > {PAGE_TREE_MAX_ENTRIES}."
+                        )
                     visited.add(obj_id)
-                    self._flatten(list_only, obj, inherit, visited=visited, **additional_arguments)
+                    try:
+                        self._flatten(
+                            list_only,
+                            obj,
+                            inherit.copy(),
+                            visited=visited,
+                            depth=depth + 1,
+                            traversal_state=traversal_state,
+                            **additional_arguments,
+                        )
+                    finally:
+                        visited.remove(obj_id)
         elif t == "/Page":
-            for attr_in, value in inherit.items():
-                # if the page has its own value, it does not inherit the
-                # parent's value
-                if attr_in not in pages:
-                    pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
             if not list_only:
                 page_obj.update(pages)
+            for attr_in, value in inherit.items():
+                # if the page has its own value, it does not inherit the
+                # parent's value
+                if attr_in not in page_obj:
+                    page_obj[attr_in] = value
 
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj)  # type: ignore[union-attr]

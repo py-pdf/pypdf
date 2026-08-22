@@ -668,7 +668,7 @@ def test_recurse_to_target_op__excessive_intra_group_spacing(caplog):
             "ty": 700.0
         }
     ]
-    assert caplog.messages == ["Limiting excessive whitespace from 299757 to 10000 characters."]
+    assert caplog.messages == ["Limiting excessive whitespace from 299758 to 10000 characters."]
 
 
 def test_fixed_width_page__excessive_blank_lines(caplog):
@@ -930,3 +930,61 @@ def test_extract_text__form_xobject__limit(caplog) -> None:
     assert caplog.messages == [
         "Exceeded 100 form XObject invocations while extracting text; further form content is skipped."
     ]
+
+
+def _page_with_helvetica(content_stream: bytes) -> BytesIO:
+    """Build a single page using /F1 (Helvetica) and the given content stream."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    helvetica = DictionaryObject()
+    helvetica[NameObject("/Type")] = NameObject("/Font")
+    helvetica[NameObject("/Subtype")] = NameObject("/Type1")
+    helvetica[NameObject("/BaseFont")] = NameObject("/Helvetica")
+    font_resources = DictionaryObject()
+    font_resources[NameObject("/F1")] = writer._add_object(helvetica)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+
+    content = DecodedStreamObject()
+    content.set_data(content_stream)
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def test_text_leading_is_not_scaled_by_font_size() -> None:
+    """Tests for #3982"""
+    buffer = _page_with_helvetica(
+        b"BT /F1 12 Tf 1 0 0 1 72 700 Tm 14 TL "
+        b"(Line one) Tj T* (Line two) Tj T* (Line three) Tj ET"
+    )
+
+    positions = []
+
+    def visitor_text(text, cm, tm, font_dict, font_size) -> None:
+        if text.strip():
+            positions.append(round(tm[5], 2))
+
+    text = PdfReader(buffer).pages[0].extract_text(visitor_text=visitor_text)
+
+    # T* moves down by the leading itself: 14 units, not 14 * 12 (the font size).
+    assert positions == [700.0, 686.0, 672.0]
+    assert text == "Line one\nLine two\nLine three"
+
+
+def test_line_breaks_with_scaled_current_matrix() -> None:
+    """Tests for #2262: the line height has to be compared in the same space."""
+    # The lines are 240 units apart in text space, which the CTM scales down to
+    # 12 units, matching a 200 pt font scaled down to 10 pt.
+    buffer = _page_with_helvetica(
+        b"q 0.05 0 0 0.05 0 0 cm "
+        b"BT /F1 200 Tf 1 0 0 1 200 14000 Tm (Line one) Tj "
+        b"1 0 0 1 200 13760 Tm (Line two) Tj ET Q"
+    )
+
+    assert PdfReader(buffer).pages[0].extract_text() == "Line one\nLine two"
