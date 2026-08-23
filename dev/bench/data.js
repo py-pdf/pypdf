@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787492656845,
+  "lastUpdate": 1787492668357,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -106793,6 +106793,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004706099267439481",
             "extra": "mean: 658.5885031999965 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "1da09878621e5286e00510e4d378dfdf8940e541",
+          "message": "REL: 6.16.2\n\n## What's new\n\n### Bug Fixes (BUG)\n- Make remove_from_tree() work on outline items (#3939) by @RISHIKKASULA\n- Be more lenient about space width in layout mode text extraction (#3992) by @PJBrs\n- Do not scale the text leading by the font size (#3987) by @matthewkogan\n- Update annotation appearance stream matrix on page transform (#3968) by @BashfulHippo\n- Allow repeated page references (#3959) by @yuming-long\n\n### Robustness (ROB)\n- Improve RC4 fallback when cryptography can't provide it (#3853) by @msylw\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.1...6.16.2)",
+          "timestamp": "2026-08-23T15:41:00+02:00",
+          "tree_id": "a3788cbce43ff881b34b60665fb1adf4f89adb24",
+          "url": "https://github.com/py-pdf/pypdf/commit/1da09878621e5286e00510e4d378dfdf8940e541"
+        },
+        "date": 1787492660574,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0025906255834416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014875758810516917",
+            "extra": "mean: 333.0457344000024 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.410836882723835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019527063282624051",
+            "extra": "mean: 51.51761389999763 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2695927501866873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016869276198911695",
+            "extra": "mean: 3.7092985597999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.276502790956354,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006625540278063366",
+            "extra": "mean: 57.882084823524885 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07185897755711071,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04746938714836142",
+            "extra": "mean: 13.916145678599992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6599582436640705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030971773368261516",
+            "extra": "mean: 602.4247921999972 msec\nrounds: 5"
           }
         ]
       }
