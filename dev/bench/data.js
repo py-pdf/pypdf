@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787584053093,
+  "lastUpdate": 1787584106275,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127651,6 +127651,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00991283294097574",
             "extra": "mean: 862.5394863999986 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "08e6f6b4720a9e95f8a805042090a78e3425c50f",
+          "message": "DOC: Use AnnotationFlag enum instead of plain integers (#3997)\n\nReverted the annotation change. The documentation and the test both passed a\nbare int while the docs comment pointed readers at AnnotationFlag, so the\nreadability gap was there rather than in the type.\n\nThe example now sets AnnotationFlag.PRINT, which is the 4 it spelled out\nbefore, and the test combines three flags.",
+          "timestamp": "2026-08-24T17:05:01+02:00",
+          "tree_id": "0dac2dab777e31c46122c9aa37680c571d8180cd",
+          "url": "https://github.com/py-pdf/pypdf/commit/08e6f6b4720a9e95f8a805042090a78e3425c50f"
+        },
+        "date": 1787584096455,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.109606152356532,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02634877387032284",
+            "extra": "mean: 82.57906883333277 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.35749703879455,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01628718788828543",
+            "extra": "mean: 69.65002307142802 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9159571064189769,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03170925282321459",
+            "extra": "mean: 1.091754180399994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4190669830616922,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0833220351399062",
+            "extra": "mean: 2.386253368599995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36901903820593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028495565216789462",
+            "extra": "mean: 2.709887286199995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2154833885679728,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02833774059254004",
+            "extra": "mean: 822.7179485999841 msec\nrounds: 5"
           }
         ]
       }
