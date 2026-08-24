@@ -70,6 +70,15 @@ def test_str_init_error():
     assert exc.value.args[0] == "1-2"
 
 
+@pytest.mark.parametrize("init_str", ["::0", "1:5:0", "0:0:0"])
+def test_str_init_zero_step(init_str):
+    """A zero stride selects nothing and only raised once the range was applied."""
+    assert PageRange.valid(init_str) is False
+    with pytest.raises(ParseError) as exc:
+        PageRange(init_str)
+    assert exc.value.args[0] == init_str
+
+
 @pytest.mark.parametrize(
     ("params", "expected"),
     [
