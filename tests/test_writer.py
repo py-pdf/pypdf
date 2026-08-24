@@ -744,8 +744,8 @@ def test_add_outline_item(pdf_file_path):
         assert reader.outline[1][0]["/Count"] == 0
 
 
-def test_add_outline_item_collapsed(pdf_file_path):
-    # Issue #2994: is_open=False must produce a collapsed outline item.
+def test_add_outline_item_collapsed():
+    """Issue #2994: is_open=False must produce a collapsed outline item."""
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
@@ -755,12 +755,40 @@ def test_add_outline_item_collapsed(pdf_file_path):
     parent = writer.add_outline_item("Parent Item", 0, is_open=False)
     writer.add_outline_item("Child Item", 0, parent=parent, is_open=False)
 
-    with open(pdf_file_path, "w+b") as output_stream:
+    with BytesIO() as output_stream:
         writer.write(output_stream)
         output_stream.seek(0)
         reader = PdfReader(output_stream)
         assert reader.outline[0]["/Count"] == -1
+        # "/%is_open%" is a BooleanObject, not a native bool, so `is False`
+        # would always fail; BooleanObject.__eq__ handles `== False` correctly.
         assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
+
+
+@pytest.mark.parametrize(
+    ("is_open", "expected_count"),
+    [
+        (True, 2),
+        (False, -2),
+    ],
+)
+def test_add_outline_item_nested_count(is_open, expected_count):
+    """Issue #2994: /Count must propagate correctly across multiple children."""
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        writer.add_page(page)
+
+    parent = writer.add_outline_item("Parent Item", 0, is_open=is_open)
+    writer.add_outline_item("Child 1", 0, parent=parent)
+    writer.add_outline_item("Child 2", 0, parent=parent)
+
+    with BytesIO() as output_stream:
+        writer.write(output_stream)
+        output_stream.seek(0)
+        reader = PdfReader(output_stream)
+        assert reader.outline[0]["/Count"] == expected_count
 
 
 def test_add_named_destination(pdf_file_path):
