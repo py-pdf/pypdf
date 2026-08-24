@@ -4,15 +4,16 @@ from collections import ChainMap, Counter
 from collections import ChainMap as ChainMapType
 from collections import Counter as CounterType
 from collections.abc import MutableMapping
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 from ..._font import Font
 from ...errors import PdfReadError
 from .. import mult
 from ._text_state_params import TextStateParams
 
-TextStateManagerChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
-TextStateManagerDictType = MutableMapping[Union[int, str], Union[float, bool]]
+TextStateManagerKeyType = Union[int, Literal["is_text", "is_render"]]
+TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, Union[float, bool]]
+TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, Union[float, bool]]
 
 
 class TextStateManager:
@@ -199,5 +200,5 @@ class TextStateManager:
         """Current effective transform accounting for cm, tm, and trm transforms"""
         eff_transform = [*self.transform_stack.maps[0].values()]
         for transform in self.transform_stack.maps[1:]:
-            eff_transform = mult(eff_transform, transform)  # type: ignore[arg-type]  # dict has int keys 0-5
+            eff_transform = mult(eff_transform, transform)
         return eff_transform
