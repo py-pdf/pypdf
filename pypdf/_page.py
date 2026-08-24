@@ -2055,7 +2055,9 @@ class PageObject(DictionaryObject):
             resources_dict: Any = obj.get(PG.RESOURCES, {})
             if "/Font" in resources_dict and self.pdf is not None:
                 for font_name in resources_dict["/Font"]:
-                    fonts[font_name] = Font.from_font_resource(resources_dict["/Font"][font_name])
+                    fonts[font_name] = Font.from_font_resource(
+                        resources_dict["/Font"][font_name].get_object()
+                    )
 
             if "/Parent" not in obj:
                 break
