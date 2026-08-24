@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787579527170,
+  "lastUpdate": 1787579564714,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -106859,6 +106859,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030971773368261516",
             "extra": "mean: 602.4247921999972 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1bd549d4482bf5483d2b0671ed49d34e2ae5c55a",
+          "message": "BUG: Type the xref stream as StreamObject rather than ContentStream (#3972)\n\n`_read_pdf15_xref_stream` casts the result of `read_object` to\nContentStream, but a compressed cross-reference stream is read as an\nEncodedStreamObject, which is a sibling of ContentStream rather than a\nsubclass. The cast hid that, and\n`_sanitize_pdf15_xref_stream_index_pairs` declared the same wrong type\nfor its parameter, so a runtime protocol check rejects the real object.\n\nBoth now use StreamObject, the common base that actually covers the\nthree stream types the function can return, and which still provides the\nonly method used here, `get_data`. The return annotation listed the three\nsiblings but not their base, so it is collapsed to StreamObject as well;\nthe single caller passes the result to `_process_xref_stream`, which\ntakes a DictionaryObject, and StreamObject extends that.\n\nUnder `make testtype` this is 138 failures in test_writer alone; they go\nto 0. mypy reports the same 11 pre-existing errors before and after.",
+          "timestamp": "2026-08-24T15:49:38+02:00",
+          "tree_id": "8df08796530795fd5c949c48c3f9a0468b4bde2e",
+          "url": "https://github.com/py-pdf/pypdf/commit/1bd549d4482bf5483d2b0671ed49d34e2ae5c55a"
+        },
+        "date": 1787579555392,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.803805744830507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012455596198258539",
+            "extra": "mean: 356.6580894000026 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.700972239333254,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018983295398136593",
+            "extra": "mean: 53.47315568421233 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2525195334679599,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010308523219074313",
+            "extra": "mean: 3.9600896860000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.670205424060168,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008607504234604928",
+            "extra": "mean: 56.59243772222232 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0741003220811758,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06203247029118053",
+            "extra": "mean: 13.495217995200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5071122645788835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009051301340852714",
+            "extra": "mean: 663.5205773999985 msec\nrounds: 5"
           }
         ]
       }
