@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787589449948,
+  "lastUpdate": 1787589509616,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127915,6 +127915,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007309639328670409",
             "extra": "mean: 637.1012658000041 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "799f2d8a5ce3e11c4f31baca3c851b558de416a0",
+          "message": "DOC: Note why the entity declaration flag is typed as a bool (#4000)\n\nexpat passes an int for is_parameter_entity, as documented in expat.h and\nunchanged since 2003, but typeshed declares the handler with a bool. Running\nthe tests under typeguard reports the mismatch, so the reason for keeping the\nannotation as it stands is worth recording.\n\nFollow-up to #3994.",
+          "timestamp": "2026-08-24T18:35:07+02:00",
+          "tree_id": "8c76c5caaf2408d788121696218ea6a7cbcca4be",
+          "url": "https://github.com/py-pdf/pypdf/commit/799f2d8a5ce3e11c4f31baca3c851b558de416a0"
+        },
+        "date": 1787589501184,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.640089535321282,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018483868817922244",
+            "extra": "mean: 73.31330174999806 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.16914186287151,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011467938735411208",
+            "extra": "mean: 58.244029199998224 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0124590583375308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03531883145094435",
+            "extra": "mean: 987.6942595999992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4595977195209715,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04904525529574549",
+            "extra": "mean: 2.1758158440000046 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.37976373579456624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01781658188363612",
+            "extra": "mean: 2.6332161439999937 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2328191147495091,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026107324014772667",
+            "extra": "mean: 811.1490064000066 msec\nrounds: 5"
           }
         ]
       }
