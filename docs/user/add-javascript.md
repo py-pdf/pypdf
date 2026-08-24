@@ -20,7 +20,7 @@ from pypdf.actions import JavaScript
 writer = PdfWriter(clone_from="example.pdf")
 
 # Add JavaScript to launch the print window on opening this PDF.
-writer.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
+writer.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
 
 writer.write("out-print-window.pdf")
 ```
