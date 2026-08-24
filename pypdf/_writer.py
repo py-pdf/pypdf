@@ -794,10 +794,10 @@ class PdfWriter(PdfDocCommon):
             >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         """
-        deprecate_with_replacement("add_js", "add_action", "7.0.0")
-        self.add_action(JavaScript(javascript))
+        deprecate_with_replacement("add_js", "add_open_action", "7.0.0")
+        self.add_open_action(JavaScript(javascript))
 
-    def add_action(self, action: Action) -> None:
+    def add_open_action(self, action: Action) -> None:
         """
         Add an action to the document-level JavaScript name tree.
 
@@ -810,7 +810,7 @@ class PdfWriter(PdfDocCommon):
             >>> from pypdf import PdfWriter
             >>> from pypdf.actions import JavaScript
             >>> output = PdfWriter()
-            >>> output.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
+            >>> output.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
         """
         return Action._create_open_action(self, action)
 

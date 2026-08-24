@@ -21,7 +21,7 @@ def test_add_js(pdf_file_writer):
         DeprecationWarning,
         match=(
             r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
-            r"Use add_action instead\.$"
+            r"Use add_open_action instead\.$"
         )
     ):
         pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
@@ -47,7 +47,7 @@ def test_added_js(pdf_file_writer):
         DeprecationWarning,
         match=(
             r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
-            r"Use add_action instead\.$"
+            r"Use add_open_action instead\.$"
         )
     ):
         pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
@@ -58,7 +58,7 @@ def test_added_js(pdf_file_writer):
         DeprecationWarning,
         match=(
             r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
-            r"Use add_action instead\.$"
+            r"Use add_open_action instead\.$"
         )
     ):
         pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
@@ -70,18 +70,18 @@ def test_added_js(pdf_file_writer):
     ), "add_js should add to the previous script in the catalog."
 
 
-def test_add_action(pdf_file_writer):
-    pdf_file_writer.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
+def test_add_open_action(pdf_file_writer):
+    pdf_file_writer.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
 
     assert (
         "/Names" in pdf_file_writer._root_object
-    ), "add_action should add a name catalog in the root object."
+    ), "add_open_action should add a name catalog in the root object."
     assert (
         "/JavaScript" in pdf_file_writer._root_object["/Names"]
-    ), "add_action should add a JavaScript name tree under the name catalog."
+    ), "add_open_action should add a JavaScript name tree under the name catalog."
 
 
-def test_added_action(pdf_file_writer):
+def test_added_open_action(pdf_file_writer):
     def get_javascript_name() -> Any:
         assert "/Names" in pdf_file_writer._root_object
         assert "/JavaScript" in pdf_file_writer._root_object["/Names"]
@@ -90,12 +90,12 @@ def test_added_action(pdf_file_writer):
             -2
         ]  # return -2 in order to get the latest javascript
 
-    pdf_file_writer.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
+    pdf_file_writer.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
     first_js = get_javascript_name()
 
-    pdf_file_writer.add_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
+    pdf_file_writer.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
     second_js = get_javascript_name()
 
     assert (
         first_js != second_js
-    ), "add_action should add to the previous script in the catalog."
+    ), "add_open_action should add to the previous script in the catalog."
