@@ -102,6 +102,51 @@ def _append_layout_tj(
         tj_ops.append(text_state_mgr.text_state_params(value))
 
 
+def _handle_layout_marked_or_show(
+    op: bytes,
+    operands: list[Any],
+    tj_ops: list[TextStateParams],
+    text_state_mgr: TextStateManager,
+    actual_text: ActualTextStack,
+) -> bool:
+    """Handle BDC/BMC/EMC and text-showing operators. Return True if consumed."""
+    if op in (b"BDC", b"BMC"):
+        actual_text.begin(operands)
+        return True
+    if op == b"EMC":
+        actual_text.end()
+        return True
+    if op == b"Tj":
+        _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[0])
+        return True
+    if op == b"TJ":
+        repl = actual_text.replacement()
+        if repl:
+            tj_ops.append(text_state_mgr.text_state_params(repl))
+        elif repl is None:
+            _tj = text_state_mgr.text_state_params()
+            for tj_op in operands[0]:
+                if isinstance(tj_op, bytes):
+                    _tj = text_state_mgr.text_state_params(tj_op)
+                    tj_ops.append(_tj)
+                else:
+                    text_state_mgr.add_trm(_tj.displacement_matrix(td_offset=tj_op))
+        return True
+    if op == b"'":
+        text_state_mgr.reset_trm()
+        text_state_mgr.add_tm([0, -text_state_mgr.TL])
+        _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[0])
+        return True
+    if op == b'"':
+        text_state_mgr.reset_trm()
+        text_state_mgr.set_state_param(b"Tw", operands[0])
+        text_state_mgr.set_state_param(b"Tc", operands[1])
+        text_state_mgr.add_tm([0, -text_state_mgr.TL])
+        _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[2])
+        return True
+    return False
+
+
 def recurse_to_target_op(
     ops: Iterator[tuple[list[Any], bytes]],
     text_state_mgr: TextStateManager,
@@ -215,34 +260,10 @@ def recurse_to_target_op(
             )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
-        elif op in (b"BDC", b"BMC"):
-            actual_text.begin(operands)
-        elif op == b"EMC":
-            actual_text.end()
-        elif op == b"Tj":
-            _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[0])
-        elif op == b"TJ":
-            repl = actual_text.replacement()
-            if repl:
-                tj_ops.append(text_state_mgr.text_state_params(repl))
-            elif repl is None:
-                _tj = text_state_mgr.text_state_params()
-                for tj_op in operands[0]:
-                    if isinstance(tj_op, bytes):
-                        _tj = text_state_mgr.text_state_params(tj_op)
-                        tj_ops.append(_tj)
-                    else:
-                        text_state_mgr.add_trm(_tj.displacement_matrix(td_offset=tj_op))
-        elif op == b"'":
-            text_state_mgr.reset_trm()
-            text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[0])
-        elif op == b'"':
-            text_state_mgr.reset_trm()
-            text_state_mgr.set_state_param(b"Tw", operands[0])
-            text_state_mgr.set_state_param(b"Tc", operands[1])
-            text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[2])
+        elif _handle_layout_marked_or_show(
+            op, operands, tj_ops, text_state_mgr, actual_text
+        ):
+            pass
         elif op in (b"Td", b"Tm", b"TD", b"T*"):
             text_state_mgr.reset_trm()
             if op == b"Tm":

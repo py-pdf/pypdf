@@ -111,6 +111,58 @@ def _emit_tj(extractor: TextExtraction, actual_text: ActualTextStack, operands: 
         extractor.process_operation(b"Tj", operands)
 
 
+def _emit_tj_array(extractor: TextExtraction, operands: list[Any]) -> None:
+    """Expand a TJ array into Tj shows, inserting spaces for large gaps."""
+    confirm_space_width = extractor._space_width * 0.95
+    if not operands:
+        return
+    for op in operands[0]:
+        if isinstance(op, (str, bytes)):
+            extractor.process_operation(b"Tj", [op])
+        if isinstance(op, (int, float, NumberObject, FloatObject)) and (
+            abs(float(op)) >= confirm_space_width
+            and extractor.text
+            and extractor.text[-1] != " "
+        ):
+            extractor.process_operation(b"Tj", [" "])
+
+
+def _handle_marked_or_show(
+    extractor: TextExtraction,
+    actual_text: ActualTextStack,
+    operator: bytes,
+    operands: list[Any],
+) -> bool:
+    """Handle BDC/BMC/EMC and text-showing operators. Return True if consumed."""
+    if operator in (b"BDC", b"BMC"):
+        actual_text.begin(operands)
+        return True
+    if operator == b"EMC":
+        actual_text.end()
+        return True
+    if operator == b"'":
+        extractor.process_operation(b"T*", [])
+        _emit_tj(extractor, actual_text, operands)
+        return True
+    if operator == b'"' and len(operands) >= 3:
+        extractor.process_operation(b"Tw", [operands[0]])
+        extractor.process_operation(b"Tc", [operands[1]])
+        extractor.process_operation(b"T*", [])
+        _emit_tj(extractor, actual_text, operands[2:])
+        return True
+    if operator == b"TJ":
+        repl = actual_text.replacement()
+        if repl:
+            extractor.process_operation(b"Tj", [repl])
+        elif repl is None:
+            _emit_tj_array(extractor, operands)
+        return True
+    if operator == b"Tj":
+        _emit_tj(extractor, actual_text, operands)
+        return True
+    return False
+
+
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval: Union[RectangleObject, ArrayObject, IndirectObject, None] = self.get(name)
     if isinstance(retval, RectangleObject):
@@ -1891,35 +1943,8 @@ class PageObject(DictionaryObject):
             if visitor_operand_before is not None:
                 visitor_operand_before(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
             # Multiple operators are handled here
-            if operator in (b"BDC", b"BMC"):
-                actual_text.begin(operands)
-            elif operator == b"EMC":
-                actual_text.end()
-            elif operator == b"'":
-                extractor.process_operation(b"T*", [])
-                _emit_tj(extractor, actual_text, operands)
-            elif operator == b'"' and len(operands) >= 3:
-                extractor.process_operation(b"Tw", [operands[0]])
-                extractor.process_operation(b"Tc", [operands[1]])
-                extractor.process_operation(b"T*", [])
-                _emit_tj(extractor, actual_text, operands[2:])
-            elif operator == b"TJ":
-                repl = actual_text.replacement()
-                if repl:
-                    extractor.process_operation(b"Tj", [repl])
-                elif repl is None:
-                    # The space width may be smaller than the font width, so the width should be 95%.
-                    _confirm_space_width = extractor._space_width * 0.95
-                    if operands:
-                        for op in operands[0]:
-                            if isinstance(op, (str, bytes)):
-                                extractor.process_operation(b"Tj", [op])
-                            if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                                abs(float(op)) >= _confirm_space_width
-                                and extractor.text
-                                and extractor.text[-1] != " "
-                            ):
-                                extractor.process_operation(b"Tj", [" "])
+            if _handle_marked_or_show(extractor, actual_text, operator, operands):
+                pass
             elif operator == b"TD" and len(operands) >= 2:
                 extractor.process_operation(b"TL", [-operands[1]])
                 extractor.process_operation(b"Td", operands)
@@ -1980,8 +2005,6 @@ class PageObject(DictionaryObject):
                     extractor.text = ""
                     extractor.memo_cm = extractor.cm_matrix.copy()
                     extractor.memo_tm = extractor.tm_matrix.copy()
-            elif operator == b"Tj":
-                _emit_tj(extractor, actual_text, operands)
             else:
                 extractor.process_operation(operator, operands)
             if visitor_operand_after is not None:
