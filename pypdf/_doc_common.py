@@ -1014,7 +1014,7 @@ class PdfDocCommon(ABC):
         ],
     ) -> Destination:
         page, typ = None, None
-        # handle outline items with missing or invalid destination: a valid
+        # Handle outline items with missing or invalid destination: a valid
         # destination is an array of at least two elements (page and fit type).
         # Anything else (a NullObject, a name, a bare number, None, ...) cannot
         # be unpacked below and is treated as a missing destination.
