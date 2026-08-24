@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787581183797,
+  "lastUpdate": 1787581211751,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127387,6 +127387,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009483336266073497",
             "extra": "mean: 581.1844378000046 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d716064190ed979c2fe70ed2f0ab3a9db4ab3431",
+          "message": "STY: Type the destination and field trees as DictionaryObject (#3988)\n\n_get_named_destinations and _get_fields both walk name trees that are plain\ndictionaries: a name tree node holds /Kids or /Names, and the AcroForm is a\ndictionary too. Neither is a TreeObject, and neither function calls anything\nTreeObject adds - both only do dictionary access.\n\nThe casts asserted TreeObject on objects that are DictionaryObject at runtime,\nso a typeguard run reports 16 failures across the reader, writer and form\ntests. Typed to match what is passed, following _check_kids in the same file,\nwhich already accepts either.",
+          "timestamp": "2026-08-24T16:17:09+02:00",
+          "tree_id": "1f5d488fe42502893821dfde47e759f9761235d5",
+          "url": "https://github.com/py-pdf/pypdf/commit/d716064190ed979c2fe70ed2f0ab3a9db4ab3431"
+        },
+        "date": 1787581202232,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.784074275267026,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021396529212460488",
+            "extra": "mean: 78.2223239999998 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.54646176265358,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010359467902747102",
+            "extra": "mean: 53.91864026666629 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0454239506189327,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03156832461571411",
+            "extra": "mean: 956.5497321999942 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5151668585596415,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02067980459596088",
+            "extra": "mean: 1.9411186557999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3651796469787528,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012719462444300328",
+            "extra": "mean: 2.738378242799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1692951887752643,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02167795024689806",
+            "extra": "mean: 855.2160392000019 msec\nrounds: 5"
           }
         ]
       }
