@@ -73,8 +73,6 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
-    ContentStream,
-    DecodedStreamObject,
     Destination,
     DictionaryObject,
     EncodedStreamObject,
@@ -1160,7 +1158,7 @@ class PdfReader(PdfDocCommon):
         raise PdfReadError("Could not find xref table at specified location")
 
     def _sanitize_pdf15_xref_stream_index_pairs(
-            self, index_pairs: list[int], entry_sizes: list[int], xref_stream: ContentStream
+            self, index_pairs: list[int], entry_sizes: list[int], xref_stream: StreamObject
     ) -> list[int]:
         # `entry_sizes` holds the byte widths for the entries. Summing determines the total number of bytes per entry.
         # We expect up to 3 values. `min_entry_bytes` will be the smallest plausible size of one xref entry.
@@ -1204,13 +1202,11 @@ class PdfReader(PdfDocCommon):
 
         return result
 
-    def _read_pdf15_xref_stream(
-        self, stream: StreamType
-    ) -> Union[ContentStream, EncodedStreamObject, DecodedStreamObject]:
+    def _read_pdf15_xref_stream(self, stream: StreamType) -> StreamObject:
         """Read the cross-reference stream for PDF 1.5+."""
         stream.seek(-1, 1)
         stream_idnum, stream_generation = self.read_object_header(stream)
-        xref_stream = cast(ContentStream, read_object(stream, self))
+        xref_stream = cast(StreamObject, read_object(stream, self))
         if cast(str, xref_stream["/Type"]) != "/XRef":
             raise PdfReadError(f"Unexpected type {xref_stream['/Type']!r}")
         self.cache_indirect_object(stream_generation, stream_idnum, xref_stream)
