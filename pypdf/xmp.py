@@ -185,6 +185,8 @@ class _XmpBuilder(ExpatBuilderNS):
     def custom_entity_declaration_handler(
             self,
             entity_name: str,
+            # expat passes an int here rather than a bool, but typeshed declares
+            # the handler with a bool, so the annotation follows typeshed.
             is_parameter_entity: bool,
             value: Optional[str],
             base: Optional[str],
