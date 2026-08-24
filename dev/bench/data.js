@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787581211751,
+  "lastUpdate": 1787583557335,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127453,6 +127453,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02167795024689806",
             "extra": "mean: 855.2160392000019 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0eba4c41703c787f27823d5cb2a9d6b5302596a4",
+          "message": "STY: Type the second argument of mult as the mapping it also accepts (#3989)\n\neffective_transform passes the entries of a ChainMap into mult, which was\nannotated to take two lists. The call carried a type: ignore[arg-type] and a\ncomment noting that the dict has integer keys 0-5.\n\nmult only reads keys 0 through 5, and the ChainMap holds those alongside the\nis_text and is_render flags, so the mapping satisfies the function as it\nstands. Annotating that removes eight typeguard failures in the text\nextraction and page tests, and the suppression with them.\n\nThe only string keys the ChainMap ever holds are is_text and is_render, so\nspelling them out is more accurate than str. Applied to the type alias as\nwell, otherwise the call site still widens to str.",
+          "timestamp": "2026-08-24T16:56:06+02:00",
+          "tree_id": "f36848f705df83cd0ba3bdbe423fd23f6d0745e7",
+          "url": "https://github.com/py-pdf/pypdf/commit/0eba4c41703c787f27823d5cb2a9d6b5302596a4"
+        },
+        "date": 1787583548110,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.43944997599469,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016888028090839835",
+            "extra": "mean: 74.40780700000242 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.748083753484016,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011445563025301413",
+            "extra": "mean: 63.4997892857133 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0302870935600155,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02890112197404947",
+            "extra": "mean: 970.603248599997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.48320696707999455,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02135675890461931",
+            "extra": "mean: 2.0695065843999942 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3664522487571713,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011015679751107567",
+            "extra": "mean: 2.7288685044000034 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1593672124782641,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00991283294097574",
+            "extra": "mean: 862.5394863999986 msec\nrounds: 5"
           }
         ]
       }
