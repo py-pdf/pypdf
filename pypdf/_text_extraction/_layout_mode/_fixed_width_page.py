@@ -8,7 +8,7 @@ from typing import Any, Literal, Optional, TypedDict
 
 from ..._font import Font
 from ..._utils import logger_warning
-from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
+from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS, ActualTextStack
 from ._text_state_manager import TextStateManager
 from ._text_state_params import TextStateParams
 
@@ -88,12 +88,27 @@ def bt_group(tj_op: TextStateParams, rendered_text: str, displaced_tx: float) ->
     )
 
 
+
+def _append_layout_tj(
+    tj_ops: list[TextStateParams],
+    text_state_mgr: TextStateManager,
+    actual_text: ActualTextStack,
+    value: Any,
+) -> None:
+    repl = actual_text.replacement()
+    if repl:
+        tj_ops.append(text_state_mgr.text_state_params(repl))
+    elif repl is None:
+        tj_ops.append(text_state_mgr.text_state_params(value))
+
+
 def recurse_to_target_op(
     ops: Iterator[tuple[list[Any], bytes]],
     text_state_mgr: TextStateManager,
     end_target: Literal[b"Q", b"ET"],
     fonts: dict[str, Font],
     strip_rotated: bool = True,
+    actual_text: Optional[ActualTextStack] = None,
 ) -> tuple[list[BTGroup], list[TextStateParams]]:
     """
     Recurse operators between BT/ET and/or q/Q operators managing the transform
@@ -114,6 +129,8 @@ def recurse_to_target_op(
 
     # 1 entry per text show operator (Tj/TJ/'/")
     tj_ops: list[TextStateParams] = []
+    if actual_text is None:
+        actual_text = ActualTextStack()
 
     if end_target == b"Q":
         # add new q level. cm's added at this level will be popped at next b'Q'
@@ -186,7 +203,7 @@ def recurse_to_target_op(
             break
         if op == b"q":
             bts, tjs = recurse_to_target_op(
-                ops, text_state_mgr, b"Q", fonts, strip_rotated
+                ops, text_state_mgr, b"Q", fonts, strip_rotated, actual_text
             )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
@@ -194,30 +211,38 @@ def recurse_to_target_op(
             text_state_mgr.add_cm(*operands)
         elif op == b"BT":
             bts, tjs = recurse_to_target_op(
-                ops, text_state_mgr, b"ET", fonts, strip_rotated
+                ops, text_state_mgr, b"ET", fonts, strip_rotated, actual_text
             )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
+        elif op in (b"BDC", b"BMC"):
+            actual_text.begin(operands)
+        elif op == b"EMC":
+            actual_text.end()
         elif op == b"Tj":
-            tj_ops.append(text_state_mgr.text_state_params(operands[0]))
+            _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[0])
         elif op == b"TJ":
-            _tj = text_state_mgr.text_state_params()
-            for tj_op in operands[0]:
-                if isinstance(tj_op, bytes):
-                    _tj = text_state_mgr.text_state_params(tj_op)
-                    tj_ops.append(_tj)
-                else:
-                    text_state_mgr.add_trm(_tj.displacement_matrix(td_offset=tj_op))
+            repl = actual_text.replacement()
+            if repl:
+                tj_ops.append(text_state_mgr.text_state_params(repl))
+            elif repl is None:
+                _tj = text_state_mgr.text_state_params()
+                for tj_op in operands[0]:
+                    if isinstance(tj_op, bytes):
+                        _tj = text_state_mgr.text_state_params(tj_op)
+                        tj_ops.append(_tj)
+                    else:
+                        text_state_mgr.add_trm(_tj.displacement_matrix(td_offset=tj_op))
         elif op == b"'":
             text_state_mgr.reset_trm()
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            tj_ops.append(text_state_mgr.text_state_params(operands[0]))
+            _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[0])
         elif op == b'"':
             text_state_mgr.reset_trm()
             text_state_mgr.set_state_param(b"Tw", operands[0])
             text_state_mgr.set_state_param(b"Tc", operands[1])
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            tj_ops.append(text_state_mgr.text_state_params(operands[2]))
+            _append_layout_tj(tj_ops, text_state_mgr, actual_text, operands[2])
         elif op in (b"Td", b"Tm", b"TD", b"T*"):
             text_state_mgr.reset_trm()
             if op == b"Tm":
@@ -310,10 +335,15 @@ def text_show_operations(
     state_mgr = TextStateManager()  # transformation stack manager
     bt_groups: list[BTGroup] = []  # BT operator dict
     tj_ops: list[TextStateParams] = []  # Tj/TJ operator data
+    actual_text = ActualTextStack()
     for operands, op in ops:
-        if op in (b"BT", b"q"):
+        if op in (b"BDC", b"BMC"):
+            actual_text.begin(operands)
+        elif op == b"EMC":
+            actual_text.end()
+        elif op in (b"BT", b"q"):
             bts, tjs = recurse_to_target_op(
-                ops, state_mgr, b"ET" if op == b"BT" else b"Q", fonts, strip_rotated
+                ops, state_mgr, b"ET" if op == b"BT" else b"Q", fonts, strip_rotated, actual_text
             )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)

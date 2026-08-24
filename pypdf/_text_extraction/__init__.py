@@ -243,3 +243,45 @@ def get_display_str(
             # Treat a sequence of bytes as a neutral character.
             text = x + text if rtl_dir else text + x
     return text, rtl_dir, widths
+
+
+class ActualTextStack:
+    """Track nested BDC/BMC...EMC /ActualText replacements during extraction."""
+
+    def __init__(self) -> None:
+        # None: unmarked or no ActualText. [text, consumed] otherwise.
+        self._stack: list[Optional[list[Any]]] = []
+
+    def begin(self, operands: list[Any]) -> None:
+        text: Optional[str] = None
+        if len(operands) >= 2:
+            props = operands[-1]
+            getter = getattr(props, "get", None)
+            raw = getter("/ActualText") if callable(getter) else None
+            if raw is not None:
+                if isinstance(raw, bytes):
+                    try:
+                        text = raw.decode("utf-8")
+                    except UnicodeDecodeError:
+                        text = raw.decode("latin-1")
+                else:
+                    text = str(raw)
+        self._stack.append([text, False] if text is not None else None)
+
+    def end(self) -> None:
+        if self._stack:
+            self._stack.pop()
+
+    def replacement(self) -> Optional[str]:
+        """Return ActualText once per marked sequence.
+
+        ``None`` means use the painted glyphs. ``""`` means skip later shows
+        in the same span. Any other string is the Unicode to emit instead.
+        """
+        if not self._stack or self._stack[-1] is None:
+            return None
+        entry = self._stack[-1]
+        if entry[1]:
+            return ""
+        entry[1] = True
+        return entry[0]

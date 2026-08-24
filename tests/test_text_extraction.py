@@ -988,3 +988,70 @@ def test_line_breaks_with_scaled_current_matrix() -> None:
     )
 
     assert PdfReader(buffer).pages[0].extract_text() == "Line one\nLine two"
+
+
+def _page_with_type1_ligature_font(
+    content_stream: bytes,
+    *,
+    differences: list[object],
+    tounicode: bytes,
+) -> BytesIO:
+    """Single page whose Type1 font maps a ligature glyph through /Differences and /ToUnicode."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    to_unicode = DecodedStreamObject()
+    to_unicode.set_data(tounicode)
+
+    font = DictionaryObject()
+    font[NameObject("/Type")] = NameObject("/Font")
+    font[NameObject("/Subtype")] = NameObject("/Type1")
+    font[NameObject("/BaseFont")] = NameObject("/Helvetica")
+    font[NameObject("/Encoding")] = DictionaryObject({
+        NameObject("/Type"): NameObject("/Encoding"),
+        NameObject("/BaseEncoding"): NameObject("/WinAnsiEncoding"),
+        NameObject("/Differences"): ArrayObject(differences),
+    })
+    font[NameObject("/ToUnicode")] = to_unicode
+
+    font_resources = DictionaryObject()
+    font_resources[NameObject("/F1")] = writer._add_object(font)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+
+    content = DecodedStreamObject()
+    content.set_data(content_stream)
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def test_extract_text_ligature_actual_text_replaces_private_use() -> None:
+    """Marked-content ActualText is the Unicode for a ligature painted as U+E000.
+
+    Type0 subset fonts in issue #3975 map CID ligatures to U+E000 / U+E001 and
+    wrap the glyph in ``/Span << /ActualText (fi) >>``. Extraction must emit
+    ``fi``, not the private-use code point.
+    """
+    buffer = _page_with_type1_ligature_font(
+        b"BT /F1 12 Tf 72 720 Td (Of) Tj "
+        b"/Span << /ActualText (fi) >> BDC (\250) Tj EMC "
+        b"(ce) Tj ET",
+        differences=[NumberObject(0xA8), NameObject("/fi")],
+        tounicode=(
+            b"/CIDInit /ProcSet findresource begin\n"
+            b"12 dict begin\nbegincmap\n"
+            b"/CMapType 2 def\n"
+            b"1 begincodespacerange <00> <FF> endcodespacerange\n"
+            b"1 beginbfchar\n<A8> <E000>\nendbfchar\n"
+            b"endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n"
+        ),
+    )
+    page = PdfReader(buffer).pages[0]
+    assert "\ue000" not in page.extract_text()
+    assert "Office" in page.extract_text()
+    assert "Office" in page.extract_text(extraction_mode="layout").replace(" ", "")
