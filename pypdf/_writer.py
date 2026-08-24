@@ -3035,7 +3035,7 @@ class PdfWriter(PdfDocCommon):
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
-                ano["/Subtype"] != "/Link"  # type: ignore[comparison-overlap]
+                ano.get("/Subtype") != "/Link"
                 or "/A" not in ano
                 or cast("DictionaryObject", ano["/A"])["/S"] != "/GoTo"  # type: ignore[comparison-overlap]
                 or "/Dest" in ano
