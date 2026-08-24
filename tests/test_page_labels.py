@@ -70,6 +70,15 @@ def test_number2uppercase_letter():
         number2uppercase_letter(-1)
 
 
+@pytest.mark.parametrize("number", [0, -1, -5])
+def test_number2roman_numeral_non_positive(number):
+    """A non-positive number produced a numeral rather than being refused."""
+    with pytest.raises(ValueError, match="Expecting a positive number"):
+        number2uppercase_roman_numeral(number)
+    with pytest.raises(ValueError, match="Expecting a positive number"):
+        number2lowercase_roman_numeral(number)
+
+
 @pytest.mark.enable_socket
 def test_index2label(caplog):
     name = "waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf"

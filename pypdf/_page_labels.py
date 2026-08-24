@@ -73,6 +73,8 @@ from .generic import (
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
+    if num <= 0:
+        raise ValueError("Expecting a positive number")
     roman = [
         (1000, "M"),
         (900, "CM"),
