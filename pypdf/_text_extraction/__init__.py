@@ -281,7 +281,10 @@ class ActualTextStack:
         if not self._stack or self._stack[-1] is None:
             return None
         entry = self._stack[-1]
+        assert entry is not None
         if entry[1]:
             return ""
         entry[1] = True
-        return entry[0]
+        text = entry[0]
+        assert isinstance(text, str)
+        return text
