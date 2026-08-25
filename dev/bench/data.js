@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787662813089,
+  "lastUpdate": 1787662829194,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128311,6 +128311,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003600242525584549",
             "extra": "mean: 853.2672300000002 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "92726151+SomSamantray@users.noreply.github.com",
+            "name": "Som Samantray",
+            "username": "SomSamantray"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "db93ea6554a394dbfac25ac2d5c8f3d1e10609dd",
+          "message": "BUG: Make is_open=False collapse outline items (#3998)\n\nPass inc_parent_counter_outline unconditionally in\nadd_outline_item_destination instead of a no-op lambda for\nis_open=False, so the parent /Count is set negative (collapsed)\nper the PDF spec. Add a regression test for the issue repro and\nupdate the root /Count assertion in test_add_outline_item from 3\nto 4, as the collapsed top-level item now correctly counts as one\nvisible child of the outline root.\n\nCloses #2994.",
+          "timestamp": "2026-08-25T14:57:23+02:00",
+          "tree_id": "84d911a272d44f13308054ce852cdd6f1d2cbea0",
+          "url": "https://github.com/py-pdf/pypdf/commit/db93ea6554a394dbfac25ac2d5c8f3d1e10609dd"
+        },
+        "date": 1787662819114,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.533561534142178,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018766441772008105",
+            "extra": "mean: 73.89037966666952 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.970204207687566,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006321064390552714",
+            "extra": "mean: 55.64767035714624 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9857843300762705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03504956461444385",
+            "extra": "mean: 1.014420669399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.48585471151030285,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05875663918548801",
+            "extra": "mean: 2.0582284710000067 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36437153318308535,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01429807912126495",
+            "extra": "mean: 2.7444514977999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1906809890237846,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003072952842351773",
+            "extra": "mean: 839.8555189999968 msec\nrounds: 5"
           }
         ]
       }
