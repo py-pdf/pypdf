@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787663625474,
+  "lastUpdate": 1787663645992,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -107453,6 +107453,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0014081998269592116",
             "extra": "mean: 613.0521857999952 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "98e649e78f8c2295747bc281becef359f14e79ff",
+          "message": "BUG: Reject a page range with a zero stride (#4004)\n\nPageRange(\"::0\") was accepted and PageRange.valid(\"::0\") returned True, but\nthe range cannot be applied: slice() takes a zero step and then raises\nValueError from indices(), away from the string that caused it. Through\nPdfWriter.append the same input surfaces as a TypeError about the pages\nargument instead.\n\nEvery other malformed range is refused at construction with ParseError, so a\nzero stride now is too, and valid() defers to the constructor rather than\nmatching the pattern a second time.",
+          "timestamp": "2026-08-25T15:11:02+02:00",
+          "tree_id": "506cbf9220c1e05a20d09aed05e4a85d66e671ac",
+          "url": "https://github.com/py-pdf/pypdf/commit/98e649e78f8c2295747bc281becef359f14e79ff"
+        },
+        "date": 1787663637531,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9602242336702425,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017241095901247668",
+            "extra": "mean: 337.8122470000008 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.96532681194377,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002094512219424231",
+            "extra": "mean: 52.7278021578954 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.260791086548552,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03952674695898362",
+            "extra": "mean: 3.8344868808 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.342192111352634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013643225490675224",
+            "extra": "mean: 57.6628371764706 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07164262526741581,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07039413501913602",
+            "extra": "mean: 13.9581707994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6575065885530509,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005661985587566496",
+            "extra": "mean: 603.3158522000008 msec\nrounds: 5"
           }
         ]
       }
