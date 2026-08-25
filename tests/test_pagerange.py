@@ -80,6 +80,21 @@ def test_str_init_zero_step(init_str):
 
 
 @pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (slice(1, 5), True),
+        (PageRange("1:5"), True),
+        ("1:5", True),
+        (5, False),
+        (None, False),
+        (["1:5"], False),
+    ],
+)
+def test_valid(value, expected):
+    assert PageRange.valid(value) is expected
+
+
+@pytest.mark.parametrize(
     ("params", "expected"),
     [
         (["foo.pdf", "1:5"], [("foo.pdf", PageRange("1:5"))]),
