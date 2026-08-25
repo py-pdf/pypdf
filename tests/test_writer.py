@@ -3557,3 +3557,22 @@ def test_add_articles_thread__cyclic() -> None:
             match=r"^Detected cyclic article structure\.$"
     ):
         writer._add_articles_thread(thread=thread, pages={}, reader=reader)
+
+
+def test_page_layout_warning_lists_the_valid_layouts(caplog):
+    """The warning built a set of an empty string and one concatenated blob."""
+    writer = PdfWriter()
+    writer.page_layout = "/Nonsense"
+    assert (
+        "Layout should be one of: /NoLayout, /SinglePage, /OneColumn, "
+        "/TwoColumnLeft, /TwoColumnRight, /TwoPageLeft, /TwoPageRight"
+    ) in caplog.text
+
+
+def test_page_mode_warning_lists_the_valid_modes(caplog):
+    writer = PdfWriter()
+    writer.page_mode = "/Nonsense"
+    assert (
+        "Mode should be one of: /UseNone, /UseOutlines, /UseThumbs, "
+        "/FullScreen, /UseOC, /UseAttachments"
+    ) in caplog.text
