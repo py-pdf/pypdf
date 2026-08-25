@@ -151,7 +151,9 @@ class ViewerPreferences(DictionaryObject):
         cls.view_clip = _add_prop_name("/ViewClip", [], None)
         cls.print_area = _add_prop_name("/PrintArea", [], None)
         cls.print_clip = _add_prop_name("/PrintClip", [], None)
-        cls.print_scaling = _add_prop_name("/PrintScaling", [], None)
+        cls.print_scaling = _add_prop_name(
+            "/PrintScaling", ["/None", "/AppDefault"], None
+        )
         cls.duplex = _add_prop_name(
             "/Duplex", ["/Simplex", "/DuplexFlipShortEdge", "/DuplexFlipLongEdge"], None
         )

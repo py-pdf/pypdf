@@ -3576,3 +3576,22 @@ def test_page_mode_warning_lists_the_valid_modes(caplog):
         "Mode should be one of: /UseNone, /UseOutlines, /UseThumbs, "
         "/FullScreen, /UseOC, /UseAttachments"
     ) in caplog.text
+
+
+@pytest.mark.parametrize("value", ["/None", "/AppDefault"])
+def test_print_scaling_accepts_the_spec_values(value):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    viewer_preferences.print_scaling = value
+    assert viewer_preferences.print_scaling == value
+
+
+@pytest.mark.parametrize("value", ["/Nonsense", "/none", "/appdefault"])
+def test_print_scaling_rejects_other_values(value):
+    """/PrintScaling was declared without its allowed values, so nothing checked it."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    with pytest.raises(ValueError, match="is an unacceptable value"):
+        viewer_preferences.print_scaling = value
