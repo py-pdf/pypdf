@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787663645992,
+  "lastUpdate": 1787665010175,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128509,6 +128509,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028431118923243594",
             "extra": "mean: 648.7359011999956 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2d214584f68ba80348323662df47130b4273b3ee",
+          "message": "STY: Use the FfBits enum instead of a plain integer for form field flags (#4003)\n\nupdate_page_form_field_values takes its flags as FieldDictionaryAttributes\nFfBits, and the docstring points readers at that enum, but the tests passed a\nbare 1 in five places. FfBits(1) is ReadOnly, so spelling it out says what the\ncall is asking for.\n\nSame shape as #3997.",
+          "timestamp": "2026-08-25T15:33:46+02:00",
+          "tree_id": "7f5a0eee6ef7d97931e72c9f1d706fe4af40cecb",
+          "url": "https://github.com/py-pdf/pypdf/commit/2d214584f68ba80348323662df47130b4273b3ee"
+        },
+        "date": 1787665001174,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.923272669211618,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004058796855722848",
+            "extra": "mean: 77.37978030769236 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.600788948462373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005142293906788903",
+            "extra": "mean: 33.78288334615302 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1703552148459828,
+            "unit": "iter/sec",
+            "range": "stddev: 0.055363100356757775",
+            "extra": "mean: 854.4414441999976 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.36642684863410957,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021517632288448933",
+            "extra": "mean: 2.7290576652000085 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5185513360423525,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026683091502685486",
+            "extra": "mean: 1.9284493752000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.672149603971744,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011902650489755435",
+            "extra": "mean: 598.032614799996 msec\nrounds: 5"
           }
         ]
       }
