@@ -3618,3 +3618,22 @@ def test_print_pagerange_accepts_page_pairs(values):
         [NumberObject(value) for value in values]
     )
     assert list(viewer_preferences.print_pagerange) == values
+
+
+@pytest.mark.parametrize("value", [-1, -5])
+def test_num_copies_rejects_negative(value):
+    """A negative copy count cannot be interpreted by a reader."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    with pytest.raises(ValueError, match="is an unacceptable value for /NumCopies"):
+        viewer_preferences.num_copies = value
+
+
+@pytest.mark.parametrize("value", [0, 1, 2, 99])
+def test_num_copies_accepts_zero_and_above(value):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    viewer_preferences.num_copies = value
+    assert viewer_preferences.num_copies == value
