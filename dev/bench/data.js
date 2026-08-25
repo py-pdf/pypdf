@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787589509616,
+  "lastUpdate": 1787651280266,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -107255,6 +107255,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018407230651791975",
             "extra": "mean: 435.1818885999933 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "84afb61de744e0d85b1dc58640a7f107f0b1da59",
+          "message": "BUG: Resolve the font resource before building a Font from it (#4002)\n\nFont.from_font_resource takes a DictionaryObject and reads it with .get(),\nbut two callers hand over the raw entry from the /Font resource dictionary,\nwhich is an IndirectObject. It works only because IndirectObject forwards\nunknown attributes to the object it points at.\n\nThe third caller in _page.py already calls get_object() first, so the other\ntwo now do the same.",
+          "timestamp": "2026-08-25T11:45:00+02:00",
+          "tree_id": "013598d62d6ee558d200d64e549948cc94aaafde",
+          "url": "https://github.com/py-pdf/pypdf/commit/84afb61de744e0d85b1dc58640a7f107f0b1da59"
+        },
+        "date": 1787651272184,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.820651346027393,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014103124723769551",
+            "extra": "mean: 354.5280423999941 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.00204223308571,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019816041877186484",
+            "extra": "mean: 52.62592240000572 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25767634684119456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019061081132944413",
+            "extra": "mean: 3.880837384800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.548534281047296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005617943928646439",
+            "extra": "mean: 56.98481616667076 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07392740887428476,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030965651195179713",
+            "extra": "mean: 13.526782761999987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5158788126754257,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038837727697546565",
+            "extra": "mean: 659.683341199991 msec\nrounds: 5"
           }
         ]
       }
