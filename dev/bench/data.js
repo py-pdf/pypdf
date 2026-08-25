@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787665015011,
+  "lastUpdate": 1787665540701,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128641,6 +128641,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011902650489755435",
             "extra": "mean: 598.032614799996 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "tadej.j@nez.si",
+            "name": "Tadej Janež",
+            "username": "tjanez"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9344ad6517daa1b7564b3777946df004120fadc0",
+          "message": "DOC: Move releasing.drawio* from docs/_static/ to docs/dev/ (#4007)\n\nThe release-process diagram lives in docs/_static/, but is referenced from\ndocs/dev/releasing.md as an image. That makes Sphinx write it to the build\ntree twice, via two independent mechanisms:\n\n- html_static_path = [\"_static\"] copies docs/_static/ verbatim into\n  _build/html/_static/;\n- the image reference in releasing.md registers the file with Sphinx's\n  image collector, which copies it into _build/html/_images/.\n\nThe rendered page only links to the _images/ copy, so the _static/ one is\nan unreferenced 290 KiB duplicate. The raw .drawio source is shipped in\n_static/ as well and is likewise never referenced.\n\nMove both files next to the page that uses them, which is also how every\nother image in docs/ is already organised (docs/user/*.png,\ndocs/dev/PR_Header_example.png).",
+          "timestamp": "2026-08-25T15:42:44+02:00",
+          "tree_id": "896109a8c13f652c32aeffb76e6f0074a03baade",
+          "url": "https://github.com/py-pdf/pypdf/commit/9344ad6517daa1b7564b3777946df004120fadc0"
+        },
+        "date": 1787665531528,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.798594765596532,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01683646224545987",
+            "extra": "mean: 72.47114775000558 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.252374632311103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007885055951376101",
+            "extra": "mean: 54.78739178571094 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.034346505724844,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05522122667779057",
+            "extra": "mean: 966.7940041999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5323653847169116,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05327622130394696",
+            "extra": "mean: 1.8784091316000116 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36591920271601247,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02223351423957801",
+            "extra": "mean: 2.7328437332000135 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1298566218296668,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09684129507106541",
+            "extra": "mean: 885.0680526000019 msec\nrounds: 5"
           }
         ]
       }
