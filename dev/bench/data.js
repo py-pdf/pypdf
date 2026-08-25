@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787665551094,
+  "lastUpdate": 1787672337698,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -107651,6 +107651,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004076408685052345",
             "extra": "mean: 603.1996484000047 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "29f389c4fc8a45d3f0cef48065e22d3fbecf4757",
+          "message": "BUG: List the valid layouts in the page layout warning (#4010)\n\nThe warning passed a set built from an empty string and the valid layouts\njoined without a separator, so it read\n\n    Layout should be one of: {'', '/NoLayout/SinglePage/OneColumn/...'}\n\npage_mode next to it already joins its values with a comma.",
+          "timestamp": "2026-08-25T17:35:48+02:00",
+          "tree_id": "989ea8e2420f6a8fae5920c44b2d6ea469a6e25c",
+          "url": "https://github.com/py-pdf/pypdf/commit/29f389c4fc8a45d3f0cef48065e22d3fbecf4757"
+        },
+        "date": 1787672328153,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9871058035282942,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015864975944777454",
+            "extra": "mean: 334.7722062000031 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.160177499349125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002854196118022909",
+            "extra": "mean: 52.19158329999658 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26978650183160857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007171579607729081",
+            "extra": "mean: 3.7066346656000064 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.262811313817004,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013740796121353555",
+            "extra": "mean: 57.92799224999978 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07195280455940357,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049291444027135",
+            "extra": "mean: 13.897998919200003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6557192074564884,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027889789907303178",
+            "extra": "mean: 603.9671433999956 msec\nrounds: 5"
           }
         ]
       }
