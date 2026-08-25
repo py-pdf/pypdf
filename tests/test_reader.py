@@ -459,6 +459,52 @@ def test_find_previous_startxref_pos_recovery_variants():
 
 
 @pytest.mark.parametrize(
+    ("suffix", "duplicates"),
+    [
+        (b"", 0),
+        (b"%%EOF\n", 1),
+        (b"\n%%EOF\n", 1),
+        (b"\n%%EOF\n\n%%EOF\n", 2),
+        (b"\n%%EOF", 1),
+    ],
+    ids=["none", "adjacent", "blank-line", "two-extra", "no-trailing-newline"],
+)
+@pytest.mark.parametrize("strict", [False, True])
+def test_duplicate_eof_markers(caplog, suffix, duplicates, strict):
+    """%%EOF markers appended below the final one still resolve startxref (#4008)."""
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+    buffer = BytesIO()
+    writer.write(buffer)
+    pdf_data = buffer.getvalue() + suffix
+
+    reader = PdfReader(BytesIO(pdf_data), strict=strict)
+    assert len(reader.pages) == 1
+
+    expected = ["Duplicate %%EOF marker(s) found, skipping them"] if duplicates else []
+    assert normalize_warnings(caplog.text) == (expected or [""])
+
+
+@pytest.mark.parametrize(
+    "pdf_data",
+    [
+        # The run of markers is exhausted by reaching the start of the stream.
+        b"%%EOF\n%%EOF\n",
+        # Same, but with something above the run that is not an offset either.
+        b"%PDF-1.7\n%%EOF\n%%EOF\n",
+        # The run is longer than the bound on the backward scan, so the scan
+        # gives up instead of walking the whole stream.
+        b"%PDF-1.7\n" + b"%%EOF\n" * (PdfReader._MAX_STARTXREF_RECOVERY_LINES + 10),
+    ],
+    ids=["start-of-stream", "no-offset-above", "beyond-scan-limit"],
+)
+def test_duplicate_eof_markers_without_startxref(pdf_data):
+    """A run of %%EOF markers with no offset above it is still reported as broken."""
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(pdf_data))
+
+
+@pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
     [
         ("encrypted-file.pdf", "test", False),
