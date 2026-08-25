@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787651289053,
+  "lastUpdate": 1787654345309,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -107321,6 +107321,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0038837727697546565",
             "extra": "mean: 659.683341199991 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bc1a49f75af9783ee08f09e9e281c163749678c2",
+          "message": "ROB: Reject a non-positive number when building a Roman numeral (#4005)\n\nnumber2uppercase_roman_numeral(-1) returned 'CMXCIX' and 0 returned an empty\nstring: the loop subtracts each value it emits and stops once the remainder\nreaches zero, which a negative input satisfies after one pass over the table.\n\nnumber2uppercase_letter and number2lowercase_letter beside it already refuse a\nnon-positive number, and index2label catches ValueError from the mapping\nfunction to fall back to the page position, so a file with /St 0 now reports a\nmalformed entry rather than a nonsense numeral.",
+          "timestamp": "2026-08-25T12:36:38+02:00",
+          "tree_id": "8f85000137ef7989d37501a28d8345770764b174",
+          "url": "https://github.com/py-pdf/pypdf/commit/bc1a49f75af9783ee08f09e9e281c163749678c2"
+        },
+        "date": 1787654337481,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.188102414871386,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01137941357745422",
+            "extra": "mean: 238.77162040000144 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 24.999254940683645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016275548661139103",
+            "extra": "mean: 40.00119213043448 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3802319645023807,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01059137937923008",
+            "extra": "mean: 2.629973524999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 26.055444958247758,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007774548860204694",
+            "extra": "mean: 38.37969382608657 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.10957543547971851,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01986656293605551",
+            "extra": "mean: 9.126133020800008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.12662280965058,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0032090218138178107",
+            "extra": "mean: 470.2291329999923 msec\nrounds: 5"
           }
         ]
       }
