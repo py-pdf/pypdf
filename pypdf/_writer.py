@@ -2392,7 +2392,7 @@ class PdfWriter(PdfDocCommon):
                 logger_warning(
                     "Layout should be one of: %(layouts)s",
                     source=__name__,
-                    layouts={"", "".join(self._valid_layouts)},
+                    layouts=", ".join(self._valid_layouts),
                 )
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
