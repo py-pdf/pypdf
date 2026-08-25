@@ -671,3 +671,10 @@ class Version:
                 return False
 
         return len(self.components) < len(other.components)
+
+
+@dataclass
+class _TraversalState:
+    """Sometimes we need mutable objects which just count something."""
+    entry_count: int = 0
+    has_logged: bool = False

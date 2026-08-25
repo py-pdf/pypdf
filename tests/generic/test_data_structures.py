@@ -15,6 +15,7 @@ from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
     ContentStream,
+    Destination,
     DictionaryObject,
     NameObject,
     NullObject,
@@ -24,6 +25,7 @@ from pypdf.generic import (
     TextStringObject,
     TreeObject,
 )
+from pypdf.types import OutlineType
 from tests import RESOURCE_ROOT, get_data_from_url
 
 try:
@@ -500,6 +502,7 @@ def test_tree_object__insert_child__cycle() -> None:
         )
 
 
+
 def test_tree_object__insert_child_append_at_end() -> None:
     """Cover insert_child append-at-end when ``before`` is not found in the tree."""
     writer = PdfWriter()
@@ -573,3 +576,100 @@ def test_tree_object__insert_child_cleanup_coverage() -> None:
     child3_ref = writer._add_object(child3)
     tree3.insert_child(child3_ref, existing_ref, writer)
     assert "/Prev" not in child3
+
+def _outlined_pdf(nested: bool = False) -> BytesIO:
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(200, 200)
+    cover = writer.add_outline_item("Cover", 0)
+    writer.add_outline_item("Body", 1)
+    if nested:
+        writer.add_outline_item("Sub", 2, parent=cover)
+    writer.add_outline_item("End", 3)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    return stream
+
+
+def _flat_outline(outline: OutlineType) -> list[Destination]:
+    """The outline items, asserting the outline holds no nested children."""
+    items = []
+    for entry in outline:
+        assert isinstance(entry, Destination), f"unexpected nested entry: {entry!r}"
+        items.append(entry)
+    return items
+
+
+@pytest.mark.parametrize(
+    ("index", "expected"),
+    [(0, ["Body", "End"]), (1, ["Cover", "End"]), (2, ["Cover", "Body"])],
+)
+def test_remove_from_tree_on_outline_item(index: int, expected: list[str]) -> None:
+    """
+    reader.outline and writer.outline yield detached copies which never carry
+    /Parent, so removal has to act on the node they were built from.
+    """
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+
+    _flat_outline(writer.outline)[index].remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == expected
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    assert [item.title for item in _flat_outline(PdfReader(stream).outline)] == expected
+
+
+def test_remove_from_tree_on_outline_item_without_clone() -> None:
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(200, 200)
+    for page_number, title in enumerate(["Cover", "Body", "End"]):
+        writer.add_outline_item(title, page_number)
+
+    _flat_outline(writer.outline)[0].remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == ["Body", "End"]
+
+
+def test_remove_from_tree_on_nested_outline_item() -> None:
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf(nested=True)))
+    children = writer.outline[1]
+    assert isinstance(children, list)
+    sub = children[0]
+    assert isinstance(sub, Destination)
+    assert sub.title == "Sub"
+
+    sub.remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == [
+        "Cover",
+        "Body",
+        "End",
+    ]
+
+
+def test_remove_from_tree_on_destination_without_node() -> None:
+    """A destination carrying no node falls back to the plain tree behaviour."""
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+    item = _flat_outline(writer.outline)[0]
+    item.node = None
+
+    with pytest.raises(
+        ValueError, match=r"^Removed child does not appear to be a tree item$"
+    ):
+        item.remove_from_tree()
+
+
+def test_remove_from_tree_on_node_already_detached() -> None:
+    """A node whose /Parent has gone is no longer part of any tree."""
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+    item = _flat_outline(writer.outline)[0]
+    assert item.node is not None
+    del item.node[NameObject("/Parent")]
+
+    with pytest.raises(
+        ValueError, match=r"^Removed child does not appear to be a tree item$"
+    ):
+        item.remove_from_tree()

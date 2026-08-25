@@ -44,6 +44,7 @@ from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
+    _TraversalState,
     deprecation_with_replacement,
     logger_warning,
     parse_iso8824_date,
@@ -85,6 +86,12 @@ from .generic import (
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
+
+# TODO: Make configurable.
+OUTLINE_MAX_ENTRIES = 100_000
+OUTLINE_MAX_DEPTH = 100
+PAGE_TREE_MAX_ENTRIES = 100_000
+PAGE_TREE_MAX_DEPTH = 100
 
 
 def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
@@ -234,7 +241,7 @@ class DocumentInformation(DictionaryObject):
         The "raw" version of modification date; can return a
         ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
+        Typically, in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
         return self.get(DI.MOD_DATE)
@@ -453,7 +460,7 @@ class PdfDocCommon(ABC):
     def _get_named_destinations(
         self,
         *,
-        tree: Union[TreeObject, None] = None,
+        tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[str, Destination]] = None,
         visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:
@@ -477,11 +484,11 @@ class PdfDocCommon(ABC):
 
             # get the name tree
             if CA.DESTS in catalog:
-                tree = cast(TreeObject, catalog[CA.DESTS])
+                tree = cast(DictionaryObject, catalog[CA.DESTS])
             elif CA.NAMES in catalog:
                 names = cast(DictionaryObject, catalog[CA.NAMES])
                 if CA.DESTS in names:
-                    tree = cast(TreeObject, names[CA.DESTS])
+                    tree = cast(DictionaryObject, names[CA.DESTS])
 
         if is_null_or_none(tree):
             return retval
@@ -539,7 +546,7 @@ class PdfDocCommon(ABC):
 
     def get_fields(
         self,
-        tree: Optional[TreeObject] = None,
+        tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
         stack: Optional[list[PdfObject]] = None,
@@ -571,7 +578,7 @@ class PdfDocCommon(ABC):
             stack = []
             # get the AcroForm tree
             if CA.ACRO_FORM in catalog:
-                tree = cast(Optional[TreeObject], catalog[CA.ACRO_FORM])
+                tree = cast(Optional[DictionaryObject], catalog[CA.ACRO_FORM])
             else:
                 return None
         if tree is None:
@@ -871,10 +878,16 @@ class PdfDocCommon(ABC):
 
     def _get_outline(
         self,
+        *,
         node: Optional[DictionaryObject] = None,
         outline: Optional[Any] = None,
         visited: Optional[set[int]] = None,
+        depth: int = 0,
+        traversal_state: Optional[_TraversalState] = None
     ) -> OutlineType:
+        if traversal_state is None:
+            traversal_state = _TraversalState()
+
         if outline is None:
             outline = []
             catalog = self.root_object
@@ -894,6 +907,9 @@ class PdfDocCommon(ABC):
         if node is None:
             return outline
 
+        if depth > OUTLINE_MAX_DEPTH:
+            raise LimitReachedError(f"Maximum outline depth reached: {depth} > {OUTLINE_MAX_DEPTH}.")
+
         # see if there are any more outline items
         if visited is None:
             visited = set()
@@ -903,6 +919,11 @@ class PdfDocCommon(ABC):
                 logger_warning("Detected cycle in outline structure for %(node)s", source=__name__, node=node)
                 break
             visited.add(node_id)
+            traversal_state.entry_count += 1
+            if traversal_state.entry_count > OUTLINE_MAX_ENTRIES:
+                raise LimitReachedError(
+                    f"Maximum outline entry limit reached: {traversal_state.entry_count} > {OUTLINE_MAX_ENTRIES}."
+                )
 
             outline_obj = self._build_outline_item(node)
             if outline_obj:
@@ -917,6 +938,8 @@ class PdfDocCommon(ABC):
                     node=cast(DictionaryObject, node["/First"]),
                     outline=sub_outline,
                     visited=inner_visited,
+                    depth=depth + 1,
+                    traversal_state=traversal_state,
                 )
                 if sub_outline:
                     outline.append(sub_outline)
@@ -1190,6 +1213,8 @@ class PdfDocCommon(ABC):
         inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
         visited: Optional[set[int]] = None,
+        depth: int = 0,
+        traversal_state: Optional[_TraversalState] = None,
     ) -> None:
         """
         Process the document pages to ease searching.
@@ -1208,9 +1233,11 @@ class PdfDocCommon(ABC):
             pages:
             inherit:
             indirect_reference: Used recursively to flatten the /Pages object.
-            visited: Set of id() values of /Pages nodes already visited during
-                traversal. Detects multi-hop cycles such as A→B→C→A that the
-                single-parent check misses.
+            visited: Set of id() values on the active page-tree traversal path.
+                Detects multi-hop cycles such as A→B→C→A that the single-parent
+                check misses.
+            depth: Current page-tree traversal depth.
+            traversal_state: State shared across the complete traversal.
 
         """
         inheritable_page_attributes = (
@@ -1223,6 +1250,10 @@ class PdfDocCommon(ABC):
             inherit = {}
         if visited is None:
             visited = set()
+        if traversal_state is None:
+            traversal_state = _TraversalState()
+        if depth > PAGE_TREE_MAX_DEPTH:
+            raise LimitReachedError(f"Maximum page tree depth reached: {depth} > {PAGE_TREE_MAX_DEPTH}.")
         if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
@@ -1271,17 +1302,34 @@ class PdfDocCommon(ABC):
                     obj_id = id(obj)
                     if obj_id in visited:
                         raise PdfReadError("Detected cyclic page references.")
+                    traversal_state.entry_count += 1
+                    if traversal_state.entry_count > PAGE_TREE_MAX_ENTRIES:
+                        raise LimitReachedError(
+                            "Maximum page tree entry limit reached: "
+                            f"{traversal_state.entry_count} > {PAGE_TREE_MAX_ENTRIES}."
+                        )
                     visited.add(obj_id)
-                    self._flatten(list_only, obj, inherit, visited=visited, **additional_arguments)
+                    try:
+                        self._flatten(
+                            list_only,
+                            obj,
+                            inherit.copy(),
+                            visited=visited,
+                            depth=depth + 1,
+                            traversal_state=traversal_state,
+                            **additional_arguments,
+                        )
+                    finally:
+                        visited.remove(obj_id)
         elif t == "/Page":
-            for attr_in, value in inherit.items():
-                # if the page has its own value, it does not inherit the
-                # parent's value
-                if attr_in not in pages:
-                    pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
             if not list_only:
                 page_obj.update(pages)
+            for attr_in, value in inherit.items():
+                # if the page has its own value, it does not inherit the
+                # parent's value
+                if attr_in not in page_obj:
+                    page_obj[attr_in] = value
 
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj)  # type: ignore[union-attr]

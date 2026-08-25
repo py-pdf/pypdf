@@ -21,6 +21,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    RectangleObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
@@ -542,6 +543,130 @@ def test_flatten__cyclic_references():
         reader._flatten()
 
 
+def test_flatten__repeated_page_reference():
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    pages = writer.root_object["/Pages"].get_object()
+    pages[NameObject("/Rotate")] = NumberObject(180)
+    kids = pages["/Kids"]
+    kids[0].get_object()[NameObject("/Rotate")] = NumberObject(90)
+    kids.append(kids[0])
+    pages[NameObject("/Count")] = NumberObject(2)
+    pdf = BytesIO()
+    writer.write(pdf)
+    pdf.seek(0)
+
+    reader = PdfReader(pdf)
+
+    assert len(reader.pages) == 2
+    assert [page.rotation for page in reader.pages] == [90, 90]
+
+
+@pytest.mark.parametrize("list_only", [False, True])
+def test_flatten__repeated_page_reference_with_different_inheritance(list_only: bool):
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    pages = writer.root_object["/Pages"].get_object()
+    page = pages["/Kids"][0]
+    del page.get_object()[NameObject("/MediaBox")]
+
+    first_pages = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([page]),
+                NameObject("/Count"): NumberObject(1),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 100, 100]),
+            }
+        )
+    )
+    second_pages = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([page]),
+                NameObject("/Count"): NumberObject(1),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 200, 200]),
+            }
+        )
+    )
+    pages[NameObject("/Kids")] = ArrayObject([first_pages, second_pages])
+    pages[NameObject("/Count")] = NumberObject(2)
+    pdf = BytesIO()
+    writer.write(pdf)
+    pdf.seek(0)
+
+    reader = PdfReader(pdf)
+    reader._flatten(list_only=list_only)
+
+    assert len(reader.pages) == 2
+    assert reader.pages[0]["/MediaBox"] == RectangleObject([0, 0, 100, 100])
+    assert reader.pages[1]["/MediaBox"] == RectangleObject([0, 0, 200, 200])
+
+
+def test_flatten__depth_limit():
+    writer = PdfWriter()
+    page = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Page"),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 100, 100]),
+            }
+        )
+    )
+    child = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([page]),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+    writer.root_object[NameObject("/Pages")] = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([child]),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+
+    with mock.patch("pypdf._doc_common.PAGE_TREE_MAX_DEPTH", 1), pytest.raises(
+        LimitReachedError, match=r"^Maximum page tree depth reached: 2 > 1\.$"
+    ):
+        writer._flatten()
+
+
+def test_flatten__entry_limit_for_reused_paths():
+    writer = PdfWriter()
+    child = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Page"),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 100, 100]),
+            }
+        )
+    )
+    for _ in range(8):
+        child = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Pages"),
+                    NameObject("/Kids"): ArrayObject([child, child]),
+                    NameObject("/Count"): NumberObject(2),
+                }
+            )
+        )
+    writer.root_object[NameObject("/Pages")] = child
+
+    with mock.patch("pypdf._doc_common.PAGE_TREE_MAX_ENTRIES", 100), pytest.raises(
+        LimitReachedError, match=r"^Maximum page tree entry limit reached: 101 > 100\.$"
+    ):
+        writer._flatten()
+
+
 def test_flatten__pages_without_kids():
     # A malformed /Pages node may advertise "/Count 0" without providing any
     # /Kids entry. Flattening such a page tree used to raise a bare
@@ -822,3 +947,58 @@ def test_get_page_in_node__cycle():
 
     with pytest.raises(LimitReachedError, match=r"^Detected cycle in /Pages hierarchy when retrieving page\.$"):
         writer._get_page_in_node(42)
+
+
+def test_get_outline__depth():
+    writer = PdfWriter()
+    outlines = [
+        DictionaryObject({NameObject("/Title"): TextStringObject(f"Title{i}")})
+        for i in range(3)
+    ]
+    writer.root_object[NameObject("/Outlines")] = DictionaryObject({
+        NameObject("/First"): writer._add_object(outlines[0])
+    })
+    for index, outline in enumerate(outlines[:-1]):
+        outline[NameObject("/First")] = writer._add_object(outlines[index + 1])
+        outline[NameObject("/Next")] = writer._add_object(outlines[index + 1])
+        writer._add_object(outline)
+
+    assert writer._get_outline() == [
+        {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title0", "/Type": "/Fit"},
+        [
+            {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title1", "/Type": "/Fit"},
+            [
+                {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title2", "/Type": "/Fit"}
+            ],
+            {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title2", "/Type": "/Fit"}
+        ],
+        {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title1", "/Type": "/Fit"},
+        [
+            {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title2", "/Type": "/Fit"}
+        ],
+        {"/%is_open%": True, "/Page": NullObject(), "/Title": "Title2", "/Type": "/Fit"}
+    ]
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum outline depth reached: 101 > 100\.$"):
+        writer._get_outline(depth=99)
+
+
+def test_get_outline__entry_count():
+    writer = PdfWriter()
+    outlines = [
+        DictionaryObject({NameObject("/Title"): TextStringObject(f"Title{i}")})
+        for i in range(10)
+    ]
+    writer.root_object[NameObject("/Outlines")] = DictionaryObject({
+        NameObject("/First"): writer._add_object(outlines[0])
+    })
+    for index, outline in enumerate(outlines[:-1]):
+        outline[NameObject("/First")] = writer._add_object(outlines[index + 1])
+        outline[NameObject("/Next")] = writer._add_object(outlines[index + 1])
+        writer._add_object(outline)
+
+    with mock.patch("pypdf._doc_common.OUTLINE_MAX_ENTRIES", 1000), \
+            pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Maximum outline entry limit reached: 1001 > 1000\.$"
+            ):
+        writer._get_outline()

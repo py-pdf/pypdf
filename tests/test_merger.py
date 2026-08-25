@@ -18,6 +18,7 @@ from pypdf.generic import (
     TextStringObject,
     TreeObject,
 )
+from pypdf.generic._outline import _find_outline_item_before_page
 
 from . import RESOURCE_ROOT, get_data_from_url
 from .test_encryption import HAS_AES
@@ -547,6 +548,7 @@ def test_merge__null_destination():
     assert writer.pages[0].annotations is None
 
 
+
 def test_merge_outline_ordering_position():
     """Verify bookmarks are inserted in correct order when merging at specific position."""
     writer_a = PdfWriter()
@@ -789,5 +791,27 @@ def test_merge_outline_ordering_coverage_edge_cases():
     parent.insert_child(child14_ref, None, writer)
 
     # child14 points to page 1, which is >= 1, so it should be returned
-    result = writer._find_outline_item_before_page(1, parent)
+    result = _find_outline_item_before_page(1, parent, writer)
     assert result == child14.indirect_reference
+
+def test_merge_annotation_without_subtype():
+    """Regression test for #3356."""
+    src = PdfWriter()
+    src.add_blank_page(width=612, height=792)
+    annot = DictionaryObject()
+    src.pages[0][NameObject("/Annots")] = ArrayObject([src._add_object(annot)])
+
+    source = BytesIO()
+    src.write(source)
+    source.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(source), import_outline=False)
+
+    merged = BytesIO()
+    writer.write(merged)
+    merged.seek(0)
+
+    reread = PdfReader(merged)
+    merged_annot = reread.pages[0]["/Annots"][0].get_object()
+    assert "/Subtype" not in merged_annot

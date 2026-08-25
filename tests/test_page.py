@@ -16,7 +16,7 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
-from pypdf._page import PageObject
+from pypdf._page import PageObject, _get_fonts_walk
 from pypdf.annotations import Polygon
 from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
@@ -664,6 +664,21 @@ def test_get_fonts2():
         },
         set(),
     )
+
+
+def test_get_fonts__acroform_default_resources():
+    """Fonts declared in the AcroForm /DR dictionary are collected too."""
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    resources = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/Helv"): font})
+    })
+    acro_form = DictionaryObject({NameObject("/DR"): resources})
+
+    assert _get_fonts_walk(acro_form, set(), set()) == ({"/Helvetica"}, set())
 
 
 def test_annotation_getter():

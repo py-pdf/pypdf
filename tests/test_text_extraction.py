@@ -7,6 +7,7 @@ The tested code might be in _page.py.
 import re
 from dataclasses import asdict
 from io import BytesIO
+from unittest import mock
 
 import pytest
 
@@ -29,6 +30,8 @@ from pypdf.generic import (
     DictionaryObject,
     NameObject,
     NumberObject,
+    RectangleObject,
+    StreamObject,
 )
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -665,7 +668,7 @@ def test_recurse_to_target_op__excessive_intra_group_spacing(caplog):
             "ty": 700.0
         }
     ]
-    assert caplog.messages == ["Limiting excessive whitespace from 299757 to 10000 characters."]
+    assert caplog.messages == ["Limiting excessive whitespace from 299758 to 10000 characters."]
 
 
 def test_fixed_width_page__excessive_blank_lines(caplog):
@@ -807,3 +810,181 @@ def test_page_object__layout_mode_fonts__cyclic(caplog) -> None:
 
     assert page._layout_mode_fonts() == fonts
     assert caplog.messages == ["Detected cycle in /Parent hierarchy when retrieving fonts."]
+
+
+def _generate_dag_with_forms(depth: int) -> bytes:
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    font = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        }
+    )
+    font_ref = writer._add_object(font)
+
+    # There are only depth + 1 actual Form objects:
+    #
+    #   F0 -> F1 -> F2 -> ... -> Fdepth
+    #
+    # But each form invokes its child twice:
+    #
+    #   F0
+    #   ├── F1
+    #   │   ├── F2
+    #   │   │   └── ...
+    #   │   └── F2
+    #   └── F1
+    #       ├── F2
+    #       └── F2
+    #
+    # This gives a DAG with exponentially many traversal paths while
+    # keeping the PDF itself linear in size.
+    num_forms = depth + 1
+    forms: list[StreamObject] = []
+
+    for _ in range(num_forms):
+        form = StreamObject()
+        forms.append(form)
+
+    # Register all forms first so that their indirect references are
+    # available when constructing their resource dictionaries.
+    form_refs = [writer._add_object(form) for form in forms]
+
+    for k, form in enumerate(forms):
+        if k < depth:
+            next_name = NameObject(f"/F{k + 1}")
+            form_content = (
+                f"q\n"
+                f"{next_name} Do\n"
+                f"{next_name} Do\n"
+                f"Q\n"
+            ).encode("ascii")
+            xobjects = DictionaryObject({
+                next_name: form_refs[k + 1],
+            })
+        else:
+            # Leaf form: emit a single character.
+            form_content = (
+                b"BT\n"
+                b"/F1 12 Tf\n"
+                b"100 700 Td\n"
+                b"(.) Tj\n"
+                b"ET\n"
+            )
+            xobjects = DictionaryObject()
+
+        resources = DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F1"): font_ref,
+            }),
+        })
+        if xobjects:
+            resources[NameObject("/XObject")] = xobjects
+
+        form.update({
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Form"),
+            NameObject("/FormType"): NumberObject(1),
+            NameObject("/BBox"): RectangleObject([0, 0, 612, 792]),
+            NameObject("/Resources"): resources,
+        })
+        form.set_data(form_content)
+
+    # Invoke the root form twice.
+    page_content = StreamObject()
+    page_content.set_data(
+        b"q\n"
+        b"/F0 Do\n"
+        b"/F0 Do\n"
+        b"Q\n"
+    )
+    page_content_ref = writer._add_object(page_content)
+
+    page_resources = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/F0"): form_refs[0],
+        }),
+    })
+
+    page[NameObject("/Resources")] = page_resources
+    page[NameObject("/Contents")] = page_content_ref
+    page[NameObject("/MediaBox")] = ArrayObject(list(map(NumberObject, [0, 0, 612, 792])))
+
+    data = BytesIO()
+    writer.write(data)
+    return data.getvalue()
+
+
+@pytest.mark.timeout(5)
+def test_extract_text__form_xobject__limit(caplog) -> None:
+    # Takes about 15 seconds without fix.
+    reader = PdfReader(BytesIO(_generate_dag_with_forms(12)))
+    page = reader.pages[0]
+    with mock.patch("pypdf._page.MAX_XFORM_INVOCATIONS_PER_EXTRACTION", 100):
+        text = page.extract_text()
+    assert len(text) == 92
+    assert text == ".\n" * 46
+    assert caplog.messages == [
+        "Exceeded 100 form XObject invocations while extracting text; further form content is skipped."
+    ]
+
+
+def _page_with_helvetica(content_stream: bytes) -> BytesIO:
+    """Build a single page using /F1 (Helvetica) and the given content stream."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    helvetica = DictionaryObject()
+    helvetica[NameObject("/Type")] = NameObject("/Font")
+    helvetica[NameObject("/Subtype")] = NameObject("/Type1")
+    helvetica[NameObject("/BaseFont")] = NameObject("/Helvetica")
+    font_resources = DictionaryObject()
+    font_resources[NameObject("/F1")] = writer._add_object(helvetica)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+
+    content = DecodedStreamObject()
+    content.set_data(content_stream)
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def test_text_leading_is_not_scaled_by_font_size() -> None:
+    """Tests for #3982"""
+    buffer = _page_with_helvetica(
+        b"BT /F1 12 Tf 1 0 0 1 72 700 Tm 14 TL "
+        b"(Line one) Tj T* (Line two) Tj T* (Line three) Tj ET"
+    )
+
+    positions = []
+
+    def visitor_text(text, cm, tm, font_dict, font_size) -> None:
+        if text.strip():
+            positions.append(round(tm[5], 2))
+
+    text = PdfReader(buffer).pages[0].extract_text(visitor_text=visitor_text)
+
+    # T* moves down by the leading itself: 14 units, not 14 * 12 (the font size).
+    assert positions == [700.0, 686.0, 672.0]
+    assert text == "Line one\nLine two\nLine three"
+
+
+def test_line_breaks_with_scaled_current_matrix() -> None:
+    """Tests for #2262: the line height has to be compared in the same space."""
+    # The lines are 240 units apart in text space, which the CTM scales down to
+    # 12 units, matching a 200 pt font scaled down to 10 pt.
+    buffer = _page_with_helvetica(
+        b"q 0.05 0 0 0.05 0 0 cm "
+        b"BT /F1 200 Tf 1 0 0 1 200 14000 Tm (Line one) Tj "
+        b"1 0 0 1 200 13760 Tm (Line two) Tj ET Q"
+    )
+
+    assert PdfReader(buffer).pages[0].extract_text() == "Line one\nLine two"

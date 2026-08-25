@@ -34,7 +34,7 @@ import re
 import struct
 import sys
 import uuid
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
@@ -44,6 +44,7 @@ from typing import (
     IO,
     Any,
     Callable,
+    Literal,
     Optional,
     Union,
     cast,
@@ -112,6 +113,7 @@ from .generic import (
     is_null_or_none,
 )
 from .generic._appearance_stream import TextStreamAppearance
+from .generic._outline import _find_outline_item_before_page
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
     AnnotationSubtype,
@@ -215,7 +217,7 @@ class PdfWriter(PdfDocCommon):
         This is used for compression.
         """
 
-        self._id_translated: dict[int, dict[int, int]] = {}
+        self._id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]] = {}
         """List of already translated IDs.
            dict[id(pdf)][(idnum, generation)]
         """
@@ -2080,7 +2082,7 @@ class PdfWriter(PdfDocCommon):
                 text_filters=text_filters
             )
             page.replace_contents(content)
-        return [], []  # type: ignore[return-value]
+        return None
 
     def _remove_objects_from_page__clean(
             self,
@@ -2294,7 +2296,7 @@ class PdfWriter(PdfDocCommon):
         page_number: int,
         uri: str,
         rect: RectangleObject,
-        border: Optional[ArrayObject] = None,
+        border: Optional[Sequence[Any]] = None,
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
@@ -2805,8 +2807,8 @@ class PdfWriter(PdfDocCommon):
             )
             before = None
             if outline_item is None and initial_position is not None:
-                before = self._find_outline_item_before_page(
-                    initial_position, outline_item_typ
+                before = _find_outline_item_before_page(
+                    initial_position, outline_item_typ, self
                 )
             self._insert_filtered_outline(
                 outline, outline_item_typ, before
@@ -3029,7 +3031,7 @@ class PdfWriter(PdfDocCommon):
 
     def _insert_filtered_annotations(
         self,
-        annots: Union[IndirectObject, list[DictionaryObject], None],
+        annots: Union[IndirectObject, list[PdfObject], None],
         page: PageObject,
         pages: dict[int, PageObject],
         reader: PdfReader,
@@ -3050,7 +3052,7 @@ class PdfWriter(PdfDocCommon):
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
-                ano["/Subtype"] != "/Link"  # type: ignore[comparison-overlap]
+                ano.get("/Subtype") != "/Link"
                 or "/A" not in ano
                 or cast("DictionaryObject", ano["/A"])["/S"] != "/GoTo"  # type: ignore[comparison-overlap]
                 or "/Dest" in ano
@@ -3176,48 +3178,7 @@ class PdfWriter(PdfDocCommon):
             n_ol[NameObject("/C")] = ArrayObject(color)
         return n_ol
 
-    def _find_outline_item_before_page(
-        self,
-        page_number: int,
-        parent: TreeObject,
-    ) -> Union[TreeObject, IndirectObject, None]:
-        """
-        Find the first top-level outline child of *parent* whose destination
-        page index is >= *page_number*.
 
-        Returns the child's ``IndirectObject`` (suitable for
-        ``TreeObject.insert_child``'s *before* parameter), or ``None`` if no
-        such child exists.
-        """
-        for child in parent.children():
-            page_ref = None
-            if "/Dest" in child:
-                dest = child["/Dest"].get_object()
-                if isinstance(dest, ArrayObject) and len(dest) > 0:
-                    page_ref = dest[0]
-            elif "/A" in child:
-                action = child["/A"].get_object()
-                if isinstance(action, DictionaryObject) and action.get("/S") == "/GoTo":
-                    d = action.get("/D")
-                    if d is not None:
-                        d = d.get_object()
-                    if isinstance(d, ArrayObject) and len(d) > 0:
-                        page_ref = d[0]
-            if page_ref is None:
-                continue
-            try:
-                pn = self._get_page_number_by_indirect(page_ref)
-            except Exception as exc:
-                logger_warning(
-                    "Could not resolve page number for outline item: %(exc)s",
-                    source=__name__,
-                    exc=exc,
-                )
-                continue
-            if pn is not None and pn >= page_number:
-                ir = child.indirect_reference
-                return cast(IndirectObject, ir) if ir is not None else child
-        return None
 
     def _insert_filtered_outline(
         self,
@@ -3295,7 +3256,7 @@ class PdfWriter(PdfDocCommon):
             except Exception:
                 pass
         else:
-            raise Exception("invalid parameter {reader}")
+            raise TypeError(f"Invalid parameter {reader}")
 
     def set_page_label(
         self,

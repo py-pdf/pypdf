@@ -543,6 +543,15 @@ def test_rectangleobject():
     assert ro.upper_right == (14, 18)
 
 
+def test_rectangleobject__accepts_an_array_object():
+    """A /MediaBox read from a PDF arrives as an ArrayObject, not a tuple."""
+    ro = RectangleObject(ArrayObject([
+        NumberObject(0), NumberObject(0), NumberObject(612), NumberObject(792)
+    ]))
+
+    assert list(ro) == [0, 0, 612, 792]
+
+
 def test_textstringobject_exc():
     tso = TextStringObject("foo")
     assert tso.get_original_bytes() == b"foo"

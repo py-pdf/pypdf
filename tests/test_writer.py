@@ -1306,6 +1306,12 @@ def test_reset_translation():
     assert len(writer.pages) == nb + 2
 
 
+def test_reset_translation_invalid_parameter():
+    writer = PdfWriter()
+    with pytest.raises(TypeError, match=r"^Invalid parameter not-a-reader$"):
+        writer.reset_translation("not-a-reader")
+
+
 def test_threads_empty():
     writer = PdfWriter()
     thr = writer.threads
@@ -3051,6 +3057,32 @@ def test_writer_reader_attribute_always_present():
 
     incremental = PdfWriter(stream, incremental=True)
     assert incremental._reader is not None
+
+
+def test_id_translated_holds_the_source_document():
+    """
+    Each `_id_translated` entry keeps the source document alive under a
+    "PreventGC" key alongside the integer idnum mappings, so the mapping is
+    keyed by `int | str` rather than by `int` alone.
+    """
+    source = PdfWriter()
+    source.add_blank_page(72, 72)
+    stream = BytesIO()
+    source.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(stream))
+
+    assert writer._id_translated
+    for translated in writer._id_translated.values():
+        assert translated["PreventGC"] is not None
+        # The remaining entries are the idnum -> idnum mappings.
+        assert all(
+            isinstance(value, int)
+            for key, value in translated.items()
+            if key != "PreventGC"
+        )
 
 
 def test_incremental_read():

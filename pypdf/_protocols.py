@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from collections.abc import Sequence
 from pathlib import Path
-from typing import IO, Any, Optional, Protocol, Union
+from typing import IO, Any, Literal, Optional, Protocol, Union
 
 from ._utils import StrByteType, StreamType
 
@@ -73,7 +73,9 @@ class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):
 
 class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _objects: list[Any]
-    _id_translated: dict[int, dict[int, int]]
+    # The "PreventGC" entry holds the source document, keeping it alive while
+    # the translation table is in use.
+    _id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]]
 
     incremental: bool
     # Only populated in incremental mode, None otherwise.
