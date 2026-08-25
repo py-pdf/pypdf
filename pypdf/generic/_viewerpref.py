@@ -32,10 +32,21 @@ from typing import (
     cast,
 )
 
+from ..constants import PageAttributes
 from ._base import BooleanObject, NameObject, NumberObject, is_null_or_none
 from ._data_structures import ArrayObject, DictionaryObject
 
 f_obj = BooleanObject(False)
+
+#: The page boundaries a viewer preference may name, per Table 147 in the 2.0
+#: reference.
+BOX_NAMES = [
+    PageAttributes.MEDIABOX,
+    PageAttributes.CROPBOX,
+    PageAttributes.BLEEDBOX,
+    PageAttributes.TRIMBOX,
+    PageAttributes.ARTBOX,
+]
 
 
 class ViewerPreferences(DictionaryObject):
@@ -147,10 +158,10 @@ class ViewerPreferences(DictionaryObject):
         cls.direction = _add_prop_name(
             "/Direction", ["/L2R", "/R2L"], NameObject("/L2R")
         )
-        cls.view_area = _add_prop_name("/ViewArea", [], None)
-        cls.view_clip = _add_prop_name("/ViewClip", [], None)
-        cls.print_area = _add_prop_name("/PrintArea", [], None)
-        cls.print_clip = _add_prop_name("/PrintClip", [], None)
+        cls.view_area = _add_prop_name("/ViewArea", BOX_NAMES, None)
+        cls.view_clip = _add_prop_name("/ViewClip", BOX_NAMES, None)
+        cls.print_area = _add_prop_name("/PrintArea", BOX_NAMES, None)
+        cls.print_clip = _add_prop_name("/PrintClip", BOX_NAMES, None)
         cls.print_scaling = _add_prop_name(
             "/PrintScaling", ["/None", "/AppDefault"], None
         )
