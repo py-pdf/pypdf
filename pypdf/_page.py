@@ -134,6 +134,13 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
 
 
 def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
+    if isinstance(value, (list, tuple)) and len(value) < 4:
+        # The getter tolerates more than four values for backwards compatibility
+        # but cannot do anything with fewer, so writing them would produce a page
+        # whose box cannot be read back.
+        raise ValueError(
+            f"Expected four values for {name}, got {len(value)}: {value}"
+        )
     self[NameObject(name)] = value
 
 
