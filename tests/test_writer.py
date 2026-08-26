@@ -39,6 +39,7 @@ from pypdf.generic import (
     StreamObject,
     TextStringObject,
 )
+from pypdf.generic._viewerpref import BOX_NAMES
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, is_sublist
 from .test_images import image_similarity
@@ -3595,6 +3596,30 @@ def test_print_scaling_rejects_other_values(value):
     viewer_preferences = writer.create_viewer_preferences()
     with pytest.raises(ValueError, match="is an unacceptable value"):
         viewer_preferences.print_scaling = value
+
+
+@pytest.mark.parametrize(
+    "preference", ["view_area", "view_clip", "print_area", "print_clip"]
+)
+@pytest.mark.parametrize("value", BOX_NAMES)
+def test_box_preferences_accept_the_page_boxes(preference, value):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    setattr(viewer_preferences, preference, value)
+    assert getattr(viewer_preferences, preference) == value
+
+
+@pytest.mark.parametrize(
+    "preference", ["view_area", "view_clip", "print_area", "print_clip"]
+)
+def test_box_preferences_reject_other_names(preference):
+    """These were declared without their allowed values, so nothing checked them."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    with pytest.raises(ValueError, match="is an unacceptable value"):
+        setattr(viewer_preferences, preference, "/Nonsense")
 
 
 @pytest.mark.parametrize("values", [[1], [1, 2, 3]])
