@@ -194,19 +194,52 @@ def test_viewer_preferences__indirect_reference():
 
 
 def test_build_destination__short_array():
+    """A one-element array degrades to a null destination instead of raising on
+    the unpacking; a valid array with extra fit args still builds.
+    """
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
 
-    # An array too short to hold a page reference and a fit type degrades to a
-    # null destination instead of raising on the unpacking.
     dest = writer._build_destination("title", ArrayObject([NumberObject(0)]))
     assert isinstance(dest["/Page"], NullObject)
 
-    # A trailing fit type with the wrong number of arguments still builds.
     dest = writer._build_destination(
         "title", ArrayObject([NumberObject(0), NameObject("/FitR"), NumberObject(1), NumberObject(2)])
     )
     assert dest["/Type"] == "/FitR"
+
+
+def test_build_destination__non_array():
+    """A non-array destination degrades to a null destination rather than
+    raising TypeError while unpacking.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    dest = writer._build_destination("title", NumberObject(5))
+    assert isinstance(dest["/Page"], NullObject)
+
+
+def test_named_destinations__non_array_value():
+    """A bare number where a destination array is expected is skipped instead
+    of crashing named_destinations with a TypeError.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    names = DictionaryObject()
+    names[NameObject("/Names")] = ArrayObject(
+        [TextStringObject("foo"), NumberObject(5)]
+    )
+    dests = DictionaryObject()
+    dests[NameObject("/Dests")] = names
+    writer.root_object[NameObject("/Names")] = dests
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    reader = PdfReader(stream)
+
+    assert "foo" in reader.named_destinations
 
 
 def _reader_with_button_field(field: DictionaryObject) -> PdfReader:
