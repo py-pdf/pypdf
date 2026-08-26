@@ -125,6 +125,16 @@ from .types import (
 from .xmp import XmpInformation
 
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
+# The five numbering styles of Table 8.10 in the 1.7 reference, as written into
+# the /S entry of a page label dictionary.
+PageLabelStyleType = Literal["/D", "/R", "/r", "/A", "/a"]
+_PAGE_LABEL_STYLES = (
+    PageLabelStyle.DECIMAL,
+    PageLabelStyle.UPPERCASE_ROMAN,
+    PageLabelStyle.LOWERCASE_ROMAN,
+    PageLabelStyle.UPPERCASE_LETTER,
+    PageLabelStyle.LOWERCASE_LETTER,
+)
 
 
 class ObjectDeletionFlag(enum.IntFlag):
@@ -3241,7 +3251,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page_index_from: int,
         page_index_to: int,
-        style: Optional[PageLabelStyle] = None,
+        style: Optional[PageLabelStyleType] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
     ) -> None:
@@ -3275,6 +3285,10 @@ class PdfWriter(PdfDocCommon):
         """
         if style is None and prefix is None:
             raise ValueError("At least one of style and prefix must be given")
+        if style is not None and style not in _PAGE_LABEL_STYLES:
+            raise ValueError(
+                f"style must be one of: {', '.join(_PAGE_LABEL_STYLES)}, got {style!r}"
+            )
         if page_index_from < 0:
             raise ValueError("page_index_from must be greater or equal than 0")
         if page_index_to < page_index_from:
@@ -3292,7 +3306,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page_index_from: int,
         page_index_to: int,
-        style: Optional[PageLabelStyle] = None,
+        style: Optional[PageLabelStyleType] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
     ) -> None:
