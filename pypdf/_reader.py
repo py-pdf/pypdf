@@ -813,9 +813,7 @@ class PdfReader(PdfDocCommon):
         # very last of them, so the line above it is another marker rather
         # than the offset. Skip that trailing run to reach the real offset;
         # the revision being read is unchanged, only the marker padding is
-        # ignored. The scan is bounded like the one in
-        # _find_previous_startxref_pos so a crafted file cannot make it run
-        # over the whole stream.
+        # ignored.
         duplicate_markers = 0
         while line.startswith(b"%%EOF") and stream.tell() > 0:
             if duplicate_markers == self._MAX_STARTXREF_RECOVERY_LINES:
