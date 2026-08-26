@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787735723346,
+  "lastUpdate": 1787735726235,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -107717,6 +107717,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0027889789907303178",
             "extra": "mean: 603.9671433999956 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e1abeb088f3458c10c07f90ec02c2b3bf814ef7a",
+          "message": "BUG: Check the value assigned to print_scaling (#4011)\n\n/PrintScaling was declared with an empty list of acceptable values, so any\nname was written through and the generated docstring read 'Acceptable values:\n[]'. The spec allows /None and /AppDefault, which is what the viewer\npreferences documentation shows.\n\ndirection and duplex beside it are declared with their values and reject\nanything else.",
+          "timestamp": "2026-08-26T11:12:23+02:00",
+          "tree_id": "ffacb94ab453dd58854d376ef849e990dc032d73",
+          "url": "https://github.com/py-pdf/pypdf/commit/e1abeb088f3458c10c07f90ec02c2b3bf814ef7a"
+        },
+        "date": 1787735717231,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.765509247432681,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012827967235996588",
+            "extra": "mean: 361.5970551999908 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.622718279246143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001985510699338422",
+            "extra": "mean: 53.69785361111528 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2495287695101089,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023316549588974445",
+            "extra": "mean: 4.00755392640001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.40726554893811,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005710729710859765",
+            "extra": "mean: 57.44727666666765 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07347575278658293,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0689038714194003",
+            "extra": "mean: 13.609932012600018 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5044174677981126,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004650954867868788",
+            "extra": "mean: 664.709112599985 msec\nrounds: 5"
           }
         ]
       }
