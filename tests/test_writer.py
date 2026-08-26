@@ -3595,3 +3595,26 @@ def test_print_scaling_rejects_other_values(value):
     viewer_preferences = writer.create_viewer_preferences()
     with pytest.raises(ValueError, match="is an unacceptable value"):
         viewer_preferences.print_scaling = value
+
+
+@pytest.mark.parametrize("values", [[1], [1, 2, 3]])
+def test_print_pagerange_rejects_an_odd_length(values):
+    """The array holds first/last page pairs, so an odd length is incomplete."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    with pytest.raises(ValueError, match="/PrintPageRange holds page pairs"):
+        viewer_preferences.print_pagerange = ArrayObject(
+            [NumberObject(value) for value in values]
+        )
+
+
+@pytest.mark.parametrize("values", [[], [1, 10], [1, 10, 20, 30]])
+def test_print_pagerange_accepts_page_pairs(values):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    viewer_preferences.print_pagerange = ArrayObject(
+        [NumberObject(value) for value in values]
+    )
+    assert list(viewer_preferences.print_pagerange) == values
