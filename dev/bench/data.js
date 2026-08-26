@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787752693943,
+  "lastUpdate": 1787752722468,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -107981,6 +107981,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0017252140756877283",
             "extra": "mean: 420.8321986000101 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "295594900e35f8d7628c13c05f5d28d9b29ef990",
+          "message": "BUG: Reject a negative number of copies (#4012)\n\n/NumCopies was written through without a check, so a negative value was stored\njust as readily as a real count and no reader can interpret it.\n\nZero stays allowed: the spec gives no lower bound, only a typical default of\none, so a reader that sees it falls back to its own default. set_page_label\ntreats a start of zero the same way.",
+          "timestamp": "2026-08-26T15:55:11+02:00",
+          "tree_id": "a1a6377c50503124aebd27c835c60b7a8c66ca57",
+          "url": "https://github.com/py-pdf/pypdf/commit/295594900e35f8d7628c13c05f5d28d9b29ef990"
+        },
+        "date": 1787752692272,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7852458419802963,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01120728843894491",
+            "extra": "mean: 359.0347339999994 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.70056492743162,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016539996438668918",
+            "extra": "mean: 53.47432036842442 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2527248222334172,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024654968646692345",
+            "extra": "mean: 3.9568728989999955 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.751171392897454,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010156219729866697",
+            "extra": "mean: 56.334310444442956 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07341724070877176,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05761891333831422",
+            "extra": "mean: 13.62077885719998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5083004602390657,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004296433890292515",
+            "extra": "mean: 662.997874999985 msec\nrounds: 5"
           }
         ]
       }
