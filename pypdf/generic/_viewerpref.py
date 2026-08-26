@@ -87,6 +87,12 @@ class ViewerPreferences(DictionaryObject):
             return
         if not isinstance(v, ArrayObject):
             raise ValueError("ArrayObject is expected")
+        if key == "/PrintPageRange" and len(v) % 2:
+            # The array holds first/last page pairs, so an odd length leaves a
+            # range without its end.
+            raise ValueError(
+                f"/PrintPageRange holds page pairs, got {len(v)} entries: {v}"
+            )
         self[NameObject(key)] = v
 
     def _get_int(self, key: str, default: Optional[NumberObject]) -> Optional[NumberObject]:
