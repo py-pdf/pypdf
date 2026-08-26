@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787737981371,
+  "lastUpdate": 1787742350431,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -107849,6 +107849,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005327779449837281",
             "extra": "mean: 606.1730217999923 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "38170a2be6516e41ee2edf34f61257750dd179ab",
+          "message": "BUG: Reject an odd-length print page range (#4013)\n\n/PrintPageRange holds first/last page pairs, so an array with an odd number of\nentries leaves a range without its end. It was written through unchecked.\n\nThe check is limited to that key because _set_arr is shared with /Enforce,\nwhich has no such constraint.",
+          "timestamp": "2026-08-26T13:03:49+02:00",
+          "tree_id": "c6f16875a5cd83f14ab389a8f4708395894aa771",
+          "url": "https://github.com/py-pdf/pypdf/commit/38170a2be6516e41ee2edf34f61257750dd179ab"
+        },
+        "date": 1787742343769,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.128378594515284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017771773055040373",
+            "extra": "mean: 194.99340416666655 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.99466818628316,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016721082791786617",
+            "extra": "mean: 34.489099636362845 msec\nrounds: 33"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.427098762325061,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04989412811287777",
+            "extra": "mean: 2.3413788289999986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 33.99855173846747,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008148788702468477",
+            "extra": "mean: 29.413017580644635 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14580133429930706,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08122526574232009",
+            "extra": "mean: 6.858647794999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.750980525386304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013481771301517157",
+            "extra": "mean: 363.5067536000008 msec\nrounds: 5"
           }
         ]
       }
