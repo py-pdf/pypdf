@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787742415942,
+  "lastUpdate": 1787751239670,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -107915,6 +107915,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0013481771301517157",
             "extra": "mean: 363.5067536000008 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b0ec95d9392232b3873bf2dd8d9179095734ca16",
+          "message": "BUG: Check the box names assigned to the area and clip preferences (#4014)\n\n/ViewArea, /ViewClip, /PrintArea and /PrintClip were each declared with an\nempty list of acceptable values, so any name was written through and the\ngenerated docstrings read 'Acceptable values: []'.\n\nAll four name one of the five page boundaries, which PageAttributes already\ndefines, so they now reject anything else the way direction and duplex do.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-08-26T15:31:27+02:00",
+          "tree_id": "781cb448c28ff047036fec9d948a90d3e22b6bf5",
+          "url": "https://github.com/py-pdf/pypdf/commit/b0ec95d9392232b3873bf2dd8d9179095734ca16"
+        },
+        "date": 1787751233008,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.2223374828079825,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01316778316704768",
+            "extra": "mean: 191.48513540000351 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.64198084680936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04954468447616295",
+            "extra": "mean: 48.444963078946486 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4558492587234132,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021863847872732257",
+            "extra": "mean: 2.1937076365999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 31.05420161651814,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00037026262471030394",
+            "extra": "mean: 32.2017616923079 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.13200058114100646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05432596989306505",
+            "extra": "mean: 7.5757242230000035 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.376244031057314,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017252140756877283",
+            "extra": "mean: 420.8321986000101 msec\nrounds: 5"
           }
         ]
       }
