@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787735726235,
+  "lastUpdate": 1787737976992,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -129037,6 +129037,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006359175433626556",
             "extra": "mean: 852.7653955999995 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8687d2504d09887c8e0e252dad5f9c0fb02c1bb7",
+          "message": "ROB: Reject too few values when setting a page box (#4009)\n\npage.mediabox = ArrayObject([0, 0]) was accepted, but reading the box back\nraises ValueError because a rectangle cannot be built from two numbers, so the\npage could be written and not read.\n\nThe getter warns and truncates when there are more than four values, for\nbackwards compatibility with files pypdf itself once wrote, so the setter\nkeeps accepting those and only refuses the case the getter cannot handle.",
+          "timestamp": "2026-08-26T11:49:59+02:00",
+          "tree_id": "2204372b7769ed4a707baf38e5fc7baddd8699f4",
+          "url": "https://github.com/py-pdf/pypdf/commit/8687d2504d09887c8e0e252dad5f9c0fb02c1bb7"
+        },
+        "date": 1787737968154,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.762278572613143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016252073840611125",
+            "extra": "mean: 72.66238615384478 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.76960302327821,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016956048295966773",
+            "extra": "mean: 56.27587733333144 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0529994477405424,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027377103150863204",
+            "extra": "mean: 949.6681143999979 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5182170676657428,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01409752928193355",
+            "extra": "mean: 1.929693293400004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36640341577128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0048542919307240405",
+            "extra": "mean: 2.729232198599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1571764960519932,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02351010435059252",
+            "extra": "mean: 864.1724088000046 msec\nrounds: 5"
           }
         ]
       }
