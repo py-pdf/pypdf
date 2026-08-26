@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787763035870,
+  "lastUpdate": 1787771715299,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -108113,6 +108113,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003569263874550652",
             "extra": "mean: 661.721783400003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d85ef0faf7853d242ef200ed6e475b80267b5664",
+          "message": "ROB: Skip trailing duplicate %%EOF markers when locating startxref (#4015)\n\n_find_eof_marker() stops at the very last %%EOF in the file. When a producer\nappends further %%EOF markers below the one that closes the last revision, the\nline above the marker that was found is another marker rather than the xref\noffset, so _find_startxref_pos() parses b\"%%EOF\" as an int, falls through to the\n\"startxref not found\" branch and PdfReader() raises PdfReadError before the\ndocument is ever opened. Other viewers open such files.\n\nSkip the trailing run of markers so the offset above the first marker of the run\nis read. The revision being used is unchanged - only the marker padding is\nignored - so this needs no strict-mode carve-out, unlike the previous-revision\nrecovery in the branch below it (#3238). A warning is logged, and the backward\nscan is bounded by _MAX_STARTXREF_RECOVERY_LINES so a crafted file cannot make\nit run over the whole stream.\n\nCloses #4008.",
+          "timestamp": "2026-08-26T21:10:26+02:00",
+          "tree_id": "d854f12a38658983c3168114e49b63825bd0daea",
+          "url": "https://github.com/py-pdf/pypdf/commit/d85ef0faf7853d242ef200ed6e475b80267b5664"
+        },
+        "date": 1787771688278,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.8436457579007626,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011773782662693853",
+            "extra": "mean: 260.16965739999875 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.57918188070925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008173244621629789",
+            "extra": "mean: 42.41029248000018 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3452574531658603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016544942212137186",
+            "extra": "mean: 2.8963893200000057 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.17420198159423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007892598754180581",
+            "extra": "mean: 45.09745157142761 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09343801689013946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02777196842756458",
+            "extra": "mean: 10.702281932799991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.157092504126343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0041155133988814005",
+            "extra": "mean: 463.5869802000059 msec\nrounds: 5"
           }
         ]
       }
