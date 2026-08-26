@@ -99,6 +99,8 @@ class ViewerPreferences(DictionaryObject):
         return self.get(key, default)
 
     def _set_int(self, key: str, v: int) -> None:
+        if v < 0:
+            raise ValueError(f"{v} is an unacceptable value for {key}")
         self[NameObject(key)] = NumberObject(v)
 
     @property
