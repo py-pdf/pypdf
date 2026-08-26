@@ -3,7 +3,7 @@ from io import BytesIO
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._page_labels import (
     get_label_from_nums,
     index2label,
@@ -21,6 +21,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    TextStringObject,
 )
 
 from . import RESOURCE_ROOT, get_data_from_url
@@ -248,3 +249,25 @@ def test_index2label__malformed_kid_limits(limits, caplog):
     assert index2label(reader, 5) == "6"
     assert "Ignoring kid with missing or malformed /Limits" in caplog.text
     assert "Could not reliably determine page label" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (NumberObject(1), "Page labels are not a dictionary: 1"),
+        (ArrayObject(), "Page labels are not a dictionary: []"),
+        (TextStringObject("x"), "Page labels are not a dictionary: x"),
+    ],
+)
+def test_index2label__page_labels_not_a_dictionary(caplog, value, expected):
+    """A malformed /PageLabels raised a TypeError from the first membership test."""
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/PageLabels")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == ["1", "2"]
+    assert expected in caplog.text
