@@ -70,7 +70,7 @@ class Action(DictionaryObject, ABC):
             writer: The writer to add the action to.
             action: The action to be done.
         """
-        if "/Names" not in writer._root_object:
+        if "/Names" not in writer.root_object:
             writer._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
 
         names = cast(DictionaryObject, writer._root_object[CatalogAttributes.NAMES])
