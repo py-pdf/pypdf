@@ -806,6 +806,22 @@ class PdfReader(PdfDocCommon):
 
         """
         line = read_previous_line(stream)
+        # Some producers append further %%EOF markers below the one that
+        # closes the last revision (#4008). _find_eof_marker() stops at the
+        # very last of them, so the line above it is another marker rather
+        # than the offset. Skip that trailing run to reach the real offset;
+        # the revision being read is unchanged, only the marker padding is
+        # ignored.
+        duplicate_markers = 0
+        while line.startswith(b"%%EOF") and stream.tell() > 0:
+            if duplicate_markers == self._MAX_STARTXREF_RECOVERY_LINES:
+                break
+            line = read_previous_line(stream)
+            duplicate_markers += 1
+        if duplicate_markers:
+            logger_warning(
+                "Duplicate %%EOF marker(s) found, skipping them", source=__name__
+            )
         try:
             startxref = int(line)
         except ValueError:
