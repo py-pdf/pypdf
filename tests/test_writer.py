@@ -3620,6 +3620,8 @@ def test_box_preferences_reject_other_names(preference):
     viewer_preferences = writer.create_viewer_preferences()
     with pytest.raises(ValueError, match="is an unacceptable value"):
         setattr(viewer_preferences, preference, "/Nonsense")
+
+
 @pytest.mark.parametrize("values", [[1], [1, 2, 3]])
 def test_print_pagerange_rejects_an_odd_length(values):
     """The array holds first/last page pairs, so an odd length is incomplete."""
