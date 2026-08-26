@@ -1035,3 +1035,26 @@ def test_get_outline__entry_count():
                 expected_exception=LimitReachedError, match=r"^Maximum outline entry limit reached: 1001 > 1000\.$"
             ):
         writer._get_outline()
+
+
+@pytest.mark.parametrize(
+    ("fields", "expected"),
+    [
+        (NumberObject(1), "AcroForm /Fields is not an array: 1"),
+        (TextStringObject("x"), "AcroForm /Fields is not an array: x"),
+        (DictionaryObject(), "AcroForm /Fields is not an array: {}"),
+    ],
+)
+def test_get_fields__fields_is_not_an_array(caplog, fields, expected):
+    """A malformed /Fields raised a TypeError when the loop tried to iterate it."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject(
+        {NameObject("/Fields"): fields}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).get_fields() == {}
+    assert expected in caplog.text
