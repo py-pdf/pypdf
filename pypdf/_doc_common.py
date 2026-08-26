@@ -1017,7 +1017,7 @@ class PdfDocCommon(ABC):
             return Destination(title, page, Fit.fit())
         page, typ, *array = array  # type: ignore[assignment]
         try:
-            return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore[arg-type]
+            return Destination(title, page, Fit(fit_type=typ, fit_args=array))
         except PdfReadError:
             logger_warning("Unknown destination: %(title)r %(array)s", source=__name__, title=title, array=array)
             if self.strict:
