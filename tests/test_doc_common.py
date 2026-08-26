@@ -194,15 +194,15 @@ def test_viewer_preferences__indirect_reference():
 
 
 def test_build_destination__short_array():
+    """A one-element array degrades to a null destination instead of raising on
+    the unpacking; a valid array with extra fit args still builds.
+    """
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
 
-    # An array too short to hold a page reference and a fit type degrades to a
-    # null destination instead of raising on the unpacking.
     dest = writer._build_destination("title", ArrayObject([NumberObject(0)]))
     assert isinstance(dest["/Page"], NullObject)
 
-    # A trailing fit type with the wrong number of arguments still builds.
     dest = writer._build_destination(
         "title", ArrayObject([NumberObject(0), NameObject("/FitR"), NumberObject(1), NumberObject(2)])
     )

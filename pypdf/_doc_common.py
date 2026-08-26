@@ -75,7 +75,6 @@ from .generic import (
     IndirectObject,
     NameObject,
     NullObject,
-    NumberObject,
     PdfObject,
     TextStringObject,
     TreeObject,
@@ -1007,18 +1006,13 @@ class PdfDocCommon(ABC):
     def _build_destination(
         self,
         title: Union[str, bytes],
-        array: Optional[
-            list[
-                Union[NumberObject, IndirectObject, NullObject, DictionaryObject, None]
-            ]
-        ],
+        array: Optional[ArrayObject],
     ) -> Destination:
         page, typ = None, None
-        # Handle outline items with missing or invalid destination: a valid
-        # destination is an array of at least two elements (page and fit type).
-        # Anything else (a NullObject, a name, a bare number, None, ...) cannot
-        # be unpacked below and is treated as a missing destination.
-        if not isinstance(array, list) or len(array) < 2:
+        # A valid destination is an array of at least a page and a fit type.
+        # Anything else (a name, a bare number, a NullObject, None, ...) cannot
+        # be unpacked below, so treat it as a missing destination.
+        if not isinstance(array, ArrayObject) or len(array) < 2:
             page = NullObject()
             return Destination(title, page, Fit.fit())
         page, typ, *array = array  # type: ignore[assignment]
