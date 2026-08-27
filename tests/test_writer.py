@@ -780,6 +780,38 @@ def test_add_named_destination(pdf_file_path):
         writer.write(output_stream)
 
 
+def test_append_with_direct_dests_dictionary():
+    """
+    Tests for #4027.
+
+    A `/Dests` name tree written as a direct object inside `/Names` carries no
+    `indirect_reference`, which `get_named_dest_root()` read for no reason. It
+    took down every `append()` of a document that has named destinations.
+    """
+    target = PdfWriter()
+    target.add_blank_page(100, 100)
+    names = DictionaryObject()
+    dests = DictionaryObject()
+    dests[NameObject("/Names")] = ArrayObject()
+    names[NameObject("/Dests")] = dests
+    target.root_object[NameObject("/Names")] = names
+    target_stream = BytesIO()
+    target.write(target_stream)
+
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_named_destination(TextStringObject("A named dest"), 0)
+    source_stream = BytesIO()
+    source.write(source_stream)
+
+    writer = PdfWriter(clone_from=target_stream)
+    assert not hasattr(writer.root_object["/Names"]["/Dests"], "indirect_reference")
+
+    writer.append(source_stream)
+
+    assert "A named dest" in writer.get_named_dest_root()
+
+
 def test_add_named_destination_sort_order(pdf_file_path):
     """
     Issue #1927 does not appear.

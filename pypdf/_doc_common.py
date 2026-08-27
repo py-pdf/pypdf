@@ -421,7 +421,6 @@ class PdfDocCommon(ABC):
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
                 # §3.6.3 Name Dictionary (PDF spec 1.7)
                 dests = cast(DictionaryObject, names[CA.DESTS])
-                dests_ref = dests.indirect_reference
                 if CA.NAMES in dests:
                     # §7.9.6, entries in a name tree node dictionary
                     named_dest = cast(ArrayObject, dests[CA.NAMES])
