@@ -1104,3 +1104,46 @@ def test_viewer_preferences__reads_a_well_formed_dictionary():
     stream.seek(0)
 
     assert PdfReader(stream).viewer_preferences == {"/CenterWindow": True}
+
+
+@pytest.mark.parametrize(
+    ("first", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "Outline node is not a dictionary: 1", id="number"
+        ),
+        pytest.param(
+            TextStringObject("x"), "Outline node is not a dictionary: x", id="string"
+        ),
+        pytest.param(ArrayObject(), "Outline node is not a dictionary: []", id="array"),
+    ],
+)
+def test_outline__first_is_not_a_dictionary(caplog, first, expected):
+    """A malformed /First raised a TypeError from the first subscript."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/Outlines")] = DictionaryObject(
+        {NameObject("/First"): first}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).outline == []
+    assert expected in caplog.text
+
+
+def test_outline__reads_a_well_formed_outline():
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.add_outline_item("Chapter 1", 0)
+    writer.add_outline_item("Chapter 2", 1)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert [item.title for item in PdfReader(stream).outline] == [
+        "Chapter 1",
+        "Chapter 2",
+    ]
