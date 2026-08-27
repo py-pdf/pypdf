@@ -1944,12 +1944,21 @@ class PdfWriter(PdfDocCommon):
 
         return page_destination_ref
 
+    def _get_page_reference(self, page_number: int) -> Any:
+        """Look up a page by number, reporting a bad index rather than an IndexError from the kids array."""
+        pages = cast(DictionaryObject, self.get_object(self._pages))
+        kids = cast(ArrayObject, pages[PagesAttributes.KIDS])
+        count = len(kids)
+        if not (-count <= page_number < count):
+            raise IndexError(f"Page number {page_number} is out of range")
+        return kids[page_number]
+
     def add_named_destination(
         self,
         title: str,
         page_number: int,
     ) -> IndirectObject:
-        page_ref = self.get_object(self._pages)[PagesAttributes.KIDS][page_number]  # type: ignore[index]
+        page_ref = self._get_page_reference(page_number)
         dest = DictionaryObject()
         dest.update(
             {
@@ -2300,7 +2309,7 @@ class PdfWriter(PdfDocCommon):
                 drawn if this argument is omitted.
 
         """
-        page_link = self.get_object(self._pages)[PagesAttributes.KIDS][page_number]  # type: ignore[index]
+        page_link = self._get_page_reference(page_number)
         page_ref = cast(dict[str, Any], self.get_object(page_link))
 
         border_arr: BorderArrayType

@@ -55,6 +55,50 @@ def test_dictionary_object__get_next_object_position() -> None:
     ) == 15
 
 
+def test_dictionary_object__duplicate_key_with_falsy_first_value__strict() -> None:
+    stream = BytesIO(b"<< /Count 0 /Count 5 >>")
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^Multiple definitions in dictionary"
+    ):
+        DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+
+def test_dictionary_object__duplicate_key_with_falsy_first_value__non_strict(
+        caplog: pytest.LogCaptureFixture
+) -> None:
+    stream = BytesIO(b"<< /Count 0 /Count 5 >>")
+
+    dictionary = DictionaryObject.read_from_stream(stream, mock.Mock(strict=False))
+
+    assert caplog.messages == ["Multiple definitions in dictionary at byte 0x14 for key /Count"]
+    # The first value wins, which is how a duplicate with a non-falsy first value
+    # has always behaved. Before the fix this case kept 5 and logged nothing.
+    assert dictionary == {NameObject("/Count"): NumberObject(0)}
+
+
+def test_dictionary_object__duplicate_key_with_non_falsy_first_value__strict() -> None:
+    stream = BytesIO(b"<< /Count 7 /Count 5 >>")
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^Multiple definitions in dictionary"
+    ):
+        DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+
+def test_dictionary_object__different_keys_with_falsy_first_value() -> None:
+    stream = BytesIO(b"<< /Count 0 /Size 5 >>")
+
+    dictionary = DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+    assert dictionary == {
+        NameObject("/Count"): NumberObject(0),
+        NameObject("/Size"): NumberObject(5),
+    }
+
+
 def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None:
     writer = PdfWriter()
     child1_object = DictionaryObject()

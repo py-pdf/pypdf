@@ -630,7 +630,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 retval.update(data)
                 return retval  # return partial data
 
-            if not data.get(key):
+            if key not in data:
                 data[key] = value
             else:
                 # multiple definitions of key not permitted

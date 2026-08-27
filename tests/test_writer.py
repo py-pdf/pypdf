@@ -3682,3 +3682,30 @@ def test_set_page_label_rejects_other_styles(style):
         writer.add_blank_page(100, 100)
     with pytest.raises(ValueError, match="style must be one of"):
         writer.set_page_label(0, 1, style)
+
+
+@pytest.mark.parametrize("page_number", [3, 99, -4, -99])
+def test_add_named_destination_out_of_range(page_number):
+    """An out-of-range page surfaced as an IndexError from the kids array."""
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_named_destination("destination", page_number)
+
+
+@pytest.mark.parametrize("page_number", [3, 99, -4, -99])
+def test_add_uri_out_of_range(page_number):
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_uri(page_number, "https://example.com", RectangleObject([0, 0, 1, 1]))
+
+
+@pytest.mark.parametrize("page_number", [0, 2, -1, -3])
+def test_add_named_destination_in_range(page_number):
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    assert writer.add_named_destination("destination", page_number) is not None
