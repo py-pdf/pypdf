@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787841180937,
+  "lastUpdate": 1787846328425,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -108641,6 +108641,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08745481484765066",
             "extra": "mean: 700.6847976000017 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "58fd80acd6c54d43c5b0036dc9c29d8039b1a738",
+          "message": "ROB: Do not crash on an outline node that is not a dictionary (#4018)\n\nThe outline walk casts /First to a DictionaryObject and subscripts it, so a\nfile where that entry holds a number, a string or an array raised 'TypeError:\nNumberObject object is not subscriptable' from reader.outline.\n\nThe same loop already warns and stops on a cycle, so an unusable node is\nreported the same way and the outline read returns what it has.",
+          "timestamp": "2026-08-27T17:55:35+02:00",
+          "tree_id": "8afeed4f67fbc1936e1cfa20e45ff6df62f1cbe2",
+          "url": "https://github.com/py-pdf/pypdf/commit/58fd80acd6c54d43c5b0036dc9c29d8039b1a738"
+        },
+        "date": 1787846319206,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.714544145868653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015823742224183764",
+            "extra": "mean: 368.3859780000006 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.496879261048115,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020395875966253323",
+            "extra": "mean: 54.063173894737076 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2391847955808594,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025425793582302954",
+            "extra": "mean: 4.180867757800004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.059872577214644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008708829095351615",
+            "extra": "mean: 58.617084944445075 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07405230833766013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028535673016063287",
+            "extra": "mean: 13.503967971400005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4936482899226176,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020652231039886906",
+            "extra": "mean: 669.5016535999969 msec\nrounds: 5"
           }
         ]
       }
