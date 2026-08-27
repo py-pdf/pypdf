@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787771718346,
+  "lastUpdate": 1787817835643,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -129829,6 +129829,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026870631351981908",
             "extra": "mean: 815.8917529999826 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55940078+devYRPauli@users.noreply.github.com",
+            "name": "Yash Raj Pandey",
+            "username": "devYRPauli"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a1f510c940ed653bfe60e08263359675cc2ba7a6",
+          "message": "BUG: Detect a duplicate dictionary key whose first value is falsy (#4024)\n\nread_from_stream() used \"if not data.get(key)\" to decide whether a key had\nalready been seen. A first value of NumberObject(0) is falsy, so the second\noccurrence looked like a new key. The duplicate went unreported and the second\nvalue replaced the first, even with strict=True.\n\nChecking \"key not in data\" makes the falsy case behave like every other\nduplicate: strict raises, non-strict warns, and the first value is kept.",
+          "timestamp": "2026-08-27T10:01:17+02:00",
+          "tree_id": "2ad78765b4d81f1d4ec31dadd57856d8dcd20645",
+          "url": "https://github.com/py-pdf/pypdf/commit/a1f510c940ed653bfe60e08263359675cc2ba7a6"
+        },
+        "date": 1787817827489,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.454076352296834,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00424425120574981",
+            "extra": "mean: 54.18856955555719 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 30.945960176329375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020686423995507543",
+            "extra": "mean: 32.31439562068919 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.568724607078305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07930989032833931",
+            "extra": "mean: 637.4605176000046 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.40674833626589085,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021730195906489686",
+            "extra": "mean: 2.458522656000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5423978741674269,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03064872640667128",
+            "extra": "mean: 1.8436650430000043 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7489164068098906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036709197523464563",
+            "extra": "mean: 571.7826170000023 msec\nrounds: 5"
           }
         ]
       }
