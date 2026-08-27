@@ -254,9 +254,13 @@ def test_index2label__malformed_kid_limits(limits, caplog):
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (NumberObject(1), "Page labels are not a dictionary: 1"),
-        (ArrayObject(), "Page labels are not a dictionary: []"),
-        (TextStringObject("x"), "Page labels are not a dictionary: x"),
+        pytest.param(
+            NumberObject(1), "Page labels are not a dictionary: 1", id="number"
+        ),
+        pytest.param(ArrayObject(), "Page labels are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Page labels are not a dictionary: x", id="string"
+        ),
     ],
 )
 def test_index2label__page_labels_not_a_dictionary(caplog, value, expected):
