@@ -1064,3 +1064,43 @@ def test_get_fields__fields_is_not_an_array(caplog, fields, expected):
 
     assert PdfReader(stream).get_fields() == {}
     assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "Viewer preferences are not a dictionary: 1", id="number"
+        ),
+        pytest.param(
+            ArrayObject(), "Viewer preferences are not a dictionary: []", id="array"
+        ),
+        pytest.param(
+            TextStringObject("x"),
+            "Viewer preferences are not a dictionary: x",
+            id="string",
+        ),
+    ],
+)
+def test_viewer_preferences__not_a_dictionary(caplog, value, expected):
+    """A malformed entry raised an AttributeError from the ViewerPreferences init."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/ViewerPreferences")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).viewer_preferences is None
+    assert expected in caplog.text
+
+
+def test_viewer_preferences__reads_a_well_formed_dictionary():
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.create_viewer_preferences().center_window = True
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).viewer_preferences == {"/CenterWindow": True}
