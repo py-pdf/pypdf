@@ -1040,9 +1040,15 @@ def test_get_outline__entry_count():
 @pytest.mark.parametrize(
     ("fields", "expected"),
     [
-        (NumberObject(1), "AcroForm /Fields is not an array: 1"),
-        (TextStringObject("x"), "AcroForm /Fields is not an array: x"),
-        (DictionaryObject(), "AcroForm /Fields is not an array: {}"),
+        pytest.param(
+            NumberObject(1), "AcroForm /Fields is not an array: 1", id="number"
+        ),
+        pytest.param(
+            TextStringObject("x"), "AcroForm /Fields is not an array: x", id="string"
+        ),
+        pytest.param(
+            DictionaryObject(), "AcroForm /Fields is not an array: {}", id="dictionary"
+        ),
     ],
 )
 def test_get_fields__fields_is_not_an_array(caplog, fields, expected):
