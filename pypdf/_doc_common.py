@@ -328,6 +328,13 @@ class PdfDocCommon(ABC):
         if o is None:
             return None
         o = o.get_object()
+        if not isinstance(o, DictionaryObject):
+            logger_warning(
+                "Viewer preferences are not a dictionary: %(preferences)s",
+                source=__name__,
+                preferences=o,
+            )
+            return None
         if not isinstance(o, ViewerPreferences):
             o = ViewerPreferences(o)
             if hasattr(o, "indirect_reference") and o.indirect_reference is not None:
