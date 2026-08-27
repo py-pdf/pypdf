@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787832555654,
+  "lastUpdate": 1787832578730,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130423,6 +130423,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02102538665847123",
             "extra": "mean: 851.749252399992 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "486a2037b84356081bf325f2a0a5e3812ca64eaf",
+          "message": "ROB: Do not crash when the page labels are not a dictionary (#4022)\n\nindex2label casts /PageLabels to a DictionaryObject and tests membership on\nthe result, so a file where that entry holds a number, a string or an array\nraised 'TypeError: argument of type NumberObject is not iterable' from\nreader.page_labels.\n\nThe function already falls back to the page position when /PageLabels is\nabsent, so an entry it cannot read is reported and takes the same path.",
+          "timestamp": "2026-08-27T14:06:34+02:00",
+          "tree_id": "78579c3bdfaefa68748e15b4a2e39147ac8dd329",
+          "url": "https://github.com/py-pdf/pypdf/commit/486a2037b84356081bf325f2a0a5e3812ca64eaf"
+        },
+        "date": 1787832569705,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.950503089212198,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018660581634918825",
+            "extra": "mean: 71.68200269231087 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.590825049359456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018388259912090293",
+            "extra": "mean: 48.565319631575825 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0417228500353506,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03132944907707761",
+            "extra": "mean: 959.9482242000022 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4853433348414873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039594592116959544",
+            "extra": "mean: 2.0603971007999915 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.37920996050283584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010674300189182997",
+            "extra": "mean: 2.63706153359999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2461124947504119,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006243099274651705",
+            "extra": "mean: 802.4957651999898 msec\nrounds: 5"
           }
         ]
       }
