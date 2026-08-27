@@ -3662,3 +3662,30 @@ def test_num_copies_accepts_zero_and_above(value):
     viewer_preferences = writer.create_viewer_preferences()
     viewer_preferences.num_copies = value
     assert viewer_preferences.num_copies == value
+
+
+@pytest.mark.parametrize("page_number", [3, 99, -4, -99])
+def test_add_named_destination_out_of_range(page_number):
+    """An out-of-range page surfaced as an IndexError from the kids array."""
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_named_destination("destination", page_number)
+
+
+@pytest.mark.parametrize("page_number", [3, 99, -4, -99])
+def test_add_uri_out_of_range(page_number):
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_uri(page_number, "https://example.com", RectangleObject([0, 0, 1, 1]))
+
+
+@pytest.mark.parametrize("page_number", [0, 2, -1, -3])
+def test_add_named_destination_in_range(page_number):
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    assert writer.add_named_destination("destination", page_number) is not None
