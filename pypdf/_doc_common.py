@@ -938,6 +938,14 @@ class PdfDocCommon(ABC):
                     f"Maximum outline entry limit reached: {traversal_state.entry_count} > {OUTLINE_MAX_ENTRIES}."
                 )
 
+            if not isinstance(node, DictionaryObject):
+                logger_warning(
+                    "Outline node is not a dictionary: %(node)s",
+                    source=__name__,
+                    node=node,
+                )
+                break
+
             outline_obj = self._build_outline_item(node)
             if outline_obj:
                 outline.append(outline_obj)
