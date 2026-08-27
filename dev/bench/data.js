@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787841174137,
+  "lastUpdate": 1787841180937,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -108575,6 +108575,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025092860821191797",
             "extra": "mean: 672.3622569999975 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "39565fe38271d87aff949bfeb3554ecae3d39973",
+          "message": "BU: Treat an empty /Filter array as no filter when extracting images (#4026)\n\n_xobj_to_image() checked only the type of the /Filter entry and then indexed\nit with -1, so an image whose /Filter is an empty array raised\n'IndexError: list index out of range', which made page.images unusable for\nthe whole page.\n\nAn empty array carries the same meaning as a missing /Filter entry - no\nfilter is applied - so the image now takes the same unfiltered path it would\ntake without the entry.\n\nCloses #4025.",
+          "timestamp": "2026-08-27T16:29:51+02:00",
+          "tree_id": "0b3926b29d2c65b6eac5189486b17d5724802f65",
+          "url": "https://github.com/py-pdf/pypdf/commit/39565fe38271d87aff949bfeb3554ecae3d39973"
+        },
+        "date": 1787841171718,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7808430531830175,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013533615370894522",
+            "extra": "mean: 359.6031781999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.605780973220583,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017453046092158996",
+            "extra": "mean: 53.746736105262464 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2488563647485329,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022706056832933995",
+            "extra": "mean: 4.018382254400007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.40217251738101,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009541516988588538",
+            "extra": "mean: 57.46408955555498 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07394639546152722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06144056747912651",
+            "extra": "mean: 13.523309605000009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.427175248307396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08745481484765066",
+            "extra": "mean: 700.6847976000017 msec\nrounds: 5"
           }
         ]
       }
