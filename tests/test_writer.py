@@ -1497,6 +1497,8 @@ def test_set_page_label(pdf_file_path):
         ValueError, match="If given, start must be greater or equal than one"
     ):
         writer.set_page_label(0, 5, "/r", start=-1)
+    with pytest.raises(ValueError, match=r"style must be one of: /D, /R, /r, /A, /a"):
+        writer.set_page_label(0, 5, "/Nonsense")
 
     pdf_file_path.unlink()
 
@@ -3662,6 +3664,24 @@ def test_num_copies_accepts_zero_and_above(value):
     viewer_preferences = writer.create_viewer_preferences()
     viewer_preferences.num_copies = value
     assert viewer_preferences.num_copies == value
+
+
+@pytest.mark.parametrize("style", ["/D", "/R", "/r", "/A", "/a"])
+def test_set_page_label_accepts_the_spec_styles(style):
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(100, 100)
+    writer.set_page_label(0, 1, style)
+
+
+@pytest.mark.parametrize("style", ["/Nonsense", "/d", "D", ""])
+def test_set_page_label_rejects_other_styles(style):
+    """An unknown style was written through and then ignored when read back."""
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(100, 100)
+    with pytest.raises(ValueError, match="style must be one of"):
+        writer.set_page_label(0, 1, style)
 
 
 @pytest.mark.parametrize("page_number", [3, 99, -4, -99])
