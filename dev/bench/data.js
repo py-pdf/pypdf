@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787837036075,
+  "lastUpdate": 1787837049105,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130555,6 +130555,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006243099274651705",
             "extra": "mean: 802.4957651999898 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5da04842048c1d5c52842d609f0eb575b4a5bb86",
+          "message": "ROB: Do not crash when the viewer preferences are not a dictionary (#4021)\n\nThe property hands whatever /ViewerPreferences holds to the ViewerPreferences\nconstructor, which calls .items() on it behind a type: ignore, so a file where\nthat entry holds a number, a string or an array raised 'AttributeError:\nNumberObject object has no attribute items'.\n\nAn entry that cannot be read as preferences is reported and treated as absent,\nwhich is what the property already returns when the key is missing.",
+          "timestamp": "2026-08-27T15:20:49+02:00",
+          "tree_id": "0b874ea456dd8d43302041bd5362a4d2572321a2",
+          "url": "https://github.com/py-pdf/pypdf/commit/5da04842048c1d5c52842d609f0eb575b4a5bb86"
+        },
+        "date": 1787837039810,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.396979712745042,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021159804233021648",
+            "extra": "mean: 69.4590129285757 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.084830812296342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01223498741988222",
+            "extra": "mean: 52.397635055569936 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.043517813788053,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039719146682792854",
+            "extra": "mean: 958.2970091999869 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.43953458070742635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014765306375339534",
+            "extra": "mean: 2.275133843599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.42562581316418696,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015290311545316036",
+            "extra": "mean: 2.349481561199968 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.432429957371554,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0039539307190514334",
+            "extra": "mean: 698.114413799999 msec\nrounds: 5"
           }
         ]
       }
