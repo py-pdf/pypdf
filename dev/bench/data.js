@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787827715581,
+  "lastUpdate": 1787827739888,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -108311,6 +108311,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005227513512146594",
             "extra": "mean: 475.58585519999497 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "13b5ffc10d307b6c57f08db4918675feb570fc14",
+          "message": "BUG: Check the page label style and type it as the strings it accepts (#4017)\n\nset_page_label validates its indices, its start and that a style or prefix is\ngiven, but not the style itself, so an unknown one was written into /S and\nthen dropped on the way back out: index2label logs 'Ignoring unknown page\nlabel numbering style' and falls back to the page position, leaving the caller\nwith plain numbers and a log line.\n\nThe style was also annotated Optional[PageLabelStyle], which is a plain class\nholding the five string constants rather than a type any caller can satisfy.\nTyped as the literal strings it takes, which clears two typeguard failures.\n\n* Make PageLabelStyle a StrEnum instead of aliasing its values\n\nThe class held the five style strings but was used as a type, so the\nannotation could not be satisfied by the strings every caller passes. Making\nit a StrEnum, as FilterTypes already is, lets the annotation name it directly\nand the validation check membership, so the separate Literal alias goes away.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-08-27T12:45:54+02:00",
+          "tree_id": "1be28554eb023baf0aaba2d659962e9560a3cc3c",
+          "url": "https://github.com/py-pdf/pypdf/commit/13b5ffc10d307b6c57f08db4918675feb570fc14"
+        },
+        "date": 1787827731561,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9512864477892746,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01769588674963632",
+            "extra": "mean: 338.835290199998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.094481560786217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021373398531801227",
+            "extra": "mean: 52.371152199998505 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2613165255427702,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015552354731095201",
+            "extra": "mean: 3.8267767334000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.172505979504926,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010055856047603224",
+            "extra": "mean: 58.23261911764549 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07159255221186776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.059603067674556406",
+            "extra": "mean: 13.967933382800004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6480491606999859,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024842515385035254",
+            "extra": "mean: 606.7780159999984 msec\nrounds: 5"
           }
         ]
       }
