@@ -1948,7 +1948,8 @@ class PdfWriter(PdfDocCommon):
         """Look up a page by number, reporting a bad index rather than an IndexError from the kids array."""
         pages = cast(DictionaryObject, self.get_object(self._pages))
         kids = cast(ArrayObject, pages[PagesAttributes.KIDS])
-        if not (-len(kids) <= page_number < len(kids)):
+        count = len(kids)
+        if not (-count <= page_number < count):
             raise IndexError(f"Page number {page_number} is out of range")
         return kids[page_number]
 
