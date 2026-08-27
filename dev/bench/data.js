@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787829330374,
+  "lastUpdate": 1787829338232,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -108377,6 +108377,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024842515385035254",
             "extra": "mean: 606.7780159999984 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9623c3b6d34ed379773778b2ba7bfd758c60c4d9",
+          "message": "ROB: Do not crash when the AcroForm fields entry is not an array (#4019)\n\nget_fields casts /Fields to an ArrayObject and iterates it, so a file where\nthat entry holds a number, a string or a dictionary raised 'TypeError:\nNumberObject object is not iterable'.\n\nThe reference is resolved first, since /Fields is usually indirect, and an\nentry that cannot be walked is reported the same way as the other malformed\nstructures the reader tolerates.",
+          "timestamp": "2026-08-27T13:12:27+02:00",
+          "tree_id": "12b4b401075fd12775641b796d460e1f2f06b084",
+          "url": "https://github.com/py-pdf/pypdf/commit/9623c3b6d34ed379773778b2ba7bfd758c60c4d9"
+        },
+        "date": 1787829329153,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7437503529423024,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012356642468412782",
+            "extra": "mean: 364.4646456000032 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.65618316689265,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019492655017265346",
+            "extra": "mean: 53.60153205263361 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24902109960139768,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03744836953853082",
+            "extra": "mean: 4.015723975200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.525584973502617,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00066860792338233",
+            "extra": "mean: 57.05943633333356 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07317511889515603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019097963746842965",
+            "extra": "mean: 13.665847286599995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5043347054026233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038464899348987958",
+            "extra": "mean: 664.7456821999981 msec\nrounds: 5"
           }
         ]
       }
