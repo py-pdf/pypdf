@@ -584,7 +584,14 @@ class PdfDocCommon(ABC):
             return retval
         assert stack is not None
         if "/Fields" in tree:
-            fields = cast(ArrayObject, tree["/Fields"])
+            fields = tree["/Fields"].get_object()
+            if not isinstance(fields, ArrayObject):
+                logger_warning(
+                    "AcroForm /Fields is not an array: %(fields)s",
+                    source=__name__,
+                    fields=fields,
+                )
+                return retval
             for f in fields:
                 field = f.get_object()
                 self._build_field(field, retval, fileobj, field_attributes, stack)
