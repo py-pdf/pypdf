@@ -202,7 +202,14 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     root = cast(DictionaryObject, reader.root_object)
     if "/PageLabels" not in root:
         return str(index + 1)  # Fallback
-    number_tree = cast(DictionaryObject, root["/PageLabels"].get_object())
+    number_tree = root["/PageLabels"].get_object()
+    if not isinstance(number_tree, DictionaryObject):
+        logger_warning(
+            "Page labels are not a dictionary: %(number_tree)s",
+            source=__name__,
+            number_tree=number_tree,
+        )
+        return str(index + 1)  # Fallback
     if "/Nums" in number_tree:
         return get_label_from_nums(number_tree, index)
     if "/Kids" in number_tree and not isinstance(number_tree["/Kids"], NullObject):
