@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787825463484,
+  "lastUpdate": 1787825486623,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130027,6 +130027,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0036709197523464563",
             "extra": "mean: 571.7826170000023 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0b0721e7f99f3437659aa62642fa0cb7cd9eacf6",
+          "message": "BUG: Report an out-of-range page number when adding a destination or URI (#4016)\n\nadd_named_destination and add_uri index the kids array with the page number\ndirectly, so a number past the end surfaced as 'IndexError: list index out of\nrange' with nothing pointing at the argument that caused it.\n\n_VirtualList already raises IndexError with the index it was given, so both\nnow report the page number and keep accepting negative ones.",
+          "timestamp": "2026-08-27T12:08:33+02:00",
+          "tree_id": "10a205bb03cd1f2bab88e406905a83c92b7a596d",
+          "url": "https://github.com/py-pdf/pypdf/commit/0b0721e7f99f3437659aa62642fa0cb7cd9eacf6"
+        },
+        "date": 1787825477824,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.806240499932787,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017270992373977622",
+            "extra": "mean: 72.43101407692183 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.63501896819648,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012698426529645025",
+            "extra": "mean: 60.11414846666791 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0647221696221723,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030125371713858356",
+            "extra": "mean: 939.2121517999954 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5149016208032542,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02785870027530291",
+            "extra": "mean: 1.9421185710000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36268954232825606,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04785306972504311",
+            "extra": "mean: 2.757179028600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1853612050373405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0046166034370090404",
+            "extra": "mean: 843.6247075999916 msec\nrounds: 5"
           }
         ]
       }
