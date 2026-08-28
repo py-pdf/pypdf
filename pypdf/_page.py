@@ -661,7 +661,15 @@ class PageObject(DictionaryObject):
             # for inline images, cache dict entries are not None
             return [image_name for image_name, image_value in self._content_stream_images.items() if image_value]
 
-        x_object = resources[RES.XOBJECT].get_object()  # type: ignore
+        x_object_entry = resources[RES.XOBJECT].get_object()  # type: ignore
+        if not isinstance(x_object_entry, DictionaryObject):
+            logger_warning(
+                "XObject resources are not a dictionary: %(x_object)s",
+                source=__name__,
+                x_object=x_object_entry,
+            )
+            return []
+        x_object = cast(Any, x_object_entry)
 
         # Iterate through all XObject resources
         for o in x_object:
