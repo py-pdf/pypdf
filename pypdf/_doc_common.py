@@ -489,12 +489,22 @@ class PdfDocCommon(ABC):
             catalog = self.root_object
 
             # get the name tree
+            candidate: Optional[PdfObject] = None
             if CA.DESTS in catalog:
-                tree = cast(DictionaryObject, catalog[CA.DESTS])
+                candidate = catalog[CA.DESTS].get_object()
             elif CA.NAMES in catalog:
-                names = cast(DictionaryObject, catalog[CA.NAMES])
-                if CA.DESTS in names:
-                    tree = cast(DictionaryObject, names[CA.DESTS])
+                names = catalog[CA.NAMES].get_object()
+                if isinstance(names, DictionaryObject) and CA.DESTS in names:
+                    candidate = names[CA.DESTS].get_object()
+            if candidate is not None and not isinstance(candidate, DictionaryObject):
+                logger_warning(
+                    "Destination tree is not a dictionary: %(tree)s",
+                    source=__name__,
+                    tree=candidate,
+                )
+                return retval
+            if candidate is not None:
+                tree = candidate
 
         if is_null_or_none(tree):
             return retval
