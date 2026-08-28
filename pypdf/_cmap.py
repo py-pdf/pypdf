@@ -1,6 +1,8 @@
+import struct
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from functools import partial
+from io import BytesIO
 from typing import Any, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
@@ -394,6 +396,33 @@ def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
             return chr(int(glyph_name[4:], 16))
         except ValueError:  # pragma: no cover
             return None
+
+
+def _character_map_from_cff_type1_font_file(
+    font_data: bytes,
+    map_dict: dict[Any, Any],
+    int_entry: list[int],
+) -> tuple[dict[Any, Any], list[int]]:
+    try:
+        from fontTools.cffLib import CFFFontSet  # noqa: PLC0415
+        cff_set = CFFFontSet()
+        cff_set.decompile(BytesIO(font_data), None)  # This can raise ValueError, AssertionError, struct.error.
+        cff_font = cff_set.topDictIndex[0]           # First font in CFF set; Can raise AttributeError or IndexError.
+        cff_encoding = cff_font.Encoding             # Can raise AttributeError.
+        # Encoding can fall back to literal strings "StandardEncoding" or "ExpertEncoding", which we do not parse.
+        if isinstance(cff_encoding, str):
+            return map_dict, int_entry
+        for i in range(min(len(cff_encoding), 256)):
+            glyph_name = cff_encoding[i]
+            if not glyph_name or glyph_name == ".notdef":
+                continue
+            if unipoint := _glyph_name_to_unicode(f"/{glyph_name}"):
+                map_dict[chr(i)] = unipoint
+                int_entry.append(i)
+        return map_dict, int_entry
+
+    except (struct.error, AssertionError, AttributeError, IndexError, ValueError):
+        return map_dict, int_entry
 
 
 def _character_map_from_type1_font_file(
