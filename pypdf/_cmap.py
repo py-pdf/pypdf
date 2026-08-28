@@ -475,7 +475,7 @@ def _character_map_from_type1_font_file(
                 continue
             try:
                 i = int(words[1])
-            except ValueError:  # pragma: no cover
+            except ValueError:
                 continue
 
             unipoint = _glyph_name_to_unicode(words[2].decode())
