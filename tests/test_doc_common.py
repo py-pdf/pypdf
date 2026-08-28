@@ -1262,3 +1262,33 @@ def test_outline__reads_a_well_formed_outlines_entry():
     stream.seek(0)
 
     assert [item.title for item in PdfReader(stream).outline] == ["Chapter 1"]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Form field is not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Form field is not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Form field is not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_build_field__entry_is_not_a_dictionary(caplog, value, expected):
+    """A field entry that is not a dictionary raised a TypeError from the /T test."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject(
+        {NameObject("/Fields"): ArrayObject([value])}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).get_fields() == {}
+    assert expected in caplog.text
+
+
+def test_build_field__reads_a_well_formed_field():
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    assert reader.get_fields()
