@@ -11,7 +11,6 @@ from .generic import (
     DictionaryObject,
     NullObject,
     StreamObject,
-    is_null_or_none,
 )
 
 _predefined_cmap: dict[str, str] = {
@@ -138,8 +137,24 @@ def _parse_to_unicode(
 
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
-            return _type1_alternative(ft, map_dict, int_entry)
+            font_descriptor = ft.get("/FontDescriptor", None)
+            if not font_descriptor:
+                return map_dict, int_entry
+
+            if (
+                "/FontFile" in font_descriptor and
+                isinstance(font_file_dict := font_descriptor["/FontFile"], StreamObject)
+            ):
+                font_file_data = font_file_dict.get_data()
+                if not font_file_data:
+                    return map_dict, int_entry
+
+                return _type1_alternative(font_file_data, map_dict, int_entry)
+
+            return map_dict, int_entry
+
         return {}, []
+
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
@@ -382,18 +397,11 @@ def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
 
 
 def _type1_alternative(
-    ft: DictionaryObject,
+    font_data: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
 ) -> tuple[dict[Any, Any], list[int]]:
-    if "/FontDescriptor" not in ft:
-        return map_dict, int_entry
-    ft_desc = cast(DictionaryObject, ft["/FontDescriptor"]).get("/FontFile")
-    if is_null_or_none(ft_desc):
-        return map_dict, int_entry
-    assert ft_desc is not None, "mypy"
-    txt = ft_desc.get_object().get_data()
-    txt = txt.split(b"eexec\n")[0]  # only clear part
+    txt = font_data.split(b"eexec\n")[0]  # Only the clear part
     encoding_part = txt.split(b"/Encoding")
     if len(encoding_part) < 2:
         return map_dict, int_entry
