@@ -369,6 +369,18 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
         lst = lst[2:]
 
 
+def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
+    try:
+        return adobe_glyphs[glyph_name]
+    except KeyError:
+        if not glyph_name.startswith("/uni"):
+            return None
+        try:
+            return chr(int(glyph_name[4:], 16))
+        except ValueError:  # pragma: no cover
+            return None
+
+
 def _type1_alternative(
     ft: DictionaryObject,
     map_dict: dict[Any, Any],
@@ -385,7 +397,7 @@ def _type1_alternative(
     encoding_part = txt.split(b"/Encoding")
     if len(encoding_part) < 2:
         return map_dict, int_entry
-    txt = encoding_part[1]  # to get the encoding part
+    txt = encoding_part[1]  # To get the encoding part
     lines = txt.replace(b"\r", b"\n").split(b"\n")
     for li in lines:
         if li.startswith(b"dup"):
@@ -396,16 +408,10 @@ def _type1_alternative(
                 i = int(words[1])
             except ValueError:  # pragma: no cover
                 continue
-            try:
-                v = adobe_glyphs[words[2].decode()]
-            except KeyError:
-                if words[2].startswith(b"/uni"):
-                    try:
-                        v = chr(int(words[2][4:], 16))
-                    except ValueError:  # pragma: no cover
-                        continue
-                else:
-                    continue
-            map_dict[chr(i)] = v
-            int_entry.append(i)
+
+            unipoint = _glyph_name_to_unicode(words[2].decode())
+            if unipoint:
+                map_dict[chr(i)] = unipoint
+                int_entry.append(i)
+
     return map_dict, int_entry
