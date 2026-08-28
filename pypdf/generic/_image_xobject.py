@@ -415,8 +415,23 @@ def _apply_decode(
     # requires reverting scale (cf p243,2§ last sentence)
     if ImageAttributes.DECODE in x_object:
         decode = x_object[ImageAttributes.DECODE]
-        # if invert_color and lfilters == FT.DCT_DECODE:
-        #     decode = list(reversed(decode))
+        if img.mode == "CMYK" and lfilters == FT.DCT_DECODE:
+            # Adobe writes CMYK JPEGs with inverted component values, which is
+            # what the [min max] -> [1 0] remap in the branches below
+            # compensates for. An explicit /Decode array is expressed in terms
+            # of the true values, so it has to be combined with that inversion
+            # rather than replacing it - otherwise an identity /Decode leaves
+            # the image inverted (#2931).
+            #
+            # Substituting s -> 1-s into dmin + s*(dmax-dmin) gives
+            # dmax + s*(dmin-dmax), which is the same pair swapped. A malformed
+            # odd-length array is left untouched here and dropped with a
+            # warning further down.
+            decode = [
+                value
+                for index in range(0, len(decode) - 1, 2)
+                for value in (decode[index + 1], decode[index])
+            ]
     elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
         decode = [1.0, 0.0] if not invert_color else [0.0, 1.0]
         decode = decode * len(img.getbands())
@@ -490,6 +505,60 @@ def _get_mode_and_invert_color(
     return mode, invert_color
 
 
+def _apply_alpha(
+    *,
+    img: Image.Image,
+    x_object: dict[str, Any],
+    obj_as_text: str,
+    image_format: str,
+    extension: str,
+    visited: set[int],
+) -> tuple[Image.Image, str, str]:
+    if ImageAttributes.S_MASK not in x_object:
+        return img, extension, image_format
+
+    s_mask = x_object[ImageAttributes.S_MASK]
+    if id(s_mask) in visited:
+        # A soft mask that refers back to an image already being
+        # converted would recurse until the interpreter runs out of
+        # stack. Such a chain cannot describe a real alpha channel, so
+        # drop the mask and keep the image we have.
+        logger_warning(
+            "Ignoring cyclic /SMask reference in %(obj_as_text)s",
+            source=__name__,
+            obj_as_text=obj_as_text,
+        )
+        return img, extension, image_format
+
+    alpha = _xobj_to_image(s_mask, visited=visited)[2]
+    if img.size != alpha.size:
+        logger_warning(
+            "Image and mask size not matching: %(image_size)s vs. %(alpha_size)s %(obj_as_text)s",
+            source=__name__,
+            image_size=img.size,
+            alpha_size=alpha.size,
+            obj_as_text=obj_as_text,
+        )
+    else:
+        # TODO: implement mask
+        if alpha.mode != "L":
+            alpha = alpha.convert("L")
+        if img.mode == "P":
+            img = img.convert("RGB")
+        elif img.mode == "1":
+            img = img.convert("L")
+        img.putalpha(alpha)
+
+    if "JPEG" in image_format:
+        image_format = "JPEG2000"
+        extension = ".jp2"
+    else:
+        image_format = "PNG"
+        extension = ".png"
+
+    return img, extension, image_format
+
+
 def _xobj_to_image(
         x_object: dict[str, Any],
         pillow_parameters: Union[dict[str, Any], None] = None,
@@ -516,50 +585,6 @@ def _xobj_to_image(
         visited = set()
     visited.add(id(x_object))
 
-    def _apply_alpha(
-        img: Image.Image,
-        x_object: dict[str, Any],
-        obj_as_text: str,
-        image_format: str,
-        extension: str,
-    ) -> tuple[Image.Image, str, str]:
-        if ImageAttributes.S_MASK in x_object:  # add alpha channel
-            s_mask = x_object[ImageAttributes.S_MASK]
-            if id(s_mask) in visited:
-                # A soft mask that refers back to an image already being
-                # converted would recurse until the interpreter runs out of
-                # stack. Such a chain cannot describe a real alpha channel, so
-                # drop the mask and keep the image we have.
-                logger_warning(
-                    "Ignoring cyclic /SMask reference in %(obj_as_text)s",
-                    source=__name__,
-                    obj_as_text=obj_as_text,
-                )
-                return img, extension, image_format
-            alpha = _xobj_to_image(s_mask, visited=visited)[2]
-            if img.size != alpha.size:
-                logger_warning(
-                    "image and mask size not matching: %(obj_as_text)s",
-                    source=__name__,
-                    obj_as_text=obj_as_text,
-                )
-            else:
-                # TODO: implement mask
-                if alpha.mode != "L":
-                    alpha = alpha.convert("L")
-                if img.mode == "P":
-                    img = img.convert("RGB")
-                elif img.mode == "1":
-                    img = img.convert("L")
-                img.putalpha(alpha)
-            if "JPEG" in image_format:
-                image_format = "JPEG2000"
-                extension = ".jp2"
-            else:
-                image_format = "PNG"
-                extension = ".png"
-        return img, extension, image_format
-
     # For error reporting
     obj_as_text = (
         x_object.indirect_reference.__repr__()
@@ -585,7 +610,9 @@ def _xobj_to_image(
 
     # Get filters
     filters = x_object.get(StreamAttributes.FILTER, NullObject()).get_object()
-    lfilters = filters[-1] if isinstance(filters, list) else filters
+    # An empty array is a valid way of saying that no filter is applied: treat it
+    # like a missing /Filter entry rather than raising IndexError on the lookup.
+    lfilters = filters[-1] if isinstance(filters, list) and filters else filters
     decode_parms = x_object.get(StreamAttributes.DECODE_PARMS)
     if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
@@ -664,7 +691,8 @@ def _xobj_to_image(
 
     img = _apply_decode(img, x_object, lfilters, color_space, invert_color)
     img, extension, image_format = _apply_alpha(
-        img, x_object, obj_as_text, image_format, extension
+        img=img, x_object=x_object, obj_as_text=obj_as_text, image_format=image_format, extension=extension,
+        visited=visited,
     )
 
     if pillow_parameters is None:

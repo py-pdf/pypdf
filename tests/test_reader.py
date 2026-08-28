@@ -459,6 +459,52 @@ def test_find_previous_startxref_pos_recovery_variants():
 
 
 @pytest.mark.parametrize(
+    ("suffix", "duplicates"),
+    [
+        (b"", 0),
+        (b"%%EOF\n", 1),
+        (b"\n%%EOF\n", 1),
+        (b"\n%%EOF\n\n%%EOF\n", 2),
+        (b"\n%%EOF", 1),
+    ],
+    ids=["none", "adjacent", "blank-line", "two-extra", "no-trailing-newline"],
+)
+@pytest.mark.parametrize("strict", [False, True])
+def test_duplicate_eof_markers(caplog, suffix, duplicates, strict):
+    """%%EOF markers appended below the final one still resolve startxref (#4008)."""
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+    buffer = BytesIO()
+    writer.write(buffer)
+    pdf_data = buffer.getvalue() + suffix
+
+    reader = PdfReader(BytesIO(pdf_data), strict=strict)
+    assert len(reader.pages) == 1
+
+    expected = ["Duplicate %%EOF marker(s) found, skipping them"] if duplicates else []
+    assert normalize_warnings(caplog.text) == (expected or [""])
+
+
+@pytest.mark.parametrize(
+    "pdf_data",
+    [
+        # The run of markers is exhausted by reaching the start of the stream.
+        b"%%EOF\n%%EOF\n",
+        # Same, but with something above the run that is not an offset either.
+        b"%PDF-1.7\n%%EOF\n%%EOF\n",
+        # The run is longer than the bound on the backward scan, so the scan
+        # gives up instead of walking the whole stream.
+        b"%PDF-1.7\n" + b"%%EOF\n" * (PdfReader._MAX_STARTXREF_RECOVERY_LINES + 10),
+    ],
+    ids=["start-of-stream", "no-offset-above", "beyond-scan-limit"],
+)
+def test_duplicate_eof_markers_without_startxref(pdf_data):
+    """A run of %%EOF markers with no offset above it is still reported as broken."""
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(pdf_data))
+
+
+@pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
     [
         ("encrypted-file.pdf", "test", False),
@@ -2191,6 +2237,74 @@ def test_rebuild_xref_table__speed():
         _ = list(reader.pages)
 
 
+@pytest.mark.parametrize("strict", [False, True])
+def test_rebuild_xref_table_with_cross_reference_stream(caplog, strict):
+    """
+    A PDF 1.5+ file may keep the trailer keys inside its cross-reference stream
+    instead of behind a ``trailer`` keyword. Rebuilding the xref table has to
+    pick them up from there as well, otherwise the trailer stays empty and
+    ``/Root`` cannot be resolved. See #3925.
+    """
+    objects = {
+        1: b"<< /Pages 2 0 R /Type /Catalog >>",
+        2: b"<< /Count 1 /Kids [3 0 R] /Type /Pages >>",
+        3: (
+            b"<< /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 2 0 R"
+            b" /Resources << >> /Rotate 0 /Type /Page >>"
+        ),
+    }
+    pdf_data = bytearray(b"%PDF-1.5\n")
+    offsets = {}
+    for number, obj in objects.items():
+        offsets[number] = len(pdf_data)
+        pdf_data += b"%d 0 obj " % number + obj + b" endobj\n"
+
+    # The cross-reference stream, uncompressed, with /W [1 4 1] entries.
+    xref_offset = len(pdf_data)
+    entries = b"".join(
+        [struct.pack(">BIB", 0, 0, 255)]
+        + [struct.pack(">BIB", 1, offsets[number], 0) for number in objects]
+        + [struct.pack(">BIB", 1, xref_offset, 0)]
+    )
+    pdf_data += (
+        b"4 0 obj << /Type /XRef /Size 5 /Root 1 0 R /W [1 4 1] /Length %d >>\nstream\n"
+        % len(entries)
+    )
+    pdf_data += entries + b"\nendstream endobj\n"
+    pdf_data += b"startxref\n%d\n%%%%EOF\n" % xref_offset
+    # /Root is reachable through the cross-reference stream only.
+    assert b"trailer" not in pdf_data
+
+    # The trailer keys live in the cross-reference stream; this reads the same
+    # way in strict and non-strict mode.
+    reader = PdfReader(io.BytesIO(bytes(pdf_data)), strict=strict)
+    assert len(reader.pages) == 1
+    assert reader.trailer["/Size"] == 5
+    assert reader.root_object["/Type"] == "/Catalog"
+    assert caplog.text == ""
+
+    # Garbage bytes around the document shift every stored offset, so the xref
+    # table has to be rebuilt by scanning the file for the objects. In strict
+    # mode the invalid header is rejected outright, so the rebuild path (and the
+    # trailer recovered from the cross-reference stream) only applies otherwise.
+    garbage = b"PK\x03\x04\x14" + b"0123456789" * 6
+    data = io.BytesIO(garbage + bytes(pdf_data) + garbage)
+    if strict:
+        with pytest.raises(PdfReadError, match="but '%PDF-' expected"):
+            PdfReader(data, strict=True)
+        return
+    reader = PdfReader(data)
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox.width == 2550
+    assert reader.trailer["/Size"] == 5
+    assert reader.root_object["/Type"] == "/Catalog"
+    assert normalize_warnings(caplog.text) == [
+        "invalid pdf header: b'PK\\x03\\x04\\x14'",
+        "incorrect startxref pointer(1)",
+        "parsing for Object Streams",
+    ]
+
+
 def test_find_pdf_objects():
     data = (
         b"     \n"
@@ -2554,3 +2668,39 @@ def test_load_recovery_cache():
     ]
     with mock.patch.object(reader, "_find_pdf_objects", return_value=iter(pdf_objects)):
         assert reader._load_recovery_cache(b"") == {1: (10, 0), 2: (30, 0), 3: (42, 1)}
+
+
+def test_flatten_rejects_typeless_non_page_kid_strict():
+    """A /Kids entry resolving to a typeless non-page dictionary (here a
+    linearization parameter dictionary) must not be counted as a page in strict
+    mode (#3949).
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(612, 792)
+    linearization = writer._add_object(
+        DictionaryObject({
+            NameObject("/Linearized"): NumberObject(1),
+            NameObject("/N"): NumberObject(1),
+        })
+    )
+    writer._pages.get_object()[NameObject("/Kids")].append(linearization)
+    output = BytesIO()
+    writer.write(output)
+
+    with pytest.raises(PdfReadError, match=r"^Non-page object reached through /Kids: "):
+        list(PdfReader(output, strict=True).pages)
+
+
+def test_flatten_keeps_typeless_real_page_strict():
+    """A real page that merely omits the spec-required /Type but carries a
+    structural page key must still be counted, even in strict mode (#3949).
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(612, 792)
+    del page[NameObject("/Type")]
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, strict=True)
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox.width == 612

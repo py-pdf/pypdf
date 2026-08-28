@@ -15,6 +15,7 @@ from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
     ContentStream,
+    Destination,
     DictionaryObject,
     NameObject,
     NullObject,
@@ -24,6 +25,7 @@ from pypdf.generic import (
     TextStringObject,
     TreeObject,
 )
+from pypdf.types import OutlineType
 from tests import RESOURCE_ROOT, get_data_from_url
 
 try:
@@ -51,6 +53,50 @@ def test_dictionary_object__get_next_object_position() -> None:
     assert DictionaryObject._get_next_object_position(
         position_before=10, position_end=999999, generations=list(reader.xref), pdf=reader
     ) == 15
+
+
+def test_dictionary_object__duplicate_key_with_falsy_first_value__strict() -> None:
+    stream = BytesIO(b"<< /Count 0 /Count 5 >>")
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^Multiple definitions in dictionary"
+    ):
+        DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+
+def test_dictionary_object__duplicate_key_with_falsy_first_value__non_strict(
+        caplog: pytest.LogCaptureFixture
+) -> None:
+    stream = BytesIO(b"<< /Count 0 /Count 5 >>")
+
+    dictionary = DictionaryObject.read_from_stream(stream, mock.Mock(strict=False))
+
+    assert caplog.messages == ["Multiple definitions in dictionary at byte 0x14 for key /Count"]
+    # The first value wins, which is how a duplicate with a non-falsy first value
+    # has always behaved. Before the fix this case kept 5 and logged nothing.
+    assert dictionary == {NameObject("/Count"): NumberObject(0)}
+
+
+def test_dictionary_object__duplicate_key_with_non_falsy_first_value__strict() -> None:
+    stream = BytesIO(b"<< /Count 7 /Count 5 >>")
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^Multiple definitions in dictionary"
+    ):
+        DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+
+def test_dictionary_object__different_keys_with_falsy_first_value() -> None:
+    stream = BytesIO(b"<< /Count 0 /Size 5 >>")
+
+    dictionary = DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+    assert dictionary == {
+        NameObject("/Count"): NumberObject(0),
+        NameObject("/Size"): NumberObject(5),
+    }
 
 
 def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None:
@@ -470,3 +516,124 @@ def test_content_stream__read_inline_image__end_of_stream() -> None:
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
         content_stream._read_inline_image(BytesIO(b"\n/IM true\n/W001"))
+
+
+def test_tree_object__insert_child__cycle() -> None:
+    writer = PdfWriter()
+
+    previous1 = TreeObject()
+    previous2 = TreeObject()
+    previous3 = TreeObject()
+    previous1[NameObject("/Next")] = writer._add_object(previous2)
+    previous2[NameObject("/Next")] = writer._add_object(previous3)
+    previous3[NameObject("/Next")] = writer._add_object(previous1)
+
+    tree = TreeObject()
+    tree[NameObject("/Last")] = writer._add_object(previous1)
+    tree[NameObject("/First")] = writer._add_object(DictionaryObject())
+    writer._add_object(tree)
+
+    with pytest.raises(LimitReachedError, match=r"^Detected cycle in tree structure\.$"):
+        tree.insert_child(
+            child=writer._add_object(DictionaryObject()),
+            before=None,
+            pdf=writer,
+        )
+
+
+def _outlined_pdf(nested: bool = False) -> BytesIO:
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(200, 200)
+    cover = writer.add_outline_item("Cover", 0)
+    writer.add_outline_item("Body", 1)
+    if nested:
+        writer.add_outline_item("Sub", 2, parent=cover)
+    writer.add_outline_item("End", 3)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    return stream
+
+
+def _flat_outline(outline: OutlineType) -> list[Destination]:
+    """The outline items, asserting the outline holds no nested children."""
+    items = []
+    for entry in outline:
+        assert isinstance(entry, Destination), f"unexpected nested entry: {entry!r}"
+        items.append(entry)
+    return items
+
+
+@pytest.mark.parametrize(
+    ("index", "expected"),
+    [(0, ["Body", "End"]), (1, ["Cover", "End"]), (2, ["Cover", "Body"])],
+)
+def test_remove_from_tree_on_outline_item(index: int, expected: list[str]) -> None:
+    """
+    reader.outline and writer.outline yield detached copies which never carry
+    /Parent, so removal has to act on the node they were built from.
+    """
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+
+    _flat_outline(writer.outline)[index].remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == expected
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    assert [item.title for item in _flat_outline(PdfReader(stream).outline)] == expected
+
+
+def test_remove_from_tree_on_outline_item_without_clone() -> None:
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(200, 200)
+    for page_number, title in enumerate(["Cover", "Body", "End"]):
+        writer.add_outline_item(title, page_number)
+
+    _flat_outline(writer.outline)[0].remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == ["Body", "End"]
+
+
+def test_remove_from_tree_on_nested_outline_item() -> None:
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf(nested=True)))
+    children = writer.outline[1]
+    assert isinstance(children, list)
+    sub = children[0]
+    assert isinstance(sub, Destination)
+    assert sub.title == "Sub"
+
+    sub.remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == [
+        "Cover",
+        "Body",
+        "End",
+    ]
+
+
+def test_remove_from_tree_on_destination_without_node() -> None:
+    """A destination carrying no node falls back to the plain tree behaviour."""
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+    item = _flat_outline(writer.outline)[0]
+    item.node = None
+
+    with pytest.raises(
+        ValueError, match=r"^Removed child does not appear to be a tree item$"
+    ):
+        item.remove_from_tree()
+
+
+def test_remove_from_tree_on_node_already_detached() -> None:
+    """A node whose /Parent has gone is no longer part of any tree."""
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+    item = _flat_outline(writer.outline)[0]
+    assert item.node is not None
+    del item.node[NameObject("/Parent")]
+
+    with pytest.raises(
+        ValueError, match=r"^Removed child does not appear to be a tree item$"
+    ):
+        item.remove_from_tree()

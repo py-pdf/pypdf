@@ -142,8 +142,8 @@ def test_free_text__font_specifier():
 
 def test_annotation_dictionary():
     a = AnnotationDictionary()
-    a.flags = 123
-    assert a.flags == 123
+    a.flags = AnnotationFlag.HIDDEN | AnnotationFlag.PRINT | AnnotationFlag.NO_ZOOM
+    assert a.flags == AnnotationFlag.HIDDEN | AnnotationFlag.PRINT | AnnotationFlag.NO_ZOOM
 
 
 def test_polygon(pdf_file_path):

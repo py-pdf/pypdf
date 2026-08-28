@@ -26,7 +26,7 @@ from xml.parsers.expat import ExpatError, XMLParserType
 from ._protocols import XmpInformationProtocol
 from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
 from .errors import LimitReachedError, PdfReadError, XmpDocumentError
-from .generic import ContentStream, PdfObject
+from .generic import ContentStream, PdfObject, StreamObject
 
 XMP_MAX_INPUT_LENGTH = 5_000_000
 XMP_MAX_ELEMENT_COUNT = 100_000
@@ -185,6 +185,8 @@ class _XmpBuilder(ExpatBuilderNS):
     def custom_entity_declaration_handler(
             self,
             entity_name: str,
+            # expat passes an int here rather than a bool, but typeshed declares
+            # the handler with a bool, so the annotation follows typeshed.
             is_parameter_entity: bool,
             value: Optional[str],
             base: Optional[str],
@@ -217,7 +219,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
     """
 
-    def __init__(self, stream: ContentStream) -> None:
+    def __init__(self, stream: StreamObject) -> None:
         self.stream = stream
         try:
             data = self.stream.get_data()

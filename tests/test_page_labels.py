@@ -3,7 +3,7 @@ from io import BytesIO
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._page_labels import (
     get_label_from_nums,
     index2label,
@@ -21,6 +21,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    TextStringObject,
 )
 
 from . import RESOURCE_ROOT, get_data_from_url
@@ -68,6 +69,15 @@ def test_number2lowercase_letter(number, expected):
 def test_number2uppercase_letter():
     with pytest.raises(ValueError):
         number2uppercase_letter(-1)
+
+
+@pytest.mark.parametrize("number", [0, -1, -5])
+def test_number2roman_numeral_non_positive(number):
+    """A non-positive number produced a numeral rather than being refused."""
+    with pytest.raises(ValueError, match="Expecting a positive number"):
+        number2uppercase_roman_numeral(number)
+    with pytest.raises(ValueError, match="Expecting a positive number"):
+        number2lowercase_roman_numeral(number)
 
 
 @pytest.mark.enable_socket
@@ -239,3 +249,29 @@ def test_index2label__malformed_kid_limits(limits, caplog):
     assert index2label(reader, 5) == "6"
     assert "Ignoring kid with missing or malformed /Limits" in caplog.text
     assert "Could not reliably determine page label" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "Page labels are not a dictionary: 1", id="number"
+        ),
+        pytest.param(ArrayObject(), "Page labels are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Page labels are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_index2label__page_labels_not_a_dictionary(caplog, value, expected):
+    """A malformed /PageLabels raised a TypeError from the first membership test."""
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/PageLabels")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == ["1", "2"]
+    assert expected in caplog.text

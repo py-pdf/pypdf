@@ -1,5 +1,57 @@
 # CHANGELOG
 
+## Version 6.16.2, 2026-08-23
+
+### Bug Fixes (BUG)
+- Make remove_from_tree() work on outline items (#3939)
+- Be more lenient about space width in layout mode text extraction (#3992)
+- Do not scale the text leading by the font size (#3987)
+- Update annotation appearance stream matrix on page transform (#3968)
+- Allow repeated page references (#3959)
+
+### Robustness (ROB)
+- Improve RC4 fallback when cryptography can't provide it (#3853)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.1...6.16.2)
+
+## Version 6.16.1, 2026-08-14
+
+### Security (SEC)
+- Limit iterations for outline retrieval and XForm text extraction (#3966)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.0...6.16.1)
+
+## Version 6.16.0, 2026-08-13
+
+### Security (SEC)
+- Detect cycles in TreeObject.insert_child (#3964)
+
+### New Features (ENH)
+- AppearanceStream: Allow arbitrary rotations and apply rotations for annotation appearance streams (#3917)
+- AppearanceStream: Consider more encodings for Type1 core fonts (#3905)
+
+### Performance Improvements (PI)
+- Build /ToUnicode source-code bytes directly in parse_bfrange (#3952)
+
+### Bug Fixes (BUG)
+- Preserve internal Link annotations when appending/merging (#3953) (#3954)
+- Fix false inline image end markers (#3922)
+- Reject typeless non-page /Kids entries in strict mode (#3955)
+- Apply character spacing (Tc) per glyph in layout-mode extraction (#3951)
+- Keep the Adobe CMYK inversion when an explicit /Decode is present (#3943)
+
+### Robustness (ROB)
+- AppearanceStream: Only escape parentheses for 8-bit fonts (#3961)
+- Recover the trailer from a cross-reference stream when rebuilding the xref (#3950)
+
+### Maintenance (MAINT)
+- Deduplicate CatalogAttributes and CatalogDictionary (#3940)
+
+### Code Style (STY)
+- Type pages as a Sequence rather than a list (#3957)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.15.0...6.16.0)
+
 ## Version 6.15.0, 2026-08-06
 
 ### Security (SEC)

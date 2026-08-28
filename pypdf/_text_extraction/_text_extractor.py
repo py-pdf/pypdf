@@ -27,9 +27,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import math
 from typing import Any, Callable, Optional, Union
 
+from .._codecs import encoding_dict_from_named_encoding
 from .._font import Font, FontDescriptor
 from ..generic import DictionaryObject, TextStringObject
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
@@ -86,7 +86,7 @@ class TextExtraction:
         self.font = Font(
             name = "NotInitialized",
             sub_type="Unknown",
-            encoding="charmap",
+            encoding=encoding_dict_from_named_encoding("cp1252"),  # WinAnsiEncoding
             font_descriptor=FontDescriptor(),
             )
         self.orientations: tuple[int, ...] = (0, 90, 180, 270)
@@ -273,8 +273,9 @@ class TextExtraction:
 
     def _handle_tl(self, operands: list[Any]) -> None:
         """Handle TL (Set Text Leading) operation - Table 5.2 page 398."""
-        scale_x = math.sqrt(self.tm_matrix[0] ** 2 + self.tm_matrix[2] ** 2)
-        self.TL = float(operands[0] if operands else 0.0) * self.font_size * scale_x
+        # The leading is measured in unscaled text space units (PDF 32000-1, 9.3.5)
+        # and T* applies the text matrix to it, so it must not be scaled here.
+        self.TL = float(operands[0] if operands else 0.0)
 
     def _handle_tf(self, operands: list[Any]) -> None:
         """Handle Tf (Set font size) operation - Table 5.2 page 398."""

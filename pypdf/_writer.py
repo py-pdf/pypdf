@@ -34,7 +34,7 @@ import re
 import struct
 import sys
 import uuid
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
@@ -44,6 +44,7 @@ from typing import (
     IO,
     Any,
     Callable,
+    Literal,
     Optional,
     Union,
     cast,
@@ -68,9 +69,8 @@ from ._utils import (
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
-from .constants import CatalogAttributes as CA
 from .constants import (
-    CatalogDictionary,
+    CatalogAttributes,
     Core,
     GoToActionArguments,
     ImageType,
@@ -216,7 +216,7 @@ class PdfWriter(PdfDocCommon):
         This is used for compression.
         """
 
-        self._id_translated: dict[int, dict[int, int]] = {}
+        self._id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]] = {}
         """List of already translated IDs.
            dict[id(pdf)][(idnum, generation)]
         """
@@ -224,6 +224,9 @@ class PdfWriter(PdfDocCommon):
         self._info_obj: Optional[PdfObject]
         """The PDF files's document information dictionary,
         defined by Info in the PDF file's trailer dictionary."""
+
+        self._reader: Optional[PdfReader] = None
+        """The document being appended to, in incremental mode only."""
 
         self._ID: Union[ArrayObject, None] = None
         """The PDF file identifier,
@@ -584,13 +587,13 @@ class PdfWriter(PdfDocCommon):
         # https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         try:
             # get the AcroForm tree
-            if CatalogDictionary.ACRO_FORM not in self._root_object:
+            if CatalogAttributes.ACRO_FORM not in self._root_object:
                 self._root_object[
-                    NameObject(CatalogDictionary.ACRO_FORM)
+                    NameObject(CatalogAttributes.ACRO_FORM)
                 ] = self._add_object(DictionaryObject())
 
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
-            cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])[
+            cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])[
                 need_appearances
             ] = BooleanObject(state)
         except Exception as exc:  # pragma: no cover
@@ -604,7 +607,7 @@ class PdfWriter(PdfDocCommon):
     def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
         self._root_object[
-            NameObject(CatalogDictionary.VIEWER_PREFERENCES)
+            NameObject(CatalogAttributes.VIEWER_PREFERENCES)
         ] = self._add_object(o)
         return o
 
@@ -793,8 +796,8 @@ class PdfWriter(PdfDocCommon):
         """
         # Names / JavaScript preferred to be able to add multiple scripts
         if "/Names" not in self._root_object:
-            self._root_object[NameObject(CA.NAMES)] = DictionaryObject()
-        names = cast(DictionaryObject, self._root_object[CA.NAMES])
+            self._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
+        names = cast(DictionaryObject, self._root_object[CatalogAttributes.NAMES])
         if "/JavaScript" not in names:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}
@@ -983,9 +986,9 @@ class PdfWriter(PdfDocCommon):
                 annotation itself.
 
         """
-        if CatalogDictionary.ACRO_FORM not in self._root_object:
+        if CatalogAttributes.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
-        acro_form = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        acro_form = cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])
         if InteractiveFormDictEntries.Fields not in acro_form:
             raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
@@ -1109,10 +1112,10 @@ class PdfWriter(PdfDocCommon):
             return lst
 
         try:
-            af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+            af = cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])
         except KeyError:
             af = DictionaryObject()
-            self._root_object[NameObject(CatalogDictionary.ACRO_FORM)] = af
+            self._root_object[NameObject(CatalogAttributes.ACRO_FORM)] = af
         try:
             fields = cast(ArrayObject, af[InteractiveFormDictEntries.Fields])
         except KeyError:
@@ -1376,6 +1379,7 @@ class PdfWriter(PdfDocCommon):
         self._resolve_links()
 
         if self.incremental:
+            assert self._reader is not None, "mypy"
             self._reader.stream.seek(0)
             stream.write(self._reader.stream.read(-1))
             if len(self.list_objects_in_increment()) > 0:
@@ -1444,6 +1448,8 @@ class PdfWriter(PdfDocCommon):
         ]
 
     def _write_increment(self, stream: StreamType) -> None:
+        # Only reached from `write()` inside `if self.incremental`.
+        assert self._reader is not None, "mypy"
         object_positions = {}
         object_blocks = []
         current_start = -1
@@ -1799,9 +1805,7 @@ class PdfWriter(PdfDocCommon):
             page_destination_ref,
             before,
             self,
-            page_destination.inc_parent_counter_outline
-            if is_open
-            else (lambda x, y: 0),  # noqa: ARG005
+            page_destination.inc_parent_counter_outline,
         )
         if "/Count" not in page_destination:
             page_destination[NameObject("/Count")] = NumberObject(0)
@@ -1940,12 +1944,21 @@ class PdfWriter(PdfDocCommon):
 
         return page_destination_ref
 
+    def _get_page_reference(self, page_number: int) -> Any:
+        """Look up a page by number, reporting a bad index rather than an IndexError from the kids array."""
+        pages = cast(DictionaryObject, self.get_object(self._pages))
+        kids = cast(ArrayObject, pages[PagesAttributes.KIDS])
+        count = len(kids)
+        if not (-count <= page_number < count):
+            raise IndexError(f"Page number {page_number} is out of range")
+        return kids[page_number]
+
     def add_named_destination(
         self,
         title: str,
         page_number: int,
     ) -> IndirectObject:
-        page_ref = self.get_object(self._pages)[PagesAttributes.KIDS][page_number]  # type: ignore[index]
+        page_ref = self._get_page_reference(page_number)
         dest = DictionaryObject()
         dest.update(
             {
@@ -2065,7 +2078,7 @@ class PdfWriter(PdfDocCommon):
                 text_filters=text_filters
             )
             page.replace_contents(content)
-        return [], []  # type: ignore[return-value]
+        return None
 
     def _remove_objects_from_page__clean(
             self,
@@ -2279,7 +2292,7 @@ class PdfWriter(PdfDocCommon):
         page_number: int,
         uri: str,
         rect: RectangleObject,
-        border: Optional[ArrayObject] = None,
+        border: Optional[Sequence[Any]] = None,
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
@@ -2296,7 +2309,7 @@ class PdfWriter(PdfDocCommon):
                 drawn if this argument is omitted.
 
         """
-        page_link = self.get_object(self._pages)[PagesAttributes.KIDS][page_number]  # type: ignore[index]
+        page_link = self._get_page_reference(page_number)
         page_ref = cast(dict[str, Any], self.get_object(page_link))
 
         border_arr: BorderArrayType
@@ -2388,7 +2401,7 @@ class PdfWriter(PdfDocCommon):
                 logger_warning(
                     "Layout should be one of: %(layouts)s",
                     source=__name__,
-                    layouts={"", "".join(self._valid_layouts)},
+                    layouts=", ".join(self._valid_layouts),
                 )
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
@@ -2980,12 +2993,23 @@ class PdfWriter(PdfDocCommon):
 
     def _get_cloned_page(
         self,
-        page: Union[IndirectObject, PageObject, NullObject, None],
+        page: Union[IndirectObject, PageObject, NullObject, int, None],
         pages: dict[int, PageObject],
         reader: PdfReader,
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
+        if isinstance(page, int):
+            # An explicit destination may reference the target page by its
+            # (zero-based) index in the source document rather than by an
+            # indirect reference; this is what `Link(target_page_index=...)`
+            # produces. Resolve the index through the reader's page list so it
+            # can be remapped like a regular page reference. A destination that
+            # points past the end of the source document is dropped.
+            try:
+                page = reader.pages[page].indirect_reference
+            except IndexError:
+                return None
         if isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
@@ -2997,7 +3021,7 @@ class PdfWriter(PdfDocCommon):
 
     def _insert_filtered_annotations(
         self,
-        annots: Union[IndirectObject, list[DictionaryObject], None],
+        annots: Union[IndirectObject, list[PdfObject], None],
         page: PageObject,
         pages: dict[int, PageObject],
         reader: PdfReader,
@@ -3018,7 +3042,7 @@ class PdfWriter(PdfDocCommon):
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
-                ano["/Subtype"] != "/Link"  # type: ignore[comparison-overlap]
+                ano.get("/Subtype") != "/Link"
                 or "/A" not in ano
                 or cast("DictionaryObject", ano["/A"])["/S"] != "/GoTo"  # type: ignore[comparison-overlap]
                 or "/Dest" in ano
@@ -3220,7 +3244,7 @@ class PdfWriter(PdfDocCommon):
             except Exception:
                 pass
         else:
-            raise Exception("invalid parameter {reader}")
+            raise TypeError(f"Invalid parameter {reader}")
 
     def set_page_label(
         self,
@@ -3260,6 +3284,10 @@ class PdfWriter(PdfDocCommon):
         """
         if style is None and prefix is None:
             raise ValueError("At least one of style and prefix must be given")
+        if style is not None and style not in tuple(PageLabelStyle):
+            raise ValueError(
+                f"style must be one of: {', '.join(PageLabelStyle)}, got {style!r}"
+            )
         if page_index_from < 0:
             raise ValueError("page_index_from must be greater or equal than 0")
         if page_index_to < page_index_from:
@@ -3317,15 +3345,15 @@ class PdfWriter(PdfDocCommon):
         if start != 0:
             new_page_label[NameObject("/St")] = NumberObject(start)
 
-        if NameObject(CatalogDictionary.PAGE_LABELS) not in self._root_object:
+        if NameObject(CatalogAttributes.PAGE_LABELS) not in self._root_object:
             nums = ArrayObject()
             nums_insert(NumberObject(0), default_page_label, nums)
             page_labels = TreeObject()
             page_labels[NameObject("/Nums")] = nums
-            self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+            self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)] = page_labels
 
         page_labels = cast(
-            TreeObject, self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
+            TreeObject, self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)]
         )
         nums = cast(ArrayObject, page_labels[NameObject("/Nums")])
 
@@ -3336,7 +3364,7 @@ class PdfWriter(PdfDocCommon):
             nums_insert(NumberObject(page_index_to + 1), default_page_label, nums)
 
         page_labels[NameObject("/Nums")] = nums
-        self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+        self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)] = page_labels
 
     def _repr_mimebundle_(
         self,

@@ -32,6 +32,7 @@ import re
 import sys
 from collections.abc import Iterable
 from io import BytesIO, UnsupportedOperation
+from operator import itemgetter
 from pathlib import Path
 from types import TracebackType
 from typing import (
@@ -72,8 +73,6 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
-    ContentStream,
-    DecodedStreamObject,
     Destination,
     DictionaryObject,
     EncodedStreamObject,
@@ -84,7 +83,6 @@ from .generic import (
     PdfObject,
     StreamObject,
     TextStringObject,
-    TreeObject,
     is_null_or_none,
     read_object,
 )
@@ -808,6 +806,22 @@ class PdfReader(PdfDocCommon):
 
         """
         line = read_previous_line(stream)
+        # Some producers append further %%EOF markers below the one that
+        # closes the last revision (#4008). _find_eof_marker() stops at the
+        # very last of them, so the line above it is another marker rather
+        # than the offset. Skip that trailing run to reach the real offset;
+        # the revision being read is unchanged, only the marker padding is
+        # ignored.
+        duplicate_markers = 0
+        while line.startswith(b"%%EOF") and stream.tell() > 0:
+            if duplicate_markers == self._MAX_STARTXREF_RECOVERY_LINES:
+                break
+            line = read_previous_line(stream)
+            duplicate_markers += 1
+        if duplicate_markers:
+            logger_warning(
+                "Duplicate %%EOF marker(s) found, skipping them", source=__name__
+            )
         try:
             startxref = int(line)
         except ValueError:
@@ -1075,10 +1089,13 @@ class PdfReader(PdfDocCommon):
             else:
                 startxref = self._read_xref_other_error(stream, startxref)
 
+    # The trailer keys a PDF 1.5+ cross-reference stream carries in place of a
+    # `trailer` keyword (PDF 2.0 specification, table 17).
+    _XREF_STREAM_TRAILER_KEYS = (TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE)
+
     def _process_xref_stream(self, xrefstream: DictionaryObject) -> None:
         """Process and handle the xref stream."""
-        trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE
-        for key in trailer_keys:
+        for key in self._XREF_STREAM_TRAILER_KEYS:
             if key in xrefstream and key not in self.trailer:
                 self.trailer[NameObject(key)] = xrefstream.raw_get(key)
         if "/XRefStm" in xrefstream:
@@ -1156,7 +1173,7 @@ class PdfReader(PdfDocCommon):
         raise PdfReadError("Could not find xref table at specified location")
 
     def _sanitize_pdf15_xref_stream_index_pairs(
-            self, index_pairs: list[int], entry_sizes: list[int], xref_stream: ContentStream
+            self, index_pairs: list[int], entry_sizes: list[int], xref_stream: StreamObject
     ) -> list[int]:
         # `entry_sizes` holds the byte widths for the entries. Summing determines the total number of bytes per entry.
         # We expect up to 3 values. `min_entry_bytes` will be the smallest plausible size of one xref entry.
@@ -1200,13 +1217,11 @@ class PdfReader(PdfDocCommon):
 
         return result
 
-    def _read_pdf15_xref_stream(
-        self, stream: StreamType
-    ) -> Union[ContentStream, EncodedStreamObject, DecodedStreamObject]:
+    def _read_pdf15_xref_stream(self, stream: StreamType) -> StreamObject:
         """Read the cross-reference stream for PDF 1.5+."""
         stream.seek(-1, 1)
         stream_idnum, stream_generation = self.read_object_header(stream)
-        xref_stream = cast(ContentStream, read_object(stream, self))
+        xref_stream = cast(StreamObject, read_object(stream, self))
         if cast(str, xref_stream["/Type"]) != "/XRef":
             raise PdfReadError(f"Unexpected type {xref_stream['/Type']!r}")
         self.cache_indirect_object(stream_generation, stream_idnum, xref_stream)
@@ -1357,14 +1372,27 @@ class PdfReader(PdfDocCommon):
             self.xref[generation_number][object_number] = object_start
 
         logger_warning("parsing for Object Streams", source=__name__)
+        # PDF 1.5+ files may carry the trailer keys inside a cross-reference
+        # stream instead of behind a `trailer` keyword. Collect them here,
+        # keyed by their offset, to merge them below in file order.
+        xref_stream_trailers: list[tuple[int, DictionaryObject]] = []
         for generation_number in self.xref:
             for object_number in self.xref[generation_number]:
                 # get_object in manual
-                stream.seek(self.xref[generation_number][object_number], 0)
+                object_start = self.xref[generation_number][object_number]
+                stream.seek(object_start, 0)
                 try:
                     _ = self.read_object_header(stream)
                     obj = cast(StreamObject, read_object(stream, self))
-                    if obj.get("/Type", "") != "/ObjStm":
+                    object_type = obj.get("/Type", "")
+                    if object_type == "/XRef":
+                        trailer = DictionaryObject()
+                        for key in self._XREF_STREAM_TRAILER_KEYS:
+                            if key in obj:
+                                trailer[NameObject(key)] = obj.raw_get(key)
+                        xref_stream_trailers.append((object_start, trailer))
+                        continue
+                    if object_type != "/ObjStm":
                         continue
                     object_stream = BytesIO(obj.get_data())
                     actual_count = 0
@@ -1399,10 +1427,12 @@ class PdfReader(PdfDocCommon):
                     pass
 
         stream.seek(0, 0)
+        trailers: list[tuple[int, dict[Any, Any]]] = list(xref_stream_trailers)
         for position in self._find_pdf_trailers(stream_data):
             stream.seek(position, 0)
-            new_trailer = cast(dict[Any, Any], read_object(stream, self))
-            # Here, we are parsing the file from start to end, the new data have to erase the existing.
+            trailers.append((position, cast(dict[Any, Any], read_object(stream, self))))
+        # Here, we are parsing the file from start to end, the new data have to erase the existing.
+        for _, new_trailer in sorted(trailers, key=itemgetter(0)):
             for key, value in new_trailer.items():
                 self.trailer[key] = value
 
@@ -1589,7 +1619,7 @@ class PdfReader(PdfDocCommon):
     def _get_named_destinations(
         self,
         *,
-        tree: Union[TreeObject, None] = None,
+        tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[str, Destination]] = None,
         visited: Optional[set[int]] = None,
     ) -> dict[str, Destination]:

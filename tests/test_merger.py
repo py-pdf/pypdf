@@ -534,3 +534,26 @@ def test_merge__null_destination():
 
     writer.merge(position=1, fileobj=data)
     assert writer.pages[0].annotations is None
+
+
+def test_merge_annotation_without_subtype():
+    """Regression test for #3356."""
+    src = PdfWriter()
+    src.add_blank_page(width=612, height=792)
+    annot = DictionaryObject()
+    src.pages[0][NameObject("/Annots")] = ArrayObject([src._add_object(annot)])
+
+    source = BytesIO()
+    src.write(source)
+    source.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(source), import_outline=False)
+
+    merged = BytesIO()
+    writer.write(merged)
+    merged.seek(0)
+
+    reread = PdfReader(merged)
+    merged_annot = reread.pages[0]["/Annots"][0].get_object()
+    assert "/Subtype" not in merged_annot

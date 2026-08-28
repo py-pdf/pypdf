@@ -16,7 +16,7 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
-from pypdf._page import PageObject
+from pypdf._page import PageObject, _get_fonts_walk
 from pypdf.annotations import Polygon
 from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
@@ -664,6 +664,21 @@ def test_get_fonts2():
         },
         set(),
     )
+
+
+def test_get_fonts__acroform_default_resources():
+    """Fonts declared in the AcroForm /DR dictionary are collected too."""
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    resources = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/Helv"): font})
+    })
+    acro_form = DictionaryObject({NameObject("/DR"): resources})
+
+    assert _get_fonts_walk(acro_form, set(), set()) == ({"/Helvetica"}, set())
 
 
 def test_annotation_getter():
@@ -1580,3 +1595,38 @@ def test_get_rectangle__size_handling(caplog):
         ValueError, match=r"Expected four values for /MediaBox, got 3: \[0, 0, 13\]"
     ):
         _ = page.mediabox
+
+
+@pytest.mark.parametrize(
+    ("box", "pdf_name"),
+    [
+        ("mediabox", "/MediaBox"),
+        ("cropbox", "/CropBox"),
+        ("trimbox", "/TrimBox"),
+        ("artbox", "/ArtBox"),
+        ("bleedbox", "/BleedBox"),
+    ],
+)
+@pytest.mark.parametrize("values", [[0, 0], [0, 0, 13]])
+def test_box_setter_rejects_too_few_values(box, pdf_name, values):
+    """
+    The getter cannot build a rectangle from fewer than four values, so writing
+    them through the property would produce a box that cannot be read back.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    page = writer.pages[0]
+    with pytest.raises(
+        ValueError, match=f"Expected four values for {pdf_name}, got {len(values)}"
+    ):
+        setattr(page, box, ArrayObject(values))
+
+
+@pytest.mark.parametrize("box", ["mediabox", "cropbox"])
+def test_box_setter_allows_extra_values(box):
+    """More than four entries stays accepted, matching what the getter tolerates."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    page = writer.pages[0]
+    setattr(page, box, ArrayObject([0, 0, 13, 37, 0, 0]))
+    assert getattr(page, box) == RectangleObject((0, 0, 13, 37))

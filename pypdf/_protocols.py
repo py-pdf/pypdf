@@ -1,8 +1,9 @@
 """Helpers for working with PDF types."""
 
 from abc import abstractmethod
+from collections.abc import Sequence
 from pathlib import Path
-from typing import IO, Any, Optional, Protocol, Union
+from typing import IO, Any, Literal, Optional, Protocol, Union
 
 from ._utils import StrByteType, StreamType
 
@@ -43,7 +44,7 @@ class PdfCommonDocProtocol(Protocol):
         ...  # pragma: no cover
 
     @property
-    def pages(self) -> list[Any]:
+    def pages(self) -> Sequence[Any]:
         ...  # pragma: no cover
 
     @property
@@ -72,10 +73,13 @@ class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):
 
 class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _objects: list[Any]
-    _id_translated: dict[int, dict[int, int]]
+    # The "PreventGC" entry holds the source document, keeping it alive while
+    # the translation table is in use.
+    _id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]]
 
     incremental: bool
-    _reader: Any  # PdfReader
+    # Only populated in incremental mode, None otherwise.
+    _reader: Optional[Any]  # PdfReader
 
     @abstractmethod
     def write(self, stream: Union[Path, StrByteType]) -> tuple[bool, IO[Any]]:

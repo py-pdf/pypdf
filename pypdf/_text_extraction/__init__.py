@@ -5,7 +5,8 @@ Some parts are still in _page.py. In doubt, they will stay there.
 """
 
 import math
-from typing import Any, Callable, Optional, Union
+from collections.abc import Mapping
+from typing import Any, Callable, Literal, Optional, Union
 
 from .._font import Font
 from .._utils import is_char_neutral, is_char_rtl
@@ -71,7 +72,13 @@ def set_custom_rtl(
     return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
 
-def mult(m: list[float], n: list[float]) -> list[float]:
+def mult(
+    m: list[float],
+    n: Union[
+        list[float],
+        Mapping[Union[int, Literal["is_text", "is_render"]], Union[float, bool]],
+    ],
+) -> list[float]:
     return [
         m[0] * n[0] + m[1] * n[2],
         m[0] * n[1] + m[1] * n[3],
@@ -119,9 +126,13 @@ def crlf_space_check(
     delta_x = m[4] - m_prev[4]
     delta_y = m[5] - m_prev[5]
     # Table 108 of the 1.7 reference ("Text positioning operators")
-    scale_prev_x = math.sqrt(tm_prev[0]**2 + tm_prev[1]**2)
-    scale_prev_y = math.sqrt(tm_prev[2]**2 + tm_prev[3]**2)
-    scale_y = math.sqrt(tm_matrix[2]**2 + tm_matrix[3]**2)
+    # delta_x/delta_y are expressed in the coordinate system produced by
+    # text matrix x current transformation matrix, so the scaling factors
+    # they get compared against have to be taken from the same combined
+    # matrices instead of the text matrices alone.
+    scale_prev_x = math.sqrt(m_prev[0]**2 + m_prev[1]**2)
+    scale_prev_y = math.sqrt(m_prev[2]**2 + m_prev[3]**2)
+    scale_y = math.sqrt(m[2]**2 + m[3]**2)
     cm_prev = m
 
     if orientation not in orientations:
@@ -179,18 +190,15 @@ def get_text_operands(
                 if isinstance(operands[0], str)
                 else operands[0]
             )
-            if isinstance(font.encoding, str):
+            if isinstance(font.encoding, str):  # Apply named encoding
                 try:
-                    t = tt.decode(font.encoding, "surrogatepass")  # apply str encoding
+                    t = tt.decode(font.encoding, "surrogatepass")
                 except Exception:
-                    # the data does not match the expectation,
-                    # we use the alternative ;
-                    # text extraction may not be good
-                    t = tt.decode(
-                        "utf-16-be" if font.encoding == "charmap" else "charmap",
-                        "surrogatepass",
-                    )  # apply str encoding
-            else:  # apply dict encoding
+                    # The data does not match the expectation,
+                    # we use "charmap" encoding as an alternative;
+                    # text extraction may not be good.
+                    t = tt.decode("charmap", "surrogatepass")
+            else:  # Apply dict encoding
                 t = "".join(
                     [font.encoding[x] if x in font.encoding else bytes((x,)).decode() for x in tt]
                 )

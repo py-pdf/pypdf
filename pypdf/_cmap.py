@@ -64,14 +64,21 @@ def _parse_encoding(
     ft: DictionaryObject
 ) -> Union[str, dict[int, str]]:
     encoding: Union[str, list[str], dict[int, str]] = []
+    # If ft["/Encoding"] exists, then use that for encoding. Otherwise, use StandardEncoding as a basis,
+    # and add what the embedded font file says, if present. See Table 114, PDF Reference 1.7 / 2.0
     if "/Encoding" not in ft:
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
-            encoding = dict(
+            # This will match Symbol and ZapfDingBats
+            return dict(
                 zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
             )
-        else:
-            encoding = "charmap"
-        return encoding
+
+        # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
+        # to overwrite this, which we do for Type1 fonts in _type1_alternative.
+        return dict(
+            zip(range(256), charset_encoding["/StandardEncoding"])
+        )
+
     enc: Union[str, DictionaryObject, NullObject] = cast(
         Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
     )
@@ -257,8 +264,12 @@ def _check_token_length(token: bytes, limit: int) -> None:
         )
 
 
-def __parse_bfrange__decode(map_dict: dict[Any, Any], fmt: bytes, code: int) -> str:
-    return unhexlify(fmt % code).decode(
+def __parse_bfrange__decode(map_dict: dict[Any, Any], code: int) -> str:
+    # `map_dict[-1]` is the number of bytes each source code occupies. Building
+    # the bytes directly with `int.to_bytes` avoids the hex round-trip of
+    # `unhexlify(b"%%0%dX" % (map_dict[-1] * 2) % code)` (format to hex, parse
+    # the hex back to bytes), which is measurably cheaper for large maps.
+    return code.to_bytes(map_dict[-1], "big").decode(
         "charmap" if map_dict[-1] == 1 else "utf-16-be",
         "surrogatepass",
     )
@@ -276,7 +287,6 @@ def parse_bfrange(
     _check_mapping_size(entry_count)
     decode_utf16 = partial(bytes.decode, encoding="utf-16-be", errors="surrogatepass")
     if multiline_rg is not None:
-        fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
         for sq in lst:
@@ -287,7 +297,7 @@ def parse_bfrange(
             entry_count += 1
             _check_mapping_size(entry_count)
             map_dict[
-                __parse_bfrange__decode(map_dict=map_dict, fmt=fmt, code=a)
+                __parse_bfrange__decode(map_dict=map_dict, code=a)
             ] = decode_utf16(unhexlify(sq))
             int_entry.append(a)
             a += 1
@@ -298,7 +308,6 @@ def parse_bfrange(
         b = int(lst[1], 16)
         nbi = max(len(lst[0]), len(lst[1]))
         map_dict[-1] = (nbi + 1) // 2
-        fmt = b"%%0%dX" % (map_dict[-1] * 2)
         if lst[2] == b"[":
             for sq in lst[3:]:
                 if sq == b"]":
@@ -308,7 +317,7 @@ def parse_bfrange(
                 entry_count += 1
                 _check_mapping_size(entry_count)
                 map_dict[
-                    __parse_bfrange__decode(map_dict=map_dict, fmt=fmt, code=a)
+                    __parse_bfrange__decode(map_dict=map_dict, code=a)
                 ] = decode_utf16(unhexlify(sq))
                 int_entry.append(a)
                 a += 1
@@ -323,7 +332,7 @@ def parse_bfrange(
                 destination = unhexlify(fmt2 % c)
                 _check_token_length(destination, limit=MAX_CMAP_CODE_BYTES_LIMIT)
                 map_dict[
-                    __parse_bfrange__decode(map_dict=map_dict, fmt=fmt, code=a)
+                    __parse_bfrange__decode(map_dict=map_dict, code=a)
                 ] = decode_utf16(destination)
                 int_entry.append(a)
                 a += 1

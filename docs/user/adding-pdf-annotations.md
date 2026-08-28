@@ -42,6 +42,7 @@ you can use {class}`~pypdf.annotations.FreeText`:
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import FreeText
+from pypdf.constants import AnnotationFlag
 
 # Fill the writer with the pages you want
 reader = PdfReader("crazyones.pdf")
@@ -62,9 +63,9 @@ annotation = FreeText(
     background_color="cdcdcd",
 )
 
-# Set annotation flags to 4 for printable annotations.
+# Mark the annotation as printable.
 # See "AnnotationFlag" for other options, e.g. hidden etc.
-annotation.flags = 4
+annotation.flags = AnnotationFlag.PRINT
 
 writer.add_annotation(page_number=0, annotation=annotation)
 

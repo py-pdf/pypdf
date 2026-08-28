@@ -630,7 +630,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 retval.update(data)
                 return retval  # return partial data
 
-            if not data.get(key):
+            if key not in data:
                 data[key] = value
             else:
                 # multiple definitions of key not permitted
@@ -817,18 +817,25 @@ class TreeObject(DictionaryObject):
             return child_reference
         prev = cast("DictionaryObject", self["/Last"])
 
+        visited: set[int] = set()
         while prev.indirect_reference != before:
+            prev_id = id(prev)
+            if prev_id in visited:
+                raise LimitReachedError("Detected cycle in tree structure.")
+            visited.add(prev_id)
             if "/Next" in prev:
                 prev = cast("TreeObject", prev["/Next"])
-            else:  # append at the end
-                prev[NameObject("/Next")] = cast("TreeObject", child_reference)
-                child_obj[NameObject("/Prev")] = prev.indirect_reference
-                child_obj[NameObject("/Parent")] = self.indirect_reference
-                if "/Next" in child_obj:
-                    del child_obj["/Next"]
-                self[NameObject("/Last")] = child_reference
-                inc_parent_counter(self, child_obj.get("/Count", 1))
-                return child_reference
+                continue
+
+            # append at the end
+            prev[NameObject("/Next")] = cast("TreeObject", child_reference)
+            child_obj[NameObject("/Prev")] = prev.indirect_reference
+            child_obj[NameObject("/Parent")] = self.indirect_reference
+            if "/Next" in child_obj:
+                del child_obj["/Next"]
+            self[NameObject("/Last")] = child_reference
+            inc_parent_counter(self, child_obj.get("/Count", 1))
+            return child_reference
         try:  # insert as first or in the middle
             assert isinstance(prev["/Prev"], DictionaryObject)
             prev["/Prev"][NameObject("/Next")] = child_reference
@@ -902,7 +909,7 @@ class TreeObject(DictionaryObject):
         last = last_ref.get_object()
         while cur is not None:
             if cur == child_obj:
-                self._remove_node_from_tree(prev, prev_ref, cur, last)
+                TreeObject._remove_node_from_tree(self, prev, prev_ref, cur, last)
                 found = True
                 break
 
@@ -923,7 +930,7 @@ class TreeObject(DictionaryObject):
 
     def remove_from_tree(self) -> None:
         """Remove the object from the tree it is in."""
-        if NameObject("/Parent") not in self:
+        if "/Parent" not in self:
             raise ValueError("Removed child does not appear to be a tree item")
         cast("TreeObject", self["/Parent"]).remove_child(self)
 
@@ -1708,6 +1715,23 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
+
+    def remove_from_tree(self) -> None:
+        """
+        Remove the outline item this destination was built from.
+
+        `reader.outline` and `writer.outline` yield detached copies rather than
+        the nodes themselves, so the copy never has a `/Parent` and removing it
+        would be a no-op. `node` is the dictionary in the document.
+        """
+        if self.node is None:
+            super().remove_from_tree()
+        elif "/Parent" not in self.node:
+            raise ValueError("Removed child does not appear to be a tree item")
+        else:
+            TreeObject.remove_child(
+                cast("TreeObject", self.node["/Parent"]), self.node
+            )
 
     def __init__(
         self,
