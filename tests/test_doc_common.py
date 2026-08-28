@@ -1147,3 +1147,64 @@ def test_outline__reads_a_well_formed_outline():
         "Chapter 1",
         "Chapter 2",
     ]
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "expected"),
+    [
+        pytest.param(
+            "/Dests",
+            NumberObject(1),
+            "Destination tree is not a dictionary: 1",
+            id="number",
+        ),
+        pytest.param(
+            "/Dests",
+            ArrayObject(),
+            "Destination tree is not a dictionary: []",
+            id="array",
+        ),
+        pytest.param(
+            "/Dests",
+            TextStringObject("x"),
+            "Destination tree is not a dictionary: x",
+            id="string",
+        ),
+    ],
+)
+def test_get_named_destinations__tree_is_not_a_dictionary(caplog, key, value, expected):
+    """A malformed name tree raised a TypeError from the first membership test."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject(key)] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).named_destinations == {}
+    assert expected in caplog.text
+
+
+def test_get_named_destinations__names_is_not_a_dictionary():
+    """A /Names entry that cannot hold /Dests simply yields no destinations."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/Names")] = NumberObject(1)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).named_destinations == {}
+
+
+def test_get_named_destinations__reads_a_well_formed_tree():
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.add_named_destination("Chapter 1", 0)
+    writer.add_named_destination("Chapter 2", 1)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert sorted(PdfReader(stream).named_destinations) == ["Chapter 1", "Chapter 2"]
