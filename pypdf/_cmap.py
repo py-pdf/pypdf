@@ -73,7 +73,7 @@ def _parse_encoding(
             )
 
         # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
-        # to overwrite this, which we do for Type1 fonts in _type1_alternative.
+        # to overwrite this, which we do for Type1 fonts in _character_map_from_type1_font_file.
         return dict(
             zip(range(256), charset_encoding["/StandardEncoding"])
         )
@@ -149,7 +149,7 @@ def _parse_to_unicode(
                 if not font_file_data:
                     return map_dict, int_entry
 
-                return _type1_alternative(font_file_data, map_dict, int_entry)
+                return _character_map_from_type1_font_file(font_file_data, map_dict, int_entry)
 
             return map_dict, int_entry
 
@@ -396,7 +396,7 @@ def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
             return None
 
 
-def _type1_alternative(
+def _character_map_from_type1_font_file(
     font_data: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
