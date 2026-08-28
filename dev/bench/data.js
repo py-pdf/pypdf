@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787846354770,
+  "lastUpdate": 1787905310279,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -108707,6 +108707,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0020652231039886906",
             "extra": "mean: 669.5016535999969 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5c2ec34dca41fa246ed1ab41f7ce671504e7f61b",
+          "message": "ROB: Do not crash when the destination tree is not a dictionary (#4020)\n\n_get_named_destinations casts /Dests and /Names to a DictionaryObject and then\ntests membership on the result, so a file where either holds a number, a string\nor an array raised 'TypeError: argument of type NumberObject is not iterable'\nfrom reader.named_destinations.\n\nThe references are resolved first, since both are usually indirect, and a tree\nthat cannot be walked is reported the way the cycle in the same function\nalready is.",
+          "timestamp": "2026-08-28T10:19:12+02:00",
+          "tree_id": "d40b3b75f51215e2295ad7369ce0caa5d80ed178",
+          "url": "https://github.com/py-pdf/pypdf/commit/5c2ec34dca41fa246ed1ab41f7ce671504e7f61b"
+        },
+        "date": 1787905300467,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6974979546032993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014093445184908591",
+            "extra": "mean: 270.45315839999944 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.409847858705117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008301108321981625",
+            "extra": "mean: 39.3548204444448 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3286831428752245,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016518053750222656",
+            "extra": "mean: 3.0424438298000043 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.132189410172067,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007887784633471408",
+            "extra": "mean: 45.183058099999585 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09495556970106694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017710947500568255",
+            "extra": "mean: 10.531241117799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8305662297722871,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01464175882053965",
+            "extra": "mean: 546.2790604000133 msec\nrounds: 5"
           }
         ]
       }
