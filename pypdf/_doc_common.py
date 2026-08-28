@@ -916,13 +916,21 @@ class PdfDocCommon(ABC):
 
             # get the outline dictionary and named destinations
             if Core.OUTLINES in catalog:
-                lines = cast(DictionaryObject, catalog[Core.OUTLINES])
+                lines = catalog[Core.OUTLINES].get_object()
 
                 if isinstance(lines, NullObject):
                     return outline
 
+                if not isinstance(lines, DictionaryObject):
+                    logger_warning(
+                        "Outlines are not a dictionary: %(lines)s",
+                        source=__name__,
+                        lines=lines,
+                    )
+                    return outline
+
                 # §12.3.3 Document outline, entries in the outline dictionary
-                if not is_null_or_none(lines) and "/First" in lines:
+                if "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
             self._named_destinations = self._get_named_destinations()
 
