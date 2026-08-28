@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787905341765,
+  "lastUpdate": 1787907652274,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131017,6 +131017,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02975849259050265",
             "extra": "mean: 862.392999399998 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "antai12232931@outlook.com",
+            "name": "Tai An",
+            "username": "Anai-Guo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a692202de32adef695fd38c29499280fba53175a",
+          "message": "BUG: Do not read indirect_reference off a direct /Dests dictionary (#4028)\n\n`get_named_dest_root()` assigned `dests_ref = dests.indirect_reference` and\nnever read it back. `PdfObject.indirect_reference` is an annotation without a\ndefault, so on a `/Dests` name tree stored as a direct object inside `/Names`\n- one that was never registered, and so never got the attribute set - the\ndead assignment raised `AttributeError`.\n\nThat took down every `PdfWriter.append()` of a document carrying named\ndestinations, via `_merge__process_named_dests` ->\n`add_named_destination_array` -> `get_named_dest_root`. The two sibling\nbranches below assign `dests_ref` from `_add_object()` and use it on the next\nline; this one had no consumer, so dropping the read is enough.\n\nCloses #4027.",
+          "timestamp": "2026-08-28T10:57:32+02:00",
+          "tree_id": "5f42a30268e9a62fe3c999af16f9ef6769cb34df",
+          "url": "https://github.com/py-pdf/pypdf/commit/a692202de32adef695fd38c29499280fba53175a"
+        },
+        "date": 1787907643366,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.525142226824716,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02213397006804376",
+            "extra": "mean: 79.83941275000699 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.66319278875035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005745651137218651",
+            "extra": "mean: 50.85644079999649 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9934922137009917,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04115012157883046",
+            "extra": "mean: 1.0065504149999982 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.42712439348645975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10064633903317047",
+            "extra": "mean: 2.34123832599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3523450529783917,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012538610888945702",
+            "extra": "mean: 2.838126976800004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.157833882385153,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03900257915517629",
+            "extra": "mean: 863.6817553999947 msec\nrounds: 5"
           }
         ]
       }
