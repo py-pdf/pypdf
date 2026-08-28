@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787907662304,
+  "lastUpdate": 1787911821315,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131149,6 +131149,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03900257915517629",
             "extra": "mean: 863.6817553999947 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b17dee7855935ad30d6ed93f100a71f31890f18a",
+          "message": "ROB: Do not crash when the outlines entry is not a dictionary (#4023)\n\n_get_outline casts /Outlines to a DictionaryObject and tests /First membership\non the result, so a file where that entry holds a number, a string or an array\nraised 'TypeError: argument of type NumberObject is not iterable' from\nreader.outline.\n\nThe dropped is_null_or_none call covered three cases, all still handled: a\ndirect NullObject returns from the branch above it, an indirect reference is\nresolved by get_object() before either check, and a bare None cannot come out\nof a dictionary lookup. Both null paths have a test.",
+          "timestamp": "2026-08-28T12:07:26+02:00",
+          "tree_id": "d0ea519a3a690b7f3e4044ee75498ea69fda6096",
+          "url": "https://github.com/py-pdf/pypdf/commit/b17dee7855935ad30d6ed93f100a71f31890f18a"
+        },
+        "date": 1787911812674,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.945312218076369,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016848408589453422",
+            "extra": "mean: 71.70868492307883 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.831605250413112,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013236182837395038",
+            "extra": "mean: 48.00398183333322 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0582408670947936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030023401207551873",
+            "extra": "mean: 944.9644510000041 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5564956547331773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03388192990053616",
+            "extra": "mean: 1.7969592241999977 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3628678188590455,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026817266354137205",
+            "extra": "mean: 2.755824429800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1703877096105368,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03397080578026358",
+            "extra": "mean: 854.4177214000001 msec\nrounds: 5"
           }
         ]
       }
