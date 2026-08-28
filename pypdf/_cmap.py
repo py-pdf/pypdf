@@ -75,7 +75,7 @@ def _parse_encoding(
             )
 
         # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
-        # to overwrite this, which we do for Type1 fonts in _character_map_from_type1_font_file.
+        # to overwrite this, which we do for Type1 fonts in _character_map_from_(cff_)type1_font_file.
         return dict(
             zip(range(256), charset_encoding["/StandardEncoding"])
         )
@@ -130,28 +130,60 @@ def _parse_encoding(
 def _parse_to_unicode(
     ft: DictionaryObject
 ) -> tuple[dict[Any, Any], list[int]]:
-    # will store all translation code
-    # and map_dict[-1] we will have the number of bytes to convert
+    from ._font import HAS_FONTTOOLS  # noqa: PLC0415
+
+    # We store all character mappings in map_dict. In map_dict[-1] we store the byte length
+    # of the character codes (or CIDs) encoded inside the ToUnicode stream.
     map_dict: dict[Any, Any] = {}
 
-    # will provide the list of cmap keys as int to correct encoding
+    # We provide the list of cmap keys in int_entry to correct encoding later on in get_encoding().
     int_entry: list[int] = []
 
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
-            font_descriptor = ft.get("/FontDescriptor", None)
+            font_descriptor = ft.get("/FontDescriptor")
             if not font_descriptor:
                 return map_dict, int_entry
 
-            if (
-                "/FontFile" in font_descriptor and
-                isinstance(font_file_dict := font_descriptor["/FontFile"], StreamObject)
-            ):
-                font_file_data = font_file_dict.get_data()
-                if not font_file_data:
-                    return map_dict, int_entry
+            # We try to read encoding from an embedded font file, if we can. See Table 126 about embedded font
+            # file organization in the PDF specification 1.7 for details.
+            font_file_handlers = (
+                # A normal Type1 font file, can be part of a Type1 or MMType1 font dictionary.
+                (
+                    "/FontFile",
+                    lambda _: True,
+                    _character_map_from_type1_font_file
+                ),
+                # A CFF Type1 font file, as part of a Type1 or MMType1 font dictionary, when subtype is Type1C.
+                (
+                    "/FontFile3",
+                    lambda stream: stream.get("/Subtype") == "/Type1C",
+                    _character_map_from_cff_type1_font_file,
+                )
+            )
+            for font_file, condition, font_file_processor in font_file_handlers:
+                if (
+                    font_file in font_descriptor and
+                    isinstance(font_file_dict := font_descriptor[font_file], StreamObject) and
+                    condition(font_file_dict)
+                ):
+                    if font_file == "/FontFile3" and not HAS_FONTTOOLS:
+                        logger_warning(
+                            (
+                                "fontTools is required to fully parse the encoding of a CFF Type1 font in font "
+                                "dictionary %(ft)s, but is not installed. Consider installing fontTools if you "
+                                "encounter encoding problems."
+                            ),
+                            source=__name__,
+                            ft=ft,
+                        )
+                        return map_dict, int_entry
 
-                return _character_map_from_type1_font_file(font_file_data, map_dict, int_entry)
+                    font_file_data = font_file_dict.get_data()
+                    if not font_file_data:
+                        return map_dict, int_entry
+
+                    return font_file_processor(font_file_data, map_dict, int_entry)
 
             return map_dict, int_entry
 
