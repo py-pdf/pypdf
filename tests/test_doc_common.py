@@ -1208,3 +1208,57 @@ def test_get_named_destinations__reads_a_well_formed_tree():
     stream.seek(0)
 
     assert sorted(PdfReader(stream).named_destinations) == ["Chapter 1", "Chapter 2"]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Outlines are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Outlines are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Outlines are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_outline__outlines_entry_is_not_a_dictionary(caplog, value, expected):
+    """A malformed /Outlines raised a TypeError from the /First membership test."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/Outlines")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).outline == []
+    assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    "indirect",
+    [pytest.param(False, id="direct"), pytest.param(True, id="indirect")],
+)
+def test_outline__outlines_entry_is_null(indirect):
+    """A null entry, direct or behind a reference, still yields no outline."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    value = NullObject()
+    writer.root_object[NameObject("/Outlines")] = (
+        writer._add_object(value) if indirect else value
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).outline == []
+
+
+def test_outline__reads_a_well_formed_outlines_entry():
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.add_outline_item("Chapter 1", 0)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert [item.title for item in PdfReader(stream).outline] == ["Chapter 1"]
