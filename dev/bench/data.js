@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788097281613,
+  "lastUpdate": 1788097308923,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -108905,6 +108905,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003301251924270971",
             "extra": "mean: 656.6930837999962 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "07d5569f1008a527db2b8c0eaf86e289df5d1972",
+          "message": "ROB: Do not crash on a form field entry that is not a dictionary (#4031)\n\n_build_field tests /T and /TM membership on whatever the /Fields array holds,\nso an entry that is a number, a string or an array raised 'TypeError: argument\nof type NumberObject is not iterable' from reader.get_fields().\n\nAn entry it cannot read is reported and skipped, so the remaining fields are\nstill returned.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-08-30T15:38:42+02:00",
+          "tree_id": "a44c7da98cf1b0e7e18a7a9125f90d557b4c7fe0",
+          "url": "https://github.com/py-pdf/pypdf/commit/07d5569f1008a527db2b8c0eaf86e289df5d1972"
+        },
+        "date": 1788097299583,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.795575099992642,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014920334415484687",
+            "extra": "mean: 357.7081509999971 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.79140387902062,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020517330735612058",
+            "extra": "mean: 53.21582178947443 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24846437222121207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03220744235862204",
+            "extra": "mean: 4.024721899000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.23455193504269,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009189237304824591",
+            "extra": "mean: 58.02297638888535 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07340257600909589,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04101417692496171",
+            "extra": "mean: 13.62350007820001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4455386883850116,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01868848458516111",
+            "extra": "mean: 691.7836292000061 msec\nrounds: 5"
           }
         ]
       }
