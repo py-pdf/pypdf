@@ -2042,7 +2042,8 @@ def test_update_form_fields3(caplog, tmp_path):
         # Also test that an ImportError is raised by the Font class
         assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in caplog.text
 
-    # Test with fonttools
+    # Test with fontTools
+    pytest.importorskip("fontTools", reason="Requires fontTools")
     data = {
         "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
         "localitatea": "شهرزاد",
