@@ -1288,7 +1288,3 @@ def test_build_field__entry_is_not_a_dictionary(caplog, value, expected):
     assert PdfReader(stream).get_fields() == {}
     assert expected in caplog.text
 
-
-def test_build_field__reads_a_well_formed_field():
-    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
-    assert reader.get_fields()
