@@ -593,7 +593,18 @@ class PdfDocCommon(ABC):
             stack = []
             # get the AcroForm tree
             if CA.ACRO_FORM in catalog:
-                tree = cast(Optional[DictionaryObject], catalog[CA.ACRO_FORM])
+                entry = catalog[CA.ACRO_FORM]
+                acro_form = None if entry is None else entry.get_object()
+                if acro_form is not None and not isinstance(
+                    acro_form, DictionaryObject
+                ):
+                    logger_warning(
+                        "AcroForm is not a dictionary: %(acro_form)s",
+                        source=__name__,
+                        acro_form=acro_form,
+                    )
+                    return None
+                tree = acro_form
             else:
                 return None
         if tree is None:
