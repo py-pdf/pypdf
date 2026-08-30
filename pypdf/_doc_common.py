@@ -663,6 +663,13 @@ class PdfDocCommon(ABC):
         field_attributes: Any,
         stack: list[PdfObject],
     ) -> None:
+        if not isinstance(field, DictionaryObject):
+            logger_warning(
+                "Form field is not a dictionary: %(field)s",
+                source=__name__,
+                field=field,
+            )
+            return
         if all(attr not in field for attr in ("/T", "/TM")):
             return
         key = self._get_qualified_field_name(parent=field)
