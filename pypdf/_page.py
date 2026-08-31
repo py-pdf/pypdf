@@ -652,8 +652,8 @@ class PageObject(DictionaryObject):
         lst: list[Union[str, list[str]]] = []
         if (
                 PG.RESOURCES not in obj or
-                is_null_or_none(resources := obj[PG.RESOURCES]) or
-                RES.XOBJECT not in cast(DictionaryObject, resources)
+                is_null_or_none(resources := cast(DictionaryObject, obj[PG.RESOURCES])) or
+                RES.XOBJECT not in resources
         ):
             # Forms without XObject resources have no images inside them
             if len(ancest) > 0:
@@ -661,7 +661,7 @@ class PageObject(DictionaryObject):
             # for inline images, cache dict entries are not None
             return [image_name for image_name, image_value in self._content_stream_images.items() if image_value]
 
-        x_object = resources[RES.XOBJECT].get_object()  # type: ignore[index]
+        x_object = resources[RES.XOBJECT].get_object()
         if not isinstance(x_object, DictionaryObject):
             logger_warning(
                 "XObject resources are not a dictionary: %(x_object)s",
