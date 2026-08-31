@@ -221,6 +221,12 @@ def get_display_str(
     width_cache: dict[str, float] = {}
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
+
+    def clear_character_caches() -> None:
+        width_cache.clear()
+        neutral_cache.clear()
+        rtl_cache.clear()
+
     for raw_character in text_operands:
         if raw_character == font.space_char:
             widths += font.space_width
@@ -245,6 +251,7 @@ def get_display_str(
                         rtl_dir = True
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
+                            clear_character_caches()
                         text = ""
                     text = x + text
                 else:
@@ -253,6 +260,7 @@ def get_display_str(
                         rtl_dir = False
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
+                            clear_character_caches()
                         text = ""
                     text = text + x
         else:
