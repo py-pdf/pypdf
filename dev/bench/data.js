@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788185376190,
+  "lastUpdate": 1788185392794,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131743,6 +131743,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027766116051141668",
             "extra": "mean: 874.8699129999864 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "17d57a57cf96ea33c8c5bb23ba19b68aec3ff253",
+          "message": "ROB: Do not crash when the XObject resources are not a dictionary (#4030)\n\n_get_ids_image reads /XObject off the page resources and iterates it, so a\nfile where that entry holds a number, a string or an array raised 'TypeError:\nNumberObject object is not iterable' from page.images.\n\nThe lookup already carried a type: ignore, and the function returns an empty\nlist when the entry is missing, so one it cannot walk takes the same path.\n\nThe lookup only needs to silence the index error on PdfObject, so the bare\nignore is replaced with type: ignore[index]. The separate entry variable also\ngoes, since the isinstance check narrows the original one.",
+          "timestamp": "2026-08-31T16:06:31+02:00",
+          "tree_id": "f62d113b1e6f6abbc915c433ca74aa649bd05347",
+          "url": "https://github.com/py-pdf/pypdf/commit/17d57a57cf96ea33c8c5bb23ba19b68aec3ff253"
+        },
+        "date": 1788185382977,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.99898798135575,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02442481541371317",
+            "extra": "mean: 83.34036183333282 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.928090166711529,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014947023573096659",
+            "extra": "mean: 66.98780546153998 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9331936200389822,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03146150022040048",
+            "extra": "mean: 1.0715889806000036 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.443712139956606,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07695166245930178",
+            "extra": "mean: 2.2537134100000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.35878798753308283,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018290343623353293",
+            "extra": "mean: 2.7871613173999945 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1663977877155292,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013301916640819839",
+            "extra": "mean: 857.3404463999964 msec\nrounds: 5"
           }
         ]
       }
