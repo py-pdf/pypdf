@@ -604,16 +604,15 @@ class Font:
                     # use buildReversed on fonttools < 4.57 and build a list of minimums from it
                     reverse_cmap = {k: min(r) for k, r in tt_font_cmap_table.buildReversed().items()}
                 for gid, glyph in enumerate(glyph_order):
-                    char_code = reverse_cmap.get(glyph)
-                    if char_code is None:
-                        continue
-                    char = chr(char_code)
-                    gid = tt_font_object.getGlyphID(glyph)
                     # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
                     gid_bytes = gid.to_bytes(2, "big")
                     gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
-                    character_map[gid_key_string] = char
+                    # Always map character width
                     character_widths[gid_key_string] = int(round(metrics[glyph][0] * scale_factor, 0))
+                    # Add GID to character_map when we can find it in the cmap
+                    char_code = reverse_cmap.get(glyph)
+                    if char_code is not None:
+                        character_map[gid_key_string] = chr(char_code)
             else:
                 raise PdfReadError("Font file does not have a cmap table")
 
