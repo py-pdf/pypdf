@@ -1287,3 +1287,26 @@ def test_build_field__entry_is_not_a_dictionary(caplog, value, expected):
 
     assert PdfReader(stream).get_fields() == {}
     assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "AcroForm is not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "AcroForm is not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "AcroForm is not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_get_fields__acro_form_is_not_a_dictionary(caplog, value, expected):
+    """A malformed /AcroForm raised a TypeError from the /Fields membership test."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/AcroForm")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).get_fields() is None
+    assert expected in caplog.text
