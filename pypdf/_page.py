@@ -652,8 +652,8 @@ class PageObject(DictionaryObject):
         lst: list[Union[str, list[str]]] = []
         if (
                 PG.RESOURCES not in obj or
-                is_null_or_none(resources := obj[PG.RESOURCES]) or
-                RES.XOBJECT not in cast(DictionaryObject, resources)
+                is_null_or_none(resources := cast(DictionaryObject, obj[PG.RESOURCES])) or
+                RES.XOBJECT not in resources
         ):
             # Forms without XObject resources have no images inside them
             if len(ancest) > 0:
@@ -661,20 +661,28 @@ class PageObject(DictionaryObject):
             # for inline images, cache dict entries are not None
             return [image_name for image_name, image_value in self._content_stream_images.items() if image_value]
 
-        x_object = resources[RES.XOBJECT].get_object()  # type: ignore
+        x_object = resources[RES.XOBJECT].get_object()
+        if not isinstance(x_object, DictionaryObject):
+            logger_warning(
+                "XObject resources are not a dictionary: %(x_object)s",
+                source=__name__,
+                x_object=x_object,
+            )
+            return []
 
         # Iterate through all XObject resources
         for o in x_object:
+            entry = x_object[o]
             # Skip non-stream objects (only process StreamObject)
-            if not isinstance(x_object[o], StreamObject):
+            if not isinstance(entry, StreamObject):
                 continue
-            if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
+            if entry.get(ImageAttributes.SUBTYPE, "") == "/Image":
                 # If it's an image, add it to lst for further processing
                 lst.append(o if len(ancest) == 0 else [*ancest, o])
             else:
                 # If it's a form, recursively search for images inside it
                 # Forms may contain images that are Do-referenced in their content stream
-                lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
+                lst.extend(self._get_ids_image(entry, [*ancest, o], call_stack))
 
         # Removes duplicates and preserves order
         deduplicated = lst.copy()
