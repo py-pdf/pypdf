@@ -56,8 +56,7 @@ from ._utils import (
     _human_readable_bytes,
     _TraversalState,
     deprecate,
-    deprecate_no_replacement,
-    deprecate_with_replacement,
+    deprecated,
     logger_warning,
     matrix_multiply,
 )
@@ -779,6 +778,10 @@ class PageObject(DictionaryObject):
         return VirtualListImages(self._get_ids_image, self._get_image)
 
     @property
+    @deprecated(
+        "PageObject.inline_images is deprecated: Use PageObject.images "
+        "and filter by ImageFile.is_inline instead."
+    )
     def inline_images(self) -> Optional[dict[str, ImageFile]]:
         """
         Return only inline images from the page.
@@ -795,11 +798,11 @@ class PageObject(DictionaryObject):
             ...     if image_file.is_inline:
             ...         print(f"{image_name} is inline")
         """
-        deprecate_with_replacement(
-            "PageObject.inline_images",
-            "PageObject.images",
-            "7.0.0",
-        )
+        # deprecate_with_replacement(
+        #     "PageObject.inline_images",
+        #     "PageObject.images",
+        #     "7.0.0",
+        # )
         if self._content_stream_images is None:
             return None
         return {
@@ -809,11 +812,15 @@ class PageObject(DictionaryObject):
         }
 
     @inline_images.setter
+    @deprecated(
+        "PageObject.inline_images is deprecated: Use PageObject.images "
+        "and filter by ImageFile.is_inline instead."
+    )
     def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
-        deprecate_no_replacement(
-            "PageObject.inline_images",
-            "7.0.0",
-        )
+        # deprecate_no_replacement(
+        #     "PageObject.inline_images",
+        #     "7.0.0",
+        # )
         if value is None:
             self._content_stream_images = None
         else:
