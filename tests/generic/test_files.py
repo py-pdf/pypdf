@@ -140,6 +140,48 @@ def test_embedded_file__kids() -> None:
     assert attachments == []
 
 
+@pytest.mark.parametrize(
+    "catalog",
+    [
+        # /Names is not a dictionary.
+        DictionaryObject({NameObject("/Names"): NumberObject(1)}),
+        # /EmbeddedFiles is not a dictionary.
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): NumberObject(1)}
+            )}
+        ),
+        # /Kids is not an array.
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): NumberObject(1)}
+                )}
+            )}
+        ),
+        # A /Kids entry that is not a dictionary.
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([NumberObject(1)])}
+                )}
+            )}
+        ),
+        # /Names name list is not an array.
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Names"): NumberObject(1)}
+                )}
+            )}
+        ),
+    ],
+)
+def test_embedded_file__load_malformed_tree(catalog: DictionaryObject) -> None:
+    # A malformed embedded files name tree must not crash attachment loading.
+    assert list(EmbeddedFile._load(catalog)) == []
+
+
 @pytest.mark.enable_socket
 def test_embedded_file__ensure_params__existing_params() -> None:
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"

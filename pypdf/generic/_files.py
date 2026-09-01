@@ -4,7 +4,7 @@ import bisect
 from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
-from pypdf._utils import format_iso8824_date, parse_iso8824_date
+from pypdf._utils import format_iso8824_date, logger_warning, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
 from pypdf.constants import PageAttributes as PG
@@ -17,6 +17,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     StreamObject,
     TextStringObject,
     is_null_or_none,
@@ -368,7 +369,7 @@ class EmbeddedFile:
         return f"<{self.__class__.__name__} name={self.name!r}>"
 
     @classmethod
-    def _load_from_names(cls, names: ArrayObject) -> Generator[EmbeddedFile]:
+    def _load_from_names(cls, names: PdfObject) -> Generator[EmbeddedFile]:
         """
         Convert the given name tree into class instances.
 
@@ -379,6 +380,13 @@ class EmbeddedFile:
             Iterable of class instances for the files found.
         """
         # This is a name tree of the format [name_1, reference_1, name_2, reference_2, ...]
+        if not isinstance(names, ArrayObject):
+            logger_warning(
+                "Embedded files name list is not an array: %(names)s",
+                source=__name__,
+                names=names,
+            )
+            return
         for i, name in enumerate(names):
             if not isinstance(name, str):
                 # Skip plain strings and retrieve them as `direct_name` by index.
@@ -400,19 +408,42 @@ class EmbeddedFile:
             Iterable of class instances for the files found.
         """
         try:
-            container = cast(
-                DictionaryObject,
-                cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-            )
+            names = catalog["/Names"]
         except KeyError:
+            return
+        if not isinstance(names, DictionaryObject):
+            logger_warning(
+                "Names tree is not a dictionary: %(names)s",
+                source=__name__,
+                names=names,
+            )
+            return
+        try:
+            container = names["/EmbeddedFiles"]
+        except KeyError:
+            return
+        if not isinstance(container, DictionaryObject):
+            logger_warning(
+                "Embedded files entry is not a dictionary: %(container)s",
+                source=__name__,
+                container=container,
+            )
             return
 
         if "/Kids" in container:
-            for kid in cast(ArrayObject, container["/Kids"].get_object()):
-                # There might be further (nested) kids here.
-                # Wait for an example before evaluating an implementation.
-                kid = kid.get_object()
-                if "/Names" in kid:
-                    yield from cls._load_from_names(cast(ArrayObject, kid["/Names"]))
+            kids = container["/Kids"].get_object()
+            if not isinstance(kids, ArrayObject):
+                logger_warning(
+                    "Embedded files /Kids is not an array: %(kids)s",
+                    source=__name__,
+                    kids=kids,
+                )
+            else:
+                for kid in kids:
+                    # There might be further (nested) kids here.
+                    # Wait for an example before evaluating an implementation.
+                    kid = kid.get_object()
+                    if isinstance(kid, DictionaryObject) and "/Names" in kid:
+                        yield from cls._load_from_names(kid["/Names"])
         if "/Names" in container:
-            yield from cls._load_from_names(cast(ArrayObject, container["/Names"]))
+            yield from cls._load_from_names(container["/Names"])
