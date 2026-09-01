@@ -4,7 +4,7 @@ import pypdf._text_extraction as text_extraction
 from pypdf._font import Font
 
 
-def _font() -> Font:
+def _create_test_font() -> Font:
     return Font(
         name="Test",
         encoding="charmap",
@@ -15,7 +15,7 @@ def _font() -> Font:
 
 
 def test_get_display_str_caches_repeated_character_lookups(monkeypatch) -> None:
-    font = _font()
+    font = _create_test_font()
     width_calls = 0
     neutral_calls = 0
     rtl_calls = 0
@@ -65,7 +65,7 @@ def test_get_display_str_caches_repeated_character_lookups(monkeypatch) -> None:
 
 
 def test_get_display_str_cache_is_scoped_to_each_call(monkeypatch) -> None:
-    font = _font()
+    font = _create_test_font()
     width_calls = 0
     original_width = font.get_text_width
 
@@ -93,7 +93,7 @@ def test_get_display_str_cache_is_scoped_to_each_call(monkeypatch) -> None:
 
 
 def test_get_display_str_invalidates_caches_after_visitor_callback(monkeypatch) -> None:
-    font = _font()
+    font = _create_test_font()
     width_calls = 0
     original_width = font.get_text_width
 
