@@ -516,12 +516,27 @@ class PdfDocCommon(ABC):
         visited.add(tree_id)
 
         if PagesAttributes.KIDS in tree:
+            kids = tree[PagesAttributes.KIDS].get_object()
+            if not isinstance(kids, ArrayObject):
+                logger_warning(
+                    "Destination tree kids are not an array: %(kids)s",
+                    source=__name__,
+                    kids=kids,
+                )
+                return retval
             # recurse down the tree
-            for kid in cast(ArrayObject, tree[PagesAttributes.KIDS]):
+            for kid in kids:
                 self._get_named_destinations(tree=kid.get_object(), retval=retval, visited=visited)
         # §7.9.6, entries in a name tree node dictionary
         elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
-            names = cast(DictionaryObject, tree[CA.NAMES])
+            names = tree[CA.NAMES].get_object()
+            if not isinstance(names, ArrayObject):
+                logger_warning(
+                    "Destination tree names are not an array: %(names)s",
+                    source=__name__,
+                    names=names,
+                )
+                return retval
             i = 0
             while i < len(names):
                 key = names[i].get_object()
