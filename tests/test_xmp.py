@@ -8,7 +8,15 @@ import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import LimitReachedError, PdfReadError, XmpDocumentError
-from pypdf.generic import ContentStream, NameObject, StreamObject
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DictionaryObject,
+    NameObject,
+    NumberObject,
+    StreamObject,
+    TextStringObject,
+)
 from pypdf.xmp import XmpInformation
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -100,6 +108,28 @@ def get_all_tiff(xmp: pypdf.xmp.XmpInformation):
         contents = [content.data for content in tag.childNodes]
         data[tag.tagName] = contents
     return data
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Metadata is not a stream: 1", id="number"),
+        pytest.param(TextStringObject("x"), "Metadata is not a stream: x", id="string"),
+        pytest.param(DictionaryObject(), "Metadata is not a stream: {}", id="dictionary"),
+        pytest.param(ArrayObject(), "Metadata is not a stream: []", id="array"),
+    ],
+)
+def test_xmp_metadata__is_not_a_stream(caplog, value, expected):
+    """A /Metadata entry that is not a stream was reported as invalid XML."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/Metadata")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).xmp_metadata is None
+    assert expected in caplog.text
 
 
 def test_converter_date():

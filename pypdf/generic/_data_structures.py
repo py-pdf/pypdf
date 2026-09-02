@@ -513,6 +513,13 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             return None
         assert metadata is not None, "mypy"
         metadata = metadata.get_object()
+        if not isinstance(metadata, StreamObject):
+            logger_warning(
+                "Metadata is not a stream: %(metadata)s",
+                source=__name__,
+                metadata=metadata,
+            )
+            return None
         return XmpInformation(metadata)
 
     def write_to_stream(
