@@ -194,19 +194,52 @@ def test_viewer_preferences__indirect_reference():
 
 
 def test_build_destination__short_array():
+    """A one-element array degrades to a null destination instead of raising on
+    the unpacking; a valid array with extra fit args still builds.
+    """
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
 
-    # An array too short to hold a page reference and a fit type degrades to a
-    # null destination instead of raising on the unpacking.
     dest = writer._build_destination("title", ArrayObject([NumberObject(0)]))
     assert isinstance(dest["/Page"], NullObject)
 
-    # A trailing fit type with the wrong number of arguments still builds.
     dest = writer._build_destination(
         "title", ArrayObject([NumberObject(0), NameObject("/FitR"), NumberObject(1), NumberObject(2)])
     )
     assert dest["/Type"] == "/FitR"
+
+
+def test_build_destination__non_array():
+    """A non-array destination degrades to a null destination rather than
+    raising TypeError while unpacking.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    dest = writer._build_destination("title", NumberObject(5))
+    assert isinstance(dest["/Page"], NullObject)
+
+
+def test_named_destinations__non_array_value():
+    """A bare number where a destination array is expected is skipped instead
+    of crashing named_destinations with a TypeError.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    names = DictionaryObject()
+    names[NameObject("/Names")] = ArrayObject(
+        [TextStringObject("foo"), NumberObject(5)]
+    )
+    dests = DictionaryObject()
+    dests[NameObject("/Dests")] = names
+    writer.root_object[NameObject("/Names")] = dests
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    reader = PdfReader(stream)
+
+    assert "foo" in reader.named_destinations
 
 
 def _reader_with_button_field(field: DictionaryObject) -> PdfReader:
@@ -1002,3 +1035,278 @@ def test_get_outline__entry_count():
                 expected_exception=LimitReachedError, match=r"^Maximum outline entry limit reached: 1001 > 1000\.$"
             ):
         writer._get_outline()
+
+
+@pytest.mark.parametrize(
+    ("fields", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "AcroForm /Fields is not an array: 1", id="number"
+        ),
+        pytest.param(
+            TextStringObject("x"), "AcroForm /Fields is not an array: x", id="string"
+        ),
+        pytest.param(
+            DictionaryObject(), "AcroForm /Fields is not an array: {}", id="dictionary"
+        ),
+    ],
+)
+def test_get_fields__fields_is_not_an_array(caplog, fields, expected):
+    """A malformed /Fields raised a TypeError when the loop tried to iterate it."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject(
+        {NameObject("/Fields"): fields}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).get_fields() == {}
+    assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "Viewer preferences are not a dictionary: 1", id="number"
+        ),
+        pytest.param(
+            ArrayObject(), "Viewer preferences are not a dictionary: []", id="array"
+        ),
+        pytest.param(
+            TextStringObject("x"),
+            "Viewer preferences are not a dictionary: x",
+            id="string",
+        ),
+    ],
+)
+def test_viewer_preferences__not_a_dictionary(caplog, value, expected):
+    """A malformed entry raised an AttributeError from the ViewerPreferences init."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/ViewerPreferences")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).viewer_preferences is None
+    assert expected in caplog.text
+
+
+def test_viewer_preferences__reads_a_well_formed_dictionary():
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.create_viewer_preferences().center_window = True
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).viewer_preferences == {"/CenterWindow": True}
+
+
+@pytest.mark.parametrize(
+    ("first", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "Outline node is not a dictionary: 1", id="number"
+        ),
+        pytest.param(
+            TextStringObject("x"), "Outline node is not a dictionary: x", id="string"
+        ),
+        pytest.param(ArrayObject(), "Outline node is not a dictionary: []", id="array"),
+    ],
+)
+def test_outline__first_is_not_a_dictionary(caplog, first, expected):
+    """A malformed /First raised a TypeError from the first subscript."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/Outlines")] = DictionaryObject(
+        {NameObject("/First"): first}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).outline == []
+    assert expected in caplog.text
+
+
+def test_outline__reads_a_well_formed_outline():
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.add_outline_item("Chapter 1", 0)
+    writer.add_outline_item("Chapter 2", 1)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert [item.title for item in PdfReader(stream).outline] == [
+        "Chapter 1",
+        "Chapter 2",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "expected"),
+    [
+        pytest.param(
+            "/Dests",
+            NumberObject(1),
+            "Destination tree is not a dictionary: 1",
+            id="number",
+        ),
+        pytest.param(
+            "/Dests",
+            ArrayObject(),
+            "Destination tree is not a dictionary: []",
+            id="array",
+        ),
+        pytest.param(
+            "/Dests",
+            TextStringObject("x"),
+            "Destination tree is not a dictionary: x",
+            id="string",
+        ),
+    ],
+)
+def test_get_named_destinations__tree_is_not_a_dictionary(caplog, key, value, expected):
+    """A malformed name tree raised a TypeError from the first membership test."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject(key)] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).named_destinations == {}
+    assert expected in caplog.text
+
+
+def test_get_named_destinations__names_is_not_a_dictionary():
+    """A /Names entry that cannot hold /Dests simply yields no destinations."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/Names")] = NumberObject(1)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).named_destinations == {}
+
+
+def test_get_named_destinations__reads_a_well_formed_tree():
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.add_named_destination("Chapter 1", 0)
+    writer.add_named_destination("Chapter 2", 1)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert sorted(PdfReader(stream).named_destinations) == ["Chapter 1", "Chapter 2"]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Outlines are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Outlines are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Outlines are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_outline__outlines_entry_is_not_a_dictionary(caplog, value, expected):
+    """A malformed /Outlines raised a TypeError from the /First membership test."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/Outlines")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).outline == []
+    assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    "indirect",
+    [pytest.param(False, id="direct"), pytest.param(True, id="indirect")],
+)
+def test_outline__outlines_entry_is_null(indirect):
+    """A null entry, direct or behind a reference, still yields no outline."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    value = NullObject()
+    writer.root_object[NameObject("/Outlines")] = (
+        writer._add_object(value) if indirect else value
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).outline == []
+
+
+def test_outline__reads_a_well_formed_outlines_entry():
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.add_outline_item("Chapter 1", 0)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert [item.title for item in PdfReader(stream).outline] == ["Chapter 1"]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Form field is not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Form field is not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Form field is not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_build_field__entry_is_not_a_dictionary(caplog, value, expected):
+    """A field entry that is not a dictionary raised a TypeError from the /T test."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject(
+        {NameObject("/Fields"): ArrayObject([value])}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).get_fields() == {}
+    assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "AcroForm is not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "AcroForm is not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "AcroForm is not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_get_fields__acro_form_is_not_a_dictionary(caplog, value, expected):
+    """A malformed /AcroForm raised a TypeError from the /Fields membership test."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/AcroForm")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).get_fields() is None
+    assert expected in caplog.text

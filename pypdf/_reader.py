@@ -354,7 +354,7 @@ class PdfReader(PdfDocCommon):
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
-    ) -> Union[int, PdfObject, str]:
+    ) -> PdfObject:
         # indirect reference to object in object stream
         # read the entire object stream into memory
         stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
@@ -399,7 +399,7 @@ class PdfReader(PdfDocCommon):
             obj_index.append((int(objnum), int(offset)))
 
         # Phase 2: Parse each object and cache it.
-        target_obj: Union[int, PdfObject, str] = NullObject()
+        target_obj: PdfObject = NullObject()
         found = False
         for i, (obj_num, obj_offset) in enumerate(obj_index):
             # Skip objects already in the cache.
@@ -439,7 +439,7 @@ class PdfReader(PdfDocCommon):
             # caching those stale versions would shadow the newer xref entry.
             authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
             if authoritative_stm == stmnum:
-                self.cache_indirect_object(0, obj_num, obj)  # type: ignore[arg-type]
+                self.cache_indirect_object(0, obj_num, obj)
 
             if obj_num == indirect_reference.idnum:
                 target_obj = obj
@@ -465,7 +465,7 @@ class PdfReader(PdfDocCommon):
             indirect_reference.generation == 0
             and indirect_reference.idnum in self.xref_objStm
         ):
-            retval = self._get_object_from_stream(indirect_reference)  # type: ignore
+            retval = self._get_object_from_stream(indirect_reference)
         elif (
             indirect_reference.generation in self.xref
             and indirect_reference.idnum in self.xref[indirect_reference.generation]
@@ -532,7 +532,7 @@ class PdfReader(PdfDocCommon):
             if current_object in self._known_objects:
                 raise LimitReachedError(f"Detected loop with self reference for {indirect_reference!r}.")
             self._known_objects.add(current_object)
-            retval = read_object(self.stream, self)  # type: ignore[assignment]
+            retval = read_object(self.stream, self)
             self._known_objects.remove(current_object)
 
             # override encryption is used for the /Encrypt dictionary
@@ -541,7 +541,6 @@ class PdfReader(PdfDocCommon):
                 if not self._encryption.is_decrypted():
                     raise FileNotDecryptedError("File has not been decrypted")
                 # otherwise, decrypt here...
-                retval = cast(PdfObject, retval)
                 retval = self._encryption.decrypt_object(
                     retval, indirect_reference.idnum, indirect_reference.generation,
                     strict=self.strict,
@@ -573,7 +572,7 @@ class PdfReader(PdfDocCommon):
                 self.stream.seek(m.end(0) + 1)
                 skip_over_whitespace(self.stream)
                 self.stream.seek(-1, 1)
-                retval = read_object(self.stream, self)  # type: ignore[assignment]
+                retval = read_object(self.stream, self)
 
                 # override encryption is used for the /Encrypt dictionary
                 if not self._override_encryption and self._encryption is not None:
@@ -581,7 +580,6 @@ class PdfReader(PdfDocCommon):
                     if not self._encryption.is_decrypted():
                         raise FileNotDecryptedError("File has not been decrypted")
                     # otherwise, decrypt here...
-                    retval = cast(PdfObject, retval)
                     retval = self._encryption.decrypt_object(
                         retval, indirect_reference.idnum, indirect_reference.generation,
                         strict=self.strict,
@@ -806,6 +804,22 @@ class PdfReader(PdfDocCommon):
 
         """
         line = read_previous_line(stream)
+        # Some producers append further %%EOF markers below the one that
+        # closes the last revision (#4008). _find_eof_marker() stops at the
+        # very last of them, so the line above it is another marker rather
+        # than the offset. Skip that trailing run to reach the real offset;
+        # the revision being read is unchanged, only the marker padding is
+        # ignored.
+        duplicate_markers = 0
+        while line.startswith(b"%%EOF") and stream.tell() > 0:
+            if duplicate_markers == self._MAX_STARTXREF_RECOVERY_LINES:
+                break
+            line = read_previous_line(stream)
+            duplicate_markers += 1
+        if duplicate_markers:
+            logger_warning(
+                "Duplicate %%EOF marker(s) found, skipping them", source=__name__
+            )
         try:
             startxref = int(line)
         except ValueError:

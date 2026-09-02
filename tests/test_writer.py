@@ -21,6 +21,7 @@ from pypdf import (
 )
 from pypdf._font import Font
 from pypdf.annotations import Link
+from pypdf.constants import FieldDictionaryAttributes
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -38,6 +39,7 @@ from pypdf.generic import (
     StreamObject,
     TextStringObject,
 )
+from pypdf.generic._viewerpref import BOX_NAMES
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, is_sublist
 from .test_images import image_similarity
@@ -598,12 +600,12 @@ def test_fill_form(pdf_file_path):
     writer.append(RESOURCE_ROOT / "crazyones.pdf", [0])
 
     writer.update_page_form_field_values(
-        writer.pages[0], {"foo": "some filled in text"}, flags=1, flatten=True
+        writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly, flatten=True
     )
 
     # check if no fields to fill in the page
     writer.update_page_form_field_values(
-        writer.pages[1], {"foo": "some filled in text"}, flags=1, flatten=True
+        writer.pages[1], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly, flatten=True
     )
 
     writer.update_page_form_field_values(
@@ -623,7 +625,7 @@ def test_fill_form_with_qualified():
     writer.clone_document_from_reader(reader)
     writer.add_page(reader.pages[0])
     writer.update_page_form_field_values(
-        writer.pages[0], {"top.foo": "filling"}, flags=1
+        writer.pages[0], {"top.foo": "filling"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly
     )
     b = BytesIO()
     writer.write(b)
@@ -736,12 +738,59 @@ def test_add_outline_item(pdf_file_path):
         writer.write(output_stream)
         output_stream.seek(0)
         reader = PdfReader(output_stream)
-        assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 3
+        assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 4
         assert reader.outline[0]["/Count"] == -2
         assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
         assert reader.outline[2]["/Count"] == 2
         assert reader.outline[2]["/%is_open%"] == True  # noqa: E712
         assert reader.outline[1][0]["/Count"] == 0
+
+
+def test_add_outline_item_collapsed():
+    """Issue #2994: is_open=False must produce a collapsed outline item."""
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        writer.add_page(page)
+
+    parent = writer.add_outline_item("Parent Item", 0, is_open=False)
+    writer.add_outline_item("Child Item", 0, parent=parent, is_open=False)
+
+    with BytesIO() as output_stream:
+        writer.write(output_stream)
+        output_stream.seek(0)
+        reader = PdfReader(output_stream)
+        assert reader.outline[0]["/Count"] == -1
+        # "/%is_open%" is a BooleanObject, not a native bool, so `is False`
+        # would always fail; BooleanObject.__eq__ handles `== False` correctly.
+        assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
+
+
+@pytest.mark.parametrize(
+    ("is_open", "expected_count"),
+    [
+        (True, 2),
+        (False, -2),
+    ],
+)
+def test_add_outline_item_nested_count(is_open, expected_count):
+    """Issue #2994: /Count must propagate correctly across multiple children."""
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        writer.add_page(page)
+
+    parent = writer.add_outline_item("Parent Item", 0, is_open=is_open)
+    writer.add_outline_item("Child 1", 0, parent=parent)
+    writer.add_outline_item("Child 2", 0, parent=parent)
+
+    with BytesIO() as output_stream:
+        writer.write(output_stream)
+        output_stream.seek(0)
+        reader = PdfReader(output_stream)
+        assert reader.outline[0]["/Count"] == expected_count
 
 
 def test_add_named_destination(pdf_file_path):
@@ -779,6 +828,38 @@ def test_add_named_destination(pdf_file_path):
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
+
+
+def test_append_with_direct_dests_dictionary():
+    """
+    Tests for #4027.
+
+    A `/Dests` name tree written as a direct object inside `/Names` carries no
+    `indirect_reference`, which `get_named_dest_root()` read for no reason. It
+    took down every `append()` of a document that has named destinations.
+    """
+    target = PdfWriter()
+    target.add_blank_page(100, 100)
+    names = DictionaryObject()
+    dests = DictionaryObject()
+    dests[NameObject("/Names")] = ArrayObject()
+    names[NameObject("/Dests")] = dests
+    target.root_object[NameObject("/Names")] = names
+    target_stream = BytesIO()
+    target.write(target_stream)
+
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_named_destination(TextStringObject("A named dest"), 0)
+    source_stream = BytesIO()
+    source.write(source_stream)
+
+    writer = PdfWriter(clone_from=target_stream)
+    assert not hasattr(writer.root_object["/Names"]["/Dests"], "indirect_reference")
+
+    writer.append(source_stream)
+
+    assert "A named dest" in writer.get_named_dest_root()
 
 
 def test_add_named_destination_sort_order(pdf_file_path):
@@ -1448,6 +1529,8 @@ def test_set_page_label(pdf_file_path):
         ValueError, match="If given, start must be greater or equal than one"
     ):
         writer.set_page_label(0, 5, "/r", start=-1)
+    with pytest.raises(ValueError, match=r"style must be one of: /D, /R, /r, /A, /a"):
+        writer.set_page_label(0, 5, "/Nonsense")
 
     pdf_file_path.unlink()
 
@@ -1959,7 +2042,8 @@ def test_update_form_fields3(caplog, tmp_path):
         # Also test that an ImportError is raised by the Font class
         assert "The 'fontTools' library is required to use 'from_truetype_font_file'" in caplog.text
 
-    # Test with fonttools
+    # Test with fontTools
+    pytest.importorskip("fontTools", reason="Requires fontTools")
     data = {
         "subsemnatul": "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
         "localitatea": "شهرزاد",
@@ -2163,7 +2247,7 @@ def test_missing_fields(pdf_file_path):
 
     with pytest.raises(PyPdfError) as exc:
         writer.update_page_form_field_values(
-            writer.pages[0], {"foo": "some filled in text"}, flags=1
+            writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly
         )
     assert exc.value.args[0] == "No /AcroForm dictionary in PDF of PdfWriter Object"
 
@@ -2172,7 +2256,7 @@ def test_missing_fields(pdf_file_path):
     del writer.root_object["/AcroForm"]["/Fields"]
     with pytest.raises(PyPdfError) as exc:
         writer.update_page_form_field_values(
-            writer.pages[0], {"foo": "some filled in text"}, flags=1
+            writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly
         )
     assert exc.value.args[0] == "No /Fields dictionary in PDF of PdfWriter Object"
 
@@ -3509,3 +3593,152 @@ def test_add_articles_thread__cyclic() -> None:
             match=r"^Detected cyclic article structure\.$"
     ):
         writer._add_articles_thread(thread=thread, pages={}, reader=reader)
+
+
+def test_page_layout_warning_lists_the_valid_layouts(caplog):
+    """The warning built a set of an empty string and one concatenated blob."""
+    writer = PdfWriter()
+    writer.page_layout = "/Nonsense"
+    assert (
+        "Layout should be one of: /NoLayout, /SinglePage, /OneColumn, "
+        "/TwoColumnLeft, /TwoColumnRight, /TwoPageLeft, /TwoPageRight"
+    ) in caplog.text
+
+
+def test_page_mode_warning_lists_the_valid_modes(caplog):
+    writer = PdfWriter()
+    writer.page_mode = "/Nonsense"
+    assert (
+        "Mode should be one of: /UseNone, /UseOutlines, /UseThumbs, "
+        "/FullScreen, /UseOC, /UseAttachments"
+    ) in caplog.text
+
+
+@pytest.mark.parametrize("value", ["/None", "/AppDefault"])
+def test_print_scaling_accepts_the_spec_values(value):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    viewer_preferences.print_scaling = value
+    assert viewer_preferences.print_scaling == value
+
+
+@pytest.mark.parametrize("value", ["/Nonsense", "/none", "/appdefault"])
+def test_print_scaling_rejects_other_values(value):
+    """/PrintScaling was declared without its allowed values, so nothing checked it."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    with pytest.raises(ValueError, match="is an unacceptable value"):
+        viewer_preferences.print_scaling = value
+
+
+@pytest.mark.parametrize(
+    "preference", ["view_area", "view_clip", "print_area", "print_clip"]
+)
+@pytest.mark.parametrize("value", BOX_NAMES)
+def test_box_preferences_accept_the_page_boxes(preference, value):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    setattr(viewer_preferences, preference, value)
+    assert getattr(viewer_preferences, preference) == value
+
+
+@pytest.mark.parametrize(
+    "preference", ["view_area", "view_clip", "print_area", "print_clip"]
+)
+def test_box_preferences_reject_other_names(preference):
+    """These were declared without their allowed values, so nothing checked them."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    with pytest.raises(ValueError, match="is an unacceptable value"):
+        setattr(viewer_preferences, preference, "/Nonsense")
+
+
+@pytest.mark.parametrize("values", [[1], [1, 2, 3]])
+def test_print_pagerange_rejects_an_odd_length(values):
+    """The array holds first/last page pairs, so an odd length is incomplete."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    with pytest.raises(ValueError, match="/PrintPageRange holds page pairs"):
+        viewer_preferences.print_pagerange = ArrayObject(
+            [NumberObject(value) for value in values]
+        )
+
+
+@pytest.mark.parametrize("values", [[], [1, 10], [1, 10, 20, 30]])
+def test_print_pagerange_accepts_page_pairs(values):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    viewer_preferences.print_pagerange = ArrayObject(
+        [NumberObject(value) for value in values]
+    )
+    assert list(viewer_preferences.print_pagerange) == values
+
+
+@pytest.mark.parametrize("value", [-1, -5])
+def test_num_copies_rejects_negative(value):
+    """A negative copy count cannot be interpreted by a reader."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    with pytest.raises(ValueError, match="is an unacceptable value for /NumCopies"):
+        viewer_preferences.num_copies = value
+
+
+@pytest.mark.parametrize("value", [0, 1, 2, 99])
+def test_num_copies_accepts_zero_and_above(value):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    viewer_preferences = writer.create_viewer_preferences()
+    viewer_preferences.num_copies = value
+    assert viewer_preferences.num_copies == value
+
+
+@pytest.mark.parametrize("style", ["/D", "/R", "/r", "/A", "/a"])
+def test_set_page_label_accepts_the_spec_styles(style):
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(100, 100)
+    writer.set_page_label(0, 1, style)
+
+
+@pytest.mark.parametrize("style", ["/Nonsense", "/d", "D", ""])
+def test_set_page_label_rejects_other_styles(style):
+    """An unknown style was written through and then ignored when read back."""
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(100, 100)
+    with pytest.raises(ValueError, match="style must be one of"):
+        writer.set_page_label(0, 1, style)
+
+
+@pytest.mark.parametrize("page_number", [3, 99, -4, -99])
+def test_add_named_destination_out_of_range(page_number):
+    """An out-of-range page surfaced as an IndexError from the kids array."""
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_named_destination("destination", page_number)
+
+
+@pytest.mark.parametrize("page_number", [3, 99, -4, -99])
+def test_add_uri_out_of_range(page_number):
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_uri(page_number, "https://example.com", RectangleObject([0, 0, 1, 1]))
+
+
+@pytest.mark.parametrize("page_number", [0, 2, -1, -3])
+def test_add_named_destination_in_range(page_number):
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    assert writer.add_named_destination("destination", page_number) is not None

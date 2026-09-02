@@ -19,12 +19,14 @@ from pypdf._page import ImageFile
 from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
+    ArrayObject,
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
     NameObject,
     NullObject,
     NumberObject,
+    TextStringObject,
 )
 from pypdf.generic._image_xobject import _handle_flate
 
@@ -993,3 +995,34 @@ def test_do_image_lazy_decode_preserves_none():
     assert page._content_stream_images is not None
     # Do images should remain as None (never cached, decoded on demand each time)
     assert page._content_stream_images["/Im1"] is None
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "XObject resources are not a dictionary: 1", id="number"
+        ),
+        pytest.param(
+            ArrayObject(), "XObject resources are not a dictionary: []", id="array"
+        ),
+        pytest.param(
+            TextStringObject("x"),
+            "XObject resources are not a dictionary: x",
+            id="string",
+        ),
+    ],
+)
+def test_images__xobject_is_not_a_dictionary(caplog, value, expected):
+    """A malformed /XObject raised a TypeError when the loop tried to iterate it."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/XObject"): value}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert list(PdfReader(stream).pages[0].images) == []
+    assert expected in caplog.text

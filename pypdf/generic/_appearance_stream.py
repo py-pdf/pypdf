@@ -534,7 +534,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         acro_form_font_resources = acro_form_resources.get("/Font", DictionaryObject())
         font_resource = acro_form_font_resources.get(font_name, None)
         if font_resource:
-            font = Font.from_font_resource(font_resource)
+            font = Font.from_font_resource(font_resource.get_object())
         else:
             # Normally, we should have found a font resource by now. However, when a user has provided a specific
             # font name, we may not have found the associated font resource among the AcroForm resources. Also, in

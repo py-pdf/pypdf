@@ -509,3 +509,18 @@ def test_xobj_to_image__acyclic_smask_still_applied() -> None:
 
     assert extension == ".png"
     assert img.mode == "LA"
+
+
+def test_xobj_to_image__empty_filter_array() -> None:
+    """An empty /Filter array means no filter and must not raise IndexError."""
+    image = _minimal_image_xobject()
+    image[NameObject(StreamAttributes.FILTER)] = ArrayObject([])
+
+    extension, _, img = _xobj_to_image(image)
+
+    # Identical to the same image without any /Filter entry at all.
+    expected_extension, _, expected_img = _xobj_to_image(_minimal_image_xobject())
+    assert (extension, img.mode, img.tobytes()) == (
+        expected_extension, expected_img.mode, expected_img.tobytes()
+    )
+    assert extension == ".png"

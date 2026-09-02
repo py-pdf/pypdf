@@ -630,7 +630,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 retval.update(data)
                 return retval  # return partial data
 
-            if not data.get(key):
+            if key not in data:
                 data[key] = value
             else:
                 # multiple definitions of key not permitted
@@ -1559,7 +1559,7 @@ def read_object(
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
     forced_encoding: Union[str, list[str], dict[int, str], None] = None,
-) -> Union[PdfObject, int, str, ContentStream]:
+) -> PdfObject:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
     if tok == b"/":

@@ -8,7 +8,7 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfWriter, Transformation
-from pypdf._font import Font
+from pypdf._font import HAS_FONTTOOLS, Font
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
@@ -126,7 +126,10 @@ Option D
     )
     assert b"OneWord" in appearance_stream.get_data()
 
-@pytest.mark.skipif(not HAS_RTL_SUPPORT, reason="Requires arabic-reshaper and python-bidi")
+@pytest.mark.skipif(
+    not HAS_RTL_SUPPORT or not HAS_FONTTOOLS,
+    reason="Requires arabic-reshaper, python-bidi and fontTools"
+)
 def test_appearance_stream_rtl():
     writer = PdfWriter(RESOURCE_ROOT / "fontsampler.pdf")
     layout = BaseStreamConfig(
