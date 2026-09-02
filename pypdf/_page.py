@@ -112,7 +112,9 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
                 break
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
-    if isinstance(retval, ArrayObject) and (length := len(retval)) != 4:
+    if not isinstance(retval, ArrayObject):
+        raise ValueError(f"Expected an array of four values for {name}, got {retval}")
+    if (length := len(retval)) != 4:
         if length > 4:
             # Keep backwards-compatibility with files previously written in a
             # broken way by pypdf, which carried more than four values.
@@ -128,7 +130,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
                 f"Expected four values for {name}, got {length}: {retval}"
             )
     else:
-        retval = RectangleObject(retval)  # type: ignore[arg-type]
+        retval = RectangleObject(retval)
     _set_rectangle(self, name, retval)
     return retval
 
