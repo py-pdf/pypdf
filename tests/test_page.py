@@ -29,6 +29,7 @@ from pypdf.generic import (
     IndirectObject,
     NameObject,
     NullObject,
+    NumberObject,
     RectangleObject,
     TextStringObject,
 )
@@ -1568,6 +1569,29 @@ def test_replace_contents__null_object_cloning_error():
 
     reader = PdfReader(data)
     assert len(reader.pages) == 10
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "got 1", id="number"),
+        pytest.param(TextStringObject("x"), "got x", id="string"),
+        pytest.param(DictionaryObject(), "got {}", id="dictionary"),
+    ],
+)
+def test_get_rectangle__value_is_not_an_array(value, expected):
+    """A page box that is not an array raised a TypeError from len()."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/MediaBox")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    with pytest.raises(
+        ValueError, match=f"Expected an array of four values for /MediaBox, {expected}"
+    ):
+        _ = PdfReader(stream).pages[0].mediabox
 
 
 def test_get_rectangle__size_handling(caplog):
