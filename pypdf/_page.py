@@ -101,6 +101,22 @@ MERGE_CROP_BOX = "cropbox"  # pypdf <= 3.4.0 used "trimbox"
 MAX_XFORM_INVOCATIONS_PER_EXTRACTION = 5_000
 
 
+def _get_font_resources(resources_dict: DictionaryObject) -> DictionaryObject:
+    """Return the /Font resources, or an empty dictionary if they are malformed."""
+    fonts = resources_dict.get("/Font")
+    if fonts is None:
+        return DictionaryObject()
+    fonts = fonts.get_object()
+    if not isinstance(fonts, DictionaryObject):
+        logger_warning(
+            "Font resources are not a dictionary: %(fonts)s",
+            source=__name__,
+            fonts=fonts,
+        )
+        return DictionaryObject()
+    return fonts
+
+
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval: Union[RectangleObject, ArrayObject, IndirectObject, None] = self.get(name)
     if isinstance(retval, RectangleObject):
@@ -1861,10 +1877,8 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if (
-            "/Font" in resources_dict
-            and (font_resources_dict := cast(DictionaryObject, resources_dict["/Font"]))
-        ):
+        font_resources_dict = _get_font_resources(resources_dict)
+        if font_resources_dict:
             for font_resource in font_resources_dict:
                 try:
                     font_resource_object = cast(DictionaryObject, font_resources_dict[font_resource].get_object())
