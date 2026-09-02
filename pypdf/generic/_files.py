@@ -17,7 +17,6 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
-    PdfObject,
     StreamObject,
     TextStringObject,
     is_null_or_none,
@@ -368,8 +367,15 @@ class EmbeddedFile:
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} name={self.name!r}>"
 
+    @staticmethod
+    def _report_malformed(message: str, strict: bool) -> None:
+        """Raise an exception in strict mode, warn otherwise."""
+        if strict:
+            raise PdfReadError(message)
+        logger_warning(message, source=__name__)
+
     @classmethod
-    def _load_from_names(cls, names: PdfObject) -> Generator[EmbeddedFile]:
+    def _load_from_names(cls, names: ArrayObject) -> Generator[EmbeddedFile]:
         """
         Convert the given name tree into class instances.
 
@@ -380,13 +386,6 @@ class EmbeddedFile:
             Iterable of class instances for the files found.
         """
         # This is a name tree of the format [name_1, reference_1, name_2, reference_2, ...]
-        if not isinstance(names, ArrayObject):
-            logger_warning(
-                "Embedded files name list is not an array: %(names)s",
-                source=__name__,
-                names=names,
-            )
-            return
         for i, name in enumerate(names):
             if not isinstance(name, str):
                 # Skip plain strings and retrieve them as `direct_name` by index.
@@ -395,7 +394,7 @@ class EmbeddedFile:
                 yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary, parent=names)
 
     @classmethod
-    def _load(cls, catalog: DictionaryObject) -> Generator[EmbeddedFile]:
+    def _load(cls, catalog: DictionaryObject, strict: bool = False) -> Generator[EmbeddedFile]:
         """
         Load the embedded files for the given document catalog.
 
@@ -403,47 +402,47 @@ class EmbeddedFile:
 
         Args:
             catalog: The document catalog to load from.
+            strict: Whether to raise an exception on malformed name trees
+                instead of issuing a warning and skipping them.
 
         Returns:
             Iterable of class instances for the files found.
         """
-        try:
-            names = catalog["/Names"]
-        except KeyError:
+        if "/Names" not in catalog:
             return
+        names = catalog["/Names"]
         if not isinstance(names, DictionaryObject):
-            logger_warning(
-                "Names tree is not a dictionary: %(names)s",
-                source=__name__,
-                names=names,
-            )
+            cls._report_malformed(f"Names tree is not a dictionary: {names}", strict=strict)
             return
-        try:
-            container = names["/EmbeddedFiles"]
-        except KeyError:
+        if "/EmbeddedFiles" not in names:
             return
+        container = names["/EmbeddedFiles"]
         if not isinstance(container, DictionaryObject):
-            logger_warning(
-                "Embedded files entry is not a dictionary: %(container)s",
-                source=__name__,
-                container=container,
-            )
+            cls._report_malformed(f"Embedded files entry is not a dictionary: {container}", strict=strict)
             return
 
         if "/Kids" in container:
             kids = container["/Kids"].get_object()
             if not isinstance(kids, ArrayObject):
-                logger_warning(
-                    "Embedded files /Kids is not an array: %(kids)s",
-                    source=__name__,
-                    kids=kids,
-                )
-            else:
-                for kid in kids:
-                    # There might be further (nested) kids here.
-                    # Wait for an example before evaluating an implementation.
-                    kid = kid.get_object()
-                    if isinstance(kid, DictionaryObject) and "/Names" in kid:
-                        yield from cls._load_from_names(kid["/Names"])
+                cls._report_malformed(f"Embedded files /Kids is not an array: {kids}", strict=strict)
+                return
+            for kid in kids:
+                # There might be further (nested) kids here.
+                # Wait for an example before evaluating an implementation.
+                kid = kid.get_object()
+                if not isinstance(kid, DictionaryObject):
+                    cls._report_malformed(f"Embedded files kid is not a dictionary: {kid}", strict=strict)
+                    continue
+                if "/Names" not in kid:
+                    continue
+                kid_names = kid["/Names"].get_object()
+                if not isinstance(kid_names, ArrayObject):
+                    cls._report_malformed(f"Embedded files name list is not an array: {kid_names}", strict=strict)
+                    continue
+                yield from cls._load_from_names(kid_names)
         if "/Names" in container:
-            yield from cls._load_from_names(container["/Names"])
+            container_names = container["/Names"].get_object()
+            if not isinstance(container_names, ArrayObject):
+                cls._report_malformed(f"Embedded files name list is not an array: {container_names}", strict=strict)
+                return
+            yield from cls._load_from_names(container_names)

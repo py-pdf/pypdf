@@ -140,18 +140,20 @@ def test_embedded_file__kids() -> None:
     assert attachments == []
 
 
-@pytest.mark.parametrize(
-    "catalog",
-    [
-        # /Names is not a dictionary.
+MALFORMED_NAME_TREE_CATALOGS = [
+    pytest.param(
         DictionaryObject({NameObject("/Names"): NumberObject(1)}),
-        # /EmbeddedFiles is not a dictionary.
+        id="names-tree-is-no-dictionary",
+    ),
+    pytest.param(
         DictionaryObject(
             {NameObject("/Names"): DictionaryObject(
                 {NameObject("/EmbeddedFiles"): NumberObject(1)}
             )}
         ),
-        # /Kids is not an array.
+        id="embedded-files-entry-is-no-dictionary",
+    ),
+    pytest.param(
         DictionaryObject(
             {NameObject("/Names"): DictionaryObject(
                 {NameObject("/EmbeddedFiles"): DictionaryObject(
@@ -159,7 +161,9 @@ def test_embedded_file__kids() -> None:
                 )}
             )}
         ),
-        # A /Kids entry that is not a dictionary.
+        id="kids-entry-is-no-array",
+    ),
+    pytest.param(
         DictionaryObject(
             {NameObject("/Names"): DictionaryObject(
                 {NameObject("/EmbeddedFiles"): DictionaryObject(
@@ -167,7 +171,21 @@ def test_embedded_file__kids() -> None:
                 )}
             )}
         ),
-        # /Names name list is not an array.
+        id="kid-is-no-dictionary",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([DictionaryObject(
+                        {NameObject("/Names"): NumberObject(1)}
+                    )])}
+                )}
+            )}
+        ),
+        id="kid-name-list-is-no-array",
+    ),
+    pytest.param(
         DictionaryObject(
             {NameObject("/Names"): DictionaryObject(
                 {NameObject("/EmbeddedFiles"): DictionaryObject(
@@ -175,11 +193,22 @@ def test_embedded_file__kids() -> None:
                 )}
             )}
         ),
-    ],
-)
+        id="name-list-is-no-array",
+    ),
+]
+
+
+@pytest.mark.parametrize("catalog", MALFORMED_NAME_TREE_CATALOGS)
 def test_embedded_file__load_malformed_tree(catalog: DictionaryObject) -> None:
     # A malformed embedded files name tree must not crash attachment loading.
     assert list(EmbeddedFile._load(catalog)) == []
+
+
+@pytest.mark.parametrize("catalog", MALFORMED_NAME_TREE_CATALOGS)
+def test_embedded_file__load_malformed_tree__strict(catalog: DictionaryObject) -> None:
+    # In strict mode, a malformed embedded files name tree raises instead.
+    with pytest.raises(PdfReadError, match="is not a"):
+        list(EmbeddedFile._load(catalog, strict=True))
 
 
 @pytest.mark.enable_socket
