@@ -22,11 +22,11 @@ GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 def test_ocg():
     # Trying to get OCGs to append while preserving the OCGs in the original document
-    reader = PdfReader(RESOURCE_ROOT / "FL_Indian_Camp_Creek.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf")
     writer = PdfWriter()
     # writer.append(reader)
     writer.clone_document_from_reader(reader)
-    readerAppend = PdfReader(RESOURCE_ROOT / "FL_25K_Recreational_Topo.pdf")
+    readerAppend = PdfReader(RESOURCE_ROOT / "ocg_map_test.pdf")
 
     # Trigger the append with the modified merge code that include the OCGs
     writer.append(readerAppend)
@@ -43,19 +43,19 @@ def test_ocg():
         "/CustomField": "Test CustomField",
     })
 
-    writer.write(SAMPLE_ROOT / "output-FL_Indian_Camp_Creek-FL_25K_Recreational_Topo-OCG-test.pdf")
+    writer.write(SAMPLE_ROOT / "output-ocg_map_test-1.pdf")
 def test_ocg_2():
     # Trying to get OCGs to append while preserving the OCGs in the original document
-    reader = PdfReader(RESOURCE_ROOT / "FL_25K_Recreational_Topo.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "ocg_map_test.pdf")
     writer = PdfWriter()
     # writer.append(reader)
     writer.clone_document_from_reader(reader)
-    readerAppend = PdfReader(RESOURCE_ROOT / "FL_Indian_Camp_Creek.pdf")
+    readerAppend = PdfReader(RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf")
 
     # Trigger the append with the modified merge code that include the OCGs
     writer.append(readerAppend)
 
-    writer.write(SAMPLE_ROOT / "output-FL_25K_Recreational_Topo-FL_Indian_Camp_Creek-OCG-test2.pdf")
+    writer.write(SAMPLE_ROOT / "output-ocg_map_test-2.pdf")
 
 def test_merge_preserves_ocgs() -> None:
     def _reader_with_single_ocg(layer_name: str) -> PdfReader:
