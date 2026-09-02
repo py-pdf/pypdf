@@ -275,3 +275,36 @@ def test_index2label__page_labels_not_a_dictionary(caplog, value, expected):
 
     assert PdfReader(stream).page_labels == ["1", "2"]
     assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "expected"),
+    [
+        pytest.param(
+            "/Nums", NumberObject(3), "Page label /Nums is not an array: 3", id="nums-number"
+        ),
+        pytest.param(
+            "/Nums", TextStringObject("x"), "Page label /Nums is not an array: x", id="nums-string"
+        ),
+        pytest.param(
+            "/Kids", NumberObject(3), "Page label /Kids is not an array: 3", id="kids-number"
+        ),
+        pytest.param(
+            "/Kids", TextStringObject("y"), "Page label /Kids is not an array: y", id="kids-string"
+        ),
+    ],
+)
+def test_index2label__node_entry_is_not_an_array(caplog, key, value, expected):
+    """A /Nums or /Kids entry that is not an array raised a TypeError from len() or iteration."""
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {NameObject(key): value}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == ["1", "2"]
+    assert expected in caplog.text

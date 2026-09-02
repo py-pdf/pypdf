@@ -134,7 +134,14 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     # The keys shall be sorted in numerical order,
     # analogously to the arrangement of keys in a name tree
     # as described in 7.9.6, "Name Trees."
-    nums = cast(ArrayObject, dictionary_object["/Nums"])
+    nums = dictionary_object["/Nums"].get_object()
+    if not isinstance(nums, ArrayObject):
+        logger_warning(
+            "Page label /Nums is not an array: %(nums)s",
+            source=__name__,
+            nums=nums,
+        )
+        return str(index + 1)  # Fallback
     nums_length = len(nums)
     i = 0
     value = None
@@ -217,7 +224,14 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
         # Limit maximum depth.
         level = 0
         while level < 100:
-            kids = cast(list[DictionaryObject], number_tree["/Kids"])
+            kids = number_tree["/Kids"].get_object()
+            if not isinstance(kids, ArrayObject):
+                logger_warning(
+                    "Page label /Kids is not an array: %(kids)s",
+                    source=__name__,
+                    kids=kids,
+                )
+                return str(index + 1)  # Fallback
             for kid in kids:
                 # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
                 limits = kid.get("/Limits", NullObject()).get_object()
