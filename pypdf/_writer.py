@@ -802,7 +802,7 @@ class PdfWriter(PdfDocCommon):
         Add an action to the document-level JavaScript name tree.
 
         Args:
-            action: The action to be done.
+            action: The action to add.
 
         Example:
             This will launch the print window when the PDF is opened.

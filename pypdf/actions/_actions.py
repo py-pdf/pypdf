@@ -64,16 +64,16 @@ class Action(DictionaryObject, ABC):
     @classmethod
     def _create_open_action(cls, writer: "PdfWriter", action: "Action") -> None:
         """
-        Create a new action and add it to the writer.
+        Create a new action and add it to the writer; currenlty only JavaScript is implemented.
 
         Args:
             writer: The writer to add the action to.
-            action: The action to be done.
+            action: The action to add.
         """
         if "/Names" not in writer.root_object:
             writer._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
 
-        names = cast(DictionaryObject, writer._root_object[CatalogAttributes.NAMES])
+        names = cast(DictionaryObject, writer.root_object[CatalogAttributes.NAMES])  
         if "/JavaScript" not in names:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}

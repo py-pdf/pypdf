@@ -27,19 +27,19 @@ def test_add_js(pdf_file_writer):
         pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
     assert (
-        "/Names" in pdf_file_writer._root_object
+        "/Names" in pdf_file_writer.root_object
     ), "add_js should add a name catalog in the root object."
     assert (
-        "/JavaScript" in pdf_file_writer._root_object["/Names"]
+        "/JavaScript" in pdf_file_writer.root_object["/Names"]
     ), "add_js should add a JavaScript name tree under the name catalog."
 
 
 def test_added_js(pdf_file_writer):
     def get_javascript_name() -> Any:
-        assert "/Names" in pdf_file_writer._root_object
-        assert "/JavaScript" in pdf_file_writer._root_object["/Names"]
-        assert "/Names" in pdf_file_writer._root_object["/Names"]["/JavaScript"]
-        return pdf_file_writer._root_object["/Names"]["/JavaScript"]["/Names"][
+        assert "/Names" in pdf_file_writer.root_object
+        assert "/JavaScript" in pdf_file_writer.root_object["/Names"]
+        assert "/Names" in pdf_file_writer.root_object["/Names"]["/JavaScript"]
+        return pdf_file_writer.root_object["/Names"]["/JavaScript"]["/Names"][
             -2
         ]  # return -2 in order to get the latest javascript
 
@@ -74,21 +74,18 @@ def test_add_open_action(pdf_file_writer):
     pdf_file_writer.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
 
     assert (
-        "/Names" in pdf_file_writer._root_object
+        "/Names" in pdf_file_writer.root_object
     ), "add_open_action should add a name catalog in the root object."
     assert (
-        "/JavaScript" in pdf_file_writer._root_object["/Names"]
+        "/JavaScript" in pdf_file_writer.root_object["/Names"]
     ), "add_open_action should add a JavaScript name tree under the name catalog."
 
 
 def test_added_open_action(pdf_file_writer):
     def get_javascript_name() -> Any:
-        assert "/Names" in pdf_file_writer._root_object
-        assert "/JavaScript" in pdf_file_writer._root_object["/Names"]
-        assert "/Names" in pdf_file_writer._root_object["/Names"]["/JavaScript"]
-        return pdf_file_writer._root_object["/Names"]["/JavaScript"]["/Names"][
-            -2
-        ]  # return -2 in order to get the latest javascript
+        assert "/Names" in pdf_file_writer.root_object
+        assert "/JavaScript" in pdf_file_writer.root_object["/Names"]
+        assert "/Names" in pdf_file_writer.root_object["/Names"]["/JavaScript"]
 
     pdf_file_writer.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
     first_js = get_javascript_name()
