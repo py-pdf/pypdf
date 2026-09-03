@@ -675,15 +675,16 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 length = -1
             pstart = stream.tell()
 
-            from ..filters import MAX_DECLARED_STREAM_LENGTH  # noqa: PLC0415
+            from .._configuration import get_configuration  # noqa: PLC0415
+            configuration = get_configuration()
             if length >= 0:
-                if length > MAX_DECLARED_STREAM_LENGTH:
+                if length > configuration.maximum_declared_stream_length:
                     raise LimitReachedError(f"Declared stream length of {length} exceeds maximum allowed length.")
 
                 data["__streamdata__"] = stream.read(length)
             else:
                 data["__streamdata__"] = read_until_regex(
-                    stream=stream, regex=re.compile(b"endstream"), length=MAX_DECLARED_STREAM_LENGTH,
+                    stream=stream, regex=re.compile(b"endstream"), length=configuration.maximum_declared_stream_length,
                 )
             e = read_non_whitespace(stream)
             ndstream = stream.read(8)
@@ -703,7 +704,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 elif pdf is not None and not pdf.strict:
                     stream.seek(pstart, 0)
                     data["__streamdata__"] = DictionaryObject._read_unsized_from_stream(
-                        stream=stream, pdf=pdf, length=MAX_DECLARED_STREAM_LENGTH
+                        stream=stream, pdf=pdf, length=configuration.maximum_declared_stream_length
                     )
                     pos = stream.tell()
                 else:
@@ -1231,7 +1232,8 @@ class ContentStream(DecodedStreamObject):
         else:
             stream = stream.get_object()
             if isinstance(stream, ArrayObject):
-                from pypdf.filters import MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH  # noqa: PLC0415
+                from pypdf._configuration import get_configuration  # noqa: PLC0415
+                configuration = get_configuration()
 
                 if (stream_length := len(stream)) > CONTENT_STREAM_ARRAY_MAX_LENGTH:
                     raise LimitReachedError(
@@ -1254,10 +1256,10 @@ class ContentStream(DecodedStreamObject):
                     else:
                         new_data = s_resolved.get_data()
                         length += len(new_data)
-                        if length > MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH:
+                        if length > configuration.array_based_stream_maximum_output_length:
                             raise LimitReachedError(
                                 f"Array-based stream has at least {length} > "
-                                f"{MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH} output bytes."
+                                f"{configuration.array_based_stream_maximum_output_length} output bytes."
                             )
                         data += new_data
                     if len(data) == 0 or data[-1:] != b"\n":

@@ -44,6 +44,7 @@ from typing import (
     overload,
 )
 
+from ._configuration import get_configuration
 from ._font import Font
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
@@ -95,10 +96,7 @@ except ImportError:
     Image = object  # type: ignore[assignment,misc,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
     pil_not_imported = True  # error will be raised only when using images
 
-MERGE_CROP_BOX = "cropbox"  # pypdf <= 3.4.0 used "trimbox"
-
-# TODO: Make configurable.
-MAX_XFORM_INVOCATIONS_PER_EXTRACTION = 5_000
+MERGE_CROP_BOX = "cropbox"  # DEPRECATED: Use pypdf.Confiugration.
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -1290,7 +1288,8 @@ class PageObject(DictionaryObject):
 
         page2_content = page2.get_contents()
         if page2_content is not None:
-            rect = getattr(page2, MERGE_CROP_BOX)
+            configuration = get_configuration()
+            rect = getattr(page2, configuration.page_merge_box)
             page2_content.operations.insert(
                 0,
                 (
@@ -1439,7 +1438,8 @@ class PageObject(DictionaryObject):
 
         page2content = page2.get_contents()
         if page2content is not None:
-            rect = getattr(page2, MERGE_CROP_BOX)
+            configuration = get_configuration()
+            rect = getattr(page2, configuration.page_merge_box)
             page2content.operations.insert(
                 0,
                 (
@@ -2018,7 +2018,8 @@ class PageObject(DictionaryObject):
             )
             return ""
 
-        if traversal_state.entry_count >= MAX_XFORM_INVOCATIONS_PER_EXTRACTION:
+        configuration = get_configuration()
+        if traversal_state.entry_count >= configuration.xform_maximum_invocations_per_extraction:
             if not traversal_state.has_logged:
                 traversal_state.has_logged = True
                 logger_warning(
@@ -2027,7 +2028,7 @@ class PageObject(DictionaryObject):
                         "further form content is skipped."
                     ),
                     source=__name__,
-                    limit=MAX_XFORM_INVOCATIONS_PER_EXTRACTION
+                    limit=configuration.xform_maximum_invocations_per_extraction
                 )
             return ""
 

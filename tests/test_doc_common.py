@@ -10,7 +10,7 @@ from unittest import mock
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.filters import FlateDecode
 from pypdf.generic import (
@@ -666,7 +666,7 @@ def test_flatten__depth_limit():
         )
     )
 
-    with mock.patch("pypdf._doc_common.PAGE_TREE_MAX_DEPTH", 1), pytest.raises(
+    with apply_configuration(page_tree_maximum_depth=1), pytest.raises(
         LimitReachedError, match=r"^Maximum page tree depth reached: 2 > 1\.$"
     ):
         writer._flatten()
@@ -694,7 +694,7 @@ def test_flatten__entry_limit_for_reused_paths():
         )
     writer.root_object[NameObject("/Pages")] = child
 
-    with mock.patch("pypdf._doc_common.PAGE_TREE_MAX_ENTRIES", 100), pytest.raises(
+    with apply_configuration(page_tree_maximum_entries=100), pytest.raises(
         LimitReachedError, match=r"^Maximum page tree entry limit reached: 101 > 100\.$"
     ):
         writer._flatten()
@@ -844,8 +844,8 @@ def test_xfa__decompression_limit():
     data.flush()
 
     reader = PdfReader(data)
-    with mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", 75_000), pytest.raises(
-            expected_exception=LimitReachedError, match=r"^Limit reached while decompressing. 902 bytes remaining.$"
+    with apply_configuration(zlib_maximum_output_length=75_000), pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Limit reached while decompressing\. 902 bytes remaining\.$"
     ):
         _ = reader.xfa
 
@@ -1030,7 +1030,7 @@ def test_get_outline__entry_count():
         outline[NameObject("/Next")] = writer._add_object(outlines[index + 1])
         writer._add_object(outline)
 
-    with mock.patch("pypdf._doc_common.OUTLINE_MAX_ENTRIES", 1000), \
+    with apply_configuration(outline_maximum_entries=1000), \
             pytest.raises(
                 expected_exception=LimitReachedError, match=r"^Maximum outline entry limit reached: 1001 > 1000\.$"
             ):

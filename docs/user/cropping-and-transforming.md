@@ -209,7 +209,7 @@ page.bleedbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
 page.artbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
 ```
 
-### pypdf._page.MERGE_CROP_BOX
+### Page merge box
 
 `pypdf<=3.4.0` used to merge the other page with `trimbox`.
 `pypdf>3.4.0` changes this behavior to `cropbox`.
@@ -218,9 +218,9 @@ In case anybody has good reasons to use/expect `trimbox`, you can add the
 following code to get the old behavior:
 
 ```{testcode}
-import pypdf
+from pypdf import overwrite_configuration
 
-pypdf._page.MERGE_CROP_BOX = "trimbox"
+overwrite_configuration(page_merge_box="trimbox")
 ```
 
 ## Transforming several copies of the same page
