@@ -478,12 +478,15 @@ class PdfWriter(PdfDocCommon):
         self,
         indirect_reference: Union[int, IndirectObject],
     ) -> PdfObject:
-        if isinstance(indirect_reference, int):
-            obj = self._objects[indirect_reference - 1]
-        elif indirect_reference.pdf != self:
-            raise ValueError("PDF must be self")
-        else:
-            obj = self._objects[indirect_reference.idnum - 1]
+        try:
+            if isinstance(indirect_reference, int):
+                obj = self._objects[indirect_reference - 1]
+            elif indirect_reference.pdf != self:
+                raise ValueError("PDF must be self")
+            else:
+                obj = self._objects[indirect_reference.idnum - 1]
+        except IndexError:
+            raise PdfReadError(f"Object {indirect_reference!r} not found!")
         if obj is None:
             raise PdfReadError(f"Object {indirect_reference!r} not found!")
         return obj
@@ -665,14 +668,37 @@ class PdfWriter(PdfDocCommon):
             return self.add_page(page, excluded_keys)
         return self._add_page(page, index, excluded_keys)
 
+    def _build_page_id_cache(self) -> dict[int, int]:
+        """
+        Build a mapping from page indirect-reference idnum to page index.
+
+        In PdfWriter, all object generations are 0 (see ``_add_object``),
+        so ``idnum`` alone uniquely identifies a page object.
+
+        Returns:
+            A dict mapping ``idnum`` to zero-based page index.
+
+        """
+        return {
+            page.indirect_reference.idnum: idx
+            for idx, page in enumerate(self.pages)
+            if page.indirect_reference is not None
+        }
+
     def _get_page_number_by_indirect(
-        self, indirect_reference: Union[int, NullObject, IndirectObject, None]
+        self,
+        indirect_reference: Union[int, NullObject, IndirectObject, None],
+        _page_cache: Optional[dict[int, int]] = None,
     ) -> Optional[int]:
         """
-        Generate _page_id2num.
+        Resolve an indirect reference to its page index.
 
         Args:
-            indirect_reference:
+            indirect_reference: The reference to resolve.
+            _page_cache: Optional pre-built ``{idnum: page_index}`` dict
+                from :meth:`_build_page_id_cache`.  When resolving many
+                references in a loop, pass a single cache to avoid
+                rebuilding it on every call.
 
         Returns:
             The page number or None
@@ -684,18 +710,19 @@ class PdfWriter(PdfDocCommon):
         assert indirect_reference is not None, "mypy"
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
+        if _page_cache is None:
+            _page_cache = self._build_page_id_cache()
         target_id = getattr(indirect_reference, "idnum", None)
         if target_id is not None:
-            for idx, page in enumerate(self.pages):
-                if page.indirect_reference is not None and page.indirect_reference.idnum == target_id:
-                    return idx
+            result = _page_cache.get(target_id)
+            if result is not None:
+                return result
         obj = indirect_reference.get_object()
         if isinstance(obj, PageObject):
             if obj.indirect_reference is not None:
-                target_id = obj.indirect_reference.idnum
-                for idx, page in enumerate(self.pages):
-                    if page.indirect_reference is not None and page.indirect_reference.idnum == target_id:
-                        return idx
+                result = _page_cache.get(obj.indirect_reference.idnum)
+                if result is not None:
+                    return result
             return obj.page_number
         return None
 
