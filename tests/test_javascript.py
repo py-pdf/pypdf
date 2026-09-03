@@ -88,7 +88,7 @@ def test_added_open_action(pdf_file_writer):
         assert "/Names" in pdf_file_writer.root_object["/Names"]["/JavaScript"]
         return pdf_file_writer.root_object["/Names"]["/JavaScript"]["/Names"][
             -2
-        ]  # return -2 in order to get the latest javascript
+        ]  # return the key of the most recently added JavaScript
 
     pdf_file_writer.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
     first_js = get_javascript_name()
