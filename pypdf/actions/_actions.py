@@ -73,7 +73,7 @@ class Action(DictionaryObject, ABC):
         if "/Names" not in writer.root_object:
             writer._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
 
-        names = cast(DictionaryObject, writer.root_object[CatalogAttributes.NAMES])  
+        names = cast(DictionaryObject, writer.root_object[CatalogAttributes.NAMES])
         if "/JavaScript" not in names:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}
