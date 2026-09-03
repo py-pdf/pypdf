@@ -1185,6 +1185,50 @@ def test_get_named_destinations__tree_is_not_a_dictionary(caplog, key, value, ex
     assert expected in caplog.text
 
 
+@pytest.mark.parametrize(
+    ("key", "value", "expected"),
+    [
+        pytest.param(
+            "/Names",
+            NumberObject(5),
+            "Destination tree names are not an array: 5",
+            id="names-number",
+        ),
+        pytest.param(
+            "/Names",
+            TextStringObject("x"),
+            "Destination tree names are not an array: x",
+            id="names-string",
+        ),
+        pytest.param(
+            "/Kids",
+            NumberObject(7),
+            "Destination tree kids are not an array: 7",
+            id="kids-number",
+        ),
+        pytest.param(
+            "/Kids",
+            TextStringObject("y"),
+            "Destination tree kids are not an array: y",
+            id="kids-string",
+        ),
+    ],
+)
+def test_get_named_destinations__node_entry_is_not_an_array(caplog, key, value, expected):
+    """A /Names or /Kids entry that is not an array raised a TypeError from len() or iteration."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/Names")] = DictionaryObject(
+        {NameObject("/Dests"): DictionaryObject({NameObject(key): value})}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).named_destinations == {}
+    assert expected in caplog.text
+
+
 def test_get_named_destinations__names_is_not_a_dictionary():
     """A /Names entry that cannot hold /Dests simply yields no destinations."""
     writer = PdfWriter()
