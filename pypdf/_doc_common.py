@@ -1555,7 +1555,7 @@ class PdfDocCommon(ABC):
     @property
     def attachment_list(self) -> Generator[EmbeddedFile, None, None]:
         """Iterable of attachment objects."""
-        yield from EmbeddedFile._load(self.root_object)
+        yield from EmbeddedFile._load(self.root_object, strict=self.strict)
 
     def _list_attachments(self) -> list[str]:
         """

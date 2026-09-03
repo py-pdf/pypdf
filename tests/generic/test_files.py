@@ -140,6 +140,143 @@ def test_embedded_file__kids() -> None:
     assert attachments == []
 
 
+MALFORMED_NAME_TREE_CATALOGS = [
+    pytest.param(
+        DictionaryObject({NameObject("/Names"): NumberObject(1)}),
+        id="names-tree-is-no-dictionary",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): NumberObject(1)}
+            )}
+        ),
+        id="embedded-files-entry-is-no-dictionary",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): NumberObject(1)}
+                )}
+            )}
+        ),
+        id="kids-entry-is-no-array",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([NumberObject(1)])}
+                )}
+            )}
+        ),
+        id="kid-is-no-dictionary",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([DictionaryObject(
+                        {NameObject("/Names"): NumberObject(1)}
+                    )])}
+                )}
+            )}
+        ),
+        id="kid-name-list-is-no-array",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Names"): NumberObject(1)}
+                )}
+            )}
+        ),
+        id="name-list-is-no-array",
+    ),
+]
+
+
+@pytest.mark.parametrize("catalog", MALFORMED_NAME_TREE_CATALOGS)
+def test_embedded_file__load_malformed_tree(catalog: DictionaryObject) -> None:
+    # A malformed embedded files name tree must not crash attachment loading.
+    assert list(EmbeddedFile._load(catalog)) == []
+
+
+@pytest.mark.parametrize("catalog", MALFORMED_NAME_TREE_CATALOGS)
+def test_embedded_file__load_malformed_tree__strict(catalog: DictionaryObject) -> None:
+    # In strict mode, a malformed embedded files name tree raises instead.
+    with pytest.raises(PdfReadError, match="is not a"):
+        list(EmbeddedFile._load(catalog, strict=True))
+
+
+SPEC_CONFORMANT_EMPTY_CATALOGS = [
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/Dests"): DictionaryObject()}
+            )}
+        ),
+        id="no-embedded-files-entry",
+    ),
+    pytest.param(
+        DictionaryObject({NameObject("/Names"): NullObject()}),
+        id="null-names-tree",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): NullObject()}
+            )}
+        ),
+        id="null-embedded-files-entry",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): NullObject()}
+                )}
+            )}
+        ),
+        id="null-kids-entry",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([DictionaryObject(
+                        {NameObject("/Names"): NullObject()}
+                    )])}
+                )}
+            )}
+        ),
+        id="null-kid-name-list",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Names"): NullObject()}
+                )}
+            )}
+        ),
+        id="null-name-list",
+    ),
+]
+
+
+@pytest.mark.parametrize("catalog", SPEC_CONFORMANT_EMPTY_CATALOGS)
+def test_embedded_file__load_absent_or_null_entries(
+    catalog: DictionaryObject, caplog: pytest.LogCaptureFixture
+) -> None:
+    # A null value is equivalent to an omitted entry, thus neither warns nor raises.
+    assert list(EmbeddedFile._load(catalog)) == []
+    assert list(EmbeddedFile._load(catalog, strict=True)) == []
+    assert caplog.text == ""
+
+
 @pytest.mark.enable_socket
 def test_embedded_file__ensure_params__existing_params() -> None:
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
