@@ -3,7 +3,7 @@ from io import BytesIO
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.generic import (
     ArrayObject,
     Destination,
@@ -247,9 +247,78 @@ def test_find_before_page_handles_direct_page_object() -> None:
     child[NameObject("/Dest")] = ArrayObject([page_obj, NameObject("/Fit")])
     writer._add_object(child)
     parent.insert_child(child, None, writer)
+    result = _find_outline_item_before_page(0, parent, writer)
+    assert result is not None
+
+
+def test_find_before_page_skips_none_page_ref() -> None:
+    """Skip children that have no resolvable page reference."""
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+
+    parent = TreeObject()
+    writer._add_object(parent)
+
+    # Child with no /Dest or /A
+    bad_child = TreeObject()
+    writer._add_object(bad_child)
+    parent.insert_child(bad_child, None, writer)
+
+    # Good child pointing to page 0
+    good_child = TreeObject()
+    good_child[NameObject("/Dest")] = ArrayObject(
+        [writer.pages[0].indirect_reference, NameObject("/Fit")]
+    )
+    writer._add_object(good_child)
+    parent.insert_child(good_child, None, writer)
 
     result = _find_outline_item_before_page(0, parent, writer)
     assert result is not None
+
+
+def test_find_before_page_handles_page_object_without_indirect_reference() -> None:
+    """Handle PageObject directly in /Dest array that has no indirect_reference."""
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+
+    parent = TreeObject()
+    writer._add_object(parent)
+
+    child = TreeObject()
+    # Bare PageObject, no indirect_reference
+    page_obj = PageObject()
+    child[NameObject("/Dest")] = ArrayObject([page_obj, NameObject("/Fit")])
+    writer._add_object(child)
+    parent.insert_child(child, None, writer)
+
+    # The page_obj has no indirect_reference, so it falls back to obj.page_number
+    # which raises PdfReadError. The function catches this and skips the child.
+    result = _find_outline_item_before_page(0, parent, writer)
+    assert result is None
+
+
+def test_find_before_page_handles_page_object_not_in_cache() -> None:
+    """Handle PageObject directly in /Dest array that has an indirect_reference but is not in pages."""
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+
+    parent = TreeObject()
+    writer._add_object(parent)
+
+    child = TreeObject()
+    # PageObject added to writer but NOT to writer.pages
+    page_obj_fake = PageObject()
+    writer._add_object(page_obj_fake)
+
+    child[NameObject("/Dest")] = ArrayObject([page_obj_fake, NameObject("/Fit")])
+    writer._add_object(child)
+    parent.insert_child(child, None, writer)
+
+    # The page_obj_fake has an indirect_reference, but it's not in writer.pages
+    # so _page_cache.get() returns None and it falls back to obj.page_number
+    # which raises PdfReadError.
+    result = _find_outline_item_before_page(0, parent, writer)
+    assert result is None
 
 
 # ── Merge-level integration tests ────────────────────────────────────
