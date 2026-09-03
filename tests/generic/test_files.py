@@ -211,6 +211,72 @@ def test_embedded_file__load_malformed_tree__strict(catalog: DictionaryObject) -
         list(EmbeddedFile._load(catalog, strict=True))
 
 
+SPEC_CONFORMANT_EMPTY_CATALOGS = [
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/Dests"): DictionaryObject()}
+            )}
+        ),
+        id="no-embedded-files-entry",
+    ),
+    pytest.param(
+        DictionaryObject({NameObject("/Names"): NullObject()}),
+        id="null-names-tree",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): NullObject()}
+            )}
+        ),
+        id="null-embedded-files-entry",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): NullObject()}
+                )}
+            )}
+        ),
+        id="null-kids-entry",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([DictionaryObject(
+                        {NameObject("/Names"): NullObject()}
+                    )])}
+                )}
+            )}
+        ),
+        id="null-kid-name-list",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Names"): NullObject()}
+                )}
+            )}
+        ),
+        id="null-name-list",
+    ),
+]
+
+
+@pytest.mark.parametrize("catalog", SPEC_CONFORMANT_EMPTY_CATALOGS)
+def test_embedded_file__load_absent_or_null_entries(
+    catalog: DictionaryObject, caplog: pytest.LogCaptureFixture
+) -> None:
+    # A null value is equivalent to an omitted entry, thus neither warns nor raises.
+    assert list(EmbeddedFile._load(catalog)) == []
+    assert list(EmbeddedFile._load(catalog, strict=True)) == []
+    assert caplog.text == ""
+
+
 @pytest.mark.enable_socket
 def test_embedded_file__ensure_params__existing_params() -> None:
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"

@@ -411,19 +411,26 @@ class EmbeddedFile:
         if "/Names" not in catalog:
             return
         names = catalog["/Names"]
+        if isinstance(names, NullObject):
+            # A null value is equivalent to an omitted entry.
+            return
         if not isinstance(names, DictionaryObject):
             cls._report_malformed(f"Names tree is not a dictionary: {names}", strict=strict)
             return
         if "/EmbeddedFiles" not in names:
             return
         container = names["/EmbeddedFiles"]
+        if isinstance(container, NullObject):
+            return
         if not isinstance(container, DictionaryObject):
             cls._report_malformed(f"Embedded files entry is not a dictionary: {container}", strict=strict)
             return
 
         if "/Kids" in container:
             kids = container["/Kids"].get_object()
-            if not isinstance(kids, ArrayObject):
+            if isinstance(kids, NullObject):
+                kids = ArrayObject()
+            elif not isinstance(kids, ArrayObject):
                 cls._report_malformed(f"Embedded files /Kids is not an array: {kids}", strict=strict)
                 return
             for kid in kids:
@@ -436,12 +443,16 @@ class EmbeddedFile:
                 if "/Names" not in kid:
                     continue
                 kid_names = kid["/Names"].get_object()
+                if isinstance(kid_names, NullObject):
+                    continue
                 if not isinstance(kid_names, ArrayObject):
                     cls._report_malformed(f"Embedded files name list is not an array: {kid_names}", strict=strict)
                     continue
                 yield from cls._load_from_names(kid_names)
         if "/Names" in container:
             container_names = container["/Names"].get_object()
+            if isinstance(container_names, NullObject):
+                return
             if not isinstance(container_names, ArrayObject):
                 cls._report_malformed(f"Embedded files name list is not an array: {container_names}", strict=strict)
                 return
