@@ -621,12 +621,12 @@ class CCITTParameters:
     def group(self) -> int:
         if self.K < 0:
             # Pure two-dimensional encoding (Group 4)
-            CCITTgroup = 4
+            ccitt_group = 4
         else:
             # K == 0: Pure one-dimensional encoding (Group 3, 1-D)
             # K > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
-            CCITTgroup = 3
-        return CCITTgroup
+            ccitt_group = 3
+        return ccitt_group
 
 
 def __create_old_class_instance(

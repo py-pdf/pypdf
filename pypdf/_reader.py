@@ -769,7 +769,7 @@ class PdfReader(PdfDocCommon):
         the file. Hence for standard-compliant PDF documents this function will
         read only the last part (DEFAULT_BUFFER_SIZE).
         """
-        HEADER_SIZE = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
+        header_size = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         first = True
         while not line.startswith(b"%%EOF"):
@@ -788,7 +788,7 @@ class PdfReader(PdfDocCommon):
                     "The file might be truncated and some data might not be read.",
                     source=__name__,
                 )
-            if stream.tell() < HEADER_SIZE:
+            if stream.tell() < header_size:
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
                 logger_warning("EOF marker not found", source=__name__)

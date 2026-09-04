@@ -974,29 +974,27 @@ def test_merge_page_resources_smoke_test():
     page1 = PageObject.create_blank_page(width=100, height=100)
     page2 = PageObject.create_blank_page(width=100, height=100)
 
-    NO = NameObject
-
     # set up some dummy resources that overlap (or not) between the two pages
     # (note, all the edge cases are tested in test_merge_resources)
-    props1 = page1[NO("/Resources")][NO("/Properties")] = DictionaryObject(
+    props1 = page1[NameObject("/Resources")][NameObject("/Properties")] = DictionaryObject(
         {
-            NO("/just1"): NO("/just1-value"),
-            NO("/overlap-matching"): NO("/overlap-matching-value"),
-            NO("/overlap-different"): NO("/overlap-different-value1"),
+            NameObject("/just1"): NameObject("/just1-value"),
+            NameObject("/overlap-matching"): NameObject("/overlap-matching-value"),
+            NameObject("/overlap-different"): NameObject("/overlap-different-value1"),
         }
     )
-    props2 = page2[NO("/Resources")][NO("/Properties")] = DictionaryObject(
+    props2 = page2[NameObject("/Resources")][NameObject("/Properties")] = DictionaryObject(
         {
-            NO("/just2"): NO("/just2-value"),
-            NO("/overlap-matching"): NO("/overlap-matching-value"),
-            NO("/overlap-different"): NO("/overlap-different-value2"),
+            NameObject("/just2"): NameObject("/just2-value"),
+            NameObject("/overlap-matching"): NameObject("/overlap-matching-value"),
+            NameObject("/overlap-different"): NameObject("/overlap-different-value2"),
         }
     )
     # use these keys for some "operations", to validate renaming
     # (the operand name doesn't matter)
-    contents1 = page1[NO("/Contents")] = ContentStream(None, None)
+    contents1 = page1[NameObject("/Contents")] = ContentStream(None, None)
     contents1.operations = [(ArrayObject(props1.keys()), b"page1-contents")]
-    contents2 = page2[NO("/Contents")] = ContentStream(None, None)
+    contents2 = page2[NameObject("/Contents")] = ContentStream(None, None)
     contents2.operations = [(ArrayObject(props2.keys()), b"page2-contents")]
 
     expected_properties = {
@@ -1013,9 +1011,9 @@ def test_merge_page_resources_smoke_test():
         (
             ArrayObject(
                 [
-                    NO("/just2"),
-                    NO("/overlap-matching"),
-                    NO("/overlap-different-0"),
+                    NameObject("/just2"),
+                    NameObject("/overlap-matching"),
+                    NameObject("/overlap-different-0"),
                 ]
             ),
             b"page2-contents",
@@ -1026,7 +1024,7 @@ def test_merge_page_resources_smoke_test():
     page1.merge_page(page2)
 
     # Assert
-    assert page1[NO("/Resources")][NO("/Properties")] == expected_properties
+    assert page1[NameObject("/Resources")][NameObject("/Properties")] == expected_properties
 
     relevant_operations = [
         (op, name)
