@@ -148,8 +148,8 @@ def test_tree_object__insert_child_in_first_position_with_next() -> None:
     child_a_ref = writer._add_object(child_a)
     tree.add_child(child_a_ref, writer)
 
-    # prev = tree["/Last"] = A, prev == before, so no while loop.
-    # try: prev["/Prev"] — A has no /Prev → KeyError → except block fires.
+    # prev = tree["/First"] = A, prev == before, so no while loop.
+    # "/Prev" not in A → first-position branch fires.
 
     # Create child C with a /Next pointer pointing to something
     child_c = DictionaryObject()
@@ -521,16 +521,21 @@ def test_content_stream__read_inline_image__end_of_stream() -> None:
 def test_tree_object__insert_child__cycle() -> None:
     writer = PdfWriter()
 
+    # Build a cyclic /Next chain reachable from /First:
+    # previous1 -> previous2 -> previous3 -> previous1
     previous1 = TreeObject()
     previous2 = TreeObject()
     previous3 = TreeObject()
-    previous1[NameObject("/Next")] = writer._add_object(previous2)
-    previous2[NameObject("/Next")] = writer._add_object(previous3)
-    previous3[NameObject("/Next")] = writer._add_object(previous1)
+    prev1_ref = writer._add_object(previous1)
+    prev2_ref = writer._add_object(previous2)
+    prev3_ref = writer._add_object(previous3)
+    previous1[NameObject("/Next")] = prev2_ref
+    previous2[NameObject("/Next")] = prev3_ref
+    previous3[NameObject("/Next")] = prev1_ref  # cycle back to previous1
 
     tree = TreeObject()
-    tree[NameObject("/Last")] = writer._add_object(previous1)
-    tree[NameObject("/First")] = writer._add_object(DictionaryObject())
+    tree[NameObject("/First")] = prev1_ref
+    tree[NameObject("/Last")] = writer._add_object(DictionaryObject())
     writer._add_object(tree)
 
     with pytest.raises(LimitReachedError, match=r"^Detected cycle in tree structure\.$"):
@@ -540,6 +545,81 @@ def test_tree_object__insert_child__cycle() -> None:
             pdf=writer,
         )
 
+
+
+def test_tree_object__insert_child_append_at_end() -> None:
+    """Cover insert_child append-at-end when ``before`` is not found in the tree."""
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    child1 = TreeObject()
+    child1[NameObject("/Foo")] = TextStringObject("1")
+    child1_ref = writer._add_object(child1)
+    tree.add_child(child1_ref, writer)
+
+    child2 = TreeObject()
+    child2[NameObject("/Foo")] = TextStringObject("2")
+    child2_ref = writer._add_object(child2)
+    tree.add_child(child2_ref, writer)
+
+    # Use a ``before`` ref that doesn't exist in the tree — triggers append
+    dummy = TreeObject()
+    dummy_ref = writer._add_object(dummy)
+
+    new_child = TreeObject()
+    new_child[NameObject("/Foo")] = TextStringObject("new")
+    new_child_ref = writer._add_object(new_child)
+    tree.insert_child(new_child_ref, dummy_ref, writer)
+
+    children = list(tree.children())
+    assert len(children) == 3
+    # new_child should be at the end
+    assert children[2]["/Foo"] == "new"
+    assert tree["/Last"] == new_child
+
+
+def test_tree_object__insert_child_cleanup_coverage() -> None:
+    """Cover the cleanup of /Next and /Prev in insert_child."""
+    writer = PdfWriter()
+
+    # 1. Empty tree: child has /Next and /Prev
+    tree1 = TreeObject()
+    writer._add_object(tree1)
+    child1 = TreeObject()
+    child1[NameObject("/Next")] = NullObject()
+    child1[NameObject("/Prev")] = NullObject()
+    child1_ref = writer._add_object(child1)
+    tree1.insert_child(child1_ref, None, writer)
+    assert "/Next" not in child1
+    assert "/Prev" not in child1
+
+    # 2. Append at end: child has /Next
+    tree2 = TreeObject()
+    writer._add_object(tree2)
+    first = TreeObject()
+    first_ref = writer._add_object(first)
+    tree2.insert_child(first_ref, None, writer)
+
+    child2 = TreeObject()
+    child2[NameObject("/Next")] = NullObject()
+    child2_ref = writer._add_object(child2)
+    # before is None or not found, so it appends
+    tree2.insert_child(child2_ref, None, writer)
+    assert "/Next" not in child2
+
+    # 3. Insert at first position: child has /Prev
+    tree3 = TreeObject()
+    writer._add_object(tree3)
+    existing = TreeObject()
+    existing_ref = writer._add_object(existing)
+    tree3.insert_child(existing_ref, None, writer)
+
+    child3 = TreeObject()
+    child3[NameObject("/Prev")] = NullObject()
+    child3_ref = writer._add_object(child3)
+    tree3.insert_child(child3_ref, existing_ref, writer)
+    assert "/Prev" not in child3
 
 def _outlined_pdf(nested: bool = False) -> BytesIO:
     writer = PdfWriter()
