@@ -27,6 +27,7 @@ from ..generic import (
     StreamObject,
 )
 from ..generic._base import ByteStringObject, TextStringObject
+from ._color import Color, GrayscaleColor
 
 if TYPE_CHECKING:
     from pypdf._writer import PdfWriter
@@ -53,6 +54,8 @@ class BaseStreamConfig:
     rectangle: RectangleObject = field(default_factory=lambda: RectangleObject((0.0, 0.0, 0.0, 0.0)))
     border_width: int = 1  # The width of the border in points
     border_style: str = BorderStyles.SOLID
+    border_color: Color | None = None
+    background_color: Color | None = None
     rotation: int = 0
 
 
@@ -97,6 +100,37 @@ class BaseStreamAppearance(DecodedStreamObject):
         rotation = self._layout.rotation % 360
         if rotation:
             self._add_matrix(rotation)
+
+        ap_stream_parts = []
+        # Only add a background color when color is defined and not transparent
+        if isinstance(self._layout.background_color, Color):
+            ap_stream_parts.append(
+                f"0 0 {self._layout.rectangle.width} {self._layout.rectangle.height} re\n"
+                f"{self._layout.background_color.as_operator()}\n"
+                "f\n"
+            )
+        # Only add a border when border width is larger than 0, border
+        # color is defined, and border color is not set to transparent.
+        if self._layout.border_width > 0:
+            if isinstance(self._layout.border_color, Color):
+                border_width_string = f"{self._layout.border_width} w\n" if self._layout.border_width != 1 else ""
+                ap_stream_parts.append(
+                    f"{self._layout.border_width} "
+                    f"{self._layout.border_width} "
+                    f"{self._layout.rectangle.width - 2 * self._layout.border_width} "
+                    f"{self._layout.rectangle.height - 2 * self._layout.border_width} re\n"
+                    f"{border_width_string}"
+                    f"{self._layout.border_color.as_operator(stroke=True)}\n"
+                    "s\n"
+                )
+            else:
+                # If we aren't drawing a border, then set border_width to 0. This means less margin to
+                # take into account and results in larger font sizes.
+                self._layout.border_width = 0
+        if ap_stream_parts:
+            ap_stream_parts.insert(0, "q\n")
+            ap_stream_parts.append("Q\n")
+        self._ap_stream_data = "".join(ap_stream_parts).encode()
 
 
 class TextAlignment(IntEnum):
@@ -220,7 +254,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         font: Font,
         font_name: str = "/Helv",
         font_size: float = 0.0,
-        font_color: str = "0 g",
+        font_color: Color | None = None,
         is_multiline: bool = False,
         alignment: TextAlignment = TextAlignment.LEFT,
         is_comb: bool = False,
@@ -240,8 +274,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             font_name: The name of the font resource to use (e.g., "/Helv").
             font_size: The font size. If 0, it is automatically calculated
                 based on whether the field is multiline or not.
-            font_color: The color to apply to the font, represented as a PDF
-                graphics state string (e.g., "0 g" for black).
+            font_color: The color to apply to the font, represented as a class Color
             is_multiline: A boolean indicating if the text field is multiline.
             alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
             is_comb: Boolean that designates fixed-length fields, where every character
@@ -253,16 +286,17 @@ class TextStreamAppearance(BaseStreamAppearance):
             A byte string containing the PDF content stream data.
 
         """
+        font_color = font_color or GrayscaleColor()
         rectangle = self._layout.rectangle
         leading_factor = (
             (font.font_descriptor.bbox[3] - font.font_descriptor.bbox[1]) / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
         )
 
-        # Set margins based on border width and style, but never less than 1 point
+        # Set margins based on border width and style
         factor = 2 if self._layout.border_style in {"/B", "/I"} else 1
-        margin = max(self._layout.border_width * factor, 1)
+        margin = self._layout.border_width * factor
         field_height = rectangle.height - 2 * margin
-        field_width = rectangle.width - 4 * margin
+        field_width = rectangle.width - 4 * max(margin, 1)
 
         reverse_cmap, encoding_cmap = font._get_typographic_maps()
 
@@ -361,17 +395,19 @@ class TextStreamAppearance(BaseStreamAppearance):
         # Set the vertical offset
         if is_multiline:
             y_offset = (
-                rectangle.height + margin - font.font_descriptor.bbox[3] * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
+                field_height + margin - font.font_descriptor.bbox[3] * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR
             )
         else:
             y_offset = margin + (
                 (field_height - font.font_descriptor.ascent * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR) / 2
             )
-        default_appearance = f"{font_name} {font_size} Tf {font_color}"
+        default_appearance = f"{font_name} {font_size} Tf {font_color.as_operator()}"
 
         ap_stream = (
-            f"q\n/Tx BMC \nq\n{2 * margin} {margin} {field_width} {field_height} "
-            f"re\nW\nBT\n{default_appearance}\n"
+            f"q\n/Tx BMC \nq\n"
+            f"{2 * max(margin, 1)} {margin} "
+            f"{round(field_width - 2 * max(margin, 1), 3)} {round(field_height - margin, 3)} re\n"
+            f"W\nBT\n{default_appearance}\n"
         ).encode()
         current_x_pos: float = 0  # Initial virtual position within the text object.
 
@@ -379,7 +415,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             if selection and line in _unicode_to_glyph_id("".join(selection), reverse_cmap):
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
-                    f"1 {y_offset - (line_number * font_size * leading_factor) - 1} "
+                    f"1 {round(y_offset - (line_number * font_size * leading_factor) - 1, 3)} "
                     f"{rectangle.width - 2} {font_size + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{default_appearance}\n"
                 ).encode()
@@ -395,11 +431,11 @@ class TextStreamAppearance(BaseStreamAppearance):
                 # Absolute start X = (Cell Index, i.e., line_number * Cell Width) + Centering Offset
                 desired_abs_x_start = (line_number * cell_width) + centering_offset_in_cell
             elif alignment == TextAlignment.RIGHT:
-                desired_abs_x_start = rectangle.width - margin * 2 - line_width
+                desired_abs_x_start = rectangle.width - max(margin, 1) * 2 - line_width
             elif alignment == TextAlignment.CENTER:
                 desired_abs_x_start = (rectangle.width - line_width) / 2
             else:  # Left aligned; default
-                desired_abs_x_start = margin * 2
+                desired_abs_x_start = max(margin, 1) * 2
             # Calculate x_rel_offset: how much to move from the current_x_pos
             # to reach the desired_abs_x_start.
             x_rel_offset = desired_abs_x_start - current_x_pos
@@ -415,7 +451,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
             # Td is a relative translation (Tx and Ty).
             # It updates the current text position.
-            ap_stream += f"{x_rel_offset} {y_rel_offset} Td\n".encode()
+            ap_stream += f"{round(x_rel_offset, 3)} {round(y_rel_offset, 3)} Td\n".encode()
             # Update current_x_pos based on the Td operation for the next iteration.
             # This is the X position where the *current line* will start.
             current_x_pos = desired_abs_x_start
@@ -455,7 +491,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         font_resource: DictionaryObject | IndirectObject | None = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
-        font_color: str = "0 g",
+        font_color: Color | None = None,
         is_multiline: bool = False,
         alignment: TextAlignment = TextAlignment.LEFT,
         is_comb: bool = False,
@@ -465,8 +501,8 @@ class TextStreamAppearance(BaseStreamAppearance):
         Initializes a TextStreamAppearance object.
 
         This constructor creates a new PDF stream object configured as an XObject
-        of subtype Form. It uses the `_appearance_stream_data` method to generate
-        the content for the stream.
+        of subtype Form. It uses the `_generate_appearance_stream_data` method to
+        generate the content for the stream.
 
         Args:
             layout: The basic layout parameters.
@@ -493,21 +529,21 @@ class TextStreamAppearance(BaseStreamAppearance):
             font = Font.from_core_font_name()
             font_resource = font.as_font_resource()
 
-        ap_stream_data = self._generate_appearance_stream_data(
+        self._ap_stream_data += self._generate_appearance_stream_data(
             text,
             selection,
             font,
             font_name=font_name,
             font_size=font_size,
-            font_color=font_color,
+            font_color=font_color or GrayscaleColor(),
             is_multiline=is_multiline,
             alignment=alignment,
             is_comb=is_comb,
             max_length=max_length
         )
 
-        self.set_data(ByteStringObject(ap_stream_data))
-        self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
+        self.set_data(ByteStringObject(self._ap_stream_data))
+        self[NameObject("/Length")] = NumberObject(len(self._ap_stream_data))
         # Update Resources with font information
         self[NameObject("/Resources")] = DictionaryObject({
             NameObject("/Font"): DictionaryObject({
@@ -717,7 +753,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         da_font_name = font_properties.pop(font_properties.index("Tf") - 2)
         font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
         font_properties.remove("Tf")
-        font_color = " ".join(font_properties)
+        font_color = Color.from_tuple(tuple(float(val) for val in font_properties[:-1]))
         # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name
@@ -759,15 +795,22 @@ class TextStreamAppearance(BaseStreamAppearance):
             border_style = cast(DictionaryObject, field["/BS"]).get("/S", border_style)
 
         rotation = 0
+        border_color: Color | None = None
+        background_color: Color | None = None
         appearance_characteristics = field.get_inherited("/MK", None)
         if isinstance(appearance_characteristics, DictionaryObject):
             rotation = int(appearance_characteristics.get("/R", 0))
+            # Color.from_tuple([]) results in None for a "/BC" or "/BG" value of []
+            border_color = Color.from_tuple(appearance_characteristics.get("/BC"))
+            background_color = Color.from_tuple(appearance_characteristics.get("/BG"))
 
         # Create the TextStreamAppearance instance
         layout = BaseStreamConfig(
             rectangle=rectangle,
             border_width=border_width,
             border_style=border_style,
+            border_color=border_color,
+            background_color=background_color,
             rotation=rotation
         )
 
