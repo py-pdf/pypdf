@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788520466284,
+  "lastUpdate": 1788520538969,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -132667,6 +132667,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03984434827754075",
             "extra": "mean: 867.7329847999943 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "c76eed7bdd6c6a6f05dbcfea147bd41d6d21e598",
+          "message": "REL: 6.17.0\n\n## What's new\n\n### Security (SEC)\n- Limit value for Roman numerals (#4047) by @stefan6419846\n\n### New Features (ENH)\n- _cmap.py: Also parse encoding for embedded CFF Type1 fonts (#4032) by @PJBrs\n\n### Performance Improvements (PI)\n- Cache repeated text extraction character lookups (#4036) by @petermik68-sudo\n\n### Bug Fixes (BUG)\n- Treat an empty /Filter array as no filter when extracting images (#4026) by @Anai-Guo\n- Detect a duplicate dictionary key whose first value is falsy (#4024) by @devYRPauli\n- Make is_open=False collapse outline items (#3998) by @SomSamantray\n\n### Robustness (ROB)\n- Multiple changes for wrong inputs by @RavSinghChandan\n- Skip trailing duplicate %%EOF markers when locating startxref (#4015) by @Anai-Guo\n- Do not crash on a non-array destination (#3976) by @eeshsaxena\n- Handle annotations without subtype during merge (#3999) by @Nexlu1\n\n### Documentation (DOC)\n- Use AnnotationFlag enum instead of plain integers (#3997) by @RavSinghChandan\n\n### Code Style (STY)\n- Multiple small changes detected from test runs by @RavSinghChandan\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.2...6.17.0)",
+          "timestamp": "2026-09-04T13:11:37+02:00",
+          "tree_id": "40b659023191174e7a82247e6e1a922ca62ee5c5",
+          "url": "https://github.com/py-pdf/pypdf/commit/c76eed7bdd6c6a6f05dbcfea147bd41d6d21e598"
+        },
+        "date": 1788520528746,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.78468605983531,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019443993532112548",
+            "extra": "mean: 78.21858083333193 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.427533213124615,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006772696028336994",
+            "extra": "mean: 54.26662312499708 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9803426880018137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023620690225939975",
+            "extra": "mean: 1.0200514699999985 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.48445180866098336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04254253509147253",
+            "extra": "mean: 2.064188804999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3630254081116481,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021335965878945606",
+            "extra": "mean: 2.754628127000001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.187967653089183,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007368767539565074",
+            "extra": "mean: 841.7737615999954 msec\nrounds: 5"
           }
         ]
       }
