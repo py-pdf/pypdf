@@ -1354,3 +1354,25 @@ def test_get_fields__acro_form_is_not_a_dictionary(caplog, value, expected):
 
     assert PdfReader(stream).get_fields() is None
     assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Ignoring page tree entry that is not a dictionary: 1", id="number"),
+        pytest.param(TextStringObject("x"), "Ignoring page tree entry that is not a dictionary: x", id="string"),
+        pytest.param(ArrayObject(), "Ignoring page tree entry that is not a dictionary: []", id="array"),
+    ],
+)
+def test_flatten__kid_is_not_a_dictionary(caplog, value, expected):
+    """A /Kids entry that is not a dictionary raised a TypeError from the /Type lookup."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    pages = writer.root_object["/Pages"]
+    pages[NameObject("/Kids")] = ArrayObject([*pages["/Kids"], value])
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert len(PdfReader(stream).pages) == 1
+    assert expected in caplog.text

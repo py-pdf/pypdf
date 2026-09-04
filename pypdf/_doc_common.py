@@ -1362,6 +1362,13 @@ class PdfDocCommon(ABC):
                 if isinstance(page, IndirectObject):
                     additional_arguments["indirect_reference"] = page
                 obj = page.get_object()
+                if not is_null_or_none(obj) and not isinstance(obj, DictionaryObject):
+                    logger_warning(
+                        "Ignoring page tree entry that is not a dictionary: %(entry)s",
+                        source=__name__,
+                        entry=obj,
+                    )
+                    continue
                 if obj:
                     # damaged file may have invalid child in /Pages
                     obj_id = id(obj)
@@ -1377,7 +1384,7 @@ class PdfDocCommon(ABC):
                     try:
                         self._flatten(
                             list_only,
-                            obj,
+                            cast(DictionaryObject, obj),
                             inherit.copy(),
                             visited=visited,
                             depth=depth + 1,
