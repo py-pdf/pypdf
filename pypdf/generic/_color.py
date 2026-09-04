@@ -14,7 +14,7 @@ class Color:
     @classmethod
     def from_tuple(
         cls,
-        color: Union[tuple[float, ...], None]
+        color: Union[list[float], tuple[float, ...], None]
     ) -> Union["Color", None]:
         """
         Method to instantiate a color class. Can be called with value of None for cases where an appearance
