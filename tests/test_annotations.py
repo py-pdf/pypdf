@@ -140,6 +140,24 @@ def test_free_text__font_specifier():
     assert free_text_annotation["/DS"] == "font: italic bold 20pt Arial;text-align:left;color:#00ff00"
 
 
+def test_free_text__font_color():
+    free_text_annotation = FreeText(
+        text="Hello World",
+        rect=(50, 550, 200, 650),
+        font_color="00ff00",
+        border_color="0000ff",
+    )
+    assert free_text_annotation["/DA"] == "0.0 1.0 0.0 rg"
+
+    free_text_annotation = FreeText(
+        text="Hello World",
+        rect=(50, 550, 200, 650),
+        font_color="ff0000",
+        border_color=None,
+    )
+    assert free_text_annotation["/DA"] == "1.0 0.0 0.0 rg"
+
+
 def test_annotation_dictionary():
     a = AnnotationDictionary()
     a.flags = AnnotationFlag.HIDDEN | AnnotationFlag.PRINT | AnnotationFlag.NO_ZOOM

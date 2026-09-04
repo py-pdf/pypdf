@@ -163,10 +163,9 @@ class FreeText(MarkupAnnotation):
         font_str = f"{font_str};text-align:left;color:#{font_color}"
 
         default_appearance_string = ""
-        if border_color:
-            for st in hex_to_rgb(border_color):
-                default_appearance_string = f"{default_appearance_string}{st} "
-            default_appearance_string = f"{default_appearance_string}rg"
+        for st in hex_to_rgb(font_color):
+            default_appearance_string = f"{default_appearance_string}{st} "
+        default_appearance_string = f"{default_appearance_string}rg"
 
         self.update(
             {
