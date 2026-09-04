@@ -40,6 +40,7 @@ from typing import (
     cast,
 )
 
+from ._configuration import get_configuration
 from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
@@ -85,12 +86,6 @@ from .generic import (
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
-
-# TODO: Make configurable.
-OUTLINE_MAX_ENTRIES = 100_000
-OUTLINE_MAX_DEPTH = 100
-PAGE_TREE_MAX_ENTRIES = 100_000
-PAGE_TREE_MAX_DEPTH = 100
 
 
 def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
@@ -970,8 +965,9 @@ class PdfDocCommon(ABC):
         if node is None:
             return outline
 
-        if depth > OUTLINE_MAX_DEPTH:
-            raise LimitReachedError(f"Maximum outline depth reached: {depth} > {OUTLINE_MAX_DEPTH}.")
+        configuration = get_configuration()
+        if depth > configuration.outline_maximum_depth:
+            raise LimitReachedError(f"Maximum outline depth reached: {depth} > {configuration.outline_maximum_depth}.")
 
         # see if there are any more outline items
         if visited is None:
@@ -983,9 +979,10 @@ class PdfDocCommon(ABC):
                 break
             visited.add(node_id)
             traversal_state.entry_count += 1
-            if traversal_state.entry_count > OUTLINE_MAX_ENTRIES:
+            if traversal_state.entry_count > configuration.outline_maximum_entries:
                 raise LimitReachedError(
-                    f"Maximum outline entry limit reached: {traversal_state.entry_count} > {OUTLINE_MAX_ENTRIES}."
+                    f"Maximum outline entry limit reached: "
+                    f"{traversal_state.entry_count} > {configuration.outline_maximum_entries}."
                 )
 
             if not isinstance(node, DictionaryObject):
@@ -1317,8 +1314,11 @@ class PdfDocCommon(ABC):
             visited = set()
         if traversal_state is None:
             traversal_state = _TraversalState()
-        if depth > PAGE_TREE_MAX_DEPTH:
-            raise LimitReachedError(f"Maximum page tree depth reached: {depth} > {PAGE_TREE_MAX_DEPTH}.")
+        configuration = get_configuration()
+        if depth > configuration.page_tree_maximum_depth:
+            raise LimitReachedError(
+                f"Maximum page tree depth reached: {depth} > {configuration.page_tree_maximum_depth}."
+            )
         if is_null_or_none(pages):
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
@@ -1368,10 +1368,10 @@ class PdfDocCommon(ABC):
                     if obj_id in visited:
                         raise PdfReadError("Detected cyclic page references.")
                     traversal_state.entry_count += 1
-                    if traversal_state.entry_count > PAGE_TREE_MAX_ENTRIES:
+                    if traversal_state.entry_count > configuration.page_tree_maximum_entries:
                         raise LimitReachedError(
                             "Maximum page tree entry limit reached: "
-                            f"{traversal_state.entry_count} > {PAGE_TREE_MAX_ENTRIES}."
+                            f"{traversal_state.entry_count} > {configuration.page_tree_maximum_entries}."
                         )
                     visited.add(obj_id)
                     try:

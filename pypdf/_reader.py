@@ -49,6 +49,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+from ._configuration import apply_legacy_configuration
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._utils import (
@@ -140,6 +141,7 @@ class PdfReader(PdfDocCommon):
         self._root_object_recovery_limit = (
             root_object_recovery_limit if isinstance(root_object_recovery_limit, int) else sys.maxsize
         )
+        apply_legacy_configuration()
 
         # Map page indirect_reference number to page number
         self._page_id2num: Optional[dict[Any, Any]] = None

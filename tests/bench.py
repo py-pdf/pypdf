@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 import pypdf
-from pypdf import PageObject, PdfReader, PdfWriter, Transformation
+from pypdf import PageObject, PdfReader, PdfWriter, Transformation, apply_configuration
 from pypdf.generic import Destination, read_string_from_stream
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -50,6 +50,7 @@ def page_ops(pdf_path, password):
     page.extract_text()
 
 
+@apply_configuration(disable_legacy_handling=True)
 def test_page_operations(benchmark):
     """
     Apply various page operations.
@@ -116,6 +117,7 @@ def merge():
         ]
 
 
+@apply_configuration(disable_legacy_handling=True)
 def test_merge(benchmark):
     """
     Apply various page operations.
@@ -134,6 +136,7 @@ def text_extraction(pdf_path):
     return text
 
 
+@apply_configuration(disable_legacy_handling=True)
 def test_text_extraction(benchmark):
     file_path = SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
     benchmark(text_extraction, file_path)
@@ -144,6 +147,7 @@ def read_string_from_stream_performance():
     assert read_string_from_stream(stream)
 
 
+@apply_configuration(disable_legacy_handling=True)
 def test_read_string_from_stream_performance(benchmark):
     """
     This test simulates reading an embedded base64 image of 256kb.
@@ -214,6 +218,7 @@ def image_new_property(data):
 
 
 @pytest.mark.enable_socket
+@apply_configuration(disable_legacy_handling=True)
 def test_image_new_property_performance(benchmark):
     url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
     name = "pdf_font_garbled.pdf"
@@ -228,6 +233,7 @@ def image_extraction(data):
 
 
 @pytest.mark.enable_socket
+@apply_configuration(disable_legacy_handling=True)
 def test_large_compressed_image_performance(benchmark):
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
     data = BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))

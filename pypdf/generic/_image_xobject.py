@@ -4,6 +4,7 @@ import sys
 from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
 
+from .._configuration import get_configuration
 from .._utils import check_if_whitespace_only, logger_warning
 from ..constants import ColorSpaces, ImageAttributes, StreamAttributes
 from ..constants import FilterTypes as FT
@@ -133,13 +134,15 @@ def bits2byte(
     colors: int = 1,
     scale: bool = False,
 ) -> bytes:
-    from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
+    configuration = get_configuration()
 
     # Number of samples per row = pixels per row * components per pixel.
     samples_per_row = size[0] * colors
     buffer_size = samples_per_row * size[1]
-    if buffer_size > FLATE_MAX_BUFFER_SIZE:
-        raise LimitReachedError(f"Requested buffer size {buffer_size} exceeds limit of {FLATE_MAX_BUFFER_SIZE}.")
+    if buffer_size > configuration.image_maximum_buffer_size:
+        raise LimitReachedError(
+            f"Requested buffer size {buffer_size} exceeds limit of {configuration.image_maximum_buffer_size}."
+        )
 
     byte_buffer = bytearray(buffer_size)
     mask = (1 << bits) - 1
@@ -204,10 +207,11 @@ def _image_from_bytes(
     bytes_per_pixel = len(mode)
     required_byte_count = pixel_count * bytes_per_pixel
 
-    from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
-    if required_byte_count > FLATE_MAX_BUFFER_SIZE:
+    configuration = get_configuration()
+    if required_byte_count > configuration.image_maximum_buffer_size:
         raise LimitReachedError(
-            f"Requested image buffer size {required_byte_count} exceeds limit {FLATE_MAX_BUFFER_SIZE}."
+            f"Requested image buffer size {required_byte_count} exceeds limit "
+            f"{configuration.image_maximum_buffer_size}."
         )
 
     try:

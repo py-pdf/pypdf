@@ -65,6 +65,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    modules/actions
    modules/annotations
    modules/constants
+   modules/configuration
    modules/errors
    modules/generic
    modules/PdfDocCommon

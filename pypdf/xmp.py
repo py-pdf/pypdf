@@ -23,13 +23,14 @@ from xml.dom.minidom import Element as XmlElement
 from xml.dom.xmlbuilder import Options
 from xml.parsers.expat import ExpatError, XMLParserType
 
+from ._configuration import get_configuration
 from ._protocols import XmpInformationProtocol
 from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
 from .errors import LimitReachedError, PdfReadError, XmpDocumentError
 from .generic import ContentStream, PdfObject, StreamObject
 
-XMP_MAX_INPUT_LENGTH = 5_000_000
-XMP_MAX_ELEMENT_COUNT = 100_000
+XMP_MAX_INPUT_LENGTH = 5_000_000  # DEPRECATED: Use pypdf.Confiugration.
+XMP_MAX_ELEMENT_COUNT = 100_000  # DEPRECATED: Use pypdf.Confiugration.
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -181,6 +182,7 @@ class _XmpBuilder(ExpatBuilderNS):
     def __init__(self, options: Optional[Options] = None) -> None:
         super().__init__(options=options)
         self._element_count = 0
+        self._configuration = get_configuration()
 
     def custom_entity_declaration_handler(
             self,
@@ -198,8 +200,10 @@ class _XmpBuilder(ExpatBuilderNS):
 
     def start_element_handler(self, name: str, attributes: list[str]) -> None:
         self._element_count += 1
-        if self._element_count > XMP_MAX_ELEMENT_COUNT:
-            raise LimitReachedError(f"XMP metadata exceeds limit of {XMP_MAX_ELEMENT_COUNT} elements.")
+        if self._element_count > self._configuration.xmp_maximum_element_count:
+            raise LimitReachedError(
+                f"XMP metadata exceeds limit of {self._configuration.xmp_maximum_element_count} elements."
+            )
         super().start_element_handler(name=name, attributes=attributes)
 
     def install(self, parser: XMLParserType) -> None:
@@ -223,8 +227,11 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         self.stream = stream
         try:
             data = self.stream.get_data()
-            if (length := len(data)) > XMP_MAX_INPUT_LENGTH:
-                raise LimitReachedError(f"XMP stream size {length} exceeds limit of {XMP_MAX_INPUT_LENGTH}.")
+            configuration = get_configuration()
+            if (length := len(data)) > configuration.xmp_maximum_input_length:
+                raise LimitReachedError(
+                    f"XMP stream size {length} exceeds limit of {configuration.xmp_maximum_input_length}."
+                )
             doc_root: Document = _XmpBuilder().parseString(data)
         except (AttributeError, ExpatError) as e:
             raise PdfReadError(f"XML in XmpInformation was invalid: {e}")

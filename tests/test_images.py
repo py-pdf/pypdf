@@ -14,7 +14,7 @@ from zipfile import ZipFile
 import pytest
 from PIL import Image, ImageChops, ImageDraw
 
-from pypdf import PageObject, PdfReader, PdfWriter
+from pypdf import PageObject, PdfReader, PdfWriter, apply_configuration
 from pypdf._page import ImageFile
 from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
@@ -819,7 +819,7 @@ def test_jbig2decode__memory_limit():
         ),
     ]
 
-    with mock.patch("pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH", 5_000_000):
+    with apply_configuration(jbig2_maximum_output_length=5_000_000):
         reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
         page = reader.pages[0]
         with pytest.raises(expected_exception=LimitReachedError, match=rf"({'|'.join(error_messages)})"):

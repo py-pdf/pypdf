@@ -49,6 +49,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, NoReturn, Optional, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
+from ._configuration import get_configuration
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
@@ -72,17 +73,17 @@ from .generic import (
     is_null_or_none,
 )
 
-MAX_DECLARED_STREAM_LENGTH = 75_000_000
-MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH = 75_000_000
+MAX_DECLARED_STREAM_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Confiugration.
+MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Confiugration.
 
-JBIG2_MAX_OUTPUT_LENGTH = 75_000_000
-LZW_MAX_OUTPUT_LENGTH = 75_000_000
-RUN_LENGTH_MAX_OUTPUT_LENGTH = 75_000_000
-ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
-ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000
-FLATE_MAX_COLUMNS = 250_000
-FLATE_MAX_ROW_LENGTH = 4_000_000
-FLATE_MAX_BUFFER_SIZE = 75_000_000  # TODO: This should be IMAGE_MAX_BUFFER_SIZE.
+JBIG2_MAX_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Confiugration.
+LZW_MAX_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Confiugration.
+RUN_LENGTH_MAX_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Confiugration.
+ZLIB_MAX_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Confiugration.
+ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000  # DEPRECATED: Use pypdf.Confiugration.
+FLATE_MAX_COLUMNS = 250_000  # DEPRECATED: Use pypdf.Confiugration.
+FLATE_MAX_ROW_LENGTH = 4_000_000  # DEPRECATED: Use pypdf.Confiugration.
+FLATE_MAX_BUFFER_SIZE = 75_000_000  # DEPRECATED: Use pypdf.Confiugration.
 
 # Reuse cached 1-byte values in the fallback loop to avoid per-byte allocations.
 _SINGLE_BYTES = tuple(bytes((i,)) for i in range(256))
@@ -90,7 +91,8 @@ _SINGLE_BYTES = tuple(bytes((i,)) for i in range(256))
 
 def _decompress_with_limit(data: bytes) -> bytes:
     decompressor = zlib.decompressobj()
-    result = decompressor.decompress(data, max_length=ZLIB_MAX_OUTPUT_LENGTH)
+    configuration = get_configuration()
+    result = decompressor.decompress(data, max_length=configuration.zlib_maximum_output_length)
     if decompressor.unconsumed_tail:
         raise LimitReachedError(
             f"Limit reached while decompressing. {len(decompressor.unconsumed_tail)} bytes remaining."
@@ -108,7 +110,7 @@ def decompress(data: bytes) -> bytes:
 
     Please note that the output length is limited to avoid memory
     issues. If you need to process larger content streams, consider
-    adapting ``pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH``. In case you
+    adapting ``pypdf.Configuration.zlib_maximum_output_length``. In case you
     are only dealing with trusted inputs and/or want to disable these
     limits, set the value to `0`.
 
@@ -143,7 +145,8 @@ def decompress(data: bytes) -> bytes:
         # If still failing, then try with increased window size.
         decompressor = zlib.decompressobj(zlib.MAX_WBITS | 32)
         result_str = b""
-        remaining_limit = ZLIB_MAX_OUTPUT_LENGTH
+        configuration = get_configuration()
+        remaining_limit = configuration.zlib_maximum_output_length
         data_length = len(data)
         known_errors = set()
         for index in range(data_length):
@@ -157,7 +160,7 @@ def decompress(data: bytes) -> bytes:
                         f"Limit reached while decompressing. {data_length - index} bytes remaining."
                     )
             except zlib.error as error:
-                if index > ZLIB_MAX_RECOVERY_INPUT_LENGTH:
+                if index > configuration.zlib_maximum_recovery_input_length:
                     raise LimitReachedError(
                         f"Recovery limit reached while decompressing. {data_length - index} bytes remaining."
                     )
@@ -210,14 +213,15 @@ class FlateDecode:
         # predictor 1 == no predictor
         if predictor != 1:
             columns, colors, bits_per_component = FlateDecode._get_parameters(parameters)
+            configuration = get_configuration()
 
             # PNG predictor can vary by row and so is the lead byte on each row
             row_length = (
                 math.ceil(columns * colors * bits_per_component / 8) + 1
             )  # number of bytes
-            if row_length > FLATE_MAX_ROW_LENGTH:
+            if row_length > configuration.flate_maximum_row_length:
                 raise LimitReachedError(
-                    f"Row length of {row_length} exceeds defined limit of {FLATE_MAX_ROW_LENGTH}."
+                    f"Row length of {row_length} exceeds defined limit of {configuration.flate_maximum_row_length}."
                 )
 
             # TIFF prediction:
@@ -247,9 +251,12 @@ class FlateDecode:
                 raise PdfReadError(f"Expected positive number for {key}, got {_value}!")
             return _value
 
+        configuration = get_configuration()
         columns = get(key=LZW.COLUMNS, default=1)
-        if columns > FLATE_MAX_COLUMNS:
-            raise LimitReachedError(f"Number of columns {columns} exceeds defined limit of {FLATE_MAX_COLUMNS}.")
+        if columns > configuration.flate_maximum_columns:
+            raise LimitReachedError(
+                f"Number of columns {columns} exceeds defined limit of {configuration.flate_maximum_columns}."
+            )
 
         colors = get(key=LZW.COLORS, default=1)
         if colors > 16:
@@ -440,6 +447,7 @@ class RunLengthDecode:
         index = 0
         data_length = len(data)
         total_length = 0
+        configuration = get_configuration()
         while True:
             if index >= data_length:
                 logger_warning(
@@ -479,7 +487,7 @@ class RunLengthDecode:
                 lst.append(bytes((data[index],)) * length)
                 index += 1
             total_length += length
-            if total_length > RUN_LENGTH_MAX_OUTPUT_LENGTH:
+            if total_length > configuration.run_length_maximum_output_length:
                 raise LimitReachedError("Limit reached while decompressing.")
         return b"".join(lst)
 
@@ -493,7 +501,8 @@ class LZWDecode:
             self.data = data
 
         def decode(self) -> bytes:
-            return _LzwCodec(max_output_length=LZW_MAX_OUTPUT_LENGTH).decode(self.data)
+            configuration = get_configuration()
+            return _LzwCodec(max_output_length=configuration.lzw_maximum_output_length).decode(self.data)
 
     @staticmethod
     def decode(
@@ -728,7 +737,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-JBIG2DEC_BINARY = shutil.which("jbig2dec")
+JBIG2DEC_BINARY = shutil.which("jbig2dec")  # DEPRECATED: Use pypdf.Confiugration.
 
 
 class JBIG2Decode:
@@ -738,7 +747,8 @@ class JBIG2Decode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if JBIG2DEC_BINARY is None:
+        configuration = get_configuration()
+        if configuration.jbig2dec_binary is None:
             raise DependencyError("jbig2dec binary is not available.")
 
         with TemporaryDirectory() as tempdir:
@@ -762,11 +772,11 @@ class JBIG2Decode:
             environment["LC_ALL"] = "C"
             result = subprocess.run(  # noqa: S603
                 [
-                    JBIG2DEC_BINARY,
+                    configuration.jbig2dec_binary,
                     "--embedded",
                     "--format", "png",
                     "--output", "-",
-                    "-M", str(JBIG2_MAX_OUTPUT_LENGTH),
+                    "-M", str(configuration.jbig2_maximum_output_length),
                     *paths
                 ],
                 capture_output=True,
@@ -787,10 +797,11 @@ class JBIG2Decode:
 
     @staticmethod
     def _is_binary_compatible() -> bool:
-        if not JBIG2DEC_BINARY:  # pragma: no cover
+        configuration = get_configuration()
+        if not configuration.jbig2dec_binary:  # pragma: no cover
             return False
         result = subprocess.run(  # noqa: S603
-            [JBIG2DEC_BINARY, "--version"],
+            [configuration.jbig2dec_binary, "--version"],
             capture_output=True,
             text=True,
         )

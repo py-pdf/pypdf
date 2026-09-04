@@ -292,9 +292,9 @@ def test_dictionary_object__read_from_stream__no_limit(tmp_path: Path) -> None:
     source_file.write_text(
         f"""
 import sys
-from pypdf import filters, PdfReader
+from pypdf import PdfReader, overwrite_configuration
 
-filters.MAX_DECLARED_STREAM_LENGTH = sys.maxsize
+overwrite_configuration(maximum_declared_stream_length=sys.maxsize)
 
 with open({pdf_path_str!r}, mode="rb") as fd:
     reader = PdfReader(fd)
@@ -324,9 +324,9 @@ def test_dictionary_object__read_from_stream__no_limit__path(tmp_path: Path) -> 
     source_file.write_text(
         f"""
 import sys
-from pypdf import filters, PdfReader
+from pypdf import PdfReader, overwrite_configuration
 
-filters.MAX_DECLARED_STREAM_LENGTH = sys.maxsize
+overwrite_configuration(maximum_declared_stream_length=sys.maxsize)
 
 reader = PdfReader({pdf_path_str!r})
 print(reader.pages[0].extract_text())
