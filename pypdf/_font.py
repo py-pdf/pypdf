@@ -574,7 +574,11 @@ class Font:
             # creates a dictionary mapping glyphs to the minimum Unicode codepoint.
             tt_font_cmap_table = tt_font_object.get("cmap")
             if tt_font_cmap_table:
-                reverse_cmap = tt_font_cmap_table.buildReversedMin()
+                try:
+                    reverse_cmap = tt_font_cmap_table.buildReversedMin()
+                except AttributeError:
+                    # use buildReversed on fonttools < 4.57 and build a list of minimums from it
+                    reverse_cmap = {k: min(r) for k, r in tt_font_cmap_table.buildReversed().items()}
                 for gid, glyph in enumerate(glyph_order):
                     char_code = reverse_cmap.get(glyph)
                     if char_code is None:
