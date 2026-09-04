@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788521901383,
+  "lastUpdate": 1788523161035,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -132865,6 +132865,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0310183926595278",
             "extra": "mean: 867.4666001999981 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dertte28@gmail.com",
+            "name": "Yuki9814",
+            "username": "Yuki9814"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3dc716eaf16b7982ff44d6f45649c51abec99e63",
+          "message": "STY: Enforce lowercase function variables (#4045)\n\nRename the remaining non-lowercase local variables and enable Ruff N806 across the repository.\n\nRefs #3327.\n\nCo-authored-by: Yuki9814 <222397878+Yuki9814@users.noreply.github.com>",
+          "timestamp": "2026-09-04T13:56:19+02:00",
+          "tree_id": "33481ebd8d868b695deeae8808f7bc5d0b28f02d",
+          "url": "https://github.com/py-pdf/pypdf/commit/3dc716eaf16b7982ff44d6f45649c51abec99e63"
+        },
+        "date": 1788523151082,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.695419373776216,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020135197716525256",
+            "extra": "mean: 78.76856766666644 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.88490351882686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007034543537297538",
+            "extra": "mean: 50.289406687500815 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.010719650567996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033420944167077825",
+            "extra": "mean: 989.3940415999907 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4832335245946771,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0247946293975545",
+            "extra": "mean: 2.069392848600006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3611808634269455,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023910776411463282",
+            "extra": "mean: 2.7686959672000055 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1697372377553295,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026135423274916497",
+            "extra": "mean: 854.8928492000073 msec\nrounds: 5"
           }
         ]
       }
