@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788523161035,
+  "lastUpdate": 1788523164054,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -109697,6 +109697,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021836496051971237",
             "extra": "mean: 497.15238580000687 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dertte28@gmail.com",
+            "name": "Yuki9814",
+            "username": "Yuki9814"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3dc716eaf16b7982ff44d6f45649c51abec99e63",
+          "message": "STY: Enforce lowercase function variables (#4045)\n\nRename the remaining non-lowercase local variables and enable Ruff N806 across the repository.\n\nRefs #3327.\n\nCo-authored-by: Yuki9814 <222397878+Yuki9814@users.noreply.github.com>",
+          "timestamp": "2026-09-04T13:56:19+02:00",
+          "tree_id": "33481ebd8d868b695deeae8808f7bc5d0b28f02d",
+          "url": "https://github.com/py-pdf/pypdf/commit/3dc716eaf16b7982ff44d6f45649c51abec99e63"
+        },
+        "date": 1788523154911,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.714930914437221,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013899464887153566",
+            "extra": "mean: 368.3334977999948 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.654321799398875,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017690404122438508",
+            "extra": "mean: 53.60688052632524 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2416256119739644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038548289828817764",
+            "extra": "mean: 4.138634111800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.504441880983062,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004914896936274954",
+            "extra": "mean: 57.128356722210405 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07376652288814624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03488151213709058",
+            "extra": "mean: 13.556284895199974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5179113516728528,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002518421828941962",
+            "extra": "mean: 658.8000010000087 msec\nrounds: 5"
           }
         ]
       }
