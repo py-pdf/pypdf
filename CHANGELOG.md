@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## Version 6.17.0, 2026-09-04
+
+### Security (SEC)
+- Limit value for Roman numerals (#4047)
+
+### New Features (ENH)
+- _cmap.py: Also parse encoding for embedded CFF Type1 fonts (#4032)
+
+### Performance Improvements (PI)
+- Cache repeated text extraction character lookups (#4036)
+
+### Bug Fixes (BUG)
+- Treat an empty /Filter array as no filter when extracting images (#4026)
+- Detect a duplicate dictionary key whose first value is falsy (#4024)
+- Make is_open=False collapse outline items (#3998)
+
+### Robustness (ROB)
+- Multiple changes for wrong inputs
+- Skip trailing duplicate %%EOF markers when locating startxref (#4015)
+- Do not crash on a non-array destination (#3976)
+- Handle annotations without subtype during merge (#3999)
+
+### Documentation (DOC)
+- Use AnnotationFlag enum instead of plain integers (#3997)
+
+### Code Style (STY)
+- Multiple small changes detected from test runs
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.2...6.17.0)
+
 ## Version 6.16.2, 2026-08-23
 
 ### Bug Fixes (BUG)
