@@ -26,7 +26,7 @@ from pypdf.generic._appearance_stream import (
 )
 from pypdf.generic._color import Color
 
-from . import RESOURCE_ROOT
+from .. import RESOURCE_ROOT
 
 
 def test_comb():
