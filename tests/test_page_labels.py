@@ -40,6 +40,8 @@ from . import RESOURCE_ROOT, get_data_from_url
         (8, "VIII"),
         (9, "IX"),
         (10, "X"),
+        (3_888, "MMMDCCCLXXXVIII"),
+        (3_999, "MMMCMXCIX"),
     ],
 )
 def test_number2uppercase_roman_numeral(number, expected):
@@ -216,7 +218,12 @@ def test_get_label_from_nums__malformed_start(caplog):
     dictionary_object = DictionaryObject()
     dictionary_object[NameObject("/Nums")] = ArrayObject([NumberObject(0), value])
     assert get_label_from_nums(dictionary_object, 3) == "4"
-    assert "Ignoring malformed page label entry in /Nums (/St='/bad', /P='')." in caplog.text
+    assert caplog.messages == [
+        (
+            "Ignoring malformed page label entry in /Nums (/St='/bad', /P=''): "
+            "unsupported operand type(s) for +: 'int' and 'NameObject'"
+        )
+    ]
 
 
 def test_index2label__empty_kids_list():
@@ -275,3 +282,37 @@ def test_index2label__page_labels_not_a_dictionary(caplog, value, expected):
 
     assert PdfReader(stream).page_labels == ["1", "2"]
     assert expected in caplog.text
+
+
+def test_get_label_from_nums__roman__limits(caplog):
+    with pytest.raises(expected_exception=ValueError, match=r"^Number is out of range\.$"):
+        number2uppercase_roman_numeral(4321)
+    assert caplog.messages == []
+
+    labels_large = DictionaryObject({
+        NameObject("/Nums"): ArrayObject([
+            NumberObject(0),
+            DictionaryObject({
+                NameObject("/S"): NameObject("/R"),
+                NameObject("/St"): NumberObject(5000)
+            })
+        ])
+    })
+    assert get_label_from_nums(labels_large, 0) == "1"
+    assert caplog.messages == [
+        "Ignoring malformed page label entry in /Nums (/St=5000, /P=''): Number is out of range."
+    ]
+
+    labels_negative = DictionaryObject({
+        NameObject("/Nums"): ArrayObject([
+            NumberObject(-10_000),
+            DictionaryObject({
+                NameObject("/S"): NameObject("/R"),
+            })
+        ])
+    })
+    caplog.clear()
+    assert get_label_from_nums(labels_negative, 0) == "1"
+    assert caplog.messages == [
+        "Ignoring malformed page label entry in /Nums (/St=1, /P=''): Number is out of range."
+    ]
