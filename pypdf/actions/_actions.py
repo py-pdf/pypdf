@@ -64,7 +64,7 @@ class Action(DictionaryObject, ABC):
     @classmethod
     def _create_open_action(cls, writer: "PdfWriter", action: "Action") -> None:
         """
-        Create a new action and add it to the writer; currenlty only JavaScript is implemented.
+        Create an action that shall be performed when the document is opened.
 
         Args:
             writer: The writer to add the action to.
