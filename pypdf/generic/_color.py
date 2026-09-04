@@ -1,13 +1,15 @@
-from dataclasses import dataclass, fields
-from typing import Any, Callable, Union, cast
+from dataclasses import dataclass, field
+from typing import Union
 
 
+@dataclass
 class Color:
     """
     A factory class to generate one of class GrayscaleColor, RGBColor or CMYKColor. Call with
     Color.from_tuple() on a tuple of length 1 for grayscale, 3 for RGB, or 4 for CMYK.
     """
-    color_operator: str = ""
+    color_operator: str = field(init=False)
+    _ordered_fields: tuple[str, ...] = field(init=False)
 
     @classmethod
     def from_tuple(
@@ -24,7 +26,7 @@ class Color:
             color: A tuple of 1 (for GrayscaleColor), 3 (for RGBColor) or 4 (for CMYKColor) float values
                 in the range of 0.0 to 1.0, or None to return None.
         """
-        color_types: dict[int, Callable[..., Color]] = {
+        color_types: dict[int, type[Color]] = {
             1: GrayscaleColor,
             3: RGBColor,
             4: CMYKColor,
@@ -36,7 +38,9 @@ class Color:
             and all(isinstance(val, (int, float)) and 0.0 <= val <= 1.0 for val in color)
         ):
             # Create instance of the appropriate subclass
-            return color_types[color_length](*(value for value in color))
+            color_subclass = color_types[color_length]
+            kwargs = dict(zip(color_subclass._ordered_fields, color))
+            return color_subclass(**kwargs)
 
         return None
 
@@ -47,7 +51,7 @@ class Color:
         Args:
             stroke: Returns stroke (i.e., uppercase) color operator if True
         """
-        values = [f"{round(getattr(self, field.name), 3):g}" for field in fields(cast(Any, self))]
+        values = [f"{round(getattr(self, field), 3):g}" for field in self._ordered_fields]
         return f"{' '.join(values)} {self.color_operator.upper() if stroke else self.color_operator}"
 
 
@@ -56,6 +60,7 @@ class GrayscaleColor(Color):
     gray: float = 0.0
 
     color_operator = "g"
+    _ordered_fields = ("gray",)
 
 
 @dataclass
@@ -65,6 +70,7 @@ class RGBColor(Color):
     blue: float = 0.0
 
     color_operator = "rg"
+    _ordered_fields = ("red", "green", "blue")
 
 
 @dataclass
@@ -75,3 +81,4 @@ class CMYKColor(Color):
     black: float = 1.0
 
     color_operator = "k"
+    _ordered_fields = ("cyan", "magenta", "yellow", "black")
