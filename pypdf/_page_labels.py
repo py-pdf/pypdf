@@ -57,9 +57,8 @@ A       Uppercase letters (A to Z for the first 26 pages,
 a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
-
-from collections.abc import Callable, Iterator
-from typing import Optional, cast
+import string
+from typing import TYPE_CHECKING, Optional, cast
 
 from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
@@ -71,10 +70,20 @@ from .generic import (
     is_null_or_none,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+# The largest number one can represent using the usual symbols
+# and subtractive notation without additional conventions.
+# Aligns with https://github.com/AA-Turner/roman-numerals/blob/master/python/roman_numerals/__init__.py
+MAXIMUM_ROMAN_NUMERAL = 3_999
+
 
 def number2uppercase_roman_numeral(num: int) -> str:
     if num <= 0:
-        raise ValueError("Expecting a positive number")
+        raise ValueError("Expecting a positive number.")
+    if num > MAXIMUM_ROMAN_NUMERAL:
+        raise ValueError("Number is out of range.")
     roman = [
         (1000, "M"),
         (900, "CM"),
@@ -91,15 +100,12 @@ def number2uppercase_roman_numeral(num: int) -> str:
         (1, "I"),
     ]
 
-    def roman_num(num: int) -> Iterator[str]:
-        for decimal, roman_repr in roman:
-            x, _ = divmod(num, decimal)
-            yield roman_repr * x
-            num -= decimal * x
-            if num <= 0:
-                break
+    result = []
+    for value, symbol in roman:
+        count, num = divmod(num, value)
+        result.append(symbol * count)
 
-    return "".join(list(roman_num(num)))
+    return "".join(result)
 
 
 def number2lowercase_roman_numeral(number: int) -> str:
@@ -109,7 +115,7 @@ def number2lowercase_roman_numeral(number: int) -> str:
 def number2uppercase_letter(number: int) -> str:
     if number <= 0:
         raise ValueError("Expecting a positive number")
-    alphabet = [chr(i) for i in range(ord("A"), ord("Z") + 1)]
+    alphabet = string.ascii_uppercase
     rep = ""
     while number > 0:
         remainder = number % 26
@@ -176,13 +182,14 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
         return str(index + 1)  # Fallback
     try:
         return prefix + mapping_function(index - start_index + start)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError) as exception:
         # Malformed /St or /P value; fall back to the page position.
         logger_warning(
-            "Ignoring malformed page label entry in /Nums (/St=%(start)r, /P=%(prefix)r).",
+            "Ignoring malformed page label entry in /Nums (/St=%(start)r, /P=%(prefix)r): %(exception)s",
             source=__name__,
             start=start,
             prefix=prefix,
+            exception=exception,
         )
         return str(index + 1)  # Fallback
 
@@ -326,5 +333,5 @@ def nums_next(
 
     i = nums.index(key) + 2
     if i < len(nums):
-        return (nums[i], nums[i + 1])
-    return (None, None)
+        return nums[i], nums[i + 1]
+    return None, None
