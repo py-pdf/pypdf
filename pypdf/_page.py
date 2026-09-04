@@ -2375,7 +2375,15 @@ class PageObject(DictionaryObject):
     def annotations(self) -> Optional[ArrayObject]:
         if "/Annots" not in self:
             return None
-        return cast(ArrayObject, self["/Annots"])
+        annotations = self["/Annots"].get_object()
+        if not isinstance(annotations, ArrayObject):
+            logger_warning(
+                "Annotations are not an array: %(annotations)s",
+                source=__name__,
+                annotations=annotations,
+            )
+            return None
+        return annotations
 
     @annotations.setter
     def annotations(self, value: Optional[ArrayObject]) -> None:
