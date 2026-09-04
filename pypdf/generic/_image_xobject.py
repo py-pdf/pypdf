@@ -616,7 +616,7 @@ def _xobj_to_image(
     filters = x_object.get(StreamAttributes.FILTER, NullObject()).get_object()
     # An empty array is a valid way of saying that no filter is applied: treat it
     # like a missing /Filter entry rather than raising IndexError on the lookup.
-    last_filter = filter[-1] if filter and isinstance(filter, list) else filter
+    last_filter = filters[-1] if filters and isinstance(filters, list) else filters
     decode_parms = x_object.get(StreamAttributes.DECODE_PARMS)
     if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
