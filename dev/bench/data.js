@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788520538969,
+  "lastUpdate": 1788521864914,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -109631,6 +109631,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0333674652824933",
             "extra": "mean: 370.6814629999883 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ec2406f31146c28deb45c26fd833779570c4144a",
+          "message": "DEP: Rework configuration value handling (#4044)\n\nThis change introduces some larger refactoring for how configuration\nvalues are handled in *pypdf*.\n\nPreviously, they were module-level constants which could be changed by\nmonkey-patching or mocking them. While this works, it is not really\nintuitive and makes refactorings (like renaming or moving these values)\nbasically impossible without breaking old code.\n\nFor this reason, a new configuration class has been introduced,\naccompanied by a setter and context manager for temporary changes. This\nallows us provide a clean API for configuration value management and\nallows us to change configuration values without too much hacking.\n\nDuring the deprecation period, each `PdfReader.__init__` call tries to\nresolve changed legacy values and issues a corresponding notice. This is\nthe most reliable method identified during the design phase to allow\nmost of the previous configuration options to be used.\n\nThe overhead of legacy resolving can be disabled by using the temporary\nsetting `disable_legacy_handling`.\n\nCloses #3886.\n\nDisclosure: The initial design phase as well as some follow-up\nrefinement and optimization phases have been assisted by ChatGPT. All\nproposals have been reviewed carefully and implemented by myself where\nthe review was positive.",
+          "timestamp": "2026-09-04T13:35:19+02:00",
+          "tree_id": "07879f8f818be0ccbaa01a374b3ae4d20b8cf9a7",
+          "url": "https://github.com/py-pdf/pypdf/commit/ec2406f31146c28deb45c26fd833779570c4144a"
+        },
+        "date": 1788521856110,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.9790527510949603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023140587772754403",
+            "extra": "mean: 251.31609519999927 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.058486186378563,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008853665997441789",
+            "extra": "mean: 36.956982482760154 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.35537429310985497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013701297872414685",
+            "extra": "mean: 2.8139345455999973 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 24.865332870752063,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013120087017109315",
+            "extra": "mean: 40.216634347825426 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.10468068121884548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.183305398692729",
+            "extra": "mean: 9.552861027999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.0114556996258233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021836496051971237",
+            "extra": "mean: 497.15238580000687 msec\nrounds: 5"
           }
         ]
       }
