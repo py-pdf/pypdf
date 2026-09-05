@@ -455,17 +455,25 @@ class IndirectObject(PdfObject):
             )
         stream.write(f"{self.idnum} {self.generation} R".encode())
 
+    _LENGTH_LIMIT: ClassVar[int] = 64
+
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
-        idnum = b""
+        idnum = bytearray()
         while True:
             tok = stream.read(1)
             if not tok:
                 raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
             if tok.isspace():
                 break
-            idnum += tok
-        generation = b""
+            if len(idnum) < IndirectObject._LENGTH_LIMIT:
+                idnum += tok
+            else:
+                raise PdfReadError(
+                    f"Object ID exceeds maximum length limit of {IndirectObject._LENGTH_LIMIT}"
+                )
+
+        generation = bytearray()
         while True:
             tok = stream.read(1)
             if not tok:
@@ -474,13 +482,24 @@ class IndirectObject(PdfObject):
                 if not generation:
                     continue
                 break
-            generation += tok
+            if len(generation) < IndirectObject._LENGTH_LIMIT:
+                generation += tok
+            else:
+                raise PdfReadError(
+                    f"Generation number exceeds maximum length limit of {IndirectObject._LENGTH_LIMIT}"
+                )
+
         r = read_non_whitespace(stream)
         if r != b"R":
             raise PdfReadError(
                 f"Error reading indirect object reference at byte {hex(stream.tell())}"
             )
-        return IndirectObject(int(idnum), int(generation), pdf)
+        try:
+            return IndirectObject(int(idnum), int(generation), pdf)
+        except (ValueError, OverflowError) as e:
+            raise PdfReadError(
+                f"Invalid indirect object reference ({bytes(idnum)!r} {bytes(generation)!r} R): {e}"
+            ) from e
 
 
 FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
