@@ -175,7 +175,7 @@ def read_until_whitespace(stream: StreamType, max_bytes: Optional[int] = None) -
     txt = bytearray()
     while True:
         tok = stream.read(1)
-        if tok.isspace() or not tok:
+        if tok in WHITESPACES or tok.isspace() or not tok:
             break
         txt += tok
         if len(txt) == max_bytes:
