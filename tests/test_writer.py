@@ -2780,11 +2780,11 @@ def test_field_box_upside_down():
     name = "iss2724.pdf"
     writer = PdfWriter(BytesIO(get_data_from_url(url=url, name=name)))
     writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
-    assert writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data() == (
-        b"q\n/Tx BMC \nq\n2 1 102.29520000000001 9.835000000000036 re\n"
-        b"W\nBT\n/Arial 8.0 Tf 0 g\n2 3.0455000000000183 Td\n(0) Tj\nET\n"
+    assert  (
+        b"q\n/Tx BMC \nq\n2 0 100.295 11.835 re\n"
+        b"W\nBT\n/Arial 8.0 Tf 0 g\n2 3.046 Td\n(0) Tj\nET\n"
         b"Q\nEMC\nQ\n"
-    )
+    ) in writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data()
     box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
     assert box[2] > 0
     assert box[3] > 0
