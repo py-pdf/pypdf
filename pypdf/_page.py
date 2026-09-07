@@ -99,6 +99,21 @@ except ImportError:
 MERGE_CROP_BOX = "cropbox"  # DEPRECATED: Use pypdf.Confiugration.
 
 
+def _get_page_resources(obj: Any) -> DictionaryObject:
+    """Return the inherited /Resources, or an empty dictionary if malformed."""
+    resources = obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject())
+    if is_null_or_none(resources):
+        return DictionaryObject()
+    if not isinstance(resources, DictionaryObject):
+        logger_warning(
+            "Page resources are not a dictionary: %(resources)s",
+            source=__name__,
+            resources=resources,
+        )
+        return DictionaryObject()
+    return resources
+
+
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval: Union[RectangleObject, ArrayObject, IndirectObject, None] = self.get(name)
     if isinstance(retval, RectangleObject):
@@ -1854,11 +1869,8 @@ class PageObject(DictionaryObject):
         font_resources: dict[str, DictionaryObject] = {}
         fonts: dict[str, Font] = {}
 
-        resources_dict = cast(
-            Optional[DictionaryObject],
-            obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject())
-        )
-        if is_null_or_none(resources_dict) or not resources_dict:
+        resources_dict = _get_page_resources(obj)
+        if not resources_dict:
             # No resources means no text is possible (no font); we consider the
             # file as not damaged, no need to check for TJ or Tj
             return ""
