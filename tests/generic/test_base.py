@@ -129,7 +129,7 @@ def _check_indirect_object_reading_limits(
 
     stream = BytesIO(b"xxx 0 R")
     context = pytest.raises(
-        expected_exception=PdfReadError if should_raise else ValueError,
+        expected_exception=PdfReadError if should_raise else ValueError,  # type: ignore[arg-type]
         match=r"^Invalid indirect object reference \(b'xxx' b'0' R\): invalid literal for int\(\) with base 10: b'xxx'$"
     )
     with context:
