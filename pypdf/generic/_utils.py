@@ -16,7 +16,7 @@ def read_hex_string_from_stream(
     forced_encoding: Union[str, list[str], dict[int, str], None] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
-    arr = []
+    arr = bytearray()
     x = b""
     while True:
         tok = read_non_whitespace(stream)
@@ -149,13 +149,23 @@ def create_string_object(
         return TextStringObject(string)
     if isinstance(string, bytes):
         if isinstance(forced_encoding, (list, dict)):
-            out = ""
+            out = []
+
+            if isinstance(forced_encoding, list):
+                list_length = len(forced_encoding)
+            else:
+                list_length = None
+
             for x in string:
-                try:
-                    out += forced_encoding[x]
-                except Exception:
-                    out += bytes((x,)).decode("charmap")
-            obj = TextStringObject(out)
+                if (
+                        (list_length is not None and x < list_length) or
+                        (list_length is None and x in forced_encoding)
+                ):
+                    value = forced_encoding[x]
+                else:
+                    value = bytes((x,)).decode("charmap")
+                out.append(value)
+            obj = TextStringObject("".join(out))
             obj._original_bytes = string
             return obj
         if isinstance(forced_encoding, str):

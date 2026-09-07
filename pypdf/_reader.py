@@ -617,10 +617,10 @@ class PdfReader(PdfDocCommon):
         skip_over_comment(stream)
         extra = skip_over_whitespace(stream)
         stream.seek(-1, 1)
-        idnum = read_until_whitespace(stream)
+        idnum = read_until_whitespace(stream, max_bytes=IndirectObject._MAXIMUM_PART_LENGTH, strict=self.strict)
         extra |= skip_over_whitespace(stream)
         stream.seek(-1, 1)
-        generation = read_until_whitespace(stream)
+        generation = read_until_whitespace(stream, max_bytes=IndirectObject._MAXIMUM_PART_LENGTH, strict=self.strict)
         extra |= skip_over_whitespace(stream)
         stream.seek(-1, 1)
 
@@ -636,7 +636,14 @@ class PdfReader(PdfDocCommon):
                 idnum=idnum,
                 generation=generation,
             )
-        return int(idnum), int(generation)
+
+        try:
+            return int(idnum), int(generation)
+        except (ValueError, OverflowError) as e:
+            # Only raise a ValueError here as other types would break future processing.
+            raise ValueError(
+                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {e}"
+            ) from e
 
     def cache_get_indirect_object(
         self, generation: int, idnum: int
@@ -1397,17 +1404,21 @@ class PdfReader(PdfDocCommon):
                     object_stream = BytesIO(obj.get_data())
                     actual_count = 0
                     while True:
-                        current = read_until_whitespace(object_stream)
+                        current = read_until_whitespace(
+                            object_stream, max_bytes=IndirectObject._MAXIMUM_PART_LENGTH, strict=self.strict
+                        )
                         if not current.isdigit():
                             break
                         inner_object_number = int(current)
                         skip_over_whitespace(object_stream)
                         object_stream.seek(-1, 1)
-                        current = read_until_whitespace(object_stream)
+                        current = read_until_whitespace(
+                            object_stream, max_bytes=IndirectObject._MAXIMUM_PART_LENGTH, strict=self.strict
+                        )
                         if not current.isdigit():  # pragma: no cover
                             break  # pragma: no cover
-                        inner_generation_number = int(current)
-                        self.xref_objStm[inner_object_number] = (object_number, inner_generation_number)
+                        inner_offset = int(current)
+                        self.xref_objStm[inner_object_number] = (object_number, inner_offset)
                         actual_count += 1
                     expected_count = cast(int, obj["/N"])
                     if actual_count != expected_count:  # pragma: no cover
@@ -1423,6 +1434,10 @@ class PdfReader(PdfDocCommon):
                             generation_number=generation_number,
                             expected=expected_count,
                         )
+                except LimitReachedError:
+                    # Do not let the broad recovery below bypass the token-length limit
+                    # when strict parsing is enabled.
+                    raise
                 except Exception:  # could be multiple causes
                     pass
 
