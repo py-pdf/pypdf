@@ -739,22 +739,18 @@ class Font:
             # Note that, in some cases, unicodedata.normalize() might split a ligature, resulting
             # in multiple characters.
             normalized_chars = unicodedata.normalize("NFKC", actual_char)
-            uni_points = [ord(char) for char in normalized_chars]
-            # Only deal with Basic Multilingual Plane characters.
-            # TODO: Add all characters.
-            if all(uni_point <= 0xFFFF for uni_point in uni_points):
-                cid = ord(src_id) if isinstance(src_id, str) else src_id
-                cid_hex = src_hex_format.format(cid=cid)
-                uni_hex = "".join(f"{uni_point:04X}" for uni_point in uni_points)
-                bfchar_map.append(f"<{cid_hex}> <{uni_hex}>")
+            cid = ord(src_id) if isinstance(src_id, str) else src_id
+            cid_hex = src_hex_format.format(cid=cid)
+            uni_hex = normalized_chars.encode("utf-16-be").hex().upper()
+            bfchar_map.append(f"<{cid_hex}> <{uni_hex}>")
 
-                # Width mapping, but not for the 14 Adobe code fonts, which are dealt with elsewhere.
-                if self.name not in CORE_FONT_METRICS:
-                    # The widths (/W) array can have two formats:
-                    #    [first_cid [w1 w2 w3]] or [first last width]
-                    # Here we choose the first format and simply provide one array with one width for every cid.
-                    width = self.character_widths.get(cast(str, src_id), self.character_widths["default"])
-                    widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+            # Width mapping, but not for the 14 Adobe code fonts, which are dealt with elsewhere.
+            if self.name not in CORE_FONT_METRICS:
+                # The widths (/W) array can have two formats:
+                #    [first_cid [w1 w2 w3]] or [first last width]
+                # Here we choose the first format and simply provide one array with one width for every cid.
+                width = self.character_widths.get(cast(str, src_id), self.character_widths["default"])
+                widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
 
         while partial_list := bfchar_map[:CMAP_MAX_ENTRIES_PER_GROUP]:
             del bfchar_map[:CMAP_MAX_ENTRIES_PER_GROUP]
