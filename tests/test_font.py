@@ -188,6 +188,18 @@ def test_font_from_font_file():
                 font._get_typographic_maps()
 
 
+def test_font_old_fonttools_substitution(monkeypatch):
+    pytest.importorskip("fontTools", minversion="4.57.0")
+    from fontTools.ttLib.tables._c_m_a_p import table__c_m_a_p  # noqa: PLC0415
+
+    # Mock the buildReversedMin to fallback for buildReversed as in FontTools < 4.57
+    def mock_build_reversed_min(self) -> dict:
+        return {k: min(r) for k, r in table__c_m_a_p.buildReversed(self).items()}
+    monkeypatch.setattr(table__c_m_a_p, "buildReversedMin", mock_build_reversed_min)
+
+    test_font_from_font_file()
+
+
 def test_font_as_font_resource():
     writer = PdfWriter(RESOURCE_ROOT / "fontsampler.pdf")
     font_resources = writer.pages[0]["/Resources"]["/Font"]
