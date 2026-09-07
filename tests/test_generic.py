@@ -187,12 +187,12 @@ def test_read_string_from_stream_multichar_eol2():
     assert read_string_from_stream(stream) == ""
 
 
-def test_read_string_from_stream_excape_digit():
+def test_read_string_from_stream_escape_digit():
     stream = BytesIO(b"x\\1a )")
     assert read_string_from_stream(stream) == "\x01a "
 
 
-def test_read_string_from_stream_excape_digit2():
+def test_read_string_from_stream_escape_digit2():
     stream = BytesIO(b"(hello \\1\\2\\3\\4)")
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
