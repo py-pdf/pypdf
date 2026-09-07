@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788798420072,
+  "lastUpdate": 1788798422841,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -133723,6 +133723,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023010949961181148",
             "extra": "mean: 517.9914459999964 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82501d2993c6387833c4949d205caeb188f8bb9e",
+          "message": "SEC: Limit allowed length of indirect object tokens (#4055)\n\nThese changes are based on the original changes proposed by the\nreporter, but have been modified/extended quite a bit for the final\npatch.\n\nDisclosure: The original patches were assisted by Antigravity with\nGoogle Gemini 3.8 Flash. Further reviews and refinements where partially\ndone with the help of ChatGPT.\n\n---------\n\nCo-authored-by: Sevban Dönmez <82449360+byjanke@users.noreply.github.com>",
+          "timestamp": "2026-09-07T18:23:54+02:00",
+          "tree_id": "e0ca8bc498cf15d58a22b3d2839727ca17696b09",
+          "url": "https://github.com/py-pdf/pypdf/commit/82501d2993c6387833c4949d205caeb188f8bb9e"
+        },
+        "date": 1788798411537,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.891825262316349,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02445912310463376",
+            "extra": "mean: 84.09138025 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.007780989290872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00756410366893644",
+            "extra": "mean: 55.53155053333304 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.8957065174057206,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0439671249726176",
+            "extra": "mean: 1.1164371148000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.41258975622994803,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04678761000656738",
+            "extra": "mean: 2.4237150460000065 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.37350448934128055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007775669071552571",
+            "extra": "mean: 2.677343990600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2030814940166363,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030938648581534986",
+            "extra": "mean: 831.1988879999944 msec\nrounds: 5"
           }
         ]
       }
