@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 6.18.0, 2026-09-07
+
+### Security (SEC)
+- Limit allowed length of indirect object tokens (#4055)
+
+### Deprecations (DEP)
+- Rework configuration value handling (#4044)
+
+### New Features (ENH)
+- Draw borders and backgrounds for appearance streams and annotations (#4033)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.17.0...6.18.0)
+
 ## Version 6.17.0, 2026-09-04
 
 ### Security (SEC)
