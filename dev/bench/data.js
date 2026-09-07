@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788776604337,
+  "lastUpdate": 1788780570822,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -133525,6 +133525,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007752297328186999",
             "extra": "mean: 807.140031199998 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d35834b5373e80bda9b6d3537eac699170ca52fd",
+          "message": "ENH: Draw borders and backgrounds for appearance streams and annotations (#4033)",
+          "timestamp": "2026-09-07T13:26:25+02:00",
+          "tree_id": "641330c4b1e9a6a2d387032b2dec1cd77963633d",
+          "url": "https://github.com/py-pdf/pypdf/commit/d35834b5373e80bda9b6d3537eac699170ca52fd"
+        },
+        "date": 1788780563302,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.19826655611597,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035217938421801464",
+            "extra": "mean: 89.29953533333664 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.737236276822294,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009235291154237277",
+            "extra": "mean: 27.982018314285792 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0109096886338917,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012269059528366287",
+            "extra": "mean: 989.2080481999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.2968589116617058,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04866181498746184",
+            "extra": "mean: 3.368603605000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.6125557950274463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03606212237381029",
+            "extra": "mean: 1.6325043499999765 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9305338103981105,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023010949961181148",
+            "extra": "mean: 517.9914459999964 msec\nrounds: 5"
           }
         ]
       }
