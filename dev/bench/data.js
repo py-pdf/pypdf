@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788798422841,
+  "lastUpdate": 1788799099157,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -133789,6 +133789,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030938648581534986",
             "extra": "mean: 831.1988879999944 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "18e4c226a4c2dd7f187854015f52e87350f84161",
+          "message": "REL: 6.18.0\n\n## What's new\n\n### Security (SEC)\n- Limit allowed length of indirect object tokens (#4055) by @stefan6419846\n\n### Deprecations (DEP)\n- Rework configuration value handling (#4044) by @stefan6419846\n\n### New Features (ENH)\n- Draw borders and backgrounds for appearance streams and annotations (#4033) by @PJBrs\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.17.0...6.18.0)",
+          "timestamp": "2026-09-07T18:35:14+02:00",
+          "tree_id": "a22e983e283acab916d054e5dbf218f096571a5c",
+          "url": "https://github.com/py-pdf/pypdf/commit/18e4c226a4c2dd7f187854015f52e87350f84161"
+        },
+        "date": 1788799089672,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.905428832537323,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018863720866514826",
+            "extra": "mean: 77.48677033333351 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.12988194248095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015182750391472108",
+            "extra": "mean: 58.377518500000136 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.032587891901887,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029519452045912394",
+            "extra": "mean: 968.4405636000008 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5450886219918967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020152230679285385",
+            "extra": "mean: 1.834564068399993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3659640344943924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017759633734381",
+            "extra": "mean: 2.732508951 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1921824297639878,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00690080551149024",
+            "extra": "mean: 838.7978006000026 msec\nrounds: 5"
           }
         ]
       }
