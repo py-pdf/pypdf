@@ -1268,68 +1268,123 @@ class PdfDocCommon(ABC):
         except KeyError:
             return None
 
-    def _flatten(
-        self,
-        list_only: bool = False,
-        pages: Union[DictionaryObject, PageObject, None] = None,
-        inherit: Optional[dict[str, Any]] = None,
-        indirect_reference: Optional[IndirectObject] = None,
-        visited: Optional[set[int]] = None,
-        depth: int = 0,
-        traversal_state: Optional[_TraversalState] = None,
-    ) -> None:
+    def _flatten(self, list_only: bool = False) -> None:
         """
         Process the document pages to ease searching.
 
-        Attributes of a page may inherit from ancestor nodes
-        in the page tree. Flattening means moving
-        any inheritance data into descendant nodes,
-        effectively removing the inheritance dependency.
+        Attributes of a page may inherit from ancestor nodes in the page tree.
+        Flattening means moving any inheritance data into descendant nodes,
+        effectively removing the inheritance dependency. The result is stored
+        in ``self.flattened_pages``.
 
         Note: It is distinct from another use of "flattening" applied to PDFs.
         Flattening a PDF also means combining all the contents into one single layer
         and making the file less editable.
 
+        The ``/Pages`` tree is walked iteratively rather than recursively, so a
+        deeply (or maliciously) nested tree cannot exhaust the interpreter
+        stack. ``Configuration.page_tree_maximum_depth`` and
+        ``Configuration.page_tree_maximum_entries`` still bound the traversal.
+
         Args:
-            list_only: Will only list the pages within _flatten_pages.
-            pages:
-            inherit:
-            indirect_reference: Used recursively to flatten the /Pages object.
-            visited: Set of id() values on the active page-tree traversal path.
-                Detects multi-hop cycles such as A→B→C→A that the single-parent
-                check misses.
-            depth: Current page-tree traversal depth.
-            traversal_state: State shared across the complete traversal.
+            list_only: If True, only collect the pages in ``self.flattened_pages``
+                without copying inherited attributes onto the page objects.
 
         """
-        if inherit is None:
-            inherit = {}
-        if visited is None:
-            visited = set()
-        if traversal_state is None:
-            traversal_state = _TraversalState()
         configuration = get_configuration()
-        if depth > configuration.page_tree_maximum_depth:
-            raise LimitReachedError(
-                f"Maximum page tree depth reached: {depth} > {configuration.page_tree_maximum_depth}."
-            )
-        if is_null_or_none(pages):
-            # Fix issue 327: set flattened_pages attribute only for
-            # decrypted file
-            catalog = self.root_object
-            pages = catalog.get("/Pages").get_object()  # type: ignore[union-attr]
-            if not isinstance(pages, DictionaryObject):
-                raise PdfReadError("Invalid object in /Pages")
-            self.flattened_pages = []
-        assert pages is not None, "mypy"
+        maximum_depth = configuration.page_tree_maximum_depth
+        maximum_entries = configuration.page_tree_maximum_entries
 
-        node_type = self._page_tree_node_type(pages)
-        if node_type == "/Pages":
-            self._flatten_page_tree_node(
-                pages, list_only, inherit, visited, depth, traversal_state
-            )
-        elif node_type == "/Page":
-            self._flatten_leaf_page(pages, list_only, inherit, indirect_reference)
+        # Fix issue 327: set flattened_pages attribute only for decrypted file
+        pages = self.root_object.get("/Pages").get_object()  # type: ignore[union-attr]
+        if not isinstance(pages, DictionaryObject):
+            raise PdfReadError("Invalid object in /Pages")
+        self.flattened_pages = []
+
+        inheritable_page_attributes = (
+            NameObject(PG.RESOURCES),
+            NameObject(PG.MEDIABOX),
+            NameObject(PG.CROPBOX),
+            NameObject(PG.ROTATE),
+        )
+        entry_count = 0
+
+        # Explicit depth-first traversal. Each item is
+        # ``(node, inherit, node_reference, depth, ancestors)`` where ``ancestors``
+        # holds the ``id()`` of every ``/Pages`` node on the current root-to-node
+        # chain. It replaces the recursive ``visited`` set and catches multi-hop
+        # cycles (A -> B -> C -> A) that the direct-parent check misses.
+        stack: list[tuple[Any, ...]] = [(pages, {}, None, 0, frozenset())]
+        while stack:
+            node, inherit, node_reference, depth, ancestors = stack.pop()
+            if depth > maximum_depth:
+                raise LimitReachedError(
+                    f"Maximum page tree depth reached: {depth} > {maximum_depth}."
+                )
+
+            node_type = self._page_tree_node_type(node)
+            if node_type == "/Page":
+                self._flatten_leaf_page(node, list_only, inherit, node_reference)
+                continue
+            if node_type != "/Pages":
+                continue
+
+            child_inherit = dict(inherit)
+            for attr in inheritable_page_attributes:
+                if attr in node:
+                    child_inherit[attr] = node[attr]
+
+            kids = node.get(PagesAttributes.KIDS, ArrayObject()).get_object()
+            if isinstance(kids, NullObject):
+                kids = ArrayObject()
+            elif not isinstance(kids, ArrayObject):
+                raise PdfReadError(
+                    f"Expected /Kids to be an array, got {type(kids).__name__}."
+                )
+
+            child_ancestors = ancestors | {id(node)}
+            pages_reference = getattr(node, "indirect_reference", object())
+            children: list[tuple[Any, ...]] = []
+            for kid in kids:
+                if getattr(kid, "indirect_reference", object()) == pages_reference:
+                    raise PdfReadError("Detected cyclic page references.")
+                kid_object = kid.get_object()
+                if is_null_or_none(kid_object):
+                    # A /Kids entry that resolves to null does not point at a real
+                    # node. The former recursive implementation descended into it,
+                    # re-resolved the page-tree root and re-hit the same cached
+                    # object, surfacing this as a cycle; keep that behaviour.
+                    raise PdfReadError("Detected cyclic page references.")
+                if not isinstance(kid_object, DictionaryObject):
+                    logger_warning(
+                        "Ignoring page tree entry that is not a dictionary: %(entry)s",
+                        source=__name__,
+                        entry=kid_object,
+                    )
+                    continue
+                if not kid_object:
+                    # damaged file may have an invalid child in /Kids
+                    continue
+                if id(kid_object) in child_ancestors:
+                    raise PdfReadError("Detected cyclic page references.")
+                entry_count += 1
+                if entry_count > maximum_entries:
+                    raise LimitReachedError(
+                        "Maximum page tree entry limit reached: "
+                        f"{entry_count} > {maximum_entries}."
+                    )
+                children.append(
+                    (
+                        kid_object,
+                        child_inherit,
+                        kid if isinstance(kid, IndirectObject) else None,
+                        depth + 1,
+                        child_ancestors,
+                    )
+                )
+
+            # Push in reverse so the children are visited left-to-right (LIFO).
+            stack.extend(reversed(children))
 
     def _page_tree_node_type(self, pages: DictionaryObject) -> str:
         """
@@ -1351,82 +1406,6 @@ class PdfDocCommon(ABC):
                 raise PdfReadError(f"Non-page object reached through /Kids: {pages!r}")
             return "/Page"
         return "/Pages"
-
-    def _flatten_page_tree_node(
-        self,
-        pages: DictionaryObject,
-        list_only: bool,
-        inherit: dict[str, Any],
-        visited: set[int],
-        depth: int,
-        traversal_state: _TraversalState,
-    ) -> None:
-        """
-        Handle an intermediate ``/Pages`` node: propagate its inheritable
-        attributes into ``inherit`` and recurse into each entry of ``/Kids``.
-
-        Cyclic references and the configured page-tree entry limit are enforced here.
-        """
-        inheritable_page_attributes = (
-            NameObject(PG.RESOURCES),
-            NameObject(PG.MEDIABOX),
-            NameObject(PG.CROPBOX),
-            NameObject(PG.ROTATE),
-        )
-        for attr in inheritable_page_attributes:
-            if attr in pages:
-                inherit[attr] = pages[attr]
-
-        kids = pages.get(PagesAttributes.KIDS, ArrayObject()).get_object()
-        if isinstance(kids, NullObject):
-            kids = ArrayObject()
-        elif not isinstance(kids, ArrayObject):
-            raise PdfReadError(
-                f"Expected /Kids to be an array, got {type(kids).__name__}."
-            )
-
-        configuration = get_configuration()
-        pages_reference = getattr(pages, "indirect_reference", object())
-        for page in kids:
-            if getattr(page, "indirect_reference", object()) == pages_reference:
-                raise PdfReadError("Detected cyclic page references.")
-
-            additional_arguments = {}
-            if isinstance(page, IndirectObject):
-                additional_arguments["indirect_reference"] = page
-            obj = page.get_object()
-            if not is_null_or_none(obj) and not isinstance(obj, DictionaryObject):
-                logger_warning(
-                    "Ignoring page tree entry that is not a dictionary: %(entry)s",
-                    source=__name__,
-                    entry=obj,
-                )
-                continue
-            if not obj:
-                # damaged file may have invalid child in /Pages
-                continue
-            obj_id = id(obj)
-            if obj_id in visited:
-                raise PdfReadError("Detected cyclic page references.")
-            traversal_state.entry_count += 1
-            if traversal_state.entry_count > configuration.page_tree_maximum_entries:
-                raise LimitReachedError(
-                    "Maximum page tree entry limit reached: "
-                    f"{traversal_state.entry_count} > {configuration.page_tree_maximum_entries}."
-                )
-            visited.add(obj_id)
-            try:
-                self._flatten(
-                    list_only,
-                    cast(DictionaryObject, obj),
-                    inherit.copy(),
-                    visited=visited,
-                    depth=depth + 1,
-                    traversal_state=traversal_state,
-                    **additional_arguments,
-                )
-            finally:
-                visited.remove(obj_id)
 
     def _flatten_leaf_page(
         self,

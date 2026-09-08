@@ -3,6 +3,7 @@ import itertools
 import re
 import shutil
 import subprocess
+import sys
 from io import BytesIO
 from operator import itemgetter
 from pathlib import Path
@@ -698,6 +699,34 @@ def test_flatten__entry_limit_for_reused_paths():
         LimitReachedError, match=r"^Maximum page tree entry limit reached: 101 > 100\.$"
     ):
         writer._flatten()
+
+
+def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
+    """A deeply nested /Pages tree is flattened iteratively, without a RecursionError."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    node = writer.root_object["/Pages"]["/Kids"][0]
+
+    # Far deeper than the interpreter's recursion limit would allow a recursive
+    # traversal to go, but still one real page at the bottom.
+    depth = sys.getrecursionlimit() * 2
+    for _ in range(depth):
+        node = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Pages"),
+                    NameObject("/Kids"): ArrayObject([node]),
+                    NameObject("/Count"): NumberObject(1),
+                }
+            )
+        )
+    writer.root_object[NameObject("/Pages")] = node
+
+    with apply_configuration(page_tree_maximum_depth=depth + 10):
+        writer._flatten()
+
+    assert writer.flattened_pages is not None
+    assert len(writer.flattened_pages) == 1
 
 
 def test_flatten__pages_without_kids():
