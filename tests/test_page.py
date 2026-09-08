@@ -1694,3 +1694,25 @@ def test_extract_text__resources_not_a_dictionary(caplog, value, expected):
 
     assert PdfReader(stream).pages[0].extract_text() == ""
     assert expected in caplog.text
+
+
+def test_extract_text__resources_is_null(caplog):
+    """A null /Resources is missing rather than malformed: no text, no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text() == ""
+    assert caplog.text == ""
+
+
+def test_extract_text__resources_is_a_dictionary():
+    """The regular path: a proper /Resources still yields its text."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+
+    assert isinstance(page["/Resources"].get_object(), DictionaryObject)
+    assert "crazy ones" in page.extract_text()
