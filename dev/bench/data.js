@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788810950639,
+  "lastUpdate": 1788861471930,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -134053,6 +134053,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018647412747071488",
             "extra": "mean: 799.673272799987 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dertte28@gmail.com",
+            "name": "Yuki9814",
+            "username": "Yuki9814"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "231698766174a1ab1cd5c41cf3e4cca716071560",
+          "message": "BUG: Use font color for FreeText default appearance (#4051)\n\nFreeText already stores font_color in /DS, but its /DA entry was generated from border_color. Use font_color for /DA so viewers do not render text with the border color and border_color=None no longer leaves the default appearance empty.\n\nAdd regression coverage for different text and border colors as well as annotations without a border.\n\nRefs #2084.\nRefs #2433.\n\nAI assistance: OpenAI ChatGPT (GPT-5.6 Pro) assisted with repository research, implementation, and validation. The final diff was checked against the current code, issue history, and repository contribution policy.\n\nGuard /DA color conversion with font_color while keeping it independent of the border color. Cover 12 text/border color combinations, no-border width, and write/read preservation.\n\nValidation: the exact changed annotation module and selected regression tests passed 13 isolated checks on Python 3.13.5, using installed pypdf 5.9.0 supporting types. The three empty-string cases fail before the guard is restored. git diff --check and Python 3.9 syntax parsing pass. The full repository suite and Ruff were not run locally due to unavailable repository downloads/dependencies; repository CI remains the integration check.\n\nAI assistance: OpenAI ChatGPT (GPT-6 Astra Pro).",
+          "timestamp": "2026-09-08T11:54:52+02:00",
+          "tree_id": "9ea43b09bc792ba74f834f42247a40ba749ab450",
+          "url": "https://github.com/py-pdf/pypdf/commit/231698766174a1ab1cd5c41cf3e4cca716071560"
+        },
+        "date": 1788861461549,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.68805133588517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016527486218529543",
+            "extra": "mean: 73.05641800000838 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.542674870371798,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0112764649730957",
+            "extra": "mean: 60.44971613333321 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9841345703548937,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03314323954284469",
+            "extra": "mean: 1.0161211993999815 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5141878360513653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03829461837473354",
+            "extra": "mean: 1.9448145792000104 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36145436996447894,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010417369752799242",
+            "extra": "mean: 2.7666009408000036 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1852653640499031,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003940202629262291",
+            "extra": "mean: 843.6929233999763 msec\nrounds: 5"
           }
         ]
       }
