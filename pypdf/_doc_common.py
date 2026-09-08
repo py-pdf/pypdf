@@ -1287,8 +1287,12 @@ class PdfDocCommon(ABC):
         ``Configuration.page_tree_maximum_entries`` still bound the traversal.
 
         Args:
-            list_only: If True, only collect the pages in ``self.flattened_pages``
-                without copying inherited attributes onto the page objects.
+            list_only: If True, the page's own entries are not copied into the
+                generated :class:`PageObject`. Attributes inherited from ancestor
+                nodes are applied either way. Note that a page reached through an
+                indirect reference is already populated by :class:`PageObject`
+                itself, so this only has an effect for ``/Kids`` entries that are
+                inline dictionaries.
 
         """
         configuration = get_configuration()
@@ -1414,7 +1418,15 @@ class PdfDocCommon(ABC):
         inherit: dict[str, Any],
         indirect_reference: Optional[IndirectObject],
     ) -> None:
-        """Build the :class:`PageObject` for a leaf ``/Page`` node and append it to ``flattened_pages``."""
+        """
+        Build the :class:`PageObject` for a leaf ``/Page`` node and append it to
+        ``flattened_pages``.
+
+        ``list_only`` suppresses copying the page's own entries; the inherited
+        attributes are applied regardless. When ``indirect_reference`` is set,
+        :class:`PageObject` has already copied those entries in its constructor,
+        so the flag only matters for inline ``/Kids`` dictionaries.
+        """
         page_obj = PageObject(self, indirect_reference)
         if not list_only:
             page_obj.update(page)
