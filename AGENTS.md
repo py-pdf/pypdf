@@ -39,7 +39,7 @@ requirements/       Dependencies for development and optional features
 2. Branch format: type/short-description (e.g., enh/user-auth).
 3. Make changes
 4. Run mypy and pytest
-5. Use pre-commit when commiting
+5. Use pre-commit when committing
 6. Commit format: `PREFIX: Description`
 
 Prefixes for commit messages:
