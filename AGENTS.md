@@ -69,7 +69,7 @@ Co-authored-by: {{Agent Name, Model Name and version}} <{{email@agent-company.co
 - Never modify `CHANGELOG.md` or `requirements`.
 - Keep PRs small and single-purpose: typos, style, a feature, and a bug fix are
   separate PRs. A feature PR must include its tests and docs.
-- Never run "git push".
+- Never run `git push`.
 
 ## When stuck
 - ask a clarifying question, propose a short plan, or open a draft PR with notes
