@@ -9,6 +9,7 @@ from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
 from .errors import LimitReachedError
 from .generic import (
+    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
     NullObject,
@@ -112,7 +113,15 @@ def _parse_encoding(
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         x: int = 0
         o: Union[int, str]
-        for o in cast(DictionaryObject, enc["/Differences"]):
+        differences = enc["/Differences"].get_object()
+        if not isinstance(differences, ArrayObject):
+            logger_warning(
+                "Font encoding differences are not an array: %(differences)s",
+                source=__name__,
+                differences=differences,
+            )
+            differences = ArrayObject()
+        for o in differences:
             if isinstance(o, int):
                 x = o
             else:  # isinstance(o, str):
