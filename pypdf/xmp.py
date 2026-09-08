@@ -29,8 +29,8 @@ from ._utils import StreamType, deprecate_with_replacement, deprecation_no_repla
 from .errors import LimitReachedError, PdfReadError, XmpDocumentError
 from .generic import ContentStream, PdfObject, StreamObject
 
-XMP_MAX_INPUT_LENGTH = 5_000_000  # DEPRECATED: Use pypdf.Confiugration.
-XMP_MAX_ELEMENT_COUNT = 100_000  # DEPRECATED: Use pypdf.Confiugration.
+XMP_MAX_INPUT_LENGTH = 5_000_000  # DEPRECATED: Use pypdf.Configuration.
+XMP_MAX_ELEMENT_COUNT = 100_000  # DEPRECATED: Use pypdf.Configuration.
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"

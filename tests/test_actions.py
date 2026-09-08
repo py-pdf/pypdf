@@ -26,7 +26,7 @@ def pdf_file_writer():
         DictionaryObject(),
     ]
 )
-def test_page_add_action__with_empyty_objects(pdf_file_writer, action_dictionary):
+def test_page_add_action__with_empty_objects(pdf_file_writer, action_dictionary):
     page = pdf_file_writer.pages[0]
 
     # Add an open action
