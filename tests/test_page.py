@@ -1673,3 +1673,46 @@ def test_box_setter_allows_extra_values(box):
     page = writer.pages[0]
     setattr(page, box, ArrayObject([0, 0, 13, 37, 0, 0]))
     assert getattr(page, box) == RectangleObject((0, 0, 13, 37))
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Page resources are not a dictionary: 1", id="number"),
+        pytest.param(TextStringObject("x"), "Page resources are not a dictionary: x", id="string"),
+        pytest.param(ArrayObject(), "Page resources are not a dictionary: []", id="array"),
+    ],
+)
+def test_extract_text__resources_not_a_dictionary(caplog, value, expected):
+    """A /Resources entry that is not a dictionary raised a TypeError on the /Font lookup."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text() == ""
+    assert expected in caplog.text
+
+
+def test_extract_text__resources_is_null(caplog):
+    """A null /Resources is missing rather than malformed: no text, no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text() == ""
+    assert caplog.text == ""
+
+
+def test_extract_text__resources_is_a_dictionary():
+    """The regular path: a proper /Resources still yields its text."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+
+    assert isinstance(page["/Resources"].get_object(), DictionaryObject)
+    assert "crazy ones" in page.extract_text()
