@@ -140,6 +140,40 @@ def test_free_text__font_specifier():
     assert free_text_annotation["/DS"] == "font: italic bold 20pt Arial;text-align:left;color:#00ff00"
 
 
+@pytest.mark.parametrize("border_color", ["0000ff", None, ""])
+@pytest.mark.parametrize(
+    ("font_color", "expected_appearance"),
+    [
+        ("00ff00", "0.0 1.0 0.0 rg"),
+        ("ff0000", "1.0 0.0 0.0 rg"),
+        ("000000", "0.0 0.0 0.0 rg"),
+        ("", ""),
+    ],
+)
+def test_free_text__font_color(font_color, border_color, expected_appearance):
+    free_text_annotation = FreeText(
+        text="Hello World",
+        rect=(50, 550, 200, 650),
+        font_color=font_color,
+        border_color=border_color,
+    )
+    assert free_text_annotation["/DA"] == expected_appearance
+    if border_color is None:
+        assert free_text_annotation["/BS"]["/W"] == 0
+    else:
+        assert "/BS" not in free_text_annotation
+
+    writer = PdfWriter()
+    writer.add_blank_page(width=300, height=700)
+    writer.add_annotation(0, free_text_annotation)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output)
+    annotation = reader.pages[0]["/Annots"][0].get_object()
+    assert annotation["/DA"] == expected_appearance
+
+
 def test_annotation_dictionary():
     a = AnnotationDictionary()
     a.flags = AnnotationFlag.HIDDEN | AnnotationFlag.PRINT | AnnotationFlag.NO_ZOOM
