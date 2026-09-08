@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788881228968,
+  "lastUpdate": 1788881234626,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -134515,6 +134515,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022244837760412965",
             "extra": "mean: 669.2521295999995 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "431f76d3b379280ce5adaec546ece3aecf16da79",
+          "message": "ROB: Fix CFF handling with supplements for fonttools < 4.58.0 (#4059)\n\nBefore https://github.com/fonttools/fonttools/commit/1394c643be69be99d5bd57d6ff59b0b878e8b9d6, CFF font files with supplements threw a `NotImplementedError`, thus breaking text extraction. Allow this error as a valid one to not enforce too recent *fonttools* versions.",
+          "timestamp": "2026-09-08T17:24:01+02:00",
+          "tree_id": "2d2b3959d98d63a25aeb018661f54ef9041e2789",
+          "url": "https://github.com/py-pdf/pypdf/commit/431f76d3b379280ce5adaec546ece3aecf16da79"
+        },
+        "date": 1788881224562,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.231805209627668,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02513975010815627",
+            "extra": "mean: 81.75408149999797 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.872571944892576,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02073554941315217",
+            "extra": "mean: 63.001762000000056 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9679777640314218,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029924582364583938",
+            "extra": "mean: 1.0330815822000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.39912135955141803,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03622781373102933",
+            "extra": "mean: 2.5055035919999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3646542180489469,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011897690738730298",
+            "extra": "mean: 2.7423239620000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.223344063797907,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00262593151074974",
+            "extra": "mean: 817.4315220000096 msec\nrounds: 5"
           }
         ]
       }
