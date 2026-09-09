@@ -771,6 +771,72 @@ def test_flatten__pages_with_non_array_kids():
         list(reader.pages)
 
 
+def test_flatten__missing_pages_entry():
+    # A document catalog without /Pages is malformed. Flattening must raise a
+    # PdfReadError, not an AttributeError from calling .get_object() on None.
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    del reader.root_object["/Pages"]
+    reader.flattened_pages = None
+
+    with pytest.raises(PdfReadError, match=r"^Invalid object in /Pages$"):
+        list(reader.pages)
+
+
+def test_flatten__error_does_not_leave_a_partial_result():
+    # If flattening raises partway through, the pages collected so far must be
+    # discarded: a later access has to re-raise rather than silently serve a
+    # truncated page list.
+    writer = PdfWriter()
+    good_kids = [
+        writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Page"),
+                    NameObject("/MediaBox"): RectangleObject([0, 0, 10, 10]),
+                }
+            )
+        )
+        for _ in range(2)
+    ]
+    good_subtree = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject(good_kids),
+                NameObject("/Count"): NumberObject(2),
+            }
+        )
+    )
+    # Second subtree is processed after the first and fails on its /Kids.
+    broken_subtree = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): NumberObject(0),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+    writer.root_object[NameObject("/Pages")] = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([good_subtree, broken_subtree]),
+                NameObject("/Count"): NumberObject(3),
+            }
+        )
+    )
+
+    writer.flattened_pages = None
+    with pytest.raises(PdfReadError, match=r"^Expected /Kids to be an array, got NumberObject\.$"):
+        writer._flatten()
+    assert writer.flattened_pages is None
+
+    # Before the fix this returned 2 (only the pages from the first subtree).
+    with pytest.raises(PdfReadError, match=r"^Expected /Kids to be an array, got NumberObject\.$"):
+        len(writer.pages)
+
+
 @pytest.mark.enable_socket
 @pytest.mark.timeout(10)
 def test_get_outline__cyclic_references(caplog):

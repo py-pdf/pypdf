@@ -1307,11 +1307,11 @@ class PdfDocCommon(ABC):
         maximum_depth = configuration.page_tree_maximum_depth
         maximum_entries = configuration.page_tree_maximum_entries
 
-        # Fix issue 327: set flattened_pages attribute only for decrypted file
-        pages = self.root_object.get("/Pages").get_object()  # type: ignore[union-attr]
+        pages = self.root_object.get("/Pages")
+        if pages is not None:
+            pages = pages.get_object()
         if not isinstance(pages, DictionaryObject):
             raise PdfReadError("Invalid object in /Pages")
-        self.flattened_pages = []
 
         inheritable_page_attributes = (
             NameObject(PG.RESOURCES),
@@ -1320,6 +1320,10 @@ class PdfDocCommon(ABC):
             NameObject(PG.ROTATE),
         )
         entry_count = 0
+        # Collect into a local list and assign self.flattened_pages only once the
+        # traversal completes, so a mid-traversal error never leaves a truncated
+        # result that a later page access would silently accept.
+        flattened: list[PageObject] = []
 
         # Explicit depth-first traversal
         # ``ancestors`` catches multi-hop cycles (A -> B -> C -> A)
@@ -1333,7 +1337,9 @@ class PdfDocCommon(ABC):
 
             node_type = self._page_tree_node_type(node)
             if node_type == "/Page":
-                self._flatten_leaf_page(node, list_only, inherit, node_reference)
+                flattened.append(
+                    self._flatten_leaf_page(node, list_only, inherit, node_reference)
+                )
                 continue
             if node_type != "/Pages":
                 continue
@@ -1395,6 +1401,8 @@ class PdfDocCommon(ABC):
             # Push in reverse so the children are visited left-to-right (LIFO).
             stack.extend(reversed(children))
 
+        self.flattened_pages = flattened
+
     def _page_tree_node_type(self, pages: DictionaryObject) -> str:
         """
         Return the node's ``/Type`` value verbatim when it has one; ``_flatten``
@@ -1424,10 +1432,9 @@ class PdfDocCommon(ABC):
         list_only: bool,
         inherit: dict[str, Any],
         indirect_reference: Optional[IndirectObject],
-    ) -> None:
+    ) -> PageObject:
         """
-        Build the :class:`PageObject` for a leaf ``/Page`` node and append it to
-        ``flattened_pages``.
+        Build the :class:`PageObject` for a leaf ``/Page`` node.
 
         ``list_only`` suppresses copying the page's own entries; the inherited
         attributes are applied regardless. When ``indirect_reference`` is set,
@@ -1441,9 +1448,7 @@ class PdfDocCommon(ABC):
             # if the page has its own value, it does not inherit the parent's value
             if attr not in page_obj:
                 page_obj[attr] = value
-
-        # TODO: Could flattened_pages be None at this point?
-        self.flattened_pages.append(page_obj)  # type: ignore[union-attr]
+        return page_obj
 
     def remove_page(
         self,
