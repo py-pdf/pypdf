@@ -26,6 +26,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     StreamObject,
     TextStringObject,
 )
@@ -751,3 +752,53 @@ def test__character_map_from_cff_type1_font_file_guards(caplog):
 
     with mock.patch("fontTools.cffLib.CFFFontSet", return_value=mock_cff_set):
         _parse_to_unicode(font_dict)
+
+
+def _generate_font_with_differences(differences: PdfObject) -> DictionaryObject:
+    """A Type1 font resource whose /Encoding carries the given /Differences."""
+    font = DictionaryObject()
+    font[NameObject("/Type")] = NameObject("/Font")
+    font[NameObject("/Subtype")] = NameObject("/Type1")
+    font[NameObject("/BaseFont")] = NameObject("/Helvetica")
+    encoding = DictionaryObject()
+    encoding[NameObject("/Differences")] = differences
+    font[NameObject("/Encoding")] = encoding
+    return font
+
+
+@pytest.mark.parametrize(
+    ("differences", "expected"),
+    [
+        pytest.param(
+            NumberObject(5),
+            "Font encoding differences are not an array: 5",
+            id="number",
+        ),
+        pytest.param(
+            TextStringObject("abc"),
+            "Font encoding differences are not an array: abc",
+            id="string",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Font encoding differences are not an array: {}",
+            id="dictionary",
+        ),
+    ],
+)
+def test_get_encoding__differences_not_an_array(caplog, differences, expected):
+    """/Differences must be an array; iterating a non-array raised a TypeError."""
+    encoding, _ = get_encoding(_generate_font_with_differences(differences))
+
+    assert encoding == dict(enumerate(charset_encoding["/StandardEncoding"]))
+    assert expected in caplog.text
+
+
+def test_get_encoding__differences_is_an_array(caplog):
+    """The regular path: a proper /Differences array is still applied."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), NameObject("/quotesingle")]))
+    )
+
+    assert encoding[65] == "'"
+    assert caplog.text == ""
