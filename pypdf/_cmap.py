@@ -462,7 +462,7 @@ def _character_map_from_cff_type1_font_file(
                 int_entry.append(i)
         return map_dict, int_entry
 
-    except (struct.error, AssertionError, AttributeError, IndexError, ValueError):
+    except (struct.error, AssertionError, AttributeError, IndexError, NotImplementedError, ValueError):
         return map_dict, int_entry
 
 
