@@ -662,7 +662,7 @@ class OutlineFontFlag(IntFlag):
     bold = 2
 
 
-class PageLabelStyle:
+class PageLabelStyle(StrEnum):
     """
     Table 8.10 in the 1.7 reference.
     Table 161 in the 2.0 reference.

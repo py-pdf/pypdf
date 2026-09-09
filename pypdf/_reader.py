@@ -49,6 +49,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+from ._configuration import apply_legacy_configuration
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._utils import (
@@ -140,6 +141,7 @@ class PdfReader(PdfDocCommon):
         self._root_object_recovery_limit = (
             root_object_recovery_limit if isinstance(root_object_recovery_limit, int) else sys.maxsize
         )
+        apply_legacy_configuration()
 
         # Map page indirect_reference number to page number
         self._page_id2num: Optional[dict[Any, Any]] = None
@@ -354,7 +356,7 @@ class PdfReader(PdfDocCommon):
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
-    ) -> Union[int, PdfObject, str]:
+    ) -> PdfObject:
         # indirect reference to object in object stream
         # read the entire object stream into memory
         stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
@@ -399,7 +401,7 @@ class PdfReader(PdfDocCommon):
             obj_index.append((int(objnum), int(offset)))
 
         # Phase 2: Parse each object and cache it.
-        target_obj: Union[int, PdfObject, str] = NullObject()
+        target_obj: PdfObject = NullObject()
         found = False
         for i, (obj_num, obj_offset) in enumerate(obj_index):
             # Skip objects already in the cache.
@@ -439,7 +441,7 @@ class PdfReader(PdfDocCommon):
             # caching those stale versions would shadow the newer xref entry.
             authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
             if authoritative_stm == stmnum:
-                self.cache_indirect_object(0, obj_num, obj)  # type: ignore[arg-type]
+                self.cache_indirect_object(0, obj_num, obj)
 
             if obj_num == indirect_reference.idnum:
                 target_obj = obj
@@ -465,7 +467,7 @@ class PdfReader(PdfDocCommon):
             indirect_reference.generation == 0
             and indirect_reference.idnum in self.xref_objStm
         ):
-            retval = self._get_object_from_stream(indirect_reference)  # type: ignore
+            retval = self._get_object_from_stream(indirect_reference)
         elif (
             indirect_reference.generation in self.xref
             and indirect_reference.idnum in self.xref[indirect_reference.generation]
@@ -532,7 +534,7 @@ class PdfReader(PdfDocCommon):
             if current_object in self._known_objects:
                 raise LimitReachedError(f"Detected loop with self reference for {indirect_reference!r}.")
             self._known_objects.add(current_object)
-            retval = read_object(self.stream, self)  # type: ignore[assignment]
+            retval = read_object(self.stream, self)
             self._known_objects.remove(current_object)
 
             # override encryption is used for the /Encrypt dictionary
@@ -541,7 +543,6 @@ class PdfReader(PdfDocCommon):
                 if not self._encryption.is_decrypted():
                     raise FileNotDecryptedError("File has not been decrypted")
                 # otherwise, decrypt here...
-                retval = cast(PdfObject, retval)
                 retval = self._encryption.decrypt_object(
                     retval, indirect_reference.idnum, indirect_reference.generation,
                     strict=self.strict,
@@ -573,7 +574,7 @@ class PdfReader(PdfDocCommon):
                 self.stream.seek(m.end(0) + 1)
                 skip_over_whitespace(self.stream)
                 self.stream.seek(-1, 1)
-                retval = read_object(self.stream, self)  # type: ignore[assignment]
+                retval = read_object(self.stream, self)
 
                 # override encryption is used for the /Encrypt dictionary
                 if not self._override_encryption and self._encryption is not None:
@@ -581,7 +582,6 @@ class PdfReader(PdfDocCommon):
                     if not self._encryption.is_decrypted():
                         raise FileNotDecryptedError("File has not been decrypted")
                     # otherwise, decrypt here...
-                    retval = cast(PdfObject, retval)
                     retval = self._encryption.decrypt_object(
                         retval, indirect_reference.idnum, indirect_reference.generation,
                         strict=self.strict,
@@ -617,10 +617,10 @@ class PdfReader(PdfDocCommon):
         skip_over_comment(stream)
         extra = skip_over_whitespace(stream)
         stream.seek(-1, 1)
-        idnum = read_until_whitespace(stream)
+        idnum = read_until_whitespace(stream, max_bytes=IndirectObject._MAXIMUM_PART_LENGTH, strict=self.strict)
         extra |= skip_over_whitespace(stream)
         stream.seek(-1, 1)
-        generation = read_until_whitespace(stream)
+        generation = read_until_whitespace(stream, max_bytes=IndirectObject._MAXIMUM_PART_LENGTH, strict=self.strict)
         extra |= skip_over_whitespace(stream)
         stream.seek(-1, 1)
 
@@ -636,7 +636,14 @@ class PdfReader(PdfDocCommon):
                 idnum=idnum,
                 generation=generation,
             )
-        return int(idnum), int(generation)
+
+        try:
+            return int(idnum), int(generation)
+        except (ValueError, OverflowError) as e:
+            # Only raise a ValueError here as other types would break future processing.
+            raise ValueError(
+                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {e}"
+            ) from e
 
     def cache_get_indirect_object(
         self, generation: int, idnum: int
@@ -769,7 +776,7 @@ class PdfReader(PdfDocCommon):
         the file. Hence for standard-compliant PDF documents this function will
         read only the last part (DEFAULT_BUFFER_SIZE).
         """
-        HEADER_SIZE = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
+        header_size = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         first = True
         while not line.startswith(b"%%EOF"):
@@ -788,7 +795,7 @@ class PdfReader(PdfDocCommon):
                     "The file might be truncated and some data might not be read.",
                     source=__name__,
                 )
-            if stream.tell() < HEADER_SIZE:
+            if stream.tell() < header_size:
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
                 logger_warning("EOF marker not found", source=__name__)
@@ -806,6 +813,22 @@ class PdfReader(PdfDocCommon):
 
         """
         line = read_previous_line(stream)
+        # Some producers append further %%EOF markers below the one that
+        # closes the last revision (#4008). _find_eof_marker() stops at the
+        # very last of them, so the line above it is another marker rather
+        # than the offset. Skip that trailing run to reach the real offset;
+        # the revision being read is unchanged, only the marker padding is
+        # ignored.
+        duplicate_markers = 0
+        while line.startswith(b"%%EOF") and stream.tell() > 0:
+            if duplicate_markers == self._MAX_STARTXREF_RECOVERY_LINES:
+                break
+            line = read_previous_line(stream)
+            duplicate_markers += 1
+        if duplicate_markers:
+            logger_warning(
+                "Duplicate %%EOF marker(s) found, skipping them", source=__name__
+            )
         try:
             startxref = int(line)
         except ValueError:
@@ -1381,17 +1404,21 @@ class PdfReader(PdfDocCommon):
                     object_stream = BytesIO(obj.get_data())
                     actual_count = 0
                     while True:
-                        current = read_until_whitespace(object_stream)
+                        current = read_until_whitespace(
+                            object_stream, max_bytes=IndirectObject._MAXIMUM_PART_LENGTH, strict=self.strict
+                        )
                         if not current.isdigit():
                             break
                         inner_object_number = int(current)
                         skip_over_whitespace(object_stream)
                         object_stream.seek(-1, 1)
-                        current = read_until_whitespace(object_stream)
+                        current = read_until_whitespace(
+                            object_stream, max_bytes=IndirectObject._MAXIMUM_PART_LENGTH, strict=self.strict
+                        )
                         if not current.isdigit():  # pragma: no cover
                             break  # pragma: no cover
-                        inner_generation_number = int(current)
-                        self.xref_objStm[inner_object_number] = (object_number, inner_generation_number)
+                        inner_offset = int(current)
+                        self.xref_objStm[inner_object_number] = (object_number, inner_offset)
                         actual_count += 1
                     expected_count = cast(int, obj["/N"])
                     if actual_count != expected_count:  # pragma: no cover
@@ -1407,6 +1434,10 @@ class PdfReader(PdfDocCommon):
                             generation_number=generation_number,
                             expected=expected_count,
                         )
+                except LimitReachedError:
+                    # Do not let the broad recovery below bypass the token-length limit
+                    # when strict parsing is enabled.
+                    raise
                 except Exception:  # could be multiple causes
                     pass
 

@@ -4,6 +4,7 @@ import sys
 from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
 
+from .._configuration import get_configuration
 from .._utils import check_if_whitespace_only, logger_warning
 from ..constants import ColorSpaces, ImageAttributes, StreamAttributes
 from ..constants import FilterTypes as FT
@@ -133,13 +134,15 @@ def bits2byte(
     colors: int = 1,
     scale: bool = False,
 ) -> bytes:
-    from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
+    configuration = get_configuration()
 
     # Number of samples per row = pixels per row * components per pixel.
     samples_per_row = size[0] * colors
     buffer_size = samples_per_row * size[1]
-    if buffer_size > FLATE_MAX_BUFFER_SIZE:
-        raise LimitReachedError(f"Requested buffer size {buffer_size} exceeds limit of {FLATE_MAX_BUFFER_SIZE}.")
+    if buffer_size > configuration.image_maximum_buffer_size:
+        raise LimitReachedError(
+            f"Requested buffer size {buffer_size} exceeds limit of {configuration.image_maximum_buffer_size}."
+        )
 
     byte_buffer = bytearray(buffer_size)
     mask = (1 << bits) - 1
@@ -204,10 +207,11 @@ def _image_from_bytes(
     bytes_per_pixel = len(mode)
     required_byte_count = pixel_count * bytes_per_pixel
 
-    from pypdf.filters import FLATE_MAX_BUFFER_SIZE  # noqa: PLC0415
-    if required_byte_count > FLATE_MAX_BUFFER_SIZE:
+    configuration = get_configuration()
+    if required_byte_count > configuration.image_maximum_buffer_size:
         raise LimitReachedError(
-            f"Requested image buffer size {required_byte_count} exceeds limit {FLATE_MAX_BUFFER_SIZE}."
+            f"Requested image buffer size {required_byte_count} exceeds limit "
+            f"{configuration.image_maximum_buffer_size}."
         )
 
     try:
@@ -610,7 +614,9 @@ def _xobj_to_image(
 
     # Get filters
     filters = x_object.get(StreamAttributes.FILTER, NullObject()).get_object()
-    lfilters = filters[-1] if isinstance(filters, list) else filters
+    # An empty array is a valid way of saying that no filter is applied: treat it
+    # like a missing /Filter entry rather than raising IndexError on the lookup.
+    last_filter = filters[-1] if filters and isinstance(filters, list) else filters
     decode_parms = x_object.get(StreamAttributes.DECODE_PARMS)
     if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
@@ -620,7 +626,7 @@ def _xobj_to_image(
         decode_parms = {}
 
     extension = None
-    if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
+    if last_filter in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
         img, image_format, extension, _ = _handle_flate(
             size,
             data,
@@ -629,11 +635,11 @@ def _xobj_to_image(
             colors,
             obj_as_text,
         )
-    elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
+    elif last_filter in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
         # I'm not sure if the following logic is correct.
-        # There might not be any relationship between the filters and the
+        # There might not be any relationship between the filter and the
         # extension
-        if lfilters == FT.LZW_DECODE:
+        if last_filter == FT.LZW_DECODE:
             image_format = "TIFF"
             extension = ".tiff"  # mime_type = "image/tiff"
         else:
@@ -646,21 +652,21 @@ def _xobj_to_image(
                 mode, size, data, color_space
             )
             img = _image_from_bytes(fallback_mode, size, fallback_data)
-    elif lfilters == FT.DCT_DECODE:
+    elif last_filter == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
-    elif lfilters == FT.JPX_DECODE:
+    elif last_filter == FT.JPX_DECODE:
         img, image_format, extension, invert_color = _handle_jpx(
             size, data, mode, color_space, colors
         )
-    elif lfilters == FT.CCITT_FAX_DECODE:
+    elif last_filter == FT.CCITT_FAX_DECODE:
         img, image_format, extension, invert_color = (
             Image.open(BytesIO(data), formats=("TIFF",)),
             "TIFF",
             ".tiff",
             False,
         )
-    elif lfilters == FT.JBIG2_DECODE:
+    elif last_filter == FT.JBIG2_DECODE:
         img, image_format, extension, invert_color = (
             Image.open(BytesIO(data), formats=("PNG", "PPM")),
             "PNG",
@@ -687,7 +693,7 @@ def _xobj_to_image(
             False,
         )
 
-    img = _apply_decode(img, x_object, lfilters, color_space, invert_color)
+    img = _apply_decode(img, x_object, last_filter, color_space, invert_color)
     img, extension, image_format = _apply_alpha(
         img=img, x_object=x_object, obj_as_text=obj_as_text, image_format=image_format, extension=extension,
         visited=visited,

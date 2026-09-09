@@ -29,6 +29,7 @@ from pypdf.generic import (
     IndirectObject,
     NameObject,
     NullObject,
+    NumberObject,
     RectangleObject,
     TextStringObject,
 )
@@ -795,7 +796,7 @@ def test_text_extraction_issue_1091():
 
 
 @pytest.mark.enable_socket
-def test_empyt_password_1088():
+def test_empty_password_1088():
     url = "https://github.com/user-attachments/files/18381712/tika-941536.pdf"
     name = "tika-941536.pdf"
     stream = BytesIO(get_data_from_url(url=url, name=name))
@@ -973,29 +974,27 @@ def test_merge_page_resources_smoke_test():
     page1 = PageObject.create_blank_page(width=100, height=100)
     page2 = PageObject.create_blank_page(width=100, height=100)
 
-    NO = NameObject
-
     # set up some dummy resources that overlap (or not) between the two pages
     # (note, all the edge cases are tested in test_merge_resources)
-    props1 = page1[NO("/Resources")][NO("/Properties")] = DictionaryObject(
+    props1 = page1[NameObject("/Resources")][NameObject("/Properties")] = DictionaryObject(
         {
-            NO("/just1"): NO("/just1-value"),
-            NO("/overlap-matching"): NO("/overlap-matching-value"),
-            NO("/overlap-different"): NO("/overlap-different-value1"),
+            NameObject("/just1"): NameObject("/just1-value"),
+            NameObject("/overlap-matching"): NameObject("/overlap-matching-value"),
+            NameObject("/overlap-different"): NameObject("/overlap-different-value1"),
         }
     )
-    props2 = page2[NO("/Resources")][NO("/Properties")] = DictionaryObject(
+    props2 = page2[NameObject("/Resources")][NameObject("/Properties")] = DictionaryObject(
         {
-            NO("/just2"): NO("/just2-value"),
-            NO("/overlap-matching"): NO("/overlap-matching-value"),
-            NO("/overlap-different"): NO("/overlap-different-value2"),
+            NameObject("/just2"): NameObject("/just2-value"),
+            NameObject("/overlap-matching"): NameObject("/overlap-matching-value"),
+            NameObject("/overlap-different"): NameObject("/overlap-different-value2"),
         }
     )
     # use these keys for some "operations", to validate renaming
     # (the operand name doesn't matter)
-    contents1 = page1[NO("/Contents")] = ContentStream(None, None)
+    contents1 = page1[NameObject("/Contents")] = ContentStream(None, None)
     contents1.operations = [(ArrayObject(props1.keys()), b"page1-contents")]
-    contents2 = page2[NO("/Contents")] = ContentStream(None, None)
+    contents2 = page2[NameObject("/Contents")] = ContentStream(None, None)
     contents2.operations = [(ArrayObject(props2.keys()), b"page2-contents")]
 
     expected_properties = {
@@ -1012,9 +1011,9 @@ def test_merge_page_resources_smoke_test():
         (
             ArrayObject(
                 [
-                    NO("/just2"),
-                    NO("/overlap-matching"),
-                    NO("/overlap-different-0"),
+                    NameObject("/just2"),
+                    NameObject("/overlap-matching"),
+                    NameObject("/overlap-different-0"),
                 ]
             ),
             b"page2-contents",
@@ -1025,7 +1024,7 @@ def test_merge_page_resources_smoke_test():
     page1.merge_page(page2)
 
     # Assert
-    assert page1[NO("/Resources")][NO("/Properties")] == expected_properties
+    assert page1[NameObject("/Resources")][NameObject("/Properties")] == expected_properties
 
     relevant_operations = [
         (op, name)
@@ -1570,6 +1569,50 @@ def test_replace_contents__null_object_cloning_error():
     assert len(reader.pages) == 10
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "got 1", id="number"),
+        pytest.param(TextStringObject("x"), "got x", id="string"),
+        pytest.param(DictionaryObject(), "got {}", id="dictionary"),
+    ],
+)
+def test_get_rectangle__value_is_not_an_array(value, expected):
+    """A page box that is not an array raised a TypeError from len()."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/MediaBox")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    with pytest.raises(
+        ValueError, match=f"Expected an array of four values for /MediaBox, {expected}"
+    ):
+        _ = PdfReader(stream).pages[0].mediabox
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(4), "Annotations are not an array: 4", id="number"),
+        pytest.param(TextStringObject("x"), "Annotations are not an array: x", id="string"),
+        pytest.param(DictionaryObject(), "Annotations are not an array: {}", id="dictionary"),
+    ],
+)
+def test_annotations__is_not_an_array(caplog, value, expected):
+    """An /Annots entry that is not an array raised a TypeError when iterated."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Annots")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].annotations is None
+    assert expected in caplog.text
+
+
 def test_get_rectangle__size_handling(caplog):
     """
     See issue #2991 and related ones. We would previously generate invalid page boxes when they
@@ -1595,3 +1638,81 @@ def test_get_rectangle__size_handling(caplog):
         ValueError, match=r"Expected four values for /MediaBox, got 3: \[0, 0, 13\]"
     ):
         _ = page.mediabox
+
+
+@pytest.mark.parametrize(
+    ("box", "pdf_name"),
+    [
+        ("mediabox", "/MediaBox"),
+        ("cropbox", "/CropBox"),
+        ("trimbox", "/TrimBox"),
+        ("artbox", "/ArtBox"),
+        ("bleedbox", "/BleedBox"),
+    ],
+)
+@pytest.mark.parametrize("values", [[0, 0], [0, 0, 13]])
+def test_box_setter_rejects_too_few_values(box, pdf_name, values):
+    """
+    The getter cannot build a rectangle from fewer than four values, so writing
+    them through the property would produce a box that cannot be read back.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    page = writer.pages[0]
+    with pytest.raises(
+        ValueError, match=f"Expected four values for {pdf_name}, got {len(values)}"
+    ):
+        setattr(page, box, ArrayObject(values))
+
+
+@pytest.mark.parametrize("box", ["mediabox", "cropbox"])
+def test_box_setter_allows_extra_values(box):
+    """More than four entries stays accepted, matching what the getter tolerates."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    page = writer.pages[0]
+    setattr(page, box, ArrayObject([0, 0, 13, 37, 0, 0]))
+    assert getattr(page, box) == RectangleObject((0, 0, 13, 37))
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Page resources are not a dictionary: 1", id="number"),
+        pytest.param(TextStringObject("x"), "Page resources are not a dictionary: x", id="string"),
+        pytest.param(ArrayObject(), "Page resources are not a dictionary: []", id="array"),
+    ],
+)
+def test_extract_text__resources_not_a_dictionary(caplog, value, expected):
+    """A /Resources entry that is not a dictionary raised a TypeError on the /Font lookup."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text() == ""
+    assert expected in caplog.text
+
+
+def test_extract_text__resources_is_null(caplog):
+    """A null /Resources is missing rather than malformed: no text, no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text() == ""
+    assert caplog.text == ""
+
+
+def test_extract_text__resources_is_a_dictionary():
+    """The regular path: a proper /Resources still yields its text."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+
+    assert isinstance(page["/Resources"].get_object(), DictionaryObject)
+    assert "crazy ones" in page.extract_text()

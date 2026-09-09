@@ -7,11 +7,10 @@ The tested code might be in _page.py.
 import re
 from dataclasses import asdict
 from io import BytesIO
-from unittest import mock
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter, mult
+from pypdf import PdfReader, PdfWriter, apply_configuration, mult
 from pypdf._font import Font
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import (
@@ -923,7 +922,7 @@ def test_extract_text__form_xobject__limit(caplog) -> None:
     # Takes about 15 seconds without fix.
     reader = PdfReader(BytesIO(_generate_dag_with_forms(12)))
     page = reader.pages[0]
-    with mock.patch("pypdf._page.MAX_XFORM_INVOCATIONS_PER_EXTRACTION", 100):
+    with apply_configuration(xform_maximum_invocations_per_extraction=100):
         text = page.extract_text()
     assert len(text) == 92
     assert text == ".\n" * 46

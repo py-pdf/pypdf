@@ -218,34 +218,51 @@ def get_display_str(
 ) -> tuple[str, bool, float]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
     widths: float = 0.0
+    width_cache: dict[str, float] = {}
+    neutral_cache: dict[str, bool] = {}
+    rtl_cache: dict[str, bool] = {}
+
+    def clear_character_caches() -> None:
+        width_cache.clear()
+        neutral_cache.clear()
+        rtl_cache.clear()
+
     for raw_character in text_operands:
-        widths += font.space_width if raw_character == font.space_char else font.get_text_width(raw_character)
+        if raw_character == font.space_char:
+            widths += font.space_width
+        else:
+            if raw_character not in width_cache:
+                width_cache[raw_character] = font.get_text_width(raw_character)
+            widths += width_cache[raw_character]
         x = font.character_map.get(raw_character, raw_character)
         # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
-            if (
+            if x not in neutral_cache:
+                neutral_cache[x] = is_char_neutral(x, CUSTOM_RTL_SPECIAL_CHARS)
+            if neutral_cache[x]:
                 # Cases where the current inserting order is kept
-                is_char_neutral(x, CUSTOM_RTL_SPECIAL_CHARS)
-            ):
                 text = x + text if rtl_dir else text + x
-            elif (
-                # Right-to-left characters
-                is_char_rtl(x, CUSTOM_RTL_MIN, CUSTOM_RTL_MAX)
-            ):
-                if not rtl_dir:
-                    rtl_dir = True
-                    if visitor_text is not None:
-                        visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
-                    text = ""
-                text = x + text
             else:
-                # Left-to-right characters
-                if rtl_dir:
-                    rtl_dir = False
-                    if visitor_text is not None:
-                        visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
-                    text = ""
-                text = text + x
+                if x not in rtl_cache:
+                    rtl_cache[x] = is_char_rtl(x, CUSTOM_RTL_MIN, CUSTOM_RTL_MAX)
+                if rtl_cache[x]:
+                    # Right-to-left characters
+                    if not rtl_dir:
+                        rtl_dir = True
+                        if visitor_text is not None:
+                            visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
+                            clear_character_caches()
+                        text = ""
+                    text = x + text
+                else:
+                    # Left-to-right characters
+                    if rtl_dir:
+                        rtl_dir = False
+                        if visitor_text is not None:
+                            visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
+                            clear_character_caches()
+                        text = ""
+                    text = text + x
         else:
             # Treat a sequence of bytes as a neutral character.
             text = x + text if rtl_dir else text + x

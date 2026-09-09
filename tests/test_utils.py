@@ -34,7 +34,7 @@ from pypdf._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.generic import DictionaryObject, NameObject, TextStringObject
 
 from . import is_sublist
@@ -74,8 +74,19 @@ def test_check_if_whitespace_only(value, expected):
     assert check_if_whitespace_only(value) is expected
 
 
-def test_read_until_whitespace():
-    assert read_until_whitespace(io.BytesIO(b"foo"), max_bytes=1) == b"f"
+def test_read_until_whitespace(caplog):
+    assert read_until_whitespace(io.BytesIO(b"foo "), max_bytes=3) == b"foo"
+    assert read_until_whitespace(io.BytesIO(b"foo "), max_bytes=4) == b"foo"
+
+    with pytest.raises(LimitReachedError, match=r"^Token exceeds maximum length of 2 bytes\.$"):
+        read_until_whitespace(io.BytesIO(b"foo "), max_bytes=2, strict=True)
+
+    assert caplog.messages == []
+    assert read_until_whitespace(io.BytesIO(b"foo "), max_bytes=2, strict=False) == b"fo"
+    assert caplog.messages == ["Token exceeds maximum length of 2 bytes."]
+
+    # PDF specification treats NUL as whitespace.
+    assert read_until_whitespace(io.BytesIO(b"foo\x00bar")) == b"foo"
 
 
 @pytest.mark.timeout(5)

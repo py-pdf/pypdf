@@ -47,6 +47,7 @@ else:
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
+    WHITESPACES,
     StreamType,
     classproperty,
     deprecation_no_replacement,
@@ -320,6 +321,8 @@ class BooleanObject(PdfObject):
 
 
 class IndirectObject(PdfObject):
+    _MAXIMUM_PART_LENGTH = 64
+
     def __init__(self, idnum: int, generation: int, pdf: Any) -> None:  # PdfReader
         self.idnum = idnum
         self.generation = generation
@@ -457,30 +460,35 @@ class IndirectObject(PdfObject):
 
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
-        idnum = b""
-        while True:
-            tok = stream.read(1)
-            if not tok:
-                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-            if tok.isspace():
-                break
-            idnum += tok
-        generation = b""
-        while True:
-            tok = stream.read(1)
-            if not tok:
-                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-            if tok.isspace():
-                if not generation:
-                    continue
-                break
-            generation += tok
+        def read_part(name: str, skip_leading_whitespace: bool) -> bytes:
+            result = bytearray()
+            while True:
+                tok = stream.read(1)
+                if not tok:
+                    raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
+                if tok.isspace() or tok in WHITESPACES:
+                    if skip_leading_whitespace and not result:
+                        continue
+                    break
+                if len(result) >= IndirectObject._MAXIMUM_PART_LENGTH:
+                    raise PdfReadError(f"{name} exceeds maximum length limit of {IndirectObject._MAXIMUM_PART_LENGTH}.")
+                result += tok
+            return bytes(result)
+
+        idnum = read_part("Object ID", skip_leading_whitespace=False)
+        generation = read_part("Generation number", skip_leading_whitespace=True)
+
         r = read_non_whitespace(stream)
         if r != b"R":
             raise PdfReadError(
                 f"Error reading indirect object reference at byte {hex(stream.tell())}"
             )
-        return IndirectObject(int(idnum), int(generation), pdf)
+        try:
+            return IndirectObject(int(idnum), int(generation), pdf)
+        except (ValueError, OverflowError) as e:
+            raise PdfReadError(
+                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {e}"
+            ) from e
 
 
 FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj

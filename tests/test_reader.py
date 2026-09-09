@@ -459,6 +459,52 @@ def test_find_previous_startxref_pos_recovery_variants():
 
 
 @pytest.mark.parametrize(
+    ("suffix", "duplicates"),
+    [
+        (b"", 0),
+        (b"%%EOF\n", 1),
+        (b"\n%%EOF\n", 1),
+        (b"\n%%EOF\n\n%%EOF\n", 2),
+        (b"\n%%EOF", 1),
+    ],
+    ids=["none", "adjacent", "blank-line", "two-extra", "no-trailing-newline"],
+)
+@pytest.mark.parametrize("strict", [False, True])
+def test_duplicate_eof_markers(caplog, suffix, duplicates, strict):
+    """%%EOF markers appended below the final one still resolve startxref (#4008)."""
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+    buffer = BytesIO()
+    writer.write(buffer)
+    pdf_data = buffer.getvalue() + suffix
+
+    reader = PdfReader(BytesIO(pdf_data), strict=strict)
+    assert len(reader.pages) == 1
+
+    expected = ["Duplicate %%EOF marker(s) found, skipping them"] if duplicates else []
+    assert normalize_warnings(caplog.text) == (expected or [""])
+
+
+@pytest.mark.parametrize(
+    "pdf_data",
+    [
+        # The run of markers is exhausted by reaching the start of the stream.
+        b"%%EOF\n%%EOF\n",
+        # Same, but with something above the run that is not an offset either.
+        b"%PDF-1.7\n%%EOF\n%%EOF\n",
+        # The run is longer than the bound on the backward scan, so the scan
+        # gives up instead of walking the whole stream.
+        b"%PDF-1.7\n" + b"%%EOF\n" * (PdfReader._MAX_STARTXREF_RECOVERY_LINES + 10),
+    ],
+    ids=["start-of-stream", "no-offset-above", "beyond-scan-limit"],
+)
+def test_duplicate_eof_markers_without_startxref(pdf_data):
+    """A run of %%EOF markers with no offset above it is still reported as broken."""
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(pdf_data))
+
+
+@pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
     [
         ("encrypted-file.pdf", "test", False),
@@ -2658,3 +2704,118 @@ def test_flatten_keeps_typeless_real_page_strict():
     reader = PdfReader(output, strict=True)
     assert len(reader.pages) == 1
     assert reader.pages[0].mediabox.width == 612
+
+
+def make_pdf_with_object_stream(
+    object_number: bytes = b"1",
+    offset: bytes = b"0",
+    object_data: bytes = b"<< /Test true >>",
+) -> bytes:
+    """
+    Construct a minimal PDF containing an object stream whose header
+    contains the supplied object number and offset.
+
+    The resulting PDF is intentionally constructed at the byte level so
+    malformed object-stream headers can be tested.
+    """
+    # Object-stream header:
+    #
+    #   <object-number> <offset>
+    #
+    # Note that an ObjStm header contains object-number/offset pairs, not
+    # object-number/generation pairs. This is important when testing
+    # _rebuild_xref_table().
+    objstm_header = object_number + b" " + offset + b" "
+    objstm_data = objstm_header + object_data
+
+    objstm = (
+        b"2 0 obj\n"
+         b"<< /Type /ObjStm /N 1 /First "
+        + str(len(objstm_header)).encode()
+        + b" /Length "
+        + str(len(objstm_data)).encode()
+        + b" >>\n"
+        + b"stream\n"
+        + objstm_data
+        + b"\nendstream\n"
+        + b"endobj\n"
+    )
+
+    # A normal indirect object, so PdfReader has something to resolve
+    # while rebuilding the xref table.
+    catalog = b"1 0 obj\n<< /Type /Catalog >>\nendobj\n"
+
+    header = b"%PDF-1.5\n%\xe2\xe3\xcf\xd3\n"
+    body = header + catalog + objstm
+
+    # Calculate offsets.
+    catalog_offset = len(header)
+    objstm_offset = catalog_offset + len(catalog)
+
+    xref_offset = len(body)
+
+    xref = (
+        b"xref\n"
+        b"0 3\n"
+        b"0000000000 65535 f \n"
+        + f"{catalog_offset:010d} 00000 n \n".encode()
+        + f"{objstm_offset:010d} 00000 n \n".encode()
+    )
+
+    trailer = (
+        b"trailer\n"
+        b"<< /Size 3 /Root 1 0 R >>\n"
+        b"startxref\n"
+        + str(xref_offset).encode()
+        + b"\n%%EOF\n"
+    )
+
+    return body + xref + trailer
+
+
+def test_rebuild_xref_table__object_stream__long_object_number():
+    object_number = b"1" * IndirectObject._MAXIMUM_PART_LENGTH
+    pdf = make_pdf_with_object_stream(
+        object_number=object_number,
+    )
+    reader = PdfReader(BytesIO(pdf), strict=True)
+    reader._rebuild_xref_table(BytesIO(pdf))
+    assert reader.xref_objStm == {
+        int(object_number.decode()): (2, 0)
+    }
+
+    object_number = b"1" * (IndirectObject._MAXIMUM_PART_LENGTH + 1)
+    pdf = make_pdf_with_object_stream(
+        object_number=object_number,
+    )
+    reader = PdfReader(BytesIO(pdf), strict=True)
+    with pytest.raises(
+        LimitReachedError,
+        match=rf"Token exceeds maximum length of {IndirectObject._MAXIMUM_PART_LENGTH} bytes",
+    ):
+        reader._rebuild_xref_table(BytesIO(pdf))
+
+
+def test_rebuild_xref_table__object_stream__long_offset():
+    offset = b"1" * IndirectObject._MAXIMUM_PART_LENGTH
+    pdf = make_pdf_with_object_stream(
+        object_number=b"1",
+        offset=offset,
+    )
+    reader = PdfReader(BytesIO(pdf), strict=True)
+    reader._rebuild_xref_table(BytesIO(pdf))
+    assert reader.xref_objStm == {
+        1: (2, int(offset.decode()))
+    }
+
+    offset = b"1" * (IndirectObject._MAXIMUM_PART_LENGTH + 1)
+    pdf = make_pdf_with_object_stream(
+        object_number=b"1",
+        offset=offset,
+    )
+    reader = PdfReader(BytesIO(pdf), strict=True)
+    with pytest.raises(
+        LimitReachedError,
+        match=rf"Token exceeds maximum length of {IndirectObject._MAXIMUM_PART_LENGTH} bytes",
+    ):
+        reader._rebuild_xref_table(BytesIO(pdf))

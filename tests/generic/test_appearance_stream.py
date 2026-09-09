@@ -3,12 +3,14 @@ import os
 import re
 import subprocess
 import sys
+from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
 
 from pypdf import PdfWriter, Transformation
-from pypdf._font import Font
+from pypdf._font import HAS_FONTTOOLS, Font
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
@@ -24,11 +26,12 @@ from pypdf.generic._appearance_stream import (
     BaseStreamConfig,
     TextStreamAppearance,
 )
+from pypdf.generic._color import Color
 
-from . import RESOURCE_ROOT
+from .. import RESOURCE_ROOT
 
 
-def test_comb():
+def test_comb() -> None:
     layout=BaseStreamConfig(rectangle=RectangleObject((0.0, 0.0, 197.285, 18.455)))
     font_size = 10.0
     text = "01234567"
@@ -37,17 +40,16 @@ def test_comb():
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_comb=is_comb, max_length=max_length
     )
-    assert appearance_stream.get_data() == (
-        b"q\n/Tx BMC \nq\n2 1 193.285 16.455 re\nW\nBT\n/Helv 10.0 Tf 0 g\n"
-        b"7.084250000000001 5.637499999999999 Td\n(0) Tj\n"
-        b"19.7285 0.0 Td\n(1) Tj\n"
-        b"19.728500000000004 0.0 Td\n(2) Tj\n"
-        b"19.728499999999997 0.0 Td\n(3) Tj\n"
-        b"19.728499999999997 0.0 Td\n(4) Tj\n"
-        b"19.728499999999997 0.0 Td\n(5) Tj\n"
-        b"19.72850000000001 0.0 Td\n(6) Tj\n"
-        b"19.728499999999997 0.0 Td\n(7) Tj\nET\nQ\nEMC\nQ\n"
-    )
+    assert (
+        b"q\n/Tx BMC \nq\n2 0 191.285 18.455 re\nW\nBT\n/Helv 10.0 Tf 0 g\n"
+        b"7.084 5.637 Td\n(0) Tj\n"
+        b"19.729 0.0 Td\n(1) Tj\n19.729 0.0 Td\n(2) Tj\n"
+        b"19.728 0.0 Td\n(3) Tj\n"
+        b"19.728 0.0 Td\n(4) Tj\n"
+        b"19.728 0.0 Td\n(5) Tj\n"
+        b"19.729 0.0 Td\n(6) Tj\n"
+        b"19.728 0.0 Td\n(7) Tj\nET\nQ\nEMC\nQ\n"
+    ) in appearance_stream.get_data()
 
     layout.rectangle = RectangleObject((0.0, 0.0, 20.852, 20.84))
     text = "AA"
@@ -55,12 +57,12 @@ def test_comb():
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_comb=is_comb, max_length=max_length
     )
-    assert appearance_stream.get_data() == (
-        b"q\n/Tx BMC \nq\n2 1 16.852 18.84 re\nW\nBT\n/Helv 10.0 Tf 0 g\n7.091 6.83 Td\n(A) Tj\nET\nQ\nEMC\nQ\n"
-    )
+    assert (
+        b"q\n/Tx BMC \nq\n2 0 14.852 20.84 re\nW\nBT\n/Helv 10.0 Tf 0 g\n7.091 6.83 Td\n(A) Tj\nET\nQ\nEMC\nQ\n"
+    ) in appearance_stream.get_data()
 
 
-def test_scale_text():
+def test_scale_text() -> None:
     layout=BaseStreamConfig(rectangle=RectangleObject((0, 0, 9.1, 55.4)))
     font_size = 10.1
     text = "Hello World"
@@ -110,7 +112,7 @@ Option B
 Option C
 Option D
 """
-    selection = "Option A"
+    selection = ["Option A"]
     assert b"4.0 Tf" in appearance_stream.get_data()
 
     text = "pneumonoultramicroscopicsilicovolcanoconiosis"
@@ -126,8 +128,11 @@ Option D
     )
     assert b"OneWord" in appearance_stream.get_data()
 
-@pytest.mark.skipif(not HAS_RTL_SUPPORT, reason="Requires arabic-reshaper and python-bidi")
-def test_appearance_stream_rtl():
+@pytest.mark.skipif(
+    not HAS_RTL_SUPPORT or not HAS_FONTTOOLS,
+    reason="Requires arabic-reshaper, python-bidi and fontTools"
+)
+def test_appearance_stream_rtl() -> None:
     writer = PdfWriter(RESOURCE_ROOT / "fontsampler.pdf")
     layout = BaseStreamConfig(
         rectangle=RectangleObject([0, 0, 250, 30]),
@@ -135,7 +140,7 @@ def test_appearance_stream_rtl():
     )
     test_string = "!مرحبا بالعالم Hello World!"
     font_name = "/F7"
-    font_resource = writer.pages[0]["/Resources"]["/Font"][font_name]
+    font_resource = cast(ArrayObject, writer.pages)[0]["/Resources"]["/Font"][font_name]
     font = Font.from_font_resource(font_resource)
     reverse_cmap, encoding_cmap = font._get_typographic_maps()
     unshaped_test_glyphs = [reverse_cmap[char] for char in test_string]
@@ -154,7 +159,6 @@ def test_appearance_stream_rtl():
         font=font,
         font_name=font_name,
         font_size=12.0,
-        font_color="0 g",
         is_multiline=False
     )
     # The regex returns two matches. The first matches the text in /Span << /ActualText <[group 0]> >> BDC
@@ -172,7 +176,6 @@ def test_appearance_stream_rtl():
             font=font,
             font_name=font_name,
             font_size=12.0,
-            font_color="0 g",
             is_multiline=False
         )
         [hex_glyphs_rtl_disabled] = re.findall("^<(.+?)>", appearance.get_data().decode(), re.MULTILINE)
@@ -189,7 +192,6 @@ def test_appearance_stream_rtl():
             font=font,
             font_name=font_name,
             font_size=12.0,
-            font_color="0 g",
             is_multiline=False
         )
         [hex_glyphs_rtl_enabled_fonttools_disabled] = re.findall(
@@ -199,7 +201,7 @@ def test_appearance_stream_rtl():
 
 
 @pytest.mark.parametrize("module", ["arabic_reshaper", "bidi"])
-def test_appearance_stream__no_rtl_support(module, tmp_path):
+def test_appearance_stream__no_rtl_support(module: str, tmp_path: Path) -> None:
     env = os.environ.copy()
     env["COVERAGE_PROCESS_START"] = "pyproject.toml"
 
@@ -241,7 +243,7 @@ assert HAS_RTL_SUPPORT is False
         (360, None),
     ]
 )
-def test_base_stream_config_rotation(rotation, outcome):
+def test_base_stream_config_rotation(rotation: int, outcome: list[float]) -> None:
     layout = BaseStreamConfig(
         rectangle=RectangleObject([0, 0, 400, 20]),
         border_width=1,
@@ -251,7 +253,7 @@ def test_base_stream_config_rotation(rotation, outcome):
     assert appearance.get("/Matrix", None) == outcome
 
 
-def test_merge_transformed_page_annotation_with_ap_but_no_normal_state():
+def test_merge_transformed_page_annotation_with_ap_but_no_normal_state() -> None:
     """/AP present but missing /N (malformed, but must not raise) is a no-op
     for the appearance transform -- /Rect still moves normally.
     """
@@ -267,12 +269,11 @@ def test_merge_transformed_page_annotation_with_ap_but_no_normal_state():
     dest_writer = PdfWriter()
     dest_page = dest_writer.add_blank_page(width=200, height=200)
     dest_page.merge_transformed_page(src_page, Transformation().translate(10, 5))
-
-    merged = dest_page["/Annots"][0].get_object()
+    merged = cast(ArrayObject, dest_page["/Annots"])[0].get_object()
     assert tuple(round(float(x), 6) for x in merged["/Rect"]) == (30.0, 25.0, 130.0, 75.0)
 
 
-def test_merge_transformed_page_annotation_with_malformed_normal_state():
+def test_merge_transformed_page_annotation_with_malformed_normal_state() -> None:
     """/N resolving to something other than a stream or a state dict (a
     malformed PDF) must be skipped, not raise.
     """
@@ -289,12 +290,12 @@ def test_merge_transformed_page_annotation_with_malformed_normal_state():
     dest_page = dest_writer.add_blank_page(width=200, height=200)
     dest_page.merge_transformed_page(src_page, Transformation().translate(10, 5))
 
-    merged = dest_page["/Annots"][0].get_object()
+    merged = cast(ArrayObject, dest_page["/Annots"])[0].get_object()
     assert tuple(round(float(x), 6) for x in merged["/Rect"]) == (30.0, 25.0, 130.0, 75.0)
     assert merged["/AP"]["/N"] == 5
 
 
-def test_merge_transformed_page_updates_annotation_appearance_matrix():
+def test_merge_transformed_page_updates_annotation_appearance_matrix() -> None:
     """
     An annotation's /Rect is repositioned/resized by the merge transform, but
     per the appearance-stream algorithm (PDF 2.0, 12.5.5) a viewer fits the
@@ -328,7 +329,7 @@ def test_merge_transformed_page_updates_annotation_appearance_matrix():
     transform = Transformation().rotate(90).translate(200, 0)
     dest_page.merge_transformed_page(src_page, transform)
 
-    merged_ap = dest_page["/Annots"][0].get_object()["/AP"]["/N"].get_object()
+    merged_ap = cast(ArrayObject, dest_page["/Annots"])[0].get_object()["/AP"]["/N"].get_object()
     # A pure 90 degree rotation + translate composed onto an identity
     # starting matrix: (0, 1, -1, 0, 200, 0).
     matrix = tuple(round(float(x), 6) for x in merged_ap["/Matrix"])
@@ -339,7 +340,7 @@ def test_merge_transformed_page_updates_annotation_appearance_matrix():
     assert tuple(merged_ap["/BBox"]) == (0, 0, 100, 50)
 
 
-def test_merge_transformed_page_composes_existing_annotation_matrix():
+def test_merge_transformed_page_composes_existing_annotation_matrix() -> None:
     """An annotation that already has its own /Matrix must have the merge
     transform composed on top of it, not overwrite it outright.
     """
@@ -372,14 +373,14 @@ def test_merge_transformed_page_composes_existing_annotation_matrix():
     transform = Transformation().translate(10, 5)
     dest_page.merge_transformed_page(src_page, transform)
 
-    merged_ap = dest_page["/Annots"][0].get_object()["/AP"]["/N"].get_object()
+    merged_ap = cast(ArrayObject, dest_page["/Annots"])[0].get_object()["/AP"]["/N"].get_object()
     matrix = tuple(round(float(x), 6) for x in merged_ap["/Matrix"])
     # (2, 0, 0, 1, 0, 0) composed with a (10, 5) translation: the scale is
     # preserved and the translation is appended, not scaled by it.
     assert matrix == (2.0, 0.0, 0.0, 1.0, 10.0, 5.0)
 
 
-def test_merge_transformed_page_annotation_without_appearance_stream():
+def test_merge_transformed_page_annotation_without_appearance_stream() -> None:
     """Annotations with no /AP at all (the common case) must merge exactly
     as before -- only /Rect moves, and nothing raises.
     """
@@ -396,12 +397,12 @@ def test_merge_transformed_page_annotation_without_appearance_stream():
     transform = Transformation().rotate(90).translate(200, 0)
     dest_page.merge_transformed_page(src_page, transform)
 
-    merged = dest_page["/Annots"][0].get_object()
+    merged = cast(ArrayObject, dest_page["/Annots"])[0].get_object()
     assert "/AP" not in merged
     assert tuple(round(float(x), 6) for x in merged["/Rect"]) == (130.0, 20.0, 180.0, 120.0)
 
 
-def test_merge_transformed_page_annotation_with_multi_state_appearance():
+def test_merge_transformed_page_annotation_with_multi_state_appearance() -> None:
     """Widget annotations with multiple states (e.g. checkboxes) store /AP /N
     as a dict of named sub-streams rather than a single stream. Every state's
     /Matrix must be updated, not just the first, and nothing should raise.
@@ -434,8 +435,26 @@ def test_merge_transformed_page_annotation_with_multi_state_appearance():
     transform = Transformation().rotate(90).translate(200, 0)
     dest_page.merge_transformed_page(src_page, transform)
 
-    merged_states = dest_page["/Annots"][0].get_object()["/AP"]["/N"]
+    merged_states = cast(ArrayObject, dest_page["/Annots"])[0].get_object()["/AP"]["/N"]
     assert set(merged_states.keys()) == {"/Off", "/Yes"}
     for state in merged_states.values():
         matrix = tuple(round(float(x), 6) for x in state.get_object()["/Matrix"])
         assert matrix == (0.0, 1.0, -1.0, 0.0, 200.0, 0.0)
+
+
+def test_base_stream_appearance() -> None:
+    layout = BaseStreamConfig(
+        rectangle=RectangleObject([0, 0, 400, 20]),
+        border_width=3,
+        rotation=90,
+        border_color=Color.from_normalized_values((.2, .3, .5)),
+        background_color=Color.from_normalized_values((.8, .5, .2))
+    )
+    appearance = BaseStreamAppearance(
+        layout=layout,
+    )
+    assert appearance["/Matrix"] == ArrayObject([0.0, 1, -1, 0.0, 20, 0.0])
+    assert appearance._ap_stream_data == (
+        b"q\n0 0 400.0 20.0 re\n0.8 0.5 0.2 rg\nf\n"
+        b"3 3 394.0 14.0 re\n3 w\n0.2 0.3 0.5 RG\ns\nQ\n"
+    )
