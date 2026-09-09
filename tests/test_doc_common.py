@@ -21,6 +21,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     RectangleObject,
     TextStringObject,
     TreeObject,
@@ -1376,3 +1377,40 @@ def test_flatten__kid_is_not_a_dictionary(caplog, value, expected):
 
     assert len(PdfReader(stream).pages) == 1
     assert expected in caplog.text
+
+
+def _generate_reader_with_xfa(xfa: PdfObject) -> PdfReader:
+    """A reader whose /AcroForm carries the given /XFA entry."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    acro_form = DictionaryObject()
+    acro_form[NameObject("/XFA")] = xfa
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acro_form)
+
+    data = BytesIO()
+    writer.write(data)
+    data.seek(0)
+    return PdfReader(data)
+
+
+@pytest.mark.parametrize(
+    ("xfa", "expected"),
+    [
+        pytest.param(NumberObject(5), "XFA entry is not an array: 5", id="number"),
+        pytest.param(TextStringObject("x"), "XFA entry is not an array: x", id="string"),
+        pytest.param(DictionaryObject(), "XFA entry is not an array: {}", id="dictionary"),
+    ],
+)
+def test_xfa__entry_not_an_array(caplog, xfa, expected):
+    """Iterating a non-array /XFA raised a TypeError or exhausted the iterator."""
+    assert _generate_reader_with_xfa(xfa).xfa == {}
+    assert expected in caplog.text
+
+
+def test_xfa__array_with_a_trailing_tag(caplog):
+    """/XFA holds tag/value pairs; a trailing tag raised StopIteration."""
+    reader = _generate_reader_with_xfa(ArrayObject([TextStringObject("datasets")]))
+
+    assert reader.xfa == {}
+    assert caplog.text == ""
