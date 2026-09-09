@@ -45,6 +45,8 @@ requirements/       Dependencies for development and optional features
 Prefixes for commit messages:
 
 `SEC`   Security fix (e.g. infinite loop, resource exhaustion).
+        Security fixes need to follow the responsible disclosure process
+        outlined in .github/SECURITY.md
 `BUG`   User-facing bug fix. Put `Closes #123` in the body.
 `ENH`   New feature.
 `DEP`   Deprecating or removing a feature.
@@ -69,6 +71,8 @@ Co-authored-by: {{Agent Name, Model Name and version}} <{{email@agent-company.co
 - Never modify `CHANGELOG.md` or `requirements`.
 - Keep PRs small and single-purpose: typos, style, a feature, and a bug fix are
   separate PRs. A feature PR must include its tests and docs.
+- Only run `git commit` after explicitly asking for confirmation.
+  Ask the developer to review your changes.
 - Never run `git push`.
 
 ## When stuck
