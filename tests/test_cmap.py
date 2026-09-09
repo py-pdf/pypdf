@@ -754,7 +754,7 @@ def test__character_map_from_cff_type1_font_file_guards(caplog):
         _parse_to_unicode(font_dict)
 
 
-def _font_with_differences(differences: PdfObject) -> DictionaryObject:
+def _generate_font_with_differences(differences: PdfObject) -> DictionaryObject:
     """A Type1 font resource whose /Encoding carries the given /Differences."""
     font = DictionaryObject()
     font[NameObject("/Type")] = NameObject("/Font")
@@ -788,7 +788,7 @@ def _font_with_differences(differences: PdfObject) -> DictionaryObject:
 )
 def test_get_encoding__differences_not_an_array(caplog, differences, expected):
     """/Differences must be an array; iterating a non-array raised a TypeError."""
-    encoding, _ = get_encoding(_font_with_differences(differences))
+    encoding, _ = get_encoding(_generate_font_with_differences(differences))
 
     assert encoding == dict(enumerate(charset_encoding["/StandardEncoding"]))
     assert expected in caplog.text
@@ -797,7 +797,7 @@ def test_get_encoding__differences_not_an_array(caplog, differences, expected):
 def test_get_encoding__differences_is_an_array(caplog):
     """The regular path: a proper /Differences array is still applied."""
     encoding, _ = get_encoding(
-        _font_with_differences(ArrayObject([NumberObject(65), NameObject("/quotesingle")]))
+        _generate_font_with_differences(ArrayObject([NumberObject(65), NameObject("/quotesingle")]))
     )
 
     assert encoding[65] == "'"
