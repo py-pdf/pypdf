@@ -256,6 +256,14 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.KEYWORDS)
 
 
+# A pending node in PdfDocCommon._flatten's explicit traversal stack:
+# (node, inherited attributes, indirect reference to node, depth,
+#  id() of every /Pages node on the root-to-node chain).
+_PageTreeItem = tuple[
+    DictionaryObject, dict[str, Any], Optional[IndirectObject], int, frozenset[int]
+]
+
+
 class PdfDocCommon(ABC):
     """
     Common functions from PdfWriter and PdfReader objects.
@@ -1313,12 +1321,9 @@ class PdfDocCommon(ABC):
         )
         entry_count = 0
 
-        # Explicit depth-first traversal. Each item is
-        # ``(node, inherit, node_reference, depth, ancestors)`` where ``ancestors``
-        # holds the ``id()`` of every ``/Pages`` node on the current root-to-node
-        # chain. It replaces the recursive ``visited`` set and catches multi-hop
-        # cycles (A -> B -> C -> A) that the direct-parent check misses.
-        stack: list[tuple[Any, ...]] = [(pages, {}, None, 0, frozenset())]
+        # Explicit depth-first traversal
+        # ``ancestors`` catches multi-hop cycles (A -> B -> C -> A)
+        stack: list[_PageTreeItem] = [(pages, {}, None, 0, frozenset())]
         while stack:
             node, inherit, node_reference, depth, ancestors = stack.pop()
             if depth > maximum_depth:
@@ -1348,7 +1353,7 @@ class PdfDocCommon(ABC):
 
             child_ancestors = ancestors | {id(node)}
             pages_reference = getattr(node, "indirect_reference", object())
-            children: list[tuple[Any, ...]] = []
+            children: list[_PageTreeItem] = []
             for kid in kids:
                 if getattr(kid, "indirect_reference", object()) == pages_reference:
                     raise PdfReadError("Detected cyclic page references.")
@@ -1392,12 +1397,14 @@ class PdfDocCommon(ABC):
 
     def _page_tree_node_type(self, pages: DictionaryObject) -> str:
         """
-        Classify a page-tree node as ``"/Pages"`` (intermediate node) or ``"/Page"`` (leaf).
+        Return the node's ``/Type`` value verbatim when it has one; ``_flatten``
+        acts on ``"/Pages"`` and ``"/Page"`` and ignores anything else.
 
-        When the node has no explicit ``/Type``, fall back to structural heuristics:
-        a node without ``/Kids`` is treated as a page. In strict mode such a node
-        must carry at least one structural page key, otherwise a ``PdfReadError``
-        is raised.
+        When the node has no explicit ``/Type``, fall back to structural
+        heuristics: a node without ``/Kids`` is reported as ``"/Page"``,
+        otherwise ``"/Pages"``. In strict mode a ``/Type``-less, ``/Kids``-less
+        node must carry at least one structural page key, otherwise a
+        ``PdfReadError`` is raised.
         """
         if PagesAttributes.TYPE in pages:
             return cast(str, pages[PagesAttributes.TYPE])
