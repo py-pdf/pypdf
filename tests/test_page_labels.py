@@ -61,16 +61,45 @@ def test_number2lowercase_roman_numeral():
         (25, "y"),
         (26, "z"),
         (27, "aa"),
-        (28, "ab"),
+        (28, "bb"),
+        (51, "yy"),
+        (52, "zz"),
+        (53, "aaa"),
+        (78, "zzz"),
+        (79, "aaaa"),
     ],
 )
 def test_number2lowercase_letter(number, expected):
     assert number2lowercase_letter(number) == expected
 
 
+@pytest.mark.parametrize(
+    ("number", "expected"),
+    [
+        (26, "Z"),
+        (27, "AA"),
+        (28, "BB"),
+        (52, "ZZ"),
+        (53, "AAA"),
+    ],
+)
+def test_number2uppercase_letter__repeats_the_same_letter(number, expected):
+    """A to Z for the first 26 pages, AA to ZZ for the next 26, and so on."""
+    assert number2uppercase_letter(number) == expected
+
+
 def test_number2uppercase_letter():
     with pytest.raises(ValueError):
         number2uppercase_letter(-1)
+
+
+def test_get_label_from_nums__letter_style_past_z():
+    # Page 28 of an /S /A section is "BB", not "AB". See the module docstring.
+    value = DictionaryObject()
+    value[NameObject("/S")] = NameObject("/A")
+    dictionary_object = DictionaryObject()
+    dictionary_object[NameObject("/Nums")] = ArrayObject([NumberObject(0), value])
+    assert get_label_from_nums(dictionary_object, 27) == "BB"
 
 
 @pytest.mark.parametrize("number", [0, -1, -5])

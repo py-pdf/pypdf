@@ -115,17 +115,9 @@ def number2lowercase_roman_numeral(number: int) -> str:
 def number2uppercase_letter(number: int) -> str:
     if number <= 0:
         raise ValueError("Expecting a positive number")
-    alphabet = string.ascii_uppercase
-    rep = ""
-    while number > 0:
-        remainder = number % 26
-        if remainder == 0:
-            remainder = 26
-        rep = alphabet[remainder - 1] + rep
-        # update
-        number -= remainder
-        number = number // 26
-    return rep
+    # A to Z, then the same letter repeated: AA to ZZ, AAA to ZZZ, and so on.
+    repetitions, position = divmod(number - 1, 26)
+    return string.ascii_uppercase[position] * (repetitions + 1)
 
 
 def number2lowercase_letter(number: int) -> str:
