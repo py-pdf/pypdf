@@ -1724,7 +1724,7 @@ def test_extract_text__visitor_text_uses_current_text_matrix():
 
     text_visits = []
 
-    def visitor_text(text, cm, tm, font_dict, font_size):
+    def visitor_text(text, cm, tm, font_dict, font_size) -> None:
         if text.strip() == "visitor Sample":
             text_visits.append(
                 {
