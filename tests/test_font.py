@@ -189,14 +189,14 @@ def test_font_from_font_file():
 
 
 def test_font_old_fonttools_substitution():
-    from fontTools.ttLib.tables._c_m_a_p import table__c_m_a_p  # noqa: PLC0415
+    import inspect  # noqa: PLC0415
     from unittest import mock  # noqa: PLC0415
+
+    from fontTools.ttLib.tables._c_m_a_p import table__c_m_a_p  # noqa: PLC0415
 
     original_build_reversed_min = table__c_m_a_p.buildReversedMin
 
-    def build_reversed_min(_self) -> dict:
-        import inspect  # noqa: PLC0415
-
+    def build_reversed_min(_self: table__c_m_a_p) -> dict[str, int]:
         caller = inspect.currentframe().f_back
         caller_name = caller.f_code.co_name
         # Check the backwards-compatible substitution works when calling from pypdf
