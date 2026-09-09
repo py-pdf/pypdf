@@ -188,16 +188,25 @@ def test_font_from_font_file():
                 font._get_typographic_maps()
 
 
-def test_font_old_fonttools_substitution(monkeypatch):
-    pytest.importorskip("fontTools", minversion="4.57.0")
+def test_font_old_fonttools_substitution():
     from fontTools.ttLib.tables._c_m_a_p import table__c_m_a_p  # noqa: PLC0415
+    from unittest import mock  # noqa: PLC0415
 
-    # Mock the buildReversedMin to fallback for buildReversed as in FontTools < 4.57
-    def mock_build_reversed_min(self) -> dict:
-        return {k: min(r) for k, r in table__c_m_a_p.buildReversed(self).items()}
-    monkeypatch.setattr(table__c_m_a_p, "buildReversedMin", mock_build_reversed_min)
+    original_build_reversed_min = table__c_m_a_p.buildReversedMin
 
-    test_font_from_font_file()
+    def build_reversed_min(_self) -> dict:
+        import inspect  # noqa: PLC0415
+
+        caller = inspect.currentframe().f_back
+        caller_name = caller.f_code.co_name
+        # Check the backwards-compatible substitution works when calling from pypdf
+        if caller_name == "from_truetype_font_file":
+            raise AttributeError
+        # Internal code relies on this, thus allow these calls.
+        return original_build_reversed_min(_self)
+
+    with mock.patch("fontTools.ttLib.tables._c_m_a_p.table__c_m_a_p.buildReversedMin", build_reversed_min):
+        test_font_from_font_file()
 
 
 def test_font_as_font_resource():
