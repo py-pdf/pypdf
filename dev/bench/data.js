@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788947750682,
+  "lastUpdate": 1788968265870,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -110687,6 +110687,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005627440567666594",
             "extra": "mean: 610.7562745999871 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "MeggyCal@users.noreply.github.com",
+            "name": "MeggyCal",
+            "username": "MeggyCal"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d80ccfc79d94ae48035b4ecef1e605ff532a99b8",
+          "message": "ROB: Fix compatibility for fonttools < 4.57.0 (#4050)\n\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-09-09T17:34:26+02:00",
+          "tree_id": "c6f407b2be19169bb7378121c88ba78530bf6109",
+          "url": "https://github.com/py-pdf/pypdf/commit/d80ccfc79d94ae48035b4ecef1e605ff532a99b8"
+        },
+        "date": 1788968255212,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.677300855689159,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02480300415251305",
+            "extra": "mean: 373.51050700000314 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.008202805027382,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04697875712310716",
+            "extra": "mean: 76.87457022222333 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23649197627220475,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07939856884650251",
+            "extra": "mean: 4.228473269 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.348763211924354,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002046379373084539",
+            "extra": "mean: 61.16670643750144 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07011632038556305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.602912564062756",
+            "extra": "mean: 14.262014813399992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7007846997108824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020051878752300432",
+            "extra": "mean: 587.9638970000087 msec\nrounds: 5"
           }
         ]
       }
