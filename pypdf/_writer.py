@@ -34,7 +34,7 @@ import re
 import struct
 import sys
 import uuid
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
@@ -44,6 +44,7 @@ from typing import (
     IO,
     Any,
     Callable,
+    Literal,
     Optional,
     Union,
     cast,
@@ -216,7 +217,7 @@ class PdfWriter(PdfDocCommon):
         This is used for compression.
         """
 
-        self._id_translated: dict[int, dict[int, int]] = {}
+        self._id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]] = {}
         """List of already translated IDs.
            dict[id(pdf)][(idnum, generation)]
         """
@@ -1805,9 +1806,7 @@ class PdfWriter(PdfDocCommon):
             page_destination_ref,
             before,
             self,
-            page_destination.inc_parent_counter_outline
-            if is_open
-            else (lambda x, y: 0),  # noqa: ARG005
+            page_destination.inc_parent_counter_outline,
         )
         if "/Count" not in page_destination:
             page_destination[NameObject("/Count")] = NumberObject(0)
@@ -1946,12 +1945,21 @@ class PdfWriter(PdfDocCommon):
 
         return page_destination_ref
 
+    def _get_page_reference(self, page_number: int) -> Any:
+        """Look up a page by number, reporting a bad index rather than an IndexError from the kids array."""
+        pages = cast(DictionaryObject, self.get_object(self._pages))
+        kids = cast(ArrayObject, pages[PagesAttributes.KIDS])
+        count = len(kids)
+        if not (-count <= page_number < count):
+            raise IndexError(f"Page number {page_number} is out of range")
+        return kids[page_number]
+
     def add_named_destination(
         self,
         title: str,
         page_number: int,
     ) -> IndirectObject:
-        page_ref = self.get_object(self._pages)[PagesAttributes.KIDS][page_number]  # type: ignore[index]
+        page_ref = self._get_page_reference(page_number)
         dest = DictionaryObject()
         dest.update(
             {
@@ -2071,7 +2079,7 @@ class PdfWriter(PdfDocCommon):
                 text_filters=text_filters
             )
             page.replace_contents(content)
-        return [], []  # type: ignore[return-value]
+        return None
 
     def _remove_objects_from_page__clean(
             self,
@@ -2285,7 +2293,7 @@ class PdfWriter(PdfDocCommon):
         page_number: int,
         uri: str,
         rect: RectangleObject,
-        border: Optional[ArrayObject] = None,
+        border: Optional[Sequence[Any]] = None,
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
@@ -2302,7 +2310,7 @@ class PdfWriter(PdfDocCommon):
                 drawn if this argument is omitted.
 
         """
-        page_link = self.get_object(self._pages)[PagesAttributes.KIDS][page_number]  # type: ignore[index]
+        page_link = self._get_page_reference(page_number)
         page_ref = cast(dict[str, Any], self.get_object(page_link))
 
         border_arr: BorderArrayType
@@ -2394,7 +2402,7 @@ class PdfWriter(PdfDocCommon):
                 logger_warning(
                     "Layout should be one of: %(layouts)s",
                     source=__name__,
-                    layouts={"", "".join(self._valid_layouts)},
+                    layouts=", ".join(self._valid_layouts),
                 )
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
@@ -3018,7 +3026,7 @@ class PdfWriter(PdfDocCommon):
 
     def _insert_filtered_annotations(
         self,
-        annots: Union[IndirectObject, list[DictionaryObject], None],
+        annots: Union[IndirectObject, list[PdfObject], None],
         page: PageObject,
         pages: dict[int, PageObject],
         reader: PdfReader,
@@ -3039,7 +3047,7 @@ class PdfWriter(PdfDocCommon):
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
-                ano["/Subtype"] != "/Link"  # type: ignore[comparison-overlap]
+                ano.get("/Subtype") != "/Link"
                 or "/A" not in ano
                 or cast("DictionaryObject", ano["/A"])["/S"] != "/GoTo"  # type: ignore[comparison-overlap]
                 or "/Dest" in ano
@@ -3241,7 +3249,7 @@ class PdfWriter(PdfDocCommon):
             except Exception:
                 pass
         else:
-            raise Exception("invalid parameter {reader}")
+            raise TypeError(f"Invalid parameter {reader}")
 
     def set_page_label(
         self,
@@ -3281,6 +3289,10 @@ class PdfWriter(PdfDocCommon):
         """
         if style is None and prefix is None:
             raise ValueError("At least one of style and prefix must be given")
+        if style is not None and style not in tuple(PageLabelStyle):
+            raise ValueError(
+                f"style must be one of: {', '.join(PageLabelStyle)}, got {style!r}"
+            )
         if page_index_from < 0:
             raise ValueError("page_index_from must be greater or equal than 0")
         if page_index_to < page_index_from:

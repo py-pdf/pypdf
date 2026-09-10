@@ -1,6 +1,7 @@
 """Test the pypdf_cmap module."""
 import sys
 from io import BytesIO
+from unittest import mock
 
 import pytest
 
@@ -8,6 +9,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import (
     __parse_bfrange__decode,
     _check_token_length,
+    _parse_to_unicode,
     get_encoding,
     parse_bfchar,
     parse_bfrange,
@@ -24,6 +26,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     StreamObject,
     TextStringObject,
 )
@@ -708,3 +711,94 @@ def test_japanese_cmap_encodings(cmap_name: str, python_codec: str, caplog) -> N
     assert "日本語テスト" in text, f"Japanese text garbled for {cmap_name}"
     assert "Hello ASCII"  in text, f"ASCII baseline broken for {cmap_name}"
     assert "Advanced encoding" not in caplog.text
+
+
+def test__character_map_from_cff_type1_font_file_guards(caplog):
+    font_file_stream = StreamObject()
+    font_dict = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/VSGOOE+Times-Roman"),
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Name"): NameObject("/R77"),
+        }
+    )
+    font_file_stream.update({NameObject("/Subtype"): NameObject("/Type1C")})
+    font_descriptor = DictionaryObject({NameObject("/FontFile3"): font_file_stream})
+    font_dict[NameObject("/FontDescriptor")] = font_descriptor
+    # Ensure a warning is logged when fontTools is missing for CFF Type1 font parsing
+    with mock.patch("pypdf._font.HAS_FONTTOOLS", False):
+        _parse_to_unicode(font_dict)
+    assert (
+        "fontTools is required to fully parse the encoding of a CFF Type1 font in font dictionary"
+        in caplog.text
+    )
+
+    # Test with fontTools
+    pytest.importorskip("fontTools", reason="Requires fontTools")
+
+    # Test raising an exception while parsing font data
+    font_file_stream.set_data(b"Corrupt font data")
+    font_file_stream.update({NameObject("/Subtype"): NameObject("/Type1C")})
+    font_descriptor = DictionaryObject({NameObject("/FontFile3"): font_file_stream})
+    font_dict[NameObject("/FontDescriptor")] = font_descriptor
+    _parse_to_unicode(font_dict)
+
+    # Ensure we return early when encoding is a string
+    mock_cff_set = mock.MagicMock()
+    mock_font_str_encoding = mock.MagicMock()
+    mock_font_str_encoding.Encoding = "StandardEncoding"
+    mock_cff_set.topDictIndex = [mock_font_str_encoding]
+
+    with mock.patch("fontTools.cffLib.CFFFontSet", return_value=mock_cff_set):
+        _parse_to_unicode(font_dict)
+
+
+def _generate_font_with_differences(differences: PdfObject) -> DictionaryObject:
+    """A Type1 font resource whose /Encoding carries the given /Differences."""
+    font = DictionaryObject()
+    font[NameObject("/Type")] = NameObject("/Font")
+    font[NameObject("/Subtype")] = NameObject("/Type1")
+    font[NameObject("/BaseFont")] = NameObject("/Helvetica")
+    encoding = DictionaryObject()
+    encoding[NameObject("/Differences")] = differences
+    font[NameObject("/Encoding")] = encoding
+    return font
+
+
+@pytest.mark.parametrize(
+    ("differences", "expected"),
+    [
+        pytest.param(
+            NumberObject(5),
+            "Font encoding differences are not an array: 5",
+            id="number",
+        ),
+        pytest.param(
+            TextStringObject("abc"),
+            "Font encoding differences are not an array: abc",
+            id="string",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Font encoding differences are not an array: {}",
+            id="dictionary",
+        ),
+    ],
+)
+def test_get_encoding__differences_not_an_array(caplog, differences, expected):
+    """/Differences must be an array; iterating a non-array raised a TypeError."""
+    encoding, _ = get_encoding(_generate_font_with_differences(differences))
+
+    assert encoding == dict(enumerate(charset_encoding["/StandardEncoding"]))
+    assert expected in caplog.text
+
+
+def test_get_encoding__differences_is_an_array(caplog):
+    """The regular path: a proper /Differences array is still applied."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), NameObject("/quotesingle")]))
+    )
+
+    assert encoding[65] == "'"
+    assert caplog.text == ""

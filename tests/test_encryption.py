@@ -1,7 +1,10 @@
 """Test the pypdf._encryption module."""
 import hashlib
+import os
 import re
 import secrets
+import subprocess
+import sys
 from io import BytesIO
 from typing import NoReturn
 
@@ -599,3 +602,67 @@ def test_encode_password_nonstrict_warns_and_falls_back(caplog) -> None:
     result = enc._encode_password("pass\x07word", strict=False)
     assert result == b"pass\x07word"
     assert any("SASLprep normalization failed" in m for m in caplog.messages)
+
+
+def _assert_rc4_fallback(operations: str) -> None:
+    """Run ``operations`` in a subprocess where cryptography's ARC4 is unavailable.
+
+    ``CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1`` makes ARC4 raise ``UnsupportedAlgorithm``.
+    Each snippet first runs the operation under test (taking the ``UnsupportedAlgorithm`` branch that activates the
+    pure-Python fallback) and then the reverse operation (taking the already-activated fallback path).
+    """
+    code = (
+        "from pypdf._crypt_providers import rc4_encrypt, rc4_decrypt, CryptRC4; "
+        "key = b'mykey'; pt = b'Encrypted text'; ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
+        + operations
+    )
+    env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
+    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_rc4_encrypt() -> None:
+    """The module-level rc4_encrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert rc4_encrypt(key, pt) == ct; assert rc4_decrypt(key, ct) == pt")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_rc4_decrypt() -> None:
+    """The module-level rc4_decrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert rc4_decrypt(key, ct) == pt; assert rc4_encrypt(key, pt) == ct")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_encrypt() -> None:
+    """CryptRC4.encrypt falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert CryptRC4(key).encrypt(pt) == ct; assert CryptRC4(key).decrypt(ct) == pt")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_decrypt() -> None:
+    """CryptRC4.decrypt falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert CryptRC4(key).decrypt(ct) == pt; assert CryptRC4(key).encrypt(pt) == ct")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
+    """Ciphers constructed before the fallback latches warn only once between them."""
+    from cryptography.exceptions import UnsupportedAlgorithm  # noqa: PLC0415
+
+    class _RejectingCipher:
+        def encryptor(self) -> NoReturn:
+            raise UnsupportedAlgorithm("cipher RC4 in None mode is not supported")
+
+        def decryptor(self) -> NoReturn:
+            raise UnsupportedAlgorithm("cipher RC4 in None mode is not supported")
+
+    monkeypatch.setattr(CryptRC4, "_is_rc4_supported", True)  # restored on teardown
+    first, second = CryptRC4(b"mykey"), CryptRC4(b"mykey")
+    first.cipher = second.cipher = _RejectingCipher()
+
+    plaintext, ciphertext = b"Encrypted text", bytes.fromhex("1308e61c0d34c903eef093fd2478")
+    assert first.encrypt(plaintext) == ciphertext
+    assert second.decrypt(ciphertext) == plaintext  # already latched: no second warning
+    assert CryptRC4._is_rc4_supported is False
+    assert sum("RC4 is not supported" in message for message in caplog.messages) == 1

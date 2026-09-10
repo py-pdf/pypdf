@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any, Optional, Union
 
 from ._base import is_null_or_none
@@ -5,7 +6,7 @@ from ._base import is_null_or_none
 
 class Fit:
     def __init__(
-        self, fit_type: str, fit_args: tuple[Union[float, Any, None], ...] = ()
+        self, fit_type: str, fit_args: Sequence[Union[float, Any, None]] = ()
     ) -> None:
         from ._base import FloatObject, NameObject, NullObject, NumberObject  # noqa: PLC0415
 

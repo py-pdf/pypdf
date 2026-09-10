@@ -28,6 +28,7 @@
 import secrets
 
 from cryptography import __version__
+from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.base import Cipher
 from cryptography.hazmat.primitives.ciphers.modes import CBC, ECB
@@ -47,16 +48,57 @@ crypt_provider = ("cryptography", __version__)
 
 
 class CryptRC4(CryptBase):
+    # Assume OpenSSL provides RC4; flipped to False the first time it rejects
+    # the cipher (e.g. legacy provider disabled), so the failing attempt is
+    # paid once.
+    _is_rc4_supported = True
+
     def __init__(self, key: bytes) -> None:
-        self.cipher = Cipher(ARC4(key), mode=None)
+        self._key = key
+        self._fallback = None
+        if CryptRC4._is_rc4_supported:
+            self.cipher = Cipher(ARC4(key), mode=None)
+        else:
+            self._fallback = self._pure_python_rc4(key)
+
+    @staticmethod
+    def _pure_python_rc4(key: bytes) -> CryptBase:
+        from pypdf._crypt_providers import _fallback  # noqa: PLC0415
+
+        return _fallback.CryptRC4(key)
+
+    @classmethod
+    def _disable_rc4(cls, key: bytes) -> CryptBase:
+        if cls._is_rc4_supported:
+            logger_warning(
+                (
+                    "RC4 is not supported by the current OpenSSL build; "
+                    "falling back to the pure-Python RC4 implementation."
+                ),
+                source=__name__,
+            )
+            cls._is_rc4_supported = False
+        return cls._pure_python_rc4(key)
 
     def encrypt(self, data: bytes) -> bytes:
-        encryptor = self.cipher.encryptor()
-        return encryptor.update(data) + encryptor.finalize()
+        if self._fallback is not None:
+            return self._fallback.encrypt(data)
+        try:
+            encryptor = self.cipher.encryptor()
+            return encryptor.update(data) + encryptor.finalize()
+        except UnsupportedAlgorithm:
+            self._fallback = self._disable_rc4(self._key)
+            return self._fallback.encrypt(data)
 
     def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:
-        decryptor = self.cipher.decryptor()
-        return decryptor.update(data) + decryptor.finalize()
+        if self._fallback is not None:
+            return self._fallback.decrypt(data, strict=strict)
+        try:
+            decryptor = self.cipher.decryptor()
+            return decryptor.update(data) + decryptor.finalize()
+        except UnsupportedAlgorithm:
+            self._fallback = self._disable_rc4(self._key)
+            return self._fallback.decrypt(data, strict=strict)
 
 
 class CryptAES(CryptBase):
@@ -103,13 +145,23 @@ class CryptAES(CryptBase):
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
-    encryptor = Cipher(ARC4(key), mode=None).encryptor()
-    return encryptor.update(data) + encryptor.finalize()
+    if CryptRC4._is_rc4_supported:
+        try:
+            encryptor = Cipher(ARC4(key), mode=None).encryptor()
+            return encryptor.update(data) + encryptor.finalize()
+        except UnsupportedAlgorithm:
+            return CryptRC4._disable_rc4(key).encrypt(data)
+    return CryptRC4._pure_python_rc4(key).encrypt(data)
 
 
 def rc4_decrypt(key: bytes, data: bytes) -> bytes:
-    decryptor = Cipher(ARC4(key), mode=None).decryptor()
-    return decryptor.update(data) + decryptor.finalize()
+    if CryptRC4._is_rc4_supported:
+        try:
+            decryptor = Cipher(ARC4(key), mode=None).decryptor()
+            return decryptor.update(data) + decryptor.finalize()
+        except UnsupportedAlgorithm:
+            return CryptRC4._disable_rc4(key).decrypt(data)
+    return CryptRC4._pure_python_rc4(key).decrypt(data)
 
 
 def aes_ecb_encrypt(key: bytes, data: bytes) -> bytes:

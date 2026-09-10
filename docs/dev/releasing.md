@@ -33,7 +33,7 @@ The release contains the following steps:
 6. CI now builds a source and a wheels package which it pushes to PyPI. It also
    creates the corresponding GitHub release.
 
-![](../_static/releasing.drawio.png)
+![](releasing.drawio.png)
 
 ### Using a Pull Request
 
@@ -65,5 +65,4 @@ The release contains the following steps:
 There is no need to wait for anything. If the CI is green (all tests succeeded),
 we can release.
 
-At the moment, there is no fixed release cycle - except that we usually release
-on Sunday.
+At the moment, there is no fixed release cycle.

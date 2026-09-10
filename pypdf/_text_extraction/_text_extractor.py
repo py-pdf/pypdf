@@ -27,7 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import math
 from typing import Any, Callable, Optional, Union
 
 from .._codecs import encoding_dict_from_named_encoding
@@ -143,6 +142,7 @@ class TextExtraction:
 
     def _post_process_text_operation(self, str_widths: float) -> None:
         """Handle common post-processing for text positioning operations."""
+        text_was_empty = self.text == ""
         try:
             self.text, self.output, self.cm_prev, self.tm_prev = crlf_space_check(
                 self.text,
@@ -158,7 +158,7 @@ class TextExtraction:
                 self.compute_str_widths(self.font_size * self._space_width),
                 self._actual_str_size["str_height"],
             )
-            if self.text == "":
+            if text_was_empty or self.text == "":
                 self.memo_cm = self.cm_matrix.copy()
                 self.memo_tm = self.tm_matrix.copy()
         except OrientationNotFoundError:
@@ -274,8 +274,9 @@ class TextExtraction:
 
     def _handle_tl(self, operands: list[Any]) -> None:
         """Handle TL (Set Text Leading) operation - Table 5.2 page 398."""
-        scale_x = math.sqrt(self.tm_matrix[0] ** 2 + self.tm_matrix[2] ** 2)
-        self.TL = float(operands[0] if operands else 0.0) * self.font_size * scale_x
+        # The leading is measured in unscaled text space units (PDF 32000-1, 9.3.5)
+        # and T* applies the text matrix to it, so it must not be scaled here.
+        self.TL = float(operands[0] if operands else 0.0)
 
     def _handle_tf(self, operands: list[Any]) -> None:
         """Handle Tf (Set font size) operation - Table 5.2 page 398."""

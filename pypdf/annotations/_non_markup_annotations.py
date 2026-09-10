@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 from ..generic._base import (
@@ -17,7 +18,7 @@ class Link(AnnotationDictionary):
         self,
         *,
         rect: Union[RectangleObject, tuple[float, float, float, float]],
-        border: Optional[ArrayObject] = None,
+        border: Optional[Sequence[Any]] = None,
         url: Optional[str] = None,
         target_page_index: Optional[int] = None,
         fit: Fit = DEFAULT_FIT,
