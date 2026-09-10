@@ -142,6 +142,7 @@ class TextExtraction:
 
     def _post_process_text_operation(self, str_widths: float) -> None:
         """Handle common post-processing for text positioning operations."""
+        text_was_empty = self.text == ""
         try:
             self.text, self.output, self.cm_prev, self.tm_prev = crlf_space_check(
                 self.text,
@@ -157,7 +158,7 @@ class TextExtraction:
                 self.compute_str_widths(self.font_size * self._space_width),
                 self._actual_str_size["str_height"],
             )
-            if self.text == "":
+            if text_was_empty or self.text == "":
                 self.memo_cm = self.cm_matrix.copy()
                 self.memo_tm = self.tm_matrix.copy()
         except OrientationNotFoundError:
