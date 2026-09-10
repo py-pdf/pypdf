@@ -21,6 +21,7 @@ from pypdf.generic import (
 )
 from pypdf.generic._image_xobject import (
     _get_image_mode,
+    _get_mode_and_invert_color,
     _handle_flate,
     _image_from_bytes,
     _xobj_to_image,
@@ -228,6 +229,29 @@ def test_handle_flate__autodesk_indexed() -> None:
         for name, _image in page.images.items():  # noqa: PERF102
             assert isinstance(name, str)
             assert name.startswith("/")
+
+
+def test_device_rgb_mode_is_not_overwritten() -> None:
+    """8-bit /DeviceRGB must stay RGB; the generic path used to replace it (#3367)."""
+    x_object = {
+        NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+        NameObject("/BitsPerComponent"): NumberObject(8),
+    }
+    # ColorSpace on the XObject is /DeviceRGB. Pass a name _get_image_mode
+    # cannot map so a regression fails instead of accidentally succeeding.
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=1, color_space=NameObject("/UnknownSpace")
+    )
+    assert mode == "RGB"
+    assert invert_color is False
+
+    # Sub-byte /DeviceRGB still reports 2/4bits so sample expansion can run.
+    x_object[NameObject("/BitsPerComponent")] = NumberObject(4)
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=3, color_space=NameObject("/DeviceRGB")
+    )
+    assert mode == "4bits"
+    assert invert_color is False
 
 
 @pytest.mark.enable_socket
