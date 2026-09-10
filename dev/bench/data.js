@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789027107907,
+  "lastUpdate": 1789035719121,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -135109,6 +135109,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005258076908310726",
             "extra": "mean: 848.6105826000028 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "youdie006@naver.com",
+            "name": "KBS",
+            "username": "youdie006"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c38feda0edff9ed2646ed87ddb731fc210b81c10",
+          "message": "BUG: Repeat the letter for /S /A and /S /a page labels past Z (#4065)\n\nnumber2uppercase_letter implemented bijective base-26 - the Excel column\nsequence - so the 28th page of a section labelled /S /A came out as \"AB\".\nThe module docstring quotes the numbering the PDF specification defines:\n\n    A       Uppercase letters (A to Z for the first 26 pages,\n                               AA to ZZ for the next 26, and so on)\n\n\"AA to ZZ for the next 26\" is 26 labels, which only holds if the letter is\nrepeated: AA, BB, CC, ..., ZZ. Bijective base-26 spends AA..AZ on those 26\npages and does not reach ZZ until 702.\n\nEmit the same letter repeated instead. The two conventions agree on 1..27,\nso only a letter-numbered section longer than 27 pages changes.\n\nThe existing case (28, \"ab\") in test_number2lowercase_letter pinned the old\nanswer and is updated to \"bb\".",
+          "timestamp": "2026-09-10T12:19:00+02:00",
+          "tree_id": "390085dc76f2126e1e3fea4b0903833909b590d0",
+          "url": "https://github.com/py-pdf/pypdf/commit/c38feda0edff9ed2646ed87ddb731fc210b81c10"
+        },
+        "date": 1789035710607,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.448777972868248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020501828957155948",
+            "extra": "mean: 80.32916983333394 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.665635070130886,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007752117422929641",
+            "extra": "mean: 56.607078999996055 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9930988764595712,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03026116774777054",
+            "extra": "mean: 1.0069490800000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.533374475706893,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016976642333792053",
+            "extra": "mean: 1.8748553699999946 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3642652311579259,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012219438734998683",
+            "extra": "mean: 2.7452523998000062 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1873584963434063,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035807557941479862",
+            "extra": "mean: 842.205621200003 msec\nrounds: 5"
           }
         ]
       }
