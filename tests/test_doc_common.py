@@ -3,6 +3,7 @@ import itertools
 import re
 import shutil
 import subprocess
+import sys
 from io import BytesIO
 from operator import itemgetter
 from pathlib import Path
@@ -740,6 +741,118 @@ def test_flatten__pages_with_non_array_kids():
 
     with pytest.raises(PdfReadError, match=r"^Expected /Kids to be an array, got NumberObject\.$"):
         list(reader.pages)
+
+
+@pytest.mark.xfail(
+    reason="_flatten recurses once per page-tree level, so a tree deeper than the "
+    "interpreter recursion limit raises RecursionError before "
+    "Configuration.page_tree_maximum_depth can apply. Passes once _flatten iterates.",
+)
+def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
+    """A deeply nested /Pages tree is flattened without a RecursionError."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    node = writer.root_object["/Pages"]["/Kids"][0]
+
+    # Far deeper than the interpreter's recursion limit would allow a recursive
+    # traversal to go, but still one real page at the bottom.
+    depth = sys.getrecursionlimit() * 2
+    for _ in range(depth):
+        node = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Pages"),
+                    NameObject("/Kids"): ArrayObject([node]),
+                    NameObject("/Count"): NumberObject(1),
+                }
+            )
+        )
+    writer.root_object[NameObject("/Pages")] = node
+
+    try:
+        with apply_configuration(page_tree_maximum_depth=depth + 10):
+            writer._flatten()
+    except RecursionError:
+        # Reported without the (huge) recursion traceback.
+        pytest.fail("_flatten exhausted the interpreter stack", pytrace=False)
+
+    assert writer.flattened_pages is not None
+    assert len(writer.flattened_pages) == 1
+
+
+@pytest.mark.xfail(
+    reason="_flatten calls .get_object() on root_object.get('/Pages') without a None "
+    "check, so a catalog without /Pages raises AttributeError instead of PdfReadError.",
+)
+def test_flatten__missing_pages_entry():
+    # A document catalog without /Pages is malformed. Flattening must raise a
+    # PdfReadError, not an AttributeError from calling .get_object() on None.
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    del reader.root_object["/Pages"]
+    reader.flattened_pages = None
+
+    with pytest.raises(PdfReadError, match=r"^Invalid object in /Pages$"):
+        list(reader.pages)
+
+
+@pytest.mark.xfail(
+    reason="_flatten sets self.flattened_pages before the traversal and appends as it "
+    "goes, so a mid-traversal error leaves a truncated, non-None list that a later "
+    "page access silently serves instead of re-raising.",
+)
+def test_flatten__error_does_not_leave_a_partial_result():
+    # If flattening raises partway through, the pages collected so far must be
+    # discarded: a later access has to re-raise rather than silently serve a
+    # truncated page list.
+    writer = PdfWriter()
+    good_kids = [
+        writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Page"),
+                    NameObject("/MediaBox"): RectangleObject([0, 0, 10, 10]),
+                }
+            )
+        )
+        for _ in range(2)
+    ]
+    good_subtree = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject(good_kids),
+                NameObject("/Count"): NumberObject(2),
+            }
+        )
+    )
+    # Second subtree is processed after the first and fails on its /Kids.
+    broken_subtree = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): NumberObject(0),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+    writer.root_object[NameObject("/Pages")] = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([good_subtree, broken_subtree]),
+                NameObject("/Count"): NumberObject(3),
+            }
+        )
+    )
+
+    writer.flattened_pages = None
+    with pytest.raises(PdfReadError, match=r"^Expected /Kids to be an array, got NumberObject\.$"):
+        writer._flatten()
+    assert writer.flattened_pages is None
+
+    # Before the fix this returned 2 (only the pages from the first subtree).
+    with pytest.raises(PdfReadError, match=r"^Expected /Kids to be an array, got NumberObject\.$"):
+        len(writer.pages)
 
 
 @pytest.mark.enable_socket
