@@ -1716,33 +1716,3 @@ def test_extract_text__resources_is_a_dictionary():
 
     assert isinstance(page["/Resources"].get_object(), DictionaryObject)
     assert "crazy ones" in page.extract_text()
-
-
-def test_extract_text__visitor_text_uses_current_text_matrix():
-    reader = PdfReader(RESOURCE_ROOT / "visitor_text_position.pdf")
-    page = reader.pages[0]
-
-    text_visits = []
-
-    def visitor_text(text, cm, tm, font_dict, font_size) -> None:
-        if text.strip() == "visitor Sample":
-            text_visits.append(
-                {
-                    "text": text,
-                    "cm": tuple(float(v) for v in cm),
-                    "tm": tuple(float(v) for v in tm),
-                    "font_size": float(font_size),
-                }
-            )
-
-    extracted_text = page.extract_text(
-        orientations=0,
-        visitor_text=visitor_text,
-    )
-
-    assert "visitor Sample" in extracted_text
-    assert len(text_visits) == 1
-
-    visit = text_visits[0]
-    assert visit["tm"][4] == pytest.approx(100.0)
-    assert visit["tm"][5] == pytest.approx(20.0)
