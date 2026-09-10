@@ -741,7 +741,7 @@ class PdfWriter(PdfDocCommon):
         if abs(index) > num_pages:
             raise IndexError(f"Index should be in range [-{num_pages}, {num_pages}]")
 
-        if num_pages and (width is None or width <= 0 or height is None or height <= 0):
+        if num_pages:
             # Use the chosen index, but do not exceed the available pages
             fixed_index = min(index, num_pages - 1)
             mediabox = self.pages[fixed_index].mediabox
