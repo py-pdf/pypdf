@@ -1160,9 +1160,7 @@ def test_read_not_binary_mode(caplog):
 @pytest.mark.enable_socket
 @pytest.mark.skipif(not HAS_AES, reason="No AES algorithm available")
 def test_read_form_416():
-    url = (
-        "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
-    )
+    url = "https://github.com/user-attachments/files/31998867/issue_416.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name="issue_416.pdf")))
     fields = reader.get_form_text_fields()
     assert len(fields) > 0
