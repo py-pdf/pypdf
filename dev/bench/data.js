@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789118218619,
+  "lastUpdate": 1789118226396,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -135571,6 +135571,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0027744635458664705",
             "extra": "mean: 798.8877725999942 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "319d0b823ce2c311a2435e9fd93c13994d32bb51",
+          "message": "SEC: Limit allowed length of tokens in parse_bfchar (#4071)\n\nAdditionally, we introduce further length validation checks while we are\nat it to better deal with malformed inputs.",
+          "timestamp": "2026-09-11T11:13:48+02:00",
+          "tree_id": "8294ccb84f979210cdabdb4c2590463aa215c4f4",
+          "url": "https://github.com/py-pdf/pypdf/commit/319d0b823ce2c311a2435e9fd93c13994d32bb51"
+        },
+        "date": 1789118216792,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.621398606966205,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021270399651905837",
+            "extra": "mean: 79.23052199999958 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.182684905540253,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015641604904835796",
+            "extra": "mean: 54.997378285717346 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9721372618811671,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03135174506427278",
+            "extra": "mean: 1.0286613209999955 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4989274369789491,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043076581372798815",
+            "extra": "mean: 2.0042994749999936 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3553212527418992,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00994377377694034",
+            "extra": "mean: 2.8143545940000023 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1561732572224284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03239984476722969",
+            "extra": "mean: 864.9222716000054 msec\nrounds: 5"
           }
         ]
       }
