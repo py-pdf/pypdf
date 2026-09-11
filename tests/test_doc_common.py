@@ -857,7 +857,6 @@ def test_flatten__error_does_not_leave_a_partial_result():
         writer._flatten()
     assert writer.flattened_pages is None
 
-    # Before the fix this returned 2 (only the pages from the first subtree).
     with pytest.raises(PdfReadError, match=r"^Expected /Kids to be an array, got NumberObject\.$"):
         len(writer.pages)
 
