@@ -144,32 +144,33 @@ def decompress(data: bytes) -> bytes:
 
         # If still failing, then try with increased window size.
         decompressor = zlib.decompressobj(zlib.MAX_WBITS | 32)
-        result_str = b""
+        result = bytearray()
         configuration = get_configuration()
         remaining_limit = configuration.zlib_maximum_output_length
         data_length = len(data)
         known_errors = set()
         for index in range(data_length):
+            if index >= configuration.zlib_maximum_recovery_input_length:
+                raise LimitReachedError(
+                    f"Recovery limit reached while decompressing. {data_length - index} bytes remaining."
+                )
+
             chunk = _SINGLE_BYTES[data[index]]
             try:
                 decompressed = decompressor.decompress(chunk, max_length=remaining_limit)
-                result_str += decompressed
+                result += decompressed
                 remaining_limit -= len(decompressed)
                 if remaining_limit <= 0:
                     raise LimitReachedError(
                         f"Limit reached while decompressing. {data_length - index} bytes remaining."
                     )
             except zlib.error as error:
-                if index > configuration.zlib_maximum_recovery_input_length:
-                    raise LimitReachedError(
-                        f"Recovery limit reached while decompressing. {data_length - index} bytes remaining."
-                    )
                 error_str = str(error)
                 if error_str in known_errors:
                     continue
                 logger_warning(error_str, source=__name__)
                 known_errors.add(error_str)
-        return result_str
+        return bytes(result)
 
 
 class FlateDecode:
