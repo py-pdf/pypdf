@@ -759,7 +759,7 @@ def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
 
     # Far deeper than the interpreter's recursion limit would allow a recursive
     # traversal to go, but still one real page at the bottom.
-    depth = sys.getrecursionlimit() * 2
+    depth = sys.getrecursionlimit() + 1
     for _ in range(depth):
         node = writer._add_object(
             DictionaryObject(
@@ -773,7 +773,7 @@ def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
     writer.root_object[NameObject("/Pages")] = node
 
     try:
-        with apply_configuration(page_tree_maximum_depth=depth + 10):
+        with apply_configuration(page_tree_maximum_depth=depth+1):
             writer._flatten()
     except RecursionError:
         # Reported without the (huge) recursion traceback.
