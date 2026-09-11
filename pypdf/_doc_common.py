@@ -1325,13 +1325,11 @@ class PdfDocCommon(ABC):
 
         # Get the current node_type
         if PagesAttributes.TYPE in pages:
-            node_type= cast(str, pages[PagesAttributes.TYPE])
+            node_type = cast(str, pages[PagesAttributes.TYPE])
         # if the page tree node has no /Type, consider as a page if /Kids is also missing
         elif PagesAttributes.KIDS not in pages:
             # Without /Type, only accept it as a page if it carries a structural page key.
-            if self.strict and not any(
-                key in pages for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)
-            ):
+            if self.strict and not any(key in pages for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)):
                 raise PdfReadError(f"Non-page object reached through /Kids: {pages!r}")
             node_type = "/Page"
         else:
@@ -1339,13 +1337,9 @@ class PdfDocCommon(ABC):
 
         # Flatten that type of node
         if node_type == "/Pages":
-            self._flatten_page_tree_node(
-                pages, list_only, inherit, visited, depth, traversal_state
-            )
+            self._flatten_page_tree_node(pages, list_only, inherit, visited, depth, traversal_state)
         elif node_type == "/Page":
             self._flatten_leaf_page(pages, list_only, inherit, indirect_reference)
-
-
 
     def _flatten_page_tree_node(
         self,
@@ -1376,9 +1370,7 @@ class PdfDocCommon(ABC):
         if isinstance(kids, NullObject):
             kids = ArrayObject()
         elif not isinstance(kids, ArrayObject):
-            raise PdfReadError(
-                f"Expected /Kids to be an array, got {type(kids).__name__}."
-            )
+            raise PdfReadError(f"Expected /Kids to be an array, got {type(kids).__name__}.")
 
         configuration = get_configuration()
         pages_reference = getattr(pages, "indirect_reference", object())
