@@ -1489,3 +1489,42 @@ def test_flatten__kid_is_not_a_dictionary(caplog, value, expected):
 
     assert len(PdfReader(stream).pages) == 1
     assert expected in caplog.text
+
+
+def test_flatten__kid_with_unrecognised_type(caplog):
+    """
+    A /Kids entry whose /Type is neither /Pages nor /Page hits neither branch
+    of `if node_type == "/Pages": ... elif node_type == "/Page": ...` in
+    _flatten. Unlike a non-dictionary entry (which is logged and skipped),
+    this one - and anything nested under it - disappears without a warning.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    hidden_page = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Page"),
+                NameObject("/MediaBox"): RectangleObject([0, 0, 10, 10]),
+            }
+        )
+    )
+    weird_node = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Template"),
+                NameObject("/Kids"): ArrayObject([hidden_page]),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+    pages = writer.root_object["/Pages"]
+    pages[NameObject("/Kids")] = ArrayObject([*pages["/Kids"], weird_node])
+    pages[NameObject("/Count")] = NumberObject(2)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    reader = PdfReader(stream)
+    assert len(reader.pages) == 1  # this calls '_flatten' internally
+    assert caplog.text == ""
