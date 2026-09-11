@@ -634,6 +634,46 @@ def test_parse_bfchar__iteration_limit():
     assert map_dict == {}
 
 
+def test_parse_bfchar__entry_size_limit():
+    int_entry = []
+    map_dict = {}
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 18 > 16\.$",
+    ):
+        parse_bfchar(
+            line=(b"01" * 9 + b" 0041"),
+            map_dict=map_dict,
+            int_entry=int_entry,
+        )
+    assert map_dict == {-1: 9}
+
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1026 > 1024\.$",
+    ):
+        parse_bfchar(
+            line=(b"01 " + b"ab" * 513),
+            map_dict=map_dict,
+            int_entry=int_entry,
+        )
+    assert map_dict == {-1: 1}
+
+
+def test_parse_bfchar__invalid_tokens(caplog):
+    map_dict = {}
+    int_entry = []
+
+    parse_bfchar(b"", map_dict, int_entry)
+    assert map_dict == {}
+    assert caplog.messages == ["Skipping broken line b'': Line is empty."]
+    caplog.clear()
+
+    parse_bfchar(b"01 0041 02", map_dict, int_entry)
+    assert map_dict == {-1: 1, "\x01": "A"}
+    assert caplog.messages == ["Ignoring final token of odd-length line b'01 0041 02'."]
+
+
 def _make_japanese_cmap_pdf(cmap_name: str, encoding: str) -> bytes:
     """Minimal PDF with a CIDFont using *cmap_name* as /Encoding, no /ToUnicode."""
     writer = PdfWriter()
