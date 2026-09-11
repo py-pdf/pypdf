@@ -341,6 +341,35 @@ def test_insert_blank_page():
 
 
 @pytest.mark.parametrize(
+    ("width", "height"),
+    [
+        pytest.param(72, 72, id="both"),
+        pytest.param(72, None, id="width-only"),
+        pytest.param(None, 72, id="height-only"),
+    ],
+)
+def test_insert_blank_page__no_pages_yet(width, height):
+    """A writer with no pages looked up the size of a page that does not exist."""
+    writer = PdfWriter()
+
+    if width is None or height is None:
+        with pytest.raises(PageSizeNotDefinedError):
+            writer.insert_blank_page(width=width, height=height)
+        return
+
+    page = writer.insert_blank_page(width=width, height=height)
+    assert len(writer.pages) == 1
+    assert page.mediabox.width == width
+    assert page.mediabox.height == height
+
+
+def test_insert_blank_page__no_pages_yet_and_no_size():
+    """Matches add_blank_page, which raises rather than an opaque IndexError."""
+    with pytest.raises(PageSizeNotDefinedError):
+        PdfWriter().insert_blank_page()
+
+
+@pytest.mark.parametrize(
     ("convert", "needs_cleanup"),
     [
         (str, True),

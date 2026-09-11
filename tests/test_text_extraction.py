@@ -987,3 +987,23 @@ def test_line_breaks_with_scaled_current_matrix() -> None:
     )
 
     assert PdfReader(buffer).pages[0].extract_text() == "Line one\nLine two"
+
+
+def test_visitor_text_uses_current_text_matrix():
+    reader = PdfReader(RESOURCE_ROOT / "visitor_text_position.pdf")
+    page = reader.pages[0]
+
+    text_matrices = []
+
+    def visitor_text(text, cm, tm, font_dict, font_size) -> None:
+        if text.strip() == "visitor Sample":
+            text_matrices.append(tuple(float(v) for v in tm))
+
+    extracted_text = page.extract_text(
+        orientations=0,
+        visitor_text=visitor_text,
+    )
+
+    assert "visitor Sample" in extracted_text
+    assert len(text_matrices) == 1
+    assert text_matrices[0] == pytest.approx((1.0, 0.0, 0.0, 1.0, 100.0, 20.0))
