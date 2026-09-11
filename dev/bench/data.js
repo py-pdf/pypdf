@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789119473656,
+  "lastUpdate": 1789119515201,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -111149,6 +111149,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0032113996153302613",
             "extra": "mean: 660.8163881999985 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d9d38cf99b115deb562d3b68f36c33027bc04f79",
+          "message": "SEC: Further restrict FlateDecode recovery (#4073)\n\nPreviously, we would only count invalid bytes which could not be decoded\nin `/FlateDecode` recovery. This avoids excessive iteration for the\ncompletely broken data we tested with, as every input byte fails to\ndecode here.\n\nFor actual padded data, this would still be a performance bottleneck, as\nthis is a very inefficient and slow byte-by-byte decoding approach.\nGiven a GZIP file for example, which is a zlib/flate data stream\nprefixed by some file header bytes, it was possible to trigger the slow\npath without the recovery limit ever kicking in.\n\nPlease note that some persons might see this as a breaking change, for\nexample because some software would use GZIP for compression in\nzlib/flate streams (for whatever reason). As this violates the PDF\nspecification, a more efficient fallback handling has not been\nimplemented for now. If this really is a concern for some use cases,\neither increasing the limit (for the slow variant) or providing a\ncorresponding fix (as a fast variant) are still possible.",
+          "timestamp": "2026-09-11T11:35:32+02:00",
+          "tree_id": "bfa12a979a5f8c7bbf12c901c831bbf003942207",
+          "url": "https://github.com/py-pdf/pypdf/commit/d9d38cf99b115deb562d3b68f36c33027bc04f79"
+        },
+        "date": 1789119506257,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7460565378660515,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013844498774038096",
+            "extra": "mean: 364.1585620000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.39891661213826,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018317119168411399",
+            "extra": "mean: 54.351026263159056 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24272713873147703,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014944885698980651",
+            "extra": "mean: 4.119852461599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.415238301346577,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009847291541411373",
+            "extra": "mean: 57.4209771176475 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07336155944109471,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06815538085133309",
+            "extra": "mean: 13.631116999400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5063141575934924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024126777681767503",
+            "extra": "mean: 663.8721378000014 msec\nrounds: 5"
           }
         ]
       }
