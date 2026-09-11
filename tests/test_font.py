@@ -376,3 +376,32 @@ def test__create_widths_list_and_unicode_stream():
     assert all(
         val in ("56", "100") for val in re.findall(r"([0-9]*) beginbfchar", to_unicode_stream.get_data().decode())
     )
+
+
+def test_font__collect_tt_t1_character_widths__limits():
+    font_resource = DictionaryObject({
+        NameObject("/Widths"): ArrayObject([NumberObject(42)] * 256),
+    })
+    current_widths = {}
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+    assert len(current_widths) == 256
+
+    font_resource = DictionaryObject({
+        NameObject("/Widths"): ArrayObject([NumberObject(42)] * 257),
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Too many character widths: 257 > 256\.$",
+    ):
+        Font._collect_tt_t1_character_widths(
+            pdf_font_dict=font_resource,
+            char_map={},
+            encoding={},
+            current_widths=current_widths,
+        )
+    assert current_widths == {}
