@@ -1283,7 +1283,7 @@ def test_flate_decode__decode__decode_parms_types__null_object(caplog) -> None:
     assert caplog.messages == []
 
 
-# @pytest.mark.timeout(10)  # Previously took about 28-33 seconds.
+@pytest.mark.timeout(10)  # Previously took about 28-33 seconds.
 def test_decompress__fallback__speed() -> None:
     # `gzip` is an optional module: https://docs.python.org/3/library/gzip.html
     gzip = pytest.importorskip("gzip")
