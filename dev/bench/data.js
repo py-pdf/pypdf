@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789121085550,
+  "lastUpdate": 1789121105905,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -111215,6 +111215,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024126777681767503",
             "extra": "mean: 663.8721378000014 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "caf8cde51a9c698c98f50a1930e3dffba222bb4e",
+          "message": "REL: 6.18.1\n\n## What's new\n\n### Security (SEC)\n- Further restrict FlateDecode recovery (#4073) by @stefan6419846\n- Limit entry count for TrueType and Type1 font `/Widths` (#4072) by @stefan6419846\n- Limit allowed length of tokens in parse_bfchar (#4071) by @stefan6419846\n\n### Bug Fixes (BUG)\n- Use current text matrix for visitor_text (#4062) by @r-kamei\n- Repeat the letter for /S /A and /S /a page labels past Z (#4065) by @youdie006\n- Use font color for FreeText default appearance (#4051) by @Yuki9814\n\n### Robustness (ROB)\n- Fix compatibility with fonttools < 4.58.0 (#4050, #4059) by @MeggyCal and @stefan6419846\n\n### Documentation (DOC)\n- Use combined matrix in visitor examples (#4066) by @r-kamei\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.18.0...6.18.1)",
+          "timestamp": "2026-09-11T11:57:14+02:00",
+          "tree_id": "7e24fbe5fe21ed3a9b91e1c161262e7c99c4223d",
+          "url": "https://github.com/py-pdf/pypdf/commit/caf8cde51a9c698c98f50a1930e3dffba222bb4e"
+        },
+        "date": 1789121096101,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.709300357249396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014375600276735364",
+            "extra": "mean: 369.0989806000118 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.33994752601325,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018120385085749",
+            "extra": "mean: 54.52578305262908 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2416525866989569,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03383059800666702",
+            "extra": "mean: 4.1381721324000065 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.33524654873188,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006114733898180443",
+            "extra": "mean: 57.685940444449734 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07346502678943065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05739131775074133",
+            "extra": "mean: 13.61191908180001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4890066275878717,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013417704090484218",
+            "extra": "mean: 671.5886829999931 msec\nrounds: 5"
           }
         ]
       }
