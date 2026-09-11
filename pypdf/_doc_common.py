@@ -1323,7 +1323,21 @@ class PdfDocCommon(ABC):
             self.flattened_pages = []
         assert pages is not None, "mypy"
 
-        node_type = self._page_tree_node_type(pages)
+        # Get the current node_type
+        if PagesAttributes.TYPE in pages:
+            node_type= cast(str, pages[PagesAttributes.TYPE])
+        # if the page tree node has no /Type, consider as a page if /Kids is also missing
+        elif PagesAttributes.KIDS not in pages:
+            # Without /Type, only accept it as a page if it carries a structural page key.
+            if self.strict and not any(
+                key in pages for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)
+            ):
+                raise PdfReadError(f"Non-page object reached through /Kids: {pages!r}")
+            node_type = "/Page"
+        else:
+            node_type = "/Pages"
+
+        # Flatten that type of node
         if node_type == "/Pages":
             self._flatten_page_tree_node(
                 pages, list_only, inherit, visited, depth, traversal_state
@@ -1331,26 +1345,7 @@ class PdfDocCommon(ABC):
         elif node_type == "/Page":
             self._flatten_leaf_page(pages, list_only, inherit, indirect_reference)
 
-    def _page_tree_node_type(self, pages: DictionaryObject) -> str:
-        """
-        Classify a page-tree node as ``"/Pages"`` (intermediate node) or ``"/Page"`` (leaf).
 
-        When the node has no explicit ``/Type``, fall back to structural heuristics:
-        a node without ``/Kids`` is treated as a page. In strict mode such a node
-        must carry at least one structural page key, otherwise a ``PdfReadError``
-        is raised.
-        """
-        if PagesAttributes.TYPE in pages:
-            return cast(str, pages[PagesAttributes.TYPE])
-        # if the page tree node has no /Type, consider as a page if /Kids is also missing
-        if PagesAttributes.KIDS not in pages:
-            # Without /Type, only accept it as a page if it carries a structural page key.
-            if self.strict and not any(
-                key in pages for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)
-            ):
-                raise PdfReadError(f"Non-page object reached through /Kids: {pages!r}")
-            return "/Page"
-        return "/Pages"
 
     def _flatten_page_tree_node(
         self,
