@@ -1,5 +1,6 @@
 """Action types"""
 import sys
+import uuid
 from abc import ABC
 from enum import Enum, unique
 from typing import (
@@ -8,6 +9,7 @@ from typing import (
 )
 
 from .._utils import logger_warning
+from ..constants import CatalogAttributes
 from ..errors import ParseError
 from ..generic import (
     ArrayObject,
@@ -15,6 +17,7 @@ from ..generic import (
     NameObject,
     NullObject,
     TextStringObject,
+    create_string_object,
     is_null_or_none,
 )
 
@@ -27,6 +30,7 @@ else:
 
 if TYPE_CHECKING:
     from .._page import PageObject
+    from .._writer import PdfWriter
 
 
 @unique
@@ -56,6 +60,32 @@ class Action(DictionaryObject, ABC):
         # represented by this dictionary. The value is either a single action dictionary
         # or an array of action dictionaries that shall be performed in order.
         self[NameObject("/Next")] = NullObject()  # Optional
+
+    @classmethod
+    def _create_open_action(cls, writer: "PdfWriter", action: "Action") -> None:
+        """
+        Create an action that shall be performed when the document is opened.
+
+        Args:
+            writer: The writer to add the action to.
+            action: The action to add.
+        """
+        if "/Names" not in writer.root_object:
+            writer._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
+
+        names = cast(DictionaryObject, writer.root_object[CatalogAttributes.NAMES])
+        if "/JavaScript" not in names:
+            names[NameObject("/JavaScript")] = DictionaryObject(
+                {NameObject("/Names"): ArrayObject()}
+            )
+
+        js = cast(
+            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
+        )
+
+        # We need a name for parameterized JavaScript in the PDF file, but it can be anything
+        js.append(create_string_object(str(uuid.uuid4())))
+        js.append(writer._add_object(action))
 
     @classmethod
     def _create_new(cls, page: "PageObject", trigger: PageTrigger, action: "Action") -> None:
