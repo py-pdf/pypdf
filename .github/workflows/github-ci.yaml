@@ -34,23 +34,12 @@ jobs:
       with:
         submodules: 'recursive'
         persist-credentials: false
-    - name: Cache Downloaded Files
+    - name: Restore Downloaded Files
       id: cache-downloaded-files-windows
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-      if: github.ref == 'refs/heads/main'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       with:
         path: '**/tests/pdf_cache/*'
         key: cache-downloaded-files-main-${{ github.run_id }}
-        restore-keys: |
-          cache-downloaded-files-main-
-          cache-downloaded-files
-        enableCrossOsArchive: true
-    - name: Restore Downloaded Files
-      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-      if: github.ref != 'refs/heads/main'
-      with:
-        path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files-main-
         restore-keys: |
           cache-downloaded-files-main-
           cache-downloaded-files
@@ -88,25 +77,16 @@ jobs:
       with:
         submodules: 'recursive'
         persist-credentials: false
-    - name: Cache Downloaded Files
+    - name: Restore Downloaded Files
       id: cache-downloaded-files-mac
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-      if: github.ref == 'refs/heads/main'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       with:
         path: '**/tests/pdf_cache/*'
         key: cache-downloaded-files-main-${{ github.run_id }}
         restore-keys: |
           cache-downloaded-files-main-
           cache-downloaded-files
-    - name: Restore Downloaded Files
-      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-      if: github.ref != 'refs/heads/main'
-      with:
-        path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files-main-
-        restore-keys: |
-          cache-downloaded-files-main-
-          cache-downloaded-files
+        enableCrossOsArchive: true
     - name: Setup Python (3.11+)
       uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
@@ -158,25 +138,16 @@ jobs:
       with:
         submodules: 'recursive'
         persist-credentials: false
-    - name: Cache Downloaded Files
+    - name: Restore Downloaded Files
       id: cache-downloaded-files
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-      if: github.ref == 'refs/heads/main'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       with:
         path: '**/tests/pdf_cache/*'
         key: cache-downloaded-files-main-${{ github.run_id }}
         restore-keys: |
           cache-downloaded-files-main-
           cache-downloaded-files
-    - name: Restore Downloaded Files
-      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-      if: github.ref != 'refs/heads/main'
-      with:
-        path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files-main-
-        restore-keys: |
-          cache-downloaded-files-main-
-          cache-downloaded-files
+        enableCrossOsArchive: true
     - name: Setup Python
       uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
@@ -230,6 +201,15 @@ jobs:
       run: |
         python -m pytest tests -n auto -vv -p no:benchmark -o faulthandler_timeout=60 --dist=loadfile
       if: ${{ startsWith(matrix.python-version, 'pypy') }}
+    # Test downloads are not fully described by example_files.yaml, so keep one
+    # cross-platform rolling cache writer instead of competing per-job caches.
+    - name: Save Downloaded Files
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+      if: github.ref == 'refs/heads/main' && matrix.python-version == '3.13' && matrix.use-crypto-lib == 'cryptography' && steps.cache-downloaded-files.outputs.cache-hit != 'true'
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files-main-${{ github.run_id }}
+        enableCrossOsArchive: true
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
       if: ${{ !startsWith(matrix.python-version, 'pypy') }}
