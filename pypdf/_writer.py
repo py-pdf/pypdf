@@ -2323,7 +2323,8 @@ class PdfWriter(PdfDocCommon):
             border_arr = [NumberObject(2), NumberObject(2), NumberObject(2)]
 
         if isinstance(rect, str):
-            rect = NumberObject(rect)
+            coords = [float(n) for n in rect.strip().strip("[]").split()]
+            rect = RectangleObject(coords)
         elif isinstance(rect, RectangleObject):
             pass
         else:
