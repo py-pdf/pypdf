@@ -43,6 +43,8 @@ except ImportError:
 # Limits.
 MAX_CID_WIDTH_ENTRY_COUNT = 65_536
 MAX_WIDTH_ENTRY_COUNT = 100_000
+# For a simple font, character codes are one-byte values, 0-255, so /Widths can have at most 256 meaningful entries.
+MAX_SIMPLE_FONT_WIDTH_ENTRY_COUNT = 256
 
 
 # Some constants from truetype font tables that we use:
@@ -118,7 +120,7 @@ class Font:
     text appearance streams.
 
     Attributes:
-        name: Font name, derived from font["/BaseFont"]
+        name: Font name, derived from ``font["/BaseFont"]``
         character_map: The font's character map
         encoding: Font encoding
         sub_type: The font type, such as Type1, TrueType, or Type3.
@@ -127,7 +129,7 @@ class Font:
         space_width: The width of a space, or an approximation
         interpretable: Default True. If False, the font glyphs cannot
             be translated to characters, e.g. Type3 fonts that do not define
-            a '/ToUnicode' mapping.
+            a ``/ToUnicode`` mapping.
 
     """
 
@@ -150,6 +152,9 @@ class Font:
     ) -> None:
         """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
         widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
+        Font.__check_entry_count(
+            len(widths_array), MAX_SIMPLE_FONT_WIDTH_ENTRY_COUNT
+        )
         first_char = pdf_font_dict.get("/FirstChar", 0)
         for idx, width in enumerate(widths_array):
             current_widths[chr(idx + first_char)] = int(width)
@@ -166,9 +171,9 @@ class Font:
             raise LimitReachedError(f"CID width range too large: {count} > {MAX_CID_WIDTH_ENTRY_COUNT}.")
 
     @staticmethod
-    def __check_entry_count(count: int) -> None:
-        if count > MAX_WIDTH_ENTRY_COUNT:
-            raise LimitReachedError(f"Too many character widths: {count} > {MAX_WIDTH_ENTRY_COUNT}.")
+    def __check_entry_count(count: int, limit: int = MAX_WIDTH_ENTRY_COUNT) -> None:
+        if count > limit:
+            raise LimitReachedError(f"Too many character widths: {count} > {limit}.")
 
     @staticmethod
     def _collect_cid_character_widths(d_font: DictionaryObject, current_widths: dict[str, float]) -> None:
@@ -574,7 +579,11 @@ class Font:
             # creates a dictionary mapping glyphs to the minimum Unicode codepoint.
             tt_font_cmap_table = tt_font_object.get("cmap")
             if tt_font_cmap_table:
-                reverse_cmap = tt_font_cmap_table.buildReversedMin()
+                try:
+                    reverse_cmap = tt_font_cmap_table.buildReversedMin()
+                except AttributeError:
+                    # use buildReversed on fonttools < 4.57 and build a list of minimums from it
+                    reverse_cmap = {k: min(r) for k, r in tt_font_cmap_table.buildReversed().items()}
                 for gid, glyph in enumerate(glyph_order):
                     char_code = reverse_cmap.get(glyph)
                     if char_code is None:

@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## Version 6.18.1, 2026-09-11
+
+### Security (SEC)
+- Further restrict FlateDecode recovery (#4073)
+- Limit entry count for TrueType and Type1 font `/Widths` (#4072)
+- Limit allowed length of tokens in parse_bfchar (#4071)
+
+### Bug Fixes (BUG)
+- Use current text matrix for visitor_text (#4062)
+- Repeat the letter for /S /A and /S /a page labels past Z (#4065)
+- Use font color for FreeText default appearance (#4051)
+
+### Robustness (ROB)
+- Fix compatibility with fonttools < 4.58.0 (#4050, #4059)
+
+### Documentation (DOC)
+- Use combined matrix in visitor examples (#4066)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.18.0...6.18.1)
+
 ## Version 6.18.0, 2026-09-07
 
 ### Security (SEC)

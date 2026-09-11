@@ -1573,11 +1573,18 @@ class PdfDocCommon(ABC):
         tree = cast(TreeObject, catalog["/AcroForm"])
 
         if "/XFA" in tree:
-            fields = cast(ArrayObject, tree["/XFA"])
+            fields = tree["/XFA"].get_object()
+            if not isinstance(fields, ArrayObject):
+                logger_warning(
+                    "XFA entry is not an array: %(fields)s",
+                    source=__name__,
+                    fields=fields,
+                )
+                return retval
             i = iter(fields)
             for f in i:
                 tag = f
-                f = next(i)
+                f = next(i, None)
                 if isinstance(f, IndirectObject):
                     field = cast(Optional[EncodedStreamObject], f.get_object())
                     if field:

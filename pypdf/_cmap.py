@@ -9,6 +9,7 @@ from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
 from .errors import LimitReachedError
 from .generic import (
+    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
     NullObject,
@@ -112,7 +113,15 @@ def _parse_encoding(
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         x: int = 0
         o: Union[int, str]
-        for o in cast(DictionaryObject, enc["/Differences"]):
+        differences = enc["/Differences"].get_object()
+        if not isinstance(differences, ArrayObject):
+            logger_warning(
+                "Font encoding differences are not an array: %(differences)s",
+                source=__name__,
+                differences=differences,
+            )
+            differences = ArrayObject()
+        for o in differences:
             if isinstance(o, int):
                 x = o
             else:  # isinstance(o, str):
@@ -278,7 +287,7 @@ def process_cm_line(
     elif process_char:
         try:
             parse_bfchar(line, map_dict, int_entry)
-        except (ValueError, IndexError) as error:
+        except ValueError as error:
             logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     return process_rg, process_char, multiline_rg
 
@@ -391,30 +400,44 @@ def parse_bfrange(
 
 def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) -> None:
     lst = [x for x in line.split(b" ") if x]
-    new_count = len(lst) // 2
+    lst_length = len(lst)
+    if lst_length == 0:
+        logger_warning("Skipping broken line %(line)r: Line is empty.", source=__name__, line=line)
+        return
+    if lst_length % 2:
+        logger_warning("Ignoring final token of odd-length line %(line)r.", source=__name__, line=line)
+
+    new_count = lst_length // 2
     _check_mapping_size(len(int_entry) + new_count)  # This can be checked beforehand.
     map_dict[-1] = len(lst[0]) // 2
+
     while len(lst) > 1:
+        source = lst[0]
+        destination = lst[1]
+
+        _check_token_length(source, limit=MAX_CMAP_CODE_BYTES_LIMIT)
+
         map_to = ""
         # placeholder (see above) means empty string
-        if lst[1] != b".":
+        if destination != b".":
+            _check_token_length(destination, limit=MAX_CMAP_STRING_BYTES_LIMIT)
             try:
-                map_to = unhexlify(lst[1]).decode(
-                    "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
+                map_to = unhexlify(destination).decode(
+                    "charmap" if len(destination) < 4 else "utf-16-be", "surrogatepass"
                 )  # join is here as some cases where the code was split
             except BinasciiError as exception:
                 logger_warning(
-                    "Got invalid hex string: %(exception)s (%(lst_value)r)",
+                    "Got invalid hex string: %(exception)s (%(destination)r)",
                     source=__name__,
                     exception=exception,
-                    lst_value=lst[1],
+                    destination=destination,
                 )
         map_dict[
-            unhexlify(lst[0]).decode(
+            unhexlify(source).decode(
                 "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
             )
         ] = map_to
-        int_entry.append(int(lst[0], 16))
+        int_entry.append(int(source, 16))
         lst = lst[2:]
 
 
