@@ -744,9 +744,11 @@ def test_flatten__pages_with_non_array_kids():
 
 
 @pytest.mark.xfail(
-    reason="_flatten recurses once per page-tree level, so a tree deeper than the "
-    "interpreter recursion limit raises RecursionError before "
-    "Configuration.page_tree_maximum_depth can apply. Passes once _flatten iterates.",
+    reason=(
+        "_flatten recurses once per page-tree level, so a tree deeper than the "
+        "interpreter recursion limit raises RecursionError before "
+        "Configuration.page_tree_maximum_depth can apply. Passes once _flatten iterates."
+    ),
 )
 def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
     """A deeply nested /Pages tree is flattened without a RecursionError."""
@@ -781,8 +783,10 @@ def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
 
 
 @pytest.mark.xfail(
-    reason="_flatten calls .get_object() on root_object.get('/Pages') without a None "
-    "check, so a catalog without /Pages raises AttributeError instead of PdfReadError.",
+    reason=(
+        "_flatten calls .get_object() on root_object.get('/Pages') without a None "
+        "check, so a catalog without /Pages raises AttributeError instead of PdfReadError."
+    ),
 )
 def test_flatten__missing_pages_entry():
     # A document catalog without /Pages is malformed. Flattening must raise a
@@ -796,9 +800,11 @@ def test_flatten__missing_pages_entry():
 
 
 @pytest.mark.xfail(
-    reason="_flatten sets self.flattened_pages before the traversal and appends as it "
-    "goes, so a mid-traversal error leaves a truncated, non-None list that a later "
-    "page access silently serves instead of re-raising.",
+    reason=(
+        "_flatten sets self.flattened_pages before the traversal and appends as it "
+        "goes, so a mid-traversal error leaves a truncated, non-None list that a later "
+        "page access silently serves instead of re-raising."
+    ),
 )
 def test_flatten__error_does_not_leave_a_partial_result():
     # If flattening raises partway through, the pages collected so far must be
