@@ -43,7 +43,7 @@ except ImportError:
 # Limits.
 MAX_CID_WIDTH_ENTRY_COUNT = 65_536
 MAX_WIDTH_ENTRY_COUNT = 100_000
-# For a simple font, character codes are one-byte values, 0–255, so /Widths can have at most 256 meaningful entries.
+# For a simple font, character codes are one-byte values, 0-255, so /Widths can have at most 256 meaningful entries.
 MAX_SIMPLE_FONT_WIDTH_ENTRY_COUNT = 256
 
 
