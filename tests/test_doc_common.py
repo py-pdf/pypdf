@@ -773,7 +773,7 @@ def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
     writer.root_object[NameObject("/Pages")] = node
 
     try:
-        with apply_configuration(page_tree_maximum_depth=depth+1):
+        with apply_configuration(page_tree_maximum_depth=depth + 1):
             writer._flatten()
     except RecursionError:
         # Reported without the (huge) recursion traceback.
