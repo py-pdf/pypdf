@@ -2560,10 +2560,7 @@ class PdfWriter(PdfDocCommon):
             fit_type = cast(str, destination["fit"])
             # Work around the intermediate destination containing native Python
             # objects instead of PdfObject instances.
-            fit_args = cast(
-                Sequence[float | Any | None],
-                dict(destination)["fit_args"]
-            )
+            fit_args = cast(Sequence[Any], dict(destination)["fit_args"])
 
             if 0 <= target_page_index < len(self.pages):
                 target_page_reference = cast(
