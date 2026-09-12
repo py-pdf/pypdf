@@ -24,8 +24,8 @@ from pypdf.errors import PdfReadError
 from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
-    FloatObject,
     Fit,
+    FloatObject,
     NameObject,
     NumberObject,
     RectangleObject,
