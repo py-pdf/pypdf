@@ -6,7 +6,14 @@ import pytest
 
 import pypdf
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import ArrayObject, Destination, DictionaryObject, Fit, NameObject, NullObject
+from pypdf.generic import (
+    ArrayObject,
+    Destination,
+    DictionaryObject,
+    Fit,
+    NameObject,
+    NullObject,
+)
 
 from . import RESOURCE_ROOT, get_data_from_url
 from .test_encryption import HAS_AES
@@ -534,6 +541,7 @@ def test_merge__null_destination():
 
     writer.merge(position=1, fileobj=data)
     assert writer.pages[0].annotations is None
+
 
 
 def test_merge_annotation_without_subtype():
