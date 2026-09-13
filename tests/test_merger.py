@@ -557,3 +557,42 @@ def test_merge_annotation_without_subtype():
     reread = PdfReader(merged)
     merged_annot = reread.pages[0]["/Annots"][0].get_object()
     assert "/Subtype" not in merged_annot
+
+
+@pytest.mark.enable_socket
+def test_append_page_with_non_terminal_fields():
+    """
+    This test is a regression test for issue #3736.
+    Appending a single page must not pull in the other pages through fields
+    sharing a non-terminal parent field.
+    """
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-3736.pdf")))
+    writer = PdfWriter()
+    writer.append(reader, pages=[0])
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    # Only the appended page and its page tree may be written.
+    page_types = [
+        obj.get("/Type")
+        for obj in writer._objects
+        if isinstance(obj, DictionaryObject)
+    ]
+    assert page_types.count("/Page") == 1
+    assert page_types.count("/Pages") == 1
+
+    result = PdfReader(output)
+    assert len(result.pages) == 1
+    assert list(result.get_fields()) == [
+        "common", "common.Text1", "common.Text2", "common.Button1"
+    ]
+    page_ref = result.pages[0].indirect_reference
+    for annotation in result.pages[0]["/Annots"]:
+        assert annotation.get_object().raw_get("/P") == page_ref
+
+    # Appending the whole document keeps all fields in their original order.
+    writer = PdfWriter()
+    writer.append(reader)
+    assert list(writer.get_fields()) == list(reader.get_fields())
