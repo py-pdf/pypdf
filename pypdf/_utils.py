@@ -245,6 +245,8 @@ def check_if_whitespace_only(value: bytes) -> bool:
 NEUTRAL_CHARACTER_RANGES = (
     ("\x00", "\x2F"),      # ASCII control codes, space, and early punctuation (!"#$%)
     ("\x3A", "\x40"),      # ASCII operators and punctuation between digits & A (:;<=>?@)
+    ("\u0660", "\u066D"),  # Arabic-Indic digits and Arabic numeric separators
+    ("\u06F0", "\u06F9"),  # Extended Arabic-Indic (Persian) digits
     ("\u2000", "\u206F"),  # General punctuation
     ("\u20A0", "\u21FF"),  # Currency symbols, diacritical marks, letter-like symbols, number forms, arrows
 )
