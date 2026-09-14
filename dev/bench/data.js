@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789402996497,
+  "lastUpdate": 1789403003628,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -111611,6 +111611,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006177804880730753",
             "extra": "mean: 351.7878956000004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "genviz.ai@gmail.com",
+            "name": "Syamjith NK",
+            "username": "Syamjith-NK"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "96d81f05ba4b3ec9ff1b3c3e52bc71a3cdd702c7",
+          "message": "BUG: Arabic-Indic digits are reversed during text extraction (#4077)\n\nArabic-Indic (U+0660-0669) and Extended Arabic-Indic (U+06F0-06F9) digits sit\ninside the U+0590-U+08FF range of RTL_CHARACTER_RANGES, so is_char_rtl()\nreported them as right-to-left and get_display_str() prepended each one,\nreversing the run: 1234 came back as 4321.\n\nPer the Unicode bidirectional algorithm digits are weak types (AN/EN) and a\ndigit run is never reordered inside a right-to-left paragraph, so treating them\nas neutral is what the standard prescribes.\n\nThis is deliberately narrow. The broader question of ordering a digit run\nrelative to the surrounding Arabic text, discussed in #1629, is untouched.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-09-14T18:20:10+02:00",
+          "tree_id": "9627d723416071b37435e9e00382db496e3676f4",
+          "url": "https://github.com/py-pdf/pypdf/commit/96d81f05ba4b3ec9ff1b3c3e52bc71a3cdd702c7"
+        },
+        "date": 1789402993784,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.6047229758027384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02315886029834505",
+            "extra": "mean: 383.91798639999877 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.77740735806088,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00260656678801279",
+            "extra": "mean: 56.251172055556566 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22810404159664743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049106202059125796",
+            "extra": "mean: 4.3839644094000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.82238715048843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009219700608755524",
+            "extra": "mean: 59.44459552941422 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07316782983192516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.046554415414768756",
+            "extra": "mean: 13.667208694 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4864259313420236,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002025738117807825",
+            "extra": "mean: 672.7546788000041 msec\nrounds: 5"
           }
         ]
       }
