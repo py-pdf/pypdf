@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789396355148,
+  "lastUpdate": 1789397365810,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -136495,6 +136495,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005070444267560592",
             "extra": "mean: 640.887569399996 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "893a01002aa8e23b3a61ae4b38ab74edbc904ab9",
+          "message": "MAINT: Split PdfDocCommon._flatten (#4070)\n\n* MAINT: Split PdfDocCommon._flatten into focused helpers\n\n_flatten mixed argument-defaulting, page-tree-root resolution, node-type\nclassification, /Pages recursion and /Page construction in one ~135-line\nmethod (cyclomatic complexity 30).\n\nExtract three private helpers, leaving _flatten as a small orchestrator:\n\n- _page_tree_node_type: classify a node as \"/Pages\" or \"/Page\", including\n  the no-/Type strict-mode heuristic.\n- _flatten_page_tree_node: propagate inheritable attributes and recurse\n  into /Kids, with the cycle checks and entry-limit enforcement.\n- _flatten_leaf_page: build the PageObject and append it to flattened_pages.\n\nBehaviour is unchanged. Radon complexity drops from D(30) to\n_flatten B(10), _flatten_page_tree_node C(13), _page_tree_node_type B(6),\n_flatten_leaf_page A(4).\n\nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>\n(cherry picked from commit b45900b991dd85797cfd6a43679853e9edaf478f)\n\n* TST: Add xfail tests for known _flatten page-tree limitations\n\nThree behaviours of PdfDocCommon._flatten that are wrong today and are\nmarked xfail until the traversal is reworked:\n\n- A page tree deeper than the interpreter recursion limit raises\n  RecursionError before Configuration.page_tree_maximum_depth can apply.\n- A document catalog without /Pages raises AttributeError from\n  .get_object() on None instead of PdfReadError.\n- A mid-traversal error leaves self.flattened_pages as a truncated,\n  non-None list, so a later page access silently serves the wrong count\n  instead of re-raising.\n\nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>\n\n* Remove _page_tree_node_type\n\n* Extend tests\n\n* wrap multi-line strings in braces\n\n* Remove unnecessary comment\n\n* Reduce test size / recursion limit\n\n* Ruff format\n\n* Formatting\n\n---------\n\nCo-authored-by: Claude Sonnet 5 <noreply@anthropic.com>",
+          "timestamp": "2026-09-14T16:46:30+02:00",
+          "tree_id": "3371ff1791f0248b87e6fb884b27151d82071eb0",
+          "url": "https://github.com/py-pdf/pypdf/commit/893a01002aa8e23b3a61ae4b38ab74edbc904ab9"
+        },
+        "date": 1789397356243,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.486982879660626,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0235691255470048",
+            "extra": "mean: 80.08339641666733 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.7454692200893,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009765359468696359",
+            "extra": "mean: 53.346224000000575 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9943592256336514,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04662131868892937",
+            "extra": "mean: 1.0056727732000013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5300179587787046,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04424212049578393",
+            "extra": "mean: 1.8867285219999956 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36503965353259377,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019953464310707533",
+            "extra": "mean: 2.7394284164000053 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1746750716835725,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024419782484247723",
+            "extra": "mean: 851.299243599999 msec\nrounds: 5"
           }
         ]
       }
