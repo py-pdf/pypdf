@@ -951,6 +951,13 @@ def test_add_uri(pdf_file_path):
         border=[0, 0, 0],
     )
 
+    # A string rect in the documented "[ xLL yLL xUR yUR ]" form must become a
+    # RectangleObject; it previously collapsed to a single NumberObject of 0.
+    string_rect = writer.pages[3]["/Annots"][0].get_object()["/Rect"]
+    assert list(string_rect) == [200, 300, 250, 350]
+    list_rect = writer.pages[3]["/Annots"][1].get_object()["/Rect"]
+    assert list(list_rect) == [100, 200, 150, 250]
+
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
