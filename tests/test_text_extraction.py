@@ -1033,7 +1033,7 @@ def _page_with_cid_font(text: str) -> BytesIO:
     ids=["arabic-indic-digits", "persian-digits", "arabic-percent", "arabic-letters", "hebrew"],
 )
 def test_arabic_indic_digits_keep_their_order(shown: str, expected: str) -> None:
-    """Arabic-Indic digits used to be reversed during extraction. Related: #1629."""
+    """Arabic-Indic digits should not be reversed during extraction. Related: #1629."""
     assert PdfReader(_page_with_cid_font(shown)).pages[0].extract_text() == expected
 
 
