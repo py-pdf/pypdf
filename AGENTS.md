@@ -39,12 +39,14 @@ requirements/       Dependencies for development and optional features
 2. Branch format: type/short-description (e.g., enh/user-auth).
 3. Make changes
 4. Run mypy and pytest
-5. Use pre-commit when commiting
+5. Use pre-commit when committing
 6. Commit format: `PREFIX: Description`
 
 Prefixes for commit messages:
 
 `SEC`   Security fix (e.g. infinite loop, resource exhaustion).
+        Security fixes need to follow the responsible disclosure process
+        outlined in .github/SECURITY.md
 `BUG`   User-facing bug fix. Put `Closes #123` in the body.
 `ENH`   New feature.
 `DEP`   Deprecating or removing a feature.
@@ -69,7 +71,9 @@ Co-authored-by: {{Agent Name, Model Name and version}} <{{email@agent-company.co
 - Never modify `CHANGELOG.md` or `requirements`.
 - Keep PRs small and single-purpose: typos, style, a feature, and a bug fix are
   separate PRs. A feature PR must include its tests and docs.
-- Never run "git push".
+- Only run `git commit` after explicitly asking for confirmation.
+  Ask the developer to review your changes.
+- Never run `git push`.
 
 ## When stuck
 - ask a clarifying question, propose a short plan, or open a draft PR with notes
