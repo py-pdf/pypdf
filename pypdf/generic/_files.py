@@ -24,7 +24,7 @@ from pypdf.generic import (
 
 if TYPE_CHECKING:
     import datetime
-    from collections.abc import Generator
+    from collections.abc import Iterator
 
     from pypdf._writer import PdfWriter
 
@@ -347,6 +347,12 @@ class EmbeddedFile:
         else:
             params[NameObject("/CheckSum")] = value
 
+    @property
+    def _names(self) -> Iterator[str]:
+        yield self.name
+        if self.alternative_name is not None and self.alternative_name != self.name:
+            yield self.alternative_name
+
     def delete(self) -> None:
         """Delete the file from the document."""
         if not self._parent:
@@ -375,7 +381,7 @@ class EmbeddedFile:
         logger_warning(message, source=__name__)
 
     @classmethod
-    def _load_from_names(cls, names: ArrayObject) -> Generator[EmbeddedFile]:
+    def _load_from_names(cls, names: ArrayObject) -> Iterator[EmbeddedFile]:
         """
         Convert the given name tree into class instances.
 
@@ -394,7 +400,7 @@ class EmbeddedFile:
                 yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary, parent=names)
 
     @classmethod
-    def _load(cls, catalog: DictionaryObject, strict: bool = False) -> Generator[EmbeddedFile]:
+    def _load(cls, catalog: DictionaryObject, strict: bool = False) -> Iterator[EmbeddedFile]:
         """
         Load the embedded files for the given document catalog.
 

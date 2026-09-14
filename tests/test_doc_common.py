@@ -39,7 +39,7 @@ def test_attachments(tmpdir):
     # No attachments.
     clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
     with PdfReader(clean_path) as pdf:
-        assert pdf._list_attachments() == []
+        assert pdf.attachments == {}
         assert list(pdf.attachment_list) == []
 
     # UF = name.
@@ -48,8 +48,8 @@ def test_attachments(tmpdir):
     file_path.write_bytes(b"Hello World\n")
     subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path])  # noqa: S603
     with PdfReader(attached_path) as pdf:
-        assert pdf._list_attachments() == ["test.txt"]
-        assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+        assert list(pdf.attachments.keys()) == ["test.txt"]
+        assert pdf.attachments["test.txt"] == [b"Hello World\n"]
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
         assert next(pdf.attachment_list).alternative_name == "test.txt"
 
@@ -57,9 +57,9 @@ def test_attachments(tmpdir):
     different_path = tmpdir / "different.pdf"
     different_path.write_bytes(re.sub(rb" /UF [^/]+ /", b" /UF(my-file.txt) /", attached_path.read_bytes()))
     with PdfReader(different_path) as pdf:
-        assert pdf._list_attachments() == ["test.txt", "my-file.txt"]
-        assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
-        assert pdf._get_attachments("my-file.txt") == {"my-file.txt": b"Hello World\n"}
+        assert list(pdf.attachments.keys()) == ["test.txt", "my-file.txt"]
+        assert pdf.attachments["test.txt"] == [b"Hello World\n"]
+        assert pdf.attachments["my-file.txt"] == [b"Hello World\n"]
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
         assert next(pdf.attachment_list).alternative_name == "my-file.txt"
 
@@ -67,8 +67,8 @@ def test_attachments(tmpdir):
     no_f_path = tmpdir / "no-f.pdf"
     no_f_path.write_bytes(re.sub(rb" /UF [^/]+ /", b" /", attached_path.read_bytes()))
     with PdfReader(no_f_path) as pdf:
-        assert pdf._list_attachments() == ["test.txt"]
-        assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+        assert list(pdf.attachments.keys()) == ["test.txt"]
+        assert pdf.attachments["test.txt"] == [b"Hello World\n"]
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
         assert next(pdf.attachment_list).alternative_name is None
 
@@ -76,8 +76,8 @@ def test_attachments(tmpdir):
     uf_f_path = tmpdir / "uf-f.pdf"
     uf_f_path.write_bytes(attached_path.read_bytes().replace(b" /UF ", b"/F(file.txt) /UF "))
     with PdfReader(uf_f_path) as pdf:
-        assert pdf._list_attachments() == ["test.txt"]
-        assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+        assert list(pdf.attachments.keys()) == ["test.txt"]
+        assert pdf.attachments["test.txt"] == [b"Hello World\n"]
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
         assert next(pdf.attachment_list).alternative_name == "test.txt"
 
@@ -85,8 +85,8 @@ def test_attachments(tmpdir):
     only_f_path = tmpdir / "f.pdf"
     only_f_path.write_bytes(attached_path.read_bytes().replace(b" /UF ", b" /F "))
     with PdfReader(only_f_path) as pdf:
-        assert pdf._list_attachments() == ["test.txt"]
-        assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+        assert list(pdf.attachments.keys()) == ["test.txt"]
+        assert pdf.attachments["test.txt"] == [b"Hello World\n"]
         assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
         assert next(pdf.attachment_list).alternative_name == "test.txt"
 
@@ -96,9 +96,7 @@ def test_get_attachments__same_attachment_more_than_twice():
     writer.add_blank_page(100, 100)
     for i in range(5):
         writer.add_attachment("test.txt", f"content{i}")
-    assert writer._get_attachments("test.txt") == {
-        "test.txt": [b"content0", b"content1", b"content2", b"content3", b"content4"]
-    }
+    assert writer.attachments["test.txt"] == [b"content0", b"content1", b"content2", b"content3", b"content4"]
     assert [(x.name, x.content) for x in writer.attachment_list] == [
         ("test.txt", b"content0"),
         ("test.txt", b"content1"),
@@ -119,7 +117,21 @@ def test_get_attachments__alternative_name_is_none():
             "pypdf.generic._files.EmbeddedFile.content",
             new_callable=mock.PropertyMock(return_value=b"content")
     ):
-        assert writer._get_attachments() == {"test.txt": b"content"}
+        assert dict(writer.attachments) == {"test.txt": [b"content"]}
+
+
+def test_get_attachments__list_queried_only_once_per_result():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    for index in range(5):
+        writer.add_attachment(f"test{index}.txt", f"content{index}")
+
+    original_load = EmbeddedFile._load
+    with mock.patch("pypdf.generic._files.EmbeddedFile._load", side_effect=original_load) as load_mock:
+        for index, (name, content) in enumerate(writer.attachments.items()):
+            assert name == f"test{index}.txt"
+            assert content == [f"content{index}".encode()]
+    load_mock.assert_called_once_with(writer.root_object, strict=False)
 
 
 @pytest.mark.enable_socket

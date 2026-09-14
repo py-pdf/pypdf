@@ -30,7 +30,7 @@
 
 import struct
 from abc import ABC, abstractmethod
-from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from datetime import datetime
 from typing import (
     Any,
@@ -1559,80 +1559,27 @@ class PdfDocCommon(ABC):
     @property
     def attachments(self) -> Mapping[str, list[bytes]]:
         """Mapping of attachment filenames to their content."""
+        entries: dict[str, list[EmbeddedFile]] = {}
+
+        for entry in self.attachment_list:
+            for name in entry._names:
+                entries.setdefault(name, []).append(entry)
+
         return LazyDict(
             {
-                name: (self._get_attachment_list, name)
-                for name in self._list_attachments()
+                name: (self._get_attachment_contents, attachment_entries)
+                for name, attachment_entries in entries.items()
             }
         )
 
+    @classmethod
+    def _get_attachment_contents(cls, entries: list[EmbeddedFile]) -> list[bytes]:
+        return [entry.content for entry in entries]
+
     @property
-    def attachment_list(self) -> Generator[EmbeddedFile, None, None]:
+    def attachment_list(self) -> Iterator[EmbeddedFile]:
         """Iterable of attachment objects."""
         yield from EmbeddedFile._load(self.root_object, strict=self.strict)
-
-    def _list_attachments(self) -> list[str]:
-        """
-        Retrieves the list of filenames of file attachments.
-
-        Returns:
-            list of filenames
-
-        """
-        names = []
-        for entry in self.attachment_list:
-            names.append(entry.name)
-            if (name := entry.alternative_name) != entry.name and name:
-                names.append(name)
-        return names
-
-    def _get_attachment_list(self, name: str) -> list[bytes]:
-        out = self._get_attachments(name)[name]
-        if isinstance(out, list):
-            return out
-        return [out]
-
-    def _get_attachments(
-        self, filename: Optional[str] = None
-    ) -> dict[str, Union[bytes, list[bytes]]]:
-        """
-        Retrieves all or selected file attachments of the PDF as a dictionary of file names
-        and the file data as a bytestring.
-
-        Args:
-            filename: If filename is None, then a dictionary of all attachments
-                will be returned, where the key is the filename and the value
-                is the content. Otherwise, a dictionary with just a single key
-                - the filename - and its content will be returned.
-
-        Returns:
-            dictionary of filename -> Union[bytestring or List[ByteString]]
-            If the filename exists multiple times a list of the different versions will be provided.
-
-        """
-        attachments: dict[str, Union[bytes, list[bytes]]] = {}
-        for entry in self.attachment_list:
-            names = set()
-            alternative_name = entry.alternative_name
-            if filename is not None:
-                if filename in {entry.name, alternative_name}:
-                    name = entry.name if filename == entry.name else alternative_name
-                    names.add(name)
-                else:
-                    continue
-            else:
-                names = {entry.name, alternative_name}
-
-            for name in names:
-                if name is None:
-                    continue
-                if name in attachments:
-                    if not isinstance(attachments[name], list):
-                        attachments[name] = [attachments[name]]  # type:ignore
-                    attachments[name].append(entry.content)  # type:ignore
-                else:
-                    attachments[name] = entry.content
-        return attachments
 
     @abstractmethod
     def _repr_mimebundle_(
