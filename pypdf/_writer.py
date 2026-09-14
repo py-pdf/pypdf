@@ -1886,6 +1886,8 @@ class PdfWriter(PdfDocCommon):
                     page_ref = self.pages[page_number].indirect_reference
                 except IndexError:
                     page_ref = NumberObject(page_number)
+            else:
+                raise TypeError(f"page_number: invalid type {type(page_number)}")
             if page_ref is None:
                 logger_warning(
                     "can not find reference of page %(page_number)s",

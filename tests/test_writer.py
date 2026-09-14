@@ -796,6 +796,17 @@ def test_add_outline_item_collapsed():
         assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
 
 
+def test_add_outline_item__page_number_invalid_type():
+    """An unsupported page_number type raised UnboundLocalError, not a
+    message naming the actual problem.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    with pytest.raises(TypeError, match="page_number: invalid type"):
+        writer.add_outline_item("Title", "not-a-valid-type")
+
+
 @pytest.mark.parametrize(
     ("is_open", "expected_count"),
     [
