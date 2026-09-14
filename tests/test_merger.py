@@ -6,7 +6,7 @@ import pytest
 
 import pypdf
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import ArrayObject, Destination, DictionaryObject, Fit, NameObject, NullObject
+from pypdf.generic import ArrayObject, Destination, DictionaryObject, Fit, NameObject, NullObject, TextStringObject
 
 from . import RESOURCE_ROOT, get_data_from_url
 from .test_encryption import HAS_AES
@@ -588,9 +588,9 @@ def test_append_page_with_non_terminal_fields():
     assert list(result.get_fields()) == [
         "common", "common.Text1", "common.Text2", "common.Button1"
     ]
-    page_ref = result.pages[0].indirect_reference
+    page_reference = result.pages[0].indirect_reference
     for annotation in result.pages[0]["/Annots"]:
-        assert annotation.get_object().raw_get("/P") == page_ref
+        assert annotation.get_object().raw_get("/P") == page_reference
 
     # Appending the whole document keeps all fields in their original order.
     writer = PdfWriter()
@@ -604,27 +604,68 @@ def test_merge_widget_with_non_dictionary_parent():
     abort the merge. The malformed reference is dropped and the widget itself
     is still carried over.
     """
-    src = PdfWriter()
-    src.add_blank_page(width=612, height=792)
-    annot = DictionaryObject()
-    annot[NameObject("/Subtype")] = NameObject("/Widget")
+    input_writer = PdfWriter()
+    input_writer.add_blank_page(width=612, height=792)
+    annotation = DictionaryObject()
+    annotation[NameObject("/Subtype")] = NameObject("/Widget")
     # An indirect reference to something that is not a dictionary.
-    annot[NameObject("/Parent")] = src._add_object(NullObject())
-    src.pages[0][NameObject("/Annots")] = ArrayObject([src._add_object(annot)])
+    annotation[NameObject("/Parent")] = input_writer._add_object(NullObject())
+    input_writer.pages[0][NameObject("/Annots")] = ArrayObject([input_writer._add_object(annotation)])
 
-    source = BytesIO()
-    src.write(source)
-    source.seek(0)
+    input_pdf = BytesIO()
+    input_writer.write(input_pdf)
+    input_pdf.seek(0)
 
     writer = PdfWriter()
-    writer.append(PdfReader(source), import_outline=False)
+    writer.append(PdfReader(input_pdf), import_outline=False)
 
     merged = BytesIO()
     writer.write(merged)
     merged.seek(0)
 
-    reread = PdfReader(merged)
-    assert len(reread.pages) == 1
-    merged_annot = reread.pages[0]["/Annots"][0].get_object()
-    assert merged_annot["/Subtype"] == "/Widget"
-    assert "/Parent" not in merged_annot
+    reader = PdfReader(merged)
+    assert len(reader.pages) == 1
+    merged_annotation = reader.pages[0]["/Annots"][0].get_object()
+    assert merged_annotation["/Subtype"] == "/Widget"
+    assert "/Parent" not in merged_annotation
+
+
+def test_merge_widget_with_cyclic_parent_chain():
+    """
+    A ``/Parent`` chain that loops back on itself must not hang the merge.
+    Every field in the loop is cloned once and keeps its ``/Parent`` and ``/Kids``.
+    """
+    input_writer = PdfWriter()
+    input_writer.add_blank_page(width=612, height=792)
+    first_field = DictionaryObject({NameObject("/T"): TextStringObject("first")})
+    second_field = DictionaryObject({NameObject("/T"): TextStringObject("second")})
+    first_reference = input_writer._add_object(first_field)
+    second_reference = input_writer._add_object(second_field)
+    widget = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Widget"),
+        NameObject("/Parent"): first_reference,
+    })
+    widget_reference = input_writer._add_object(widget)
+    first_field[NameObject("/Parent")] = second_reference
+    first_field[NameObject("/Kids")] = ArrayObject([widget_reference])
+    second_field[NameObject("/Parent")] = first_reference
+    second_field[NameObject("/Kids")] = ArrayObject([first_reference])
+    input_writer.pages[0][NameObject("/Annots")] = ArrayObject([widget_reference])
+
+    input_pdf = BytesIO()
+    input_writer.write(input_pdf)
+    input_pdf.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(input_pdf), import_outline=False)
+
+    merged_widget = writer.pages[0]["/Annots"][0].get_object()
+    merged_first = merged_widget["/Parent"].get_object()
+    merged_second = merged_first["/Parent"].get_object()
+    assert merged_first["/T"] == "first"
+    assert merged_second["/T"] == "second"
+    assert merged_second.raw_get("/Parent") == merged_widget.raw_get("/Parent")
+    assert merged_first["/Kids"] == [merged_widget.indirect_reference]
+    assert merged_second["/Kids"] == [merged_widget.raw_get("/Parent")]
+    fields = [obj for obj in writer._objects if isinstance(obj, DictionaryObject) and "/T" in obj]
+    assert len(fields) == 2

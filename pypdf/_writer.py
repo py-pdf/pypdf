@@ -2809,7 +2809,11 @@ class PdfWriter(PdfDocCommon):
             parent_fields: dict[int, DictionaryObject] = {}
             for pag in srcpages.values():
                 lst = self._insert_filtered_annotations(
-                    pag.original_page.get("/Annots", []), pag, srcpages, reader, parent_fields
+                    annots=pag.original_page.get("/Annots", []),
+                    page=pag,
+                    pages=srcpages,
+                    reader=reader,
+                    parent_fields=parent_fields,
                 )
                 if len(lst) > 0:
                     pag[NameObject("/Annots")] = lst
@@ -3024,6 +3028,7 @@ class PdfWriter(PdfDocCommon):
 
     def _insert_filtered_annotations(
         self,
+        *,
         annots: Union[IndirectObject, list[PdfObject], None],
         page: PageObject,
         pages: dict[int, PageObject],
@@ -3126,7 +3131,7 @@ class PdfWriter(PdfDocCommon):
         """Set the ``/Kids`` of the cloned parent fields to the cloned kids, in their original order."""
         translated = self._id_translated.get(id(reader), {})
         for idnum, source_parent in parent_fields.items():
-            kids = source_parent["/Kids"] if "/Kids" in source_parent else ArrayObject()
+            kids = source_parent.get("/Kids", ArrayObject())
             parent = cast(DictionaryObject, self.get_object(translated[idnum]))
             parent[NameObject("/Kids")] = ArrayObject(
                 IndirectObject(translated[kid.idnum], 0, self)
