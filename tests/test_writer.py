@@ -1639,10 +1639,8 @@ def test_attachments():
     writer.write(b)
     b.seek(0)
     reader = PdfReader(b)
-    b = None
     assert reader.attachments == {}
-    assert reader._list_attachments() == []
-    assert reader._get_attachments() == {}
+
     to_add = [
         ("foobar.txt", b"foobarcontent"),
         ("foobar2.txt", b"foobarcontent2"),
@@ -1655,27 +1653,18 @@ def test_attachments():
     writer.write(b)
     b.seek(0)
     reader = PdfReader(b)
-    b = None
     assert sorted(reader.attachments.keys()) == sorted({name for name, _ in to_add})
     assert str(reader.attachments) == "LazyDict(keys=['foobar.txt', 'foobar2.txt'])"
-    assert reader._list_attachments() == [name for name, _ in to_add]
 
     # We've added the same key twice - hence only 2 and not 3:
-    att = reader._get_attachments()
+    att = reader.attachments
     assert len(att) == 2  # we have 2 keys, but 3 attachments!
 
-    # The content for foobar.txt is clear and just a single value:
-    assert att["foobar.txt"] == b"foobarcontent"
+    # The content for foobar.txt is a single list value, as it only occurs once.
+    assert att["foobar.txt"] == [b"foobarcontent"]
 
-    # The content for foobar2.txt is a list!
-    att = reader._get_attachments("foobar2.txt")
-    assert len(att) == 1
+    # The content for foobar2.txt is a list with different values.
     assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
-
-    # Let's do both cases with the public interface:
-    assert reader.attachments["foobar.txt"][0] == b"foobarcontent"
-    assert reader.attachments["foobar2.txt"][0] == b"foobarcontent2"
-    assert reader.attachments["foobar2.txt"][1] == b"2nd_foobarcontent"
 
 
 @pytest.mark.enable_socket
