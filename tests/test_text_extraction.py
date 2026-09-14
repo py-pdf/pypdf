@@ -31,6 +31,7 @@ from pypdf.generic import (
     NumberObject,
     RectangleObject,
     StreamObject,
+    TextStringObject,
 )
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
@@ -954,6 +955,86 @@ def _page_with_helvetica(content_stream: bytes) -> BytesIO:
     writer.write(buffer)
     buffer.seek(0)
     return buffer
+
+
+def _page_with_cid_font(text: str) -> BytesIO:
+    """
+    Build a single page showing `text` through a Type0/Identity-H font.
+
+    The character codes are 1, 2, 3, ... and a ToUnicode CMap maps them back to
+    the characters of `text`, so the extracted string depends only on pypdf's
+    own handling and not on any embedded font program.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    entries = "".join(f"<{code:04X}> <{ord(char):04X}>\n" for code, char in enumerate(text, 1))
+    to_unicode = DecodedStreamObject()
+    to_unicode.set_data(
+        b"/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CMapType 2 def\n"
+        b"1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n"
+        + f"{len(text)} beginbfchar\n{entries}endbfchar\n".encode()
+        + b"endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend"
+    )
+
+    cid_system_info = DictionaryObject()
+    cid_system_info[NameObject("/Registry")] = TextStringObject("Adobe")
+    cid_system_info[NameObject("/Ordering")] = TextStringObject("Identity")
+    cid_system_info[NameObject("/Supplement")] = NumberObject(0)
+    cid_font = DictionaryObject()
+    cid_font[NameObject("/Type")] = NameObject("/Font")
+    cid_font[NameObject("/Subtype")] = NameObject("/CIDFontType2")
+    cid_font[NameObject("/BaseFont")] = NameObject("/Test")
+    cid_font[NameObject("/CIDSystemInfo")] = cid_system_info
+    cid_font[NameObject("/DW")] = NumberObject(1000)
+
+    font = DictionaryObject()
+    font[NameObject("/Type")] = NameObject("/Font")
+    font[NameObject("/Subtype")] = NameObject("/Type0")
+    font[NameObject("/BaseFont")] = NameObject("/Test")
+    font[NameObject("/Encoding")] = NameObject("/Identity-H")
+    font[NameObject("/DescendantFonts")] = ArrayObject([writer._add_object(cid_font)])
+    font[NameObject("/ToUnicode")] = writer._add_object(to_unicode)
+
+    font_resources = DictionaryObject()
+    font_resources[NameObject("/F1")] = writer._add_object(font)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+
+    codes = "".join(f"{code:04X}" for code in range(1, len(text) + 1))
+    content = DecodedStreamObject()
+    content.set_data(
+        b"BT /F1 12 Tf 1 0 0 1 72 700 Tm <" + codes.encode() + b"> Tj ET"
+    )
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+@pytest.mark.parametrize(
+    ("shown", "expected"),
+    [
+        # Arabic-Indic digits: U+0660-0669. Digits are not reordered by the
+        # bidirectional algorithm, so they must come back in the order shown.
+        ("١٢٣٤", "١٢٣٤"),
+        # Extended Arabic-Indic (Persian) digits: U+06F0-06F9.
+        ("۱۲۳۴", "۱۲۳۴"),
+        # Arabic-Indic digits with the Arabic percent sign U+066A.
+        ("٥٠٪", "٥٠٪"),
+        # Arabic letters are still reversed: they are shown in visual order.
+        ("ابحرم", "مرحبا"),
+        # Hebrew is unaffected as well.
+        ("םולש", "שלום"),
+    ],
+    ids=["arabic-indic-digits", "persian-digits", "arabic-percent", "arabic-letters", "hebrew"],
+)
+def test_arabic_indic_digits_keep_their_order(shown: str, expected: str) -> None:
+    """Arabic-Indic digits should not be reversed during extraction. Related: #1629."""
+    assert PdfReader(_page_with_cid_font(shown)).pages[0].extract_text() == expected
 
 
 def test_text_leading_is_not_scaled_by_font_size() -> None:
