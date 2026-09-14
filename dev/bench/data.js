@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789397382073,
+  "lastUpdate": 1789398643855,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -111545,6 +111545,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002136376477534109",
             "extra": "mean: 660.8814657999972 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2d219015b4cf92edcfd6d28c564295f0704fd204",
+          "message": "DEV: Fix Color class for latest mypy (#4082)\n\nRecent *mypy* versions started to complain about `Color._ordered_fields`:\r\n\r\n> error: Cannot access instance-only attribute \"_ordered_fields\" on class object  [misc]\r\n\r\nResolve this by converting the corresponding attribute from an instance field to a ClassVar/constant.",
+          "timestamp": "2026-09-14T17:08:44+02:00",
+          "tree_id": "b54072da0a6d89fd6a0faea5236f047245ad703d",
+          "url": "https://github.com/py-pdf/pypdf/commit/2d219015b4cf92edcfd6d28c564295f0704fd204"
+        },
+        "date": 1789398637146,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.018771454915457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019216073292402703",
+            "extra": "mean: 199.25195020000075 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.328281830071404,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009474140008263162",
+            "extra": "mean: 34.09678090909034 msec\nrounds: 33"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.44146860098272056,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014173107301876873",
+            "extra": "mean: 2.265166758800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 34.76260426877312,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008765876377801712",
+            "extra": "mean: 28.766544424241815 msec\nrounds: 33"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14735722501323337,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0332345394741714",
+            "extra": "mean: 6.7862298568 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.842621967690007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006177804880730753",
+            "extra": "mean: 351.7878956000004 msec\nrounds: 5"
           }
         ]
       }
