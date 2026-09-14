@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Union
+from typing import ClassVar, Union
 
 
 @dataclass
@@ -10,7 +10,7 @@ class Color:
     Color.from_normalized_values() on a tuple of length 1 for grayscale, 3 for RGB, or 4 for CMYK.
     """
     color_operator: str = field(init=False)
-    _ordered_fields: tuple[str, ...] = field(init=False)
+    _ordered_fields: ClassVar[tuple[str, ...]]
 
     @classmethod
     def from_normalized_values(
