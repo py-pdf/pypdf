@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789396340711,
+  "lastUpdate": 1789396355148,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -111413,6 +111413,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006846381514295123",
             "extra": "mean: 667.2760707999998 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6b10556d13609a68f9ed18bb29fdd8bba88eb2c3",
+          "message": "PI: Reduce number of full data lookups for attachment mapping API (#4081)\n\nWith the old implementation, when iterating over the attachment mapping\nusing `.items()`, each content retrieval would re-parse the whole\nattachment list to find the correct attachments. This has been changed\nto now record the associated file objects per name, which makes the\ncontent retrieval a mostly direct stream access operation.",
+          "timestamp": "2026-09-14T16:29:20+02:00",
+          "tree_id": "ac077e07dabf380e72943e03c3f998f55822196d",
+          "url": "https://github.com/py-pdf/pypdf/commit/6b10556d13609a68f9ed18bb29fdd8bba88eb2c3"
+        },
+        "date": 1789396345728,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.843528078823786,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020163380721253545",
+            "extra": "mean: 351.67579579999995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.62087540286399,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007587238437848589",
+            "extra": "mean: 56.75086947368494 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25006060673914593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022718602009282735",
+            "extra": "mean: 3.9990305272000057 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.35725036593644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026336279517313143",
+            "extra": "mean: 57.61281187500167 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0724436220234152,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019972595185985067",
+            "extra": "mean: 13.803837688799993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6671048457257993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003673048053404852",
+            "extra": "mean: 599.8422970000036 msec\nrounds: 5"
           }
         ]
       }
