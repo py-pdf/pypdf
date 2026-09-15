@@ -417,29 +417,25 @@ def test_link__existing_target_uses_indirect_reference():
     assert destination[2:] == [0, 0, 0]
 
 
-def test_link__future_target_preserves_page_index():
+@pytest.mark.parametrize("target_page_index", [-1, 1])
+def test_link__future_target_preserves_page_index(target_page_index):
     # Arrange
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=200)
 
     link_annotation = Link(
         rect=(100, 100, 300, 200),
-        target_page_index=1,
+        target_page_index=target_page_index,
         border=[50, 10, 4],
         fit=Fit(fit_type="/Fit"),
     )
 
-    # Act
-    added_annotation = writer.add_annotation(0, link_annotation)
-
-    # Assert
-    destination = added_annotation["/Dest"]
-
-    assert isinstance(destination, ArrayObject)
-    # Preserve the existing page-index representation when the target page
-    # has not yet been added to the writer. See #2450.
-    assert destination[0] == NumberObject(1)
-    assert destination[1] == "/Fit"
+    # Act & Assert
+    with pytest.raises(
+        ValueError,
+        match=f"Target page {target_page_index} does not exist",
+    ):
+        writer.add_annotation(0, link_annotation)
 
 
 def test_link__completed_destination_is_preserved():
