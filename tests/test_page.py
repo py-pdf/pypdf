@@ -320,6 +320,41 @@ def test_compress_content_streams(pdf_path, password):
         reader.pages[0].compress_content_streams()
 
 
+def test_compress_content_streams_releases_replaced_streams():
+    """The streams being replaced must not be kept in the output. See #4085."""
+    def stamped() -> PdfWriter:
+        writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+        stamp = PdfReader(RESOURCE_ROOT / "crazyones.pdf").pages[0]
+        for page in writer.pages:
+            page.merge_page(stamp)
+        return writer
+
+    def write(writer: PdfWriter) -> bytes:
+        output = BytesIO()
+        writer.write(output)
+        return output.getvalue()
+
+    writer = stamped()
+    # Merging makes `/Contents` an indirect reference to an array of streams.
+    assert isinstance(writer.pages[0][PG.CONTENTS], ArrayObject)
+    replaced = [
+        reference.idnum for page in writer.pages for reference in page[PG.CONTENTS]
+    ]
+
+    for page in writer.pages:
+        page.compress_content_streams()
+
+    # The streams the compressed one replaces have been released ...
+    assert all(isinstance(writer._objects[idnum - 1], NullObject) for idnum in replaced)
+    compressed, uncompressed = write(writer), write(stamped())
+    # ... thus the output is smaller than without compressing at all.
+    assert len(compressed) < len(uncompressed)
+    # The content itself is unchanged.
+    assert PdfReader(BytesIO(compressed)).pages[0].extract_text() == (
+        PdfReader(BytesIO(uncompressed)).pages[0].extract_text()
+    )
+
+
 def test_page_properties():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     page = reader.pages[0]
