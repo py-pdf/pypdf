@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789463018571,
+  "lastUpdate": 1789464078266,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -137089,6 +137089,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008308356533783619",
             "extra": "mean: 849.0497433999849 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "anandghegde@gmail.com",
+            "name": "Anand Hegde",
+            "username": "anandghegde"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a92443848fda10cc2a65a7b6397fd8e1986c17d2",
+          "message": "BUG: Do not copy unrelated pages when appending pages with non-terminal fields (#4078)\n\nWhen merging a subset of pages, widget annotations were cloned including\ntheir /Parent. Cloning the parent field also cloned its /Kids, which pulled\nin the widgets of sibling fields on other pages and, through their /P entry,\nthose pages and the source page tree.\n\nClone the parent fields without their /Kids instead and only add the kids\nwhich have been cloned, keeping their original order.\n\nCloses #3736.\n\ncodecov/patch flagged the defensive `break` in `_clone_widget_annotation`\nas the only uncovered line in the change. Add a test for a `/Widget` whose\n`/Parent` resolves to a non-dictionary, which drives that branch and checks\nthe widget still merges with the malformed reference dropped.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01MA8JGs7pCoXFL2W6jEJ8sD\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-09-15T11:18:34+02:00",
+          "tree_id": "353894acc4c2b9c6eeacc7bf667158255ba7b5c3",
+          "url": "https://github.com/py-pdf/pypdf/commit/a92443848fda10cc2a65a7b6397fd8e1986c17d2"
+        },
+        "date": 1789464069860,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 16.402089102056145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01853759580943978",
+            "extra": "mean: 60.967843411766445 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.896623459218965,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0346818649043002",
+            "extra": "mean: 47.85462120000204 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.2357003501247699,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026653631553478538",
+            "extra": "mean: 809.2576812000004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5119634109301403,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12485452810744295",
+            "extra": "mean: 1.9532645861999982 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4704095401026674,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015320275610314397",
+            "extra": "mean: 2.1258072270000072 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5601032290103276,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003138402769476402",
+            "extra": "mean: 640.9832255999902 msec\nrounds: 5"
           }
         ]
       }
