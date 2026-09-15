@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789470186994,
+  "lastUpdate": 1789470214880,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -111875,6 +111875,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006251239561109297",
             "extra": "mean: 664.8581259999958 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "25f230191b89cdcf2b4ba3d8051d52c7392831d0",
+          "message": "DEP: Replace PdfWriter method add_js (#3979)\n\nReplace add_js with add_action. The more generic name gives\nextensibility if more action types are implemented.\n\nCloses #3776.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-09-15T13:00:28+02:00",
+          "tree_id": "447485f531d295220bc6a82a9119c664a3040a43",
+          "url": "https://github.com/py-pdf/pypdf/commit/25f230191b89cdcf2b4ba3d8051d52c7392831d0"
+        },
+        "date": 1789470204934,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9267065664767156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013721664904939226",
+            "extra": "mean: 341.6809910000097 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.046715344464847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001918144025174433",
+            "extra": "mean: 52.502490950000436 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2624557120637479,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01564034443105485",
+            "extra": "mean: 3.810166645400005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.433716951744707,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006865006844103716",
+            "extra": "mean: 57.360114470593345 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07194122174848885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04502217959805815",
+            "extra": "mean: 13.900236550000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.654558492899566,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0058203191775290375",
+            "extra": "mean: 604.3908416000022 msec\nrounds: 5"
           }
         ]
       }
