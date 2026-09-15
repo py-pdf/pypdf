@@ -797,9 +797,7 @@ def test_add_outline_item_collapsed():
 
 
 def test_add_outline_item__page_number_invalid_type():
-    """An unsupported page_number type raised UnboundLocalError, not a
-    message naming the actual problem.
-    """
+    """An unsupported page_number type must raise a TypeError naming it."""
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
 
