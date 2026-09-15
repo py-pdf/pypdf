@@ -345,3 +345,49 @@ def test_get_label_from_nums__roman__limits(caplog):
     assert caplog.messages == [
         "Ignoring malformed page label entry in /Nums (/St=1, /P=''): Number is out of range."
     ]
+
+
+def test_get_label_from_nums__regular__limits(caplog):
+    with pytest.raises(expected_exception=ValueError, match=r"^Number is too large\.$"):
+        number2lowercase_letter(15_000)
+    assert caplog.messages == []
+
+    labels_at_limit = DictionaryObject({
+        NameObject("/Nums"): ArrayObject([
+            NumberObject(0),
+            DictionaryObject({
+                NameObject("/S"): NameObject("/A"),
+                NameObject("/St"): NumberObject(13_312)
+            })
+        ])
+    })
+    assert get_label_from_nums(labels_at_limit, 0) == "Z" * 512
+    assert caplog.messages == []
+
+    labels_over_limit = DictionaryObject({
+        NameObject("/Nums"): ArrayObject([
+            NumberObject(0),
+            DictionaryObject({
+                NameObject("/S"): NameObject("/A"),
+                NameObject("/St"): NumberObject(13_313)
+            })
+        ])
+    })
+    assert get_label_from_nums(labels_over_limit, 0) == "1"
+    assert caplog.messages == [
+        "Ignoring malformed page label entry in /Nums (/St=13313, /P=''): Number is too large."]
+
+    caplog.clear()
+    labels_large = DictionaryObject({
+        NameObject("/Nums"): ArrayObject([
+            NumberObject(0),
+            DictionaryObject({
+                NameObject("/S"): NameObject("/A"),
+                NameObject("/St"): NumberObject(15_000)
+            })
+        ])
+    })
+    assert get_label_from_nums(labels_large, 0) == "1"
+    assert caplog.messages == [
+        "Ignoring malformed page label entry in /Nums (/St=15000, /P=''): Number is too large."
+    ]
