@@ -1,8 +1,8 @@
 """Test the pypdf.actions submodule."""
 
-import pytest
-
 from typing import Any
+
+import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript, PageTrigger
@@ -14,7 +14,7 @@ from . import RESOURCE_ROOT
 
 @pytest.fixture
 def pdf_file_writer():
-    reader = PdfReader(RESOURCE_ROOT / "issue-604.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     writer = PdfWriter()
     writer.append_pages_from_reader(reader)
     return writer
@@ -103,14 +103,6 @@ def test_added_open_action(pdf_file_writer):
     assert (
         first_js != second_js
     ), "add_open_action should add to the previous script in the catalog."
-
-
-@pytest.fixture
-def pdf_file_writer():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    writer = PdfWriter()
-    writer.append_pages_from_reader(reader)
-    return writer
 
 
 @pytest.mark.parametrize(
