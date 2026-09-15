@@ -1174,11 +1174,20 @@ class PageObject(DictionaryObject):
             )
 
         writer = self.indirect_reference.pdf
-        if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
-            content_array = cast(ArrayObject, self[PG.CONTENTS])
-            for reference in content_array:
+        # `dict.get()` does not resolve indirect references, while `/Contents` usually is
+        # an indirect reference to the array rather than a direct array. Resolve it first,
+        # otherwise the streams being replaced are never released and remain in the output
+        # as unreferenced objects. (#4085)
+        old_contents = self.get(PG.CONTENTS, None)
+        if old_contents is not None:
+            old_contents = old_contents.get_object()
+        if isinstance(old_contents, ArrayObject):
+            for reference in old_contents:
+                if not isinstance(reference, IndirectObject):
+                    # Direct objects are not part of the writer's object list.
+                    continue
                 try:
-                    writer._replace_object(indirect_reference=reference.indirect_reference, obj=NullObject())
+                    writer._replace_object(indirect_reference=reference, obj=NullObject())
                 except ValueError:
                     # Occurs when called on PdfReader.
                     pass
