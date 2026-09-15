@@ -21,7 +21,15 @@ from pypdf.annotations import (
 )
 from pypdf.constants import AnnotationFlag
 from pypdf.errors import PdfReadError
-from pypdf.generic import ArrayObject, FloatObject, NameObject, NumberObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    Fit,
+    FloatObject,
+    NameObject,
+    NumberObject,
+    RectangleObject,
+)
 
 from . import RESOURCE_ROOT, get_data_from_url
 
@@ -382,6 +390,91 @@ def test_link(pdf_file_path):
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
+
+
+def test_link__existing_target_uses_indirect_reference():
+    # Arrange
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    writer.add_blank_page(width=200, height=200)
+
+    link_annotation = Link(
+        rect=(100, 100, 300, 200),
+        target_page_index=1,
+        border=[50, 10, 4],
+        fit=Fit(fit_type="/XYZ", fit_args=(0, 0, 0)),
+    )
+
+    # Act
+    added_annotation = writer.add_annotation(0, link_annotation)
+
+    # Assert
+    destination = added_annotation["/Dest"]
+
+    assert isinstance(destination, ArrayObject)
+    assert destination[0] == writer.pages[1].indirect_reference
+    assert destination[1] == "/XYZ"
+    assert destination[2:] == [0, 0, 0]
+
+
+def test_link__future_target_preserves_page_index():
+    # Arrange
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+
+    link_annotation = Link(
+        rect=(100, 100, 300, 200),
+        target_page_index=1,
+        border=[50, 10, 4],
+        fit=Fit(fit_type="/Fit"),
+    )
+
+    # Act
+    added_annotation = writer.add_annotation(0, link_annotation)
+
+    # Assert
+    destination = added_annotation["/Dest"]
+
+    assert isinstance(destination, ArrayObject)
+    # Preserve the existing page-index representation when the target page
+    # has not yet been added to the writer. See #2450.
+    assert destination[0] == NumberObject(1)
+    assert destination[1] == "/Fit"
+
+
+def test_link__completed_destination_is_preserved():
+    # Arrange
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    writer.add_blank_page(width=200, height=200)
+
+    target_page_reference = writer.pages[1].indirect_reference
+    assert target_page_reference is not None
+
+    destination = ArrayObject(
+        [
+            target_page_reference,
+            NameObject("/Fit"),
+        ]
+    )
+    link_annotation = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/Rect"): RectangleObject((100, 100, 300, 200)),
+            NameObject("/Dest"): destination,
+        }
+    )
+
+    # Act
+    added_annotation = writer.add_annotation(0, link_annotation)
+
+    # Assert
+    added_destination = added_annotation["/Dest"]
+
+    assert isinstance(added_destination, ArrayObject)
+    assert added_destination[0] == target_page_reference
+    assert added_destination[1] == "/Fit"
 
 
 def test_popup(caplog):
