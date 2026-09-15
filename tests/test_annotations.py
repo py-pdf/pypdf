@@ -349,9 +349,9 @@ def test_link(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    for page in reader.pages:
+        writer.add_page(page)
 
     # Act
     # Part 1: Too many args
