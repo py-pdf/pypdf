@@ -1887,11 +1887,11 @@ def test_update_form_fields(caplog, tmp_path):
     assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
 
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.insert_blank_page(100, 100, 0)
     writer.add_annotation(
         page_number=0,
         annotation=Link(target_page_index=1, rect=RectangleObject([0, 0, 100, 100])),
     )
-    writer.insert_blank_page(100, 100, 0)
     del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DA"]
     del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DR"]["/Font"]
     writer.update_page_form_field_values(
