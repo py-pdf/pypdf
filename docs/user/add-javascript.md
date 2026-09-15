@@ -15,11 +15,20 @@ pypdf_test_setup("user/add-javascript", {
 
 ```{testcode}
 from pypdf import PdfWriter
+from pypdf.actions import JavaScript
 
 writer = PdfWriter(clone_from="example.pdf")
 
-# Add JavaScript to launch the print window on opening this PDF.
-writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
+# Add JavaScript to launch the print window on opening this PDF
+writer.add_open_action(JavaScript("this.print({bUI:true,bSilent:false,bShrinkToFit:true});"))
+# bUI: (optional) If true (the default), will cause a UI to be presented to the
+# user to obtain printing information and confirm the action.
+
+# bSilent: (optional) If true, suppresses the cancel dialog box while the
+# document is printing. The default is false.
+
+# bShrinkToFit: If true, the page is shrunk (if necessary) to fit within the
+# imageable area of the printed page. If false, it is not. The default is false.
 
 writer.write("out-print-window.pdf")
 ```
