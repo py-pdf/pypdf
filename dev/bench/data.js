@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789549227609,
+  "lastUpdate": 1789550019203,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -112139,6 +112139,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0064485947820782565",
             "extra": "mean: 668.0735570000138 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "d62cb58d3988b291b0435eddfd118c4f8f6b6a46",
+          "message": "REL: 6.19.0\n\n## What's new\n\n### Security (SEC)\n- Limit size of alphabetical page labels (#4096) by @stefan6419846\n\n### Deprecations (DEP)\n- Replace PdfWriter method add_js (#3979) by @j-t-1\n\n### Performance Improvements (PI)\n- Move static value out of loop body for appearance stream data (#4087) by @stefan6419846\n- Reduce number of full data lookups for attachment mapping API (#4081) by @stefan6419846\n\n### Bug Fixes (BUG)\n- Do not copy unrelated pages when appending pages with non-terminal fields (#4078) by @anandghegde\n- Use page reference for existing internal link targets (#4076) by @r-kamei\n- Arabic-Indic digits are reversed during text extraction (#4077) by @Syamjith-NK\n- Parse a string rect for add_uri into a rectangle (#4074) by @RavSinghChandan\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.18.1...6.19.0)",
+          "timestamp": "2026-09-16T11:10:42+02:00",
+          "tree_id": "db9891f20419c3dee6f2fef1a32e7335e0753b83",
+          "url": "https://github.com/py-pdf/pypdf/commit/d62cb58d3988b291b0435eddfd118c4f8f6b6a46"
+        },
+        "date": 1789550007748,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5716950734564796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018516223252175085",
+            "extra": "mean: 279.97910779999984 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.113460424865107,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011494782316657981",
+            "extra": "mean: 43.2648327692298 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3106846509048476,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02913102700094567",
+            "extra": "mean: 3.2186977924000075 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.486980085222584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009797858889779442",
+            "extra": "mean: 48.81148884999931 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09385930808089443,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015058241149102116",
+            "extra": "mean: 10.654244320000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8054678814334295,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011122122011166381",
+            "extra": "mean: 553.8730487999942 msec\nrounds: 5"
           }
         ]
       }
