@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## Version 6.19.0, 2026-09-16
+
+### Security (SEC)
+- Limit size of alphabetical page labels (#4096)
+
+### Deprecations (DEP)
+- Replace PdfWriter method add_js (#3979)
+
+### Performance Improvements (PI)
+- Move static value out of loop body for appearance stream data (#4087)
+- Reduce number of full data lookups for attachment mapping API (#4081)
+
+### Bug Fixes (BUG)
+- Do not copy unrelated pages when appending pages with non-terminal fields (#4078)
+- Use page reference for existing internal link targets (#4076)
+- Arabic-Indic digits are reversed during text extraction (#4077)
+- Parse a string rect for add_uri into a rectangle (#4074)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.18.1...6.19.0)
+
 ## Version 6.18.1, 2026-09-11
 
 ### Security (SEC)
