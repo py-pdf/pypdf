@@ -1959,11 +1959,13 @@ class PdfWriter(PdfDocCommon):
         page_number: int,
     ) -> IndirectObject:
         page_ref = self._get_page_reference(page_number)
+        top = cast(DictionaryObject, page_ref.get_object()).get(PG.MEDIABOX)
+        top = RectangleObject(top).top if top is not None else 0
         dest = DictionaryObject()
         dest.update(
             {
                 NameObject(GoToActionArguments.D): ArrayObject(
-                    [page_ref, NameObject(TypFitArguments.FIT_H), NumberObject(826)]
+                    [page_ref, NameObject(TypFitArguments.FIT_H), FloatObject(top)]
                 ),
                 NameObject(GoToActionArguments.S): NameObject("/GoTo"),
             }
