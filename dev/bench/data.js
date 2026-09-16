@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789564527233,
+  "lastUpdate": 1789564530335,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -112337,6 +112337,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0008619740522552892",
             "extra": "mean: 661.1243584000022 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "37008538+DaNN-55@users.noreply.github.com",
+            "name": "DaNN",
+            "username": "DaNN-55"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca60531d3ca90d71c02f55ff23c30a6f6ec9a764",
+          "message": "BUG: Avoid link mismatch warnings for excluded annotations (#4092)\n\nappend and merge temporarily omit annotations while cloning, then restore filtered annotations separately. Do not pair links while annotations are deliberately excluded. Preserve page mappings and genuine mismatch diagnostics; verify link targets after writing and rereading the output.\n\nCloses #4084.",
+          "timestamp": "2026-09-16T15:12:18+02:00",
+          "tree_id": "273e91c4d4ad1f2790ac02ec6b0e85ef45d4a405",
+          "url": "https://github.com/py-pdf/pypdf/commit/ca60531d3ca90d71c02f55ff23c30a6f6ec9a764"
+        },
+        "date": 1789564518882,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.721499087740441,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01097277455633431",
+            "extra": "mean: 367.4445472000002 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.725181982579144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015628404811875414",
+            "extra": "mean: 53.404020368418514 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24456586717357284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030164524178552872",
+            "extra": "mean: 4.088878025199984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.898278036303036,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001047566189307185",
+            "extra": "mean: 55.87129655555145 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07382696948370789,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007913534255304692",
+            "extra": "mean: 13.54518554660001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5099044494021534,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015669214292607881",
+            "extra": "mean: 662.2935646000315 msec\nrounds: 5"
           }
         ]
       }
