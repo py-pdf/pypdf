@@ -355,6 +355,27 @@ def test_compress_content_streams_releases_replaced_streams():
     )
 
 
+def test_replace_contents_skips_direct_array_entries():
+    """Entries of a `/Contents` array which are not indirect references must be skipped.
+
+    Such entries are not part of the writer's object list, so handing one to
+    `PdfWriter._replace_object()` raises `TypeError` rather than the `ValueError`
+    the surrounding handler covers. See #4085.
+    """
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+
+    released = writer._add_object(ContentStream(None, writer))
+    direct = ContentStream(None, writer)
+    assert not isinstance(direct, IndirectObject)
+    page[NameObject(PG.CONTENTS)] = ArrayObject([direct, released])
+
+    page.replace_contents(ContentStream(None, writer))
+
+    # The indirect entry has been released, the direct one silently ignored.
+    assert isinstance(writer._objects[released.idnum - 1], NullObject)
+
+
 def test_page_properties():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     page = reader.pages[0]
