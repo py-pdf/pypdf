@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789550044292,
+  "lastUpdate": 1789553807212,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -137881,6 +137881,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024166601450284236",
             "extra": "mean: 883.1512959999884 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6393e9f852d5dd152ca63e02ed3bb7d7eed73e3d",
+          "message": "ROB: Raise a clear TypeError for an unsupported page_number in add_outline_item (#4080)\n\n\n---------\n\nCo-authored-by: Claude Sonnet 5 <noreply@anthropic.com>",
+          "timestamp": "2026-09-16T12:13:55+02:00",
+          "tree_id": "fbff7cee1399609a1134bbea9fda73ae5f510e72",
+          "url": "https://github.com/py-pdf/pypdf/commit/6393e9f852d5dd152ca63e02ed3bb7d7eed73e3d"
+        },
+        "date": 1789553798248,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.01664409644002,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01885036343385148",
+            "extra": "mean: 76.82471707692265 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.9402562802166,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014984422886729501",
+            "extra": "mean: 55.74056381249903 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0260626776267852,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032498926024571",
+            "extra": "mean: 974.599331800016 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5534233974046361,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01996496934599567",
+            "extra": "mean: 1.8069348074000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.368983069138962,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015606402349849606",
+            "extra": "mean: 2.7101514503999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.199692870083422,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0046087385997708044",
+            "extra": "mean: 833.5466726000163 msec\nrounds: 5"
           }
         ]
       }
