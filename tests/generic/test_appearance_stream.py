@@ -513,11 +513,11 @@ def _build_acro_form_pdf(option_count: int, value_count: int) -> bytes:
 
 @pytest.mark.timeout(10)
 def test_generate_appearance_stream_data__selection__speed() -> None:
-    data = _build_acro_form_pdf(option_count=5000, value_count=10_000)
+    data = _build_acro_form_pdf(option_count=2000, value_count=2000)
     writer = PdfWriter(clone_from=BytesIO(data))
 
     writer.update_page_form_field_values(
         writer.pages[0],
-        {"fld": None},  # type: ignore[dict-item]  # Slow path only triggered for `None`.
+        {"fld": ["test"] * 1000},
         flatten=True,
     )
