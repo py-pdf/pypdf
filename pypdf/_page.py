@@ -1971,14 +1971,9 @@ class PageObject(DictionaryObject):
                     if xform_text is not None:
                         text = xform_text
                         extractor.output += text
-                        if visitor_text is not None:
-                            visitor_text(
-                                text,
-                                extractor.memo_cm,
-                                extractor.memo_tm,
-                                extractor.font_resource,
-                                extractor.font_size,
-                            )
+                        # Nothing else to do: each text piece inside the form has
+                        # already been reported via visitor_text while the form was
+                        # being extracted recursively (issue #4079).
                 except Exception as exception:
                     logger_warning(
                         "Impossible to decode XFormObject %(operand)s: %(exception)s",

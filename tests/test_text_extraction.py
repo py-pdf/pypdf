@@ -1088,3 +1088,104 @@ def test_visitor_text_uses_current_text_matrix():
     assert "visitor Sample" in extracted_text
     assert len(text_matrices) == 1
     assert text_matrices[0] == pytest.approx((1.0, 0.0, 0.0, 1.0, 100.0, 20.0))
+
+
+def _page_with_form_xobject(
+    page_content: bytes, form_matrix: list[int], form_content: bytes
+) -> BytesIO:
+    """Build a page painting form XObject /Fx (using Helvetica /F1 inside)."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    helvetica = DictionaryObject()
+    helvetica[NameObject("/Type")] = NameObject("/Font")
+    helvetica[NameObject("/Subtype")] = NameObject("/Type1")
+    helvetica[NameObject("/BaseFont")] = NameObject("/Helvetica")
+    font_ref = writer._add_object(helvetica)
+
+    form = DecodedStreamObject()
+    form.update({
+        NameObject("/Type"): NameObject("/XObject"),
+        NameObject("/Subtype"): NameObject("/Form"),
+        NameObject("/FormType"): NumberObject(1),
+        NameObject("/BBox"): RectangleObject([0, 0, 595, 842]),
+        NameObject("/Matrix"): ArrayObject(list(map(NumberObject, form_matrix))),
+        NameObject("/Resources"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F1"): font_ref,
+            }),
+        }),
+    })
+    form.set_data(form_content)
+    form_ref = writer._add_object(form)
+
+    resources = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font_ref,
+        }),
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/Fx"): form_ref,
+        }),
+    })
+    page[NameObject("/Resources")] = resources
+
+    content = DecodedStreamObject()
+    content.set_data(page_content)
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def test_visitor_text_reports_form_xobject_text_once() -> None:
+    """Regression test for #4079: visitor_text must report form text exactly once."""
+    def text_at(x: int, y: int, s: str) -> bytes:
+        return f"BT /F1 12 Tf 1 0 0 1 {x} {y} Tm ({s}) Tj ET".encode("ascii")
+
+    def collect(pdf: BytesIO) -> list[tuple[int, str]]:
+        page = PdfReader(pdf).pages[0]
+        depth = [0]
+        reports = []
+
+        def before(op, args, cm, tm) -> None:
+            if op == b"Do":
+                depth[0] += 1
+
+        def after(op, args, cm, tm) -> None:
+            if op == b"Do":
+                depth[0] -= 1
+
+        def visitor_text(t, cm, tm, font, size) -> None:
+            if t.strip():
+                reports.append((depth[0], t))
+
+        page.extract_text(
+            visitor_text=visitor_text,
+            visitor_operand_before=before,
+            visitor_operand_after=after,
+        )
+        return reports
+
+    # Case A: form with a non-identity /Matrix. The form text used to be
+    # reported a second time with the outer (identity) matrices.
+    reports_a = collect(
+        _page_with_form_xobject(
+            b"q /Fx Do Q",
+            [1, 0, 0, 1, 50, 50],
+            text_at(100, 200, "1234"),
+        )
+    )
+    assert reports_a == [(1, "1234")]
+
+    # Case B: page text, then an identity form with its own text. The form
+    # text used to be reported a second time at the page text position.
+    reports_b = collect(
+        _page_with_form_xobject(
+            text_at(100, 700, "1111") + b" /Fx Do",
+            [1, 0, 0, 1, 0, 0],
+            text_at(300, 700, "2222"),
+        )
+    )
+    assert reports_b == [(0, "1111"), (1, "2222")]
