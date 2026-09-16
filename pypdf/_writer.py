@@ -563,7 +563,8 @@ class PdfWriter(PdfDocCommon):
             # pages may or may not already be added.  we store the
             # information we need, so that we can resolve the references
             # later.
-            self._unresolved_links.extend(extract_links(page, page_org))
+            if "/Annots" not in excluded_keys:
+                self._unresolved_links.extend(extract_links(page, page_org))
             self._merged_in_pages[page_org.indirect_reference] = page.indirect_reference
 
         return page

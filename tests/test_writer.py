@@ -1074,6 +1074,51 @@ def test_append_preserves_internal_link_annotation():
     assert target["/Type"] == "/Page"
 
 
+@pytest.mark.parametrize("operation", ["append", "merge", "add_page"])
+@pytest.mark.parametrize("exclude_annotations", [False, True])
+def test_transfer_internal_links_without_spurious_warnings(
+    operation, exclude_annotations, caplog
+):
+    """Excluding annotations during cloning must not warn about missing links (#4084)."""
+    source = PdfWriter()
+    source.add_blank_page(width=200, height=200)
+    source.add_blank_page(width=200, height=200)
+    source.add_annotation(
+        0, Link(rect=(10, 10, 90, 30), target_page_index=1)
+    )
+    source_buffer = BytesIO()
+    source.write(source_buffer)
+    source_buffer.seek(0)
+    reader = PdfReader(source_buffer)
+
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    excluded = ["/Annots"] if exclude_annotations else []
+    caplog.set_level("WARNING", logger="pypdf")
+    if operation == "append":
+        writer.append(reader, excluded_fields=excluded)
+    elif operation == "merge":
+        writer.merge(1, reader, excluded_fields=excluded)
+    else:
+        for page in reader.pages:
+            writer.add_page(page, excluded_keys=excluded)
+
+    result_buffer = BytesIO()
+    writer.write(result_buffer)
+    result_buffer.seek(0)
+    result = PdfReader(result_buffer)
+    assert len(result.pages) == 3
+    if exclude_annotations:
+        assert all("/Annots" not in page for page in result.pages)
+    else:
+        annotations = result.pages[1]["/Annots"]
+        assert len(annotations) == 1
+        annotation = annotations[0].get_object()
+        assert annotation["/Subtype"] == "/Link"
+        assert annotation["/Dest"][0] == result.pages[2].indirect_reference
+    assert caplog.messages == []
+
+
 def test_get_cloned_page_out_of_range_index_is_dropped():
     """
     A destination index that points past the end of the source document
@@ -3304,14 +3349,6 @@ def test_insert_filtered_annotations__annotations_are_no_list(caplog):
     writer.append(reader)
     font_file2 = reader.get_object(36).indirect_reference
     assert caplog.messages == [
-        (
-            f"Expected annotation arrays: {{'/FontFile2': {font_file2!r}, "
-            "'/Descent': -269, '/CapHeight': 714, '/FontWeight': "
-            "300, '/FontName': '/JQJGLF+OpenSans-Light', '/ItalicAngle': 0, '/StemV': "
-            "48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
-            "'/FontFamily': 'Open Sans Light', '/Flags': 32, '/XHeight': 531, "
-            "'/Ascent': 1048, '/FontStretch': '/Normal'} []. Ignoring annotations."
-        ),
         (
             f"Expected list of annotations, got {{'/FontFile2': {font_file2!r}, "
             "'/Descent': -269, '/CapHeight': 714, '/FontWeight': 300, '/FontName': '/JQJGLF+OpenSans-Light', "
