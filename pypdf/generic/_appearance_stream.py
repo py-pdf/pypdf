@@ -415,6 +415,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         selection_glyphs = _unicode_to_glyph_id("".join(selection), reverse_cmap) if selection else ""
         for line_number, (line_width, original_text, line) in enumerate(lines):
             if selection_glyphs and line in selection_glyphs:
+            # if selection and line in _unicode_to_glyph_id("".join(selection), reverse_cmap):
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {round(y_offset - (line_number * font_size * leading_factor) - 1, 3)} "

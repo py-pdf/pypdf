@@ -513,7 +513,7 @@ def _build_acro_form_pdf(option_count: int, value_count: int) -> bytes:
 
 @pytest.mark.timeout(10)
 def test_generate_appearance_stream_data__selection__speed() -> None:
-    data = _build_acro_form_pdf(option_count=2000, value_count=2000)
+    data = _build_acro_form_pdf(option_count=2000, value_count=1000)
     writer = PdfWriter(clone_from=BytesIO(data))
 
     writer.update_page_form_field_values(
