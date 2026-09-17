@@ -322,7 +322,7 @@ def test_compress_content_streams(pdf_path, password):
 
 def test_compress_content_streams_releases_replaced_streams():
     """The streams being replaced must not be kept in the output. See #4085."""
-    def stamped() -> PdfWriter:
+    def create_stamped_writer() -> PdfWriter:
         writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
         stamp = PdfReader(RESOURCE_ROOT / "crazyones.pdf").pages[0]
         for page in writer.pages:
@@ -334,9 +334,12 @@ def test_compress_content_streams_releases_replaced_streams():
         writer.write(output)
         return output.getvalue()
 
-    writer = stamped()
-    # Merging makes `/Contents` an indirect reference to an array of streams.
-    assert isinstance(writer.pages[0][PG.CONTENTS], ArrayObject)
+    writer = create_stamped_writer()
+    # Merging makes `/Contents` an indirect reference to an array, which is what
+    # `replace_contents()` failed to resolve before checking its type.
+    contents = writer.pages[0].raw_get(PG.CONTENTS)
+    assert isinstance(contents, IndirectObject)
+    assert isinstance(contents.get_object(), ArrayObject)
     replaced = [
         reference.idnum for page in writer.pages for reference in page[PG.CONTENTS]
     ]
@@ -346,7 +349,7 @@ def test_compress_content_streams_releases_replaced_streams():
 
     # The streams the compressed one replaces have been released ...
     assert all(isinstance(writer._objects[idnum - 1], NullObject) for idnum in replaced)
-    compressed, uncompressed = write(writer), write(stamped())
+    compressed, uncompressed = write(writer), write(create_stamped_writer())
     # ... thus the output is smaller than without compressing at all.
     assert len(compressed) < len(uncompressed)
     # The content itself is unchanged.
