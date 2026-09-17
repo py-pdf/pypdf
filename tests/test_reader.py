@@ -32,7 +32,10 @@ from pypdf.generic import (
     DictionaryObject,
     IndirectObject,
     NameObject,
+    NullObject,
     NumberObject,
+    PdfObject,
+    StreamObject,
     TextStringObject,
 )
 
@@ -2941,3 +2944,34 @@ def test_get_object_from_stream__circular_reference(
     reader = PdfReader(BytesIO(data))
     with pytest.raises(expected_exception=PdfReadError, match=expected_message):
         _ = list(reader.pages)
+
+
+def test_get_object_from_stream__read_object_raises_and_warns(caplog):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.strict = False
+    reader._object_stream_resolution_stack = []
+    reader.xref_objStm = {1: (5, 0)}
+
+    # Object stream containing one object: object 1 at offset 0.
+    obj_stm = StreamObject()
+    obj_stm[NameObject("/Type")] = NameObject("/ObjStm")
+    obj_stm[NameObject("/N")] = NumberObject(1)
+    obj_stm[NameObject("/First")] = NumberObject(0)
+    obj_stm.set_data(b"1 0")
+
+    cached = {}
+
+    def cache_indirect_object(generation: int, idnum: int, obj: PdfObject) -> None:
+        cached[(generation, idnum)] = obj
+
+    exc = PdfStreamError("malformed stream")
+    with mock.patch.object(reader, "get_object", return_value=obj_stm), \
+            mock.patch.object(reader, "cache_get_indirect_object", return_value=None), \
+            mock.patch.object(reader, "cache_indirect_object", side_effect=cache_indirect_object), \
+            mock.patch("pypdf._reader.read_object", side_effect=lambda *_: (_ for _ in ()).throw(exc)):
+        result = reader._get_object_from_stream(IndirectObject(1, 0, reader))
+
+    assert isinstance(result, NullObject)
+    assert cached[(0, 1)] is result
+    assert "Invalid stream (index 0) within object 1 0: malformed stream" in caplog.text
+    assert reader._object_stream_resolution_stack == []
