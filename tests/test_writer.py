@@ -3835,3 +3835,36 @@ def test_add_named_destination_in_range(page_number):
     for _ in range(3):
         writer.add_blank_page(100, 100)
     assert writer.add_named_destination("destination", page_number) is not None
+
+
+def test_update_page_form_field_values__warns_for_unannotated_page(caplog):
+    # Arrange
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    page = writer.add_blank_page(width=100, height=100)
+
+    # Act
+    writer.update_page_form_field_values(
+        page,
+        {},
+        auto_regenerate=False,
+    )
+
+    # Assert
+    assert "No fields to update on this page" in caplog.text
+
+
+def test_update_page_form_field_values__skips_unannotated_page_in_list(caplog):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    page = writer.add_blank_page(width=100, height=100)
+
+    caplog.clear()
+
+    writer.update_page_form_field_values(
+        [page],
+        {},
+        auto_regenerate=False,
+    )
+    assert not [
+        r for r in caplog.records
+        if r.levelname == "WARNING"
+    ]
