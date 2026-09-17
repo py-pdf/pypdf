@@ -1174,10 +1174,9 @@ class PageObject(DictionaryObject):
             )
 
         writer = self.indirect_reference.pdf
-        # `dict.get()` does not resolve indirect references, while `/Contents` usually is
-        # an indirect reference to the array rather than a direct array. Resolve it first,
-        # otherwise the streams being replaced are never released and remain in the output
-        # as unreferenced objects. (#4085)
+        # Resolve /Contents because it may be an indirect reference to an
+        # ArrayObject. Without resolving it, an indirect contents array is not
+        # recognized and its stream objects are left in the writer's object list.
         old_contents = self.get(PG.CONTENTS, None)
         if old_contents is not None:
             old_contents = old_contents.get_object()
