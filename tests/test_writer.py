@@ -868,6 +868,28 @@ def test_add_named_destination(pdf_file_path):
         writer.write(output_stream)
 
 
+@pytest.mark.parametrize(
+    ("media_box", "expected_top"),
+    [
+        pytest.param([0, 0, 612, 792], 792, id="letter"),
+        pytest.param([0, 0, 595, 842], 842, id="a4"),
+        pytest.param([0, 0, 200, 400], 400, id="small"),
+        pytest.param([0, 100, 200, 500], 500, id="offset-origin"),
+    ],
+)
+def test_add_named_destination__fit_h_uses_the_page_top(media_box, expected_top):
+    """The /FitH top must be the page's own top edge, whatever its size."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=400)
+    writer.pages[0][NameObject("/MediaBox")] = RectangleObject(media_box)
+
+    writer.add_named_destination("Target", 0)
+
+    destination = writer.get_named_dest_root()[1].get_object()["/D"]
+    assert destination[1] == "/FitH"
+    assert destination[2] == expected_top
+
+
 def test_append_with_direct_dests_dictionary():
     """
     Tests for #4027.
