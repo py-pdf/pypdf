@@ -175,7 +175,8 @@ def test_iss1533():
             None,
             "tst-GBK_EUC.pdf",
             0,
-            ["NJA", "中华男科学杂志"],
+            # Type0 fonts, followed by Type1 subset fonts with /Differences and two-byte /ToUnicode. See #4035.
+            ["NJA", "中华男科学杂志", "National Journal of Andrology", "2022，28(5)"],
             "Multiple definitions in dictionary at byte 0x5cb42 for key /MediaBox\n",
         ),
     ],
@@ -842,3 +843,91 @@ def test_get_encoding__differences_is_an_array(caplog):
 
     assert encoding[65] == "'"
     assert caplog.text == ""
+
+
+def _generate_simple_font_page(
+    to_unicode_data: bytes, text: str, encoding: PdfObject = NameObject("/WinAnsiEncoding")
+) -> bytes:
+    """Draw `text` with Helvetica, the given /Encoding and the given /ToUnicode CMap."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=100)
+
+    to_unicode = DecodedStreamObject()
+    to_unicode.set_data(to_unicode_data)
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Encoding"): encoding,
+        NameObject("/ToUnicode"): writer._add_object(to_unicode),
+    }))
+
+    content_stream = DecodedStreamObject()
+    content_stream.set_data(f"BT\n/F1 12 Tf\n20 50 Td\n({text}) Tj\nET\n".encode("latin-1"))
+    page.update({
+        NameObject("/Contents"): writer._add_object(content_stream),
+        NameObject("/Resources"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F1"): font.indirect_reference,
+            })
+        }),
+    })
+
+    buf = BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+@pytest.mark.parametrize(
+    ("code_width", "expected"),
+    [
+        (1, "XXXXXXXXXX"),  # <70> <0058>: applies to the one-byte codes of a simple font
+        (2, "pypdf-cmap"),  # <0070> <0058>: cannot apply, fall back to /Encoding
+    ],
+)
+def test_simple_font_to_unicode_source_code_length(code_width: int, expected: str):
+    """Only one-byte /ToUnicode source codes are applied to simple fonts. See #4035."""
+    text = "pypdf-cmap"
+    to_unicode = b"beginbfchar\n" + b"".join(
+        b"<%s> <0058>\n" % ord(character).to_bytes(code_width, "big").hex().upper().encode()
+        for character in sorted(set(text))
+    ) + b"endbfchar\n"
+
+    reader = PdfReader(BytesIO(_generate_simple_font_page(to_unicode, text)))
+
+    assert reader.pages[0].extract_text() == expected
+    assert reader.pages[0].extract_text(extraction_mode="layout").strip() == expected
+
+
+def test_simple_font_to_unicode_source_code_length__mixed_entries():
+    """Two-byte bfchar and bfrange entries are dropped, one-byte entries are kept."""
+    to_unicode = (
+        b"beginbfrange\n"
+        b"<0070> <0071> <0058>\n"  # ignored: p, q
+        b"<61> <62> <0059>\n"  # applied: a -> Y, b -> Z
+        b"endbfrange\n"
+        b"beginbfchar\n"
+        b"<0063> <0058>\n"  # ignored: c
+        b"<2D> <005F>\n"  # applied: - -> _
+        b"endbfchar\n"
+    )
+
+    reader = PdfReader(BytesIO(_generate_simple_font_page(to_unicode, "pq-abc")))
+
+    assert reader.pages[0].extract_text() == "pq_YZc"
+
+
+def test_simple_font_to_unicode_source_code_length__encoding_dictionary():
+    """Two-byte /ToUnicode entries still apply if /Encoding is a dictionary (like PDFBox). See #4035."""
+    text = "pypdf-cmap"
+    to_unicode = b"beginbfchar\n" + b"".join(
+        b"<%04X> <0058>\n" % ord(character) for character in sorted(set(text))
+    ) + b"endbfchar\n"
+    encoding = DictionaryObject({
+        NameObject("/Type"): NameObject("/Encoding"),
+        NameObject("/Differences"): ArrayObject([NumberObject(0x70), NameObject("/g1")]),
+    })
+
+    reader = PdfReader(BytesIO(_generate_simple_font_page(to_unicode, text, encoding)))
+
+    assert reader.pages[0].extract_text() == "XXXXXXXXXX"

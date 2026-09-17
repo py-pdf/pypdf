@@ -203,8 +203,20 @@ def _parse_to_unicode(
     multiline_rg: Union[
         tuple[int, int], None
     ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
+    # Simple fonts always use one-byte character codes (see §9.6 of the PDF specification 2.0),
+    # thus /ToUnicode entries with longer source codes cannot apply to them and are dropped.
+    # Otherwise, <0044> would be mixed up with <44> as both end up under the same key. See #4035.
+    # Like PDFBox, only do this for a predefined (named) /Encoding: fonts with an /Encoding
+    # dictionary (/Differences) commonly rely on two-byte /ToUnicode entries in the wild.
+    encoding_name = ft.get("/Encoding", NullObject()).get_object()
+    only_one_byte_codes = (
+        ft.get("/Subtype", "") in ("/Type1", "/TrueType", "/MMType1")
+        and isinstance(encoding_name, str)
+        and not encoding_name.startswith("/Identity")
+    )
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
+        entry_count = len(int_entry)
         process_rg, process_char, multiline_rg = process_cm_line(
             line.strip(b" \t"),
             process_rg,
@@ -213,6 +225,13 @@ def _parse_to_unicode(
             map_dict,
             int_entry,
         )
+        if only_one_byte_codes and map_dict.get(-1, 1) != 1 and len(int_entry) > entry_count:
+            for code in int_entry[entry_count:]:
+                try:
+                    map_dict.pop(__parse_bfrange__decode(map_dict=map_dict, code=code), None)
+                except OverflowError:  # bfchar source code wider than the declared length
+                    continue
+            del int_entry[entry_count:]
 
     map_dict.pop(-1, None)  # Don't pass the -1 key, we only used it to temporarily store encoding length
 
