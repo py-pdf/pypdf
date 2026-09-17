@@ -159,6 +159,7 @@ class PdfReader(PdfDocCommon):
             raise PdfReadError("Not an encrypted file")
 
         self._named_destinations_cache: Optional[dict[str, Destination]] = None
+        self._object_stream_resolution_stack: list[int] = []
 
     def _initialize_stream(self, stream: Union[StrByteType, Path]) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
@@ -357,101 +358,116 @@ class PdfReader(PdfDocCommon):
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
     ) -> PdfObject:
-        # indirect reference to object in object stream
-        # read the entire object stream into memory
-        stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
-        # This is an xref to a stream, so its type better be a stream
-        assert cast(str, obj_stm["/Type"]) == "/ObjStm"
-        # Parse ALL objects in this stream in one pass and cache them.
-        # This avoids O(N²) behavior when many objects from the same stream
-        # are resolved individually (each call would re-parse the header).
-        stream_data = BytesIO(obj_stm.get_data())
-        n = int(obj_stm["/N"])  # type: ignore[call-overload]
-        first_offset = int(obj_stm["/First"])  # type: ignore[call-overload]
-
-        # ObjStm header format: "objnum offset objnum offset ..."
-        # smallest possible entry: "0 0" = 3 bytes (1 digit + 1 space + 1 digit)
-        # using // 4 would reject a valid 3-byte single entry (3 // 4 = 0)
-        max_n = stream_data.getbuffer().nbytes // 3
-        stream_data.seek(0)
-        if n > max_n:
-            if self.strict:
-                raise LimitReachedError(f"Value /N {n} for object {stmnum} exceeds maximum allowed value {max_n}.")
-            logger_warning(
-                "Value /N %(n)d for object %(stmnum)d exceeds maximum allowed value %(max_n)d. Limiting to %(max_n)d.",
-                source=__name__,
-                n=n,
-                stmnum=stmnum,
-                max_n=max_n,
-            )
-            n = max_n
-
-        # Phase 1: Read the index (objnum, offset) pairs from the header.
-        obj_index: list[tuple[int, int]] = []
-        for _i in range(n):
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            objnum = NumberObject.read_from_stream(stream_data)
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            offset = NumberObject.read_from_stream(stream_data)
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            obj_index.append((int(objnum), int(offset)))
-
-        # Phase 2: Parse each object and cache it.
-        target_obj: PdfObject = NullObject()
-        found = False
-        for i, (obj_num, obj_offset) in enumerate(obj_index):
-            # Skip objects already in the cache.
-            cached = self.cache_get_indirect_object(0, obj_num)
-            if cached is not None:
-                if obj_num == indirect_reference.idnum:
-                    target_obj = cached
-                    found = True
-                continue
-
-            stream_data.seek(first_offset + obj_offset, 0)
-
-            # To cope with case where the 'pointer' is on a white space
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-
-            try:
-                obj = read_object(stream_data, self)
-            except PdfStreamError as exc:
-                # Stream object cannot be read. Normally, a critical error, but
-                # Adobe Reader doesn't complain, so continue (in strict mode?)
-                logger_warning(
-                    "Invalid stream (index %(index)d) within object %(obj_num)d 0: %(exc)s",
-                    source=__name__,
-                    index=i,
-                    obj_num=obj_num,
-                    exc=exc,
-                )
-                if self.strict:  # pragma: no cover
-                    raise PdfReadError(
-                        f"Cannot read object stream: {exc}"
-                    )  # pragma: no cover
-                obj = NullObject()  # pragma: no cover
-
-            # Only cache if this stream is the authoritative source for the object.
-            # Incremental updates may override objects originally in the stream;
-            # caching those stale versions would shadow the newer xref entry.
-            authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
-            if authoritative_stm == stmnum:
-                self.cache_indirect_object(0, obj_num, obj)
-
-            if obj_num == indirect_reference.idnum:
-                target_obj = obj
-                found = True
-
-        if not found and self.strict:  # pragma: no cover
+        obj_id = indirect_reference.idnum
+        if obj_id in self._object_stream_resolution_stack:
+            start = self._object_stream_resolution_stack.index(obj_id)
+            cycle = [*self._object_stream_resolution_stack[start:], obj_id]
             raise PdfReadError(
-                "This is a fatal error in strict mode."
-            )  # pragma: no cover
-        return target_obj
+                "Circular object-stream reference detected: " + " -> ".join(map(str, cycle))
+            )
+        self._object_stream_resolution_stack.append(obj_id)
+
+        try:
+            # indirect reference to object in object stream
+            # read the entire object stream into memory
+            stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
+            obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
+            # This is an xref to a stream, so its type better be a stream
+            assert cast(str, obj_stm["/Type"]) == "/ObjStm"
+            # Parse ALL objects in this stream in one pass and cache them.
+            # This avoids O(N²) behavior when many objects from the same stream
+            # are resolved individually (each call would re-parse the header).
+            stream_data = BytesIO(obj_stm.get_data())
+            n = int(obj_stm["/N"])  # type: ignore[call-overload]
+            first_offset = int(obj_stm["/First"])  # type: ignore[call-overload]
+
+            # ObjStm header format: "objnum offset objnum offset ..."
+            # smallest possible entry: "0 0" = 3 bytes (1 digit + 1 space + 1 digit)
+            # using // 4 would reject a valid 3-byte single entry (3 // 4 = 0)
+            max_n = stream_data.getbuffer().nbytes // 3
+            stream_data.seek(0)
+            if n > max_n:
+                if self.strict:
+                    raise LimitReachedError(f"Value /N {n} for object {stmnum} exceeds maximum allowed value {max_n}.")
+                logger_warning(
+                    (
+                        "Value /N %(n)d for object %(stmnum)d exceeds maximum allowed value %(max_n)d. "
+                        "Limiting to %(max_n)d."
+                    ),
+                    source=__name__,
+                    n=n,
+                    stmnum=stmnum,
+                    max_n=max_n,
+                )
+                n = max_n
+
+            # Phase 1: Read the index (objnum, offset) pairs from the header.
+            obj_index: list[tuple[int, int]] = []
+            for _i in range(n):
+                read_non_whitespace(stream_data)
+                stream_data.seek(-1, 1)
+                objnum = NumberObject.read_from_stream(stream_data)
+                read_non_whitespace(stream_data)
+                stream_data.seek(-1, 1)
+                offset = NumberObject.read_from_stream(stream_data)
+                read_non_whitespace(stream_data)
+                stream_data.seek(-1, 1)
+                obj_index.append((int(objnum), int(offset)))
+
+            # Phase 2: Parse each object and cache it.
+            target_obj: PdfObject = NullObject()
+            found = False
+            for i, (obj_num, obj_offset) in enumerate(obj_index):
+                # Skip objects already in the cache.
+                cached = self.cache_get_indirect_object(0, obj_num)
+                if cached is not None:
+                    if obj_num == indirect_reference.idnum:
+                        target_obj = cached
+                        found = True
+                    continue
+
+                stream_data.seek(first_offset + obj_offset, 0)
+
+                # To cope with case where the 'pointer' is on a white space
+                read_non_whitespace(stream_data)
+                stream_data.seek(-1, 1)
+
+                try:
+                    obj = read_object(stream_data, self)
+                except PdfStreamError as exc:
+                    # Stream object cannot be read. Normally, a critical error, but
+                    # Adobe Reader doesn't complain, so continue (in strict mode?)
+                    logger_warning(
+                        "Invalid stream (index %(index)d) within object %(obj_num)d 0: %(exc)s",
+                        source=__name__,
+                        index=i,
+                        obj_num=obj_num,
+                        exc=exc,
+                    )
+                    if self.strict:  # pragma: no cover
+                        raise PdfReadError(
+                            f"Cannot read object stream: {exc}"
+                        )  # pragma: no cover
+                    obj = NullObject()  # pragma: no cover
+
+                # Only cache if this stream is the authoritative source for the object.
+                # Incremental updates may override objects originally in the stream;
+                # caching those stale versions would shadow the newer xref entry.
+                authoritative_stm, _idx = self.xref_objStm.get(obj_num, (None, None))
+                if authoritative_stm == stmnum:
+                    self.cache_indirect_object(0, obj_num, obj)
+
+                if obj_num == indirect_reference.idnum:
+                    target_obj = obj
+                    found = True
+
+            if not found and self.strict:  # pragma: no cover
+                raise PdfReadError(
+                    "This is a fatal error in strict mode."
+                )  # pragma: no cover
+            return target_obj
+        finally:
+            self._object_stream_resolution_stack.pop()
 
     def get_object(
         self, indirect_reference: Union[int, IndirectObject]
