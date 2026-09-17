@@ -300,12 +300,17 @@ reader = PdfReader("crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
+writer.add_blank_page(
+    width=page.mediabox.width,
+    height=page.mediabox.height,
+)
 
 # Add the link
 annotation = Link(
     rect=(50, 550, 200, 650),
-    target_page_index=3,
+    target_page_index=1,
     fit=Fit(fit_type="/FitH", fit_args=(123,)),
+    border=[0, 0, 2],
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 

@@ -78,6 +78,12 @@ if TYPE_CHECKING:
 # Aligns with https://github.com/AA-Turner/roman-numerals/blob/master/python/roman_numerals/__init__.py
 MAXIMUM_ROMAN_NUMERAL = 3_999
 
+# Allow values of up to 512 * 26 = 13_312 for the `/A` and `/a`.
+# Please note that this limit is somehow arbitrary and some trade-off
+# between rather restrictive <= 256 output bytes per label and the possibly
+# unrealistic 1000 output bytes per label.
+MAXIMUM_PAGE_LABEL_LENGTH = 512
+
 
 def number2uppercase_roman_numeral(num: int) -> str:
     if num <= 0:
@@ -114,9 +120,12 @@ def number2lowercase_roman_numeral(number: int) -> str:
 
 def number2uppercase_letter(number: int) -> str:
     if number <= 0:
-        raise ValueError("Expecting a positive number")
+        raise ValueError("Expecting a positive number.")
     # A to Z, then the same letter repeated: AA to ZZ, AAA to ZZZ, and so on.
     repetitions, position = divmod(number - 1, 26)
+    length = repetitions + 1
+    if length > MAXIMUM_PAGE_LABEL_LENGTH:
+        raise ValueError("Number is too large.")
     return string.ascii_uppercase[position] * (repetitions + 1)
 
 

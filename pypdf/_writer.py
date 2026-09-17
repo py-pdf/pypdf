@@ -563,7 +563,8 @@ class PdfWriter(PdfDocCommon):
             # pages may or may not already be added.  we store the
             # information we need, so that we can resolve the references
             # later.
-            self._unresolved_links.extend(extract_links(page, page_org))
+            if "/Annots" not in excluded_keys:
+                self._unresolved_links.extend(extract_links(page, page_org))
             self._merged_in_pages[page_org.indirect_reference] = page.indirect_reference
 
         return page
@@ -1882,6 +1883,8 @@ class PdfWriter(PdfDocCommon):
                     page_ref = self.pages[page_number].indirect_reference
                 except IndexError:
                     page_ref = NumberObject(page_number)
+            else:
+                raise TypeError(f"page_number: invalid type {type(page_number)}")
             if page_ref is None:
                 logger_warning(
                     "can not find reference of page %(page_number)s",
@@ -1956,11 +1959,13 @@ class PdfWriter(PdfDocCommon):
         page_number: int,
     ) -> IndirectObject:
         page_ref = self._get_page_reference(page_number)
+        top = cast(DictionaryObject, page_ref.get_object()).get(PG.MEDIABOX)
+        top = RectangleObject(top).top if top is not None else 0
         dest = DictionaryObject()
         dest.update(
             {
                 NameObject(GoToActionArguments.D): ArrayObject(
-                    [page_ref, NameObject(TypFitArguments.FIT_H), NumberObject(826)]
+                    [page_ref, NameObject(TypFitArguments.FIT_H), FloatObject(top)]
                 ),
                 NameObject(GoToActionArguments.S): NameObject("/GoTo"),
             }

@@ -796,6 +796,15 @@ def test_add_outline_item_collapsed():
         assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
 
 
+def test_add_outline_item__page_number_invalid_type():
+    """An unsupported page_number type must raise a TypeError naming it."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    with pytest.raises(TypeError, match="page_number: invalid type"):
+        writer.add_outline_item("Title", "not-a-valid-type")
+
+
 @pytest.mark.parametrize(
     ("is_open", "expected_count"),
     [
@@ -857,6 +866,28 @@ def test_add_named_destination(pdf_file_path):
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
+
+
+@pytest.mark.parametrize(
+    ("media_box", "expected_top"),
+    [
+        pytest.param([0, 0, 612, 792], 792, id="letter"),
+        pytest.param([0, 0, 595, 842], 842, id="a4"),
+        pytest.param([0, 0, 200, 400], 400, id="small"),
+        pytest.param([0, 100, 200, 500], 500, id="offset-origin"),
+    ],
+)
+def test_add_named_destination__fit_h_uses_the_page_top(media_box, expected_top):
+    """The /FitH top must be the page's own top edge, whatever its size."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=400)
+    writer.pages[0][NameObject("/MediaBox")] = RectangleObject(media_box)
+
+    writer.add_named_destination("Target", 0)
+
+    destination = writer.get_named_dest_root()[1].get_object()["/D"]
+    assert destination[1] == "/FitH"
+    assert destination[2] == expected_top
 
 
 def test_append_with_direct_dests_dictionary():
@@ -1063,6 +1094,51 @@ def test_append_preserves_internal_link_annotation():
     target = destination[0].get_object()
     assert result.pages[4].indirect_reference.idnum == destination[0].idnum
     assert target["/Type"] == "/Page"
+
+
+@pytest.mark.parametrize("operation", ["append", "merge", "add_page"])
+@pytest.mark.parametrize("exclude_annotations", [False, True])
+def test_transfer_internal_links_without_spurious_warnings(
+    operation, exclude_annotations, caplog
+):
+    """Excluding annotations during cloning must not warn about missing links (#4084)."""
+    source = PdfWriter()
+    source.add_blank_page(width=200, height=200)
+    source.add_blank_page(width=200, height=200)
+    source.add_annotation(
+        0, Link(rect=(10, 10, 90, 30), target_page_index=1)
+    )
+    source_buffer = BytesIO()
+    source.write(source_buffer)
+    source_buffer.seek(0)
+    reader = PdfReader(source_buffer)
+
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    excluded = ["/Annots"] if exclude_annotations else []
+    caplog.set_level("WARNING", logger="pypdf")
+    if operation == "append":
+        writer.append(reader, excluded_fields=excluded)
+    elif operation == "merge":
+        writer.merge(1, reader, excluded_fields=excluded)
+    else:
+        for page in reader.pages:
+            writer.add_page(page, excluded_keys=excluded)
+
+    result_buffer = BytesIO()
+    writer.write(result_buffer)
+    result_buffer.seek(0)
+    result = PdfReader(result_buffer)
+    assert len(result.pages) == 3
+    if exclude_annotations:
+        assert all("/Annots" not in page for page in result.pages)
+    else:
+        annotations = result.pages[1]["/Annots"]
+        assert len(annotations) == 1
+        annotation = annotations[0].get_object()
+        assert annotation["/Subtype"] == "/Link"
+        assert annotation["/Dest"][0] == result.pages[2].indirect_reference
+    assert caplog.messages == []
 
 
 def test_get_cloned_page_out_of_range_index_is_dropped():
@@ -3296,14 +3372,6 @@ def test_insert_filtered_annotations__annotations_are_no_list(caplog):
     font_file2 = reader.get_object(36).indirect_reference
     assert caplog.messages == [
         (
-            f"Expected annotation arrays: {{'/FontFile2': {font_file2!r}, "
-            "'/Descent': -269, '/CapHeight': 714, '/FontWeight': "
-            "300, '/FontName': '/JQJGLF+OpenSans-Light', '/ItalicAngle': 0, '/StemV': "
-            "48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
-            "'/FontFamily': 'Open Sans Light', '/Flags': 32, '/XHeight': 531, "
-            "'/Ascent': 1048, '/FontStretch': '/Normal'} []. Ignoring annotations."
-        ),
-        (
             f"Expected list of annotations, got {{'/FontFile2': {font_file2!r}, "
             "'/Descent': -269, '/CapHeight': 714, '/FontWeight': 300, '/FontName': '/JQJGLF+OpenSans-Light', "
             "'/ItalicAngle': 0, '/StemV': 48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
@@ -3767,3 +3835,36 @@ def test_add_named_destination_in_range(page_number):
     for _ in range(3):
         writer.add_blank_page(100, 100)
     assert writer.add_named_destination("destination", page_number) is not None
+
+
+def test_update_page_form_field_values__warns_for_unannotated_page(caplog):
+    # Arrange
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    page = writer.add_blank_page(width=100, height=100)
+
+    # Act
+    writer.update_page_form_field_values(
+        page,
+        {},
+        auto_regenerate=False,
+    )
+
+    # Assert
+    assert "No fields to update on this page" in caplog.text
+
+
+def test_update_page_form_field_values__skips_unannotated_page_in_list(caplog):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    page = writer.add_blank_page(width=100, height=100)
+
+    caplog.clear()
+
+    writer.update_page_form_field_values(
+        [page],
+        {},
+        auto_regenerate=False,
+    )
+    assert not [
+        r for r in caplog.records
+        if r.levelname == "WARNING"
+    ]
