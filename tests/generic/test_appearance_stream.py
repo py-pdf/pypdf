@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import sys
+from io import BytesIO
 from pathlib import Path
 from typing import cast
 from unittest import mock
@@ -19,6 +20,7 @@ from pypdf.generic import (
     NameObject,
     NumberObject,
     RectangleObject,
+    TextStringObject,
 )
 from pypdf.generic._appearance_stream import (
     HAS_RTL_SUPPORT,
@@ -457,4 +459,65 @@ def test_base_stream_appearance() -> None:
     assert appearance._ap_stream_data == (
         b"q\n0 0 400.0 20.0 re\n0.8 0.5 0.2 rg\nf\n"
         b"3 3 394.0 14.0 re\n3 w\n0.2 0.3 0.5 RG\ns\nQ\n"
+    )
+
+
+def _build_acro_form_pdf(option_count: int, value_count: int) -> bytes:
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    # Build the choice options and selected values.
+    options = ArrayObject(TextStringObject(f"o{i:05d}") for i in range(option_count))
+    values = ArrayObject(TextStringObject(f"v{i:05d}") for i in range(value_count))
+
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+
+    # AcroForm dictionary.
+    fields = ArrayObject()
+    acro_form = DictionaryObject({
+        NameObject("/Fields"): fields,
+        NameObject("/DA"): TextStringObject("/Helv 10 Tf 0 g"),
+        NameObject("/DR"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/Helv"): writer._add_object(font),
+            })
+        }),
+    })
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acro_form)
+
+    # Choice-field widget annotation and add to AcroForm.
+    field = DictionaryObject({
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Widget"),
+        NameObject("/FT"): NameObject("/Ch"),
+        NameObject("/T"): TextStringObject("fld"),
+        NameObject("/Rect"): ArrayObject(NumberObject(x) for x in (0, 0, 200, 100)),
+        NameObject("/Ff"): NumberObject(0),
+        NameObject("/DA"): TextStringObject("/Helv 10 Tf 0 g"),
+        NameObject("/Opt"): options,
+        NameObject("/V"): values,
+    })
+    fields.append(writer._add_object(field))
+
+    # Add the widget to the page annotations.
+    page[NameObject("/Annots")] = ArrayObject([writer._add_object(field)])
+
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+@pytest.mark.timeout(10)
+def test_generate_appearance_stream_data__selection__speed() -> None:
+    data = _build_acro_form_pdf(option_count=1000, value_count=1000)
+    writer = PdfWriter(clone_from=BytesIO(data))
+
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"fld": ["test"] * 1000},
+        flatten=True,
     )

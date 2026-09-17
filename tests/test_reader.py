@@ -32,7 +32,10 @@ from pypdf.generic import (
     DictionaryObject,
     IndirectObject,
     NameObject,
+    NullObject,
     NumberObject,
+    PdfObject,
+    StreamObject,
     TextStringObject,
 )
 
@@ -2817,3 +2820,158 @@ def test_rebuild_xref_table__object_stream__long_offset():
         match=rf"Token exceeds maximum length of {IndirectObject._MAXIMUM_PART_LENGTH} bytes",
     ):
         reader._rebuild_xref_table(BytesIO(pdf))
+
+
+@pytest.mark.parametrize(
+    ("xref_obj_stm", "root_object", "expected_message"),
+    [
+        (
+            {
+                5: 5,
+            },
+            5,
+            r"^Circular object-stream reference detected: 5 -> 5$",
+        ),
+        (
+            {
+                5: 6,
+                6: 5,
+            },
+            5,
+            r"^Circular object-stream reference detected: 5 -> 6 -> 5$",
+        ),
+        (
+            {
+                5: 6,
+                6: 7,
+                7: 5,
+            },
+            5,
+            r"^Circular object-stream reference detected: 5 -> 6 -> 7 -> 5$",
+        ),
+        (
+            {
+                5: 6,
+                6: 7,
+                7: 8,
+                8: 9,
+                9: 5,
+            },
+            5,
+            r"^Circular object-stream reference detected: 5 -> 6 -> 7 -> 8 -> 9 -> 5$",
+        ),
+    ],
+    ids=["direct", "intermediate-1", "intermediate-2", "intermediate-4"]
+)
+def test_get_object_from_stream__circular_reference(
+        xref_obj_stm: dict[int, int],
+        root_object: int,
+        expected_message: str,
+) -> None:
+    def xref_entry(kind: int, field2: int, field3: int) -> bytes:
+        """Encode one entry for /W [1 4 2]."""
+        return (
+            bytes([kind])
+            + field2.to_bytes(4, "big")
+            + field3.to_bytes(2, "big")
+        )
+
+    # Objects needed by the xref stream:
+    #
+    #   0 = free
+    #   1..4 = free
+    #   5..N = compressed objects
+    #   N+1 = actual xref stream
+    #
+    # The xref stream itself is object `xref_object`.
+    max_object = max(*xref_obj_stm, *xref_obj_stm.values())
+    xref_object = max_object + 1
+    size = xref_object + 1
+
+    header = b"%PDF-1.5\n%\xe2\xe3\xcf\xd3\n"
+    xref_offset = len(header)
+
+    entries = [
+        # object 0: free
+        xref_entry(0, 0, 65535),
+    ]
+
+    # objects 1 .. xref_object - 1
+    for object_id in range(1, xref_object):
+        if object_id in xref_obj_stm:
+            # TYPE 2:
+            #
+            # field2 = object-stream number
+            # field3 = index within that object stream
+            entries.append(
+                xref_entry(2, xref_obj_stm[object_id], 0)
+            )
+        else:
+            entries.append(xref_entry(0, 0, 0))
+
+    # xref stream itself: TYPE 1
+    entries.append(xref_entry(1, xref_offset, 0))
+
+    entries = b"".join(entries)
+
+    dictionary = (
+        f"{xref_object} 0 obj\n".encode("ascii")
+        + b"<<\n"
+        + b"/Type /XRef\n"
+        + f"/Size {size}\n".encode("ascii")
+        + b"/W [1 4 2]\n"
+        + f"/Index [0 {size}]\n".encode("ascii")
+        + f"/Root {root_object} 0 R\n".encode("ascii")
+        + b"/Length "
+        + str(len(entries)).encode("ascii")
+        + b"\n"
+        + b">>\n"
+        + b"stream\n"
+    )
+
+    data = (
+        header
+        + dictionary
+        + entries
+        + b"endstream\n"
+        + b"endobj\n"
+        + b"startxref\n"
+        + str(xref_offset).encode("ascii")
+        + b"\n"
+        + b"%%EOF\n"
+    )
+
+    reader = PdfReader(BytesIO(data))
+    with pytest.raises(expected_exception=PdfReadError, match=expected_message):
+        _ = list(reader.pages)
+
+
+def test_get_object_from_stream__read_object_raises_and_warns(caplog):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.strict = False
+    reader._object_stream_resolution_stack = []
+    reader.xref_objStm = {1: (5, 0)}
+
+    # Object stream containing one object: object 1 at offset 0.
+    obj_stm = StreamObject()
+    obj_stm[NameObject("/Type")] = NameObject("/ObjStm")
+    obj_stm[NameObject("/N")] = NumberObject(1)
+    obj_stm[NameObject("/First")] = NumberObject(0)
+    obj_stm.set_data(b"1 0")
+
+    cached = {}
+
+    def cache_indirect_object(generation: int, idnum: int, obj: PdfObject) -> None:
+        cached[(generation, idnum)] = obj
+
+    exc = PdfStreamError("malformed stream")
+    with mock.patch.object(reader, "get_object", return_value=obj_stm), \
+            mock.patch.object(reader, "cache_get_indirect_object", return_value=None), \
+            mock.patch.object(reader, "cache_indirect_object", side_effect=cache_indirect_object), \
+            mock.patch("pypdf._reader.read_object", side_effect=lambda *_: (_ for _ in ()).throw(exc)):
+        result = reader._get_object_from_stream(IndirectObject(1, 0, reader))
+
+    assert isinstance(result, NullObject)
+    assert cached[(0, 1)] is result
+    assert "Invalid stream (index 0) within object 1 0: malformed stream" in caplog.text
+    assert reader._object_stream_resolution_stack == []
