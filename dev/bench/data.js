@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789641096410,
+  "lastUpdate": 1789658201568,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -138673,6 +138673,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007310082723442918",
             "extra": "mean: 840.8411653999906 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "095d5af1dacc6c5fcfe7cde1dca0d33e56c7810e",
+          "message": "ROB: Detect cycles in `_get_object_from_stream` (#4101)\n\nThis would previously raise a RecursionError and now returns a proper\ninternal exception.",
+          "timestamp": "2026-09-17T17:14:32+02:00",
+          "tree_id": "e02fcea46415b2f0b7d203d70f1ef2c6988c7e1f",
+          "url": "https://github.com/py-pdf/pypdf/commit/095d5af1dacc6c5fcfe7cde1dca0d33e56c7810e"
+        },
+        "date": 1789658195175,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 20.746115690496694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018539181475191055",
+            "extra": "mean: 48.20179424999912 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.958666147035146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007952266661394869",
+            "extra": "mean: 27.809707843750253 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.5550641720027711,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034558976472348034",
+            "extra": "mean: 643.0602788000044 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.0858622801430458,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017816671932869912",
+            "extra": "mean: 920.9270993999951 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5585340155192436,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01608676845698934",
+            "extra": "mean: 1.7904012507999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9053998144731468,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006657683291492682",
+            "extra": "mean: 524.8242349999941 msec\nrounds: 5"
           }
         ]
       }
