@@ -225,9 +225,23 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
         # Limit maximum depth.
         level = 0
         while level < 100:
-            kids = cast(list[DictionaryObject], number_tree["/Kids"])
+            kids = number_tree["/Kids"].get_object()
+            if not isinstance(kids, ArrayObject):
+                logger_warning(
+                    "Page label kids are not an array: %(kids)s",
+                    source=__name__,
+                    kids=kids,
+                )
+                break
             for kid in kids:
                 # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
+                kid = kid.get_object()
+                if not isinstance(kid, DictionaryObject):
+                    logger_warning(
+                        "Ignoring kid which is not a dictionary in /PageLabels.",
+                        source=__name__,
+                    )
+                    continue
                 limits = kid.get("/Limits", NullObject()).get_object()
                 if not isinstance(limits, list) or len(limits) < 2:
                     # Skip kids whose /Limits range is missing or malformed.
