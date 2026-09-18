@@ -384,9 +384,6 @@ def test_link(pdf_file_path):
     )
     writer.add_annotation(0, link_annotation)
 
-    for page in reader.pages[1:]:
-        writer.add_page(page)
-
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
