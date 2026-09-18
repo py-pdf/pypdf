@@ -174,6 +174,13 @@ class PdfWriter(PdfDocCommon):
 
     """
 
+    # Declared here as well to satisfy PdfWriterProtocol at runtime: protocol
+    # members are looked up on the class, while these are assigned in __init__.
+    incremental: bool
+    _objects: list[Optional[PdfObject]]
+    _id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]]
+    _reader: Optional[PdfReader]
+
     def __init__(
         self,
         fileobj: Union[PdfReader, StrByteType, Path, None] = "",
