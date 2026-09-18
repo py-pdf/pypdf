@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789718206767,
+  "lastUpdate": 1789718453729,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -138937,6 +138937,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03467596442018698",
             "extra": "mean: 868.2996799999955 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "raffaele.mancuso4@unibo.it",
+            "name": "Raffaele Mancuso",
+            "username": "raffaelemancuso"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "27d592f5af257b89d67074be905dbedabe50b5fa",
+          "message": "BUG: Release content streams replaced by replace_contents() (#4088)\n\n`PageObject.replace_contents()` only released the streams it replaced when\n`/Contents` was a direct array. `DictionaryObject` does not override\n`dict.get()`, so the `isinstance(self.get(PG.CONTENTS, None), ArrayObject)`\nguard saw the unresolved `IndirectObject` and was False for the usual case of\n`/Contents` being an indirect reference to an array, while the loop it guards\nalready used the resolved `self[PG.CONTENTS]`.\n\nAs a result the replaced streams stayed in the writer's object list and were\nstill serialized. `compress_content_streams()` is affected because\n`get_contents()` returns a new `ContentStream` without an `indirect_reference`,\nso it always reaches `replace_contents()`: on a merged page it wrote both the\ncompressed and the uncompressed content, making the output larger than if it\nhad never been called.\n\nResolve `/Contents` before the check and skip array members that are not\nindirect references.\n\nCloses #4085.",
+          "timestamp": "2026-09-18T09:53:41+02:00",
+          "tree_id": "84a0f34debd3b1a4e0f16ef4bfebd4ecd4e278f2",
+          "url": "https://github.com/py-pdf/pypdf/commit/27d592f5af257b89d67074be905dbedabe50b5fa"
+        },
+        "date": 1789718444741,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.142643568211584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021833595214585652",
+            "extra": "mean: 82.35438966667157 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.086776174038118,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00815080247190243",
+            "extra": "mean: 55.28901283333217 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9837957295548001,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0287898967790501",
+            "extra": "mean: 1.0164711738000052 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5052483189026529,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0184546059732412",
+            "extra": "mean: 1.9792247942000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3642218857067608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011274312890501844",
+            "extra": "mean: 2.745579107799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1619874227950069,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00453104694945681",
+            "extra": "mean: 860.594512800003 msec\nrounds: 5"
           }
         ]
       }
