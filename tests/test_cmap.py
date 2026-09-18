@@ -934,3 +934,17 @@ def test_simple_font_to_unicode_source_code_length__encoding_dictionary():
     reader = PdfReader(BytesIO(_generate_simple_font_page(to_unicode, text, encoding)))
 
     assert reader.pages[0].extract_text() == "XXXXXXXXXX"
+
+
+def test_simple_font_to_unicode_source_code_length__wider_than_declared():
+    """A bfchar source code wider than the line's declared length is skipped, not a crash. See #4035."""
+    to_unicode = (
+        b"beginbfchar\n"
+        b"<0070> <0058> <00010079> <0058>\n"  # ignored: p, and a code wider than the declared two bytes
+        b"<61> <0059>\n"  # applied: a -> Y
+        b"endbfchar\n"
+    )
+
+    reader = PdfReader(BytesIO(_generate_simple_font_page(to_unicode, "pya")))
+
+    assert reader.pages[0].extract_text() == "pyY"
