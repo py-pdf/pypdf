@@ -34,6 +34,7 @@ from collections.abc import Iterable, Iterator, Mapping, Sequence
 from datetime import datetime
 from typing import (
     Any,
+    NamedTuple,
     NoReturn,
     Optional,
     Union,
@@ -94,6 +95,30 @@ def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
     return cast(int, struct.unpack(">Q", d)[0])
+
+
+# Attributes a page inherits from its ancestors in the page tree.
+_INHERITABLE_PAGE_ATTRIBUTES = (
+    NameObject(PG.RESOURCES),
+    NameObject(PG.MEDIABOX),
+    NameObject(PG.CROPBOX),
+    NameObject(PG.ROTATE),
+)
+
+
+class _PageTreeItem(NamedTuple):
+    """A page tree node waiting to be flattened by :meth:`PdfDocCommon._flatten`."""
+
+    node: DictionaryObject
+    #: Inherited attributes. Shared read-only between the kids of one node.
+    inherit: dict[str, Any]
+    indirect_reference: Optional[IndirectObject]
+    depth: int
+
+
+#: A ``/Pages`` node currently being walked: the node - carrying the attributes its
+#: kids inherit - and the part of its ``/Kids`` which has not been reached yet.
+_PageTreeFrame = tuple[_PageTreeItem, Iterator[PdfObject]]
 
 
 class DocumentInformation(DictionaryObject):
@@ -1268,16 +1293,7 @@ class PdfDocCommon(ABC):
         except KeyError:
             return None
 
-    def _flatten(
-        self,
-        list_only: bool = False,
-        pages: Union[DictionaryObject, PageObject, None] = None,
-        inherit: Optional[dict[str, Any]] = None,
-        indirect_reference: Optional[IndirectObject] = None,
-        visited: Optional[set[int]] = None,
-        depth: int = 0,
-        traversal_state: Optional[_TraversalState] = None,
-    ) -> None:
+    def _flatten(self, list_only: bool = False) -> None:
         """
         Process the document pages to ease searching.
 
@@ -1285,84 +1301,82 @@ class PdfDocCommon(ABC):
         in the page tree. Flattening means moving
         any inheritance data into descendant nodes,
         effectively removing the inheritance dependency.
+        The result is stored in ``self.flattened_pages``.
 
         Note: It is distinct from another use of "flattening" applied to PDFs.
         Flattening a PDF also means combining all the contents into one single layer
         and making the file less editable.
 
+        The page tree is walked with an explicit stack instead of recursion, so the
+        traversal is bound by ``Configuration.page_tree_maximum_depth`` and
+        ``Configuration.page_tree_maximum_entries`` only, not by the interpreter
+        recursion limit.
+
         Args:
-            list_only: Will only list the pages within _flatten_pages.
-            pages:
-            inherit:
-            indirect_reference: Used recursively to flatten the /Pages object.
-            visited: Set of id() values on the active page-tree traversal path.
-                Detects multi-hop cycles such as A→B→C→A that the single-parent
-                check misses.
-            depth: Current page-tree traversal depth.
-            traversal_state: State shared across the complete traversal.
+            list_only: If True, the page's own entries are not copied into the
+                generated :class:`PageObject`. Attributes inherited from ancestor
+                nodes are applied either way. Note that a page reached through an
+                indirect reference is already populated by :class:`PageObject`
+                itself, so this only has an effect for ``/Kids`` entries that are
+                inline dictionaries.
 
         """
-        if inherit is None:
-            inherit = {}
-        if visited is None:
-            visited = set()
-        if traversal_state is None:
-            traversal_state = _TraversalState()
         configuration = get_configuration()
-        if depth > configuration.page_tree_maximum_depth:
-            raise LimitReachedError(
-                f"Maximum page tree depth reached: {depth} > {configuration.page_tree_maximum_depth}."
-            )
-        if is_null_or_none(pages):
-            # Fix issue 327: set flattened_pages attribute only for
-            # decrypted file
-            catalog = self.root_object
-            pages = catalog.get("/Pages").get_object()  # type: ignore[union-attr]
-            if not isinstance(pages, DictionaryObject):
-                raise PdfReadError("Invalid object in /Pages")
-            self.flattened_pages = []
-        assert pages is not None, "mypy"
+        pages = self.root_object.get("/Pages")
+        pages = None if pages is None else pages.get_object()
+        if not isinstance(pages, DictionaryObject):
+            raise PdfReadError("Invalid object in /Pages")
 
-        # Get the current node_type
-        if PagesAttributes.TYPE in pages:
-            node_type = cast(str, pages[PagesAttributes.TYPE])
-        # if the page tree node has no /Type, consider as a page if /Kids is also missing
-        elif PagesAttributes.KIDS not in pages:
-            # Without /Type, only accept it as a page if it carries a structural page key.
-            if self.strict and not any(key in pages for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)):
-                raise PdfReadError(f"Non-page object reached through /Kids: {pages!r}")
-            node_type = "/Page"
-        else:
-            node_type = "/Pages"
-
-        # Flatten that type of node
-        if node_type == "/Pages":
-            self._flatten_page_tree_node(pages, list_only, inherit, visited, depth, traversal_state)
-        elif node_type == "/Page":
-            self._flatten_leaf_page(pages, list_only, inherit, indirect_reference)
-
-    def _flatten_page_tree_node(
-        self,
-        pages: DictionaryObject,
-        list_only: bool,
-        inherit: dict[str, Any],
-        visited: set[int],
-        depth: int,
-        traversal_state: _TraversalState,
-    ) -> None:
-        """
-        Handle an intermediate ``/Pages`` node: propagate its inheritable
-        attributes into ``inherit`` and recurse into each entry of ``/Kids``.
-
-        Cyclic references and the configured page-tree entry limit are enforced here.
-        """
-        inheritable_page_attributes = (
-            NameObject(PG.RESOURCES),
-            NameObject(PG.MEDIABOX),
-            NameObject(PG.CROPBOX),
-            NameObject(PG.ROTATE),
+        flattened_pages: list[PageObject] = []
+        traversal_state = _TraversalState()
+        # id() values of the nodes on the path from the root to the current node.
+        # Detects multi-hop cycles such as A→B→C→A that the single-parent check misses.
+        ancestor_ids: set[int] = set()
+        # The /Pages nodes of that path whose /Kids are not exhausted yet.
+        stack: list[_PageTreeFrame] = []
+        item: Optional[_PageTreeItem] = _PageTreeItem(
+            node=pages, inherit={}, indirect_reference=None, depth=0
         )
-        for attr in inheritable_page_attributes:
+        while item is not None:
+            if item.depth > configuration.page_tree_maximum_depth:
+                raise LimitReachedError(
+                    f"Maximum page tree depth reached: {item.depth} > {configuration.page_tree_maximum_depth}."
+                )
+
+            # Get the current node_type
+            node = item.node
+            if PagesAttributes.TYPE in node:
+                node_type = cast(str, node[PagesAttributes.TYPE])
+            # if the page tree node has no /Type, consider as a page if /Kids is also missing
+            elif PagesAttributes.KIDS not in node:
+                # Without /Type, only accept it as a page if it carries a structural page key.
+                if self.strict and not any(key in node for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)):
+                    raise PdfReadError(f"Non-page object reached through /Kids: {node!r}")
+                node_type = "/Page"
+            else:
+                node_type = "/Pages"
+
+            # Flatten that type of node
+            if node_type == "/Pages":
+                ancestor_ids.add(id(node))
+                stack.append(self._enter_page_tree_node(item))
+            elif node_type == "/Page":
+                flattened_pages.append(self._flatten_leaf_page(item, list_only))
+
+            item = self._next_page_tree_kid(stack, ancestor_ids, traversal_state)
+
+        # Assigned only here, so that a failed traversal does not leave a partial page list behind.
+        self.flattened_pages = flattened_pages
+
+    def _enter_page_tree_node(self, item: _PageTreeItem) -> _PageTreeFrame:
+        """
+        Start walking an intermediate ``/Pages`` node: propagate its inheritable
+        attributes and pair it with an iterator over its ``/Kids``.
+        """
+        pages = item.node
+        # Copied before being modified, as the kids of the enclosing node share it.
+        inherit = dict(item.inherit)
+        for attr in _INHERITABLE_PAGE_ATTRIBUTES:
             if attr in pages:
                 inherit[attr] = pages[attr]
 
@@ -1372,67 +1386,77 @@ class PdfDocCommon(ABC):
         elif not isinstance(kids, ArrayObject):
             raise PdfReadError(f"Expected /Kids to be an array, got {type(kids).__name__}.")
 
-        configuration = get_configuration()
-        pages_reference = getattr(pages, "indirect_reference", object())
-        for page in kids:
-            if getattr(page, "indirect_reference", object()) == pages_reference:
-                raise PdfReadError("Detected cyclic page references.")
+        return item._replace(inherit=inherit), iter(kids)
 
-            additional_arguments = {}
-            if isinstance(page, IndirectObject):
-                additional_arguments["indirect_reference"] = page
-            obj = page.get_object()
-            if not is_null_or_none(obj) and not isinstance(obj, DictionaryObject):
-                logger_warning(
-                    "Ignoring page tree entry that is not a dictionary: %(entry)s",
-                    source=__name__,
-                    entry=obj,
-                )
-                continue
-            if not obj:
-                # damaged file may have invalid child in /Pages
-                continue
-            obj_id = id(obj)
-            if obj_id in visited:
-                raise PdfReadError("Detected cyclic page references.")
-            traversal_state.entry_count += 1
-            if traversal_state.entry_count > configuration.page_tree_maximum_entries:
-                raise LimitReachedError(
-                    "Maximum page tree entry limit reached: "
-                    f"{traversal_state.entry_count} > {configuration.page_tree_maximum_entries}."
-                )
-            visited.add(obj_id)
-            try:
-                self._flatten(
-                    list_only,
-                    cast(DictionaryObject, obj),
-                    inherit.copy(),
-                    visited=visited,
-                    depth=depth + 1,
-                    traversal_state=traversal_state,
-                    **additional_arguments,
-                )
-            finally:
-                visited.remove(obj_id)
-
-    def _flatten_leaf_page(
+    def _next_page_tree_kid(
         self,
-        page: DictionaryObject,
-        list_only: bool,
-        inherit: dict[str, Any],
-        indirect_reference: Optional[IndirectObject],
-    ) -> None:
-        """Build the :class:`PageObject` for a leaf ``/Page`` node and append it to ``flattened_pages``."""
-        page_obj = PageObject(self, indirect_reference)
+        stack: list[_PageTreeFrame],
+        ancestor_ids: set[int],
+        traversal_state: _TraversalState,
+    ) -> Optional[_PageTreeItem]:
+        """
+        Return the next page tree node to flatten, leaving the ``/Pages`` nodes whose
+        ``/Kids`` are exhausted, or ``None`` when the traversal is complete.
+
+        Cyclic references and the configured page-tree entry limit are enforced here.
+        """
+        configuration = get_configuration()
+        while stack:
+            parent, kids = stack[-1]
+            pages_reference = getattr(parent.node, "indirect_reference", object())
+            for page in kids:
+                if getattr(page, "indirect_reference", object()) == pages_reference:
+                    raise PdfReadError("Detected cyclic page references.")
+
+                obj = page.get_object()
+                if not isinstance(obj, DictionaryObject):
+                    if not is_null_or_none(obj):
+                        logger_warning(
+                            "Ignoring page tree entry that is not a dictionary: %(entry)s",
+                            source=__name__,
+                            entry=obj,
+                        )
+                    # damaged file may have invalid child in /Pages
+                    continue
+                if not obj:
+                    # damaged file may have invalid child in /Pages
+                    continue
+                if id(obj) in ancestor_ids:
+                    raise PdfReadError("Detected cyclic page references.")
+                traversal_state.entry_count += 1
+                if traversal_state.entry_count > configuration.page_tree_maximum_entries:
+                    raise LimitReachedError(
+                        "Maximum page tree entry limit reached: "
+                        f"{traversal_state.entry_count} > {configuration.page_tree_maximum_entries}."
+                    )
+                return _PageTreeItem(
+                    node=obj,
+                    inherit=parent.inherit,
+                    indirect_reference=page if isinstance(page, IndirectObject) else None,
+                    depth=parent.depth + 1,
+                )
+            stack.pop()
+            ancestor_ids.discard(id(parent.node))
+        return None
+
+    def _flatten_leaf_page(self, item: _PageTreeItem, list_only: bool) -> PageObject:
+        """
+        Build the :class:`PageObject` for a leaf ``/Page`` node.
+
+        ``list_only`` suppresses copying the page's own entries; the inherited
+        attributes are applied regardless. When the node has an indirect reference,
+        :class:`PageObject` has already copied those entries in its constructor,
+        so the flag only matters for inline ``/Kids`` dictionaries.
+        """
+        page_obj = PageObject(self, item.indirect_reference)
         if not list_only:
-            page_obj.update(page)
-        for attr, value in inherit.items():
+            page_obj.update(item.node)
+        for attr, value in item.inherit.items():
             # if the page has its own value, it does not inherit the parent's value
             if attr not in page_obj:
                 page_obj[attr] = value
 
-        # TODO: Could flattened_pages be None at this point?
-        self.flattened_pages.append(page_obj)  # type: ignore[union-attr]
+        return page_obj
 
     def remove_page(
         self,
