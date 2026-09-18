@@ -320,6 +320,65 @@ def test_compress_content_streams(pdf_path, password):
         reader.pages[0].compress_content_streams()
 
 
+def test_compress_content_streams_releases_replaced_streams():
+    """The streams being replaced must not be kept in the output. See #4085."""
+    def create_stamped_writer() -> PdfWriter:
+        writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+        stamp = PdfReader(RESOURCE_ROOT / "crazyones.pdf").pages[0]
+        for page in writer.pages:
+            page.merge_page(stamp)
+        return writer
+
+    def write(writer: PdfWriter) -> bytes:
+        output = BytesIO()
+        writer.write(output)
+        return output.getvalue()
+
+    writer = create_stamped_writer()
+    # Merging makes `/Contents` an indirect reference to an array, which is what
+    # `replace_contents()` failed to resolve before checking its type.
+    contents = writer.pages[0].raw_get(PG.CONTENTS)
+    assert isinstance(contents, IndirectObject)
+    assert isinstance(contents.get_object(), ArrayObject)
+    replaced = [
+        reference.idnum for page in writer.pages for reference in page[PG.CONTENTS]
+    ]
+
+    for page in writer.pages:
+        page.compress_content_streams()
+
+    # The streams the compressed one replaces have been released ...
+    assert all(isinstance(writer._objects[idnum - 1], NullObject) for idnum in replaced)
+    compressed, uncompressed = write(writer), write(create_stamped_writer())
+    # ... thus the output is smaller than without compressing at all.
+    assert len(compressed) < len(uncompressed)
+    # The content itself is unchanged.
+    assert PdfReader(BytesIO(compressed)).pages[0].extract_text() == (
+        PdfReader(BytesIO(uncompressed)).pages[0].extract_text()
+    )
+
+
+def test_replace_contents_skips_direct_array_entries():
+    """Entries of a `/Contents` array which are not indirect references must be skipped.
+
+    Such entries are not part of the writer's object list, so handing one to
+    `PdfWriter._replace_object()` raises `TypeError` rather than the `ValueError`
+    the surrounding handler covers. See #4085.
+    """
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+
+    released = writer._add_object(ContentStream(None, writer))
+    direct = ContentStream(None, writer)
+    assert not isinstance(direct, IndirectObject)
+    page[NameObject(PG.CONTENTS)] = ArrayObject([direct, released])
+
+    page.replace_contents(ContentStream(None, writer))
+
+    # The indirect entry has been released, the direct one silently ignored.
+    assert isinstance(writer._objects[released.idnum - 1], NullObject)
+
+
 def test_page_properties():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     page = reader.pages[0]
