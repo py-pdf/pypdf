@@ -1168,8 +1168,8 @@ def test_visitor_text_reports_form_xobject_text_once() -> None:
         )
         return reports
 
-    # Case A: form with a non-identity /Matrix. The form text used to be
-    # reported a second time with the outer (identity) matrices.
+    # Case A: form with a non-identity /Matrix. The form text must be
+    # reported exactly once with the form's own matrix.
     reports_a = collect(
         _page_with_form_xobject(
             b"q /Fx Do Q",
@@ -1180,7 +1180,7 @@ def test_visitor_text_reports_form_xobject_text_once() -> None:
     assert reports_a == [(1, "1234")]
 
     # Case B: page text, then an identity form with its own text. The form
-    # text used to be reported a second time at the page text position.
+    # text must be reported exactly once at the form text position.
     reports_b = collect(
         _page_with_form_xobject(
             text_at(100, 700, "1111") + b" /Fx Do",
