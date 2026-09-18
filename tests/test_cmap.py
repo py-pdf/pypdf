@@ -1,6 +1,7 @@
 """Test the pypdf_cmap module."""
 import sys
 from io import BytesIO
+from typing import Optional
 from unittest import mock
 
 import pytest
@@ -846,9 +847,11 @@ def test_get_encoding__differences_is_an_array(caplog):
 
 
 def _generate_simple_font_page(
-    to_unicode_data: bytes, text: str, encoding: PdfObject = NameObject("/WinAnsiEncoding")
+    to_unicode_data: bytes, text: str, encoding: Optional[PdfObject] = None
 ) -> bytes:
     """Draw `text` with Helvetica, the given /Encoding and the given /ToUnicode CMap."""
+    if encoding is None:
+        encoding = NameObject("/WinAnsiEncoding")
     writer = PdfWriter()
     page = writer.add_blank_page(width=200, height=100)
 
