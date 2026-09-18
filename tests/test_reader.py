@@ -2611,7 +2611,9 @@ def test_get_object_from_stream__size_limit(caplog):
         _ = reader.pages[0]
     assert caplog.messages == []
 
-    with pytest.raises(PdfReadError, match=r"cyclic page references|Maximum recursion depth"):
+    # The only /Kids entry cannot be read from the object stream and resolves to
+    # null, so it is dropped from the page tree and no page remains.
+    with pytest.raises(IndexError, match=r"^Sequence index out of range$"):
         reader = PdfReader(BytesIO(pdf), strict=False)
         _ = reader.pages[0]
     assert caplog.messages == [
