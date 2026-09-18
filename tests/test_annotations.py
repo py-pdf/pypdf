@@ -349,9 +349,9 @@ def test_link(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    for page in reader.pages:
+        writer.add_page(page)
 
     # Act
     # Part 1: Too many args
@@ -383,9 +383,6 @@ def test_link(pdf_file_path):
         border=[50, 10, 4],
     )
     writer.add_annotation(0, link_annotation)
-
-    for page in reader.pages[1:]:
-        writer.add_page(page)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
