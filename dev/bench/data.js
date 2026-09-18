@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789720248221,
+  "lastUpdate": 1789720255755,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -112733,6 +112733,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004463844071214508",
             "extra": "mean: 497.9604963999918 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ryo.kamei@gmail.com",
+            "name": "Ryo Kamei",
+            "username": "r-kamei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b93b48243ec0e2eb750a2b4dd3386193852ca06e",
+          "message": "TST: Add target pages before creating link annotations (#4090)",
+          "timestamp": "2026-09-18T10:27:50+02:00",
+          "tree_id": "a46dc7d38389e4b17be820ff17172fe17fdf231b",
+          "url": "https://github.com/py-pdf/pypdf/commit/b93b48243ec0e2eb750a2b4dd3386193852ca06e"
+        },
+        "date": 1789720245649,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.742436211055531,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008516636235855198",
+            "extra": "mean: 364.6392926000317 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.0291882499341,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002119233680136539",
+            "extra": "mean: 55.46561421053747 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23699225394709317,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026086336349905898",
+            "extra": "mean: 4.219547193400013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.445545143425278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000835994435493622",
+            "extra": "mean: 57.32122394449056 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07375262705251616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02812326718641937",
+            "extra": "mean: 13.558839053799966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5026592119794095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005565372870708336",
+            "extra": "mean: 665.4868862000512 msec\nrounds: 5"
           }
         ]
       }
