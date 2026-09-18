@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789723630943,
+  "lastUpdate": 1789723777980,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -112865,6 +112865,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0013901489110517194",
             "extra": "mean: 597.7968279999686 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "patilom1906@gmail.com",
+            "name": "Om Patil",
+            "username": "ompatil1906"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f0b34a2879173df71467a889ce848e7064bbfb34",
+          "message": "BUG: Remove duplicate visitor_text callback for Form XObject text (#4100)\n\nCloses #4079.\n---------\n\nSigned-off-by: Om Patil <patilom1906@gmail.com>",
+          "timestamp": "2026-09-18T11:24:45+02:00",
+          "tree_id": "63da6b3daf9cd186f459fe6303881a194eac1c9e",
+          "url": "https://github.com/py-pdf/pypdf/commit/f0b34a2879173df71467a889ce848e7064bbfb34"
+        },
+        "date": 1789723768282,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.273640642820242,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0084708241086246",
+            "extra": "mean: 233.99253320000355 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.050453630235634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0073488425390597365",
+            "extra": "mean: 34.42287038709794 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3668744006720531,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009281447740974324",
+            "extra": "mean: 2.725728473199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 25.110651039100873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015334499179448058",
+            "extra": "mean: 39.82373847825996 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.10902820986082856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06157724463578635",
+            "extra": "mean: 9.171938173400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.0947421676234184,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006327162923905651",
+            "extra": "mean: 477.385720999996 msec\nrounds: 5"
           }
         ]
       }
