@@ -116,6 +116,11 @@ class PdfReader(PdfDocCommon):
 
     """
 
+    # Declared here as well to satisfy PdfReaderProtocol at runtime: protocol
+    # members are looked up on the class, while these are assigned in __init__.
+    xref: dict[int, dict[Any, Any]]
+    trailer: DictionaryObject
+
     def __init__(
         self,
         stream: Union[StrByteType, Path],
