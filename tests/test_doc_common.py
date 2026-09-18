@@ -743,6 +743,19 @@ def test_flatten__pages_with_null_kids():
     assert list(reader.pages) == []
 
 
+def test_flatten__kid_resolving_to_null():
+    # A /Kids entry pointing to a null object cannot contribute a page and is
+    # dropped, just like any other damaged child.
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    pages = writer.root_object["/Pages"]
+    pages[NameObject("/Kids")] = ArrayObject([*pages["/Kids"], writer._add_object(NullObject())])
+    pages[NameObject("/Count")] = NumberObject(2)
+    writer.flattened_pages = None
+
+    assert len(writer.pages) == 1
+
+
 def test_flatten__pages_with_non_array_kids():
     # A /Pages node whose /Kids is neither an array nor null is malformed; we
     # raise a descriptive error instead of failing obscurely on iteration.
