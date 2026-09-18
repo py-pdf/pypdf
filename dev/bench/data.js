@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789721085555,
+  "lastUpdate": 1789721100069,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -112799,6 +112799,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005565372870708336",
             "extra": "mean: 665.4868862000512 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df5397d680b11619ed2c9498eb4ad9d1cc245aaa",
+          "message": "ROB: Do not crash when the page label kids are not an array (#4102)\n\nindex2label casts the /Kids entry of a number tree to a list of dictionaries\nand iterates it, so a file where that entry holds a string raised\n'AttributeError: str object has no attribute get' from reader.page_labels, and\na file whose kids array holds anything other than a dictionary raised the same\nerror for the element.\n\nBoth cases now take the fallback the function already uses for a /PageLabels\nentry it cannot read: the malformed entry is reported and the page position is\nreturned.",
+          "timestamp": "2026-09-18T10:41:53+02:00",
+          "tree_id": "a8aa40c4692626535da546821a395d0684b7d631",
+          "url": "https://github.com/py-pdf/pypdf/commit/df5397d680b11619ed2c9498eb4ad9d1cc245aaa"
+        },
+        "date": 1789721090415,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9476507548612396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006896885105548208",
+            "extra": "mean: 339.25321659996825 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.075530309065922,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002112030078134998",
+            "extra": "mean: 52.42318214999955 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25971387212277525,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03515885644188294",
+            "extra": "mean: 3.850391170200055 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.16547705266087,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014208680093746884",
+            "extra": "mean: 58.25646423528831 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0717983393658498,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015860695949961836",
+            "extra": "mean: 13.927898734599989 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6728091437782813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013901489110517194",
+            "extra": "mean: 597.7968279999686 msec\nrounds: 5"
           }
         ]
       }
