@@ -537,6 +537,37 @@ class VirtualListImages(Sequence[ImageFile]):
         return f"[{', '.join(p)}]"
 
 
+def _content_stream_referenced_elsewhere(
+    writer: Any,
+    reference: IndirectObject,
+    current_page: "PageObject",
+) -> bool:
+    """Return True if another page's /Contents still points at ``reference``."""
+    for page in getattr(writer, "pages", []):
+        if page is current_page:
+            continue
+        contents = page.get(PG.CONTENTS, None)
+        if contents is None:
+            continue
+        contents_obj = contents.get_object()
+        if isinstance(contents_obj, ArrayObject):
+            for item in contents_obj:
+                if (
+                    isinstance(item, IndirectObject)
+                    and item.idnum == reference.idnum
+                    and item.generation == reference.generation
+                ):
+                    return True
+        elif (
+            isinstance(contents_obj, IndirectObject)
+            and contents_obj.idnum == reference.idnum
+            and contents_obj.generation == reference.generation
+        ):
+            return True
+    return False
+
+
+
 class PageObject(DictionaryObject):
     """
     PageObject represents a single page within a PDF file.
@@ -1184,6 +1215,11 @@ class PageObject(DictionaryObject):
             for reference in old_contents:
                 if not isinstance(reference, IndirectObject):
                     # Direct objects are not part of the writer's object list.
+                    continue
+                # Content streams may be shared across pages (e.g. after
+                # compress_identical_objects). Nullifying a still-referenced
+                # stream drops its bytes from later pages (#4111).
+                if _content_stream_referenced_elsewhere(writer, reference, self):
                     continue
                 try:
                     writer._replace_object(indirect_reference=reference, obj=NullObject())

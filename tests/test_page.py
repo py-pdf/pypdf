@@ -23,6 +23,7 @@ from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
+    DecodedStreamObject,
     ContentStream,
     DictionaryObject,
     FloatObject,
@@ -357,6 +358,49 @@ def test_compress_content_streams_releases_replaced_streams():
         PdfReader(BytesIO(uncompressed)).pages[0].extract_text()
     )
 
+
+
+
+def test_compress_identical_objects_then_compress_content_streams_keeps_shared_parts(tmp_path):
+    """Shared /Contents array members must survive replace_contents (#4111)."""
+    src = tmp_path / "source.pdf"
+    out = tmp_path / "output.pdf"
+
+    writer = PdfWriter()
+    for i in range(1, 4):
+        page = writer.add_blank_page(width=595, height=842)
+        parts = [
+            b"q\n",
+            b"0.5 0 0 0.5 0 %d cm\n0 0 100 100 re f\n" % (400 + i),
+            b"Q\n0 0 %d 10 re f\n" % (10 + i),
+        ]
+        refs = []
+        for data in parts:
+            stream = DecodedStreamObject()
+            stream.set_data(data)
+            refs.append(writer._add_object(stream))
+        page[NameObject("/Contents")] = ArrayObject(refs)
+    writer.write(src)
+
+    writer = PdfWriter(clone_from=src)
+    writer.compress_identical_objects(remove_duplicates=True, remove_unreferenced=True)
+    for page in writer.pages:
+        page.compress_content_streams()
+    writer.write(out)
+
+    reader = PdfReader(out)
+    for page in reader.pages:
+        contents = page["/Contents"].get_object()
+        data = ContentStream(contents, reader).get_data()
+        depth = low = 0
+        for _, op in ContentStream(contents, reader).operations:
+            if op == b"q":
+                depth += 1
+            elif op == b"Q":
+                depth -= 1
+                low = min(low, depth)
+        assert low >= 0
+        assert data.startswith(b"q\n")
 
 def test_replace_contents_skips_direct_array_entries():
     """Entries of a `/Contents` array which are not indirect references must be skipped.
