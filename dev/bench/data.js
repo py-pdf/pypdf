@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789974209350,
+  "lastUpdate": 1789974229740,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -139531,6 +139531,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.041359882419891095",
             "extra": "mean: 658.2249714000056 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "aad085f29f8c4bc09e1ec6d8685fbb5ab7fd2f63",
+          "message": "ROB: Drop a /Kids entry resolving to null instead of raising a cycle error (#4108)\n\nA /Kids entry pointing to a null object does not point at a real node, but\n_flatten's check for it was ineffective: `not is_null_or_none(obj) and not\nisinstance(obj, DictionaryObject)` is False for a NullObject, so it fell\nthrough the \"not a dictionary\" branch; `if not obj:` did not catch it\neither, since NullObject has no __bool__ override and is truthy like any\nother object.\n\nThe entry was therefore neither skipped nor logged. Instead it was passed to\na recursive _flatten call, which treated it as a missing pages argument,\nre-resolved the root /Pages and recursed back into the same /Kids array -\neventually raising \"Detected cyclic page references.\" for a document that\nhas nothing cyclic in it.\n\nRestructure the check so a null kid is dropped by the same branch that\nalready drops other damaged children, without a warning (a warning is still\nlogged for a kid that resolves to something that is neither null nor a\ndictionary). test_get_object_from_stream__size_limit relied on the old\ncyclic-reference detour; its only page is such a null kid, so it now\nexpects the resulting empty page list to raise IndexError instead.\n\nCo-authored-by: Claude Sonnet 5 <noreply@anthropic.com>",
+          "timestamp": "2026-09-21T09:00:52+02:00",
+          "tree_id": "82635d4fcb7e7d80f8cc76c72c6fa8d63ffe37f8",
+          "url": "https://github.com/py-pdf/pypdf/commit/aad085f29f8c4bc09e1ec6d8685fbb5ab7fd2f63"
+        },
+        "date": 1789974220452,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.686311000480094,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01582190133168563",
+            "extra": "mean: 73.06570776923903 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.207685376743513,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01370928015929918",
+            "extra": "mean: 58.11356833334003 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.012318996728163,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026240628882580587",
+            "extra": "mean: 987.8309141999921 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5366623269120527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.055024071900434735",
+            "extra": "mean: 1.863369105400011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36338413543089493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03342471964573308",
+            "extra": "mean: 2.7519087998000145 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1498184192609526,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019679479930949345",
+            "extra": "mean: 869.7025402000008 msec\nrounds: 5"
           }
         ]
       }
