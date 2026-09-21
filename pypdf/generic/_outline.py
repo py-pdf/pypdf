@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, cast
 
 from .._utils import StreamType, logger_warning
 from ..errors import PdfReadError
@@ -15,11 +15,7 @@ if TYPE_CHECKING:
 class OutlineItem(Destination):
     def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"<<\n")
-        for key in [
-            NameObject(x)
-            for x in ["/Title", "/Parent", "/First", "/Last", "/Next", "/Prev"]
-            if x in self
-        ]:
+        for key in [NameObject(x) for x in ["/Title", "/Parent", "/First", "/Last", "/Next", "/Prev"] if x in self]:
             key.write_to_stream(stream)
             stream.write(b" ")
             value = self.raw_get(key)
@@ -36,7 +32,7 @@ class OutlineItem(Destination):
 
 def _resolve_outline_dest_page_ref(
     child: "DictionaryObject",
-) -> Union[IndirectObject, None]:
+) -> IndirectObject | None:
     """
     Extract the page reference from an outline child's destination.
 
@@ -69,7 +65,7 @@ def _find_outline_item_before_page(
     page_number: int,
     parent: "TreeObject",
     writer: "PdfWriter",
-) -> Union["TreeObject", "IndirectObject", None]:
+) -> TreeObject | IndirectObject | None:
     """
     Find the top-level outline child with the smallest destination page
     index that is still >= *page_number*.
@@ -97,15 +93,13 @@ def _find_outline_item_before_page(
     """
     page_cache = writer._build_page_id_cache()
     best_child = None
-    best_page_number: Optional[int] = None
+    best_page_number: int | None = None
     for child in parent.children():
         page_ref = _resolve_outline_dest_page_ref(child)
         if page_ref is None:
             continue
         try:
-            child_page_number = writer._get_page_number_by_indirect(
-                page_ref, _page_cache=page_cache
-            )
+            child_page_number = writer._get_page_number_by_indirect(page_ref, _page_cache=page_cache)
         except (PdfReadError, ValueError) as exc:
             logger_warning(
                 f"Could not resolve page number for outline item: {exc}",
