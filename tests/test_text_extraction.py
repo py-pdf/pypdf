@@ -757,30 +757,36 @@ def test_page__extract_text__xform__self_references(caplog):
 
 
 @pytest.mark.parametrize(
-    "encoding",
+    ("raw_bytes", "expected_text"),
     [
-        "ascii",
-        {65: "A"},
+        # Truncated 1-byte payload triggers UnicodeDecodeError -> fallback to surrogateescape
+        (b"\xff", "\udcff"),
+        # Isolated high surrogate (U+D800) in UTF-16-BE -> decoded directly via surrogatepass
+        (b"\xd8\x00", "\ud800"),
     ],
-    ids=["string", "dictionary"],
+    ids=["truncated_byte_surrogateescape", "unpaired_surrogatepass"],
 )
-def test_text_state_params__unicode_decode_error(encoding):
+def test_text_state_params__unicode_decode_error(raw_bytes, expected_text):
     font_dictionary = DictionaryObject({
         NameObject("/Type"): NameObject("/Font"),
-        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/Subtype"): NameObject("/Type0"),
         NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Encoding"): NameObject("/Identity-H"),
+        NameObject("/DescendantFonts"): ArrayObject([
+            DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/CIDFontType2"),
+                NameObject("/BaseFont"): NameObject("/Helvetica"),
+            })
+        ]),
     })
     font = Font.from_font_resource(font_dictionary)
-    font.encoding = encoding
+    font.encoding = "utf-16-be"
 
-    # For string: 0xff (255) is out of range for ASCII (0-127)
-    # For dictionary: 0xff (255) is missing from the dict, and bytes((255,)).decode()
-    # throws a UnicodeDecodeError under default UTF-8 rules.
-    parameters = TextStateParams(value=b"\xff", font=font, font_size=10)
+    parameters = TextStateParams(value=raw_bytes, font=font, font_size=10)
 
-    # Assertions: 'replace' mode changes invalid UTF-8 bytes to '\xfffd'.
-    assert parameters.text == "\ufffd"
-    assert parameters._decoded_value == "\ufffd"
+    assert parameters._raw_chars == expected_text
+    assert parameters.text == expected_text
 
 
 @pytest.mark.timeout(5)
@@ -1189,3 +1195,42 @@ def test_visitor_text_reports_form_xobject_text_once() -> None:
         )
     )
     assert reports_b == [(0, "1111"), (1, "2222")]
+
+
+def test_simple_font_character_widths_with_differences_encoding() -> None:
+    # This test was written by hpertuz-vzy
+    def build() -> bytes:
+        stream = b"BT /F1 12 Tf 1 0 0 1 72 700 Tm (ABC) Tj ET\n"
+        objs = [
+            b"<< /Type /Catalog /Pages 2 0 R >>",
+            b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            (
+                b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+                b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
+            ),
+            b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"endstream",
+            (
+                b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 65 /LastChar 67 "
+                b"/Widths [600 700 800] /FontDescriptor 6 0 R "
+                b"/Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding "
+                b"/Differences [65 /Aacute /Eacute /Iacute] >> >>"
+            ),
+            b"<< /Type /FontDescriptor /FontName /Helvetica /Flags 32 /MissingWidth 250 >>",
+        ]
+        out = bytearray(b"%PDF-1.7\n")
+        offsets = []
+        for index, obj in enumerate(objs, start=1):
+            offsets.append(len(out))
+            out += f"{index} 0 obj\n".encode() + obj + b"\nendobj\n"
+        xref = len(out)
+        out += f"xref\n0 {len(objs) + 1}\n".encode() + b"0000000000 65535 f \n"
+        for offset in offsets:
+            out += f"{offset:010d} 00000 n \n".encode()
+        out += f"trailer\n<< /Size {len(objs) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
+        return bytes(out)
+
+    page = PdfReader(BytesIO(build())).pages[0]
+    ops = iter(ContentStream(page["/Contents"].get_object(), page.pdf, "bytes").operations)
+    groups = text_show_operations(ops, page._layout_mode_fonts())
+    advance = sum(g["displaced_tx"] - g["tx"] for g in groups)
+    assert f"{advance:.1f}" == "25.2"
