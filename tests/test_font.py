@@ -13,7 +13,15 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import _parse_to_unicode
 from pypdf._font import Font, FontDescriptor
 from pypdf.errors import LimitReachedError, PdfReadError
-from pypdf.generic import ArrayObject, DictionaryObject, EncodedStreamObject, NameObject, NumberObject, RectangleObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    EncodedStreamObject,
+    NameObject,
+    NumberObject,
+    RectangleObject,
+    TextStringObject,
+)
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 
 from . import RESOURCE_ROOT
@@ -73,6 +81,39 @@ def test_collect_cid_character_widths_truncated_w(w_array):
         NameObject("/DescendantFonts"): ArrayObject([d_font]),
     })
     Font.from_font_resource(font_res)
+
+
+@pytest.mark.parametrize(
+    ("descendant_fonts", "expected"),
+    [
+        pytest.param(None, "", id="absent"),
+        pytest.param(
+            DictionaryObject(),
+            "Expected an array for /DescendantFonts, got {}. Ignoring it.",
+            id="dictionary",
+        ),
+        pytest.param(
+            TextStringObject("x"),
+            "Expected an array for /DescendantFonts, got x. Ignoring it.",
+            id="string",
+        ),
+    ],
+)
+def test_font__from_font_resource__descendant_fonts_not_an_array(
+    descendant_fonts, expected, caplog
+):
+    """A composite font whose /DescendantFonts cannot be read still builds a font."""
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Foo"),
+    })
+    if descendant_fonts is not None:
+        font_res[NameObject("/DescendantFonts")] = descendant_fonts
+
+    font = Font.from_font_resource(font_res)
+
+    assert font is not None
+    assert expected in caplog.text
 
 
 @pytest.mark.parametrize("bbox", [
