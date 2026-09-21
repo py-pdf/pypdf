@@ -31,7 +31,7 @@ class OutlineItem(Destination):
 
 
 def _resolve_outline_dest_page_ref(
-    child: "DictionaryObject",
+    child: DictionaryObject,
 ) -> IndirectObject | None:
     """
     Extract the page reference from an outline child's destination.
@@ -63,8 +63,8 @@ def _resolve_outline_dest_page_ref(
 
 def _find_outline_item_before_page(
     page_number: int,
-    parent: "TreeObject",
-    writer: "PdfWriter",
+    parent: TreeObject,
+    writer: PdfWriter,
 ) -> TreeObject | IndirectObject | None:
     """
     Find the top-level outline child with the smallest destination page

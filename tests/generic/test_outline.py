@@ -431,9 +431,8 @@ def test_merge_outline_ordering_out_of_order() -> None:
     merged.write(buf)
     buf.seek(0)
     titles = [el.title for el in PdfReader(buf).outline if isinstance(el, Destination)]
-    # B1 should appear before all outlines pointing to page >= 1
-    assert titles[0] == "A1" or titles[0] == "B1"
-    assert "B1" in titles
+    # B1 is inserted before A2 (smallest destination >= 1), giving [A3, A1, B1, A2]
+    assert titles == ["A3", "A1", "B1", "A2"]
 
 
 def test_merge_outline_duplicate_destinations() -> None:
