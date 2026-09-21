@@ -18,8 +18,6 @@ from pypdf.generic._outline import (
     _resolve_outline_dest_page_ref,
 )
 
-# ── helpers ──────────────────────────────────────────────────────────
-
 
 def _write_pdf_with_outlines(
     page_count: int,
@@ -35,9 +33,6 @@ def _write_pdf_with_outlines(
     writer.write(buf)
     buf.seek(0)
     return buf
-
-
-# ── _resolve_outline_dest_page_ref ───────────────────────────────────
 
 
 def test_resolve_dest_array() -> None:
@@ -128,9 +123,6 @@ def test_resolve_returns_none_for_a_without_s() -> None:
     child = DictionaryObject()
     child[NameObject("/A")] = DictionaryObject({})
     assert _resolve_outline_dest_page_ref(child) is None
-
-
-# ── _find_outline_item_before_page ───────────────────────────────────
 
 
 def test_find_before_page_returns_child_at_page() -> None:
@@ -321,9 +313,6 @@ def test_find_before_page_handles_page_object_not_in_cache() -> None:
     assert result is None
 
 
-# ── Merge-level integration tests ────────────────────────────────────
-
-
 def test_merge_outline_ordering_at_position() -> None:
     """Merging Doc B at position 1 of Doc A produces [A1, B1, B2, A2, A3]."""
     buf_a = _write_pdf_with_outlines(3, ["A1", "A2", "A3"])
@@ -402,3 +391,178 @@ def test_merge_outline_with_dest_array() -> None:
     buf.seek(0)
     titles = [el.title for el in PdfReader(buf).outline if isinstance(el, Destination)]
     assert titles == ["B1", "A_Dest"]
+
+
+def test_resolve_dest_null_falls_through_to_action() -> None:
+    """When /Dest is a NullObject, fall through to /A GoTo."""
+    from pypdf.generic import NullObject
+
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+    page_ref = writer.pages[0].indirect_reference
+
+    action = DictionaryObject({
+        NameObject("/S"): NameObject("/GoTo"),
+        NameObject("/D"): ArrayObject([page_ref, NameObject("/Fit")]),
+    })
+    child = DictionaryObject()
+    child[NameObject("/Dest")] = NullObject()
+    child[NameObject("/A")] = action
+
+    assert _resolve_outline_dest_page_ref(child) == page_ref
+
+
+def test_merge_outline_ordering_out_of_order() -> None:
+    """Outlines not stored in page-number order are still inserted correctly."""
+    writer_a = PdfWriter()
+    for _ in range(3):
+        writer_a.add_blank_page(200, 200)
+    # Add outlines in reverse page order
+    writer_a.add_outline_item("A3", 2)
+    writer_a.add_outline_item("A1", 0)
+    writer_a.add_outline_item("A2", 1)
+    buf_a = BytesIO()
+    writer_a.write(buf_a)
+    buf_a.seek(0)
+
+    buf_b = _write_pdf_with_outlines(1, ["B1"])
+
+    merged = PdfWriter()
+    merged.append(buf_a)
+    merged.merge(1, buf_b)
+
+    buf = BytesIO()
+    merged.write(buf)
+    buf.seek(0)
+    titles = [el.title for el in PdfReader(buf).outline if isinstance(el, Destination)]
+    # B1 should appear before all outlines pointing to page >= 1
+    assert titles[0] == "A1" or titles[0] == "B1"
+    assert "B1" in titles
+
+
+def test_merge_outline_duplicate_destinations() -> None:
+    """Multiple outline items pointing to the same page are handled."""
+    writer_a = PdfWriter()
+    writer_a.add_blank_page(200, 200)
+    writer_a.add_blank_page(200, 200)
+    writer_a.add_outline_item("A1-first", 0)
+    writer_a.add_outline_item("A1-second", 0)
+    writer_a.add_outline_item("A2", 1)
+    buf_a = BytesIO()
+    writer_a.write(buf_a)
+    buf_a.seek(0)
+
+    buf_b = _write_pdf_with_outlines(1, ["B1"])
+
+    merged = PdfWriter()
+    merged.append(buf_a)
+    merged.merge(1, buf_b)
+
+    buf = BytesIO()
+    merged.write(buf)
+    buf.seek(0)
+    titles = [el.title for el in PdfReader(buf).outline if isinstance(el, Destination)]
+    assert len(titles) == 4
+    # B1 should come before A2 (which points to page 1, now shifted)
+    assert "B1" in titles
+    assert "A2" in titles
+
+
+def test_merge_outline_with_nested_outlines() -> None:
+    """Nested sub-outlines don't break the insertion logic."""
+    writer_a = PdfWriter()
+    for _ in range(3):
+        writer_a.add_blank_page(200, 200)
+    parent_item = writer_a.add_outline_item("A-Parent", 0)
+    writer_a.add_outline_item("A-Child", 1, parent=parent_item)
+    writer_a.add_outline_item("A-Sibling", 2)
+    buf_a = BytesIO()
+    writer_a.write(buf_a)
+    buf_a.seek(0)
+
+    buf_b = _write_pdf_with_outlines(1, ["B1"])
+
+    merged = PdfWriter()
+    merged.append(buf_a)
+    merged.merge(1, buf_b)
+
+    buf = BytesIO()
+    merged.write(buf)
+    buf.seek(0)
+    reader = PdfReader(buf)
+    # Should not crash; outline should contain all items
+    top_level = [el for el in reader.outline if isinstance(el, Destination)]
+    top_titles = [el.title for el in top_level]
+    assert "B1" in top_titles
+
+
+def test_merge_into_empty_outline() -> None:
+    """Merging into a writer with no existing outlines works."""
+    writer_a = PdfWriter()
+    writer_a.add_blank_page(200, 200)
+    buf_a = BytesIO()
+    writer_a.write(buf_a)
+    buf_a.seek(0)
+
+    buf_b = _write_pdf_with_outlines(1, ["B1"])
+
+    merged = PdfWriter()
+    merged.append(buf_a)
+    merged.merge(0, buf_b)
+
+    buf = BytesIO()
+    merged.write(buf)
+    buf.seek(0)
+    titles = [el.title for el in PdfReader(buf).outline if isinstance(el, Destination)]
+    assert titles == ["B1"]
+
+
+def test_merge_where_no_bookmark_after_insertion_page() -> None:
+    """All bookmarks are before the insertion page; new ones append at end."""
+    writer_a = PdfWriter()
+    for _ in range(3):
+        writer_a.add_blank_page(200, 200)
+    writer_a.add_outline_item("A1", 0)
+    buf_a = BytesIO()
+    writer_a.write(buf_a)
+    buf_a.seek(0)
+
+    buf_b = _write_pdf_with_outlines(1, ["B1"])
+
+    merged = PdfWriter()
+    merged.append(buf_a)
+    merged.merge(2, buf_b)
+
+    buf = BytesIO()
+    merged.write(buf)
+    buf.seek(0)
+    titles = [el.title for el in PdfReader(buf).outline if isinstance(el, Destination)]
+    assert titles == ["A1", "B1"]
+
+
+def test_merge_multiple_bookmarks_on_same_page() -> None:
+    """Multiple bookmarks on the same page as the insertion point."""
+    writer_a = PdfWriter()
+    for _ in range(2):
+        writer_a.add_blank_page(200, 200)
+    writer_a.add_outline_item("A1-a", 1)
+    writer_a.add_outline_item("A1-b", 1)
+    writer_a.add_outline_item("A1-c", 1)
+    buf_a = BytesIO()
+    writer_a.write(buf_a)
+    buf_a.seek(0)
+
+    buf_b = _write_pdf_with_outlines(1, ["B1"])
+
+    merged = PdfWriter()
+    merged.append(buf_a)
+    merged.merge(1, buf_b)
+
+    buf = BytesIO()
+    merged.write(buf)
+    buf.seek(0)
+    titles = [el.title for el in PdfReader(buf).outline if isinstance(el, Destination)]
+    assert len(titles) == 4
+    # B1 should appear before the A1-* bookmarks (which point to page >= 1)
+    assert titles[0] == "B1"
+

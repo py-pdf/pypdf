@@ -718,13 +718,13 @@ class PdfWriter(PdfDocCommon):
             if result is not None:
                 return result
         obj = indirect_reference.get_object()
-        if isinstance(obj, PageObject):
-            if obj.indirect_reference is not None:
-                result = _page_cache.get(obj.indirect_reference.idnum)
-                if result is not None:
-                    return result
-            return obj.page_number
-        return None
+        if not isinstance(obj, PageObject):
+            return None
+        if obj.indirect_reference is not None:
+            result = _page_cache.get(obj.indirect_reference.idnum)
+            if result is not None:
+                return result
+        return obj.page_number
 
     def add_blank_page(
         self, width: Optional[float] = None, height: Optional[float] = None
