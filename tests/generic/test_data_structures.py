@@ -620,6 +620,28 @@ def test_tree_object__insert_child_cleanup_coverage() -> None:
     tree3.insert_child(child3_ref, existing_ref, writer)
     assert "/Prev" not in child3
 
+    # 4. Insert in the middle: prev has /Prev
+    tree4 = TreeObject()
+    writer._add_object(tree4)
+    first_node = TreeObject()
+    first_node_ref = writer._add_object(first_node)
+    tree4.insert_child(first_node_ref, None, writer)
+
+    last_node = TreeObject()
+    last_node_ref = writer._add_object(last_node)
+    tree4.insert_child(last_node_ref, None, writer)
+
+    middle_node = TreeObject()
+    middle_node_ref = writer._add_object(middle_node)
+    tree4.insert_child(middle_node_ref, last_node_ref, writer)
+
+    assert tree4["/First"] == first_node
+    assert tree4["/Last"] == last_node
+    assert first_node["/Next"] == middle_node
+    assert middle_node["/Prev"] == first_node
+    assert middle_node["/Next"] == last_node
+    assert last_node["/Prev"] == middle_node
+
 
 def _outlined_pdf(nested: bool = False) -> BytesIO:
     writer = PdfWriter()
