@@ -1201,28 +1201,32 @@ def test_simple_font_character_widths_with_differences_encoding() -> None:
     # This test was written by hpertuz-vzy
     def build() -> bytes:
         stream = b"BT /F1 12 Tf 1 0 0 1 72 700 Tm (ABC) Tj ET\n"
-        objs = {
-            1: b"<< /Type /Catalog /Pages 2 0 R >>",
-            2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            3: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-               b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
-            4: b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"endstream",
-            5: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 65 /LastChar 67 "
-               b"/Widths [600 700 800] /FontDescriptor 6 0 R "
-               b"/Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding "
-               b"/Differences [65 /Aacute /Eacute /Iacute] >> >>",
-            6: b"<< /Type /FontDescriptor /FontName /Helvetica /Flags 32 /MissingWidth 250 >>",
-        }
+        objs = [
+            b"<< /Type /Catalog /Pages 2 0 R >>",
+            b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            (
+                b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+                b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
+            ),
+            b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"endstream",
+            (
+                b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 65 /LastChar 67 "
+                b"/Widths [600 700 800] /FontDescriptor 6 0 R "
+                b"/Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding "
+                b"/Differences [65 /Aacute /Eacute /Iacute] >> >>"
+            ),
+            b"<< /Type /FontDescriptor /FontName /Helvetica /Flags 32 /MissingWidth 250 >>",
+        ]
         out = bytearray(b"%PDF-1.7\n")
-        offs = {}
-        for n in sorted(objs):
-            offs[n] = len(out)
-            out += f"{n} 0 obj\n".encode() + objs[n] + b"\nendobj\n"
+        offsets = []
+        for index, obj in enumerate(objs, start=1):
+            offsets.append(len(out))
+            out += f"{index} 0 obj\n".encode() + obj + b"\nendobj\n"
         xref = len(out)
-        out += f"xref\n0 {len(objs)+1}\n".encode() + b"0000000000 65535 f \n"
-        for n in sorted(objs):
-            out += f"{offs[n]:010d} 00000 n \n".encode()
-        out += f"trailer\n<< /Size {len(objs)+1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
+        out += f"xref\n0 {len(objs) + 1}\n".encode() + b"0000000000 65535 f \n"
+        for offset in offsets:
+            out += f"{offset:010d} 00000 n \n".encode()
+        out += f"trailer\n<< /Size {len(objs) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
         return bytes(out)
 
     page = PdfReader(BytesIO(build())).pages[0]
