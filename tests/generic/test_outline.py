@@ -68,7 +68,7 @@ def test_resolve_goto_action() -> None:
     assert _resolve_outline_dest_page_ref(child) == page_ref
 
 
-def test_resolve_returns_none_for_no_dest() -> None:
+def test_resolve_outline_destination_page_reference__no_dest_entry() -> None:
     """Return None when child has neither /Dest nor /A."""
     child = DictionaryObject()
     assert _resolve_outline_dest_page_ref(child) is None
