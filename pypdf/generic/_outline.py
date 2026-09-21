@@ -58,7 +58,7 @@ def _resolve_outline_dest_page_ref(
         dest = child["/Dest"].get_object()
         if isinstance(dest, ArrayObject) and len(dest) > 0:
             return cast(IndirectObject, dest[0])
-    elif "/A" in child:
+    if "/A" in child:
         action = child["/A"].get_object()
         if isinstance(action, DictionaryObject) and action.get("/S") == "/GoTo":
             dest_obj = action.get("/D")
@@ -110,9 +110,9 @@ def _find_outline_item_before_page(
             child_page_number = writer._get_page_number_by_indirect(
                 page_ref, _page_cache=page_cache
             )
-        except (PdfReadError, ValueError):
+        except (PdfReadError, ValueError) as exc:
             logger_warning(
-                "Could not resolve page number for outline item",
+                f"Could not resolve page number for outline item: {exc}",
                 source=__name__,
             )
             continue
