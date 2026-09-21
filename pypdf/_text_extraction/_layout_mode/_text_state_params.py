@@ -60,9 +60,11 @@ class TextStateParams:
         if isinstance(self.value, bytes):
             if isinstance(self.font.encoding, str):
                 try:
+                    # Decode 2-byte UTF-16-BE units
                     self._raw_chars = self.value.decode(self.font.encoding, "surrogatepass")
                 except UnicodeDecodeError:
-                    self._raw_chars = self.value.decode("utf-8", "replace")
+                    # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
+                    self._raw_chars = self.value.decode(self.font.encoding, "surrogateescape")
             else:
                 self._raw_chars = "".join(chr(byte) for byte in self.value)
                 decoded_value = "".join(self.font.encoding.get(x, chr(x)) for x in self.value)
