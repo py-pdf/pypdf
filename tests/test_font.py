@@ -13,7 +13,15 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import _parse_to_unicode
 from pypdf._font import Font, FontDescriptor
 from pypdf.errors import LimitReachedError, PdfReadError
-from pypdf.generic import ArrayObject, DictionaryObject, EncodedStreamObject, NameObject, NumberObject, RectangleObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    EncodedStreamObject,
+    NameObject,
+    NumberObject,
+    RectangleObject,
+    TextStringObject,
+)
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 
 from . import RESOURCE_ROOT
@@ -376,6 +384,42 @@ def test__create_widths_list_and_unicode_stream():
     assert all(
         val in ("56", "100") for val in re.findall(r"([0-9]*) beginbfchar", to_unicode_stream.get_data().decode())
     )
+
+
+@pytest.mark.parametrize(
+    ("widths", "expected"),
+    [
+        pytest.param(
+            TextStringObject("bad"),
+            "Expected an array for /Widths, got bad. Ignoring it.",
+            id="string",
+        ),
+        pytest.param(
+            NumberObject(5),
+            "Expected an array for /Widths, got 5. Ignoring it.",
+            id="number",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Expected an array for /Widths, got {}. Ignoring it.",
+            id="dictionary",
+        ),
+    ],
+)
+def test_font__collect_tt_t1_character_widths__not_an_array(widths, expected, caplog):
+    """A /Widths entry which is not an array is reported and the widths are skipped."""
+    font_resource = DictionaryObject({NameObject("/Widths"): widths})
+    current_widths = {}
+
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+
+    assert current_widths == {}
+    assert expected in caplog.text
 
 
 def test_font__collect_tt_t1_character_widths__limits():
