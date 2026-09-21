@@ -44,7 +44,7 @@ except ImportError:
 MAX_CID_WIDTH_ENTRY_COUNT = 65_536
 MAX_WIDTH_ENTRY_COUNT = 100_000
 # For a simple font, character codes are one-byte values, 0-255, so /Widths can have at most 256 meaningful entries.
-MAX_SIMPLE_FONT_WIDTH_ENTRY_COUNT = 256
+MAX_SIMPLE_FONT_CHARACTER_CODE = 255
 
 
 # Some constants from truetype font tables that we use:
@@ -153,11 +153,24 @@ class Font:
         """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
         widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
         Font.__check_entry_count(
-            len(widths_array), MAX_SIMPLE_FONT_WIDTH_ENTRY_COUNT
+            len(widths_array), MAX_SIMPLE_FONT_CHARACTER_CODE + 1
         )
         first_char = pdf_font_dict.get("/FirstChar", 0)
-        for idx, width in enumerate(widths_array):
-            current_widths[chr(idx + first_char)] = int(width)
+        if first_char < 0:
+            logger_warning(
+                "Ignoring invalid /FirstChar %(code)d < 0.", source=__name__, code=first_char
+            )
+            return
+        for character_code, width in enumerate(widths_array, start=first_char):
+            if character_code > MAX_SIMPLE_FONT_CHARACTER_CODE:
+                logger_warning(
+                    "Ignoring invalid character codes > %(limit)d (starting at %(code)d).",
+                    source=__name__,
+                    code=character_code,
+                    limit=MAX_SIMPLE_FONT_CHARACTER_CODE
+                )
+                break
+            current_widths[chr(character_code)] = int(width)
 
     @staticmethod
     def __check_range_length(start: int, end: int) -> None:
