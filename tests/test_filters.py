@@ -1296,3 +1296,34 @@ def test_decompress__fallback__speed() -> None:
 
     result = decompress(compressed)
     assert len(result) == size
+
+
+@pytest.mark.parametrize(
+    ("parameters", "rows", "expected_message"),
+    [
+        (
+            DictionaryObject({"/Columns": NumberObject(-1)}),
+            42,
+            r"^Expected valid 32 bit unsigned value for /Columns, got -1!$"
+        ),
+        (
+            DictionaryObject({"/Columns": NumberObject(CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10)}),
+            42,
+            rf"^Expected valid 32 bit unsigned value for /Columns, got {CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10}!$"
+        ),
+        (
+            DictionaryObject({"/Columns": NumberObject(42)}),
+            -1,
+            r"^Expected valid 32 bit unsigned value for /Rows, got -1!$"
+        ),
+    (
+            DictionaryObject({"/Columns": NumberObject(42)}),
+            CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10,
+            fr"^Expected valid 32 bit unsigned value for /Rows, got {CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10}!$"
+        ),
+    ],
+    ids=["columns-negative", "columns-large", "rows-negative", "rows-large"]
+)
+def test_ccitt_get_parameters__limits(parameters, rows, expected_message):
+    with pytest.raises(expected_exception=PdfReadError, match=expected_message):
+        CCITTFaxDecode._get_parameters(parameters=parameters, rows=rows)
