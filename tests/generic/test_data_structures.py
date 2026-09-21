@@ -717,4 +717,3 @@ def test_remove_from_tree_on_node_already_detached() -> None:
         ValueError, match=r"^Removed child does not appear to be a tree item$"
     ):
         item.remove_from_tree()
-
