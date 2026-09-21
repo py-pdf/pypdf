@@ -21,8 +21,15 @@ def test_pdfobjectprotocol():
     assert o.write_to_stream(None) is None
 
 
-def _data_members(protocol: type) -> set:
-    """Protocol members which are looked up as attributes rather than methods."""
+def _get_data_members(protocol: type) -> set:
+    """
+    Collect the protocol members which are looked up as attributes, not as methods.
+
+    This mirrors what CPython does in ``typing._get_protocol_attrs``, which is what
+    runtime ``isinstance`` checks against a ``runtime_checkable`` protocol rely on.
+    That helper is private, so this reimplements the part we need using public APIs
+    and narrows it to data members: annotations and properties.
+    """
     members = set(typing.get_type_hints(protocol))
     members.update(
         name
@@ -47,7 +54,7 @@ def test_data_members_are_declared_on_the_class(cls, protocol):
     annotations = typing.get_type_hints(cls)
     missing = sorted(
         name
-        for name in _data_members(protocol)
+        for name in _get_data_members(protocol)
         if name not in annotations and not hasattr(cls, name)
     )
     assert not missing, (

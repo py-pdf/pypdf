@@ -116,8 +116,6 @@ class PdfReader(PdfDocCommon):
 
     """
 
-    # Declared here as well to satisfy PdfReaderProtocol at runtime: protocol
-    # members are looked up on the class, while these are assigned in __init__.
     xref: dict[int, dict[Any, Any]]
     trailer: DictionaryObject
 
@@ -137,7 +135,7 @@ class PdfReader(PdfDocCommon):
 
         self._startxref: int = 0
         self.xref_index = 0
-        self.xref: dict[int, dict[Any, Any]] = {}
+        self.xref = {}
         self.xref_free_entry: dict[int, dict[Any, Any]] = {}
         self.xref_objStm: dict[int, tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
