@@ -780,7 +780,7 @@ def test_text_state_params__unicode_decode_error(encoding):
 
     # Assertions: 'replace' mode changes invalid UTF-8 bytes to '\xfffd'.
     assert parameters.text == "\ufffd"
-    assert parameters._decoded_value == "\ufffd"
+    assert parameters._string_value == "\ufffd"
 
 
 @pytest.mark.timeout(5)
