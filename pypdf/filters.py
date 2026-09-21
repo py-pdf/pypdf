@@ -652,6 +652,11 @@ class CCITTFaxDecode:
     §7.4.6, optional parameters for the CCITTFaxDecode filter.
     """
 
+    # We use the `L` with standard size, thus have 4 bytes, which corresponds to an upper limit of
+    # 2 ** (struct.calcsize("<L") * 8) - 1 = 2 ** (4 * 8) - 1 = 2 ** 32 - 1 = 4_294_967_295
+    # https://docs.python.org/3/library/struct.html#format-characters
+    _MAXIMUM_UNSIGNED_LONG = 0xFFFFFFFF
+
     @staticmethod
     def _get_parameters(
         parameters: Union[ArrayObject, DictionaryObject, IndirectObject, None],
@@ -677,6 +682,15 @@ class CCITTFaxDecode:
                     ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore[assignment]
                 if CCITT.BLACK_IS_1 in parameters_unwrapped:
                     ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore[union-attr]
+
+        if ccitt_parameters.columns < 0 or ccitt_parameters.columns > CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG:
+            raise PdfReadError(
+                f"Expected valid 32 bit unsigned value for {CCITT.COLUMNS}, got {ccitt_parameters.columns}!"
+            )
+        if ccitt_parameters.rows < 0 or ccitt_parameters.rows > CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG:
+            raise PdfReadError(
+                f"Expected valid 32 bit unsigned value for {CCITT.ROWS}, got {ccitt_parameters.rows}!"
+            )
         return ccitt_parameters
 
     @staticmethod
@@ -721,7 +735,7 @@ class CCITTFaxDecode:
             273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
-              struct.calcsize(
+            struct.calcsize(
                 tiff_header_struct
             ),
             278,    # RowsPerStrip, LONG, 1, length
