@@ -757,30 +757,36 @@ def test_page__extract_text__xform__self_references(caplog):
 
 
 @pytest.mark.parametrize(
-    "encoding",
+    ("raw_bytes", "expected_text"),
     [
-        "ascii",
-        {65: "A"},
+        # Truncated 1-byte payload triggers UnicodeDecodeError -> fallback to surrogateescape
+        (b"\xff", "\udcff"),
+        # Isolated high surrogate (U+D800) in UTF-16-BE -> decoded directly via surrogatepass
+        (b"\xd8\x00", "\ud800"),
     ],
-    ids=["string", "dictionary"],
+    ids=["truncated_byte_surrogateescape", "unpaired_surrogatepass"],
 )
-def test_text_state_params__unicode_decode_error(encoding):
+def test_text_state_params__unicode_decode_error(raw_bytes, expected_text):
     font_dictionary = DictionaryObject({
         NameObject("/Type"): NameObject("/Font"),
-        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/Subtype"): NameObject("/Type0"),
         NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Encoding"): NameObject("/Identity-H"),
+        NameObject("/DescendantFonts"): ArrayObject([
+            DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/CIDFontType2"),
+                NameObject("/BaseFont"): NameObject("/Helvetica"),
+            })
+        ]),
     })
     font = Font.from_font_resource(font_dictionary)
-    font.encoding = encoding
+    font.encoding = "utf-16-be"
 
-    # For string: 0xff (255) is out of range for ASCII (0-127)
-    # For dictionary: 0xff (255) is missing from the dict, and bytes((255,)).decode()
-    # throws a UnicodeDecodeError under default UTF-8 rules.
-    parameters = TextStateParams(value=b"\xff", font=font, font_size=10)
+    parameters = TextStateParams(value=raw_bytes, font=font, font_size=10)
 
-    # Assertions: 'replace' mode changes invalid UTF-8 bytes to '\xfffd'.
-    assert parameters.text == "\ufffd"
-    assert parameters._string_value == "\ufffd"
+    assert parameters._raw_chars == expected_text
+    assert parameters.text == expected_text
 
 
 @pytest.mark.timeout(5)
