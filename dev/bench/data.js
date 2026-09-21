@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789979822415,
+  "lastUpdate": 1789992982979,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -113063,6 +113063,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025517647089070613",
             "extra": "mean: 661.9282121999959 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "25c5cdb038fef9415da522d1398eec8d91f52397",
+          "message": "BUG: Layout mode text extraction: Use raw character codes in word_tx for width calculation (#4116)\n\nSince https://github.com/py-pdf/pypdf/pull/3798 we key Font.character_widths\nwith raw values, but, for simple fonts, layout mode text extraction uses\nthe decoded values for calculating character widths. This causes some\nwidths to go missing, which in turn causes spurious spaces to appear in the\ntext extraction result.\n\nThis patch sets the non-binary raw value for word_tx to calculate character\nwidths instead of the decoded value.\n\nCloses #4109.\n\n* ENH: Layout mode text extraction: More precise decode fallback for 16-bit data\n\nIn the layout mode text extraction, we used to have a fallback to utf-8\ndecoding when encountering a unicode decode error. This is correct when the\nfallback applies to both 8-bit and 16-bit encoded data. Now, however, we only\nneed the fallback for 16-bit encoded data. This means that we can make the\nfallback more specific as well.\n\n* ENH: Tests: Update coverage for UnicodeDecodeError in layout mode text extraction\n\nThis patch amends test_text_state_params__unicode_decode_error.\nThe test_text_state_params__unicode_decode_error test was introduced\nto cover to unicode-decode error in a code path that pertained to\ndecoding simple font encoded pdf content data. Now that we've moved\nfrom .decode() to chr(), we will no longer raise a unicode-decode\nerror in that code path any longer. The decode code path still is\npresent for the Type0 decoding branch. This patch amends the test\nso that it covers the Type0 code path instead.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-09-21T14:13:55+02:00",
+          "tree_id": "9dec7a80d83e274113077c555abfe506f2fcc477",
+          "url": "https://github.com/py-pdf/pypdf/commit/25c5cdb038fef9415da522d1398eec8d91f52397"
+        },
+        "date": 1789992973386,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.983542827757946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010484506170401161",
+            "extra": "mean: 251.03282259998423 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.036250172547625,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007944490426886027",
+            "extra": "mean: 38.407988607145526 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3322239853976646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02736013162979833",
+            "extra": "mean: 3.010017470000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 23.011820664968887,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011615147928917926",
+            "extra": "mean: 43.455927045455795 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.10040170329116918,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06321287914492547",
+            "extra": "mean: 9.959990390800021 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9714979438222477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01023616694512927",
+            "extra": "mean: 507.2285280000074 msec\nrounds: 5"
           }
         ]
       }
