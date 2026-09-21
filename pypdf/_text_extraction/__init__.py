@@ -174,17 +174,23 @@ def get_text_operands(
     tm_matrix: list[float],
     font: Font,
     orientations: tuple[int, ...]
-) -> tuple[str, bool]:
-    t: str = ""
+) -> tuple[str, bool, float]:
+    text: str = ""
     is_str_operands = False
+    widths: float = 0.0
+    width_cache: dict[str, float] = {}
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
     if orientation in orientations and len(operands) > 0:
         if isinstance(operands[0], str):
-            t = operands[0]
+            text = operands[0]
             is_str_operands = True
+            widths = sum(
+                [font.space_width if x == font.space_char else font.get_text_width(x) for x in text]
+            )
+
         else:
-            t = ""
+            text = ""
             tt: bytes = (
                 encode_pdfdocencoding(operands[0])
                 if isinstance(operands[0], str)
@@ -192,17 +198,33 @@ def get_text_operands(
             )
             if isinstance(font.encoding, str):  # Apply named encoding
                 try:
-                    t = tt.decode(font.encoding, "surrogatepass")
+                    text = tt.decode(font.encoding, "surrogatepass")
                 except Exception:
                     # The data does not match the expectation,
                     # we use "charmap" encoding as an alternative;
                     # text extraction may not be good.
-                    t = tt.decode("charmap", "surrogatepass")
+                    text = tt.decode("charmap", "surrogatepass")
+                for raw_character in text:
+                    if raw_character == font.space_char:
+                        widths += font.space_width
+                    else:
+                        if raw_character not in width_cache:
+                            width_cache[raw_character] = font.get_text_width(raw_character)
+                        widths += width_cache[raw_character]
             else:  # Apply dict encoding
-                t = "".join(
+                text = "".join(
                     [font.encoding[x] if x in font.encoding else bytes((x,)).decode() for x in tt]
                 )
-    return (t, is_str_operands)
+                for raw_character in text:
+                    if raw_character == font.space_char:
+                        widths += font.space_width
+                    else:
+                        if raw_character not in width_cache:
+                            width_cache[raw_character] = font.get_text_width(raw_character)
+                        widths += width_cache[raw_character]
+
+    width_cache.clear()
+    return (text, is_str_operands, widths)
 
 
 def get_display_str(
