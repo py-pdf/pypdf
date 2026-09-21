@@ -1,4 +1,3 @@
-import sys
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -6,9 +5,7 @@ from typing import (
     cast,
 )
 
-from ..constants import (
-    CatalogAttributes,
-)
+from ..constants import CatalogAttributes
 from ._base import (
     BooleanObject,
     ByteStringObject,
@@ -26,33 +23,31 @@ from ._data_structures import (
     DictionaryObject,
 )
 
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
-
 if TYPE_CHECKING:
     from .._doc_common import PdfDocCommon
+    from .._writer import PdfWriter
 
-def _append_unique_indirect(values: ArrayObject, value: PdfObject) -> None:
+
+def _append_unique_indirect(indirectObjArray: ArrayObject, indirectValue: PdfObject) -> None:
     """
     Utility function to check if an indirect object is already present in an array
-    of indirect objects and append it only if it is not.
+    of indirect objects and append it only if it is not found in the array.
 
     Args:
-        values: The array of indirect objects to which the new object should be appended.
-        value: The indirect object to be appended if it is not already present in the array.
+        indirectObjArray: The array of indirect objects to which the new indirect PDFOObject should be appended
+            if it is not found.
+        indirectValue: The indirect object to be appended if it is not already present in the array.
     """
-    if isinstance(value, IndirectObject) and any(
-        isinstance(existing, IndirectObject) and existing.idnum == value.idnum
-        for existing in values
+    if isinstance(indirectValue, IndirectObject) and any(
+        isinstance(existing, IndirectObject) and existing.idnum == indirectValue.idnum
+        for existing in indirectObjArray
     ):
         return
-    values.append(value)
+    indirectObjArray.append(indirectValue)
 
 
 def _translate_ocg_indirect_object(
-    self: Any, obj: Any, trslat: dict[int, int]
+    writer: "PdfWriter", obj: PdfObject, source_translated_mapping: dict[int, int]
 ) -> Optional[IndirectObject]:
     """
     Merge the pages from the given file into the output file at the
@@ -60,7 +55,7 @@ def _translate_ocg_indirect_object(
 
     Args:
         obj: The object to be translated such as an indirect object from the reader.
-        trslat: A dictionary mapping source object IDs to their corresponding
+        source_translated_mapping: A dictionary mapping source object IDs to their corresponding
             translated object IDs in the writer. This is meant to ensure
             that indirect objects are correctly referenced in the output PDF.
     """
@@ -72,13 +67,13 @@ def _translate_ocg_indirect_object(
         source_obj = obj
     else:
         return None
-    if source_id in trslat:
-        return IndirectObject(trslat[source_id], 0, self)
+    if source_id in source_translated_mapping:
+        return IndirectObject(source_translated_mapping[source_id], 0, writer)
     if isinstance(source_obj, DictionaryObject):
-        source_obj.clone(self)
-    if source_id not in trslat:
+        source_obj.clone(writer)
+    if source_id not in source_translated_mapping:
         return None
-    return IndirectObject(trslat[source_id], 0, self)
+    return IndirectObject(source_translated_mapping[source_id], 0, writer)
 
 
 def _map_ocg_array(
