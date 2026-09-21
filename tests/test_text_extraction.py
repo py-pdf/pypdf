@@ -38,7 +38,7 @@ from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 
 @pytest.mark.samples
-@pytest.mark.parametrize(("visitor_text"), [None, lambda a, b, c, d, e: None])  # noqa: ARG005
+@pytest.mark.parametrize("visitor_text", [None, lambda a, b, c, d, e: None], ids=["none", "lambda-none"])  # noqa: ARG005
 def test_multi_language(visitor_text):
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
     txt = reader.pages[0].extract_text(visitor_text=visitor_text)
