@@ -1,4 +1,5 @@
 """Tests for pypdf.generic._outline module."""
+
 from io import BytesIO
 
 import pytest
@@ -10,6 +11,7 @@ from pypdf.generic import (
     DictionaryObject,
     IndirectObject,
     NameObject,
+    NullObject,
     TextStringObject,
     TreeObject,
 )
@@ -53,10 +55,12 @@ def test_resolve_goto_action() -> None:
     writer.add_blank_page(200, 200)
     page_ref = writer.pages[0].indirect_reference
 
-    action = DictionaryObject({
-        NameObject("/S"): NameObject("/GoTo"),
-        NameObject("/D"): ArrayObject([page_ref, NameObject("/Fit")]),
-    })
+    action = DictionaryObject(
+        {
+            NameObject("/S"): NameObject("/GoTo"),
+            NameObject("/D"): ArrayObject([page_ref, NameObject("/Fit")]),
+        }
+    )
     child = DictionaryObject()
     child[NameObject("/A")] = action
 
@@ -102,10 +106,12 @@ def test_resolve_returns_none_for_goto_without_d() -> None:
 
 def test_resolve_returns_none_for_goto_empty_d() -> None:
     """Return None when /A GoTo has an empty /D array."""
-    action = DictionaryObject({
-        NameObject("/S"): NameObject("/GoTo"),
-        NameObject("/D"): ArrayObject([]),
-    })
+    action = DictionaryObject(
+        {
+            NameObject("/S"): NameObject("/GoTo"),
+            NameObject("/D"): ArrayObject([]),
+        }
+    )
     child = DictionaryObject()
     child[NameObject("/A")] = action
     assert _resolve_outline_dest_page_ref(child) is None
@@ -175,17 +181,13 @@ def test_find_before_page_skips_unresolvable(caplog: pytest.LogCaptureFixture) -
 
     # Unresolvable child (idnum 9999 doesn't correspond to a page)
     bad_child = TreeObject()
-    bad_child[NameObject("/Dest")] = ArrayObject(
-        [IndirectObject(9999, 0, writer), NameObject("/Fit")]
-    )
+    bad_child[NameObject("/Dest")] = ArrayObject([IndirectObject(9999, 0, writer), NameObject("/Fit")])
     writer._add_object(bad_child)
     parent.insert_child(bad_child, None, writer)
 
     # Good child pointing to page 1
     good_child = TreeObject()
-    good_child[NameObject("/Dest")] = ArrayObject(
-        [writer.pages[1].indirect_reference, NameObject("/Fit")]
-    )
+    good_child[NameObject("/Dest")] = ArrayObject([writer.pages[1].indirect_reference, NameObject("/Fit")])
     writer._add_object(good_child)
     parent.insert_child(good_child, None, writer)
 
@@ -215,9 +217,7 @@ def test_find_before_page_skips_value_error(caplog: pytest.LogCaptureFixture) ->
 
     # Good child pointing to page 0
     good_child = TreeObject()
-    good_child[NameObject("/Dest")] = ArrayObject(
-        [writer.pages[0].indirect_reference, NameObject("/Fit")]
-    )
+    good_child[NameObject("/Dest")] = ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")])
     writer._add_object(good_child)
     parent.insert_child(good_child, None, writer)
 
@@ -258,9 +258,7 @@ def test_find_before_page_skips_none_page_ref() -> None:
 
     # Good child pointing to page 0
     good_child = TreeObject()
-    good_child[NameObject("/Dest")] = ArrayObject(
-        [writer.pages[0].indirect_reference, NameObject("/Fit")]
-    )
+    good_child[NameObject("/Dest")] = ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")])
     writer._add_object(good_child)
     parent.insert_child(good_child, None, writer)
 
@@ -372,9 +370,7 @@ def test_merge_outline_with_dest_array() -> None:
     item = TreeObject()
     writer_a._add_object(item)
     item[NameObject("/Title")] = TextStringObject("A_Dest")
-    item[NameObject("/Dest")] = ArrayObject(
-        [writer_a.pages[1].indirect_reference, NameObject("/Fit")]
-    )
+    item[NameObject("/Dest")] = ArrayObject([writer_a.pages[1].indirect_reference, NameObject("/Fit")])
     outline_root.insert_child(item, None, writer_a)
     buf_a = BytesIO()
     writer_a.write(buf_a)
@@ -395,16 +391,16 @@ def test_merge_outline_with_dest_array() -> None:
 
 def test_resolve_dest_null_falls_through_to_action() -> None:
     """When /Dest is a NullObject, fall through to /A GoTo."""
-    from pypdf.generic import NullObject
-
     writer = PdfWriter()
     writer.add_blank_page(200, 200)
     page_ref = writer.pages[0].indirect_reference
 
-    action = DictionaryObject({
-        NameObject("/S"): NameObject("/GoTo"),
-        NameObject("/D"): ArrayObject([page_ref, NameObject("/Fit")]),
-    })
+    action = DictionaryObject(
+        {
+            NameObject("/S"): NameObject("/GoTo"),
+            NameObject("/D"): ArrayObject([page_ref, NameObject("/Fit")]),
+        }
+    )
     child = DictionaryObject()
     child[NameObject("/Dest")] = NullObject()
     child[NameObject("/A")] = action
@@ -565,4 +561,3 @@ def test_merge_multiple_bookmarks_on_same_page() -> None:
     assert len(titles) == 4
     # B1 should appear before the A1-* bookmarks (which point to page >= 1)
     assert titles[0] == "B1"
-

@@ -11,19 +11,11 @@ if TYPE_CHECKING:
 
 
 class OutlineItem(Destination):
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
-    ) -> None:
+    def write_to_stream(self, stream: StreamType, encryption_key: Union[str, bytes, None] = None) -> None:
         if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+            deprecation_no_replacement("the encryption_key parameter of write_to_stream", "5.0.0")
         stream.write(b"<<\n")
-        for key in [
-            NameObject(x)
-            for x in ["/Title", "/Parent", "/First", "/Last", "/Next", "/Prev"]
-            if x in self
-        ]:
+        for key in [NameObject(x) for x in ["/Title", "/Parent", "/First", "/Last", "/Next", "/Prev"] if x in self]:
             key.write_to_stream(stream)
             stream.write(b" ")
             value = self.raw_get(key)
@@ -107,9 +99,7 @@ def _find_outline_item_before_page(
         if page_ref is None:
             continue
         try:
-            child_page_number = writer._get_page_number_by_indirect(
-                page_ref, _page_cache=page_cache
-            )
+            child_page_number = writer._get_page_number_by_indirect(page_ref, _page_cache=page_cache)
         except (PdfReadError, ValueError) as exc:
             logger_warning(
                 f"Could not resolve page number for outline item: {exc}",
