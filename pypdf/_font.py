@@ -440,14 +440,19 @@ class Font:
 
         else:
             # Composite font or CID font - CID fonts have a /W array mapping character codes
-            # to widths stashed in /DescendantFonts. No need to test for /DescendantFonts though,
-            # because all other fonts have already been dealt with.
+            # to widths stashed in /DescendantFonts.
+            descendant_fonts = pdf_font_dict.get("/DescendantFonts", ArrayObject()).get_object()
+            if not isinstance(descendant_fonts, ArrayObject):
+                logger_warning(
+                    "Expected an array for /DescendantFonts, got %(descendant_fonts)s. Ignoring it.",
+                    source=__name__,
+                    descendant_fonts=descendant_fonts,
+                )
+                descendant_fonts = ArrayObject()
             d_font: DictionaryObject
-            for d_font_idx, d_font in enumerate(
-                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
-            ):
+            for d_font_idx, d_font in enumerate(descendant_fonts):
                 d_font = cast(DictionaryObject, d_font.get_object())
-                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
+                descendant_fonts[d_font_idx] = d_font
                 cls._collect_cid_character_widths(d_font=d_font, current_widths=character_widths)
                 if "/DW" in d_font:
                     character_widths["default"] = cast(int, d_font["/DW"].get_object())
