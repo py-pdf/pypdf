@@ -16,18 +16,11 @@ def _create_test_font() -> Font:
 
 def test_get_display_str_caches_repeated_character_lookups(monkeypatch) -> None:
     font = _create_test_font()
-    width_calls = 0
     neutral_calls = 0
     rtl_calls = 0
 
-    original_width = font.get_text_width
     original_neutral = text_extraction.is_char_neutral
     original_rtl = text_extraction.is_char_rtl
-
-    def counted_width(text: str = "") -> float:
-        nonlocal width_calls
-        width_calls += 1
-        return original_width(text)
 
     def counted_neutral(char: str, custom_special_characters: str = "") -> bool:
         nonlocal neutral_calls
@@ -39,12 +32,11 @@ def test_get_display_str_caches_repeated_character_lookups(monkeypatch) -> None:
         rtl_calls += 1
         return original_rtl(char, custom_rtl_min, custom_rtl_max)
 
-    monkeypatch.setattr(font, "get_text_width", counted_width)
     monkeypatch.setattr(text_extraction, "is_char_neutral", counted_neutral)
     monkeypatch.setattr(text_extraction, "is_char_rtl", counted_rtl)
 
     operands = "A" * 10_000
-    text, rtl_dir, widths = text_extraction.get_display_str(
+    text, rtl_dir = text_extraction.get_display_str(
         text="",
         cm_matrix=[1, 0, 0, 1, 0, 0],
         tm_matrix=[1, 0, 0, 1, 0, 0],
@@ -58,8 +50,6 @@ def test_get_display_str_caches_repeated_character_lookups(monkeypatch) -> None:
 
     assert text == operands
     assert rtl_dir is False
-    assert widths == 6_000_000
-    assert width_calls == 1
     assert neutral_calls == 1
     assert rtl_calls == 1
 
