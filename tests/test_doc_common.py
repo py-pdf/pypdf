@@ -1313,7 +1313,7 @@ def test_outline__action_without_s():
     assert [item.title for item in outline] == ["Item"]
 
 
-def test_outline__action_without_s_strict():
+def test_outline__action_without_s__strict():
     """In strict mode the missing /S must be reported."""
     action = DictionaryObject()
     action[NameObject("/D")] = ArrayObject([NumberObject(0), NameObject("/Fit")])
