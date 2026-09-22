@@ -53,24 +53,23 @@ class TextStateParams:
     flip_vertical: bool = field(default=False, init=False)
     rotated: bool = field(default=False, init=False)
     text: str = ""
-    _decoded_value: str = ""
+    _raw_chars: str = ""
 
     def __post_init__(self) -> None:
+        decoded_value: str = ""
         if isinstance(self.value, bytes):
-            try:
-                if isinstance(self.font.encoding, str):
-                    self._decoded_value = self.value.decode(self.font.encoding, "surrogatepass")
-                else:
-                    self._decoded_value = "".join(
-                        self.font.encoding[x]
-                        if x in self.font.encoding
-                        else bytes((x,)).decode()
-                        for x in self.value
-                    )
-            except UnicodeDecodeError:
-                self._decoded_value = self.value.decode("utf-8", "replace")
+            if isinstance(self.font.encoding, str):
+                try:
+                    # Decode 2-byte UTF-16-BE units
+                    self._raw_chars = self.value.decode(self.font.encoding, "surrogatepass")
+                except UnicodeDecodeError:
+                    # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
+                    self._raw_chars = self.value.decode(self.font.encoding, "surrogateescape")
+            else:
+                self._raw_chars = "".join(chr(byte) for byte in self.value)
+                decoded_value = "".join(self.font.encoding.get(x, chr(x)) for x in self.value)
             self.text = "".join(
-                self.font.character_map.get(x, x) for x in self._decoded_value
+                self.font.character_map.get(x, x) for x in (decoded_value or self._raw_chars)
             )
         else:
             self.text = self.value
@@ -139,9 +138,8 @@ class TextStateParams:
     def word_tx(self, word: Union[bytes, str], td_offset: float = 0.0) -> float:
         """Horizontal text displacement for any word according this text state"""
         width: float = 0.0
-
         if isinstance(word, bytes):
-            word = self._decoded_value
+            word = self._raw_chars
 
         for char in word:
             if char == self.font.space_char:
