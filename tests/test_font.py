@@ -83,6 +83,39 @@ def test_collect_cid_character_widths_truncated_w(w_array):
     Font.from_font_resource(font_res)
 
 
+@pytest.mark.parametrize(
+    ("descendant_fonts", "expected"),
+    [
+        pytest.param(None, "", id="absent"),
+        pytest.param(
+            DictionaryObject(),
+            "Expected an array for /DescendantFonts, got {}. Ignoring it.",
+            id="dictionary",
+        ),
+        pytest.param(
+            TextStringObject("x"),
+            "Expected an array for /DescendantFonts, got x. Ignoring it.",
+            id="string",
+        ),
+    ],
+)
+def test_font__from_font_resource__descendant_fonts_not_an_array(
+    descendant_fonts, expected, caplog
+):
+    """A composite font whose /DescendantFonts cannot be read still builds a font."""
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Foo"),
+    })
+    if descendant_fonts is not None:
+        font_res[NameObject("/DescendantFonts")] = descendant_fonts
+
+    font = Font.from_font_resource(font_res)
+
+    assert font is not None
+    assert expected in caplog.text
+
+
 @pytest.mark.parametrize("bbox", [
     pytest.param(ArrayObject([NumberObject(0), NumberObject(0), NumberObject(100)]), id="too-short"),
     pytest.param(ArrayObject(NumberObject(v) for v in range(6)), id="too-long"),
@@ -449,3 +482,54 @@ def test_font__collect_tt_t1_character_widths__limits():
             current_widths=current_widths,
         )
     assert current_widths == {}
+
+
+def test_font__collect_tt_t1_character_widths():
+    reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
+    font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F2"])
+    assert font.character_widths == {
+        "\x00": 1000,
+        "\x01": 1000,
+        "\x02": 1000,
+        "\x03": 1000,
+        "\x04": 1000,
+        "\x05": 1000,
+        "\x06": 1000,
+        "\x07": 1000,
+        "\x08": 1000,
+        "\t": 1000,
+        "default": 1000
+    }
+
+
+@pytest.mark.parametrize(
+    ("first_character_code", "expected_widths", "expected_message"),
+    [
+        (-1, {}, "Ignoring invalid /FirstChar -1 < 0."),
+        (
+            250,
+            {"ú": 42, "û": 42, "ü": 42, "ý": 42, "þ": 42, "ÿ": 42},
+            "Ignoring invalid character codes > 255 (starting at 256)."
+        ),
+    ],
+    ids=["negative", "too-large"]
+)
+def test_font__collect_tt_t1_character_widths__out_of_range(
+        caplog: pytest.LogCaptureFixture,
+        first_character_code: int,
+        expected_widths: dict[str, int],
+        expected_message: str
+) -> None:
+    font_resource = DictionaryObject({
+        NameObject("/Widths"): ArrayObject([NumberObject(42)] * 10),
+        NameObject("/FirstChar"): NumberObject(first_character_code),
+    })
+    current_widths = {}
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+    assert current_widths == expected_widths
+    assert caplog.messages == [expected_message]

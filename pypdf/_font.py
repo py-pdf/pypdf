@@ -44,7 +44,7 @@ except ImportError:
 MAX_CID_WIDTH_ENTRY_COUNT = 65_536
 MAX_WIDTH_ENTRY_COUNT = 100_000
 # For a simple font, character codes are one-byte values, 0-255, so /Widths can have at most 256 meaningful entries.
-MAX_SIMPLE_FONT_WIDTH_ENTRY_COUNT = 256
+MAX_SIMPLE_FONT_CHARACTER_CODE = 255
 
 
 # Some constants from truetype font tables that we use:
@@ -160,11 +160,24 @@ class Font:
             )
             return
         Font.__check_entry_count(
-            len(widths_array), MAX_SIMPLE_FONT_WIDTH_ENTRY_COUNT
+            len(widths_array), MAX_SIMPLE_FONT_CHARACTER_CODE + 1
         )
         first_char = pdf_font_dict.get("/FirstChar", 0)
-        for idx, width in enumerate(widths_array):
-            current_widths[chr(idx + first_char)] = int(width)
+        if first_char < 0:
+            logger_warning(
+                "Ignoring invalid /FirstChar %(code)d < 0.", source=__name__, code=first_char
+            )
+            return
+        for character_code, width in enumerate(widths_array, start=first_char):
+            if character_code > MAX_SIMPLE_FONT_CHARACTER_CODE:
+                logger_warning(
+                    "Ignoring invalid character codes > %(limit)d (starting at %(code)d).",
+                    source=__name__,
+                    code=character_code,
+                    limit=MAX_SIMPLE_FONT_CHARACTER_CODE
+                )
+                break
+            current_widths[chr(character_code)] = int(width)
 
     @staticmethod
     def __check_range_length(start: int, end: int) -> None:
@@ -434,14 +447,19 @@ class Font:
 
         else:
             # Composite font or CID font - CID fonts have a /W array mapping character codes
-            # to widths stashed in /DescendantFonts. No need to test for /DescendantFonts though,
-            # because all other fonts have already been dealt with.
+            # to widths stashed in /DescendantFonts.
+            descendant_fonts = pdf_font_dict.get("/DescendantFonts", ArrayObject()).get_object()
+            if not isinstance(descendant_fonts, ArrayObject):
+                logger_warning(
+                    "Expected an array for /DescendantFonts, got %(descendant_fonts)s. Ignoring it.",
+                    source=__name__,
+                    descendant_fonts=descendant_fonts,
+                )
+                descendant_fonts = ArrayObject()
             d_font: DictionaryObject
-            for d_font_idx, d_font in enumerate(
-                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
-            ):
+            for d_font_idx, d_font in enumerate(descendant_fonts):
                 d_font = cast(DictionaryObject, d_font.get_object())
-                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
+                descendant_fonts[d_font_idx] = d_font
                 cls._collect_cid_character_widths(d_font=d_font, current_widths=character_widths)
                 if "/DW" in d_font:
                     character_widths["default"] = cast(int, d_font["/DW"].get_object())
