@@ -183,11 +183,8 @@ class TextExtraction:
         )
         if is_str_operands:
             text += text_operands
-            old_font_widths = sum(
-                [font.space_width if x == font.space_char else font.get_text_width(x) for x in text_operands]
-            )
         else:
-            text, rtl_dir, old_font_widths = get_display_str(
+            text, rtl_dir = get_display_str(
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix

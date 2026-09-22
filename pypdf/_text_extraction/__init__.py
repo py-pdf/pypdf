@@ -237,25 +237,16 @@ def get_display_str(
     font_size: float,
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
-) -> tuple[str, bool, float]:
+) -> tuple[str, bool]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
-    widths: float = 0.0
-    width_cache: dict[str, float] = {}
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
 
     def clear_character_caches() -> None:
-        width_cache.clear()
         neutral_cache.clear()
         rtl_cache.clear()
 
     for raw_character in text_operands:
-        if raw_character == font.space_char:
-            widths += font.space_width
-        else:
-            if raw_character not in width_cache:
-                width_cache[raw_character] = font.get_text_width(raw_character)
-            widths += width_cache[raw_character]
         x = font.character_map.get(raw_character, raw_character)
         # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
@@ -288,4 +279,4 @@ def get_display_str(
         else:
             # Treat a sequence of bytes as a neutral character.
             text = x + text if rtl_dir else text + x
-    return text, rtl_dir, widths
+    return text, rtl_dir
