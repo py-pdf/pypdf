@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790057894684,
+  "lastUpdate": 1790060011993,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -140125,6 +140125,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003569840614698726",
             "extra": "mean: 841.9115414000089 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "359f70dbad2a5425d421f70bc9103271e26264a1",
+          "message": "ROB: Do not crash on a composite font without descendant fonts (#4119)\n\nfrom_font_resource reads /DescendantFonts directly on the composite-font\nbranch, with a comment stating the entry does not need to be tested for because\nevery other font subtype has already been handled. That holds for the subtype,\nnot for the entry: a /Type0 font which omits /DescendantFonts raised a bare\nKeyError out of extract_text(), and one storing a dictionary or a string there\nwas cast to an ArrayObject and enumerated.\n\nThe entry is now read with a default and checked, matching how the same\nfunction already reads /FontDescriptor. A composite font whose descendants\ncannot be read still yields a font, with its widths left empty, rather than\nfailing the page.",
+          "timestamp": "2026-09-22T08:50:25+02:00",
+          "tree_id": "3f62079b48acf1ea0a0fe6d6b9d742c63e443ad4",
+          "url": "https://github.com/py-pdf/pypdf/commit/359f70dbad2a5425d421f70bc9103271e26264a1"
+        },
+        "date": 1790060001492,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.450055021433373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017837751451481223",
+            "extra": "mean: 74.34913823076911 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.878611842358293,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016389975338295303",
+            "extra": "mean: 59.246578411763466 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0002781741593403,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02393964899650659",
+            "extra": "mean: 999.7219032000032 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.43243582691810084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03618333192928001",
+            "extra": "mean: 2.3124818475999915 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3781474999766668,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00425975196019808",
+            "extra": "mean: 2.6444707424000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2405268740730493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003250407447805468",
+            "extra": "mean: 806.1090984000032 msec\nrounds: 5"
           }
         ]
       }
