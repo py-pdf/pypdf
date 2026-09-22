@@ -215,9 +215,7 @@ def get_text_operands(
                             width_cache[raw_character] = font.get_text_width(raw_character)
                         widths += width_cache[raw_character]
             else:  # Apply dict encoding
-                text = "".join(
-                    [font.encoding[x] if x in font.encoding else bytes((x,)).decode() for x in tt]
-                )
+                text = "".join(font.encoding.get(x, chr(x)) for x in tt)
                 for raw_byte in tt:
                     if (raw_character := chr(raw_byte)) == font.space_char:
                         widths += font.space_width
