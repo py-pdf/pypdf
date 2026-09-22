@@ -202,11 +202,9 @@ def get_text_operands(
             if isinstance(font.encoding, str):  # Apply named encoding
                 try:
                     text = tt.decode(font.encoding, "surrogatepass")
-                except Exception:
-                    # The data does not match the expectation,
-                    # we use "charmap" encoding as an alternative;
-                    # text extraction may not be good.
-                    text = tt.decode("charmap", "surrogatepass")
+                except UnicodeDecodeError:
+                    # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
+                    text = tt.decode(font.encoding, "surrogateescape")
                 for raw_character in text:
                     if raw_character == font.space_char:
                         widths += font.space_width
