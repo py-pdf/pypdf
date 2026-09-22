@@ -151,7 +151,14 @@ class Font:
         current_widths: dict[str, float]
     ) -> None:
         """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
-        widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
+        widths_array = pdf_font_dict["/Widths"].get_object()
+        if not isinstance(widths_array, ArrayObject):
+            logger_warning(
+                "Expected an array for /Widths, got %(widths_array)s. Ignoring it.",
+                source=__name__,
+                widths_array=widths_array,
+            )
+            return
         Font.__check_entry_count(
             len(widths_array), MAX_SIMPLE_FONT_CHARACTER_CODE + 1
         )

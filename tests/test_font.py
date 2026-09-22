@@ -419,6 +419,42 @@ def test__create_widths_list_and_unicode_stream():
     )
 
 
+@pytest.mark.parametrize(
+    ("widths", "expected"),
+    [
+        pytest.param(
+            TextStringObject("bad"),
+            "Expected an array for /Widths, got bad. Ignoring it.",
+            id="string",
+        ),
+        pytest.param(
+            NumberObject(5),
+            "Expected an array for /Widths, got 5. Ignoring it.",
+            id="number",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Expected an array for /Widths, got {}. Ignoring it.",
+            id="dictionary",
+        ),
+    ],
+)
+def test_font__collect_tt_t1_character_widths__not_an_array(widths, expected, caplog):
+    """A /Widths entry which is not an array is reported and the widths are skipped."""
+    font_resource = DictionaryObject({NameObject("/Widths"): widths})
+    current_widths = {}
+
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+
+    assert current_widths == {}
+    assert expected in caplog.text
+
+
 def test_font__collect_tt_t1_character_widths__limits():
     font_resource = DictionaryObject({
         NameObject("/Widths"): ArrayObject([NumberObject(42)] * 256),
