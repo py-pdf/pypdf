@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790062401180,
+  "lastUpdate": 1790062472491,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -113327,6 +113327,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003541071694196361",
             "extra": "mean: 664.8265532000096 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ebae1a58fd6d692bfc6444aec85490700b41dfbf",
+          "message": "ROB: Do not crash when the font widths are not an array (#4118)\n\n_collect_tt_t1_character_widths casts the /Widths entry of a TrueType or Type1\nfont to an ArrayObject and enumerates it, so a file storing a string there\nraised 'ValueError: invalid literal for int() with base 10' out of\nextract_text() when the characters were passed to int().\n\nThe entry is now checked and a font whose widths cannot be read is reported and\nskipped, which is how the surrounding code already handles a non-numeric width\nentry.",
+          "timestamp": "2026-09-22T09:30:41+02:00",
+          "tree_id": "407235348f1f4d8f8ec3a18149900b96eca37ba0",
+          "url": "https://github.com/py-pdf/pypdf/commit/ebae1a58fd6d692bfc6444aec85490700b41dfbf"
+        },
+        "date": 1790062462043,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.5738287779533997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01253582395093648",
+            "extra": "mean: 388.5262332000025 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.430942057440994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003086709987260173",
+            "extra": "mean: 57.369245833337835 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2229356168898475,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014479255343604489",
+            "extra": "mean: 4.485599985999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.400833229038092,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012570511605283303",
+            "extra": "mean: 57.4685123888909 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07375140199232151,
+            "unit": "iter/sec",
+            "range": "stddev: 0.060954996380878146",
+            "extra": "mean: 13.55906427519999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5095826428245602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003622234139119791",
+            "extra": "mean: 662.4347496000041 msec\nrounds: 5"
           }
         ]
       }
