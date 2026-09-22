@@ -277,14 +277,14 @@ class Font:
         character_map: dict[Any, Any],
     ) -> str:
         space_char = " "
+        for glyph_id, char_str in character_map.items():
+            if char_str == space_char:
+                return str(glyph_id)
+
         if isinstance(encoding, dict):
             for char_code, char_str in encoding.items():
                 if char_str == space_char:
                     return chr(char_code)
-
-        for glyph_id, char_str in character_map.items():
-            if char_str == space_char:
-                return str(glyph_id)
 
         return space_char
 
