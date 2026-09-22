@@ -185,10 +185,13 @@ def get_text_operands(
         if isinstance(operands[0], str):
             text = operands[0]
             is_str_operands = True
-            widths = sum(
-                [font.space_width if x == font.space_char else font.get_text_width(x) for x in text]
-            )
-
+            for char in text:
+                if char == font.space_char:
+                    widths += font.space_width
+                else:
+                    if char not in width_cache:
+                        width_cache[char] = font.get_text_width(char)
+                    widths += width_cache[char]
         else:
             text = ""
             tt: bytes = (
