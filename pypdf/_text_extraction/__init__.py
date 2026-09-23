@@ -174,17 +174,20 @@ def get_text_operands(
     tm_matrix: list[float],
     font: Font,
     orientations: tuple[int, ...]
-) -> tuple[str, bool]:
-    t: str = ""
+) -> tuple[str, bool, float]:
+    text: str = ""
     is_str_operands = False
+    widths: float = 0.0
+    width_cache: dict[str, float] = {}
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
+    raw_characters: str = ""
     if orientation in orientations and len(operands) > 0:
         if isinstance(operands[0], str):
-            t = operands[0]
+            text = operands[0]
             is_str_operands = True
         else:
-            t = ""
+            text = ""
             tt: bytes = (
                 encode_pdfdocencoding(operands[0])
                 if isinstance(operands[0], str)
@@ -192,17 +195,23 @@ def get_text_operands(
             )
             if isinstance(font.encoding, str):  # Apply named encoding
                 try:
-                    t = tt.decode(font.encoding, "surrogatepass")
-                except Exception:
-                    # The data does not match the expectation,
-                    # we use "charmap" encoding as an alternative;
-                    # text extraction may not be good.
-                    t = tt.decode("charmap", "surrogatepass")
+                    text = tt.decode(font.encoding, "surrogatepass")
+                except UnicodeDecodeError:
+                    # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
+                    text = tt.decode(font.encoding, "surrogateescape")
             else:  # Apply dict encoding
-                t = "".join(
-                    [font.encoding[x] if x in font.encoding else bytes((x,)).decode() for x in tt]
-                )
-    return (t, is_str_operands)
+                text = "".join(font.encoding.get(x, chr(x)) for x in tt)
+                raw_characters = "".join(chr(byte) for byte in tt)
+        for char in (raw_characters or text):
+            if char == font.space_char:
+                widths += font.space_width
+            else:
+                if char not in width_cache:
+                    width_cache[char] = font.get_text_width(char)
+                widths += width_cache[char]
+
+    width_cache.clear()
+    return (text, is_str_operands, widths)
 
 
 def get_display_str(
@@ -215,25 +224,16 @@ def get_display_str(
     font_size: float,
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
-) -> tuple[str, bool, float]:
+) -> tuple[str, bool]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
-    widths: float = 0.0
-    width_cache: dict[str, float] = {}
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
 
     def clear_character_caches() -> None:
-        width_cache.clear()
         neutral_cache.clear()
         rtl_cache.clear()
 
     for raw_character in text_operands:
-        if raw_character == font.space_char:
-            widths += font.space_width
-        else:
-            if raw_character not in width_cache:
-                width_cache[raw_character] = font.get_text_width(raw_character)
-            widths += width_cache[raw_character]
         x = font.character_map.get(raw_character, raw_character)
         # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
@@ -266,4 +266,4 @@ def get_display_str(
         else:
             # Treat a sequence of bytes as a neutral character.
             text = x + text if rtl_dir else text + x
-    return text, rtl_dir, widths
+    return text, rtl_dir
