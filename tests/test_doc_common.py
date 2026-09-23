@@ -1293,6 +1293,61 @@ def test_outline__reads_a_well_formed_outline():
     ]
 
 
+def _generate_reader_with_outline_action(action: DictionaryObject) -> PdfReader:
+    """A reader whose single outline item carries the given /A action."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    item = DictionaryObject()
+    item[NameObject("/Title")] = TextStringObject("Item")
+    item[NameObject("/A")] = writer._add_object(action)
+    item_ref = writer._add_object(item)
+
+    outlines = DictionaryObject()
+    outlines[NameObject("/Type")] = NameObject("/Outlines")
+    outlines[NameObject("/First")] = item_ref
+    outlines[NameObject("/Last")] = item_ref
+    outlines[NameObject("/Count")] = NumberObject(1)
+    writer.root_object[NameObject("/Outlines")] = writer._add_object(outlines)
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    return PdfReader(stream)
+
+
+def test_outline__action_without_s():
+    """An /A action without /S must keep the item rather than raise KeyError."""
+    action = DictionaryObject()
+    action[NameObject("/D")] = ArrayObject([NumberObject(0), NameObject("/Fit")])
+
+    outline = _generate_reader_with_outline_action(action).outline
+
+    assert [item.title for item in outline] == ["Item"]
+
+
+def test_outline__action_without_s__strict():
+    """In strict mode the missing /S must be reported."""
+    action = DictionaryObject()
+    action[NameObject("/D")] = ArrayObject([NumberObject(0), NameObject("/Fit")])
+    reader = _generate_reader_with_outline_action(action)
+    reader.strict = True
+
+    with pytest.raises(PdfReadError, match="Outline Action Missing /S attribute"):
+        _ = reader.outline
+
+
+def test_outline__goto_action_without_d_strict():
+    """A /GoTo action without /D must be reported in strict mode."""
+    action = DictionaryObject()
+    action[NameObject("/S")] = NameObject("/GoTo")
+    reader = _generate_reader_with_outline_action(action)
+    reader.strict = True
+
+    with pytest.raises(PdfReadError, match="Outline Action Missing /D attribute"):
+        _ = reader.outline
+
+
 @pytest.mark.parametrize(
     ("key", "value", "expected"),
     [
