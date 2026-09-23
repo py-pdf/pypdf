@@ -46,10 +46,10 @@ def _get_data_members(protocol: type) -> set:
 )
 def test_data_members_are_declared_on_the_class(cls, protocol):
     """
-    Runtime protocol checks resolve members on the class, not on an instance.
+    Every data member of the protocol is declared in the class body.
 
-    Attributes which are only assigned in ``__init__`` are therefore invisible
-    to them, which is what made ``make testtype`` report hundreds of failures.
+    Runtime protocol checks resolve members on the class, not on an instance,
+    so a data member has to be visible on the class itself.
     """
     annotations = typing.get_type_hints(cls)
     missing = sorted(

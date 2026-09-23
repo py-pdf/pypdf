@@ -187,12 +187,15 @@ class PdfWriter(PdfDocCommon):
     """
 
     _id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]]
-    """List of already translated IDs.
-       dict[id(pdf)][(idnum, generation)]
+    """
+    List of already translated IDs.
+    dict[id(pdf)][(idnum, generation)]
     """
 
     _reader: Optional[PdfReader]
-    """The document being appended to, in incremental mode only."""
+    """
+    The document being appended to, in incremental mode only.
+    """
 
     def __init__(
         self,
