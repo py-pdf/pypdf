@@ -2557,22 +2557,21 @@ class PdfWriter(PdfDocCommon):
             and isinstance(destination, DictionaryObject)
             and "target_page_index" in destination
         ):
-            target_page_reference: Union[IndirectObject, NumberObject]
             target_page_index = cast(int, destination["target_page_index"])
             fit_type = cast(str, destination["fit"])
             # Work around the intermediate destination containing native Python
             # objects instead of PdfObject instances.
             fit_args = cast(Sequence[Any], dict(destination)["fit_args"])
 
-            if 0 <= target_page_index < len(self.pages):
-                target_page_reference = cast(
-                    IndirectObject,
-                    self.pages[target_page_index].indirect_reference,
+            if target_page_index < 0 or target_page_index >= len(self.pages):
+                raise ValueError(
+                    f"Target page {target_page_index} does not exist"
                 )
-            else:
-                # Preserve support for referencing a page that may be added
-                # later. See #2450.
-                target_page_reference = NumberObject(target_page_index)
+
+            target_page_reference = cast(
+                IndirectObject,
+                self.pages[target_page_index].indirect_reference,
+            )
 
             to_add[NameObject("/Dest")] = Destination(
                 NameObject("/LinkName"),
