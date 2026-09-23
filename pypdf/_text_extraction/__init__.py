@@ -181,17 +181,11 @@ def get_text_operands(
     width_cache: dict[str, float] = {}
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
+    raw_characters: str = ""
     if orientation in orientations and len(operands) > 0:
         if isinstance(operands[0], str):
             text = operands[0]
             is_str_operands = True
-            for char in text:
-                if char == font.space_char:
-                    widths += font.space_width
-                else:
-                    if char not in width_cache:
-                        width_cache[char] = font.get_text_width(char)
-                    widths += width_cache[char]
         else:
             text = ""
             tt: bytes = (
@@ -205,22 +199,16 @@ def get_text_operands(
                 except UnicodeDecodeError:
                     # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
                     text = tt.decode(font.encoding, "surrogateescape")
-                for raw_character in text:
-                    if raw_character == font.space_char:
-                        widths += font.space_width
-                    else:
-                        if raw_character not in width_cache:
-                            width_cache[raw_character] = font.get_text_width(raw_character)
-                        widths += width_cache[raw_character]
             else:  # Apply dict encoding
                 text = "".join(font.encoding.get(x, chr(x)) for x in tt)
-                for raw_byte in tt:
-                    if (raw_character := chr(raw_byte)) == font.space_char:
-                        widths += font.space_width
-                    else:
-                        if raw_character not in width_cache:
-                            width_cache[raw_character] = font.get_text_width(raw_character)
-                        widths += width_cache[raw_character]
+                raw_characters = "".join(chr(byte) for byte in tt)
+        for char in (raw_characters or text):
+            if char == font.space_char:
+                widths += font.space_width
+            else:
+                if char not in width_cache:
+                    width_cache[char] = font.get_text_width(char)
+                widths += width_cache[char]
 
     width_cache.clear()
     return (text, is_str_operands, widths)
