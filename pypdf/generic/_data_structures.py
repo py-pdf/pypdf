@@ -173,7 +173,7 @@ class ArrayObject(list[Any], PdfObject):
         elif isinstance(lst, PdfObject):
             result = [lst]
         elif isinstance(lst, str):
-            if lst[0] == "/":
+            if lst.startswith("/"):
                 result = [NameObject(lst)]
             else:
                 result = [TextStringObject(lst)]
