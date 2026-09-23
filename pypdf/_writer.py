@@ -1879,10 +1879,8 @@ class PdfWriter(PdfDocCommon):
             elif isinstance(page_number, PageObject):
                 page_ref = page_number.indirect_reference
             elif isinstance(page_number, int):
-                try:
-                    page_ref = self.pages[page_number].indirect_reference
-                except IndexError:
-                    page_ref = NumberObject(page_number)
+                self._get_page_reference(page_number)
+                page_ref = self.pages[page_number].indirect_reference
             else:
                 raise TypeError(f"page_number: invalid type {type(page_number)}")
             if page_ref is None:
