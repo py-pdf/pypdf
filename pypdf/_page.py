@@ -1152,9 +1152,9 @@ class PageObject(DictionaryObject):
             return ContentStream(resolved_object, pdf)
         return None
 
-    def _content_references_of_other_pages(self, writer: Any) -> set[int]:
+    def _get_content_references_of_other_pages(self, writer: Any) -> set[int]:
         """
-        Collect the object numbers of the content streams used by the other pages.
+        Collect the object numbers the /Contents of the other pages point at.
 
         Args:
             writer: The writer this page belongs to.
@@ -1164,20 +1164,30 @@ class PageObject(DictionaryObject):
 
         """
         shared: set[int] = set()
+        pages = writer.flattened_pages or []
+        if len(pages) < 2:
+            # Nothing to share the content with.
+            return shared
+
         own_idnum = (
             self.indirect_reference.idnum if self.indirect_reference is not None else None
         )
-        for page in getattr(writer, "flattened_pages", None) or []:
+        for page in pages:
             reference = page.indirect_reference
             if reference is not None and reference.idnum == own_idnum:
                 continue
             if PG.CONTENTS not in page:
                 continue
+            # The references have to stay unresolved here: we are only after the
+            # object numbers, and an indirect /Contents array is an object of its
+            # own which another page may point at as well.
             contents = page.raw_get(PG.CONTENTS)
             if isinstance(contents, IndirectObject):
                 shared.add(contents.idnum)
                 contents = contents.get_object()
             if isinstance(contents, ArrayObject):
+                # A direct object inside the array is not part of the writer's
+                # object list, so no other page can be sharing it.
                 shared.update(
                     item.idnum for item in contents if isinstance(item, IndirectObject)
                 )
@@ -1212,7 +1222,7 @@ class PageObject(DictionaryObject):
         if old_contents is not None:
             old_contents = old_contents.get_object()
         if isinstance(old_contents, ArrayObject):
-            shared_references = self._content_references_of_other_pages(writer)
+            shared_references = self._get_content_references_of_other_pages(writer)
             for reference in old_contents:
                 if not isinstance(reference, IndirectObject):
                     # Direct objects are not part of the writer's object list.
