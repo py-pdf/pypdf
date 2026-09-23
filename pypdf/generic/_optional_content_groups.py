@@ -143,6 +143,9 @@ def _map_ocg_order_structure(self: Any, order_object: Optional[PdfObject],
                 continue
             mapped.append(mapped_item)
         return mapped or None
+    # These are types that may appear in the /Order array and should be preserved.
+    # NameObject represents a PDF name, such as /Type, and can serve as a
+    # dictionary key. TextStringObject represents a layer or group text label.
     if isinstance(
         order_object,
         (
@@ -160,24 +163,24 @@ def _map_ocg_order_structure(self: Any, order_object: Optional[PdfObject],
     # These can appear in the Order hierarchy to define visibility logic
     if isinstance(order_object, DictionaryObject):
         mapped_dict = DictionaryObject()
-        for key, val in order_object.items():
+        for key, value in order_object.items():
             if key == "/OCGs":
                 # Map the OCG references array inside the OCMD
-                mapped_array = _map_ocg_reference_array(self, val, trslat)
-                if len(mapped_array) == 0:
+                mapped_array = _map_ocg_reference_array(self, value, trslat)
+                if not mapped_array:
                     continue
                 mapped_dict[key] = mapped_array
                 continue
-            if not isinstance(val, (ArrayObject, DictionaryObject, IndirectObject)):
+            if not isinstance(value, (ArrayObject, DictionaryObject, IndirectObject)):
                 # Copy scalar properties (names, strings, etc.) as-is
-                mapped_dict[key] = val
+                mapped_dict[key] = value
                 continue
-            mapped_val = _map_ocg_order_structure(self, val, trslat)
-            if mapped_val is None:
+            mapped_value = _map_ocg_order_structure(self, value, trslat)
+            if mapped_value is None:
                 continue
             # Recursively map nested structures
-            mapped_dict[key] = mapped_val
-        return mapped_dict if len(mapped_dict) > 0 else None
+            mapped_dict[key] = mapped_value
+        return mapped_dict or None
     return None
 
 
