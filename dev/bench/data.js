@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790142570346,
+  "lastUpdate": 1790142585900,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -113459,6 +113459,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030254404853257144",
             "extra": "mean: 658.0259998000031 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "54d35184b9e984834823b3558dc096bd4e6c9e80",
+          "message": "DEV: Bump codecov/codecov-action from 7.1.0 to 7.1.1 (#4126)\n\nBumps [codecov/codecov-action](https://github.com/codecov/codecov-action) from 7.1.0 to 7.1.1.\n- [Release notes](https://github.com/codecov/codecov-action/releases)\n- [Changelog](https://github.com/codecov/codecov-action/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/codecov/codecov-action/compare/0b35c9ecc4f0529d0eb674914510c22f85b196b4...303a32d7a59b442fa8d48b6a1cc6825c09c847a5)\n\n---\nupdated-dependencies:\n- dependency-name: codecov/codecov-action\n  dependency-version: 7.1.1\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-09-23T07:46:40+02:00",
+          "tree_id": "b64a8d8ddc4e562d9ba2b9a2bd07c0905511f84a",
+          "url": "https://github.com/py-pdf/pypdf/commit/54d35184b9e984834823b3558dc096bd4e6c9e80"
+        },
+        "date": 1790142575419,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.974625267328237,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006136796457349223",
+            "extra": "mean: 336.1767987999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.180529559038487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019158206019822726",
+            "extra": "mean: 52.1362038999996 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26432280057127305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016429644316469698",
+            "extra": "mean: 3.783252893200017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.550585799941413,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010507865468445889",
+            "extra": "mean: 56.978155111115335 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07184616103623243,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02129594589124389",
+            "extra": "mean: 13.918628157400008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6513677168749181,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019045291307703386",
+            "extra": "mean: 605.5586468000115 msec\nrounds: 5"
           }
         ]
       }
