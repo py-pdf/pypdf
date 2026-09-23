@@ -122,7 +122,7 @@ class Font:
     Attributes:
         name: Font name, derived from ``font["/BaseFont"]``
         character_map: The font's character map
-        encoding: Font encoding
+        encoding: Font encoding. Must be a dict for a simple font, and string otherwise.
         sub_type: The font type, such as Type1, TrueType, or Type3.
         font_descriptor: Font metrics, including a mapping of characters to widths
         character_widths: A mapping of characters to widths
