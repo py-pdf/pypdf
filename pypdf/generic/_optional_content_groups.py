@@ -50,11 +50,16 @@ def _translate_ocg_indirect_object(
     writer: "PdfWriter", obj: PdfObject, source_translated_mapping: dict[int, int]
 ) -> Optional[IndirectObject]:
     """
-    Merge the pages from the given file into the output file at the
-    specified page number.
+    Translates an indirect object from the reader to the writer, ensuring that
+    the object is correctly referenced in the output PDF. If the object has
+    already been translated, it returns the corresponding indirect object
+    in the writer. Otherwise, it clones the object into the writer and updates
+    the mapping.
 
     Args:
-        obj: The object to be translated such as an indirect object from the reader.
+        writer: The PdfWriter instance to which the object should be translated.
+        obj: The PDF object to be translated. This can be an indirect object
+        or a dictionary object with an indirect reference.
         source_translated_mapping: A dictionary mapping source object IDs to their corresponding
             translated object IDs in the writer. This is meant to ensure
             that indirect objects are correctly referenced in the output PDF.
@@ -76,7 +81,7 @@ def _translate_ocg_indirect_object(
     return IndirectObject(source_translated_mapping[source_id], 0, writer)
 
 
-def _map_ocg_array(
+def _map_ocg_reference_array(
     self: Any, values: Any, trslat: dict[int, int]
 ) -> ArrayObject:
     """
@@ -96,46 +101,50 @@ def _map_ocg_array(
     if not isinstance(values, ArrayObject):
         return mapped
     for value in values:
-        mapped_ref = _translate_ocg_indirect_object(self, value, trslat)
-        if mapped_ref is None:
+        mapped_reference = _translate_ocg_indirect_object(self, value, trslat)
+        if mapped_reference is None:
             continue
-        _append_unique_indirect(mapped, mapped_ref)
+        _append_unique_indirect(mapped, mapped_reference)
     return mapped
 
 
-def _map_ocg_order(self: Any, value: Any, trslat: dict[int, int]) -> Optional[PdfObject]:
+def _map_ocg_order_structure(self: Any, order_object: Optional[PdfObject],
+                             trslat: dict[int, int]) -> Optional[PdfObject]:
     """
     This function recursively maps the order of OCGs from the reader to the writer,
     handling both indirect objects and arrays.
 
     Args:
-        value: The OCG order object from the reader, which can be an indirect object, array, or dictionary.
+        order_object: The OCG order object from the reader, which can be an indirect object, array, or dictionary.
         trslat: A dictionary mapping source object IDs to their corresponding translated object IDs in the writer.
 
     Returns:
         The mapped OCG order object for the writer, or None if it cannot be mapped.
     """
-    mapped_ref = _translate_ocg_indirect_object(self, value, trslat)
-    if mapped_ref is not None:
-        return mapped_ref
-    if isinstance(value, IndirectObject):
+    if order_object is None:
+        return None
+    mapped_reference = _translate_ocg_indirect_object(self, order_object, trslat)
+    if mapped_reference is not None:
+        return mapped_reference
+    if isinstance(order_object, IndirectObject):
         # Some PDFs store deep /Order branches as indirect arrays or dictionaries.
         # Resolve and map recursively so nested layer trees are preserved.
         try:
-            return _map_ocg_order(self, value.get_object(), trslat)
+            return _map_ocg_order_structure(self, order_object.get_object(), trslat)
+        # If resolving the indirect object fails, return None
         except Exception:
             return None
-    if isinstance(value, ArrayObject):
+    if isinstance(order_object, ArrayObject):
         mapped = ArrayObject()
-        for item in value:
-            mapped_item = _map_ocg_order(self, item, trslat)
+        for item in order_object:
+            mapped_item = _map_ocg_order_structure(self, item, trslat)
             # this ensures that only successfully mapped items are included in the final array
             if mapped_item is None:
                 continue
             mapped.append(mapped_item)
-        return mapped if len(mapped) > 0 else None
+        return mapped or None
     if isinstance(
-        value,
+        order_object,
         (
             TextStringObject,
             ByteStringObject,
@@ -146,15 +155,15 @@ def _map_ocg_order(self: Any, value: Any, trslat: dict[int, int]) -> Optional[Pd
             NullObject,
         ),
     ):
-        return value
+        return order_object
     # Handle OCMDs (Optional Content Membership Dictionaries) which are DictionaryObjects
     # These can appear in the Order hierarchy to define visibility logic
-    if isinstance(value, DictionaryObject):
+    if isinstance(order_object, DictionaryObject):
         mapped_dict = DictionaryObject()
-        for key, val in value.items():
+        for key, val in order_object.items():
             if key == "/OCGs":
                 # Map the OCG references array inside the OCMD
-                mapped_array = _map_ocg_array(self, val, trslat)
+                mapped_array = _map_ocg_reference_array(self, val, trslat)
                 if len(mapped_array) == 0:
                     continue
                 mapped_dict[key] = mapped_array
@@ -163,7 +172,7 @@ def _map_ocg_order(self: Any, value: Any, trslat: dict[int, int]) -> Optional[Pd
                 # Copy scalar properties (names, strings, etc.) as-is
                 mapped_dict[key] = val
                 continue
-            mapped_val = _map_ocg_order(self, val, trslat)
+            mapped_val = _map_ocg_order_structure(self, val, trslat)
             if mapped_val is None:
                 continue
             # Recursively map nested structures
@@ -196,7 +205,7 @@ def _map_rbgroups(self: Any, rbgroups: Any, trslat: dict[int, int]) -> Optional[
         if not isinstance(value, ArrayObject):
             continue
         # Each RBGroup entry is an array of OCG references
-        mapped_array = _map_ocg_array(self, value, trslat)
+        mapped_array = _map_ocg_reference_array(self, value, trslat)
         if len(mapped_array) == 0:
             continue
         mapped[key] = mapped_array
@@ -223,14 +232,14 @@ def _map_config_dict(self: Any, config: Any, trslat: dict[int, int]) -> Optional
     for key, value in config.items():
         if key in ("/ON", "/OFF", "/Locked"):
             # These are arrays of OCG references
-            mapped_array = _map_ocg_array(self, value, trslat)
+            mapped_array = _map_ocg_reference_array(self, value, trslat)
             if len(mapped_array) == 0:
                 continue
             mapped[key] = mapped_array
             continue
         if key == "/Order":
             # Order can be nested arrays and names
-            mapped_order = _map_ocg_order(self, value, trslat)
+            mapped_order = _map_ocg_order_structure(self, value, trslat)
             if mapped_order is None:
                 continue
             mapped[key] = mapped_order
@@ -269,7 +278,7 @@ def _merge_oc_properties(self: Any, reader: "PdfDocCommon") -> None:
     )
 
     # Get both OCGs and OCMDs from the reader and map them to the writer's references
-    source_ocgs = _map_ocg_array(self, source_oc_properties.get("/OCGs"), trslat)
+    source_ocgs = _map_ocg_reference_array(self, source_oc_properties.get("/OCGs"), trslat)
     if len(source_ocgs) == 0:
         return
     if CatalogAttributes.OC_PROPERTIES not in self._root_object or is_null_or_none(
@@ -309,14 +318,14 @@ def _merge_oc_properties(self: Any, reader: "PdfDocCommon") -> None:
         target_default = target_default.get_object()
     target_default = cast(DictionaryObject, target_default)
     for key in ("/ON", "/OFF", "/Locked"):
-        mapped = _map_ocg_array(self, source_default.get(key), trslat)
+        mapped = _map_ocg_reference_array(self, source_default.get(key), trslat)
         if len(mapped) == 0:
             continue
         existing = cast(ArrayObject, target_default.get(key, ArrayObject()))
-        for mapped_ref in mapped:
-            _append_unique_indirect(existing, mapped_ref)
+        for mapped_reference in mapped:
+            _append_unique_indirect(existing, mapped_reference)
         target_default[NameObject(key)] = existing
-    mapped_order = _map_ocg_order(self, source_default.get("/Order"), trslat)
+    mapped_order = _map_ocg_order_structure(self, source_default.get("/Order"), trslat)
     if mapped_order is not None:
         if "/Order" not in target_default:
             target_default[NameObject("/Order")] = ArrayObject()
