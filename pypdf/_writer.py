@@ -234,6 +234,10 @@ class PdfWriter(PdfDocCommon):
 
         self._unresolved_links: list[tuple[ReferenceLink, ReferenceLink]] = []
         "Tracks links in pages added to the writer for resolving later."
+        self._content_reference_pages: dict[int, set[int]] = {}
+        "Maps the object number of a content stream to the pages using it."
+        self._content_reference_page_count: Optional[int] = None
+        "Number of pages the content stream index was built for; None when unbuilt"
         self._merged_in_pages: dict[Optional[IndirectObject], Optional[IndirectObject]] = {}
         "Tracks pages added to the writer and what page they turned into."
 
@@ -486,6 +490,87 @@ class PdfWriter(PdfDocCommon):
         if obj is None:
             raise PdfReadError(f"Object {indirect_reference!r} not found!")
         return obj
+
+    @staticmethod
+    def _get_page_content_idnums(page: PageObject) -> set[int]:
+        """
+        Collect the object numbers the /Contents of a single page points at.
+
+        Args:
+            page: The page to inspect.
+
+        Returns:
+            The object numbers, empty if the page has no indirect content.
+
+        """
+        if PG.CONTENTS not in page:
+            return set()
+        # The references are read unresolved on purpose: only their object
+        # numbers matter, and an indirect /Contents array is an object of its
+        # own which another page may point at as well.
+        contents = page.raw_get(PG.CONTENTS)
+        idnums = set()
+        if isinstance(contents, IndirectObject):
+            idnums.add(contents.idnum)
+            contents = contents.get_object()
+        if isinstance(contents, ArrayObject):
+            # A direct object inside the array is not part of self._objects,
+            # so no other page can be sharing it.
+            idnums.update(
+                item.idnum for item in contents if isinstance(item, IndirectObject)
+            )
+        return idnums
+
+    def _get_content_reference_index(self) -> dict[int, set[int]]:
+        """
+        Map every content stream object number to the pages using it.
+
+        The index is built once and rebuilt when the number of pages changed,
+        which is when new sharing can appear -- duplicating a page inside a
+        writer makes both pages point at the same content streams.
+        :meth:`replace_contents<pypdf._page.PageObject.replace_contents>` keeps
+        it up to date for the page it rewrites.
+
+        Returns:
+            The object number to page object number mapping.
+
+        """
+        pages = self.flattened_pages or []
+        if self._content_reference_page_count != len(pages):
+            index: dict[int, set[int]] = {}
+            for page in pages:
+                reference = page.indirect_reference
+                if reference is None:
+                    continue
+                for idnum in self._get_page_content_idnums(page):
+                    index.setdefault(idnum, set()).add(reference.idnum)
+            self._content_reference_pages = index
+            self._content_reference_page_count = len(pages)
+        return self._content_reference_pages
+
+    def _update_content_reference_index(
+        self, page: PageObject, old_idnums: set[int]
+    ) -> None:
+        """
+        Move a page from its previous content streams to its current ones.
+
+        Args:
+            page: The page whose /Contents has just been replaced.
+            old_idnums: The object numbers the page pointed at before.
+
+        """
+        if self._content_reference_page_count is None:
+            # Nothing built yet, so there is nothing to keep up to date.
+            return
+        reference = page.indirect_reference
+        if reference is None:
+            return
+        for idnum in old_idnums:
+            pages = self._content_reference_pages.get(idnum)
+            if pages is not None:
+                pages.discard(reference.idnum)
+        for idnum in self._get_page_content_idnums(page):
+            self._content_reference_pages.setdefault(idnum, set()).add(reference.idnum)
 
     def _replace_object(
         self,
