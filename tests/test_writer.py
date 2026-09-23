@@ -2945,6 +2945,55 @@ def test_compress_identical_objects__remove_unreferenced():
         writer.get_object(reference)
 
 
+def test_compress_identical_objects__shared_content_streams_are_kept():
+    """Cf #4111"""
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(200, 200)
+    for index, page in enumerate(writer.pages):
+        # The first and the last part are identical on every page, so
+        # compress_identical_objects() merges them into one object each.
+        prologue = DecodedStreamObject()
+        prologue.set_data(b"q\n")
+        body = DecodedStreamObject()
+        body.set_data(f"1 0 0 RG {index} 0 m 10 10 l S\n".encode())
+        epilogue = DecodedStreamObject()
+        epilogue.set_data(b"Q\n")
+        page[NameObject("/Contents")] = ArrayObject(
+            [writer._add_object(o) for o in (prologue, body, epilogue)]
+        )
+    expected = [page.get_contents().get_data() for page in writer.pages]
+
+    writer.compress_identical_objects()
+    for page in writer.pages:
+        page.compress_content_streams()
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+    reader = PdfReader(output)
+    assert [page.get_contents().get_data() for page in reader.pages] == expected
+
+
+def test_replace_contents__releases_unshared_content_streams():
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+    page = writer.pages[0]
+    prologue = DecodedStreamObject()
+    prologue.set_data(b"q\n")
+    body = DecodedStreamObject()
+    body.set_data(b"1 0 0 RG 0 0 m 10 10 l S\n")
+    references = [writer._add_object(o) for o in (prologue, body)]
+    page[NameObject("/Contents")] = ArrayObject(references)
+
+    page.compress_content_streams()
+
+    assert all(
+        isinstance(writer.get_object(reference), NullObject) for reference in references
+    )
+    assert page.get_contents().get_data() == b"q\n1 0 0 RG 0 0 m 10 10 l S\n"
+
+
 @pytest.mark.enable_socket
 def test_compress_identical_objects__deprecation():
     url = "https://github.com/user-attachments/files/16575458/tt2.pdf"

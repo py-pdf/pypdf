@@ -1152,6 +1152,37 @@ class PageObject(DictionaryObject):
             return ContentStream(resolved_object, pdf)
         return None
 
+    def _content_references_of_other_pages(self, writer: Any) -> set[int]:
+        """
+        Collect the object numbers of the content streams used by the other pages.
+
+        Args:
+            writer: The writer this page belongs to.
+
+        Returns:
+            The object numbers referenced by the /Contents of every other page.
+
+        """
+        shared: set[int] = set()
+        own_idnum = (
+            self.indirect_reference.idnum if self.indirect_reference is not None else None
+        )
+        for page in getattr(writer, "flattened_pages", None) or []:
+            reference = page.indirect_reference
+            if reference is not None and reference.idnum == own_idnum:
+                continue
+            if PG.CONTENTS not in page:
+                continue
+            contents = page.raw_get(PG.CONTENTS)
+            if isinstance(contents, IndirectObject):
+                shared.add(contents.idnum)
+                contents = contents.get_object()
+            if isinstance(contents, ArrayObject):
+                shared.update(
+                    item.idnum for item in contents if isinstance(item, IndirectObject)
+                )
+        return shared
+
     def replace_contents(
         self, content: Union[ContentStream, EncodedStreamObject, ArrayObject, None]
     ) -> None:
@@ -1181,9 +1212,16 @@ class PageObject(DictionaryObject):
         if old_contents is not None:
             old_contents = old_contents.get_object()
         if isinstance(old_contents, ArrayObject):
+            shared_references = self._content_references_of_other_pages(writer)
             for reference in old_contents:
                 if not isinstance(reference, IndirectObject):
                     # Direct objects are not part of the writer's object list.
+                    continue
+                if reference.idnum in shared_references:
+                    # Another page points at this stream as well, which happens
+                    # once compress_identical_objects() has merged parts that are
+                    # identical across pages. Releasing it here would silently
+                    # drop that part from the other pages.
                     continue
                 try:
                     writer._replace_object(indirect_reference=reference, obj=NullObject())
