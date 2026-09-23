@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790062472491,
+  "lastUpdate": 1790142066050,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -113393,6 +113393,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003622234139119791",
             "extra": "mean: 662.4347496000041 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e0712a8d143629c069923389133d7b2c3dcb2d1b",
+          "message": "ROB: Do not crash on an outline action without a type (#4098)",
+          "timestamp": "2026-09-23T07:38:01+02:00",
+          "tree_id": "bfcf6c92247e1a27e77292ec6d69c8fa608279c9",
+          "url": "https://github.com/py-pdf/pypdf/commit/e0712a8d143629c069923389133d7b2c3dcb2d1b"
+        },
+        "date": 1790142056817,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7988793376695997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007550058538919835",
+            "extra": "mean: 357.28585600000144 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.337796814203625,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018198648651808794",
+            "extra": "mean: 54.53217800000082 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24404729729769561,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020302398294431007",
+            "extra": "mean: 4.097566377800007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.73000182317636,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010631604966802998",
+            "extra": "mean: 56.401573444443585 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07373774218139452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022842662762717316",
+            "extra": "mean: 13.561576072399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5196967905583285,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030254404853257144",
+            "extra": "mean: 658.0259998000031 msec\nrounds: 5"
           }
         ]
       }
