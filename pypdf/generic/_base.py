@@ -532,7 +532,7 @@ class FloatObject(float, PdfObject):
             Hash considering type and value.
 
         """
-        return hash((self.__class__, self.as_numeric))
+        return hash((self.__class__, self.as_numeric()))
 
     def myrepr(self) -> str:
         if self == 0:  # type: ignore[comparison-overlap]
