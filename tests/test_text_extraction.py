@@ -239,6 +239,80 @@ def test_layout_mode_character_spacing_per_glyph():
     assert tj_form == td_form
 
 
+def _pdf_font_size_in_tm(stream: bytes) -> bytes:
+    """Minimal PDF whose font size lives in Tm (Tf 1), as in issue #4110."""
+    objs = {
+        1: b"<< /Type /Catalog /Pages 2 0 R >>",
+        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        3: (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
+        ),
+        4: (
+            b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n"
+            + stream + b"endstream"
+        ),
+        5: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    }
+    out = bytearray(b"%PDF-1.7\n")
+    offsets = {}
+    for number in sorted(objs):
+        offsets[number] = len(out)
+        out += f"{number} 0 obj\n".encode() + objs[number] + b"\nendobj\n"
+    xref = len(out)
+    out += f"xref\n0 {len(objs) + 1}\n".encode() + b"0000000000 65535 f \n"
+    for number in sorted(objs):
+        out += f"{offsets[number]:010d} 00000 n \n".encode()
+    out += (
+        f"trailer\n<< /Size {len(objs) + 1} /Root 1 0 R >>\n"
+        f"startxref\n{xref}\n%%EOF\n"
+    ).encode()
+    return bytes(out)
+
+
+@pytest.mark.parametrize(
+    ("stream", "expected"),
+    [
+        # Illustrator/InDesign/Figma: Tf 1, real size in Tm, small TJ kern.
+        (
+            b"BT /F1 1 Tf 11 0 0 11 100 700 Tm [(C) -30.5 (EO)] TJ ET\n",
+            "CEO",
+        ),
+        # Same kern under a y-flipped CTM (Skia). transform[0] stays positive.
+        (
+            (
+                b"q 1 0 0 -1 0 792 cm "
+                b"BT /F1 1 Tf 11 0 0 11 100 100 Tm [(C) -30.5 (EO)] TJ ET Q\n"
+            ),
+            "CEO",
+        ),
+        # Horizontal flip: page-space advance is negative, width uses abs(transform[0]).
+        (
+            (
+                b"q -1 0 0 1 612 0 cm "
+                b"BT /F1 1 Tf 11 0 0 11 100 700 Tm [(C) -30.5 (EO)] TJ ET Q\n"
+            ),
+            "CEO",
+        ),
+        # A real space-width TJ gap must still become one space, not ~11.
+        (
+            b"BT /F1 1 Tf 11 0 0 11 100 700 Tm [(Hello) -278 (World)] TJ ET\n",
+            "Hello World",
+        ),
+    ],
+    ids=["tm_kern", "y_flipped_ctm", "x_flipped_ctm", "real_space"],
+)
+def test_layout_mode_space_tx_scaled_into_page_space(stream: bytes, expected: str):
+    """Regression test for #4110.
+
+    space_tx used to stay in text space while tx / displaced_tx are in page
+    space, so [(C) -30.5 (EO)] TJ extracted as "C EO".
+    """
+    page = PdfReader(BytesIO(_pdf_font_size_in_tm(stream))).pages[0]
+    assert page.extract_text(extraction_mode="layout").strip() == expected
+    assert page.extract_text().strip() == expected
+
+
 @pytest.mark.enable_socket
 def test_layout_mode_type0_font_widths():
     # Cover both the 'int int int' and 'int [int int ...]' formats for Type0

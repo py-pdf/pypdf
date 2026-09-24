@@ -167,8 +167,16 @@ def recurse_to_target_op(
                     # multiply by bool (_idx != bt_idx) to ensure spaces aren't double
                     # applied to the first tj of a BTGroup in fixed_width_page().
                     excess_tx = round(_tj.tx - last_displaced_tx, 3) * (_idx != bt_idx)
-                    # space_tx could be 0 if either Tz or font_size was 0 for this _tj.
-                    spaces = round(excess_tx / _tj.space_tx) if excess_tx > 0 else 0
+                    # space_tx is text space; excess_tx is page space (tx / displaced_tx).
+                    # Producers that set Tf 1 and put the font size in Tm leave
+                    # transform[0] as that scale, so an unscaled space_tx reads a
+                    # small TJ kern as a full space (#4110). The backward-jump test
+                    # above stays on text-space space_tx: scaling it splits same-line
+                    # runs when a CTM scale < 1 makes 5 page-space widths tiny
+                    # (resources/toy.pdf).
+                    page_space_tx = _tj.space_tx * abs(_tj.transform[0])
+                    # page_space_tx is 0 when Tz, font_size, or the horizontal scale is 0.
+                    spaces = round(excess_tx / page_space_tx) if excess_tx > 0 and page_space_tx else 0
                     if spaces > WHITESPACE_LIMIT:
                         logger_warning(
                             "Limiting excessive whitespace from %(actual)d to %(limit)d characters.",
