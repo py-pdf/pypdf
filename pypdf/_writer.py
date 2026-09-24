@@ -113,6 +113,7 @@ from .generic import (
     is_null_or_none,
 )
 from .generic._appearance_stream import TextStreamAppearance
+from .generic._optional_content_groups import _preserve_oc_properties
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
     AnnotationSubtype,
@@ -2869,6 +2870,10 @@ class PdfWriter(PdfDocCommon):
             cast(DictionaryObject, self._root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr
+
+        # Preserve OCG Code
+        # Feed in reader with PDF pages to append
+        _preserve_oc_properties(self, reader)
 
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)
