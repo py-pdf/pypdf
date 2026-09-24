@@ -35,22 +35,22 @@ _OCG_STATE_KEYS = ("/ON", "/OFF", "/Locked")
 _TranslationMap = dict[Union[int, Literal["PreventGC"]], Any]
 
 
-def _append_unique_indirect(indirectObjArray: ArrayObject, indirectValue: PdfObject) -> None:
+def _append_unique_indirect_reference(indirect_object_array: ArrayObject,
+                                       indirect_value: PdfObject) -> None:
     """
-    Utility function to check if an indirect object is already present in an array
-    of indirect objects and append it only if it is not found in the array.
+    Append the "indirect_value" object to the "indirect_object_array" array
+    unless an indirect object with the same ID is
+    already present.
 
     Args:
-        indirectObjArray: The array of indirect objects to which the new indirect PDFOObject should be appended
-            if it is not found.
-        indirectValue: The indirect object to be appended if it is not already present in the array.
+        indirect_object_array: The array of indirect objects to which the new indirect object should be appended.
+        indirect_value: The indirect object to append when it is not already present.
     """
-    if isinstance(indirectValue, IndirectObject) and any(
-        isinstance(existing, IndirectObject) and existing.idnum == indirectValue.idnum
-        for existing in indirectObjArray
-    ):
-        return
-    indirectObjArray.append(indirectValue)
+    if isinstance(indirect_value, IndirectObject):
+        for existing in indirect_object_array:
+            if isinstance(existing, IndirectObject) and existing.idnum == indirect_value.idnum:
+                return
+    indirect_object_array.append(indirect_value)
 
 
 def _translate_ocg_indirect_object(
@@ -89,7 +89,7 @@ def _translate_ocg_indirect_object(
 
 
 def _map_ocg_reference_array(
-    writer: "PdfWriter", values: Optional[PdfObject], trslat: _TranslationMap
+    writer: "PdfWriter", ocg_reference_array: Optional[PdfObject], trslat: _TranslationMap
 ) -> ArrayObject:
     """
     This function maps an array of OCG indirect objects from the reader to the writer
@@ -97,21 +97,23 @@ def _map_ocg_reference_array(
     are added to the mapped array.
 
     Args:
-        values: The array of OCG indirect objects from the reader.
+        writer: The PdfWriter instance to which the OCG references should be translated.
+        ocg_reference_array: The array of OCG indirect objects from the reader.
         trslat: A dictionary mapping source object IDs to their corresponding
             translated object IDs in the writer. This is meant to ensure
             that indirect objects are correctly referenced in the output PDF.
     """
     mapped = ArrayObject()
-    if isinstance(values, IndirectObject):
-        values = values.get_object()
-    if not isinstance(values, ArrayObject):
+    if ocg_reference_array is None:
         return mapped
-    for value in values:
+    ocg_reference_array = ocg_reference_array.get_object()
+    if not isinstance(ocg_reference_array, ArrayObject):
+        return mapped
+    for value in ocg_reference_array:
         mapped_reference = _translate_ocg_indirect_object(writer, value, trslat)
         if mapped_reference is None:
             continue
-        _append_unique_indirect(mapped, mapped_reference)
+        _append_unique_indirect_reference(mapped, mapped_reference)
     return mapped
 
 
@@ -266,120 +268,148 @@ def _map_ocg_configuration(writer: "PdfWriter", configuration: Optional[Dictiona
     return mapped or None
 
 
-def _preserve_oc_properties(writer: "PdfWriter", reader: PdfReader) -> None:
-    """
-    This function ensures that the OCGs and their associated properties from the
-    reader are preserved in the output PDF by mapping the reader's OCG references
-    to the corresponding references in the writer and merging them into the writer's
-    root object.
-
-    Args:
-        writer: The PDF writer where the OCG properties should be preserved.
-        reader: The PDF reader containing the source OCG properties.
-    """
-    source_root = reader.root_object
-    # if no OCGs then skip this
-    if is_null_or_none(
-    source_oc_properties := source_root.get(CatalogAttributes.OC_PROPERTIES)):
-        return
-    trslat = writer._id_translated.setdefault(id(reader), {})
-    source_oc_properties = cast(
-        DictionaryObject, source_root[CatalogAttributes.OC_PROPERTIES].get_object()
-    )
-
-    # Get both OCGs and OCMDs from the reader and map them to the writer's references
-    source_ocgs = _map_ocg_reference_array(writer, source_oc_properties.get("/OCGs"), trslat)
-    if not source_ocgs:
-        return
-    if is_null_or_none(
-        target_oc_properties := writer.root_object.get(
-            CatalogAttributes.OC_PROPERTIES
-        )
-    ):
+def _get_target_oc_properties(
+    writer: "PdfWriter", source_ocgs: ArrayObject
+) -> Optional[DictionaryObject]:
+    target = writer.root_object.get(CatalogAttributes.OC_PROPERTIES)
+    if target is None or is_null_or_none(target):
         target_oc_properties = DictionaryObject()
         target_oc_properties[NameObject("/OCGs")] = source_ocgs
         writer.root_object[NameObject(CatalogAttributes.OC_PROPERTIES)] = writer._add_object(
             target_oc_properties
         )
+        return target_oc_properties
+
+    target = target.get_object()
+    if not isinstance(target, DictionaryObject):
+        return None
+    target_ocgs = target.get("/OCGs")
+    if target_ocgs is None:
+        target_ocgs = ArrayObject()
+        target[NameObject("/OCGs")] = target_ocgs
     else:
-        if isinstance(target_oc_properties, IndirectObject):
-            target_oc_properties = target_oc_properties.get_object()
-        if not isinstance(target_oc_properties, DictionaryObject):
-            return
-        if "/OCGs" not in target_oc_properties:
-            target_oc_properties[NameObject("/OCGs")] = ArrayObject()
-        target_ocgs = target_oc_properties["/OCGs"]
-        if isinstance(target_ocgs, IndirectObject):
-            target_ocgs_object = target_ocgs.get_object()
-        else:
-            target_ocgs_object = target_ocgs
-        target_ocgs = cast(ArrayObject, target_ocgs_object)
-        for source_reference in source_ocgs:
-            _append_unique_indirect(target_ocgs, source_reference)
+        target_ocgs = target_ocgs.get_object()
+    if not isinstance(target_ocgs, ArrayObject):
+        return None
+    for source_reference in source_ocgs:
+        _append_unique_indirect_reference(target_ocgs, source_reference)
+    return target
+
+
+def _merge_oc_default(
+    writer: "PdfWriter",
+    source_oc_properties: DictionaryObject,
+    target_oc_properties: DictionaryObject,
+    trslat: _TranslationMap,
+) -> bool:
     source_default = source_oc_properties.get("/D")
-    if isinstance(source_default, IndirectObject):
-        source_default = source_default.get_object()
+    if source_default is None:
+        return False
+    source_default = source_default.get_object()
     if not isinstance(source_default, DictionaryObject):
-        return
-    target_oc_properties = cast(
-        DictionaryObject,
-        writer.root_object[CatalogAttributes.OC_PROPERTIES].get_object(),
-    )
-    target_default = target_oc_properties.get("/D", DictionaryObject())
-    if isinstance(target_default, IndirectObject):
+        return False
+
+    target_default = target_oc_properties.get("/D")
+    if target_default is None:
+        target_default = DictionaryObject()
+    else:
         target_default = target_default.get_object()
-    target_default = cast(DictionaryObject, target_default)
+    if not isinstance(target_default, DictionaryObject):
+        return False
     for key in _OCG_STATE_KEYS:
         mapped = _map_ocg_reference_array(writer, source_default.get(key), trslat)
         if not mapped:
             continue
-        existing = cast(ArrayObject, target_default.get(key, ArrayObject()))
+        existing = target_default.get(key)
+        if existing is None:
+            existing = ArrayObject()
+        else:
+            existing = existing.get_object()
+        if not isinstance(existing, ArrayObject):
+            continue
         for mapped_reference in mapped:
-            _append_unique_indirect(existing, mapped_reference)
+            _append_unique_indirect_reference(existing, mapped_reference)
         target_default[NameObject(key)] = existing
     mapped_order = _map_ocg_order_structure(writer, source_default.get("/Order"), trslat)
     if mapped_order is not None:
-        if "/Order" not in target_default:
-            target_default[NameObject("/Order")] = ArrayObject()
-        target_order = cast(ArrayObject, target_default["/Order"])
-        if isinstance(mapped_order, ArrayObject):
-            target_order.extend(mapped_order)
+        target_order = target_default.get("/Order")
+        if target_order is None:
+            target_order = ArrayObject()
+            target_default[NameObject("/Order")] = target_order
         else:
-            target_order.append(mapped_order)
+            target_order = target_order.get_object()
+        if isinstance(target_order, ArrayObject):
+            if isinstance(mapped_order, ArrayObject):
+                target_order.extend(mapped_order)
+            else:
+                target_order.append(mapped_order)
     for key in ("/BaseState", "/Intent", "/ListMode", "/Name", "/Creator"):
         if key in source_default and key not in target_default:
             target_default[NameObject(key)] = source_default[key]
     target_oc_properties[NameObject("/D")] = target_default
-
-    # Merge /RBGroups if present (radio-button groups define mutually exclusive OCG sets)
     _merge_radio_button_properties(writer, source_oc_properties, target_oc_properties, trslat)
+    return True
 
-    # Merge /Configs if present
-    if "/Configs" not in source_oc_properties:
-        return
+
+def _merge_oc_configurations(
+    writer: "PdfWriter",
+    source_oc_properties: DictionaryObject,
+    target_oc_properties: DictionaryObject,
+    trslat: _TranslationMap,
+) -> None:
     source_configs = source_oc_properties.get("/Configs")
-    if isinstance(source_configs, IndirectObject):
-        source_configs = source_configs.get_object()
+    if source_configs is None:
+        return
+    source_configs = cast(PdfObject, source_configs).get_object()
     if not isinstance(source_configs, ArrayObject):
         return
     mapped_configs = ArrayObject()
     for config in source_configs:
-        config_obj = config.get_object()
+        config_obj = config.get_object() if isinstance(config, IndirectObject) else config
         if not isinstance(config_obj, DictionaryObject):
             continue
         mapped_config = _map_ocg_configuration(writer, config_obj, trslat)
-        if mapped_config is None:
-            continue
-        mapped_configs.append(writer._add_object(mapped_config))
+        if mapped_config is not None:
+            mapped_configs.append(writer._add_object(mapped_config))
     if not mapped_configs:
         return
-    if "/Configs" not in target_oc_properties:
+    existing_configs = target_oc_properties.get("/Configs")
+    if existing_configs is None:
         target_oc_properties[NameObject("/Configs")] = mapped_configs
         return
-    # Append new configs, avoiding duplicates
-    existing_configs = cast(ArrayObject, target_oc_properties["/Configs"])
+    existing_configs = cast(PdfObject, existing_configs).get_object()
+    if not isinstance(existing_configs, ArrayObject):
+        return
     for mapped_config in mapped_configs:
-        _append_unique_indirect(existing_configs, mapped_config)
+        _append_unique_indirect_reference(existing_configs, mapped_config)
+
+
+def _preserve_oc_properties(writer: "PdfWriter", reader: PdfReader) -> None:
+    """
+    Preserve /OCProperties while appending a PDF.
+    Function called by the PDF _writer.py "merge" function.
+
+    Args:
+        writer: The PDF writer where the OCG properties should be preserved to.
+        reader: The PDF reader from which the OCG properties are sourced if present.
+    """
+    source_oc_properties = reader.root_object.get(CatalogAttributes.OC_PROPERTIES)
+    if source_oc_properties is None or is_null_or_none(source_oc_properties):
+        return
+    source_oc_properties = source_oc_properties.get_object()
+    if not isinstance(source_oc_properties, DictionaryObject):
+        return
+    trslat = writer._id_translated.setdefault(id(reader), {})
+    source_ocgs = _map_ocg_reference_array(writer, source_oc_properties.get("/OCGs"), trslat)
+    if not source_ocgs:
+        return
+    target_oc_properties = _get_target_oc_properties(writer, source_ocgs)
+    if target_oc_properties is None or not _merge_oc_default(
+        writer, source_oc_properties, target_oc_properties, trslat
+    ):
+        return
+    # Merge optional content configurations into the writer's OCG properties.
+    _merge_oc_configurations(writer, source_oc_properties, target_oc_properties, trslat)
 
 def _merge_radio_button_properties(
     writer: "PdfWriter",
@@ -413,4 +443,4 @@ def _merge_radio_button_properties(
         # Merge the arrays, avoiding duplicates
         existing_array = cast(ArrayObject, existing_rbgroups[key])
         for item in value:
-            _append_unique_indirect(existing_array, item)
+            _append_unique_indirect_reference(existing_array, item)
