@@ -1211,8 +1211,6 @@ class PageObject(DictionaryObject):
             assert self[PG.CONTENTS].indirect_reference is not None
             writer._replace_object(indirect_reference=self[PG.CONTENTS].indirect_reference, obj=NullObject())
             del self[PG.CONTENTS]
-            if is_writer:
-                writer._update_content_reference_index(self, old_idnums)
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
             try:
                 self[NameObject(PG.CONTENTS)] = writer._add_object(content)

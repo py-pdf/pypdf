@@ -33,6 +33,7 @@ import hashlib
 import re
 import struct
 import sys
+from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
@@ -234,7 +235,7 @@ class PdfWriter(PdfDocCommon):
 
         self._unresolved_links: list[tuple[ReferenceLink, ReferenceLink]] = []
         "Tracks links in pages added to the writer for resolving later."
-        self._content_reference_pages: dict[int, set[int]] = {}
+        self._content_reference_pages: defaultdict[int, set[int]] = defaultdict(set)
         "Maps the object number of a content stream to the pages using it."
         self._content_reference_page_count: Optional[int] = None
         "Number of pages the content stream index was built for; None when unbuilt"
@@ -537,13 +538,11 @@ class PdfWriter(PdfDocCommon):
         """
         pages = self.flattened_pages or []
         if self._content_reference_page_count != len(pages):
-            index: dict[int, set[int]] = {}
+            index: defaultdict[int, set[int]] = defaultdict(set)
             for page in pages:
-                reference = page.indirect_reference
-                if reference is None:
-                    continue
+                assert page.indirect_reference is not None, "mypy"
                 for idnum in self._get_page_content_idnums(page):
-                    index.setdefault(idnum, set()).add(reference.idnum)
+                    index[idnum].add(page.indirect_reference.idnum)
             self._content_reference_pages = index
             self._content_reference_page_count = len(pages)
         return self._content_reference_pages
@@ -559,18 +558,17 @@ class PdfWriter(PdfDocCommon):
             old_idnums: The object numbers the page pointed at before.
 
         """
-        if self._content_reference_page_count is None:
-            # Nothing built yet, so there is nothing to keep up to date.
+        if self._content_reference_page_count != len(self.flattened_pages or []):
+            # The index is not current, so it will be rebuilt when next used
+            # and there is nothing to keep up to date here.
             return
-        reference = page.indirect_reference
-        if reference is None:
-            return
+
+        assert page.indirect_reference is not None, "mypy"
+        page_idnum = page.indirect_reference.idnum
         for idnum in old_idnums:
-            pages = self._content_reference_pages.get(idnum)
-            if pages is not None:
-                pages.discard(reference.idnum)
+            self._content_reference_pages[idnum].discard(page_idnum)
         for idnum in self._get_page_content_idnums(page):
-            self._content_reference_pages.setdefault(idnum, set()).add(reference.idnum)
+            self._content_reference_pages[idnum].add(page_idnum)
 
     def _replace_object(
         self,
