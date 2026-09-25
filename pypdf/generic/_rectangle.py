@@ -19,8 +19,8 @@ class RectangleObject(ArrayObject):
     """
 
     def __init__(self, arr: Sequence[Any]) -> None:
-        if len(arr) != 4:
-            raise ValueError(f"Expected four values for a rectangle, got {len(arr)}: {list(arr)}")
+        if (length := len(arr)) != 4:
+            raise ValueError(f"Expected four values for a rectangle, got {length}: {arr}")
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
         ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])
 
