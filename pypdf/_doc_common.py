@@ -1084,11 +1084,11 @@ class PdfDocCommon(ABC):
         if not isinstance(array, ArrayObject) or len(array) < 2:
             page = NullObject()
             return Destination(title, page, Fit.fit())
-        page, typ, *array = array  # type: ignore[assignment]
+        page, typ, *fit_args = array
         try:
-            return Destination(title, page, Fit(fit_type=typ, fit_args=array))
+            return Destination(title, page, Fit(fit_type=typ, fit_args=fit_args))
         except PdfReadError:
-            logger_warning("Unknown destination: %(title)r %(array)s", source=__name__, title=title, array=array)
+            logger_warning("Unknown destination: %(title)r %(array)s", source=__name__, title=title, array=fit_args)
             if self.strict:
                 raise
             # create a link to first Page
