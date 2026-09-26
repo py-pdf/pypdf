@@ -1136,12 +1136,15 @@ class PdfDocCommon(ABC):
         if "/A" in node:
             # Action, PDF 1.7 and PDF 2.0 §12.6 (only type GoTo supported)
             action = cast(DictionaryObject, node["/A"])
-            action_type = cast(NameObject, action[GoToActionArguments.S])
-            if action_type == "/GoTo":
-                if GoToActionArguments.D in action:
-                    dest = action[GoToActionArguments.D]
-                elif self.strict:
-                    raise PdfReadError(f"Outline Action Missing /D attribute: {node!r}")
+            if GoToActionArguments.S in action:
+                action_type = cast(NameObject, action[GoToActionArguments.S])
+                if action_type == "/GoTo":
+                    if GoToActionArguments.D in action:
+                        dest = action[GoToActionArguments.D]
+                    elif self.strict:
+                        raise PdfReadError(f"Outline Action Missing /D attribute: {node!r}")
+            elif self.strict:
+                raise PdfReadError(f"Outline Action Missing /S attribute: {node!r}")
         elif "/Dest" in node:
             # Destination, PDF 1.7 and PDF 2.0 §12.3.2
             dest = node["/Dest"]
