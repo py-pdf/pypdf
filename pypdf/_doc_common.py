@@ -1362,7 +1362,7 @@ class PdfDocCommon(ABC):
             elif node_type == "/Page":
                 flattened_pages.append(self._flatten_leaf_page(item, list_only))
 
-            item = self._next_page_tree_kid(stack, ancestor_ids, traversal_state)
+            item = self._pop_next_page_tree_kid(stack, ancestor_ids, traversal_state)
 
         # Assigned only here, so that a failed traversal does not leave a partial page list behind.
         self.flattened_pages = flattened_pages
@@ -1387,7 +1387,7 @@ class PdfDocCommon(ABC):
 
         return item._replace(inherit=inherit), iter(kids)
 
-    def _next_page_tree_kid(
+    def _pop_next_page_tree_kid(
         self,
         stack: list[_PageTreeFrame],
         ancestor_ids: set[int],
