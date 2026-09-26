@@ -1583,6 +1583,22 @@ def test_flatten__kid_is_not_a_dictionary(caplog, value, expected):
     assert expected in caplog.text
 
 
+@pytest.mark.parametrize("indirect", [False, True], ids=["inline", "indirect"])
+@pytest.mark.parametrize("strict", [False, True], ids=["lenient", "strict"])
+def test_flatten__empty_kid_is_skipped(indirect, strict):
+    """An empty /Kids entry is skipped instead of being read as a blank page."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    pages = writer.root_object["/Pages"]
+    kid = writer._add_object(DictionaryObject()) if indirect else DictionaryObject()
+    pages[NameObject("/Kids")] = ArrayObject([*pages["/Kids"], kid])
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert len(PdfReader(stream, strict=strict).pages) == 1
+
+
 def _generate_reader_with_xfa(xfa: PdfObject) -> PdfReader:
     """A reader whose /AcroForm carries the given /XFA entry."""
     writer = PdfWriter()

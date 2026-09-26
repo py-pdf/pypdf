@@ -1418,7 +1418,7 @@ class PdfDocCommon(ABC):
                     # damaged file may have invalid child in /Pages
                     continue
                 if not obj:
-                    # damaged file may have invalid child in /Pages
+                    # An empty dictionary would otherwise be read as a blank page.
                     continue
                 if id(obj) in ancestor_ids:
                     raise PdfReadError("Detected cyclic page references.")
