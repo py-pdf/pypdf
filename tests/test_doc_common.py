@@ -756,6 +756,87 @@ def test_flatten__kid_resolving_to_null():
     assert len(writer.pages) == 1
 
 
+def test_flatten__multi_hop_cycle():
+    # A → B → C → A is not caught by comparing a kid against its own parent;
+    # the complete traversal path has to be taken into account.
+    writer = PdfWriter()
+    first = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+    node = first
+    for _ in range(2):
+        node = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Pages"),
+                    NameObject("/Kids"): ArrayObject([node]),
+                    NameObject("/Count"): NumberObject(1),
+                }
+            )
+        )
+    first.get_object()[NameObject("/Kids")] = ArrayObject([node])
+    writer.root_object[NameObject("/Pages")] = first
+
+    with pytest.raises(PdfReadError, match=r"^Detected cyclic page references\.$"):
+        writer._flatten()
+
+
+def test_flatten__page_tree_node_used_twice():
+    # The same intermediate /Pages node below two different parents is not a
+    # cycle: its pages are flattened once per reference. The second reference is
+    # only reached after the first branch has been walked and left again.
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    shared = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): writer.root_object["/Pages"]["/Kids"],
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+    # One deep and one shallow path to the shared node, so that the second one is
+    # reached at a different depth than the first one.
+    deep = shared
+    for _ in range(3):
+        deep = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Pages"),
+                    NameObject("/Kids"): ArrayObject([deep]),
+                    NameObject("/Count"): NumberObject(1),
+                }
+            )
+        )
+    shallow = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([shared]),
+                NameObject("/Count"): NumberObject(1),
+            }
+        )
+    )
+    writer.root_object[NameObject("/Pages")] = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Pages"),
+                NameObject("/Kids"): ArrayObject([deep, shallow]),
+                NameObject("/Count"): NumberObject(2),
+            }
+        )
+    )
+    writer.flattened_pages = None
+
+    assert len(writer.pages) == 2
+
+
 def test_flatten__pages_with_non_array_kids():
     # A /Pages node whose /Kids is neither an array nor null is malformed; we
     # raise a descriptive error instead of failing obscurely on iteration.
@@ -769,13 +850,6 @@ def test_flatten__pages_with_non_array_kids():
         list(reader.pages)
 
 
-@pytest.mark.xfail(
-    reason=(
-        "_flatten recurses once per page-tree level, so a tree deeper than the "
-        "interpreter recursion limit raises RecursionError before "
-        "Configuration.page_tree_maximum_depth can apply. Passes once _flatten iterates."
-    ),
-)
 def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
     """A deeply nested /Pages tree is flattened without a RecursionError."""
     writer = PdfWriter()
@@ -808,12 +882,6 @@ def test_flatten__deep_page_tree_does_not_exhaust_the_stack():
     assert len(writer.flattened_pages) == 1
 
 
-@pytest.mark.xfail(
-    reason=(
-        "_flatten calls .get_object() on root_object.get('/Pages') without a None "
-        "check, so a catalog without /Pages raises AttributeError instead of PdfReadError."
-    ),
-)
 def test_flatten__missing_pages_entry():
     # A document catalog without /Pages is malformed. Flattening must raise a
     # PdfReadError, not an AttributeError from calling .get_object() on None.
@@ -825,13 +893,6 @@ def test_flatten__missing_pages_entry():
         list(reader.pages)
 
 
-@pytest.mark.xfail(
-    reason=(
-        "_flatten sets self.flattened_pages before the traversal and appends as it "
-        "goes, so a mid-traversal error leaves a truncated, non-None list that a later "
-        "page access silently serves instead of re-raising."
-    ),
-)
 def test_flatten__error_does_not_leave_a_partial_result():
     # If flattening raises partway through, the pages collected so far must be
     # discarded: a later access has to re-raise rather than silently serve a
@@ -1575,6 +1636,22 @@ def test_flatten__kid_is_not_a_dictionary(caplog, value, expected):
 
     assert len(PdfReader(stream).pages) == 1
     assert expected in caplog.text
+
+
+@pytest.mark.parametrize("indirect", [False, True], ids=["inline", "indirect"])
+@pytest.mark.parametrize("strict", [False, True], ids=["lenient", "strict"])
+def test_flatten__empty_kid_is_skipped(indirect, strict):
+    """An empty /Kids entry is skipped instead of being read as a blank page."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    pages = writer.root_object["/Pages"]
+    kid = writer._add_object(DictionaryObject()) if indirect else DictionaryObject()
+    pages[NameObject("/Kids")] = ArrayObject([*pages["/Kids"], kid])
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert len(PdfReader(stream, strict=strict).pages) == 1
 
 
 def _generate_reader_with_xfa(xfa: PdfObject) -> PdfReader:
