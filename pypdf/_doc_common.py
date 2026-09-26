@@ -1329,6 +1329,7 @@ class PdfDocCommon(ABC):
         if not isinstance(pages, DictionaryObject):
             raise PdfReadError("Invalid object in /Pages")
 
+        self.flattened_pages = None
         flattened_pages: list[PageObject] = []
         traversal_state = _TraversalState()
         # id() values of the nodes on the path from the root to the current node.
