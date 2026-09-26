@@ -1322,8 +1322,7 @@ class PdfDocCommon(ABC):
 
         """
         configuration = get_configuration()
-        pages = self.root_object.get("/Pages")
-        pages = None if pages is None else pages.get_object()
+        pages = self.root_object.get("/Pages", NullObject()).get_object()
         if not isinstance(pages, DictionaryObject):
             raise PdfReadError("Invalid object in /Pages")
 
