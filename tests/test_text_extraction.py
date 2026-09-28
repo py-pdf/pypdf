@@ -1076,6 +1076,19 @@ def test_line_breaks_with_scaled_current_matrix() -> None:
     assert PdfReader(buffer).pages[0].extract_text() == "Line one\nLine two"
 
 
+def test_wrapped_table_cell_line_is_not_split():
+    """The second wrapped line of a cell stays with the row label. Regression #4130."""
+    # The district number is centered between the two baselines. Since 6.16.2
+    # the line break looked only at the previous fragment and dropped
+    # "Louis Heights" off the Kapahulu line. Spaces inserted between tokens
+    # (B.204 -> B. 204) are the intentional 6.16.2 behavior and must stay.
+    text = PdfReader(RESOURCE_ROOT / "issue-4130.pdf").pages[0].extract_text()
+    assert [line for line in text.splitlines() if "Kapahulu" in line] == [
+        "5 Diamond Head/Kapahulu/St.Louis Heights"
+    ]
+    assert 'Geraldine "Gerri" B. 204' in text
+
+
 def test_visitor_text_uses_current_text_matrix():
     reader = PdfReader(RESOURCE_ROOT / "visitor_text_position.pdf")
     page = reader.pages[0]
