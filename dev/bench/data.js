@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790771858160,
+  "lastUpdate": 1790776618578,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -113723,6 +113723,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001957181006623466",
             "extra": "mean: 541.0204999999905 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "142108881+Atishyy27@users.noreply.github.com",
+            "name": "Atishay Jain",
+            "username": "Atishyy27"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1758ef5fd95140597316dad06a6bc7f1fc452759",
+          "message": "BUG: FloatObject.hash_bin hashes the as_numeric method, not the value (#4129)\n\nFloatObject.hash_bin returned hash((self.__class__, self.as_numeric)), which\nhashes the bound method object instead of the numeric value, so the value-hash\ncontract upheld by NumberObject, NullObject and ByteStringObject was broken for\nFloatObject alone. Call as_numeric(), matching NumberObject.",
+          "timestamp": "2026-09-30T15:54:08+02:00",
+          "tree_id": "46b3c401a1565c883c556357b8f1fd207420ee03",
+          "url": "https://github.com/py-pdf/pypdf/commit/1758ef5fd95140597316dad06a6bc7f1fc452759"
+        },
+        "date": 1790776609844,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7497278325673014,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007826914578386418",
+            "extra": "mean: 266.6860221999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.886883846875822,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04293945160311827",
+            "extra": "mean: 59.21755660000031 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.32825851774878934,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040837097006416606",
+            "extra": "mean: 3.0463794415999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.411625335476614,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000713611553093976",
+            "extra": "mean: 44.61970004545115 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09167541046058839,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07312336906909157",
+            "extra": "mean: 10.908050424599995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.125463144370469,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026304078891351075",
+            "extra": "mean: 470.48569279999697 msec\nrounds: 5"
           }
         ]
       }
