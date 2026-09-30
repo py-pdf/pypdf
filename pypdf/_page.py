@@ -1198,8 +1198,10 @@ class PageObject(DictionaryObject):
         old_contents = self.get(PG.CONTENTS, None)
         if old_contents is not None:
             old_contents = old_contents.get_object()
-        if isinstance(old_contents, ArrayObject) and is_writer:
-            index = writer._get_content_reference_index()
+        if isinstance(old_contents, ArrayObject):
+            # Only a writer keeps an object list from which a stream can be
+            # released, and thus only it can share one between pages.
+            index = writer._get_content_reference_index() if is_writer else {}
             own_idnum = self.indirect_reference.idnum
             for reference in old_contents:
                 if not isinstance(reference, IndirectObject):
