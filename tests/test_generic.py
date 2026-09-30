@@ -1361,6 +1361,8 @@ def test_missing_hashbin():
     assert hash(NullObject()) == NullObject().hash_bin()
     t = ByteStringObject(b"123")
     assert t.hash_bin() == hash((ByteStringObject, b"123"))
+    assert FloatObject(1.5).hash_bin() == hash((FloatObject, 1.5))
+    assert FloatObject(1.5).hash_bin() == FloatObject(1.5).hash_bin()
 
 
 def test_is_null_or_none():
