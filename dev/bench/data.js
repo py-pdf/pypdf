@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790776636151,
+  "lastUpdate": 1790779031333,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -113789,6 +113789,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0026304078891351075",
             "extra": "mean: 470.48569279999697 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "59c1d74a0cc52d45b0dadd9e8736be6c1375b3b7",
+          "message": "BUG: Raise a clear error for a rectangle without four values (#4123)\n\nRectangleObject validated its input with a bare assert:\n\n    assert len(arr) == 4\n\nAn AssertionError carrying no message is hard to act on, and it is the only\ncheck on a public constructor that pypdf itself calls for every page box. Under\npython -O the statement is removed altogether, so RectangleObject((0, 0)) was\naccepted and the problem surfaced later as \"IndexError: list index out of\nrange\" from .width, well away from the cause.\n\nThe check now raises ValueError with the number of values it received, matching\nthe message _page.py already uses when a box read from a file has the wrong\nlength.",
+          "timestamp": "2026-09-30T16:34:39+02:00",
+          "tree_id": "5201c85a50e9567f2c3006e03b334e7a482b00cc",
+          "url": "https://github.com/py-pdf/pypdf/commit/59c1d74a0cc52d45b0dadd9e8736be6c1375b3b7"
+        },
+        "date": 1790779023783,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.789494160243721,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007646941327026567",
+            "extra": "mean: 263.88746299999184 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.466902475409835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010148032881265118",
+            "extra": "mean: 44.50991858332524 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3274116859331967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018741810788066297",
+            "extra": "mean: 3.0542587297999946 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.95508430317549,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008082097462099964",
+            "extra": "mean: 45.54753633332049 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09234698090848105,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03337104256935744",
+            "extra": "mean: 10.828724341199996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1202261293256757,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015375510248849277",
+            "extra": "mean: 471.6478049999523 msec\nrounds: 5"
           }
         ]
       }
