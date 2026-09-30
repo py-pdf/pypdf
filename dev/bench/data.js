@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790612440957,
+  "lastUpdate": 1790769471357,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -113591,6 +113591,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022174906366549505",
             "extra": "mean: 663.8084254000034 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d4c9a6239cf470e036fe042acb20352b0fda5a1e",
+          "message": "BUG: Fixes for standard mode text extraction with simple fonts with difference encoding and ToUnicode CMap (#4124)\n\n* BUG: Font: Always first check character_map for space_char\n\nWe previously used the font encoding dict for finding the space\ncharacter with sipmle fonts. However, in the case of a simple\nfont that also specified a ToUnicode CMap we should also take\ninto account character_map. This patch makes sure that we always\nfirst consult character_map for finding space_char.\n\n* MAINT: Duplicate widths calculation in get_text_operands()\n\n* MAIN: Text Extraction: Don't collect character widths in get_display_str\n\n* BUG: Text Extraction: Use raw character codes for width calculation\n\nWhen encoding is a string, we inadvertently used decoded character\nvalues for collecting character widths. This patch uses raw characters\ninstead. While this does not change the output of the test, I did\ncheck that, with the new code, we set default which much less often\nand the variety of widths is much larger, suggesting that more\ndifferent width values are found with this test than without it.\n\n* MAINT: Text Extraction: Use the width cache where possible\n\n* MAINT: Text Extraction: Don't risk UnicodeDecodeError on simple fonts\n\nWhen decoding simple fonts, we can just call chr on the raw bytes\ninstead of decoding them, removing the risk of a UnicodeDecodeError.\n\n* MAINT: Text Extraction: More precise decode fallback for 16-bit data\n\nIn the text extraction, we used to have a fallback to utf-8\ndecoding when encountering a unicode decode error. This is correct when the\nfallback applies to both 8-bit and 16-bit encoded data. Now, however, we only\nneed the fallback for 16-bit encoded data. This means that we can make the\nfallback more specific as well.\n\n* ROB: _cmap.py: Set unkown string encoding to known default\n\nWhen we found an unknown encoding, we'd only raise a warning and\nthen set it like we found it. As a result, we risk lookup errors\nin text extraction and appearance streams because we encounter\nan entirely unknown encoding. Guard this by setting a known\nalternative instead.\n\n* MAINT: No widths in test_get_display_str_caches_repeated_character_lookups\n\n* MAINT: Modify test due to moving widths cache\n\n* MAINT: Font: Simple fonts have only dict encodings\n\nWith recent changes, get_encoding in _cmap.py will only\nreturn a dict encoding for simple fonts. No need to\nkeep the code branch that checks whether encoding is a string\n\n* MAINT: test_font: Add synthetic test for space_char with simple fonts and ToUnicode CMap\n\n* MAINT: text extraction: Move widths collection to one place\n\n* MAINT: Font: Clarify that simple fonts have dict encoding and others string encoding",
+          "timestamp": "2026-09-30T13:54:42+02:00",
+          "tree_id": "b3b29c834919c9d9c9f274813e6182c083beb567",
+          "url": "https://github.com/py-pdf/pypdf/commit/d4c9a6239cf470e036fe042acb20352b0fda5a1e"
+        },
+        "date": 1790769461380,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.927244207015846,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013557915378725425",
+            "extra": "mean: 341.6182351999396 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.041245344352287,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001988706951275604",
+            "extra": "mean: 52.51757340002996 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25778370605143286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027117587258228777",
+            "extra": "mean: 3.8792211320000205 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.47595142034355,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009278653833029711",
+            "extra": "mean: 57.2214911764925 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07150976478111316,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04202721676341083",
+            "extra": "mean: 13.98410417179998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6641345683222217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031553425280579266",
+            "extra": "mean: 600.9129423999639 msec\nrounds: 5"
           }
         ]
       }
