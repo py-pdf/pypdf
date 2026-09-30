@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790769481605,
+  "lastUpdate": 1790771838543,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -113657,6 +113657,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0031553425280579266",
             "extra": "mean: 600.9129423999639 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "132747884+ihsandeniz@users.noreply.github.com",
+            "name": "İhsan Deniz",
+            "username": "ihsandeniz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a776b495063520400f5a77681b07c9b10f73f920",
+          "message": "DEV: Declare protocol data members on PdfReader and PdfWriter (#4106)",
+          "timestamp": "2026-09-30T14:34:40+02:00",
+          "tree_id": "971ac8a8e211dd630da1858a866f0c313a64812a",
+          "url": "https://github.com/py-pdf/pypdf/commit/a776b495063520400f5a77681b07c9b10f73f920"
+        },
+        "date": 1790771827178,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5865092407648143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008608384355018334",
+            "extra": "mean: 278.82264699999837 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.92188107319539,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009094311050805453",
+            "extra": "mean: 41.802732692309306 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.30430837424476226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01970547343513972",
+            "extra": "mean: 3.2861402598000042 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.614392848703535,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004906198980715354",
+            "extra": "mean: 48.50979639998911 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09309314564285982,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0182468299921608",
+            "extra": "mean: 10.741929420200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8483587960160799,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001957181006623466",
+            "extra": "mean: 541.0204999999905 msec\nrounds: 5"
           }
         ]
       }
