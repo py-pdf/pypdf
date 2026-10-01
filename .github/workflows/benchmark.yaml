@@ -20,7 +20,7 @@ jobs:
         include:
           - python-version: '3.x'
             name: 'CPython'
-          - python-version: 'pypy3.11'
+          - python-version: 'pypy3.11-7.3.23'
             name: 'PyPy 3.11'
     permissions:
       contents: write  # Write the results to the branch.
