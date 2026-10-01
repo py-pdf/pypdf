@@ -75,9 +75,9 @@ tomli-w==1.0.0
     # via flit
 typing-extensions==4.15.0
     # via virtualenv
-urllib3==2.7.0
+urllib3==2.8.0
     # via requests
-virtualenv==20.36.1
+virtualenv==21.14.2
     # via pre-commit
 wheel==0.46.2
     # via
