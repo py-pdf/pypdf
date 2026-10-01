@@ -116,6 +116,9 @@ class PdfReader(PdfDocCommon):
 
     """
 
+    xref: dict[int, dict[Any, Any]]
+    trailer: DictionaryObject
+
     def __init__(
         self,
         stream: Union[StrByteType, Path],
@@ -132,7 +135,7 @@ class PdfReader(PdfDocCommon):
 
         self._startxref: int = 0
         self.xref_index = 0
-        self.xref: dict[int, dict[Any, Any]] = {}
+        self.xref = {}
         self.xref_free_entry: dict[int, dict[Any, Any]] = {}
         self.xref_objStm: dict[int, tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()

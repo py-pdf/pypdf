@@ -6,7 +6,7 @@ from typing import ClassVar, Union
 @dataclass
 class Color:
     """
-    A factory class to generate one of class GrayscaleColor, RGBColor or CMYKColor. Call with
+    A factory class to generate one of class DeviceGray, DeviceRGB or DeviceCMYK. Call with
     Color.from_normalized_values() on a tuple of length 1 for grayscale, 3 for RGB, or 4 for CMYK.
     """
     color_operator: str = field(init=False)

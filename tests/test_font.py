@@ -20,6 +20,7 @@ from pypdf.generic import (
     NameObject,
     NumberObject,
     RectangleObject,
+    StreamObject,
     TextStringObject,
 )
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
@@ -192,7 +193,7 @@ def test_font_from_font_file():
             assert font.font_descriptor.flags == 98
         if font_resource == "/F4":
             assert len(font.character_map) == 697
-            assert len(font.character_widths) == 698
+            assert len(font.character_widths) == 1825
         if font_resource == "/F6":
             crippled_font_data = BytesIO()
             with TTFont(BytesIO(font_data)) as tt_font_object:
@@ -533,3 +534,21 @@ def test_font__collect_tt_t1_character_widths__out_of_range(
     )
     assert current_widths == expected_widths
     assert caplog.messages == [expected_message]
+
+
+def test_simple_font_space_char_with_tounicode_cmap():
+    """Font should read space_char from character_map when present."""
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfchar\n"
+        b"<25> <0020>\n"  # Map "%" to space
+        b"endbfchar\n"
+    )
+    font_resource = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    })
+    font = Font.from_font_resource(font_resource)
+    assert font.space_char == "%"
