@@ -947,6 +947,24 @@ def test_flatten__error_does_not_leave_a_partial_result():
         len(writer.pages)
 
 
+def test_flatten__invalid_pages_entry_discards_previous_result():
+    # An invalid /Pages entry must also discard a previously flattened page list,
+    # so that a later access re-raises rather than serving stale pages.
+    writer = PdfWriter()
+    writer.add_blank_page(10, 10)
+    writer._flatten()
+    assert writer.flattened_pages is not None
+    assert len(writer.flattened_pages) == 1
+
+    writer.root_object[NameObject("/Pages")] = NumberObject(1)
+    with pytest.raises(PdfReadError, match=r"^Invalid object in /Pages$"):
+        writer._flatten()
+    assert writer.flattened_pages is None
+
+    with pytest.raises(PdfReadError, match=r"^Invalid object in /Pages$"):
+        len(writer.pages)
+
+
 @pytest.mark.enable_socket
 @pytest.mark.timeout(10)
 def test_get_outline__cyclic_references(caplog):
