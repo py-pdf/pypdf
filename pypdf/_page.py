@@ -846,8 +846,8 @@ class PageObject(DictionaryObject):
                 try:
                     res = cast(DictionaryObject, self["/Resources"])["/ColorSpace"]
                     v = cast(DictionaryObject, res)[v]
-                except KeyError:  # for res and v
-                    raise PdfReadError(f"Cannot find resource entry {v} for {k}")
+                except KeyError as e:  # for res and v
+                    raise PdfReadError(f"Cannot find resource entry {v} for {k}") from e
         return v
 
     def _parse_images_from_content_stream(self) -> dict[str, Optional[ImageFile]]:
@@ -1782,13 +1782,13 @@ class PageObject(DictionaryObject):
                 content.indirect_reference.pdf._objects[  # type: ignore[union-attr]
                     content.indirect_reference.idnum - 1  # type: ignore[union-attr]
                 ] = content_obj
-            except AttributeError:
+            except AttributeError as e:
                 if self.indirect_reference is not None and hasattr(
                     self.indirect_reference.pdf, "_add_object"
                 ):
                     self.replace_contents(content_obj)
                 else:
-                    raise ValueError("Page must be part of a PdfWriter")
+                    raise ValueError("Page must be part of a PdfWriter") from e
 
     @property
     def page_number(self) -> Optional[int]:
@@ -2538,9 +2538,9 @@ class _VirtualList(Sequence[PageObject]):
                     # No more objects in this part of this subtree
                     ind = parent.indirect_reference
                 parent = parent.get("/Parent", None)
-            except ValueError:  # from index
+            except ValueError as e:  # from index
                 if first:
-                    raise PdfReadError(f"Page not found in page tree: {ind}")
+                    raise PdfReadError(f"Page not found in page tree: {ind}") from e
                 break
 
     def __iter__(self) -> Iterator[PageObject]:
