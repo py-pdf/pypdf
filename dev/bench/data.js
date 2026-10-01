@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790865586997,
+  "lastUpdate": 1790882238182,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -141709,6 +141709,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007830181937195032",
             "extra": "mean: 683.5541152000019 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "36047f40f9ee27b690d6c006e115ea8bcb4cb75d",
+          "message": "ROB: Flatten the page tree iteratively (#4107)\n\n* ROB: Flatten the page tree iteratively\n\nPdfDocCommon._flatten recursed once per page tree level, using two Python\nframes per level. A page tree nested deeper than the interpreter recursion\nlimit therefore raised RecursionError before\nConfiguration.page_tree_maximum_depth could apply. This is one of the three\nlimitations which were marked xfail in 893a0100.\n\nThe traversal now uses an explicit stack of (node, /Kids iterator) frames.\nThe nodes on the path from the root are held in a set, which the traversal\nadds to when it enters a node and discards from when the /Kids of that node\nare exhausted, so cycle detection, the depth limit and the entry limit keep\nworking as before. Every kid is still validated immediately before it is\nprocessed, and the recursion parameters of _flatten are gone - it takes\nlist_only only.\n\nWith this, the three xfail markers can be removed:\n\n* A page tree deeper than the interpreter recursion limit is flattened, up to\n  Configuration.page_tree_maximum_depth.\n* A document catalog without /Pages raises PdfReadError instead of an\n  AttributeError from calling .get_object() on None.\n* flattened_pages is assigned once the traversal succeeded, so a failure no\n  longer leaves a truncated page list behind which a later page access would\n  silently serve.\n\nOne further behaviour change: a /Kids entry resolving to null is now dropped\nlike any other damaged child. It used to be passed to _flatten as the node to\nprocess, which restarted the traversal at the catalog's /Pages and ended only\nwhen the cycle detection triggered. test_get_object_from_stream__size_limit\ncovered that path and now expects the document to have no pages.\n\nPerformance, measured with the script below on CPython 3.10.2. Time is the\nfastest of five runs, memory the tracemalloc peak of a single run:\n\n    Page tree                time before    time after   peak before   peak after\n    flat, 50,000 pages          774.3 ms      566.3 ms      17.2 MiB     17.2 MiB\n    balanced, 32,768 pages      556.2 ms      413.8 ms      11.3 MiB     11.4 MiB\n    chain, depth 300              3.8 ms        2.9 ms       0.6 MiB      0.1 MiB\n    chain, depth 5,000     RecursionError      46.7 ms             -      2.0 MiB\n\nThe stack holds one frame per page tree level rather than one item per pending\nkid, which is why a document with many pages below a single node does not need\nmore memory than before.\n\n```python\n\"\"\"Benchmark PdfDocCommon._flatten on synthetic page trees.\"\"\"\nimport statistics\nimport time\nimport tracemalloc\n\nfrom pypdf import PdfWriter, apply_configuration\nfrom pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject, RectangleObject\n\ndef _page(writer):\n    return writer._add_object(DictionaryObject({\n        NameObject(\"/Type\"): NameObject(\"/Page\"),\n        NameObject(\"/MediaBox\"): RectangleObject([0, 0, 10, 10]),\n    }))\n\ndef _pages(writer, kids):\n    return writer._add_object(DictionaryObject({\n        NameObject(\"/Type\"): NameObject(\"/Pages\"),\n        NameObject(\"/Kids\"): ArrayObject(kids),\n        NameObject(\"/Count\"): NumberObject(len(kids)),\n    }))\n\ndef flat(writer, count=50_000):\n    \"\"\"A single /Pages node with `count` pages below it.\"\"\"\n    return _pages(writer, [_page(writer) for _ in range(count)])\n\ndef balanced(writer, branching=8, depth=5):\n    \"\"\"A tree as written by most producers: branching**depth pages.\"\"\"\n    nodes = [_page(writer) for _ in range(branching ** depth)]\n    while len(nodes) > 1:\n        nodes = [_pages(writer, nodes[i:i + branching]) for i in range(0, len(nodes), branching)]\n    return nodes[0]\n\ndef chain(writer, depth):\n    \"\"\"One page below `depth` nested /Pages nodes.\"\"\"\n    node = _page(writer)\n    for _ in range(depth):\n        node = _pages(writer, [node])\n    return node\n\ndef measure(build, rounds=5):\n    writer = PdfWriter()\n    writer.root_object[NameObject(\"/Pages\")] = build(writer)\n    writer._flatten()  # warm-up\n    timings = []\n    for _ in range(rounds):\n        start = time.perf_counter()\n        writer._flatten()\n        timings.append(time.perf_counter() - start)\n    tracemalloc.start()\n    writer._flatten()\n    peak = tracemalloc.get_traced_memory()[1]\n    tracemalloc.stop()\n    return len(writer.flattened_pages), min(timings), statistics.median(timings), peak\n\nif __name__ == \"__main__\":\n    cases = [\n        (\"flat, 50,000 pages\", flat),\n        (\"balanced, 32,768 pages\", balanced),\n        (\"chain, depth 300\", lambda writer: chain(writer, 300)),\n        (\"chain, depth 5,000\", lambda writer: chain(writer, 5_000)),\n    ]\n    with apply_configuration(page_tree_maximum_depth=10_000, page_tree_maximum_entries=1_000_000):\n        for name, build in cases:\n            try:\n                pages, best, median, peak = measure(build)\n            except RecursionError:\n                print(f\"{name:<24} RecursionError\")\n                continue\n            print(f\"{name:<24} {best * 1000:8.1f} ms (median {median * 1000:6.1f} ms)\"\n                  f\"   peak {peak / 2 ** 20:6.1f} MiB   {pages} pages\")\n```\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\n\n* Use NullObject as fallback instead of None\n\n* _next_page_tree_kid -> _pop_next_page_tree_kid\n\n* Expand test suite\n\n* Add flattened_pages attribute to _doc_common.py\n\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>\n\n* Discard flattened pages before the /Pages lookup\n\nAn invalid /Pages entry raised before the cache was reset, leaving a\npreviously flattened page list behind.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5 <noreply@anthropic.com>\nCo-authored-by: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>\nCo-authored-by: MartinThoma <1658117+MartinThoma@users.noreply.github.com>\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",
+          "timestamp": "2026-10-01T21:14:37+02:00",
+          "tree_id": "d7b270d5a14d1b4569828e6392f4a40ff7e91078",
+          "url": "https://github.com/py-pdf/pypdf/commit/36047f40f9ee27b690d6c006e115ea8bcb4cb75d"
+        },
+        "date": 1790882230415,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 15.983861895717192,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019070201452559225",
+            "extra": "mean: 62.56310311764804 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.30597063757017,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016889133858119618",
+            "extra": "mean: 39.51636609090834 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1618340400133471,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030151589965869988",
+            "extra": "mean: 860.7081266000023 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4995777838842185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04207405260068267",
+            "extra": "mean: 2.001690291800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4606653763981026,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02931712493538768",
+            "extra": "mean: 2.1707730844000084 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5662726962166533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002772700280557209",
+            "extra": "mean: 638.4584257999961 msec\nrounds: 5"
           }
         ]
       }
