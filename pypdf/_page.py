@@ -114,6 +114,22 @@ def _get_page_resources(obj: Any) -> DictionaryObject:
     return resources
 
 
+def _get_font_resources(resources: Any) -> DictionaryObject:
+    """Return the /Font resources, or an empty dictionary if missing or malformed."""
+    fonts = resources.get(RES.FONT)
+    if is_null_or_none(fonts):
+        return DictionaryObject()
+    fonts = fonts.get_object()
+    if not isinstance(fonts, DictionaryObject):
+        logger_warning(
+            "Font resources are not a dictionary: %(fonts)s",
+            source=__name__,
+            fonts=fonts,
+        )
+        return DictionaryObject()
+    return fonts
+
+
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval: Union[RectangleObject, ArrayObject, IndirectObject, None] = self.get(name)
     if isinstance(retval, RectangleObject):
@@ -1883,10 +1899,7 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if (
-            "/Font" in resources_dict
-            and (font_resources_dict := cast(DictionaryObject, resources_dict["/Font"]))
-        ):
+        if font_resources_dict := _get_font_resources(resources_dict):
             for font_resource in font_resources_dict:
                 try:
                     font_resource_object = cast(DictionaryObject, font_resources_dict[font_resource].get_object())
@@ -2086,10 +2099,11 @@ class PageObject(DictionaryObject):
             visited.add(obj_id)
 
             resources_dict: Any = obj.get(PG.RESOURCES, {})
-            if "/Font" in resources_dict and self.pdf is not None:
-                for font_name in resources_dict["/Font"]:
+            if self.pdf is not None:
+                font_resources = _get_font_resources(resources_dict)
+                for font_name in font_resources:
                     fonts[font_name] = Font.from_font_resource(
-                        resources_dict["/Font"][font_name].get_object()
+                        cast(DictionaryObject, font_resources[font_name].get_object())
                     )
 
             if "/Parent" not in obj:

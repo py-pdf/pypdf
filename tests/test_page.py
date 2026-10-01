@@ -1768,6 +1768,44 @@ def test_extract_text__resources_is_null(caplog):
     assert caplog.text == ""
 
 
+@pytest.mark.parametrize("extraction_mode", ["plain", "layout"])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Font resources are not a dictionary: 1", id="number"),
+        pytest.param(TextStringObject("x"), "Font resources are not a dictionary: x", id="string"),
+        pytest.param(ArrayObject(), "Font resources are not a dictionary: []", id="array"),
+    ],
+)
+def test_extract_text__font_resources_not_a_dictionary(caplog, value, expected, extraction_mode):
+    """A /Font entry that is not a dictionary raised a TypeError when iterated."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0].replace_contents(ContentStream(None, writer))
+    writer.pages[0][NameObject("/Resources")] = DictionaryObject({NameObject("/Font"): value})
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text(extraction_mode=extraction_mode) == ""
+    assert expected in caplog.text
+
+
+@pytest.mark.parametrize("extraction_mode", ["plain", "layout"])
+def test_extract_text__font_resources_is_null(caplog, extraction_mode):
+    """A null /Font is missing rather than malformed: no text, no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0].replace_contents(ContentStream(None, writer))
+    writer.pages[0][NameObject("/Resources")] = DictionaryObject({NameObject("/Font"): NullObject()})
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text(extraction_mode=extraction_mode) == ""
+    assert caplog.text == ""
+
+
 def test_extract_text__resources_is_a_dictionary():
     """The regular path: a proper /Resources still yields its text."""
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
