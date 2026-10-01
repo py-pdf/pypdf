@@ -239,29 +239,29 @@ def test_layout_mode_character_spacing_per_glyph():
     assert tj_form == td_form
 
 
-def _pdf_font_size_in_tm(stream: bytes) -> bytes:
-    """Minimal PDF whose font size lives in Tm (Tf 1), as in issue #4110."""
-    objs = {
-        1: b"<< /Type /Catalog /Pages 2 0 R >>",
-        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        3: (
+def build_pdf_font_size_in_tm(stream: bytes) -> bytes:
+    """Build a minimal PDF whose font size lives in Tm (Tf 1), as in issue #4110."""
+    objs = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
             b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
             b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
         ),
-        4: (
+        (
             b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n"
             + stream + b"endstream"
         ),
-        5: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    }
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
     out = bytearray(b"%PDF-1.7\n")
     offsets = {}
-    for number in sorted(objs):
+    for number, body in enumerate(objs, start=1):
         offsets[number] = len(out)
-        out += f"{number} 0 obj\n".encode() + objs[number] + b"\nendobj\n"
+        out += f"{number} 0 obj\n".encode() + body + b"\nendobj\n"
     xref = len(out)
     out += f"xref\n0 {len(objs) + 1}\n".encode() + b"0000000000 65535 f \n"
-    for number in sorted(objs):
+    for number, _body in enumerate(objs, start=1):
         out += f"{offsets[number]:010d} 00000 n \n".encode()
     out += (
         f"trailer\n<< /Size {len(objs) + 1} /Root 1 0 R >>\n"
@@ -308,7 +308,7 @@ def test_layout_mode_space_tx_scaled_into_page_space(stream: bytes, expected: st
     space_tx used to stay in text space while tx / displaced_tx are in page
     space, so [(C) -30.5 (EO)] TJ extracted as "C EO".
     """
-    page = PdfReader(BytesIO(_pdf_font_size_in_tm(stream))).pages[0]
+    page = PdfReader(BytesIO(build_pdf_font_size_in_tm(stream))).pages[0]
     assert page.extract_text(extraction_mode="layout").strip() == expected
     assert page.extract_text().strip() == expected
 
