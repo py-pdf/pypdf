@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790863288197,
+  "lastUpdate": 1790865568874,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -141577,6 +141577,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025495077155065463",
             "extra": "mean: 642.5804592000077 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0d43fad5bdaea3d487ae63b29b47f870fc3f9eb6",
+          "message": "MAINT: Add glyphs beyond BMP in character map; really collect all character widths (#4135)\n\n* MAINT: Color: Fix spelling errors\n\n* BUG: Font: Really add all character widths in from_truetype_font_file\n\nIn the from_truetype_font_file method, we collect widths and character\nmappings in one loop. Some glyphs do not have a unicode mapping, so\nthe loop skips those. However, it should have added the associated\nglyphs to character_widths. This patch changes the order of operations\nso that we first add the character width, then we check whether a glyph\nis mapped to a unicode code point, and we only skip if the latter is\nnot the case.\n\n* ENH: Font: Collect characters beyond BMP in character_map",
+          "timestamp": "2026-10-01T16:36:28+02:00",
+          "tree_id": "5d592c5803b69416f7fff9ed3e52bb9613dc8e91",
+          "url": "https://github.com/py-pdf/pypdf/commit/0d43fad5bdaea3d487ae63b29b47f870fc3f9eb6"
+        },
+        "date": 1790865560318,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.032848266088727,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02720985860141636",
+            "extra": "mean: 76.72919837500025 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.79531830362597,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023390566907206204",
+            "extra": "mean: 56.19455538461711 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9260623700691116,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0554116750886908",
+            "extra": "mean: 1.0798408749999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3867747255046967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03431508965970174",
+            "extra": "mean: 2.5854843505999896 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4135009770992951,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02739158443321285",
+            "extra": "mean: 2.418373970999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4629419643057944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007830181937195032",
+            "extra": "mean: 683.5541152000019 msec\nrounds: 5"
           }
         ]
       }
