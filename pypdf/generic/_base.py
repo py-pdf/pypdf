@@ -410,10 +410,10 @@ class IndirectObject(PdfObject):
         # Attribute not found in object: look in pointed object
         try:
             return getattr(self._get_object_with_check(), name)
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(
                 f"No attribute {name} found in IndirectObject or pointed object"
-            )
+            ) from e
 
     def __getitem__(self, key: Any) -> Any:
         # items should be extracted from pointed Object
@@ -951,14 +951,14 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
     try:
         return bytes([_pdfdoc_encoding_rev[k] for k in unicode_string])
-    except KeyError:
+    except KeyError as e:
         raise UnicodeEncodeError(
             "pdfdocencoding",
             unicode_string,
             -1,
             -1,
             "does not exist in translation table",
-        )
+        ) from e
 
 
 def is_null_or_none(x: Any) -> TypeGuard[Union[NullObject, IndirectObject, None]]:

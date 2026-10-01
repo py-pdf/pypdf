@@ -640,10 +640,10 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 stream.seek(-1, 1)
                 value = read_object(stream, pdf, forced_encoding)
             except (RecursionError, LimitReachedError) as exc:
-                raise PdfReadError(exc.__repr__())
+                raise PdfReadError(exc.__repr__()) from exc
             except Exception as exc:
                 if pdf is not None and pdf.strict:
-                    raise PdfReadError(exc.__repr__())
+                    raise PdfReadError(exc.__repr__()) from exc
                 logger_warning("%(exception)r", source=__name__, exception=exc)
                 retval = DictionaryObject()
                 retval.update(data)
