@@ -796,6 +796,23 @@ def test_add_outline_item_collapsed():
         assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
 
 
+@pytest.mark.parametrize(
+    "page_number",
+    [
+        pytest.param(5, id="beyond-last-page"),
+        pytest.param(-6, id="before-first-page"),
+    ],
+)
+def test_add_outline_item__page_number_out_of_range(page_number):
+    """A page_number outside the document must raise rather than write a dead item."""
+    writer = PdfWriter()
+    for _ in range(5):
+        writer.add_blank_page(width=72, height=72)
+
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_outline_item("Title", page_number)
+
+
 def test_add_outline_item__page_number_invalid_type():
     """An unsupported page_number type must raise a TypeError naming it."""
     writer = PdfWriter()
@@ -1390,9 +1407,9 @@ def test_colors_in_outline_item(pdf_file_path):
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     purple_rgb = (0.5019607843137255, 0.0, 0.5019607843137255)
-    writer.add_outline_item("First Outline Item", page_number=2, color="800080")
-    writer.add_outline_item("Second Outline Item", page_number=3, color="#800080")
-    writer.add_outline_item("Third Outline Item", page_number=4, color=purple_rgb)
+    writer.add_outline_item("First Outline Item", page_number=1, color="800080")
+    writer.add_outline_item("Second Outline Item", page_number=2, color="#800080")
+    writer.add_outline_item("Third Outline Item", page_number=3, color=purple_rgb)
 
     with open(pdf_file_path, "wb") as f:
         writer.write(f)
