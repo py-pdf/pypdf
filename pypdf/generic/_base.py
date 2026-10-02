@@ -894,6 +894,8 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
     @staticmethod
     def unnumber(sin: bytes) -> bytes:
+        if b"#" not in sin:
+            return bytes(sin)
         result = bytearray()
         i = 0
         while i < len(sin):
