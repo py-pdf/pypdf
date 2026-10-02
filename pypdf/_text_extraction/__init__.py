@@ -144,10 +144,10 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     elif orientation in (90, 270):
         moved_height = delta_x
         moved_width = delta_y
-    # Axis of moved_height. A centered row label can already sit on this line,
-    # between the two wrapped baselines of a cell (#4130). Compare the new
-    # baseline with every baseline kept on the line, not only the previous
-    # fragment, so the second line stays with the label.
+    # Keep track of the baseline range of the current extracted line. A centered
+    # row label can fall between the two baselines of a wrapped cell (#4130), so
+    # comparing only with the immediately preceding fragment can incorrectly
+    # insert a line break. Use the established baseline range for that case.
     axis_index = 5 if orientation in (0, 180) else 4
     axis = m[axis_index]
     if line_span is None or line_span[0] != axis_index:
@@ -155,10 +155,7 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     else:
         lower, upper = line_span[1], line_span[2]
         distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
-    try:
-        last = (output + text)[-1]
-    except IndexError:
-        last = ""
+    last = (output + text)[-1:]
     try:
         if distance > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
             if last not in ("", "\n"):
@@ -183,7 +180,7 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
                 line_span = (axis_index, axis, axis)
             else:
                 line_span = (axis_index, min(line_span[1], axis), max(line_span[2], axis))
-    except Exception:
+    except (TypeError, ValueError, ZeroDivisionError, AttributeError):
         pass
     tm_prev = tm_matrix.copy()
     cm_prev = cm_matrix.copy()
