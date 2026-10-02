@@ -663,7 +663,7 @@ def test_merge_output(caplog):
             "https://github.com/user-attachments/files/18381743/tika-969502.pdf",
             "tika-969502.pdf",
         ),
-        ("https://arxiv.org/pdf/2201.00214.pdf", "arxiv-2201.00214.pdf"),
+        ("https://arxiv.org/pdf/2201.00214.pdf", "2201.00214.pdf"),
     ],
 )
 def test_image_extraction(url, name):

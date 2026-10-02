@@ -1,5 +1,11 @@
 """Test the pypdf._protocols module."""
-from pypdf._protocols import PdfObjectProtocol
+import inspect
+import typing
+
+import pytest
+
+from pypdf import PdfReader, PdfWriter
+from pypdf._protocols import PdfObjectProtocol, PdfReaderProtocol, PdfWriterProtocol
 
 
 class IPdfObjectProtocol(PdfObjectProtocol):
@@ -13,3 +19,45 @@ def test_pdfobjectprotocol():
     assert o.get_object() is None
     assert o.hash_value() is None
     assert o.write_to_stream(None) is None
+
+
+def _get_data_members(protocol: type) -> set:
+    """
+    Collect the protocol members which are looked up as attributes, not as methods.
+
+    This mirrors what CPython does in ``typing._get_protocol_attrs``, which is what
+    runtime ``isinstance`` checks against a ``runtime_checkable`` protocol rely on.
+    That helper is private, so this reimplements the part we need using public APIs
+    and narrows it to data members: annotations and properties.
+    """
+    members = set(typing.get_type_hints(protocol))
+    members.update(
+        name
+        for name in dir(protocol)
+        if not name.startswith("__")
+        and isinstance(inspect.getattr_static(protocol, name), property)
+    )
+    return members
+
+
+@pytest.mark.parametrize(
+    ("cls", "protocol"),
+    [(PdfReader, PdfReaderProtocol), (PdfWriter, PdfWriterProtocol)],
+)
+def test_data_members_are_declared_on_the_class(cls, protocol):
+    """
+    Every data member of the protocol is declared in the class body.
+
+    Runtime protocol checks resolve members on the class, not on an instance,
+    so a data member has to be visible on the class itself.
+    """
+    annotations = typing.get_type_hints(cls)
+    missing = sorted(
+        name
+        for name in _get_data_members(protocol)
+        if name not in annotations and not hasattr(cls, name)
+    )
+    assert not missing, (
+        f"{cls.__name__} only assigns {missing} in __init__; declare them in the "
+        f"class body as well so that runtime protocol checks can find them"
+    )

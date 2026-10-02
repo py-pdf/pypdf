@@ -122,7 +122,7 @@ class Font:
     Attributes:
         name: Font name, derived from ``font["/BaseFont"]``
         character_map: The font's character map
-        encoding: Font encoding
+        encoding: Font encoding. Must be a dict for a simple font, and string otherwise.
         sub_type: The font type, such as Type1, TrueType, or Type3.
         font_descriptor: Font metrics, including a mapping of characters to widths
         character_widths: A mapping of characters to widths
@@ -277,14 +277,14 @@ class Font:
         character_map: dict[Any, Any],
     ) -> str:
         space_char = " "
+        for glyph_id, char_str in character_map.items():
+            if char_str == space_char:
+                return str(glyph_id)
+
         if isinstance(encoding, dict):
             for char_code, char_str in encoding.items():
                 if char_str == space_char:
                     return chr(char_code)
-
-        for glyph_id, char_str in character_map.items():
-            if char_str == space_char:
-                return str(glyph_id)
 
         return space_char
 
@@ -422,16 +422,10 @@ class Font:
 
                 elif name in CORE_FONT_METRICS:
                     font_descriptor = CORE_FONT_METRICS[name].font_descriptor
-                    if isinstance(encoding, dict):
-                        for code, character in encoding.items():
-                            # Look up the width using the glyph name from the encoding
-                            if character in CORE_FONT_METRICS[name].character_widths:
-                                character_widths[chr(code)] = CORE_FONT_METRICS[name].character_widths[character]
-                    else:
-                        for code in range(256):
-                            character = chr(code)
-                            if character in CORE_FONT_METRICS[name].character_widths:
-                                character_widths[character] = CORE_FONT_METRICS[name].character_widths[character]
+                    for code, character in cast(dict[int, str], encoding).items():
+                        # Look up the width using the glyph name from the encoding
+                        if character in CORE_FONT_METRICS[name].character_widths:
+                            character_widths[chr(code)] = CORE_FONT_METRICS[name].character_widths[character]
                 if "/FontDescriptor" in pdf_font_dict:
                     font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
                     if "/MissingWidth" in font_descriptor_obj:
@@ -610,16 +604,15 @@ class Font:
                     # use buildReversed on fonttools < 4.57 and build a list of minimums from it
                     reverse_cmap = {k: min(r) for k, r in tt_font_cmap_table.buildReversed().items()}
                 for gid, glyph in enumerate(glyph_order):
-                    char_code = reverse_cmap.get(glyph)
-                    if char_code is None:
-                        continue
-                    char = chr(char_code)
-                    gid = tt_font_object.getGlyphID(glyph)
                     # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
                     gid_bytes = gid.to_bytes(2, "big")
                     gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
-                    character_map[gid_key_string] = char
+                    # Always map character width
                     character_widths[gid_key_string] = int(round(metrics[glyph][0] * scale_factor, 0))
+                    # Add GID to character_map when we can find it in the cmap
+                    char_code = reverse_cmap.get(glyph)
+                    if char_code is not None:
+                        character_map[gid_key_string] = chr(char_code)
             else:
                 raise PdfReadError("Font file does not have a cmap table")
 
@@ -746,22 +739,18 @@ class Font:
             # Note that, in some cases, unicodedata.normalize() might split a ligature, resulting
             # in multiple characters.
             normalized_chars = unicodedata.normalize("NFKC", actual_char)
-            uni_points = [ord(char) for char in normalized_chars]
-            # Only deal with Basic Multilingual Plane characters.
-            # TODO: Add all characters.
-            if all(uni_point <= 0xFFFF for uni_point in uni_points):
-                cid = ord(src_id) if isinstance(src_id, str) else src_id
-                cid_hex = src_hex_format.format(cid=cid)
-                uni_hex = "".join(f"{uni_point:04X}" for uni_point in uni_points)
-                bfchar_map.append(f"<{cid_hex}> <{uni_hex}>")
+            cid = ord(src_id) if isinstance(src_id, str) else src_id
+            cid_hex = src_hex_format.format(cid=cid)
+            uni_hex = normalized_chars.encode("utf-16-be").hex().upper()
+            bfchar_map.append(f"<{cid_hex}> <{uni_hex}>")
 
-                # Width mapping, but not for the 14 Adobe code fonts, which are dealt with elsewhere.
-                if self.name not in CORE_FONT_METRICS:
-                    # The widths (/W) array can have two formats:
-                    #    [first_cid [w1 w2 w3]] or [first last width]
-                    # Here we choose the first format and simply provide one array with one width for every cid.
-                    width = self.character_widths.get(cast(str, src_id), self.character_widths["default"])
-                    widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
+            # Width mapping, but not for the 14 Adobe code fonts, which are dealt with elsewhere.
+            if self.name not in CORE_FONT_METRICS:
+                # The widths (/W) array can have two formats:
+                #    [first_cid [w1 w2 w3]] or [first last width]
+                # Here we choose the first format and simply provide one array with one width for every cid.
+                width = self.character_widths.get(cast(str, src_id), self.character_widths["default"])
+                widths_list.extend([NumberObject(cid), ArrayObject([NumberObject(width)])])
 
         while partial_list := bfchar_map[:CMAP_MAX_ENTRIES_PER_GROUP]:
             del bfchar_map[:CMAP_MAX_ENTRIES_PER_GROUP]

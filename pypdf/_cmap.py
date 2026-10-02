@@ -97,8 +97,15 @@ def _parse_encoding(
             else:
                 raise Exception("not found")
         except Exception:
-            logger_error("Advanced encoding %(encoding)s not implemented yet", source=__name__, encoding=enc)
-            encoding = enc
+            encoding = (
+                "utf-16-be" if ft.get("/Subtype", "") == "/Type0" else charset_encoding["/StandardEncoding"].copy()
+            )
+            logger_error(
+                "Advanced encoding %(encoding)s not implemented yet, using %(new_encoding)s instead.",
+                source=__name__,
+                encoding=enc,
+                new_encoding=encoding
+            )
     elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
         try:
             encoding = charset_encoding[cast(str, enc["/BaseEncoding"])].copy()
