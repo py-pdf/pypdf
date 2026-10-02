@@ -48,7 +48,7 @@ from pypdf.generic._image_inline import (
 )
 
 from . import RESOURCE_ROOT, get_data_from_url
-from .utils import ReaderDummy
+from .utils import ReaderDummy, count_function_calls
 
 
 class ChildDummy(DictionaryObject):
@@ -385,6 +385,110 @@ def test_read_object_comment():
     pdf = None
     out = read_object(stream, pdf)
     assert out == 1
+
+
+@pytest.mark.parametrize(
+    ("data", "idnum", "generation", "remainder"),
+    [
+        (b"12 0 R/Next", 12, 0, b"/Next"),
+        (b"12\n0\r\nR>>", 12, 0, b">>"),
+        (b"-12 3 R ", -12, 3, b" "),
+        # A vertical tab is no whitespace in PDF, but the intention is clear
+        (b"12 0 \x0bR ", 12, 0, b" "),
+    ],
+)
+def test_read_object__indirect_object(data, idnum, generation, remainder):
+    """The stream continues right after the "R"."""
+    stream = BytesIO(data)
+    result = read_object(stream, ReaderDummy())
+    assert isinstance(result, IndirectObject)
+    assert (result.idnum, result.generation) == (idnum, generation)
+    assert stream.read() == remainder
+
+    written = BytesIO()
+    result.write_to_stream(written)
+    assert written.getvalue() == f"{idnum} {generation} R".encode()
+
+
+@pytest.mark.parametrize(
+    ("data", "expected", "remainder"),
+    [
+        (b"123/Next", NumberObject(123), b"/Next"),
+        (b"-4.5]", FloatObject(-4.5), b"]"),
+        (b"12 0 obj", NumberObject(12), b" 0 obj"),
+        # The number ends with the stream
+        (b"123", NumberObject(123), b""),
+        # The number is longer than the peek of the reference check
+        (b"1" * 25 + b" ", NumberObject(int("1" * 25)), b" "),
+    ],
+)
+def test_read_object__number(data, expected, remainder):
+    """The stream continues right after the number."""
+    stream = BytesIO(data)
+    result = read_object(stream, ReaderDummy())
+    assert type(result) is type(expected)
+    assert result == expected
+    assert stream.read() == remainder
+
+
+def test_read_array_of_numbers_and_references__function_calls():
+    """
+    Parsing numbers and indirect references must stay cheap, see #2136.
+
+    Counting the Python function calls measures the work per element
+    independently of the machine speed.
+    """
+    stream = BytesIO(b"[" + b" ".join([b"123", b"4.5", b"12 0 R"] * 100) + b"]")
+
+    array, calls = count_function_calls(lambda: ArrayObject.read_from_stream(stream, ReaderDummy()))
+
+    assert len(array) == 300
+    assert array[:3] == [123, 4.5, IndirectObject(12, 0, array[2].pdf)]
+    # Two calls per element; numbers took four and references six before
+    assert calls < 3 * len(array)
+
+
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        (b"[null null]", [NullObject(), NullObject()]),
+        (b"[null]", [NullObject()]),
+        (b"[nullnull 1]", [NullObject(), NullObject(), NumberObject(1)]),
+        (b"[ null\n/A ]", [NullObject(), NameObject("/A")]),
+    ],
+)
+def test_read_array_of_nulls(data, expected):
+    array = ArrayObject.read_from_stream(BytesIO(data), ReaderDummy())
+    assert array == expected
+    assert all(type(value) is type(other) for value, other in zip(array, expected))
+
+
+@pytest.mark.parametrize("data", [b"[nul]", b"[nu", b"[n"])
+def test_read_array_of_nulls__invalid(data):
+    with pytest.raises(PdfReadError, match=r"^Could not read Null object$"):
+        ArrayObject.read_from_stream(BytesIO(data), ReaderDummy())
+
+
+def test_array_of_nulls__function_calls():
+    """
+    Parsing and cloning nulls must stay cheap, see #2136.
+
+    Tagged documents can contain arrays with thousands of nulls in the
+    /ParentTree of the structure tree.
+    """
+    stream = BytesIO(b"[" + b" ".join([b"null"] * 1000) + b"]")
+
+    array, calls = count_function_calls(lambda: ArrayObject.read_from_stream(stream, ReaderDummy()))
+
+    assert array == [NullObject()] * 1000
+    # No calls per element; it was two before
+    assert calls < len(array)
+
+    clone, calls = count_function_calls(lambda: array.clone(PdfWriter()))
+
+    assert clone == array
+    # One call per element; it was three before
+    assert calls < 2 * len(array)
 
 
 def test_bytestringobject():
@@ -1056,6 +1160,25 @@ def test_cloning_null_obj_keeps_hard_reference():
     del null_obj
     gc.collect()
     assert obj_weakref() is not None
+
+
+def test_cloning_array_of_direct_objects__function_calls():
+    """
+    Cloning direct objects must stay cheap, see #2136.
+
+    Documents can contain arrays with thousands of direct objects, for example
+    in the /ParentTree of the structure tree. Counting the Python function calls
+    measures the work per element independently of the machine speed.
+    """
+    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
+    array = ArrayObject(elements * 200)
+    writer = PdfWriter()
+
+    clone, calls = count_function_calls(lambda: array.clone(writer))
+
+    assert clone == array
+    # About 3.6 calls per element; it was more than 7 before the fix
+    assert calls < 5 * len(array)
 
 
 @pytest.mark.enable_socket

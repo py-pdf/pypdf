@@ -213,7 +213,7 @@ class _XmpBuilder(ExpatBuilderNS):
         parser.StartElementHandler = self.start_element_handler
 
 
-class XmpInformation(XmpInformationProtocol, PdfObject):
+class XmpInformation(PdfObject, XmpInformationProtocol):
     """
     An object that represents Extensible Metadata Platform (XMP) metadata.
     Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`.

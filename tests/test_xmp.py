@@ -409,6 +409,13 @@ def test_xmp_information__create():
     assert xmp.pdf_producer is None
 
 
+def test_xmp_information__pdf_object_methods():
+    """The methods of PdfObject take precedence over the stubs of XmpInformationProtocol."""
+    xmp = XmpInformation.create()
+    assert xmp.get_object() is xmp
+    assert xmp.hash_value().startswith(b"XmpInformation:")
+
+
 def test_xmp_information__set_dc_title():
     """Test setting dc:title metadata."""
     xmp = XmpInformation.create()
