@@ -193,7 +193,7 @@ def test_font_from_font_file():
             assert font.font_descriptor.flags == 98
         if font_resource == "/F4":
             assert len(font.character_map) == 697
-            assert len(font.character_widths) == 698
+            assert len(font.character_widths) == 1825
         if font_resource == "/F6":
             crippled_font_data = BytesIO()
             with TTFont(BytesIO(font_data)) as tt_font_object:
