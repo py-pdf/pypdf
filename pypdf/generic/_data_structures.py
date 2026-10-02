@@ -97,6 +97,12 @@ logger = logging.getLogger(__name__)
 
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
+# Checking for these types first avoids isinstance() calls while cloning,
+# which are slow because PdfObject inherits from a Protocol.
+_SCALAR_TYPES = frozenset(
+    (BooleanObject, ByteStringObject, FloatObject, NameObject, NullObject, NumberObject, TextStringObject)
+)
+
 
 class ArrayObject(list[Any], PdfObject):
     def replicate(
@@ -131,7 +137,9 @@ class ArrayObject(list[Any], PdfObject):
             self._reference_clone(ArrayObject(), pdf_dest, force_duplicate=True),
         )
         for data in self:
-            if isinstance(data, StreamObject):
+            if type(data) in _SCALAR_TYPES:
+                arr.append(data.clone(pdf_dest, force_duplicate, ignore_fields))
+            elif isinstance(data, StreamObject):
                 dup = data._reference_clone(
                     data.clone(pdf_dest, force_duplicate, ignore_fields),
                     pdf_dest,
@@ -411,7 +419,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
 
         for k, v in src.items():
             if k not in ignore_fields:
-                if isinstance(v, StreamObject):
+                if type(v) not in _SCALAR_TYPES and isinstance(v, StreamObject):
                     if not hasattr(v, "indirect_reference"):
                         v.indirect_reference = None
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
