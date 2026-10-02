@@ -45,7 +45,7 @@ else:
     from typing_extensions import Self
 
 from .._codecs import _pdfdoc_encoding_rev
-from .._protocols import PdfObjectProtocol, PdfWriterProtocol
+from .._protocols import PdfWriterProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,
@@ -62,7 +62,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
-class PdfObject(PdfObjectProtocol):
+class PdfObject:
     # function for calculating a hash value
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
     indirect_reference: Optional["IndirectObject"]
