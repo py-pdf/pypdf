@@ -1548,6 +1548,10 @@ class ContentStream(DecodedStreamObject):
         super().write_to_stream(stream, encryption_key)
 
 
+# Bound comment scanning without consuming Python recursion depth.
+_MAX_LEADING_COMMENTS = 1000
+
+
 def read_object(
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
@@ -1555,6 +1559,16 @@ def read_object(
 ) -> PdfObject:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
+    comment_count = 0
+    while tok == b"%":
+        if comment_count >= _MAX_LEADING_COMMENTS:
+            raise LimitReachedError(f"Maximum number of leading comments exceeded: {_MAX_LEADING_COMMENTS}.")
+        skip_over_comment(stream)
+        read_non_whitespace(stream)
+        stream.seek(-1, 1)
+        tok = stream.read(1)
+        stream.seek(-1, 1)
+        comment_count += 1
     if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
     if tok == b"<":
@@ -1574,12 +1588,6 @@ def read_object(
         return NullObject()
     if tok == b"n":
         return NullObject.read_from_stream(stream)
-    if tok == b"%":
-        # comment
-        skip_over_comment(stream)
-        tok = read_non_whitespace(stream)
-        stream.seek(-1, 1)
-        return read_object(stream, pdf, forced_encoding)
     if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)
