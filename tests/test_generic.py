@@ -12,7 +12,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import CheckboxRadioButtonAttributes, OutlineFontFlag
-from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, DeprecationError, PdfReadError, PdfStreamError
+from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -40,6 +40,7 @@ from pypdf.generic import (
     read_object,
     read_string_from_stream,
 )
+from pypdf.generic._data_structures import MAX_LEADING_COMMENT_ITERATIONS
 from pypdf.generic._image_inline import (
     extract_inline__ascii85_decode,
     extract_inline__ascii_hex_decode,
@@ -385,6 +386,23 @@ def test_read_object_comment():
     pdf = None
     out = read_object(stream, pdf)
     assert out == 1
+
+
+def test_read_object_many_leading_comments():
+    """Many leading comments must not recurse; capped by LimitReachedError (#4145)."""
+    def build(n: int) -> bytes:
+        return b"\n".join(b"% pad " + str(i).encode() for i in range(n)) + b"\n42\n"
+
+    # Below the cap: the trailing number is returned.
+    assert read_object(BytesIO(build(100)), None) == 42
+    assert read_object(BytesIO(build(MAX_LEADING_COMMENT_ITERATIONS)), None) == 42
+
+    # One comment beyond the cap: a typed exception, not RecursionError.
+    with pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"More than 1000 consecutive leading comments",
+    ):
+        read_object(BytesIO(build(MAX_LEADING_COMMENT_ITERATIONS + 1)), None)
 
 
 def test_bytestringobject():

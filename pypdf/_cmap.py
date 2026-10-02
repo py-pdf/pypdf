@@ -294,7 +294,7 @@ def process_cm_line(
     elif process_char:
         try:
             parse_bfchar(line, map_dict, int_entry)
-        except ValueError as error:
+        except (ValueError, LimitReachedError) as error:
             logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     return process_rg, process_char, multiline_rg
 

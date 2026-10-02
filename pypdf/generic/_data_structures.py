@@ -1548,6 +1548,19 @@ class ContentStream(DecodedStreamObject):
         super().write_to_stream(stream, encryption_key)
 
 
+# Maximum consecutive ``%`` comments allowed before the
+# leading-comment loop in :func:`read_object` raises
+# ``LimitReachedError`` instead of driving the interpreter past
+# its default recursion limit.
+#
+# The value 1000 mirrors the default Python recursion limit (1000)
+# and the ``_MAX_STARTXREF_RECOVERY_LINES`` guard used elsewhere in
+# the codebase for the same reason: cap unbounded scans of crafted
+# inputs. A real object preceded by 1000 or more leading comment lines
+# is already far larger than any well-formed PDF ever emits.
+MAX_LEADING_COMMENT_ITERATIONS = 1000
+
+
 def read_object(
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
@@ -1555,6 +1568,41 @@ def read_object(
 ) -> PdfObject:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
+    # Leading-comments loop: each consecutive ``%`` comment is skipped
+    # in place (no new ``read_object`` frame). Without this cap,
+    # crafted inputs with >= ~1000 leading comments would drive the
+    # interpreter past its default recursion limit (1000) before the
+    # real object is reached, leaking a raw ``RecursionError`` to the
+    # caller instead of a typed ``LimitReachedError``.
+    #
+    # See: https://github.com/py-pdf/pypdf/issues/4145
+    comment_count = 0
+    while True:
+        tok = stream.read(1)
+        stream.seek(-1, 1)  # reset to start
+        if tok == b"%":
+            # Skip the whole comment (up to and including its
+            # terminating newline), then peek at the next non-
+            # whitespace byte and rewind one byte so the stream is
+            # left pointing at that byte for the next loop
+            # iteration. This mirrors the positioning performed by
+            # the original recursive ``read_object`` call: each
+            # leading comment advances the stream exactly once,
+            # and ``comment_count`` grows by one per comment line.
+            skip_over_comment(stream)
+            _ = read_non_whitespace(stream)
+            stream.seek(-1, 1)
+            comment_count += 1
+            if comment_count > MAX_LEADING_COMMENT_ITERATIONS:
+                raise LimitReachedError(
+                    f"More than {MAX_LEADING_COMMENT_ITERATIONS} consecutive "
+                    "leading comments in object stream; possible crafted input."
+                )
+            continue
+        # First non-comment token: break out of the leading-comment
+        # loop; ``tok`` now holds that first byte and the stream is
+        # positioned at the start of the real object.
+        break
     if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
     if tok == b"<":
@@ -1574,12 +1622,6 @@ def read_object(
         return NullObject()
     if tok == b"n":
         return NullObject.read_from_stream(stream)
-    if tok == b"%":
-        # comment
-        skip_over_comment(stream)
-        tok = read_non_whitespace(stream)
-        stream.seek(-1, 1)
-        return read_object(stream, pdf, forced_encoding)
     if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)

@@ -621,6 +621,55 @@ def test_parse_to_unicode_skips_truncated_lines(caplog):
     assert "Skipping broken line b'zz  0042': Non-hexadecimal digit found" in caplog.text
 
 
+def test_parse_to_unicode_skips_oversize_bfchar_source(caplog):
+    """An over-limit bfchar source token is skipped with a warning, not raised (#4146).
+
+    ``parse_bfchar`` validates the source token with
+    ``_check_token_length``, which raises ``LimitReachedError``
+    (a ``PyPdfError``). Historically ``process_cm_line`` only caught
+    ``ValueError`` on the bfchar path, so the ``LimitReachedError``
+    escaped ``process_cm_line`` -> ``_parse_to_unicode`` -> ``get_encoding``
+    -> ``Font.from_font_resource`` -> ``PdfReader.extract_text()``
+    as an uncaught internal exception.
+
+    The fix adds ``LimitReachedError`` to the bfchar-path exception
+    guard so the over-limit line is treated as a broken line
+    (skipped + logged) rather than a fatal leak.
+    """
+    writer = PdfWriter()
+
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"begincmap\n"
+        b"/CMapType 2 def\n"
+        b"1 beginbfchar\n"
+        b"<0041> <0042>\n"           # valid source (within the 16-hex cap)
+        b"<010101010101010101> <0043>\n"   # source token = 18 hex chars > 16-hex cap
+        b"endbfchar\n"
+        b"endcmap\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+
+    # No exception escapes: the over-limit line is skipped + logged.
+    page.extract_text()
+    assert (
+        "Skipping broken line b'010101010101010101   0043': "
+        "Maximum /ToUnicode code length exceeded: 18 > 16."
+    ) in caplog.text
+
+
 def test_parse_bfchar__iteration_limit():
     int_entry = [0] * 99_995
     map_dict = {}
