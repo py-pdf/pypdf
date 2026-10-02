@@ -97,8 +97,8 @@ logger = logging.getLogger(__name__)
 
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
-# Checking for these types first avoids isinstance() calls while cloning,
-# which are slow because PdfObject inherits from a Protocol.
+# Checking for these types first skips the isinstance() checks for streams
+# and indirect objects while cloning, which adds up for large arrays.
 _SCALAR_TYPES = frozenset(
     (BooleanObject, ByteStringObject, FloatObject, NameObject, NullObject, NumberObject, TextStringObject)
 )
