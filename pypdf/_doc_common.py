@@ -1088,7 +1088,12 @@ class PdfDocCommon(ABC):
         try:
             return Destination(title, page, Fit(fit_type=typ, fit_args=fit_args))
         except PdfReadError:
-            logger_warning("Unknown destination: %(title)r %(fit_args)s", source=__name__, title=title, fit_args=fit_args)
+            logger_warning(
+                "Unknown destination: %(title)r %(fit_args)s",
+                source=__name__,
+                title=title,
+                fit_args=fit_args,
+            )
             if self.strict:
                 raise
             # create a link to first Page
