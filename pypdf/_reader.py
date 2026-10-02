@@ -707,6 +707,16 @@ class PdfReader(PdfDocCommon):
         self._basic_validation(stream)
         self._find_eof_marker(stream)
         startxref = self._find_startxref_pos(stream)
+        if startxref < 0:
+            # A negative offset cannot point into the file. Treat it like the
+            # zero case (#3157) so the xref table is repaired instead of
+            # leaking a ValueError from a negative seek.
+            logger_warning(
+                "Negative startxref pointer (%(startxref)d), treating it as zero.",
+                source=__name__,
+                startxref=startxref,
+            )
+            startxref = 0
         self._startxref = startxref
 
         # check and eventually correct the startxref only if not strict
