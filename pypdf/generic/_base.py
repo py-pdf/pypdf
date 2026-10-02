@@ -216,6 +216,9 @@ class NullObject(PdfObject):
         ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "NullObject":
         """Clone object into pdf_dest."""
+        if not hasattr(self, "indirect_reference"):
+            # Direct object: shortcut, as some arrays consist mostly of nulls
+            return NullObject()
         return cast(
             "NullObject", self._reference_clone(NullObject(), pdf_dest, force_duplicate)
         )

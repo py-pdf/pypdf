@@ -448,6 +448,49 @@ def test_read_array_of_numbers_and_references__function_calls():
     assert calls < 3 * len(array)
 
 
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        (b"[null null]", [NullObject(), NullObject()]),
+        (b"[null]", [NullObject()]),
+        (b"[nullnull 1]", [NullObject(), NullObject(), NumberObject(1)]),
+        (b"[ null\n/A ]", [NullObject(), NameObject("/A")]),
+    ],
+)
+def test_read_array_of_nulls(data, expected):
+    array = ArrayObject.read_from_stream(BytesIO(data), ReaderDummy())
+    assert array == expected
+    assert all(type(value) is type(other) for value, other in zip(array, expected))
+
+
+@pytest.mark.parametrize("data", [b"[nul]", b"[nu", b"[n"])
+def test_read_array_of_nulls__invalid(data):
+    with pytest.raises(PdfReadError, match=r"^Could not read Null object$"):
+        ArrayObject.read_from_stream(BytesIO(data), ReaderDummy())
+
+
+def test_array_of_nulls__function_calls():
+    """
+    Parsing and cloning nulls must stay cheap, see #2136.
+
+    Tagged documents can contain arrays with thousands of nulls in the
+    /ParentTree of the structure tree.
+    """
+    stream = BytesIO(b"[" + b" ".join([b"null"] * 1000) + b"]")
+
+    array, calls = count_function_calls(lambda: ArrayObject.read_from_stream(stream, ReaderDummy()))
+
+    assert array == [NullObject()] * 1000
+    # No calls per element; it was two before
+    assert calls < len(array)
+
+    clone, calls = count_function_calls(lambda: array.clone(PdfWriter()))
+
+    assert clone == array
+    # One call per element; it was three before
+    assert calls < 2 * len(array)
+
+
 def test_bytestringobject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")

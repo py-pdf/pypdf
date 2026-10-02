@@ -272,6 +272,13 @@ class ArrayObject(list[Any], PdfObject):
             # check for array ending
             if tok == b"]":
                 break
+            if tok == b"n":
+                # Shortcut for null, as some arrays consist mostly of nulls
+                rest = stream.read(3)
+                if rest == b"ull":
+                    arr.append(NullObject())
+                    continue
+                stream.seek(-len(rest), 1)
             stream.seek(-1, 1)
             # read and append object
             arr.append(read_object(stream, pdf, forced_encoding))
