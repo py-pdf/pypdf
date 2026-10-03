@@ -552,6 +552,22 @@ def test_rectangleobject__accepts_an_array_object():
     assert list(ro) == [0, 0, 612, 792]
 
 
+@pytest.mark.parametrize(
+    "values",
+    [
+        pytest.param((0, 0), id="too-few"),
+        pytest.param((0, 0, 1, 1, 2), id="too-many"),
+        pytest.param((), id="empty"),
+    ],
+)
+def test_rectangleobject__requires_four_values(values):
+    """A rectangle built from the wrong number of values reports it."""
+    with pytest.raises(
+        ValueError, match=f"Expected four values for a rectangle, got {len(values)}"
+    ):
+        RectangleObject(values)
+
+
 def test_textstringobject_exc():
     tso = TextStringObject("foo")
     assert tso.get_original_bytes() == b"foo"
@@ -1361,6 +1377,8 @@ def test_missing_hashbin():
     assert hash(NullObject()) == NullObject().hash_bin()
     t = ByteStringObject(b"123")
     assert t.hash_bin() == hash((ByteStringObject, b"123"))
+    assert FloatObject(1.5).hash_bin() == hash((FloatObject, 1.5))
+    assert FloatObject(1.5).hash_bin() == FloatObject(1.5).hash_bin()
 
 
 def test_is_null_or_none():
