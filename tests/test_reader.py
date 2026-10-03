@@ -2095,6 +2095,36 @@ def test_issue3151(caplog):
     assert len(reader.pages) == 742
 
 
+def test_negative_startxref_is_treated_as_zero(caplog):
+    """A negative startxref pointer (the uncovered variant of #3151) is
+    repaired like the zero case of #3157 instead of leaking a ValueError
+    from a negative seek.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    buf = BytesIO()
+    writer.write(buf)
+    data = buf.getvalue()
+    idx = data.rfind(b"startxref")
+    num = data[idx : data.rfind(b"%%EOF")].split(b"\n")[1].strip()
+    negative_data = data[:idx] + b"startxref\n-" + num + b"\n%%EOF" + data[data.rfind(b"%%EOF") + 5 :]
+
+    # A corrupted (negative) startxref is recovered to a single page.
+    reader = PdfReader(BytesIO(negative_data))
+    assert len(reader.pages) == 1
+    assert caplog.messages == [
+        f"Negative startxref pointer (-{int(num)}), treating it as zero.",
+        "incorrect startxref pointer(4)",
+        "parsing for Object Streams",
+    ]
+
+    # A healthy startxref emits no warnings.
+    caplog.clear()
+    reader = PdfReader(BytesIO(data))
+    assert len(reader.pages) == 1
+    assert caplog.messages == []
+
+
 @pytest.mark.enable_socket
 def test_issue2886(caplog):
     """Tests for #2886"""
