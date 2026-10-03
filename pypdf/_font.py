@@ -686,6 +686,7 @@ class Font:
             HAS_FONTTOOLS
             and getattr(self.font_descriptor, "font_file", None)
             and isinstance(self.encoding, str)
+            and (font_file_data := cast(StreamObject, self.font_descriptor.font_file).get_data()) is not None
         ):
             try:
                 font_file_data = cast(StreamObject, self.font_descriptor.font_file).get_data()
