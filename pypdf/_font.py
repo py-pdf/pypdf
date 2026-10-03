@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 try:
     from io import BytesIO
 
-    from fontTools.ttLib import TTFont, TTLibError
+    from fontTools.ttLib import TTFont
     HAS_FONTTOOLS = True
 except ImportError:
     HAS_FONTTOOLS = False
@@ -703,7 +703,7 @@ class Font:
 
                 return reverse_cmap, encoding_cmap
 
-            except (AttributeError, TTLibError):  # Cmap table is missing or the font is corrupt.
+            except Exception:  # Cmap table is missing or the font is corrupt.
                 reverse_cmap.clear()
                 encoding_cmap.clear()
 
