@@ -482,48 +482,50 @@ class Font:
 
     @staticmethod
     def _font_flags_from_truetype_font_tables(
-            header: table__h_e_a_d,
-            postscript: table__p_o_s_t,
-            os2: table_O_S_2f_2
+            header_table: table__h_e_a_d,
+            postscript_table: table__p_o_s_t,
+            os2_table: table_O_S_2f_2
         ) -> int:
         # Get the font flags
-        if os2:
-            panose = os2.panose
+        if os2_table:
+            panose = os2_table.panose
             # sFamilyClass is a two-byte field. The high byte describes the family class, whereas the low
             # byte only describes the subclass. We only need the high byte, hence the bit shift below:
-            family_class = os2.sFamilyClass >> 8
+            family_class = os2_table.sFamilyClass >> 8
         flags: int = 0
 
         # ITALIC
-        if header.macStyle & HEADER_MACSTYLE_ITALIC or (os2 and os2.fsSelection & OS2_FSSELECTION_ITALIC):
+        if header_table.macStyle & HEADER_MACSTYLE_ITALIC or (
+            os2_table and os2_table.fsSelection & OS2_FSSELECTION_ITALIC
+        ):
             flags |= FontFlags.ITALIC
-        if postscript:
-            italic_angle = postscript.italicAngle
+        if postscript_table:
+            italic_angle = postscript_table.italicAngle
             if italic_angle != 0.0:
                 flags |= FontFlags.ITALIC
 
         # FIXED_PITCH
         if (
-            (os2 and panose.bProportion == OS2_PANOSE_BPROPORTION_MONOSPACED) or
-            (postscript and postscript.isFixedPitch > 0)  # Actually 1, but originally (older versions of the TTF
-        ):                                                # specification) any non-zero value signified monospace.
+            (os2_table and panose.bProportion == OS2_PANOSE_BPROPORTION_MONOSPACED) or
+            (postscript_table and postscript_table.isFixedPitch > 0)  # Actually 1, but originally (older TTF spec.
+        ):                                                            # version) any non-zero value signified monospace.
             flags |= FontFlags.FIXED_PITCH
 
         # SCRIPT
-        if os2 and (
+        if os2_table and (
             family_class == OS2_SFAMILYSCLASS_SCRIPTS or panose.bFamilyType == OS2_PANOSE_BFAMILYTYPE_SCRIPT
         ):
             flags |= FontFlags.SCRIPT
 
         # SERIF
-        if os2 and (
+        if os2_table and (
             2 <= panose.bSerifStyle <= 10
             or 1 <= family_class <= 5 or family_class == 7  # 6 is reserved, all 8 and above are not serif
         ):
             flags |= FontFlags.SERIF
 
         # SYMBOLIC
-        if os2 and (
+        if os2_table and (
             family_class == OS2_SFAMILYSCLASS_SYMBOLIC or
             panose.bFamilyType in {OS2_PANOSE_BFAMILYTYPE_DECORATIVE, OS2_PANOSE_BFAMILYTYPE_PICTORIAL}
         ):
@@ -542,43 +544,47 @@ class Font:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6head.html
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6post.html
-            header = tt_font_object["head"]
-            horizontal_header = tt_font_object["hhea"]
-            metrics = tt_font_object["hmtx"].metrics
+            header_table = tt_font_object["head"]
+            horizontal_header_table = tt_font_object["hhea"]
+            metrics_table = tt_font_object["hmtx"]
 
             # Collect additional font tables to derive font information
-            postscript = tt_font_object.get("post", None)
-            os2 = tt_font_object.get("OS/2", None)
+            postscript_table = tt_font_object.get("post", None)
+            os2_table = tt_font_object.get("OS/2", None)
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
-            units_per_em = header.unitsPerEm
+            units_per_em = header_table.unitsPerEm
             if not units_per_em:
                 raise PdfReadError("Font file has an invalid unitsPerEm of 0")
             scale_factor = 1000.0 / units_per_em
 
             # Get the font descriptor
             font_descriptor_kwargs: dict[Any, Any] = {}
-            names = tt_font_object.get("name", None)
-            if names:
-                font_descriptor_kwargs["name"] = names.getBestFullName()
-                font_descriptor_kwargs["family"] = names.getBestFamilyName()
-                font_descriptor_kwargs["weight"] = names.getBestSubFamilyName()
-            font_descriptor_kwargs["ascent"] = int(round(horizontal_header.ascent * scale_factor, 0))
-            font_descriptor_kwargs["descent"] = int(round(horizontal_header.descent * scale_factor, 0))
-            if os2:
+            name_table = tt_font_object.get("name", None)
+            if name_table:
+                font_descriptor_kwargs["name"] = name_table.getBestFullName()
+                font_descriptor_kwargs["family"] = name_table.getBestFamilyName()
+                font_descriptor_kwargs["weight"] = name_table.getBestSubFamilyName()
+            font_descriptor_kwargs["ascent"] = int(round(horizontal_header_table.ascent * scale_factor, 0))
+            font_descriptor_kwargs["descent"] = int(round(horizontal_header_table.descent * scale_factor, 0))
+            if os2_table:
                 try:
-                    font_descriptor_kwargs["cap_height"] = int(round(os2.sCapHeight * scale_factor, 0))
-                    font_descriptor_kwargs["x_height"] = int(round(os2.sxHeight * scale_factor, 0))
+                    font_descriptor_kwargs["cap_height"] = int(round(os2_table.sCapHeight * scale_factor, 0))
+                    font_descriptor_kwargs["x_height"] = int(round(os2_table.sxHeight * scale_factor, 0))
                 except AttributeError:
                     pass
 
-            font_descriptor_kwargs["flags"] = cls._font_flags_from_truetype_font_tables(header, postscript, os2)
+            font_descriptor_kwargs["flags"] = cls._font_flags_from_truetype_font_tables(
+                header_table,
+                postscript_table,
+                os2_table
+            )
 
             font_descriptor_kwargs["bbox"] = (
-                round(header.xMin * scale_factor, 0),
-                round(header.yMin * scale_factor, 0),
-                round(header.xMax * scale_factor, 0),
-                round(header.yMax * scale_factor, 0)
+                round(header_table.xMin * scale_factor, 0),
+                round(header_table.yMin * scale_factor, 0),
+                round(header_table.xMax * scale_factor, 0),
+                round(header_table.yMax * scale_factor, 0)
             )
 
             font_file_data = StreamObject()
@@ -603,6 +609,7 @@ class Font:
                 except AttributeError:
                     # use buildReversed on fonttools < 4.57 and build a list of minimums from it
                     reverse_cmap = {k: min(r) for k, r in tt_font_cmap_table.buildReversed().items()}
+                metrics = metrics_table.metrics
                 for gid, glyph in enumerate(glyph_order):
                     # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
                     gid_bytes = gid.to_bytes(2, "big")
