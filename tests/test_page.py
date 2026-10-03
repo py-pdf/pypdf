@@ -320,6 +320,42 @@ def test_compress_content_streams(pdf_path, password):
         reader.pages[0].compress_content_streams()
 
 
+def test_page_number_of_identical_pages():
+    """
+    Pages which only differ in their object number must still report their
+    own position in the document.
+
+    `PageObject.page_number` looks the page up with `list.index`, which compares
+    with `==`. Two pages with identical content therefore compare equal and the
+    first match wins, so every page but the first reported the number 0.
+    """
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(width=200, height=200)
+
+    for number, page in enumerate(writer.pages):
+        assert number == page.page_number
+        assert number == writer.get_page_number(page)
+
+    # The same for a reader, where the pages are read back from the file.
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+    for number, page in enumerate(PdfReader(output).pages):
+        assert number == page.page_number
+
+
+def test_page_number_of_named_destination():
+    """A named destination has to resolve to the page it points at."""
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(width=200, height=200)
+    writer.add_named_destination("chapter2", 2)
+
+    destination = writer.named_destinations["chapter2"]
+    assert writer.get_destination_page_number(destination) == 2
+
+
 def test_compress_content_streams_releases_replaced_streams():
     """The streams being replaced must not be kept in the output. See #4085."""
     def create_stamped_writer() -> PdfWriter:
