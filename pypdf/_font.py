@@ -545,7 +545,7 @@ class Font:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6post.html
             header_table = tt_font_object["head"]
-            horizontal_header_table = tt_font_object["hhea"]
+            horizontal_header_table = tt_font_object.get("hhea")
             metrics_table = tt_font_object["hmtx"]
 
             # Collect additional font tables to derive font information
@@ -569,8 +569,9 @@ class Font:
                     if (value := getter()) is not None:
                         font_descriptor_kwargs[name] = value
 
-            font_descriptor_kwargs["ascent"] = int(round(horizontal_header_table.ascent * scale_factor, 0))
-            font_descriptor_kwargs["descent"] = int(round(horizontal_header_table.descent * scale_factor, 0))
+            if horizontal_header_table:
+                font_descriptor_kwargs["ascent"] = int(round(horizontal_header_table.ascent * scale_factor, 0))
+                font_descriptor_kwargs["descent"] = int(round(horizontal_header_table.descent * scale_factor, 0))
 
             if os2_table:
                 try:

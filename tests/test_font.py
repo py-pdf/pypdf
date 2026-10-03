@@ -215,6 +215,7 @@ def test_font_from_font_file():
                 del tt_font_object["name"]
                 del tt_font_object["OS/2"]
                 del tt_font_object["post"]
+                del tt_font_object["hhea"]
                 crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
                 font = Font.from_truetype_font_file(crippled_font_data)
