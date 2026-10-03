@@ -482,12 +482,7 @@ def _apply_decode(
 def _get_mode_and_invert_color(
     x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
-    if (
-        ImageAttributes.COLOR_SPACE in x_object
-        and x_object[ImageAttributes.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
-    ):
-        # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: mode_str_type = "RGB"
+    mode: mode_str_type
     if x_object.get("/BitsPerComponent", 8) < 8:
         mode, invert_color = _get_image_mode(
             f"{x_object.get('/BitsPerComponent', 8)}bit", 0, ""

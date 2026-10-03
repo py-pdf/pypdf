@@ -21,6 +21,7 @@ from pypdf.generic import (
 )
 from pypdf.generic._image_xobject import (
     _get_image_mode,
+    _get_mode_and_invert_color,
     _handle_flate,
     _image_from_bytes,
     _xobj_to_image,
@@ -239,6 +240,37 @@ def test_get_mode_and_invert_color() -> None:
     for _name, image in page.images.items():  # noqa: PERF102
         assert image.image is not None
         image.image.load()
+
+
+@pytest.mark.parametrize(
+    ("x_object", "colors", "color_space", "expected"),
+    [
+        # /DeviceRGB is resolved by _get_image_mode itself, whether or not the
+        # image dictionary carries a /ColorSpace entry.
+        ({}, 3, "/DeviceRGB", ("RGB", False)),
+        ({"/ColorSpace": "/DeviceRGB"}, 3, "/DeviceRGB", ("RGB", False)),
+        ({"/ColorSpace": "/DeviceRGB", "/BitsPerComponent": 8}, 3, "/DeviceRGB", ("RGB", False)),
+        ({"/ColorSpace": "/DeviceRGB", "/BitsPerComponent": 16}, 3, "/DeviceRGB", ("RGB", False)),
+        # Sub-byte samples are reported by their bit depth even for /DeviceRGB;
+        # _expand_low_bit_samples widens them to a real mode afterwards.
+        ({"/ColorSpace": "/DeviceRGB", "/BitsPerComponent": 1}, 3, "/DeviceRGB", ("1", False)),
+        ({"/ColorSpace": "/DeviceRGB", "/BitsPerComponent": 2}, 3, "/DeviceRGB", ("2bits", False)),
+        ({"/ColorSpace": "/DeviceRGB", "/BitsPerComponent": 4}, 3, "/DeviceRGB", ("4bits", False)),
+        # Other device color spaces are unaffected.
+        ({"/ColorSpace": "/DeviceGray", "/BitsPerComponent": 8}, 1, "/DeviceGray", ("L", False)),
+        ({"/ColorSpace": "/DeviceCMYK", "/BitsPerComponent": 8}, 4, "/DeviceCMYK", ("CMYK", True)),
+    ],
+)
+def test_get_mode_and_invert_color__device_rgb(x_object, colors, color_space, expected) -> None:
+    """The mode does not depend on the image dictionary's /ColorSpace entry.
+
+    _get_mode_and_invert_color used to special-case a /DeviceRGB entry in the
+    image dictionary by presetting the mode to RGB, but the assignment was
+    immediately overwritten by both branches that follow it, so it never had
+    any effect. These cases pin the behaviour that the color space argument
+    and the bit depth are what actually decide the mode.
+    """
+    assert _get_mode_and_invert_color(x_object, colors, color_space) == expected
 
 
 @pytest.mark.enable_socket
