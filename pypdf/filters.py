@@ -123,7 +123,7 @@ def decompress(data: bytes) -> bytes:
     """
     try:
         return _decompress_with_limit(data)
-    except zlib.error:
+    except zlib.error as e:
         # First quick approach: There are known issues with faulty added bytes to the
         # tail of the encoded stream from early Adobe Distiller or Pitstop versions
         # with CR char as the default line separator (assumed by reverse engineering)
@@ -153,7 +153,7 @@ def decompress(data: bytes) -> bytes:
             if index >= configuration.zlib_maximum_recovery_input_length:
                 raise LimitReachedError(
                     f"Recovery limit reached while decompressing. {data_length - index} bytes remaining."
-                )
+                ) from e
 
             chunk = _SINGLE_BYTES[data[index]]
             try:
@@ -407,7 +407,7 @@ class ASCIIHexDecode:
         try:
             return binascii.unhexlify(hex_data)
         except binascii.Error as error:
-            raise PdfStreamError(f"Invalid hexadecimal character in ASCIIHexDecode stream: {error}")
+            raise PdfStreamError(f"Invalid hexadecimal character in ASCIIHexDecode stream: {error}") from error
 
 
 class RunLengthDecode:

@@ -26,11 +26,11 @@ else:
 
 try:
     from PIL import Image, UnidentifiedImageError
-except ImportError:
+except ImportError as e:
     raise ImportError(
         "pillow is required to do image extraction. "
         "It can be installed via 'pip install pypdf[image]'"
-    )
+    ) from e
 
 mode_str_type: TypeAlias = Literal[
     "", "1", "RGB", "2bits", "4bits", "P", "L", "RGBA", "CMYK"
