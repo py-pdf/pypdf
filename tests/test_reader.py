@@ -507,6 +507,65 @@ def test_duplicate_eof_markers_without_startxref(pdf_data):
         PdfReader(BytesIO(pdf_data))
 
 
+def _glue_eof_marker(data: bytes, layout: str) -> bytes:
+    """Rebuild the trailer tail so %%EOF is not at column 0."""
+    start = data.rfind(b"startxref")
+    assert start != -1
+    offset = data[start:].split()[1]
+    assert offset.isdigit()
+    prefix = data[:start]
+    if layout == "leading-ws":
+        # The marker owns the line; only indentation is in front of it.
+        return prefix + b"startxref\n" + offset + b"\n  %%EOF"
+    if layout == "spaced-offset":
+        return prefix + b"startxref\n" + offset + b" %%EOF"
+    newline = b"\r\n" if layout.endswith("-crlf") else b"\n"
+    number_sep = b" " if layout.startswith("same-line") else newline
+    tail = b"startxref" + number_sep + offset + b"%%EOF"
+    if layout.endswith(("-nl", "-crlf")):
+        tail += newline
+    return prefix + tail
+
+
+@pytest.mark.parametrize(
+    "layout",
+    [
+        "same-line",
+        "offset-line",
+        "same-line-nl",
+        "offset-line-nl",
+        "offset-line-crlf",
+        "spaced-offset",
+        "leading-ws",
+    ],
+)
+@pytest.mark.parametrize("strict", [False, True])
+def test_eof_marker_not_at_line_start(caplog, layout, strict):
+    """%%EOF glued to the startxref offset is still the trailer (#4127)."""
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+    buffer = BytesIO()
+    writer.write(buffer)
+    data = buffer.getvalue()
+    expected = PdfReader(BytesIO(data))._startxref
+    pdf_data = _glue_eof_marker(data, layout)
+
+    caplog.clear()
+    reader = PdfReader(BytesIO(pdf_data), strict=strict)
+    assert len(reader.pages) == 1
+    assert reader._startxref == expected
+
+    warnings = normalize_warnings(caplog.text)
+    if layout == "leading-ws":
+        assert warnings == [""]
+    elif layout.startswith("same-line"):
+        assert "EOF marker not at start of line" in warnings
+        assert "startxref on same line as offset" in warnings
+    else:
+        assert "EOF marker not at start of line" in warnings
+        assert "startxref on same line as offset" not in warnings
+
+
 @pytest.mark.parametrize(
     ("pdffile", "password", "should_fail"),
     [

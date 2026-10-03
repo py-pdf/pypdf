@@ -794,11 +794,33 @@ class PdfReader(PdfDocCommon):
         According to the specs, the %%EOF marker should be at the very end of
         the file. Hence for standard-compliant PDF documents this function will
         read only the last part (DEFAULT_BUFFER_SIZE).
+
+        Producers that omit the line break before the marker (``startxref
+        256%%EOF`` or ``256%%EOF``) are accepted as well (#4127).
         """
         header_size = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
+        # PDF whitespace that can share a line with the marker (CR/LF end the line).
+        inline_whitespace = b" \t\x00\x0c"
         line = b""
         first = True
-        while not line.startswith(b"%%EOF"):
+        # Bytes of `line` end at this position. An inline %%EOF therefore
+        # begins at end_pos - len(line) + index.
+        end_pos = stream.tell()
+        while True:
+            eof_at = line.find(b"%%EOF")
+            if eof_at == 0:
+                break
+            if eof_at > 0 and first:
+                # Only the trailing line is allowed to carry an inline marker.
+                # Earlier lines keep the historical "starts with %%EOF" rule so
+                # a %%EOF buried in stream data is not treated as the trailer.
+                if line[:eof_at].strip(inline_whitespace) != b"":
+                    logger_warning(
+                        "EOF marker not at start of line",
+                        source=__name__,
+                    )
+                    stream.seek(end_pos - len(line) + eof_at)
+                break
             if line != b"" and first:
                 if any(
                     line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
@@ -818,6 +840,7 @@ class PdfReader(PdfDocCommon):
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
                 logger_warning("EOF marker not found", source=__name__)
+            end_pos = stream.tell()
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
