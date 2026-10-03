@@ -561,11 +561,17 @@ class Font:
             font_descriptor_kwargs: dict[Any, Any] = {}
             name_table = tt_font_object.get("name", None)
             if name_table:
-                font_descriptor_kwargs["name"] = name_table.getBestFullName()
-                font_descriptor_kwargs["family"] = name_table.getBestFamilyName()
-                font_descriptor_kwargs["weight"] = name_table.getBestSubFamilyName()
+                for name, getter in (
+                    ("name", name_table.getBestFullName),
+                    ("family", name_table.getBestFamilyName),
+                    ("weight", name_table.getBestSubFamilyName)
+                ):
+                    if (value := getter()) is not None:
+                        font_descriptor_kwargs[name] = value
+
             font_descriptor_kwargs["ascent"] = int(round(horizontal_header_table.ascent * scale_factor, 0))
             font_descriptor_kwargs["descent"] = int(round(horizontal_header_table.descent * scale_factor, 0))
+
             if os2_table:
                 try:
                     font_descriptor_kwargs["cap_height"] = int(round(os2_table.sCapHeight * scale_factor, 0))
