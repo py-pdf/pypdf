@@ -539,7 +539,11 @@ class Font:
     def from_truetype_font_file(cls, font_file: BytesIO) -> Font:
         if not HAS_FONTTOOLS:
             raise ImportError("The 'fontTools' library is required to use 'from_truetype_font_file'")
-        with TTFont(font_file) as tt_font_object:
+        try:
+            tt_font_object = TTFont(font_file)
+        except Exception as exception:
+            raise PdfReadError(f"Could not open font file: {exception}") from exception
+        with tt_font_object:
             # See Chapter 6 of the TrueType reference manual for the definition of the head, OS/2 and post tables:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6head.html
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html

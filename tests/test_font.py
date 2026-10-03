@@ -232,8 +232,11 @@ def test_font_from_font_file():
                 with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
                     Font.from_truetype_font_file(crippled_font_data)
 
-                # Test raising TTLibError in _get_typographic_maps due to corrupt font data
+                # Test raising TTLibError in from_truetype_font_file and _get_typographic_maps due to corrupt font data
                 garbage_bytes = b"CORRUPT_HEADER!!" + crippled_font_data_value[16:]
+                with pytest.raises(PdfReadError, match=r"^Could not open font file: embedded null byte$"):
+                    Font.from_truetype_font_file(garbage_bytes)
+
                 font.font_descriptor.font_file.set_data(garbage_bytes)
                 font._get_typographic_maps()
 
