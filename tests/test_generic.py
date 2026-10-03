@@ -3,6 +3,7 @@
 import codecs
 import gc
 import re
+import sys
 import weakref
 from base64 import a85encode
 from copy import deepcopy
@@ -1056,6 +1057,36 @@ def test_cloning_null_obj_keeps_hard_reference():
     del null_obj
     gc.collect()
     assert obj_weakref() is not None
+
+
+def test_cloning_array_of_direct_objects__function_calls():
+    """
+    Cloning direct objects must stay cheap, see #2136.
+
+    Documents can contain arrays with thousands of direct objects, for example
+    in the /ParentTree of the structure tree. Counting the Python function calls
+    measures the work per element independently of the machine speed.
+    """
+    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
+    array = ArrayObject(elements * 200)
+    writer = PdfWriter()
+    calls = 0
+
+    def count_calls(frame, event, arg) -> None:
+        nonlocal calls
+        if event == "call":
+            calls += 1
+
+    previous_profile = sys.getprofile()
+    sys.setprofile(count_calls)
+    try:
+        clone = array.clone(writer)
+    finally:
+        sys.setprofile(previous_profile)
+
+    assert clone == array
+    # About 3.6 calls per element; it was more than 7 before the fix
+    assert calls < 5 * len(array)
 
 
 @pytest.mark.enable_socket
