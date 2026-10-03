@@ -48,7 +48,7 @@ from pypdf.generic._image_inline import (
 )
 
 from . import RESOURCE_ROOT, get_data_from_url
-from .utils import ReaderDummy
+from .utils import ReaderDummy, count_function_calls
 
 
 class ChildDummy(DictionaryObject):
@@ -1056,6 +1056,26 @@ def test_cloning_null_obj_keeps_hard_reference():
     del null_obj
     gc.collect()
     assert obj_weakref() is not None
+
+
+def test_cloning_array_of_direct_objects__function_calls():
+    """
+    Cloning direct objects must stay cheap, see #2136.
+
+    Documents can contain arrays with thousands of direct objects, for example
+    in the /ParentTree of the structure tree. Counting the Python function calls
+    measures the work per element independently of the machine speed.
+    """
+    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
+    array = ArrayObject(elements * 200)
+    writer = PdfWriter()
+
+    clone, calls = count_function_calls(lambda: array.clone(writer))
+
+    assert clone == array
+    # About 3.7 calls per element; it was more than 7 while PdfObject inherited
+    # from a Protocol, as every isinstance() check ran Python code
+    assert calls < 5 * len(array)
 
 
 @pytest.mark.enable_socket
