@@ -553,9 +553,8 @@ class Font:
             os2_table = tt_font_object.get("OS/2", None)
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
-            units_per_em = header_table.unitsPerEm
-            if not units_per_em:
-                raise PdfReadError("Font file has an invalid unitsPerEm of 0")
+            if (units_per_em := header_table.unitsPerEm) <= 0:
+                raise PdfReadError(f"Font file has an invalid unitsPerEm of {units_per_em}")
             scale_factor = 1000.0 / units_per_em
 
             # Get the font descriptor
