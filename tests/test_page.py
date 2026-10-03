@@ -325,9 +325,9 @@ def test_page_number_of_identical_pages():
     Pages which only differ in their object number must still report their
     own position in the document.
 
-    `PageObject.page_number` looks the page up with `list.index`, which compares
-    with `==`. Two pages with identical content therefore compare equal and the
-    first match wins, so every page but the first reported the number 0.
+    `PageObject.page_number` used to look the page up with `list.index`, which
+    compares with `==`. Two pages with identical content therefore compared
+    equal, the first match won, and every page but the first reported 0.
     """
     writer = PdfWriter()
     for _ in range(3):
