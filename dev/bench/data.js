@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790882280785,
+  "lastUpdate": 1791041623302,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -141841,6 +141841,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002772700280557209",
             "extra": "mean: 638.4584257999961 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "132747884+ihsandeniz@users.noreply.github.com",
+            "name": "İhsan Deniz",
+            "username": "ihsandeniz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3f2a0a03d07d19fae4728023df345b0675646d86",
+          "message": "MAINT: Do not rebind the array parameter in _build_destination (#4131)\n\nStarred unpacking replaced the ArrayObject parameter with a plain list,\nso the name no longer matched its annotation for the rest of the function.\nThe assignment carried a type: ignore[assignment] for that reason.\n\nUnpack into fit_args instead. The value passed on to Fit and logged in the\nPdfReadError branch is unchanged, so behaviour is identical; the annotation\nnow holds throughout and the ignore is no longer needed.",
+          "timestamp": "2026-10-03T17:30:38+02:00",
+          "tree_id": "9406b3c2249b5c1cb30b1108e40ac9688ca9c8a1",
+          "url": "https://github.com/py-pdf/pypdf/commit/3f2a0a03d07d19fae4728023df345b0675646d86"
+        },
+        "date": 1791041614036,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.309513385957343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017857596410411087",
+            "extra": "mean: 75.13422699999566 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.872714395728885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015601530335758161",
+            "extra": "mean: 55.9512102000004 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9525192804966512,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023783971111544153",
+            "extra": "mean: 1.0498475153999949 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4687446678536234,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009020833794308684",
+            "extra": "mean: 2.1333576008000024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3543680458692858,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029414066228240773",
+            "extra": "mean: 2.8219248650000055 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1565218457798394,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03239946840945685",
+            "extra": "mean: 864.6615744000087 msec\nrounds: 5"
           }
         ]
       }
