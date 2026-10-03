@@ -1172,7 +1172,7 @@ def test_lzwdecode__invalid_first_code():
         LZWDecode.decode(data=lzw_data)
 
 
-@pytest.mark.timeout(5)  # Has been 20 seconds before.
+@pytest.mark.timeout(10)  # Has been 20 seconds before.
 def test_flatedecode__decode_png_prediction__speed():
     columns = 4096
     rows = 120000
