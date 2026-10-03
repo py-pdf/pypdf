@@ -1778,7 +1778,7 @@ def test_extract_text__resources_is_null(caplog):
     ],
 )
 def test_extract_text__font_resources_not_a_dictionary(caplog, value, expected, extraction_mode):
-    """A /Font entry that is not a dictionary raised a TypeError when iterated."""
+    """A /Font entry that is not a dictionary is malformed: no text, and a warning."""
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
     writer.pages[0].replace_contents(ContentStream(None, writer))
