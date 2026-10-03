@@ -27,6 +27,7 @@ from .errors import LimitReachedError, PdfReadError
 if TYPE_CHECKING:
     from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
     from fontTools.ttLib.tables._p_o_s_t import table__p_o_s_t
+    from fontTools.ttLib.tables.DefaultTable import DefaultTable
     from fontTools.ttLib.tables.O_S_2f_2 import table_O_S_2f_2
 
     from ._writer import PdfWriter
@@ -479,6 +480,44 @@ class Font:
             space_char=space_char,
             interpretable=interpretable
         )
+
+    @staticmethod
+    def _load_fonttools_table(table_name: str, is_critical: bool, tt_font_object: TTFont) -> DefaultTable | None:
+        """Once we have a TTFont object, we can try to get the necessary font tables from
+        which we collect the information to instantiate a Font class. However, some of
+        these tables might be missing from the embedded font file, and others might be
+        corrupt in some form and then throw a struct.error on decompilation. We decompile
+        all tables we need using this method to guard against fontTools exceptions.
+
+        This method distinguishes between optional tables and critical tables without which
+        we cannot instantiate a Font. For critical tables, raises PdfReadError if missing
+        OR if binary data is corrupt. For optional tables, it logs warnings instead.
+        """
+        try:
+            # tt_font.get() automatically triggers table.decompile() under the hood
+            table = tt_font_object.get(table_name)
+            if table is None:
+                if is_critical:
+                    raise PdfReadError(f"Font file does not have a {table_name!r} table")
+                logger_warning(
+                    "Optional font table %(table_name)r is missing from font file",
+                    source=__name__,
+                    table_name=table_name
+                )
+                return None
+            return table
+        except Exception as exception:
+            if is_critical:
+                raise PdfReadError(
+                    f"Font table {table_name!r} is corrupt or truncated: {exception}"
+                ) from exception
+            logger_warning(
+                "Optional font table %(table_name)r is corrupt and will be ignored: %(exception)s",
+                source=__name__,
+                table_name=table_name,
+                exception=exception
+            )
+            return None
 
     @staticmethod
     def _font_flags_from_truetype_font_tables(
