@@ -1174,6 +1174,8 @@ class PageObject(DictionaryObject):
             )
 
         writer = self.indirect_reference.pdf
+        is_writer = isinstance(writer, PdfWriter)
+        old_idnums = writer._get_page_content_idnums(self) if is_writer else set()
         # Resolve /Contents because it may be an indirect reference to an
         # ArrayObject. Without resolving it, an indirect contents array is not
         # recognized and its stream objects are left in the writer's object list.
@@ -1181,9 +1183,20 @@ class PageObject(DictionaryObject):
         if old_contents is not None:
             old_contents = old_contents.get_object()
         if isinstance(old_contents, ArrayObject):
+            # Only a writer keeps an object list from which a stream can be
+            # released, and thus only it can share one between pages.
+            index = writer._get_content_reference_index() if is_writer else {}
+            own_idnum = self.indirect_reference.idnum
             for reference in old_contents:
                 if not isinstance(reference, IndirectObject):
                     # Direct objects are not part of the writer's object list.
+                    continue
+                if index.get(reference.idnum, set()) - {own_idnum}:
+                    # Another page points at this stream as well, which happens
+                    # once compress_identical_objects() has merged parts that are
+                    # identical across pages, or when a page was duplicated.
+                    # Releasing it here would silently drop that part from the
+                    # other pages.
                     continue
                 try:
                     writer._replace_object(indirect_reference=reference, obj=NullObject())
@@ -1220,6 +1233,8 @@ class PageObject(DictionaryObject):
                 # as a backup solution, we put content as an object although not in accordance with pdf ref
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
+        if is_writer:
+            writer._update_content_reference_index(self, old_idnums)
         # forces recalculation of images
         self._content_stream_images = None
 
