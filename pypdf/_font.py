@@ -737,23 +737,24 @@ class Font:
             and (font_file_data := cast(StreamObject, self.font_descriptor.font_file).get_data()) is not None
         ):
             try:
-                font_file_data = cast(StreamObject, self.font_descriptor.font_file).get_data()
-                with TTFont(BytesIO(font_file_data)) as tt_font_object:
-                    tt_font_cmap_table = tt_font_object.get("cmap")
-                    best_cmap = tt_font_cmap_table.getBestCmap()
-                    for unicode_int, glyph_name in best_cmap.items():
-                        gid = tt_font_object.getGlyphID(glyph_name)
-                        gid_bytes = gid.to_bytes(2, "big")
-                        gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
-                        unicode_char = chr(unicode_int)
-                        reverse_cmap[unicode_char] = gid_key_string
-                        encoding_cmap[gid_key_string] = gid_key_string.encode(self.encoding)
+                tt_font_object = TTFont(BytesIO(font_file_data))
+            except Exception as exception:  # Font file data is corrupt.
+                logger_warning("Could not open font file: %(exception)s", source=__name__, exception=exception)
+            else:
+                with tt_font_object:
+                    # Read reverse_cmap and encoding_cmap from the font file if we can get a cmap
+                    tt_font_cmap_table = self._load_fonttools_table(
+                        table_name="cmap", is_critical=False, tt_font_object=tt_font_object
+                    )
+                    if tt_font_cmap_table and (best_cmap := tt_font_cmap_table.getBestCmap()):
+                        for unicode_int, glyph_name in best_cmap.items():
+                            gid = tt_font_object.getGlyphID(glyph_name)
+                            gid_key_string = gid.to_bytes(2, "big").decode("utf-16-be", "surrogatepass")
+                            unicode_char = chr(unicode_int)
+                            reverse_cmap[unicode_char] = gid_key_string
+                            encoding_cmap[gid_key_string] = gid_key_string.encode(self.encoding)
 
-                return reverse_cmap, encoding_cmap
-
-            except Exception:  # Cmap table is missing or the font is corrupt.
-                reverse_cmap.clear()
-                encoding_cmap.clear()
+                        return reverse_cmap, encoding_cmap
 
         if isinstance(self.encoding, str):
             for glyph_id, unicode_char in self.character_map.items():
