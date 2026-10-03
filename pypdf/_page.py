@@ -2099,8 +2099,7 @@ class PageObject(DictionaryObject):
             visited.add(obj_id)
 
             resources_dict: Any = obj.get(PG.RESOURCES, {})
-            if self.pdf is not None:
-                font_resources = _get_font_resources(resources_dict)
+            if self.pdf is not None and (font_resources := _get_font_resources(resources_dict)):
                 for font_name in font_resources:
                     fonts[font_name] = Font.from_font_resource(
                         cast(DictionaryObject, font_resources[font_name].get_object())
