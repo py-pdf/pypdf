@@ -229,7 +229,7 @@ def test_font_from_font_file():
                 font._get_typographic_maps()
 
                 # Test raising PdfReadError in from_truetype_font_file due to missing cmap table
-                with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
+                with pytest.raises(PdfReadError, match=r"Font file does not have a 'cmap' table"):
                     Font.from_truetype_font_file(crippled_font_data)
 
                 # Test raising TTLibError in from_truetype_font_file and _get_typographic_maps due to corrupt font data

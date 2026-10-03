@@ -587,13 +587,29 @@ class Font:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6head.html
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6post.html
-            header_table = tt_font_object["head"]
-            horizontal_header_table = tt_font_object.get("hhea")
-            metrics_table = tt_font_object["hmtx"]
 
-            # Collect additional font tables to derive font information
-            postscript_table = tt_font_object.get("post", None)
-            os2_table = tt_font_object.get("OS/2", None)
+            # Collect all font tables.
+            (
+                cmap_table,
+                header_table,
+                metrics_table,
+                horizontal_header_table,
+                name_table,
+                os2_table,
+                postscript_table
+            ) = (
+                cls._load_fonttools_table(
+                    table_name=table_name,
+                    is_critical=table_name in {"head", "hmtx", "cmap"},
+                    tt_font_object=tt_font_object
+                )
+                for table_name in ("cmap", "head", "hmtx", "hhea", "name", "OS/2", "post")
+            )
+
+            if TYPE_CHECKING:
+                assert header_table is not None
+                assert metrics_table is not None
+                assert cmap_table is not None
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
             if (units_per_em := header_table.unitsPerEm) <= 0:
@@ -602,7 +618,7 @@ class Font:
 
             # Get the font descriptor
             font_descriptor_kwargs: dict[Any, Any] = {}
-            name_table = tt_font_object.get("name", None)
+
             if name_table:
                 for name, getter in (
                     ("name", name_table.getBestFullName),
@@ -648,29 +664,22 @@ class Font:
             character_widths: dict[str, float] = {}
             character_map: dict[str, str] = {}
 
-            glyph_order = tt_font_object.getGlyphOrder()
             # Note that one glyph can be mapped to multiple unicode code points. However, buildReversedMin()
             # creates a dictionary mapping glyphs to the minimum Unicode codepoint.
-            tt_font_cmap_table = tt_font_object.get("cmap")
-            if tt_font_cmap_table:
-                try:
-                    reverse_cmap = tt_font_cmap_table.buildReversedMin()
-                except AttributeError:
-                    # use buildReversed on fonttools < 4.57 and build a list of minimums from it
-                    reverse_cmap = {k: min(r) for k, r in tt_font_cmap_table.buildReversed().items()}
-                metrics = metrics_table.metrics
-                for gid, glyph in enumerate(glyph_order):
-                    # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
-                    gid_bytes = gid.to_bytes(2, "big")
-                    gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
-                    # Always map character width
-                    character_widths[gid_key_string] = int(round(metrics[glyph][0] * scale_factor, 0))
-                    # Add GID to character_map when we can find it in the cmap
-                    char_code = reverse_cmap.get(glyph)
-                    if char_code is not None:
-                        character_map[gid_key_string] = chr(char_code)
-            else:
-                raise PdfReadError("Font file does not have a cmap table")
+            try:
+                reverse_cmap = cmap_table.buildReversedMin()
+            except AttributeError:
+                # Use buildReversed on fonttools < 4.57 and build a list of minimums from it
+                reverse_cmap = {k: min(r) for k, r in cmap_table.buildReversed().items()}
+            metrics = metrics_table.metrics
+            for gid, glyph in enumerate(tt_font_object.getGlyphOrder()):
+                # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
+                gid_key_string = gid.to_bytes(2, "big").decode("utf-16-be", "surrogatepass")
+                # Always map character width
+                character_widths[gid_key_string] = round(metrics[glyph][0] * scale_factor)
+                # Add GID to character_map when we can find it in the cmap
+                if (char_code := reverse_cmap.get(glyph)) is not None:
+                    character_map[gid_key_string] = chr(char_code)
 
             space_char = cls._get_space_char(encoding, character_map)
             cls._add_default_width(character_widths, font_descriptor_kwargs["flags"], space_char)
