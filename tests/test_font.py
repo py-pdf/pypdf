@@ -179,7 +179,7 @@ def test_font_file():
     assert len(font.font_descriptor.font_file.get_data()) == 2168
 
 
-def test_font_from_font_file(caplog):
+def test_font_from_font_file_and__get_typographic_maps(caplog):
     reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
     font_resources = reader.pages[0]["/Resources"]["/Font"]
     for font_resource in font_resources:
@@ -244,17 +244,20 @@ def test_font_from_font_file(caplog):
                 tt_font_object.save(crippled_font_data)
                 font = Font.from_truetype_font_file(crippled_font_data)
 
-                # Test raising AttributeError in _get_typographic_maps due to missing cmap table
+                # Test missing cmap table in from_truetype_font_file and _get_typographic_maps
                 del tt_font_object["cmap"]
                 crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
+                with pytest.raises(
+                    PdfReadError,
+                    match=r"^Font table 'cmap' is corrupt or truncated: Font file does not have a 'cmap' table$"
+                ):
+                    Font.from_truetype_font_file(crippled_font_data)
+
                 crippled_font_data_value = crippled_font_data.getvalue()
                 font.font_descriptor.font_file.set_data(crippled_font_data_value)
                 font._get_typographic_maps()
-
-                # Test raising PdfReadError in from_truetype_font_file due to missing cmap table
-                with pytest.raises(PdfReadError, match=r"Font file does not have a 'cmap' table"):
-                    Font.from_truetype_font_file(crippled_font_data)
+                assert "Optional font table 'cmap' is missing from font file" in caplog.text
 
                 # Test raising TTLibError in from_truetype_font_file and _get_typographic_maps due to corrupt font data
                 garbage_bytes = b"CORRUPT_HEADER!!" + crippled_font_data_value[16:]
@@ -263,6 +266,7 @@ def test_font_from_font_file(caplog):
 
                 font.font_descriptor.font_file.set_data(garbage_bytes)
                 font._get_typographic_maps()
+                assert "Could not open font file: Not a TrueType or OpenType font (bad sfntVersion)" in caplog.text
 
 
 def test_font_old_fonttools_substitution(caplog):
@@ -283,7 +287,7 @@ def test_font_old_fonttools_substitution(caplog):
         return original_build_reversed_min(_self)
 
     with mock.patch("fontTools.ttLib.tables._c_m_a_p.table__c_m_a_p.buildReversedMin", build_reversed_min):
-        test_font_from_font_file(caplog)
+        test_font_from_font_file_and__get_typographic_maps(caplog)
 
 
 def test_font_as_font_resource():
