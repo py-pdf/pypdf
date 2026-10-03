@@ -2100,29 +2100,29 @@ def test_negative_startxref_is_treated_as_zero(caplog):
     repaired like the zero case of #3157 instead of leaking a ValueError
     from a negative seek.
     """
-
-    def make_pdf(negative: bool) -> bytes:
-        writer = PdfWriter()
-        writer.add_blank_page(100, 100)
-        buf = BytesIO()
-        writer.write(buf)
-        data = buf.getvalue()
-        if negative:
-            idx = data.rfind(b"startxref")
-            num = data[idx : data.rfind(b"%%EOF")].split(b"\n")[1].strip()
-            data = data[:idx] + b"startxref\n-" + num + b"\n%%EOF" + data[data.rfind(b"%%EOF") + 5 :]
-        return data
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    buf = BytesIO()
+    writer.write(buf)
+    data = buf.getvalue()
+    idx = data.rfind(b"startxref")
+    num = data[idx : data.rfind(b"%%EOF")].split(b"\n")[1].strip()
+    negative_data = data[:idx] + b"startxref\n-" + num + b"\n%%EOF" + data[data.rfind(b"%%EOF") + 5 :]
 
     # A corrupted (negative) startxref is recovered to a single page.
-    reader = PdfReader(BytesIO(make_pdf(negative=True)))
+    reader = PdfReader(BytesIO(negative_data))
     assert len(reader.pages) == 1
-    assert "treating it as zero." in caplog.text
+    assert caplog.messages == [
+        f"Negative startxref pointer (-{int(num)}), treating it as zero.",
+        "incorrect startxref pointer(4)",
+        "parsing for Object Streams",
+    ]
 
-    # A healthy startxref leaves no "treating it as zero" warning.
+    # A healthy startxref emits no warnings.
     caplog.clear()
-    reader = PdfReader(BytesIO(make_pdf(negative=False)))
+    reader = PdfReader(BytesIO(data))
     assert len(reader.pages) == 1
-    assert "treating it as zero." not in caplog.text
+    assert caplog.messages == []
 
 
 @pytest.mark.enable_socket
