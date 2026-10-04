@@ -8,6 +8,7 @@ import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
+from typing import Union
 
 import pytest
 
@@ -1059,7 +1060,15 @@ def test_cloning_null_obj_keeps_hard_reference():
     assert obj_weakref() is not None
 
 
-def test_cloning_array_of_direct_objects__function_calls():
+def _create_direct_objects_container(kind: str) -> Union[ArrayObject, DictionaryObject]:
+    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
+    if kind == "array":
+        return ArrayObject(elements * 200)
+    return DictionaryObject({NameObject(f"/K{i}"): element for i, element in enumerate(elements * 200)})
+
+
+@pytest.mark.parametrize("kind", ["array", "dictionary"])
+def test_cloning_direct_objects__function_calls(kind):
     """
     Cloning direct objects must stay cheap, see #2136.
 
@@ -1067,8 +1076,7 @@ def test_cloning_array_of_direct_objects__function_calls():
     in the /ParentTree of the structure tree. Counting the Python function calls
     measures the work per element independently of the machine speed.
     """
-    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
-    array = ArrayObject(elements * 200)
+    container = _create_direct_objects_container(kind)
     writer = PdfWriter()
     calls = 0
 
@@ -1080,13 +1088,41 @@ def test_cloning_array_of_direct_objects__function_calls():
     previous_profile = sys.getprofile()
     sys.setprofile(count_calls)
     try:
-        clone = array.clone(writer)
+        clone = container.clone(writer)
     finally:
         sys.setprofile(previous_profile)
 
-    assert clone == array
-    # About 3.6 calls per element; it was more than 7 before the fix
-    assert calls < 5 * len(array)
+    assert clone == container
+    # Per element, arrays need about 3.6 calls (more than 9 before the fix),
+    # dictionaries about 8.6 (more than 11 before the fix).
+    max_calls_per_element = {"array": 5, "dictionary": 10}[kind]
+    assert calls < max_calls_per_element * len(container)
+
+
+@pytest.mark.parametrize("kind", ["array", "dictionary"])
+def test_cloning_direct_objects__no_exceptions(kind):
+    """Direct objects have no indirect reference; cloning must not rely on catching AttributeError."""
+    container = _create_direct_objects_container(kind)
+    writer = PdfWriter()
+    exceptions = 0
+
+    def trace(frame, event, arg):  # noqa: ANN202
+        nonlocal exceptions
+        if event == "exception":
+            exceptions += 1
+        return trace
+
+    previous_trace = sys.gettrace()
+    sys.settrace(trace)
+    try:
+        clone = container.clone(writer)
+    finally:
+        sys.settrace(previous_trace)
+
+    assert clone == container
+    # Tolerate a constant number of exceptions for the container itself,
+    # but not one per element.
+    assert exceptions < len(container) // 10
 
 
 @pytest.mark.enable_socket
