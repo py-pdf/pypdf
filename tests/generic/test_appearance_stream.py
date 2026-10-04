@@ -521,3 +521,49 @@ def test_generate_appearance_stream_data__selection__speed() -> None:
         {"fld": ["test"] * 1000},
         flatten=True,
     )
+
+
+@pytest.mark.parametrize(
+    ("default_appearance", "expected_color"),
+    [
+        # WeasyPrint writes every field's /DA like this.
+        ("/a1.0 gs 0 0 0 rg /Helv 10 Tf", b"0 0 0 rg"),
+        ("/Helv 10 Tf 1 Tc 0.5 g", b"0.5 g"),
+        ("1 0 0 rg /Helv 10 Tf 0 0 1 rg", b"0 0 1 rg"),
+        ("/Helv 10 Tf 0 1 0 0 k 2 Tw", b"0 1 0 0 k"),
+        ("/a1.0 gs /Helv 10 Tf", b"0 g"),
+    ],
+)
+def test_text_annotation_default_appearance_with_other_operators(
+    default_appearance: str, expected_color: bytes
+) -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    helvetica = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    widget = writer.add_annotation(0, DictionaryObject({
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Widget"),
+        NameObject("/FT"): NameObject("/Tx"),
+        NameObject("/T"): TextStringObject("name"),
+        NameObject("/Rect"): ArrayObject([FloatObject(v) for v in (72, 700, 272, 716)]),
+        NameObject("/DA"): TextStringObject(default_appearance),
+    }))
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject({
+        NameObject("/Fields"): ArrayObject([widget.indirect_reference]),
+        NameObject("/DR"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({NameObject("/Helv"): helvetica}),
+        }),
+    })
+
+    writer.update_page_form_field_values(writer.pages[0], {"name": "Jane"}, auto_regenerate=False)
+
+    appearance = cast(DictionaryObject, widget["/AP"])["/N"].get_object()
+    data = appearance.get_data()
+    assert b"/Helv 10.0 Tf " + expected_color + b"\n" in data
+    # Only the font is declared, so the stream must not refer to anything else.
+    assert b"gs" not in data
+    assert list(appearance["/Resources"]) == ["/Font"]

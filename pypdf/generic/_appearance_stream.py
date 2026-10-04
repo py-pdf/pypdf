@@ -47,6 +47,10 @@ DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 # (Table 111, PDF Specification 2.0)
 TEXT_SPACE_TO_GLYPH_SPACE_FACTOR = 1000
 
+# The non-stroking colour operators of the device colour spaces, mapped to their operand count
+# (Table 73, PDF Specification 2.0)
+COLOR_OPERAND_COUNTS = {"g": 1, "rg": 3, "k": 4}
+
 
 @dataclass
 class BaseStreamConfig:
@@ -755,7 +759,14 @@ class TextStreamAppearance(BaseStreamAppearance):
         da_font_name = font_properties.pop(font_properties.index("Tf") - 2)
         font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
         font_properties.remove("Tf")
-        font_color = Color.from_normalized_values(tuple(float(val) for val in font_properties[:-1]))
+        font_color = None
+        for index in range(len(font_properties) - 1, -1, -1):
+            if font_properties[index] in COLOR_OPERAND_COUNTS:
+                operand_count = COLOR_OPERAND_COUNTS[font_properties[index]]
+                font_color = Color.from_normalized_values(
+                    tuple(float(val) for val in font_properties[max(index - operand_count, 0):index])
+                )
+                break
         # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name
