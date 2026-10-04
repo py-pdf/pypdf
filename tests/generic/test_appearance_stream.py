@@ -462,6 +462,78 @@ def test_base_stream_appearance() -> None:
     )
 
 
+def _build_text_field_pdf(default_appearance: str) -> bytes:
+    """Build a single-page PDF holding one text field with the given /DA string."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    fields = ArrayObject()
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(DictionaryObject({
+        NameObject("/Fields"): fields,
+        NameObject("/DR"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/Helv"): writer._add_object(font),
+            })
+        }),
+    }))
+
+    field = DictionaryObject({
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Widget"),
+        NameObject("/FT"): NameObject("/Tx"),
+        NameObject("/T"): TextStringObject("fld"),
+        NameObject("/V"): TextStringObject(""),
+        NameObject("/Rect"): ArrayObject(NumberObject(x) for x in (0, 0, 200, 100)),
+        NameObject("/DA"): TextStringObject(default_appearance),
+    })
+    reference = writer._add_object(field)
+    fields.append(reference)
+    page[NameObject("/Annots")] = ArrayObject([reference])
+
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+@pytest.mark.parametrize("default_appearance", [
+    "0 g",  # Colour operator only, without any Tf operator.
+    "/Helv Tf 0 g",  # Tf operator without its size operand.
+    "12 Tf 0 g",  # Tf operator without its font name operand.
+    "Tf",  # Tf operator without any operand at all.
+    "/Helv not-a-number Tf 0 g",  # Non-numeric font size.
+])
+def test_incomplete_tf_operator_in_default_appearance(default_appearance: str, caplog) -> None:
+    """An incomplete Tf operator falls back to the default appearance instead of raising."""
+    data = _build_text_field_pdf(default_appearance)
+    writer = PdfWriter(clone_from=BytesIO(data))
+
+    writer.update_page_form_field_values(writer.pages[0], {"fld": "hello"})
+
+    assert "Could not read a complete Tf operator" in caplog.text
+    annotation = writer.pages[0]["/Annots"][0].get_object()
+    appearance = annotation["/AP"]["/N"].get_data()
+    # The default appearance requests auto-sizing, thus the exact size depends on the field.
+    assert re.search(rb"/Helv \d+(\.\d+)? Tf", appearance)
+    assert b"(hello) Tj" in appearance
+
+
+def test_complete_tf_operator_in_default_appearance(caplog) -> None:
+    """A well-formed Tf operator is used as-is, without any fallback."""
+    data = _build_text_field_pdf("/Helv 12 Tf 0 g")
+    writer = PdfWriter(clone_from=BytesIO(data))
+
+    writer.update_page_form_field_values(writer.pages[0], {"fld": "hello"})
+
+    assert "Could not read a complete Tf operator" not in caplog.text
+    annotation = writer.pages[0]["/Annots"][0].get_object()
+    assert b"/Helv 12.0 Tf" in annotation["/AP"]["/N"].get_data()
+
+
 def _build_acro_form_pdf(option_count: int, value_count: int) -> bytes:
     writer = PdfWriter()
     page = writer.add_blank_page(width=612, height=792)
