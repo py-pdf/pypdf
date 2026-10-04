@@ -226,17 +226,17 @@ class PdfReader(PdfDocCommon):
         """Provide access to "/Root". Standardized with PdfWriter."""
         if self._validated_root:
             return self._validated_root
-        root = self.trailer.get(TK.ROOT)
-        root_dictionary = (
-            None if is_null_or_none(root) else cast(PdfObject, root).get_object()
-        )
-        if not isinstance(root_dictionary, DictionaryObject):
+        root = self.trailer.get(TK.ROOT, NullObject()).get_object()
+        root_dictionary: DictionaryObject
+        if isinstance(root, DictionaryObject):
+            root_dictionary = root
+        else:
             # The catalog has to be a dictionary. Anything else cannot be used,
-            # thus treat it like a missing one and attempt the recovery below.
-            root_dictionary = None
+            # thus treat it like an empty one and attempt the recovery below.
+            root_dictionary = DictionaryObject()
         if is_null_or_none(root):
             logger_warning('Cannot find "/Root" key in trailer', source=__name__)
-        elif root_dictionary is not None and root_dictionary.get("/Type") == "/Catalog":
+        elif root_dictionary.get("/Type") == "/Catalog":
             self._validated_root = root_dictionary
         else:
             logger_warning("Invalid Root object in trailer", source=__name__)
@@ -259,11 +259,11 @@ class PdfReader(PdfDocCommon):
                     )
                     break
         if self._validated_root is None:
-            if root_dictionary is not None and "/Pages" in root_dictionary:
+            if "/Pages" in root_dictionary:
                 logger_warning(
                     "Possible root found at %(root_ref)r, but missing /Catalog key",
                     source=__name__,
-                    root_ref=cast(PdfObject, root).indirect_reference,
+                    root_ref=root_dictionary.indirect_reference,
                 )
                 self._validated_root = root_dictionary
             else:

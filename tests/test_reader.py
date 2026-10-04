@@ -2086,7 +2086,7 @@ def test_repair_root(caplog):
     )
 
 
-def _pdf_with_root(root_body: bytes, *, with_catalog: bool = False) -> bytes:
+def _generate_pdf_with_root(root_body: bytes, *, with_catalog: bool = False) -> bytes:
     """Build a minimal document whose ``/Root`` points at ``root_body``."""
     objects = [
         b"1 0 obj\n" + root_body + b"\nendobj\n",
@@ -2118,7 +2118,7 @@ def _pdf_with_root(root_body: bytes, *, with_catalog: bool = False) -> bytes:
 )
 def test_root_object__not_a_dictionary(caplog, root_body):
     """A ``/Root`` which does not resolve to a dictionary cannot be used as the catalog."""
-    reader = PdfReader(BytesIO(_pdf_with_root(root_body)))
+    reader = PdfReader(BytesIO(_generate_pdf_with_root(root_body)))
     with pytest.raises(PdfReadError, match=r"^Cannot find Root object in pdf$"):
         _ = reader.root_object
     assert all(
@@ -2131,7 +2131,7 @@ def test_root_object__not_a_dictionary(caplog, root_body):
 
     # A catalog elsewhere in the document is still being picked up.
     caplog.clear()
-    reader = PdfReader(BytesIO(_pdf_with_root(root_body, with_catalog=True)))
+    reader = PdfReader(BytesIO(_generate_pdf_with_root(root_body, with_catalog=True)))
     assert reader.root_object["/Type"] == "/Catalog"
     assert len(reader.pages) == 1
     assert "Root found at IndirectObject(4, 0," in caplog.text
