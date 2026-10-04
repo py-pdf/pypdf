@@ -136,10 +136,10 @@ jobs:
 
   tests:
     name: "pytest on ${{ matrix.python-version }} (crypto-lib: ${{ matrix.use-crypto-lib }})"
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-24.04' || 'ubuntu-26.04' }}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', 'pypy3.11-7.3.23']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15-dev', 'pypy3.11-7.3.23']
         use-crypto-lib: ['cryptography']
         include:
           - python-version: '3.9'
@@ -244,7 +244,7 @@ jobs:
 
   codestyle:
     name: Check code style issues
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
     - name: Checkout Code
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -341,10 +341,10 @@ jobs:
       - name: Check Number of Downloaded Files
         run: |
           downloaded_files_count=$(find \.coverage* -type f | wc -l)
-          if [ $downloaded_files_count -eq 8 ]; then
-            echo "The expected number of files (8) were downloaded."
+          if [ $downloaded_files_count -eq 9 ]; then
+            echo "The expected number of files (9) were downloaded."
           else
-            echo "ERROR: Expected 8 files, but found $downloaded_files_count files."
+            echo "ERROR: Expected 9 files, but found $downloaded_files_count files."
             exit 1
           fi
 
