@@ -30,8 +30,8 @@
 from typing import Any, Callable, Optional, Union
 
 from .._codecs import encoding_dict_from_named_encoding
-from .._font import Font, FontDescriptor
 from ..generic import DictionaryObject, TextStringObject
+from ..generic._font import Font, FontDescriptor
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
 

@@ -12,7 +12,6 @@ from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import _parse_to_unicode
-from pypdf._font import Font, FontDescriptor
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
@@ -25,6 +24,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
+from pypdf.generic._font import Font, FontDescriptor
 
 from . import RESOURCE_ROOT
 
@@ -311,7 +311,7 @@ from io import BytesIO
 import pytest
 
 sys.modules["fontTools.ttLib"] = None
-from pypdf._font import Font
+from pypdf.generic._font import Font
 
 with pytest.raises(ImportError, match=r"^The 'fontTools' library is required to use 'from_truetype_font_file'$"):
     Font.from_truetype_font_file(BytesIO(b""))

@@ -17,12 +17,12 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from ._cmap import get_encoding
-from ._codecs import encoding_dict_from_named_encoding
-from ._codecs.adobe_glyphs import adobe_glyphs
-from ._utils import logger_warning
-from .constants import FontFlags
-from .errors import LimitReachedError, PdfReadError
+from .._cmap import get_encoding
+from .._codecs import encoding_dict_from_named_encoding
+from .._codecs.adobe_glyphs import adobe_glyphs
+from .._utils import logger_warning
+from ..constants import FontFlags
+from ..errors import LimitReachedError, PdfReadError
 
 if TYPE_CHECKING:
     from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from fontTools.ttLib.tables.DefaultTable import DefaultTable
     from fontTools.ttLib.tables.O_S_2f_2 import table_O_S_2f_2
 
-    from ._writer import PdfWriter
+    from .._writer import PdfWriter
 
 try:
     from io import BytesIO

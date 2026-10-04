@@ -6,8 +6,8 @@ from math import ceil
 from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
 
-from ..._font import Font
 from ..._utils import logger_warning
+from ...generic._font import Font
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
 from ._text_state_manager import TextStateManager
 from ._text_state_params import TextStateParams

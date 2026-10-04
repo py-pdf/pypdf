@@ -11,7 +11,6 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration, mult
-from pypdf._font import Font
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import (
     BTGroup,
@@ -33,6 +32,7 @@ from pypdf.generic import (
     StreamObject,
     TextStringObject,
 )
+from pypdf.generic._font import Font
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
