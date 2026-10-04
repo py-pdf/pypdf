@@ -5,6 +5,7 @@ import subprocess
 import sys
 import unicodedata
 from io import BytesIO
+from unittest import mock
 
 import pytest
 from fontTools.ttLib import TTFont
@@ -184,6 +185,12 @@ def test_font_from_font_file():
     for font_resource in font_resources:
         font_data = font_resources[font_resource]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
         font = Font.from_truetype_font_file(BytesIO(font_data))
+
+        # Test an empty name table
+        with mock.patch("fontTools.ttLib.tables._n_a_m_e.table__n_a_m_e.getBestFullName", return_value=None):
+            font = Font.from_truetype_font_file(BytesIO(font_data))
+            assert font.font_descriptor.name == "Unknown"
+
         if font_resource == "/F1":
             assert font.font_descriptor.flags == 33
             assert len(font.character_map) == 872
