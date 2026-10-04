@@ -3,9 +3,8 @@ import ast
 import sys
 from collections.abc import Iterator
 from operator import itemgetter
-from pathlib import Path
 
-from tests import _get_data_from_url, read_yaml_to_list_of_dicts
+from tests import EXAMPLE_FILES_YAML, TESTS_ROOT, _get_data_from_url, read_yaml_to_list_of_dicts
 
 URL_PREFIXES_TO_IGNORE = (
     "http://ns.adobe.com/tiff/1.0/",
@@ -23,8 +22,7 @@ PDF_URLS_WHICH_DO_NOT_LOOK_LIKE_PDFS = {
 
 def get_urls_from_test_files() -> Iterator[str]:
     """Retrieve all URLs defined the test files."""
-    tests_directory = Path(__file__).parent.parent.parent / "tests"
-    for test_file in sorted(tests_directory.rglob("test_*.py")):
+    for test_file in sorted(TESTS_ROOT.rglob("test_*.py")):
         tree = ast.parse(source=test_file.read_text(encoding="utf-8"), filename=str(test_file))
         for node in ast.walk(tree):
             if not isinstance(node, ast.Constant):
@@ -38,7 +36,7 @@ def get_urls_from_test_files() -> Iterator[str]:
 
 def get_urls_from_example_files() -> Iterator[str]:
     """Retrieve all URLs defined in the `example_files.yaml`."""
-    pdfs = read_yaml_to_list_of_dicts(Path(__file__).parent.parent.parent / "tests" / "example_files.yaml")
+    pdfs = read_yaml_to_list_of_dicts(EXAMPLE_FILES_YAML)
     yield from map(itemgetter("url"), pdfs)
 
 
