@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791110693797,
+  "lastUpdate": 1791110753944,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -142435,6 +142435,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04625962585399231",
             "extra": "mean: 869.4231363999961 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fa9d5cbafbb4c8f6bc75b5feca8826d5ffbc3137",
+          "message": "DEV: Make downloading of test files more robust (#4153)\n\nCI is flaky because of failing downloads of the test files:\n\n* `download_test_pdfs` never looked at the results of the downloads, so a\n  failed download went unnoticed until a test failed with a\n  `FileNotFoundError`. Failures are now reported.\n* Tests without a URL could only read the cache. If the file is not\n  cached, the URL is now looked up in `example_files.yaml` and the file is\n  downloaded, so a failed prefetch gets another chance.\n* Only `HTTPError` was retried, without any delay. Now connection errors,\n  timeouts and incomplete reads are retried as well, with an exponential\n  backoff. A 404 or 410 is not retried. A timeout and a User-Agent\n  header were added.\n* Files are written atomically, so an interrupted download cannot leave a\n  truncated file in the cache.\n* Creating the cache directory no longer fails when several pytest-xdist\n  workers do it at the same time.\n\n---------\n\nCo-authored-by: Claude Sonnet 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-04T12:42:54+02:00",
+          "tree_id": "780ca9046b79083d136bc203e9f203ee034bc1bb",
+          "url": "https://github.com/py-pdf/pypdf/commit/fa9d5cbafbb4c8f6bc75b5feca8826d5ffbc3137"
+        },
+        "date": 1791110743920,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.175899203024864,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017578495402084657",
+            "extra": "mean: 75.89614830769384 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.35719892186503,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01340613250915597",
+            "extra": "mean: 54.4745417999972 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9643342393366813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0313107782068426",
+            "extra": "mean: 1.0369848535999835 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4566824093322544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06837929905486732",
+            "extra": "mean: 2.1897055362000173 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.35635605900744094,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018181888791936534",
+            "extra": "mean: 2.8061821167999823 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1457933366240745,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024230056661497437",
+            "extra": "mean: 872.7577373999793 msec\nrounds: 5"
           }
         ]
       }
