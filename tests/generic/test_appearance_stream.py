@@ -507,7 +507,9 @@ def _build_text_field_pdf(default_appearance: str) -> bytes:
     "Tf",  # Tf operator without any operand at all.
     "/Helv not-a-number Tf 0 g",  # Non-numeric font size.
 ])
-def test_incomplete_tf_operator_in_default_appearance(default_appearance: str, caplog) -> None:
+def test_incomplete_tf_operator_in_default_appearance(
+    default_appearance: str, caplog: pytest.LogCaptureFixture
+) -> None:
     """An incomplete Tf operator falls back to the default appearance instead of raising."""
     data = _build_text_field_pdf(default_appearance)
     writer = PdfWriter(clone_from=BytesIO(data))
@@ -515,14 +517,14 @@ def test_incomplete_tf_operator_in_default_appearance(default_appearance: str, c
     writer.update_page_form_field_values(writer.pages[0], {"fld": "hello"})
 
     assert "Could not read a complete Tf operator" in caplog.text
-    annotation = writer.pages[0]["/Annots"][0].get_object()
+    annotation = cast(ArrayObject, writer.pages[0]["/Annots"])[0].get_object()
     appearance = annotation["/AP"]["/N"].get_data()
     # The default appearance requests auto-sizing, thus the exact size depends on the field.
     assert re.search(rb"/Helv \d+(\.\d+)? Tf", appearance)
     assert b"(hello) Tj" in appearance
 
 
-def test_complete_tf_operator_in_default_appearance(caplog) -> None:
+def test_complete_tf_operator_in_default_appearance(caplog: pytest.LogCaptureFixture) -> None:
     """A well-formed Tf operator is used as-is, without any fallback."""
     data = _build_text_field_pdf("/Helv 12 Tf 0 g")
     writer = PdfWriter(clone_from=BytesIO(data))
@@ -530,7 +532,7 @@ def test_complete_tf_operator_in_default_appearance(caplog) -> None:
     writer.update_page_form_field_values(writer.pages[0], {"fld": "hello"})
 
     assert "Could not read a complete Tf operator" not in caplog.text
-    annotation = writer.pages[0]["/Annots"][0].get_object()
+    annotation = cast(ArrayObject, writer.pages[0]["/Annots"])[0].get_object()
     assert b"/Helv 12.0 Tf" in annotation["/AP"]["/N"].get_data()
 
 
