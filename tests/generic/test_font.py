@@ -26,7 +26,7 @@ from pypdf.generic import (
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 from pypdf.generic._font import Font, FontDescriptor
 
-from . import RESOURCE_ROOT
+from .. import RESOURCE_ROOT
 
 
 def test_font_descriptor():
