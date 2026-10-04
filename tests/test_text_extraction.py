@@ -1043,6 +1043,25 @@ def test_arabic_indic_digits_keep_their_order(shown: str, expected: str) -> None
     assert PdfReader(_page_with_cid_font(shown)).pages[0].extract_text() == expected
 
 
+@pytest.mark.parametrize(
+    ("shown", "expected"),
+    [
+        pytest.param("١٢٣٤ ابحرم", "١٢٣٤ مرحبا", id="arabic-indic-digits-before"),
+        pytest.param("۱۲۳۴ ابحرم", "۱۲۳۴ مرحبا", id="persian-digits-before"),
+        pytest.param("AB ابحرم", "AB مرحبا", id="latin-before"),
+        pytest.param("ابحرمAB", "مرحباAB", id="latin-after"),
+    ],
+)
+def test_text_before_a_change_of_direction_is_kept(shown: str, expected: str) -> None:
+    """Text shown before a change of direction stays in the output and reaches the visitor once. Related: #4142."""
+    page = PdfReader(_page_with_cid_font(shown)).pages[0]
+    assert page.extract_text() == expected
+
+    parts: list[str] = []
+    page.extract_text(visitor_text=lambda text, *_: parts.append(text))
+    assert "".join(parts) == expected
+
+
 def test_text_leading_is_not_scaled_by_font_size() -> None:
     """Tests for #3982"""
     buffer = _page_with_helvetica(
