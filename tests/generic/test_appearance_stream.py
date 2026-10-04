@@ -561,9 +561,9 @@ def test_text_annotation_default_appearance_with_other_operators(
 
     writer.update_page_form_field_values(writer.pages[0], {"name": "Jane"}, auto_regenerate=False)
 
-    appearance = cast(DictionaryObject, widget["/AP"])["/N"].get_object()
+    appearance = cast(DecodedStreamObject, cast(DictionaryObject, widget["/AP"])["/N"].get_object())
     data = appearance.get_data()
     assert b"/Helv 10.0 Tf " + expected_color + b"\n" in data
     # Only the font is declared, so the stream must not refer to anything else.
     assert b"gs" not in data
-    assert list(appearance["/Resources"]) == ["/Font"]
+    assert list(cast(DictionaryObject, appearance["/Resources"])) == ["/Font"]
