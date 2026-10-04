@@ -1,6 +1,5 @@
 import concurrent.futures
 import functools
-import http.client
 import os
 import random
 import ssl
@@ -8,6 +7,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+from http.client import HTTPException
 from pathlib import Path
 from types import TracebackType
 from typing import Callable, Optional, cast
@@ -56,13 +56,16 @@ def _get_data_from_url(url: str) -> bytes:
             if error.code in _PERMANENT_HTTP_STATUS_CODES or attempt == _DOWNLOAD_ATTEMPTS:
                 raise
             reason = f"HTTP {error.code}"
-        except (OSError, http.client.HTTPException) as error:
+        except (OSError, HTTPException) as error:
             # Covers URLError, timeouts, connection resets and incomplete reads.
             if attempt == _DOWNLOAD_ATTEMPTS:
                 raise
             reason = repr(error)
         delay = 2 ** attempt + random.random()  # noqa: S311
-        _report(f"Download of {url} failed ({reason}), attempt {attempt}/{_DOWNLOAD_ATTEMPTS}. Retry in {delay:.0f}s.")
+        _report(
+            f"Download of {url} failed ({reason}), attempt {attempt}/{_DOWNLOAD_ATTEMPTS}. "
+            f"Retrying in {delay:.0f}s."
+        )
         time.sleep(delay)
     raise ValueError(f"Unknown error handling {url}")
 
@@ -179,13 +182,13 @@ def download_test_pdfs() -> None:
     again when a test needs a missing file, which might succeed later on.
     """
     pdfs = read_yaml_to_list_of_dicts(EXAMPLE_FILES_YAML)
+    failures = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
             executor.submit(get_data_from_url, url=pdf["url"], name=pdf["local_filename"]): pdf
             for pdf in pdfs
         }
-        failures = []
         for future in concurrent.futures.as_completed(futures):
             error = future.exception()
             if error is not None:
@@ -193,7 +196,8 @@ def download_test_pdfs() -> None:
 
     for pdf, error in failures:
         _report(f"Failed to download {pdf['local_filename']} from {pdf['url']}: {error!r}")
-    _report(f"Downloaded {len(pdfs) - len(failures)} of {len(pdfs)} test files.")
+    total = len(pdfs)
+    _report(f"Downloaded {total - len(failures)} of {total} test files.")
 
 
 class PILContext:
