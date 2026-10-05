@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791206852523,
+  "lastUpdate": 1791215520689,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -142897,6 +142897,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02312222008714243",
             "extra": "mean: 853.1355590000032 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "63511f20213c65112f3cd42d515aab4f563be418",
+          "message": "ROB: Guard against a non-dictionary /Root in root_object (#4141)\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-05T17:48:57+02:00",
+          "tree_id": "33eaf716cea48961bb8950748fd6d62595e6b1ee",
+          "url": "https://github.com/py-pdf/pypdf/commit/63511f20213c65112f3cd42d515aab4f563be418"
+        },
+        "date": 1791215510695,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.53841872064539,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019966154526621347",
+            "extra": "mean: 79.75487358333548 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.446325140729293,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011064663068597111",
+            "extra": "mean: 48.90854435294045 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9615115013106846,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027626899670455944",
+            "extra": "mean: 1.0400291609999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4864522478842207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07864616562463397",
+            "extra": "mean: 2.055700234400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3540307357484547,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04719461324278368",
+            "extra": "mean: 2.8246135124000036 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1144132423625075,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07009617573161846",
+            "extra": "mean: 897.3331992000055 msec\nrounds: 5"
           }
         ]
       }
