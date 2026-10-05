@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791215523812,
+  "lastUpdate": 1791229828005,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -114647,6 +114647,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0044662853416303164",
             "extra": "mean: 657.782766400004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7e25ccb60bb6721df6d563e64ffe03d3b519d755",
+          "message": "ROB: Font / _cmapy.py: More robust guards around fontTools (#4157)\n\n* MAINT: Font: Homogenize font table variable names in from_truetype_font_file\n\n* MAINT: Font: More specifically deal with invalid units per em\n\nThe way fontTools decompiles a font table guarantees that all the\ntable attributes will be set. In other words, once we have the\nheader table, we know that unitsPerEm will be set to an int.\n\nChange the test to an invalid int (unitsPerEm <=0) and also\nreport the actual erroneous value instead of just reporting 0.\n\n* ROB: Font: Deal with the case of absent names in TTF name table\n\nThe various fontTools methods for getting font, font family and\nfont weight names all can potentially return None. Only set a\nfont descriptor value for these names if we actually get one.\n\n* ROB: test_font: Add a test for a case where name table method returns None\n\n* ROB: Font: Only set ascent and descent when we have the needed font table\n\nWhen initialising a Font from a font file, we read the font descriptor\nvalues for ascent and descent from the font's horizontal header table.\nHowever, a font file is not guaranteed to have such a table. Add an\nif statement to check for this case, and add associated test coverage\nto test_font.py as well.\n\n* ROB: Font: Guard against loading a corrupt font file with fontTools\n\n* ROB: Font: Guard against empty font data in _get_typographic_maps\n\n* ROB: Font: More generally guard against excepttions from fontTools\n\nWhen looking in detail at the fontTools code, it becomes clear that\nit can raise many more different exceptions that AttributeError\nand TTLibError. For instance, most font table decompilations can\nat least raise struct.error, and since fontTools uses lazy\ndecompilation, this will only occur when a font table is accesed.\n\n* ENH: Font: Add _load_fonttools_table method to guard fontTools exceptions\n\nFontTools does not only raise exceptions during instantiation of a TTFont\nobject, but also during accessing the font tables, because underlying font\ndata is only loaded at that time, and not at TTFont object instantiation.\n\nWe add a handler method to encapsulate loading a table from a fontTools\nTTFont object. It distinguishes between critical and optional tables and\nwill raise errors or warnings accordingly.\n\n* ROB: Font: Use _load_fonttools_table in from_truetype_font_file\n\nThe _load_fonttools_table method guards against fontTools exceptions.\nThis patch loads all tables that we use in from_truetype_font_file via\nthis helper. An alternative would have been loading TTFont \"non-lazily\",\nwhich means that it would decompile _all_ tables while loading. However,\nwe do not actually need all tables, should not be affected by corrupted\ntables that we don't need, and we would lose all the advantages of lazy\nloading.\n\n* ROB: test_font: Tests to cover corrupt optional and critical font tables\n\nThe new _fonttools_table_handler method has separate branches for dealing\nwith absent and corrupt font table data. This patch adds test coverage\nfor dealing with corrupt font tables.\n\n* ROB: Font: Use _load_fonttools_table in _get_typographic_maps\n\nThe _load_fonttools_table method guards against fontTools exceptions.\nThis patch loads the cmap table that we use in _get_typographic_maps via\nthis helper.\n\n* MAINT: test_font: Add assertions for _get_typographic_maps\n\nAdd assertions for warnings in _get_typographic_maps. Change\nassociated test name from test_font_from_font_file to\ntest_font_from_font_file_and__get_typographic_maps, to better\nreflect that this test applies to both methods, but in the\nsame way.\n\n* ROB: cmap: Don't make assumptions about fontTools exceptions\n\nIn cmap.py, the _character_map_from_cff_type1_font_file uses\nfontTools to parse embedded Type 1C fonts. This patch removes\nthe various anticipated exceptions from the try-except block\naround fontTools' CFFFontSet library and instead catches\nException, so that we lower the chances of overlooking some\npotential exception that we didn't see earlier, or fontTools\nadding or changing code so that different exceptions might be\nraised than we expected.\n\n* MAINT: Font: _font_flags_from_truetype_font_tables -> _get_font_flags_from_truetype_font_tables\n\n* MAINT: tests: More robust test match\n\nOne test in part returns \"embedded null byte\" on linux and macos and\n\"'utf-8' codec can't decode byte 0xa2 in position 38: invalid start byte\"\non windows. Just don't match that part of the error.",
+          "timestamp": "2026-10-05T21:37:14+02:00",
+          "tree_id": "121f286b9cd589b35fd6cc65a7e40575e0d43730",
+          "url": "https://github.com/py-pdf/pypdf/commit/7e25ccb60bb6721df6d563e64ffe03d3b519d755"
+        },
+        "date": 1791229818253,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.953821877611116,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008100495754542095",
+            "extra": "mean: 338.54444899999976 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.953853683600183,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019278206664100268",
+            "extra": "mean: 52.75971929999912 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2599970425710803,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028540929986846944",
+            "extra": "mean: 3.8461975956000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.42004794374298,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005008782223252585",
+            "extra": "mean: 57.40512329411729 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0719209952772467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05303590774489836",
+            "extra": "mean: 13.904145738599993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.645503642472403,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003126017969446628",
+            "extra": "mean: 607.7166735999924 msec\nrounds: 5"
           }
         ]
       }
