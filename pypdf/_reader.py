@@ -226,16 +226,18 @@ class PdfReader(PdfDocCommon):
         """Provide access to "/Root". Standardized with PdfWriter."""
         if self._validated_root:
             return self._validated_root
-        root = self.trailer.get(TK.ROOT)
+        root = self.trailer.get(TK.ROOT, NullObject()).get_object()
+        root_dictionary: DictionaryObject
+        if isinstance(root, DictionaryObject):
+            root_dictionary = root
+        else:
+            # The catalog has to be a dictionary. Anything else cannot be used,
+            # thus treat it like an empty one and attempt the recovery below.
+            root_dictionary = DictionaryObject()
         if is_null_or_none(root):
             logger_warning('Cannot find "/Root" key in trailer', source=__name__)
-        elif (
-            cast(DictionaryObject, cast(PdfObject, root).get_object()).get("/Type")
-            == "/Catalog"
-        ):
-            self._validated_root = cast(
-                DictionaryObject, cast(PdfObject, root).get_object()
-            )
+        elif root_dictionary.get("/Type") == "/Catalog":
+            self._validated_root = root_dictionary
         else:
             logger_warning("Invalid Root object in trailer", source=__name__)
         if self._validated_root is None:
@@ -257,15 +259,13 @@ class PdfReader(PdfDocCommon):
                     )
                     break
         if self._validated_root is None:
-            if not is_null_or_none(root) and "/Pages" in cast(DictionaryObject, cast(PdfObject, root).get_object()):
+            if "/Pages" in root_dictionary:
                 logger_warning(
                     "Possible root found at %(root_ref)r, but missing /Catalog key",
                     source=__name__,
-                    root_ref=cast(PdfObject, root).indirect_reference,
+                    root_ref=root_dictionary.indirect_reference,
                 )
-                self._validated_root = cast(
-                    DictionaryObject, cast(PdfObject, root).get_object()
-                )
+                self._validated_root = root_dictionary
             else:
                 raise PdfReadError("Cannot find Root object in pdf")
         return self._validated_root
@@ -325,7 +325,11 @@ class PdfReader(PdfDocCommon):
     def xmp_metadata(self) -> Optional[XmpInformation]:
         """XMP (Extensible Metadata Platform) data."""
         try:
-            self._override_encryption = True
+            # The document-level metadata stream is exempt from encryption
+            # only if /EncryptMetadata is false (ISO 32000-2, Table 21).
+            self._override_encryption = (
+                self._encryption is not None and not self._encryption.EncryptMetadata
+            )
             return cast(XmpInformation, self.root_object.xmp_metadata)
         finally:
             self._override_encryption = False
@@ -707,6 +711,16 @@ class PdfReader(PdfDocCommon):
         self._basic_validation(stream)
         self._find_eof_marker(stream)
         startxref = self._find_startxref_pos(stream)
+        if startxref < 0:
+            # A negative offset cannot point into the file. Treat it like the
+            # zero case (#3157) so the xref table is repaired instead of
+            # leaking a ValueError from a negative seek.
+            logger_warning(
+                "Negative startxref pointer (%(startxref)d), treating it as zero.",
+                source=__name__,
+                startxref=startxref,
+            )
+            startxref = 0
         self._startxref = startxref
 
         # check and eventually correct the startxref only if not strict
