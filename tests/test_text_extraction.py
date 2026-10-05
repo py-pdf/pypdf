@@ -294,7 +294,7 @@ def build_pdf_font_size_in_tm(stream: bytes) -> bytes:
             ),
             "CEO",
         ),
-        # A real space-width TJ gap must still become one space, not ~11.
+        # A real space-width TJ gap becomes exactly one space.
         (
             b"BT /F1 1 Tf 11 0 0 11 100 700 Tm [(Hello) -278 (World)] TJ ET\n",
             "Hello World",
@@ -305,8 +305,8 @@ def build_pdf_font_size_in_tm(stream: bytes) -> bytes:
 def test_layout_mode_space_tx_scaled_into_page_space(stream: bytes, expected: str):
     """Regression test for #4110.
 
-    space_tx used to stay in text space while tx / displaced_tx are in page
-    space, so [(C) -30.5 (EO)] TJ extracted as "C EO".
+    space_tx is scaled into page space like tx / displaced_tx, so a small kern
+    such as [(C) -30.5 (EO)] TJ extracts as "CEO".
     """
     page = PdfReader(BytesIO(build_pdf_font_size_in_tm(stream))).pages[0]
     assert page.extract_text(extraction_mode="layout").strip() == expected
