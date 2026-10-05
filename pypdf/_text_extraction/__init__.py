@@ -156,32 +156,29 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
         lower, upper = line_span[1], line_span[2]
         distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
     last = (output + text)[-1:]
-    try:
-        if distance > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
-            if last not in ("", "\n"):
-                output += text + "\n"
-                if visitor_text is not None:
-                    visitor_text(
-                        text + "\n",
-                        memo_cm,
-                        memo_tm,
-                        font_resource,
-                        font_size,
-                    )
-                text = ""
+    if distance > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
+        if last not in ("", "\n"):
+            output += text + "\n"
+            if visitor_text is not None:
+                visitor_text(
+                    text + "\n",
+                    memo_cm,
+                    memo_tm,
+                    font_resource,
+                    font_size,
+                )
+            text = ""
+        line_span = (axis_index, axis, axis)
+    else:
+        if (
+            (moved_width >= (spacewidth + str_widths) * scale_prev_x)
+            and last not in ("", " ")
+        ):
+            text += " "
+        if last in ("", "\n") or line_span is None or line_span[0] != axis_index:
             line_span = (axis_index, axis, axis)
         else:
-            if (
-                (moved_width >= (spacewidth + str_widths) * scale_prev_x)
-                and last not in ("", " ")
-            ):
-                text += " "
-            if last in ("", "\n") or line_span is None or line_span[0] != axis_index:
-                line_span = (axis_index, axis, axis)
-            else:
-                line_span = (axis_index, min(line_span[1], axis), max(line_span[2], axis))
-    except (TypeError, ValueError, ZeroDivisionError, AttributeError):
-        pass
+            line_span = (axis_index, min(line_span[1], axis), max(line_span[2], axis))
     tm_prev = tm_matrix.copy()
     cm_prev = cm_matrix.copy()
     return text, output, cm_prev, tm_prev, line_span
