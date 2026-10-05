@@ -5,6 +5,7 @@ import subprocess
 import sys
 import unicodedata
 from io import BytesIO
+from unittest import mock
 
 import pytest
 from fontTools.ttLib import TTFont
@@ -178,12 +179,18 @@ def test_font_file():
     assert len(font.font_descriptor.font_file.get_data()) == 2168
 
 
-def test_font_from_font_file():
+def test_font_from_font_file_and__get_typographic_maps(caplog):
     reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
     font_resources = reader.pages[0]["/Resources"]["/Font"]
     for font_resource in font_resources:
         font_data = font_resources[font_resource]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
         font = Font.from_truetype_font_file(BytesIO(font_data))
+
+        # Test an empty name table
+        with mock.patch("fontTools.ttLib.tables._n_a_m_e.table__n_a_m_e.getBestFullName", return_value=None):
+            font = Font.from_truetype_font_file(BytesIO(font_data))
+            assert font.font_descriptor.name == "Unknown"
+
         if font_resource == "/F1":
             assert font.font_descriptor.flags == 33
             assert len(font.character_map) == 872
@@ -204,33 +211,65 @@ def test_font_from_font_file():
                     Font.from_truetype_font_file(crippled_font_data)
                 tt_font_object["head"].unitsPerEm = 2048
 
+                # Test a crippled optional table
+                os_2_table_offset = tt_font_object.reader.tables["OS/2"].offset
+                stream_data = bytearray(font_data)
+                stream_data[os_2_table_offset : os_2_table_offset + 2] = b"\x03\x09"
+                crippled_font_data = BytesIO(stream_data)
+                crippled_font_data.seek(0)
+                assert Font.from_truetype_font_file(crippled_font_data) is not None
+                assert (
+                    "Optional font table 'OS/2' is corrupt and will be ignored: "
+                    "unknown format for OS/2 table: version 777"
+                ) in caplog.text
+
+                # Test a crippled optional table (that in turn causes critical table 'cmap' to fail)
+                post_table_offset = tt_font_object.reader.tables["post"].offset
+                stream_data = bytearray(font_data)
+                stream_data[post_table_offset : post_table_offset + 16] = b"\xff" * 16
+                crippled_font_data = BytesIO(stream_data)
+                crippled_font_data.seek(0)
+                with pytest.raises(
+                    PdfReadError,
+                    match=r"^Font table 'cmap' is corrupt or truncated: 'post' table format -0\.000015 not supported$"
+                ):
+                    Font.from_truetype_font_file(crippled_font_data)
+
                 # Test various missing tables
                 del tt_font_object["name"]
                 del tt_font_object["OS/2"]
                 del tt_font_object["post"]
+                del tt_font_object["hhea"]
                 crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
                 font = Font.from_truetype_font_file(crippled_font_data)
 
-                # Test raising AttributeError in _get_typographic_maps due to missing cmap table
+                # Test missing cmap table in from_truetype_font_file and _get_typographic_maps
                 del tt_font_object["cmap"]
                 crippled_font_data.seek(0)
                 tt_font_object.save(crippled_font_data)
+                with pytest.raises(
+                    PdfReadError,
+                    match=r"^Font table 'cmap' is corrupt or truncated: Font file does not have a 'cmap' table$"
+                ):
+                    Font.from_truetype_font_file(crippled_font_data)
+
                 crippled_font_data_value = crippled_font_data.getvalue()
                 font.font_descriptor.font_file.set_data(crippled_font_data_value)
                 font._get_typographic_maps()
+                assert "Optional font table 'cmap' is missing from font file" in caplog.text
 
-                # Test raising PdfReadError in from_truetype_font_file due to missing cmap table
-                with pytest.raises(PdfReadError, match=r"Font file does not have a cmap table"):
-                    Font.from_truetype_font_file(crippled_font_data)
-
-                # Test raising TTLibError in _get_typographic_maps due to corrupt font data
+                # Test raising TTLibError in from_truetype_font_file and _get_typographic_maps due to corrupt font data
                 garbage_bytes = b"CORRUPT_HEADER!!" + crippled_font_data_value[16:]
+                with pytest.raises(PdfReadError, match=r"^Could not open font file: "):
+                    Font.from_truetype_font_file(garbage_bytes)
+
                 font.font_descriptor.font_file.set_data(garbage_bytes)
                 font._get_typographic_maps()
+                assert "Could not open font file: Not a TrueType or OpenType font (bad sfntVersion)" in caplog.text
 
 
-def test_font_old_fonttools_substitution():
+def test_font_old_fonttools_substitution(caplog):
     import inspect  # noqa: PLC0415
     from unittest import mock  # noqa: PLC0415
 
@@ -248,7 +287,7 @@ def test_font_old_fonttools_substitution():
         return original_build_reversed_min(_self)
 
     with mock.patch("fontTools.ttLib.tables._c_m_a_p.table__c_m_a_p.buildReversedMin", build_reversed_min):
-        test_font_from_font_file()
+        test_font_from_font_file_and__get_typographic_maps(caplog)
 
 
 def test_font_as_font_resource():
