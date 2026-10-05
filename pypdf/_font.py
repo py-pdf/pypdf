@@ -520,7 +520,7 @@ class Font:
             return None
 
     @staticmethod
-    def _font_flags_from_truetype_font_tables(
+    def _get_font_flags_from_truetype_font_tables(
             header_table: table__h_e_a_d,
             postscript_table: table__p_o_s_t,
             os2_table: table_O_S_2f_2
@@ -639,7 +639,7 @@ class Font:
                 except AttributeError:
                     pass
 
-            font_descriptor_kwargs["flags"] = cls._font_flags_from_truetype_font_tables(
+            font_descriptor_kwargs["flags"] = cls._get_font_flags_from_truetype_font_tables(
                 header_table,
                 postscript_table,
                 os2_table
