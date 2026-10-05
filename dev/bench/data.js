@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791202873431,
+  "lastUpdate": 1791202924246,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -142567,6 +142567,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024230056661497437",
             "extra": "mean: 872.7577373999793 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b78c2aa5301ee4fb1ee024b9838923945ab357b6",
+          "message": "BUG: Decrypt the XMP metadata stream unless /EncryptMetadata is false (#4151)\n\nThe /Metadata stream of the document catalogue is only exempt from encryption when /EncryptMetadata is false (ISO 32000-2, Table 21), so reading it with encryption overridden returns ciphertext for every other encrypted document.",
+          "timestamp": "2026-10-05T14:19:23+02:00",
+          "tree_id": "d62ffde730b9ae3516e2835459b41f59840e3607",
+          "url": "https://github.com/py-pdf/pypdf/commit/b78c2aa5301ee4fb1ee024b9838923945ab357b6"
+        },
+        "date": 1791202915351,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 16.76378844748558,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017595556759256437",
+            "extra": "mean: 59.65238723529651 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 24.33419119103742,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014269152084310371",
+            "extra": "mean: 41.094441649998714 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.2195456413098926,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0360426183223056",
+            "extra": "mean: 819.9775113999976 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5202027116354974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02356317768368852",
+            "extra": "mean: 1.9223275419999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.46704073510339045,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016518809569843505",
+            "extra": "mean: 2.141140857400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5577201338222102,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006569768276054232",
+            "extra": "mean: 641.9638408000026 msec\nrounds: 5"
           }
         ]
       }
