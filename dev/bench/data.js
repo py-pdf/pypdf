@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791202924246,
+  "lastUpdate": 1791206563332,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -114449,6 +114449,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007859681272428157",
             "extra": "mean: 377.914863999996 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2573438329@qq.com",
+            "name": "Nor.na",
+            "username": "Master-Norna"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "91a73b5e8e9701efdad26b865964c2a53cb110b3",
+          "message": "ROB: Treat a negative startxref pointer as zero (#4144)\n\nA negative startxref (the uncovered variant of #3151) crashed with a\nraw ValueError at seek; normalize to zero and let the existing #3157\nxref-repair path recover, matching its behavior. Adds a regression\ntest (red without the fix, green with it).\n\n---------\n\nCo-authored-by: Master-Norna <263870076+Master-Norna@users.noreply.github.com>",
+          "timestamp": "2026-10-05T15:19:36+02:00",
+          "tree_id": "f9db2e153189596deb377bdeca03f2aeca580153",
+          "url": "https://github.com/py-pdf/pypdf/commit/91a73b5e8e9701efdad26b865964c2a53cb110b3"
+        },
+        "date": 1791206553365,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7527778749508824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007843773858439736",
+            "extra": "mean: 363.26941199999396 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.25197487833046,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020806708044359737",
+            "extra": "mean: 54.78859173684507 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23473602552203343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038644221010029386",
+            "extra": "mean: 4.260104505800006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.72263081446641,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006295794752510393",
+            "extra": "mean: 56.425031388891334 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07376179331562571,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05462909344250266",
+            "extra": "mean: 13.557154118 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4947725056590242,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005795767483954473",
+            "extra": "mean: 668.99812260001 msec\nrounds: 5"
           }
         ]
       }
