@@ -325,7 +325,11 @@ class PdfReader(PdfDocCommon):
     def xmp_metadata(self) -> Optional[XmpInformation]:
         """XMP (Extensible Metadata Platform) data."""
         try:
-            self._override_encryption = True
+            # The document-level metadata stream is exempt from encryption
+            # only if /EncryptMetadata is false (ISO 32000-2, Table 21).
+            self._override_encryption = (
+                self._encryption is not None and not self._encryption.EncryptMetadata
+            )
             return cast(XmpInformation, self.root_object.xmp_metadata)
         finally:
             self._override_encryption = False
