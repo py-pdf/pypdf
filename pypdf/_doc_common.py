@@ -1131,11 +1131,11 @@ class PdfDocCommon(ABC):
 
         # title required for valid outline
         # §12.3.3, entries in an outline item dictionary
-        try:
+        if "/Title" in node:
             title = cast("str", node["/Title"])
-        except KeyError as e:
+        else:
             if self.strict:
-                raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}") from e
+                raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
             title = ""
 
         if "/A" in node:

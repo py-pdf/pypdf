@@ -410,10 +410,10 @@ class IndirectObject(PdfObject):
         # Attribute not found in object: look in pointed object
         try:
             return getattr(self._get_object_with_check(), name)
-        except AttributeError as e:
+        except AttributeError as exception:
             raise AttributeError(
                 f"No attribute {name} found in IndirectObject or pointed object"
-            ) from e
+            ) from exception
 
     def __getitem__(self, key: Any) -> Any:
         # items should be extracted from pointed Object
@@ -488,10 +488,10 @@ class IndirectObject(PdfObject):
             )
         try:
             return IndirectObject(int(idnum), int(generation), pdf)
-        except (ValueError, OverflowError) as e:
+        except (ValueError, OverflowError) as exception:
             raise PdfReadError(
-                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {e}"
-            ) from e
+                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {exception}"
+            ) from exception
 
 
 FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
@@ -504,13 +504,13 @@ class FloatObject(float, PdfObject):
         try:
             value = float(value)
             return float.__new__(cls, value)
-        except Exception as e:
+        except Exception as exception:
             # If this isn't a valid decimal (happens in malformed PDFs)
             # fallback to 0
             logger_warning(
                 "%(error)s : FloatObject (%(value)s) invalid; use 0.0 instead",
                 source=__name__,
-                error=e,
+                error=exception,
                 value=value,
             )
             return float.__new__(cls, 0.0)
@@ -934,7 +934,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 except Exception:
                     pass
             raise UnicodeDecodeError("", name, 0, 0, "Code Not Found")
-        except (UnicodeEncodeError, UnicodeDecodeError) as e:
+        except (UnicodeEncodeError, UnicodeDecodeError) as exception:
             if not pdf.strict:
                 logger_warning(
                     "Illegal character in NameObject (%(name)r), you may need to adjust NameObject.CHARSETS",
@@ -945,20 +945,20 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             raise PdfReadError(
                 f"Illegal character in NameObject ({name!r}). "
                 "You may need to adjust NameObject.CHARSETS.",
-            ) from e
+            ) from exception
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
     try:
         return bytes([_pdfdoc_encoding_rev[k] for k in unicode_string])
-    except KeyError as e:
+    except KeyError as exception:
         raise UnicodeEncodeError(
             "pdfdocencoding",
             unicode_string,
             -1,
             -1,
             "does not exist in translation table",
-        ) from e
+        ) from exception
 
 
 def is_null_or_none(x: Any) -> TypeGuard[Union[NullObject, IndirectObject, None]]:

@@ -1215,8 +1215,8 @@ class PdfWriter(PdfDocCommon):
 
         try:
             self._flatten()
-        except IndexError as e:  # pragma: no cover
-            raise PdfReadError("Got index error while flattening.") from e  # pragma: no cover
+        except IndexError as exception:  # pragma: no cover
+            raise PdfReadError("Got index error while flattening.") from exception  # pragma: no cover
 
         assert self.flattened_pages is not None
         for p in self.flattened_pages:
@@ -1344,8 +1344,8 @@ class PdfWriter(PdfDocCommon):
         if algorithm is not None:
             try:
                 alg = getattr(EncryptAlgorithm, algorithm.replace("-", "_"))
-            except AttributeError as e:  # pragma: no cover
-                raise ValueError(f"Algorithm '{algorithm}' NOT supported") from e  # pragma: no cover
+            except AttributeError as exception:  # pragma: no cover
+                raise ValueError(f"Algorithm '{algorithm}' NOT supported") from exception  # pragma: no cover
         else:
             alg = EncryptAlgorithm.RC4_128
             if not use_128bit:
