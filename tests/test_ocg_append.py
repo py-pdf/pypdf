@@ -32,7 +32,7 @@ def test_ocg_append_metadata_reverse_order(tmp_path):
 
     reader_append = PdfReader(RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf")
 
-    # Trigger the append with the modified merge code that include the OCGs
+    # 1.Trigger the append with the modified merge code that include the OCGs
     writer.append(reader_append)
 
     # 2. Add or change metadata values
