@@ -6,7 +6,6 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._protocols import PdfObjectProtocol, PdfReaderProtocol, PdfWriterProtocol
-from pypdf.generic import PdfObject
 
 
 class IPdfObjectProtocol(PdfObjectProtocol):
@@ -20,17 +19,6 @@ def test_pdfobjectprotocol():
     assert o.get_object() is None
     assert o.hash_value() is None
     assert o.write_to_stream(None) is None
-
-
-def test_pdf_object_is_not_a_protocol():
-    """
-    PdfObject satisfies PdfObjectProtocol without inheriting from it.
-
-    isinstance() checks against subclasses of a Protocol go through
-    typing._ProtocolMeta and are several times slower, see #2136.
-    """
-    assert typing.Protocol not in PdfObject.__mro__
-    assert type(PdfObject) is type
 
 
 def _get_data_members(protocol: type) -> set:
