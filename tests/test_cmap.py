@@ -8,6 +8,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import (
     __parse_bfrange__decode,
+    _character_map_from_cff_type1_font_file,
     _check_token_length,
     _parse_to_unicode,
     get_encoding,
@@ -842,3 +843,117 @@ def test_get_encoding__differences_is_an_array(caplog):
 
     assert encoding[65] == "'"
     assert caplog.text == ""
+
+
+def _build_cff_font_program(encoding: dict[int, str]) -> bytes:
+    """A minimal CFF font program whose built-in encoding maps the given character codes to glyph names."""
+    from fontTools.fontBuilder import FontBuilder  # noqa: PLC0415
+    from fontTools.pens.t2CharStringPen import T2CharStringPen  # noqa: PLC0415
+
+    glyph_names = [".notdef", *sorted(set(encoding.values()))]
+    builder = FontBuilder(1000, isTTF=False)
+    builder.setupGlyphOrder(glyph_names)
+    pen = T2CharStringPen(600, None)
+    pen.moveTo((0, 0))
+    pen.lineTo((100, 100))
+    pen.closePath()
+    builder.setupCFF("Test", {"FullName": "Test"}, dict.fromkeys(glyph_names, pen.getCharString()), {})
+    cff_encoding = [".notdef"] * 256
+    for code, glyph_name in encoding.items():
+        cff_encoding[code] = glyph_name
+    cff = builder.font["CFF "].cff
+    cff.topDictIndex[0].Encoding = cff_encoding
+    stream = BytesIO()
+    cff.compile(stream, builder.font)
+    return stream.getvalue()
+
+
+def _build_pdf_with_cff_font(
+    font_program: bytes, font_dictionaries: int, resource_names: int, pages: int
+) -> tuple[PdfWriter, DecodedStreamObject]:
+    """
+    A PDF showing "AB" with a Type1 font embedding the given CFF font program on each page.
+
+    The single font file stream is shared by `font_dictionaries` font dictionaries, each of which is
+    referenced under `resource_names` resource names on every page.
+    """
+    writer = PdfWriter()
+    font_file = DecodedStreamObject()
+    font_file.set_data(font_program)
+    font_file[NameObject("/Subtype")] = NameObject("/Type1C")
+    font_file_reference = writer._add_object(font_file)
+    fonts = DictionaryObject()
+    for font_index in range(font_dictionaries):
+        font_descriptor = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/FontDescriptor"),
+                    NameObject("/FontName"): NameObject("/Test"),
+                    NameObject("/Flags"): NumberObject(4),
+                    NameObject("/FontBBox"): ArrayObject([NumberObject(0)] * 4),
+                    NameObject("/FontFile3"): font_file_reference,
+                }
+            )
+        )
+        font = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Font"),
+                    NameObject("/Subtype"): NameObject("/Type1"),
+                    NameObject("/BaseFont"): NameObject("/Test"),
+                    NameObject("/FontDescriptor"): font_descriptor,
+                }
+            )
+        )
+        for name_index in range(resource_names):
+            fonts[NameObject(f"/F{font_index}_{name_index}")] = font
+    resources = writer._add_object(DictionaryObject({NameObject("/Font"): fonts}))
+    for _ in range(pages):
+        page = writer.add_blank_page(width=200, height=200)
+        contents = DecodedStreamObject()
+        contents.set_data(b"BT /F0_0 12 Tf 20 100 Td (AB) Tj ET")
+        page[NameObject("/Contents")] = writer._add_object(contents)
+        page[NameObject("/Resources")] = resources
+    return writer, font_file
+
+
+def test_cff_type1_font_file_is_parsed_once_per_font_program():
+    """
+    An embedded CFF font program is parsed once per stream, however many font dictionaries, resource names
+    and pages reference it, for reader and writer pages alike. Resolves #4156.
+    """
+    pytest.importorskip("fontTools", reason="Requires fontTools")
+    writer, _ = _build_pdf_with_cff_font(
+        _build_cff_font_program({65: "Z", 66: "Y"}), font_dictionaries=2, resource_names=3, pages=4
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+
+    with mock.patch(
+        "pypdf._cmap._character_map_from_cff_type1_font_file", wraps=_character_map_from_cff_type1_font_file
+    ) as parse:
+        assert [page.extract_text() for page in reader.pages] == ["ZY"] * 4
+        assert parse.call_count == 1
+
+        writer = PdfWriter(clone_from=reader)
+        assert [page.extract_text() for page in writer.pages] == ["ZY"] * 4
+        assert parse.call_count == 2
+
+
+def test_cff_type1_font_file_is_parsed_again_when_its_data_changes():
+    """A writer replacing an embedded CFF font program gets the new program's encoding. Resolves #4156."""
+    pytest.importorskip("fontTools", reason="Requires fontTools")
+    writer, font_file = _build_pdf_with_cff_font(
+        _build_cff_font_program({65: "Z", 66: "Y"}), font_dictionaries=1, resource_names=1, pages=2
+    )
+
+    with mock.patch(
+        "pypdf._cmap._character_map_from_cff_type1_font_file", wraps=_character_map_from_cff_type1_font_file
+    ) as parse:
+        assert [page.extract_text() for page in writer.pages] == ["ZY"] * 2
+        assert parse.call_count == 1
+
+        font_file.set_data(_build_cff_font_program({65: "Q"}))
+        assert [page.extract_text() for page in writer.pages] == ["QB"] * 2
+        assert parse.call_count == 2

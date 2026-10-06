@@ -1,6 +1,8 @@
 from binascii import Error as BinasciiError
 from binascii import unhexlify
+from collections.abc import Callable
 from functools import partial
+from hashlib import sha256
 from io import BytesIO
 from typing import Any, Union, cast
 
@@ -198,7 +200,9 @@ def _parse_to_unicode(
                     if not font_file_data:
                         return map_dict, int_entry
 
-                    return font_file_processor(font_file_data, map_dict, int_entry)
+                    return _character_map_from_font_file(
+                        font_file_dict, font_file_data, font_file_processor, map_dict, int_entry
+                    )
 
             return map_dict, int_entry
 
@@ -457,6 +461,32 @@ def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
             return chr(int(glyph_name[4:], 16))
         except ValueError:  # pragma: no cover
             return None
+
+
+def _character_map_from_font_file(
+    font_file: StreamObject,
+    font_data: bytes,
+    font_file_processor: Callable[[bytes, dict[Any, Any], list[int]], tuple[dict[Any, Any], list[int]]],
+    map_dict: dict[Any, Any],
+    int_entry: list[int],
+) -> tuple[dict[Any, Any], list[int]]:
+    """
+    Derive the character map from an embedded font program, caching the result on its stream.
+
+    The character map depends only on the decoded font data, and the same font program is reached from every
+    font dictionary, resource name and page referencing its stream. Parsing a CFF font program with fontTools is
+    expensive, so each stream is parsed once and reused until its data changes, which a digest of the data
+    detects (a writer may replace the font program). See #4156.
+    """
+    digest = sha256(font_data).digest()
+    cached = font_file._font_file_character_map
+    if cached is None or cached[0] != digest:
+        cached_map_dict, cached_int_entry = font_file_processor(font_data, {}, [])
+        cached = (digest, cached_map_dict, cached_int_entry)
+        font_file._font_file_character_map = cached
+    map_dict.update(cached[1])
+    int_entry.extend(cached[2])
+    return map_dict, int_entry
 
 
 def _character_map_from_cff_type1_font_file(
