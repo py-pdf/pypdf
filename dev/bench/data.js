@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791277176411,
+  "lastUpdate": 1791279191555,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -114779,6 +114779,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0017999045577403421",
             "extra": "mean: 475.18717720000154 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pa.sen@outlook.com",
+            "name": "Merge_Conflict - Pasi",
+            "username": "pasmud"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca99aa42994b2ef8355e2dae674190a858b06395",
+          "message": "BUG: Report the correct page number for identical pages (#4154)\n\nPageObject.page_number looked the page up with list.index, which compares\nthe pages with ==. Pages which only differ in their object number therefore\ncompare equal, and index returns the position of the first match. Every page\nexcept the first one reported 0.\n\nLook the page up by its indirect reference instead, which is what identifies\nit within a document. This also fixes get_destination_page_number on a\nPdfWriter, which is implemented on top of page_number and so resolved every\nnamed destination to page 0.\n\nTwo regression tests added, one for page_number with identical pages and one\nfor a named destination pointing at a later page.\n\n* TST: Describe the old page_number lookup in the past tense\n\nThe docstring on test_page_number_of_identical_pages described what\nPageObject.page_number does, but the test is about a lookup the change has\nalready replaced. Reword it so it explains the previous behaviour the test\nguards against.\n\n---------\n\nCo-authored-by: pasmud <pasmud@users.noreply.github.com>",
+          "timestamp": "2026-10-06T11:31:13+02:00",
+          "tree_id": "8eeb7e4784f142e570e02879c825009da3ddbe8b",
+          "url": "https://github.com/py-pdf/pypdf/commit/ca99aa42994b2ef8355e2dae674190a858b06395"
+        },
+        "date": 1791279184721,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.851807283779104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016730004305293287",
+            "extra": "mean: 206.10876349999904 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.424893420566733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007841789228781879",
+            "extra": "mean: 31.821905857142138 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4079229545636064,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03594029076620605",
+            "extra": "mean: 2.451443314999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 32.217328972312444,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037436970661688055",
+            "extra": "mean: 31.039196354837465 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14218744375486841,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14048875464177468",
+            "extra": "mean: 7.032969815000001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.8105676319916406,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006988790394241376",
+            "extra": "mean: 355.8000129999982 msec\nrounds: 5"
           }
         ]
       }
