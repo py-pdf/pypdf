@@ -1401,6 +1401,30 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
 
 
 @pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+@pytest.mark.parametrize(
+    ("filter_name", "image_data"),
+    [
+        (b"AHx", b"41>"),
+        (b"A85", a85encode(b"A") + b"~>"),
+        (b"RL", b"\x00A\x80"),
+        (b"DCT", b"\xff\xd8\xff\xd9"),
+    ],
+    ids=["ASCIIHex", "ASCII85", "RunLength", "DCT"],
+)
+def test_content_stream_filtered_inline_image_at_end_of_stream(filter_name, image_data, tail):
+    """The separator before `EI` is excluded from filtered inline image data."""
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(
+        b"BI /W 1 /H 1 /BPC 8 /CS /G /F /" + filter_name + b" ID\n" + image_data + b"\nEI" + tail
+    )
+    operations = ContentStream(stream_object, None).operations
+
+    assert operations[0][1] == b"INLINE IMAGE"
+    assert operations[0][0]["data"] == image_data
+    assert operations[1:] == ([([], b"Q")] if tail == b"\nQ\n" else [])
+
+
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
 def test_inline_image_at_end_of_stream(tail):
     # An inline image whose `EI` marker is the very end of the content stream
     # (no trailing whitespace or operator) must not raise (#3468).
