@@ -6,8 +6,8 @@ from collections import Counter as CounterType
 from collections.abc import MutableMapping
 from typing import Any, Literal, Union
 
-from ..._font import Font
 from ...errors import PdfReadError
+from ...generic._font import Font
 from .. import mult
 from ._text_state_params import TextStateParams
 

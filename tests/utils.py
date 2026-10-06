@@ -1,8 +1,6 @@
 """Utility functions and classes for testing."""
 import logging
-import sys
-from types import FrameType
-from typing import Any, Callable, Optional, TypeVar, Union, cast
+from typing import Callable, Optional, Union, cast
 
 from PIL import Image
 
@@ -13,8 +11,6 @@ from pypdf.generic import (
     IndirectObject,
     PdfObject,
 )
-
-T = TypeVar("T")
 
 
 class PositionedText:
@@ -222,25 +218,3 @@ class ReaderDummy:
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         return IndirectObject(idnum=1, generation=1, pdf=self)
-
-
-def count_function_calls(func: Callable[[], T]) -> tuple[T, int]:
-    """
-    Run func and count the calls of Python functions meanwhile.
-
-    The count measures the work independently of the machine speed.
-    """
-    calls = 0
-
-    def count_calls(frame: FrameType, event: str, arg: Any) -> None:
-        nonlocal calls
-        if event == "call":
-            calls += 1
-
-    previous_profile = sys.getprofile()
-    sys.setprofile(count_calls)
-    try:
-        result = func()
-    finally:
-        sys.setprofile(previous_profile)
-    return result, calls

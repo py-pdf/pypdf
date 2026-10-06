@@ -2086,6 +2086,57 @@ def test_repair_root(caplog):
     )
 
 
+def _generate_pdf_with_root(root_body: bytes, *, with_catalog: bool = False) -> bytes:
+    """Build a minimal document whose ``/Root`` points at ``root_body``."""
+    objects = [
+        b"1 0 obj\n" + root_body + b"\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] >>\nendobj\n",
+    ]
+    if with_catalog:
+        objects.append(b"4 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
+
+    data = bytearray(b"%PDF-1.7\n")
+    offsets = []
+    for obj in objects:
+        offsets.append(len(data))
+        data += obj
+    xref_offset = len(data)
+    data += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    for offset in offsets:
+        data += b"%010d 00000 n \n" % offset
+    data += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (
+        len(objects) + 1, xref_offset
+    )
+    return bytes(data)
+
+
+@pytest.mark.parametrize(
+    "root_body",
+    [b"42", b"[1 2 3]", b"(hello)", b"/Catalog", b"[/Pages]", b"(x /Pages y)"],
+    ids=["number", "array", "string", "name", "array-with-pages", "string-with-pages"],
+)
+def test_root_object__not_a_dictionary(caplog, root_body):
+    """A ``/Root`` which does not resolve to a dictionary cannot be used as the catalog."""
+    reader = PdfReader(BytesIO(_generate_pdf_with_root(root_body)))
+    with pytest.raises(PdfReadError, match=r"^Cannot find Root object in pdf$"):
+        _ = reader.root_object
+    assert all(
+        message in caplog.text
+        for message in (
+            "Invalid Root object in trailer",
+            'Searching object with "/Catalog" key',
+        )
+    )
+
+    # A catalog elsewhere in the document is still being picked up.
+    caplog.clear()
+    reader = PdfReader(BytesIO(_generate_pdf_with_root(root_body, with_catalog=True)))
+    assert reader.root_object["/Type"] == "/Catalog"
+    assert len(reader.pages) == 1
+    assert "Root found at IndirectObject(4, 0," in caplog.text
+
+
 @pytest.mark.enable_socket
 def test_issue3151(caplog):
     """Tests for #3151"""
@@ -2093,6 +2144,36 @@ def test_issue3151(caplog):
     name = "issue3151.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert len(reader.pages) == 742
+
+
+def test_negative_startxref_is_treated_as_zero(caplog):
+    """A negative startxref pointer (the uncovered variant of #3151) is
+    repaired like the zero case of #3157 instead of leaking a ValueError
+    from a negative seek.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    buf = BytesIO()
+    writer.write(buf)
+    data = buf.getvalue()
+    idx = data.rfind(b"startxref")
+    num = data[idx : data.rfind(b"%%EOF")].split(b"\n")[1].strip()
+    negative_data = data[:idx] + b"startxref\n-" + num + b"\n%%EOF" + data[data.rfind(b"%%EOF") + 5 :]
+
+    # A corrupted (negative) startxref is recovered to a single page.
+    reader = PdfReader(BytesIO(negative_data))
+    assert len(reader.pages) == 1
+    assert caplog.messages == [
+        f"Negative startxref pointer (-{int(num)}), treating it as zero.",
+        "incorrect startxref pointer(4)",
+        "parsing for Object Streams",
+    ]
+
+    # A healthy startxref emits no warnings.
+    caplog.clear()
+    reader = PdfReader(BytesIO(data))
+    assert len(reader.pages) == 1
+    assert caplog.messages == []
 
 
 @pytest.mark.enable_socket

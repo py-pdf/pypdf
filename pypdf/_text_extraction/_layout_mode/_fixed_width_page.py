@@ -6,8 +6,8 @@ from math import ceil
 from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
 
-from ..._font import Font
 from ..._utils import logger_warning
+from ...generic._font import Font
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
 from ._text_state_manager import TextStateManager
 from ._text_state_params import TextStateParams
@@ -167,8 +167,16 @@ def recurse_to_target_op(
                     # multiply by bool (_idx != bt_idx) to ensure spaces aren't double
                     # applied to the first tj of a BTGroup in fixed_width_page().
                     excess_tx = round(_tj.tx - last_displaced_tx, 3) * (_idx != bt_idx)
-                    # space_tx could be 0 if either Tz or font_size was 0 for this _tj.
-                    spaces = round(excess_tx / _tj.space_tx) if excess_tx > 0 else 0
+                    # space_tx is measured in text space, while excess_tx is measured
+                    # in page-space x coordinates. Convert the space width using the
+                    # effective horizontal transform. This matters for PDFs that use
+                    # Tf 1 and put the font size in Tm (e.g. Illustrator/InDesign/Figma).
+                    # The backward-jump test above stays on text-space space_tx:
+                    # scaling it splits same-line runs when a CTM scale < 1 makes
+                    # 5 page-space widths tiny (resources/toy.pdf).
+                    page_space_tx = _tj.space_tx * abs(_tj.transform[0])
+                    # page_space_tx is 0 when Tz, font_size, or the horizontal scale is 0.
+                    spaces = round(excess_tx / page_space_tx) if excess_tx > 0 and page_space_tx else 0
                     if spaces > WHITESPACE_LIMIT:
                         logger_warning(
                             "Limiting excessive whitespace from %(actual)d to %(limit)d characters.",

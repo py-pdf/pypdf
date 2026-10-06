@@ -3,10 +3,12 @@
 import codecs
 import gc
 import re
+import sys
 import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
+from typing import Union
 
 import pytest
 
@@ -48,7 +50,7 @@ from pypdf.generic._image_inline import (
 )
 
 from . import RESOURCE_ROOT, get_data_from_url
-from .utils import ReaderDummy, count_function_calls
+from .utils import ReaderDummy
 
 
 class ChildDummy(DictionaryObject):
@@ -1058,24 +1060,74 @@ def test_cloning_null_obj_keeps_hard_reference():
     assert obj_weakref() is not None
 
 
-def test_cloning_array_of_direct_objects__function_calls():
+def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayObject, DictionaryObject]:
+    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
+    elements = elements * (size // len(elements))
+    if as_array:
+        return ArrayObject(elements)
+    return DictionaryObject({NameObject(f"/K{i}"): element for i, element in enumerate(elements)})
+
+
+def _clone_and_count(container: Union[ArrayObject, DictionaryObject], writer: PdfWriter) -> tuple[int, int]:
+    """Clone the container and return the number of Python function calls and raised exceptions."""
+    calls = 0
+    exceptions = 0
+
+    def trace(frame, event, arg):  # noqa: ANN202
+        nonlocal calls, exceptions
+        if event == "call":
+            calls += 1
+        elif event == "exception":
+            exceptions += 1
+        return trace
+
+    # Otherwise, finalizers and weakref callbacks of unrelated objects might be counted.
+    gc.collect()
+    gc_was_enabled = gc.isenabled()
+    gc.disable()
+    previous_trace = sys.gettrace()
+    sys.settrace(trace)
+    try:
+        clone = container.clone(writer)
+    finally:
+        sys.settrace(previous_trace)
+        if gc_was_enabled:
+            gc.enable()
+
+    assert clone == container
+    return calls, exceptions
+
+
+@pytest.mark.parametrize(
+    ("as_array", "calls_per_1000_elements"),
+    [
+        # 7,600 to 9,600 before the fix, depending on the Python version.
+        pytest.param(True, 3600, id="array"),
+        # 10,600 to 11,600 before the fix, depending on the Python version.
+        pytest.param(False, 8600, id="dictionary"),
+    ],
+)
+def test_cloning_direct_objects__function_calls_and_exceptions(as_array, calls_per_1000_elements):
     """
     Cloning direct objects must stay cheap, see #2136.
 
     Documents can contain arrays with thousands of direct objects, for example
     in the /ParentTree of the structure tree. Counting the Python function calls
-    measures the work per element independently of the machine speed.
+    and the raised exceptions measures the work per element independently of the
+    machine speed. Comparing 1,000 with 2,000 elements leaves out the work for
+    the container itself.
     """
-    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
-    array = ArrayObject(elements * 200)
     writer = PdfWriter()
+    # The first clone fills caches, for example of isinstance(), which takes additional calls.
+    _create_direct_objects_container(as_array, size=5).clone(writer)
 
-    clone, calls = count_function_calls(lambda: array.clone(writer))
+    calls_1000, exceptions_1000 = _clone_and_count(_create_direct_objects_container(as_array, size=1000), writer)
+    calls_2000, exceptions_2000 = _clone_and_count(_create_direct_objects_container(as_array, size=2000), writer)
 
-    assert clone == array
-    # About 3.7 calls per element; it was more than 7 while PdfObject inherited
-    # from a Protocol, as every isinstance() check ran Python code
-    assert calls < 5 * len(array)
+    assert calls_2000 - calls_1000 == calls_per_1000_elements
+    # Direct objects have no indirect reference, which must not be handled by
+    # catching an AttributeError per element.
+    assert exceptions_2000 == exceptions_1000
 
 
 @pytest.mark.enable_socket
@@ -1346,6 +1398,30 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
     ec.set_data(b)
     co = ContentStream(ec, None)
     assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
+
+
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+@pytest.mark.parametrize(
+    ("filter_name", "image_data"),
+    [
+        (b"AHx", b"41>"),
+        (b"A85", a85encode(b"A") + b"~>"),
+        (b"RL", b"\x00A\x80"),
+        (b"DCT", b"\xff\xd8\xff\xd9"),
+    ],
+    ids=["ASCIIHex", "ASCII85", "RunLength", "DCT"],
+)
+def test_content_stream_filtered_inline_image_at_end_of_stream(filter_name, image_data, tail):
+    """The separator before `EI` is excluded from filtered inline image data."""
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(
+        b"BI /W 1 /H 1 /BPC 8 /CS /G /F /" + filter_name + b" ID\n" + image_data + b"\nEI" + tail
+    )
+    operations = ContentStream(stream_object, None).operations
+
+    assert operations[0][1] == b"INLINE IMAGE"
+    assert operations[0][0]["data"] == image_data
+    assert operations[1:] == ([([], b"Q")] if tail == b"\nQ\n" else [])
 
 
 @pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])

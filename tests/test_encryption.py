@@ -666,3 +666,38 @@ def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
     assert second.decrypt(ciphertext) == plaintext  # already latched: no second warning
     assert CryptRC4._is_rc4_supported is False
     assert sum("RC4 is not supported" in message for message in caplog.messages) == 1
+
+
+@pytest.mark.parametrize(
+    ("algorithm", "requires_aes"),
+    [
+        ("RC4-128", False),
+        ("AES-128", True),
+        ("AES-256", True),
+    ],
+)
+def test_xmp_metadata_of_encrypted_document(algorithm, requires_aes):
+    """The document metadata stream is decrypted when /EncryptMetadata is true."""
+    if requires_aes and not HAS_AES:
+        pytest.skip("No AES implementation")
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    writer.encrypt(user_password="user", owner_password="owner", algorithm=algorithm)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, password="user")
+    assert reader.xmp_metadata.stream.get_data().startswith(b"<?xpacket")
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_xmp_metadata_with_cleartext_metadata():
+    """The document metadata stream is read as-is when /EncryptMetadata is false."""
+    # created by:
+    # qpdf --encrypt "foo" "bar" 256 --cleartext-metadata -- commented-xmp.pdf r6-cleartext-metadata.pdf
+    path = RESOURCE_ROOT / "encryption" / "r6-cleartext-metadata.pdf"
+    reader = PdfReader(path, password="foo")
+    assert reader.xmp_metadata.stream.get_data().startswith(b"<?xpacket")
+
+    # Cleartext metadata is readable without knowing the password.
+    reader = PdfReader(path)
+    assert reader.xmp_metadata.stream.get_data().startswith(b"<?xpacket")
