@@ -1,4 +1,3 @@
-import struct
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from functools import partial
@@ -97,8 +96,15 @@ def _parse_encoding(
             else:
                 raise Exception("not found")
         except Exception:
-            logger_error("Advanced encoding %(encoding)s not implemented yet", source=__name__, encoding=enc)
-            encoding = enc
+            encoding = (
+                "utf-16-be" if ft.get("/Subtype", "") == "/Type0" else charset_encoding["/StandardEncoding"].copy()
+            )
+            logger_error(
+                "Advanced encoding %(encoding)s not implemented yet, using %(new_encoding)s instead.",
+                source=__name__,
+                encoding=enc,
+                new_encoding=encoding
+            )
     elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
         try:
             encoding = charset_encoding[cast(str, enc["/BaseEncoding"])].copy()
@@ -139,7 +145,7 @@ def _parse_encoding(
 def _parse_to_unicode(
     ft: DictionaryObject
 ) -> tuple[dict[Any, Any], list[int]]:
-    from ._font import HAS_FONTTOOLS  # noqa: PLC0415
+    from .generic._font import HAS_FONTTOOLS  # noqa: PLC0415
 
     # We store all character mappings in map_dict. In map_dict[-1] we store the byte length
     # of the character codes (or CIDs) encoded inside the ToUnicode stream.
@@ -461,9 +467,9 @@ def _character_map_from_cff_type1_font_file(
     try:
         from fontTools.cffLib import CFFFontSet  # noqa: PLC0415
         cff_set = CFFFontSet()
-        cff_set.decompile(BytesIO(font_data), None)  # This can raise ValueError, AssertionError, struct.error.
-        cff_font = cff_set.topDictIndex[0]           # First font in CFF set; Can raise AttributeError or IndexError.
-        cff_encoding = cff_font.Encoding             # Can raise AttributeError.
+        cff_set.decompile(BytesIO(font_data), None)
+        cff_font = cff_set.topDictIndex[0]
+        cff_encoding = cff_font.Encoding
         # Encoding can fall back to literal strings "StandardEncoding" or "ExpertEncoding", which we do not parse.
         if isinstance(cff_encoding, str):
             return map_dict, int_entry
@@ -476,7 +482,7 @@ def _character_map_from_cff_type1_font_file(
                 int_entry.append(i)
         return map_dict, int_entry
 
-    except (struct.error, AssertionError, AttributeError, IndexError, NotImplementedError, ValueError):
+    except Exception:
         return map_dict, int_entry
 
 

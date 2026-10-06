@@ -320,6 +320,42 @@ def test_compress_content_streams(pdf_path, password):
         reader.pages[0].compress_content_streams()
 
 
+def test_page_number_of_identical_pages():
+    """
+    Pages which only differ in their object number must still report their
+    own position in the document.
+
+    `PageObject.page_number` used to look the page up with `list.index`, which
+    compares with `==`. Two pages with identical content therefore compared
+    equal, the first match won, and every page but the first reported 0.
+    """
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(width=200, height=200)
+
+    for number, page in enumerate(writer.pages):
+        assert number == page.page_number
+        assert number == writer.get_page_number(page)
+
+    # The same for a reader, where the pages are read back from the file.
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+    for number, page in enumerate(PdfReader(output).pages):
+        assert number == page.page_number
+
+
+def test_page_number_of_named_destination():
+    """A named destination has to resolve to the page it points at."""
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(width=200, height=200)
+    writer.add_named_destination("chapter2", 2)
+
+    destination = writer.named_destinations["chapter2"]
+    assert writer.get_destination_page_number(destination) == 2
+
+
 def test_compress_content_streams_releases_replaced_streams():
     """The streams being replaced must not be kept in the output. See #4085."""
     def create_stamped_writer() -> PdfWriter:
@@ -1765,6 +1801,44 @@ def test_extract_text__resources_is_null(caplog):
     stream.seek(0)
 
     assert PdfReader(stream).pages[0].extract_text() == ""
+    assert caplog.text == ""
+
+
+@pytest.mark.parametrize("extraction_mode", ["plain", "layout"])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Font resources are not a dictionary: 1", id="number"),
+        pytest.param(TextStringObject("x"), "Font resources are not a dictionary: x", id="string"),
+        pytest.param(ArrayObject(), "Font resources are not a dictionary: []", id="array"),
+    ],
+)
+def test_extract_text__font_resources_not_a_dictionary(caplog, value, expected, extraction_mode):
+    """A /Font entry that is not a dictionary is malformed: no text, and a warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0].replace_contents(ContentStream(None, writer))
+    writer.pages[0][NameObject("/Resources")] = DictionaryObject({NameObject("/Font"): value})
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text(extraction_mode=extraction_mode) == ""
+    assert expected in caplog.text
+
+
+@pytest.mark.parametrize("extraction_mode", ["plain", "layout"])
+def test_extract_text__font_resources_is_null(caplog, extraction_mode):
+    """A null /Font is missing rather than malformed: no text, no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0].replace_contents(ContentStream(None, writer))
+    writer.pages[0][NameObject("/Resources")] = DictionaryObject({NameObject("/Font"): NullObject()})
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].extract_text(extraction_mode=extraction_mode) == ""
     assert caplog.text == ""
 
 

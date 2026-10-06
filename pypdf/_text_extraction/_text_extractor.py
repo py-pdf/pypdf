@@ -30,8 +30,8 @@
 from typing import Any, Callable, Optional, Union
 
 from .._codecs import encoding_dict_from_named_encoding
-from .._font import Font, FontDescriptor
 from ..generic import DictionaryObject, TextStringObject
+from ..generic._font import Font, FontDescriptor
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
 
@@ -182,16 +182,13 @@ class TextExtraction:
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
-        text_operands, is_str_operands = get_text_operands(
+        text_operands, is_str_operands, font_widths = get_text_operands(
             operands, cm_matrix, tm_matrix, font, orientations
         )
         if is_str_operands:
             text += text_operands
-            font_widths = sum(
-                [font.space_width if x == font.space_char else font.get_text_width(x) for x in text_operands]
-            )
         else:
-            text, rtl_dir, font_widths = get_display_str(
+            text, rtl_dir = get_display_str(
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix

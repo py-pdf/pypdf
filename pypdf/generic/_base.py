@@ -153,6 +153,10 @@ class PdfObject(PdfObjectProtocol):
           The clone
 
         """
+        if not hasattr(self, "indirect_reference"):
+            # Direct object: nothing to reference.
+            # Returning early is much faster than handling the exceptions below.
+            return clone
         try:
             if (
                 not force_duplicate
@@ -162,11 +166,7 @@ class PdfObject(PdfObjectProtocol):
                 return clone
         except Exception:
             pass
-        # if hasattr(clone, "indirect_reference"):
-        try:
-            ind = self.indirect_reference
-        except AttributeError:
-            return clone
+        ind = self.indirect_reference
         if (
             pdf_dest.incremental
             and ind is not None
@@ -532,7 +532,7 @@ class FloatObject(float, PdfObject):
             Hash considering type and value.
 
         """
-        return hash((self.__class__, self.as_numeric))
+        return hash((self.__class__, self.as_numeric()))
 
     def myrepr(self) -> str:
         if self == 0:  # type: ignore[comparison-overlap]
