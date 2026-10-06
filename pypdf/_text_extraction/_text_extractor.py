@@ -77,6 +77,8 @@ class TextExtraction:
         }  # will be set to string length calculation result
         self.TL = 0.0
         self.font_size = 12.0  # init just in case of
+        # (axis index, min, max) of baselines kept on the current extracted line.
+        self._line_span: Optional[tuple[int, float, float]] = None
 
         # Text extraction variables
         self.text: str = ""
@@ -127,6 +129,7 @@ class TextExtraction:
         self.text = ""
         self.output = ""
         self.rtl_dir = False
+        self._line_span = None
 
     def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
@@ -144,7 +147,7 @@ class TextExtraction:
         """Handle common post-processing for text positioning operations."""
         text_was_empty = self.text == ""
         try:
-            self.text, self.output, self.cm_prev, self.tm_prev = crlf_space_check(
+            self.text, self.output, self.cm_prev, self.tm_prev, self._line_span = crlf_space_check(
                 self.text,
                 (self.cm_prev, self.tm_prev),
                 (self.cm_matrix, self.tm_matrix),
@@ -157,6 +160,7 @@ class TextExtraction:
                 str_widths,
                 self.compute_str_widths(self.font_size * self._space_width),
                 self._actual_str_size["str_height"],
+                self._line_span,
             )
             if text_was_empty or self.text == "":
                 self.memo_cm = self.cm_matrix.copy()

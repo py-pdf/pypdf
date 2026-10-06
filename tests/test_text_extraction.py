@@ -1150,6 +1150,21 @@ def test_line_breaks_with_scaled_current_matrix() -> None:
     assert PdfReader(buffer).pages[0].extract_text() == "Line one\nLine two"
 
 
+def test_wrapped_table_cell_line_is_not_split():
+    """The second wrapped line of a cell stays with the row label. Regression #4130."""
+    # Label baseline sits between the two wrapped cell baselines. Comparing only
+    # to the previous fragment used to insert a break before BBB (#4130).
+    text = PdfReader(
+        _page_with_helvetica(
+            b"BT /F1 12 Tf "
+            b"1 0 0 1 40 700 Tm (LBL) Tj "
+            b"1 0 0 1 100 694 Tm (AAA) Tj "
+            b"1 0 0 1 100 706 Tm (BBB) Tj ET"
+        )
+    ).pages[0].extract_text()
+    assert [line for line in text.splitlines() if "LBL" in line] == ["LBL AAABBB"]
+
+
 def test_visitor_text_uses_current_text_matrix():
     reader = PdfReader(RESOURCE_ROOT / "visitor_text_position.pdf")
     page = reader.pages[0]
