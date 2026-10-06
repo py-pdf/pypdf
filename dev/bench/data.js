@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791281663439,
+  "lastUpdate": 1791281682840,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -143491,6 +143491,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02463506663792819",
             "extra": "mean: 819.3809116000011 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "164994318+Dmao233@users.noreply.github.com",
+            "name": "CenFangyu",
+            "username": "Dmao233"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "175f6c0391aa508f2e0c2ae64cf06bfdf13aa8ce",
+          "message": "BUG: Scale layout-mode space_tx into page space (#4128)\n\nLayout mode divided page-space excess_tx by text-space space_tx. With Tf 1\nand the font size in Tm, a small TJ kern such as [(C) -30.5 (EO)] rounded\nto a full space.\n\nScale that divisor by abs(transform[0]), the horizontal Tm x CTM factor,\nincluding a y-flipped or x-flipped CTM. Leave the backward-jump group test\non text-space space_tx: scaling it splits same-line runs when the CTM scale\nis below 1, which resources/toy.pdf covers.\n\nVerified: python3 -m pytest tests/test_text_extraction.py -m \"not enable_socket and not samples\"\n(35 passed). ruff check is clean on the two edited files.\n\nCloses #4110.\n\n---------\n\nCo-authored-by: CenFangyu <Dmao233@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-06T12:11:43+02:00",
+          "tree_id": "ec1ed578d49271ff1155a3dd021ea45fd26b430d",
+          "url": "https://github.com/py-pdf/pypdf/commit/175f6c0391aa508f2e0c2ae64cf06bfdf13aa8ce"
+        },
+        "date": 1791281673568,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.679767254968304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019605107709094127",
+            "extra": "mean: 78.86580091666673 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.142178670880888,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013537451456788002",
+            "extra": "mean: 47.29881511110771 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9925339157225894,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03154689035917804",
+            "extra": "mean: 1.007522246000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5419099530260767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02156348452975531",
+            "extra": "mean: 1.8453250294000043 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3612881973259013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014222510885775018",
+            "extra": "mean: 2.767873424599992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1686878869676933,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021239030825335025",
+            "extra": "mean: 855.6604472000004 msec\nrounds: 5"
           }
         ]
       }
