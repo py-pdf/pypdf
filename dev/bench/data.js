@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791277151727,
+  "lastUpdate": 1791277176411,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -143227,6 +143227,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028894075315793712",
             "extra": "mean: 861.5735616000052 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1fdc10f2ce45469400c2af045f4c2e6e552c17b7",
+          "message": "PI: Speed up cloning direct objects (#4152)\n\n* PI: Speed up cloning direct objects\n\nPdfWriter(clone_from=...) was about 7x slower than append() for the PDF in\nthe issue. Most of the difference is by design: cloning copies all 5851\nobjects including the /StructTreeRoot, while append() copies 1385. But the\nclone itself was also disproportionately slow. The /ParentTree of that\ndocument contains 145 arrays with more than 1,000 entries each, about 506k\ndirect null objects in total, and each array element cost about 5 µs:\n\n* ArrayObject.clone ran isinstance(data, StreamObject) and\n  isinstance(data, IndirectObject) for every element. PdfObject inherits\n  from a Protocol, so these checks go through typing._ProtocolMeta and\n  take 0.6 to 1.3 µs each instead of about 0.1 µs.\n* PdfObject._reference_clone raised and caught two AttributeErrors for\n  every object without an indirect_reference attribute, i.e. for every\n  direct object.\n\nThe clone loops of ArrayObject and DictionaryObject now check the exact\ntype against booleans, numbers, strings, names and null first, and\n_reference_clone returns early for direct objects. The cloned objects are\nthe same as before.\n\nTimings on CPython 3.10.2 for the PDF from the issue:\n\n    Operation                                      before    after\n    PdfWriter(clone_from=path)                     4.73 s    3.18 s\n    PdfWriter(clone_from=reader), reader parsed    3.62 s    1.08 s\n    Cloning one direct array element               4.9 µs    1.1 µs\n\nWhen the reader still has to parse the objects, parsing now dominates.\nappend_pages_from_reader() and append() are unchanged at 0.6 s and 0.5 s.\n\ntest_cloning_array_of_direct_objects__function_calls clones an array of\n1,000 direct objects and counts the Python function calls, which keeps the\ntest independent of the machine speed. It fails without the fix:\n\n    Python    calls per element before    after\n    3.10.2                         9.7      3.6\n    3.12.8                         7.7      3.6\n    3.13.3                         7.7      3.6\n\nTest results:\n\n* pytest -m \"not enable_socket\": 1420 passed, 4 skipped, 1 xfailed.\n  test_font_old_fonttools_substitution was deselected; it fails with the\n  locally installed fontTools with and without this change.\n* pytest tests/test_writer.py tests/test_merger.py tests/test_generic.py\n  tests/test_page.py, including the tests which download files:\n  530 passed, 1 xfailed.\n* ruff check passes; mypy reports the same errors as before.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nCloses #2136\n\n* TST: Cover dictionary cloning and exception path for direct objects\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\n\n* TST: Assert exact call counts for cloning direct objects\n\nThe test now compares the clones of 1,000 and 2,000 direct objects, so the\nwork for the container itself drops out, and asserts the exact number of\nPython function calls and raised exceptions per element. A warm-up clone\nfills the isinstance() caches first, and the garbage collector is disabled\nwhile counting, as finalizers and weakref callbacks of unrelated objects\nwould be counted otherwise. The counts are the same on CPython 3.9 to 3.15\nand PyPy 3.11.\n\nThe comments on the scalar shortcuts in the clone loops no longer refer to\nthe Protocol base of PdfObject, and explain that they do not change the\nresult.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-06T10:56:25+02:00",
+          "tree_id": "d9e07b4151bd418a0501f8061ed5037c84ead2a5",
+          "url": "https://github.com/py-pdf/pypdf/commit/1fdc10f2ce45469400c2af045f4c2e6e552c17b7"
+        },
+        "date": 1791277163843,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 9.57825117844338,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0197449847753484",
+            "extra": "mean: 104.40319233333322 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 24.350541960542408,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0057461335848242034",
+            "extra": "mean: 41.06684777777837 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.8660199742529167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016965512717965616",
+            "extra": "mean: 1.1547077778000017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3832907629326601,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02574258352372584",
+            "extra": "mean: 2.6089853884000034 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.39178737348136994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01798233443833322",
+            "extra": "mean: 2.5524048698 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.251917826689812,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006837998187815618",
+            "extra": "mean: 798.7744711999937 msec\nrounds: 5"
           }
         ]
       }
