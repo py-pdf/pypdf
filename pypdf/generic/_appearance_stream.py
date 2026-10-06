@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
 from .._codecs import encoding_dict_from_named_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
-from .._font import Font
 from .._page import Transformation
 from .._utils import is_char_rtl, logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes, PageAttributes
@@ -28,6 +27,7 @@ from ..generic import (
 )
 from ..generic._base import ByteStringObject, TextStringObject
 from ._color import Color, DeviceGray
+from ._font import Font
 
 if TYPE_CHECKING:
     from pypdf._writer import PdfWriter

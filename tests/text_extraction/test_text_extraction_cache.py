@@ -1,7 +1,7 @@
 """Tests for text-extraction character lookup caching."""
 
 import pypdf._text_extraction as text_extraction
-from pypdf._font import Font
+from pypdf.generic._font import Font
 
 
 def _create_test_font() -> Font:

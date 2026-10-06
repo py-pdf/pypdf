@@ -11,7 +11,6 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfWriter, Transformation
-from pypdf._font import HAS_FONTTOOLS, Font
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
@@ -31,6 +30,7 @@ from pypdf.generic._appearance_stream import (
     _parse_default_appearance,
 )
 from pypdf.generic._color import Color, DeviceCMYK, DeviceGray, DeviceRGB
+from pypdf.generic._font import HAS_FONTTOOLS, Font
 
 from .. import RESOURCE_ROOT
 
@@ -188,7 +188,7 @@ def test_appearance_stream_rtl() -> None:
     assert hex_glyphs_rtl_enabled != hex_glyphs_rtl_disabled
 
     # fontTools support disabled
-    with mock.patch("pypdf._font.HAS_FONTTOOLS", False):
+    with mock.patch("pypdf.generic._font.HAS_FONTTOOLS", False):
         appearance = TextStreamAppearance(
             layout=layout,
             text=test_string,

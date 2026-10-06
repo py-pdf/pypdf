@@ -45,7 +45,6 @@ from typing import (
 )
 
 from ._configuration import get_configuration
-from ._font import Font
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     _layout_mode,
@@ -87,6 +86,7 @@ from .generic import (
     StreamObject,
     is_null_or_none,
 )
+from .generic._font import Font
 
 try:
     from PIL.Image import Image
@@ -1817,11 +1817,13 @@ class PageObject(DictionaryObject):
         """
         if self.indirect_reference is None:
             return None
-        try:
-            lst = self.indirect_reference.pdf.pages
-            return int(lst.index(self))
-        except ValueError:
-            return None
+        # Compare the indirect references, not the pages themselves: two pages
+        # with identical contents compare equal, so `list.index` would return
+        # the position of the first match for all of them.
+        for number, page in enumerate(self.indirect_reference.pdf.pages):
+            if page.indirect_reference == self.indirect_reference:
+                return number
+        return None
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""

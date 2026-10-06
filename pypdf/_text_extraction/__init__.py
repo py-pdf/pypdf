@@ -8,9 +8,9 @@ import math
 from collections.abc import Mapping
 from typing import Any, Callable, Literal, Optional, Union
 
-from .._font import Font
 from .._utils import is_char_neutral, is_char_rtl
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
+from ..generic._font import Font
 
 CUSTOM_RTL_MIN: str = ""
 CUSTOM_RTL_MAX: str = ""

@@ -15,7 +15,6 @@ from pypdf._cmap import (
     parse_bfrange,
 )
 from pypdf._codecs import charset_encoding
-from pypdf._font import Font
 from pypdf.errors import LimitReachedError
 from pypdf.generic import (
     ArrayObject,
@@ -30,6 +29,7 @@ from pypdf.generic import (
     StreamObject,
     TextStringObject,
 )
+from pypdf.generic._font import Font
 
 from . import RESOURCE_ROOT, get_data_from_url
 
@@ -767,7 +767,7 @@ def test__character_map_from_cff_type1_font_file_guards(caplog):
     font_descriptor = DictionaryObject({NameObject("/FontFile3"): font_file_stream})
     font_dict[NameObject("/FontDescriptor")] = font_descriptor
     # Ensure a warning is logged when fontTools is missing for CFF Type1 font parsing
-    with mock.patch("pypdf._font.HAS_FONTTOOLS", False):
+    with mock.patch("pypdf.generic._font.HAS_FONTTOOLS", False):
         _parse_to_unicode(font_dict)
     assert (
         "fontTools is required to fully parse the encoding of a CFF Type1 font in font dictionary"
