@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791297386551,
+  "lastUpdate": 1791297460605,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -114977,6 +114977,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004556475111662073",
             "extra": "mean: 363.33799880000015 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "164994318+Dmao233@users.noreply.github.com",
+            "name": "CenFangyu",
+            "username": "Dmao233"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "93d357106d70d00ecb6376bd1d976ea2a1cfdd07",
+          "message": "BUG: Keep wrapped table-cell text on one extracted line (#4132)\n\nThe break check compared only the previous fragment. A row label already\non that line sits between the two wrapped baselines, so the second line\nstays within the line height (#4130).\n\nCloses #4130.\n\nCo-authored-by: CenFangyu <Dmao233@users.noreply.github.com>\n\n* Address review: tighten exceptions, drop fixture PDF\n\nUse (output+text)[-1:], narrow the bare except, reword the line-span\ncomment, and replace resources/issue-4130.pdf with a synthetic page.\n\n* Address review: drop the unreachable try/except in crlf_space_check\n\n---------\n\nCo-authored-by: CenFangyu <Dmao233@users.noreply.github.com>\nCo-authored-by: CenFangyu <cenfangyu@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-06T16:34:25+02:00",
+          "tree_id": "808d2c91f7e4025e77cda4619860823cef0bbe76",
+          "url": "https://github.com/py-pdf/pypdf/commit/93d357106d70d00ecb6376bd1d976ea2a1cfdd07"
+        },
+        "date": 1791297449967,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.601789096231495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02688381955313175",
+            "extra": "mean: 384.35090739999964 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.10635905560856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023906784709333984",
+            "extra": "mean: 52.33859560000553 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22410958021586935,
+            "unit": "iter/sec",
+            "range": "stddev: 0.047312687305037786",
+            "extra": "mean: 4.4621028652 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.179700335518476,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008410716419156778",
+            "extra": "mean: 58.20823299999782 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07327976066392132,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05290223088619167",
+            "extra": "mean: 13.646332779199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4779550902701515,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015647782461793668",
+            "extra": "mean: 676.6105456000105 msec\nrounds: 5"
           }
         ]
       }
