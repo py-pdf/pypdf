@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Union
 
-from ..._font import Font
+from ...generic._font import Font
 from .. import mult, orient
 
 

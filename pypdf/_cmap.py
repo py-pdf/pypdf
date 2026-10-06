@@ -145,7 +145,7 @@ def _parse_encoding(
 def _parse_to_unicode(
     ft: DictionaryObject
 ) -> tuple[dict[Any, Any], list[int]]:
-    from ._font import HAS_FONTTOOLS  # noqa: PLC0415
+    from .generic._font import HAS_FONTTOOLS  # noqa: PLC0415
 
     # We store all character mappings in map_dict. In map_dict[-1] we store the byte length
     # of the character codes (or CIDs) encoded inside the ToUnicode stream.
