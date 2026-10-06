@@ -188,7 +188,7 @@ class TextExtraction:
         if is_str_operands:
             text += text_operands
         else:
-            text, rtl_dir = get_display_str(
+            text, rtl_dir, completed = get_display_str(
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix
@@ -199,6 +199,7 @@ class TextExtraction:
                 rtl_dir,
                 visitor_text,
             )
+            self.output += completed
         actual_str_size["str_widths"] += font_widths * font_size
         actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size

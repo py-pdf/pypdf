@@ -240,8 +240,17 @@ def get_display_str(
     font_size: float,
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
-) -> tuple[str, bool]:
+) -> tuple[str, bool, str]:
+    """
+    Add the characters of ``text_operands`` to ``text`` in display order.
+
+    Returns:
+        A tuple containing the current text run, its direction, and any text runs completed
+        because of a direction change. The completed runs precede the current run in display order.
+
+    """
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
+    completed_text: list[str] = []
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
 
@@ -268,6 +277,7 @@ def get_display_str(
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                             clear_character_caches()
+                        completed_text.append(text)
                         text = ""
                     text = x + text
                 else:
@@ -277,9 +287,10 @@ def get_display_str(
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                             clear_character_caches()
+                        completed_text.append(text)
                         text = ""
                     text = text + x
         else:
             # Treat a sequence of bytes as a neutral character.
             text = x + text if rtl_dir else text + x
-    return text, rtl_dir
+    return text, rtl_dir, "".join(completed_text)
