@@ -77,7 +77,7 @@ def _parse_encoding(
             )
 
         # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
-        # to overwrite this, which we do for Type1 fonts in _character_map_from_(cff_)type1_font_file.
+        # to overwrite this, which we do for Type1 fonts in _derive_character_map_from_(cff_)type1_font_file.
         return dict(
             zip(range(256), charset_encoding["/StandardEncoding"])
         )
@@ -169,13 +169,13 @@ def _parse_to_unicode(
                 (
                     "/FontFile",
                     lambda _: True,
-                    _character_map_from_type1_font_file
+                    _derive_character_map_from_type1_font_file
                 ),
                 # A CFF Type1 font file, as part of a Type1 or MMType1 font dictionary, when subtype is Type1C.
                 (
                     "/FontFile3",
                     lambda stream: stream.get("/Subtype") == "/Type1C",
-                    _character_map_from_cff_type1_font_file,
+                    _derive_character_map_from_cff_type1_font_file,
                 )
             )
             for font_file, condition, font_file_processor in font_file_handlers:
@@ -200,7 +200,7 @@ def _parse_to_unicode(
                     if not font_file_data:
                         return map_dict, int_entry
 
-                    return _character_map_from_font_file(
+                    return _derive_character_map_from_font_file(
                         font_file_dict, font_file_data, font_file_processor, map_dict, int_entry
                     )
 
@@ -463,7 +463,7 @@ def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
             return None
 
 
-def _character_map_from_font_file(
+def _derive_character_map_from_font_file(
     font_file: StreamObject,
     font_data: bytes,
     font_file_processor: Callable[[bytes, dict[Any, Any], list[int]], tuple[dict[Any, Any], list[int]]],
@@ -489,7 +489,7 @@ def _character_map_from_font_file(
     return map_dict, int_entry
 
 
-def _character_map_from_cff_type1_font_file(
+def _derive_character_map_from_cff_type1_font_file(
     font_data: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
@@ -516,7 +516,7 @@ def _character_map_from_cff_type1_font_file(
         return map_dict, int_entry
 
 
-def _character_map_from_type1_font_file(
+def _derive_character_map_from_type1_font_file(
     font_data: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
