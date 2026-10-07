@@ -39,6 +39,7 @@ from math import ceil
 from typing import (
     Any,
     Callable,
+    NamedTuple,
     Optional,
     Union,
     cast,
@@ -978,12 +979,21 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         del child_obj[NameObject("/Prev")]
 
 
+class _FontFileCharacterMap(NamedTuple):
+    """The character map pypdf._cmap derived from an embedded font program. See #4156."""
+
+    digest: bytes
+    """SHA-256 digest of the decoded font data the map was derived from."""
+    map_dict: dict[Any, Any]
+    int_entry: list[int]
+
+
 class StreamObject(DictionaryObject):
-    _font_file_character_map: Optional[tuple[bytes, dict[Any, Any], list[int]]] = None
+    _font_file_character_map: Optional[_FontFileCharacterMap] = None
     """
-    The character map pypdf._cmap derived from this stream as an embedded font program, with a digest of the
-    decoded data it was derived from. Parsing a CFF font program with fontTools is expensive, and the same
-    program is reached from every font resource and page referencing it. See #4156.
+    The character map pypdf._cmap derived from this stream as an embedded font program. Parsing a CFF font
+    program with fontTools is expensive, and the same program is reached from every font resource and page
+    referencing it. See #4156.
     """
 
     def __init__(self) -> None:

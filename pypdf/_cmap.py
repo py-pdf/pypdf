@@ -16,6 +16,7 @@ from .generic import (
     NullObject,
     StreamObject,
 )
+from .generic._data_structures import _FontFileCharacterMap
 
 _predefined_cmap: dict[str, str] = {
     "/Identity-H": "utf-16-be",
@@ -480,12 +481,12 @@ def _derive_character_map_from_font_file(
     """
     digest = sha256(font_data).digest()
     cached = font_file._font_file_character_map
-    if cached is None or cached[0] != digest:
+    if cached is None or cached.digest != digest:
         cached_map_dict, cached_int_entry = font_file_processor(font_data, {}, [])
-        cached = (digest, cached_map_dict, cached_int_entry)
+        cached = _FontFileCharacterMap(digest, cached_map_dict, cached_int_entry)
         font_file._font_file_character_map = cached
-    map_dict.update(cached[1])
-    int_entry.extend(cached[2])
+    map_dict.update(cached.map_dict)
+    int_entry.extend(cached.int_entry)
     return map_dict, int_entry
 
 
