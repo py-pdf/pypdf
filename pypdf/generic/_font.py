@@ -164,6 +164,12 @@ class Font:
             len(widths_array), MAX_SIMPLE_FONT_CHARACTER_CODE + 1
         )
         first_char = pdf_font_dict.get("/FirstChar", 0)
+        if not isinstance(first_char, (int, float)):
+            logger_warning(
+                "Ignoring invalid /FirstChar %(code)s.", source=__name__, code=first_char
+            )
+            return
+        first_char = int(first_char)
         if first_char < 0:
             logger_warning(
                 "Ignoring invalid /FirstChar %(code)d < 0.", source=__name__, code=first_char
