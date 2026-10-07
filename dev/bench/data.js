@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791370472917,
+  "lastUpdate": 1791372119473,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -115241,6 +115241,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030398064265177646",
             "extra": "mean: 652.2616931999892 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1c0560e03c029985c3cecd68b1c8c965aee17559",
+          "message": "PI: Do not inherit PdfObject from a Protocol (#4149)\n\n* PI: Do not inherit PdfObject from a Protocol\n\nPdfObject inherited from PdfObjectProtocol. This made typing._ProtocolMeta\nthe metaclass of every PDF object class, so every isinstance() check against\none of them, for example isinstance(obj, StreamObject), ran through the\nPython implementation of _ProtocolMeta.__instancecheck__. pypdf does such\nchecks all over the place, for example for every element when cloning an\narray.\n\nPdfObject still satisfies PdfObjectProtocol structurally; mypy reports the\nsame errors for pypdf/ as on main. isinstance(obj, PdfObjectProtocol) raised\na TypeError already, as the protocol is not runtime_checkable, so no code\ncould rely on the inheritance.\n\nXmpInformation inherited from XmpInformationProtocol and PdfObject, in this\norder. Without the protocol as a base of PdfObject, the stubs of\nPdfObjectProtocol would come before the methods of PdfObject in the MRO, and\nXmpInformation.get_object() would return None. The bases are swapped.\n\nisinstance(NullObject(), StreamObject), best of five runs:\n\n    Python     main       this change\n    3.10.2     1.22 µs    0.15 µs\n    3.12.8     0.58 µs    0.10 µs\n    3.13.3     0.45 µs    0.09 µs\n\nBenchmark for the PDF from #2136\n(https://chezsoi.org/lucas/2020-LaCaravelle_LaMortPrendDesVacances.pdf,\n148 pages), best of two rounds of five runs each, alternately on main and\nwith this change, measured with the script below:\n\n                                    CPython 3.10.2         CPython 3.12.8\n    Operation                       main    this change    main    this change\n    PdfWriter(clone_from=path)      4.98 s  3.47 s  -30%   4.12 s  3.38 s  -18%\n    clone_from=reader, parsed       3.20 s  1.81 s  -43%   2.61 s  1.83 s  -30%\n    append_pages_from_reader()      0.49 s  0.39 s  -20%   0.42 s  0.36 s  -14%\n    append()                        0.50 s  0.42 s  -16%   0.47 s  0.38 s  -19%\n    extract_text() of all pages     6.08 s  5.86 s   -4%   5.87 s  5.09 s  -13%\n\n```python\n\"\"\"Best-of-5 timings for the PDF from issue #2136.\"\"\"\nimport sys\nimport time\nfrom pathlib import Path\n\nfrom pypdf import PdfReader, PdfWriter\n\nPDF = Path(\"2020-LaCaravelle_LaMortPrendDesVacances.pdf\")\n\ndef best(func, setup=lambda: None, rounds=5):\n    timings = []\n    for _ in range(rounds):\n        arg = setup()\n        start = time.perf_counter()\n        func(arg)\n        timings.append(time.perf_counter() - start)\n    return min(timings)\n\ndef parsed_reader():\n    reader = PdfReader(PDF)\n    PdfWriter(clone_from=reader)  # resolves every object once\n    return reader\n\ndef extract_text(_):\n    for page in PdfReader(PDF).pages:\n        page.extract_text()\n\ncases = [\n    (\"PdfWriter(clone_from=path)\", lambda _: PdfWriter(clone_from=PDF), lambda: None),\n    (\"clone_from=reader, parsed\", lambda r: PdfWriter(clone_from=r), parsed_reader),\n    (\"append_pages_from_reader()\",\n     lambda _: PdfWriter().append_pages_from_reader(PdfReader(PDF)), lambda: None),\n    (\"append()\", lambda _: PdfWriter().append(PdfReader(PDF)), lambda: None),\n    (\"extract_text() of all pages\", extract_text, lambda: None),\n]\nprint(f\"Python {sys.version.split()[0]}\")\nfor label, func, setup in cases:\n    print(f\"{label:<30} {best(func, setup):6.2f} s\")\n```\n\nTest results:\n\n* test_cloning_array_of_direct_objects__function_calls clones an array of\n  1000 direct objects and counts the Python function calls with the new\n  helper count_function_calls() in tests/utils.py, which is independent of\n  the machine speed. The limit is 5000 calls. On main it fails with 9805\n  calls on CPython 3.10.2, 7837 on 3.12.8 and 7840 on 3.13.3; with this\n  change it takes 3703, 3683 and 3686 calls.\n* test_pdf_object_is_not_a_protocol fails on main.\n* test_xmp_information__pdf_object_methods passes on main and with this\n  change. It fails if XmpInformation keeps the old order of its bases:\n  get_object() returns None.\n* pytest -m \"not enable_socket\" on CPython 3.10.2: 1422 passed, 4 skipped,\n  1 xfailed. test_font_old_fonttools_substitution was deselected; it fails\n  with the locally installed fontTools on main as well.\n* pytest -m enable_socket on CPython 3.10.2: 399 passed, 3 skipped,\n  1 xfailed, 1 xpassed. test_issue_2336 passes unexpectedly on main as\n  well.\n* pytest -m \"not enable_socket\" on CPython 3.12.8: 1419 passed, 6 skipped,\n  1 xfailed, 1 failed. test_rename_kwargs__stacklevel imports pypdf in a\n  subprocess, which fails on main as well, as pypdf is not installed for\n  this interpreter locally.\n* ruff check passes for the changed files; mypy reports the same errors for\n  pypdf/ as on main.\n\nSee #2136.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Check that PdfObject satisfies PdfObjectProtocol\n\ntest_pdf_object_is_not_a_protocol claimed that PdfObject satisfies\nPdfObjectProtocol, but only checked that it does not inherit from it. The test\nmoves to tests/generic/test_base.py, which mypy checks, and assigns a PdfObject\nto a variable annotated as PdfObjectProtocol, so mypy verifies the claim. The\nassertion on the MRO is dropped, as inheriting from a Protocol would also make\ntyping._ProtocolMeta the metaclass, which the test still checks.\n\nWithout the Protocol as a base of PdfObject, cloning 1,000 more direct objects\nin a dictionary takes 4,600 instead of 8,600 Python function calls, as the two\nisinstance() checks in DictionaryObject.__setitem__() no longer run Python code.\nThe count for arrays stays at 3,600, as the clone loop skips the isinstance()\nchecks for scalars since #4152.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* PI: Do not inherit XmpInformation from a Protocol\n\nXmpInformationProtocol lacked Protocol in its bases. A class which\ninherits from a protocol without listing Protocol is a regular class\n(PEP 544), so XmpInformation had to inherit from it and kept\ntyping._ProtocolMeta as its metaclass.\n\nXmpInformationProtocol now lists Protocol, and XmpInformation only\ninherits from PdfObject, so its metaclass is type. mypy checks that\nXmpInformation satisfies the protocol where\nDictionaryObject.xmp_metadata returns it.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-07T13:20:08+02:00",
+          "tree_id": "f6e20ab8a888e9947b98facbc31bf88477b5b71f",
+          "url": "https://github.com/py-pdf/pypdf/commit/1c0560e03c029985c3cecd68b1c8c965aee17559"
+        },
+        "date": 1791372113405,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.160350278549619,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009384544855956863",
+            "extra": "mean: 193.78529479999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 34.66503425210533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005408845264717872",
+            "extra": "mean: 28.847512243241663 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4429981766413916,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038633787394429596",
+            "extra": "mean: 2.257345634199987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 34.61364953963212,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00045755352028245024",
+            "extra": "mean: 28.890337000003846 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14341165689048713,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04191121490806653",
+            "extra": "mean: 6.972933872199985 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.801251771176275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030302569258385016",
+            "extra": "mean: 356.9832637999866 msec\nrounds: 5"
           }
         ]
       }
