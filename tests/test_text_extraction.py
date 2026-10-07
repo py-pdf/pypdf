@@ -620,6 +620,13 @@ def test_do_operator_without_operand_is_skipped() -> None:
     assert page.extract_text() == "HelloWorld"
 
 
+def test_tj_operator_without_an_array_is_skipped() -> None:
+    """A TJ operator whose operand is not an array is skipped and the text around it is kept."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj 5 TJ (World) Tj ET")).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")

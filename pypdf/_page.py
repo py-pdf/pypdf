@@ -1943,7 +1943,7 @@ class PageObject(DictionaryObject):
             elif operator == b"TJ":
                 # The space width may be smaller than the font width, so the width should be 95%.
                 _confirm_space_width = extractor._space_width * 0.95
-                if operands:
+                if operands and isinstance(operands[0], ArrayObject):
                     for op in operands[0]:
                         if isinstance(op, (str, bytes)):
                             extractor.process_operation(b"Tj", [op])
