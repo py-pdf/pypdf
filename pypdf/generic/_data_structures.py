@@ -979,10 +979,12 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 
 
 class StreamObject(DictionaryObject):
-    # The character map pypdf._cmap derived from this stream as an embedded font program, with a digest of the
-    # decoded data it was derived from. Parsing a CFF font program with fontTools is expensive, and the same
-    # program is reached from every font resource and page referencing it. See #4156.
     _font_file_character_map: Optional[tuple[bytes, dict[Any, Any], list[int]]] = None
+    """
+    The character map pypdf._cmap derived from this stream as an embedded font program, with a digest of the
+    decoded data it was derived from. Parsing a CFF font program with fontTools is expensive, and the same
+    program is reached from every font resource and page referencing it. See #4156.
+    """
 
     def __init__(self) -> None:
         self._data: bytes = b""
