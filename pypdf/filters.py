@@ -44,6 +44,8 @@ import subprocess
 import zlib
 from base64 import a85decode
 from dataclasses import dataclass
+from functools import lru_cache
+from importlib.util import find_spec
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, NoReturn, Optional, Union, cast
@@ -73,12 +75,6 @@ from .generic import (
     is_null_or_none,
 )
 
-try:
-    import brotli
-except ImportError:
-    brotli = None
-
-
 MAX_DECLARED_STREAM_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
 MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
 
@@ -90,8 +86,6 @@ ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000  # DEPRECATED: Use pypdf.Configuratio
 FLATE_MAX_COLUMNS = 250_000  # DEPRECATED: Use pypdf.Configuration.
 FLATE_MAX_ROW_LENGTH = 4_000_000  # DEPRECATED: Use pypdf.Configuration.
 FLATE_MAX_BUFFER_SIZE = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
-
-BROTLI_MAX_OUTPUT_LENGTH = 75_000_000  # TODO: Migrate.
 
 # Reuse cached 1-byte values in the fallback loop to avoid per-byte allocations.
 _SINGLE_BYTES = tuple(bytes((i,)) for i in range(256))
@@ -615,6 +609,13 @@ class JPXDecode:
 
 class BrotliDecode:
     @staticmethod
+    @lru_cache(maxsize=1)
+    def _check_brotli_available() -> None:
+        if find_spec("brotli") is not None:
+            return
+        raise DependencyError("brotli is required for BrotliDecode. Install it with: pip install pypdf[brotli]")
+
+    @staticmethod
     def decode(
         data: bytes,
         decode_parms: Optional[DictionaryObject] = None,
@@ -622,13 +623,9 @@ class BrotliDecode:
     ) -> bytes:
         """
         Decompresses data encoded using the Brotli compression method,
-        reproducing the original data; §7.4.11, ISO 32000-2:2020.
+        reproducing the original data.
 
-        Please note that the output length is limited to avoid memory
-        issues. If you need to process larger content streams, consider
-        adapting ``pypdf.filters.BROTLI_MAX_OUTPUT_LENGTH``. In case you
-        are only dealing with trusted inputs and/or want to disable these
-        limits, set the value to ``0``.
+        Announcement: https://pdfa.org/brotli-compression-coming-to-pdf/
 
         Args:
           data: text to decode.
@@ -641,29 +638,35 @@ class BrotliDecode:
           DependencyError: If the ``brotli`` package is not installed.
 
         """
-        if brotli is None:
-            raise DependencyError("brotli is required for BrotliDecode. Install it with: pip install pypdf[brotli]")
-        if not BROTLI_MAX_OUTPUT_LENGTH:
-            return bytes(brotli.decompress(data))
+        BrotliDecode._check_brotli_available()
+        import brotli  # noqa: PLC0415
+
         decompressor = brotli.Decompressor()
-        chunks: list[bytes] = []
-        total_length = 0
-        chunk_size = 65536
-        for i in range(0, len(data), chunk_size):
-            output: bytes = decompressor.process(data[i : i + chunk_size])
-            chunks.append(output)
-            total_length += len(output)
-            if total_length > BROTLI_MAX_OUTPUT_LENGTH:
-                raise LimitReachedError(
-                    f"Limit reached while decompressing. {len(data) - i - chunk_size} bytes remaining."
-                )
-        return b"".join(chunks)
+        configuration = get_configuration()
+
+        # TODO: Simplify once fixed upstream.
+        #       https://github.com/google/brotli/issues/1396
+        #       https://github.com/google/brotli/pull/1525
+        output = bytearray()
+        view = memoryview(data)
+        remaining = configuration.brotli_maximum_output_length
+        chunk_size = 65_535
+        for offset in range(0, len(view), chunk_size):
+            chunk = view[offset:offset + chunk_size]
+            try:
+                part = decompressor.process(chunk, output_buffer_limit=remaining)
+            except brotli.error as exception:  # pragma: no cover
+                raise LimitReachedError("Limit reached while decompressing.") from exception
+            output.extend(part)
+            remaining -= len(part)
+            if remaining < 0:
+                raise LimitReachedError("Limit reached while decompressing.")
+        return bytes(output)
 
     @staticmethod
     def encode(data: bytes, **kwargs: Any) -> bytes:
         """
-        Compresses data using the Brotli compression method;
-        §7.4.11, ISO 32000-2:2020.
+        Compresses data using the Brotli compression method.
 
         Args:
             data: The data to be compressed.
@@ -675,8 +678,9 @@ class BrotliDecode:
             DependencyError: If the ``brotli`` package is not installed.
 
         """
-        if brotli is None:
-            raise DependencyError("brotli is required for BrotliDecode. Install it with: pip install pypdf[brotli]")
+        BrotliDecode._check_brotli_available()
+        import brotli  # noqa: PLC0415
+
         return bytes(brotli.compress(data))
 
 

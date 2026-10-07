@@ -8,7 +8,7 @@ from copy import deepcopy
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
-from typing import cast
+from typing import Callable, cast
 from unittest import mock
 
 import pytest
@@ -30,13 +30,6 @@ from pypdf.filters import (
     decode_stream_data,
     decompress,
 )
-
-try:
-    import brotli
-
-    HAS_BROTLI = True
-except ImportError:
-    HAS_BROTLI = False
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -922,37 +915,54 @@ def test_rle_decode_exception_with_corrupted_stream(caplog):
 
 
 @pytest.mark.parametrize("s", filter_inputs)
-@pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
 def test_brotli_decode_encode(s):
     """BrotliDecode encode() and decode() methods work as expected."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
     s_bytes = s.encode()
     encoded = BrotliDecode.encode(s_bytes)
     assert BrotliDecode.decode(encoded) == s_bytes
 
 
-@mock.patch("pypdf.filters.brotli", None)
-def test_brotli_missing_installation():
+@pytest.mark.parametrize(
+    "function",
+    [
+        pytest.param(BrotliDecode.decode, id="decode"),
+        pytest.param(BrotliDecode.encode, id="encode"),
+    ]
+)
+def test_brotli_missing_installation(function: Callable[[bytes], bytes]) -> None:
     """BrotliDecode raises DependencyError when brotli is not installed."""
-    with pytest.raises(DependencyError):
-        BrotliDecode.decode(b"test data")
-
-    with pytest.raises(DependencyError):
-        BrotliDecode.encode(b"test data")
+    with mock.patch("pypdf.filters.BrotliDecode._check_brotli_available", side_effect=DependencyError("Dummy")), \
+            pytest.raises(DependencyError):
+        function(b"test data")
 
 
-@pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
 def test_brotli_decode_output_limit():
     """BrotliDecode raises LimitReachedError when output exceeds limit."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
     large_data = b"A" * 1000
     compressed = BrotliDecode.encode(large_data)
-    with mock.patch("pypdf.filters.BROTLI_MAX_OUTPUT_LENGTH", 100), \
-            pytest.raises(LimitReachedError):
+    with apply_configuration(brotli_maximum_output_length=100), \
+            pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
         BrotliDecode.decode(compressed)
 
 
-@pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
+@pytest.mark.timeout(10)
+def test_brotli_decode_output_limit__speed():
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    large_data = b"A" * 80_000_000
+    compressed = BrotliDecode.encode(large_data)
+    with pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
+        BrotliDecode.decode(compressed)
+
+
 def test_brotli_decode_stream_data():
     """BrotliDecode works correctly through decode_stream_data."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
     original = b"Hello, Brotli!"
     compressed = BrotliDecode.encode(original)
     stream = DictionaryObject()
@@ -961,19 +971,10 @@ def test_brotli_decode_stream_data():
     assert decode_stream_data(stream) == original
 
 
-@mock.patch("pypdf.filters.brotli", None)
-def test_brotli_decode_stream_data_missing():
-    """decode_stream_data raises DependencyError for BrotliDecode when brotli is missing."""
-    stream = DictionaryObject()
-    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
-    stream._data = b"dummy"  # type: ignore[attr-defined]
-    with pytest.raises(DependencyError):
-        decode_stream_data(stream)
-
-
-@pytest.mark.skipif(not HAS_BROTLI, reason="brotli not installed")
 def test_brotli_pdf_roundtrip():
     """A PDF with BrotliDecode-compressed content stream can be read back."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
     original_text = "Hello, Brotli PDF!"
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=200)
@@ -981,7 +982,7 @@ def test_brotli_pdf_roundtrip():
 
     # Build a minimal content stream with BrotliDecode filter
     content = f"BT /F1 12 Tf 50 150 Td ({original_text}) Tj ET".encode()
-    compressed = brotli.compress(content)
+    compressed = BrotliDecode.encode(content)
 
     stream = StreamObject()
     stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
@@ -1403,7 +1404,7 @@ def test_decompress__fallback__speed() -> None:
             -1,
             r"^Expected valid 32 bit unsigned value for /Rows, got -1!$"
         ),
-    (
+        (
             DictionaryObject({"/Columns": NumberObject(42)}),
             CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10,
             fr"^Expected valid 32 bit unsigned value for /Rows, got {CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10}!$"
