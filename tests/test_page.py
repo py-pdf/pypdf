@@ -1849,3 +1849,22 @@ def test_extract_text__resources_is_a_dictionary():
 
     assert isinstance(page["/Resources"].get_object(), DictionaryObject)
     assert "crazy ones" in page.extract_text()
+
+
+@pytest.mark.parametrize(
+    "resources",
+    [
+        # /Resources present but ColorSpace entry missing for the custom name
+        DictionaryObject({NameObject("/ColorSpace"): DictionaryObject({})}),
+        # /Resources absent entirely
+        None,
+    ],
+)
+def test_translate_value_inline_image_colorspace_not_found(resources):
+    """Raise PdfReadError when a custom NameObject ColorSpace can't be resolved."""
+    page = PageObject()
+    if resources is not None:
+        page[NameObject("/Resources")] = resources
+    custom_name = NameObject("/CustomCS")
+    with pytest.raises(PdfReadError, match="Cannot find resource entry"):
+        page._translate_value_inline_image("/CS", custom_name)
