@@ -19,7 +19,6 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
-from pypdf._font import Font
 from pypdf.annotations import Link
 from pypdf.constants import FieldDictionaryAttributes
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
@@ -39,6 +38,7 @@ from pypdf.generic import (
     StreamObject,
     TextStringObject,
 )
+from pypdf.generic._font import Font
 from pypdf.generic._viewerpref import BOX_NAMES
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, is_sublist
@@ -2137,7 +2137,7 @@ def test_update_form_fields3(caplog, tmp_path):
     output = BytesIO()
     writer.append(BytesIO(get_data_from_url(url=url, name=name)))
     # First test for the case where fonttools is missing.
-    with mock.patch("pypdf._font.HAS_FONTTOOLS", False):
+    with mock.patch("pypdf.generic._font.HAS_FONTTOOLS", False):
         writer.update_page_form_field_values(writer.pages[0], {"subsemnatul": "Σ"})
         assert "Unable to use embedded font for encoding" in caplog.text
         # Also test that an ImportError is raised by the Font class

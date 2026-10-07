@@ -97,8 +97,10 @@ logger = logging.getLogger(__name__)
 
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
-# Checking for these types first skips the isinstance() checks for streams
-# and indirect objects while cloning, which adds up for large arrays.
+# Direct objects of these types are neither streams nor indirect objects.
+# Large arrays consist mostly of them, for example in the /ParentTree of the
+# structure tree, so the clone loops check the exact type first and skip the
+# slower isinstance() checks.
 _SCALAR_TYPES = frozenset(
     (BooleanObject, ByteStringObject, FloatObject, NameObject, NullObject, NumberObject, TextStringObject)
 )
@@ -138,6 +140,7 @@ class ArrayObject(list[Any], PdfObject):
         )
         for data in self:
             if type(data) in _SCALAR_TYPES:
+                # Same as the generic case below, but without the isinstance() checks.
                 arr.append(data.clone(pdf_dest, force_duplicate, ignore_fields))
             elif isinstance(data, StreamObject):
                 dup = data._reference_clone(
@@ -424,6 +427,8 @@ class DictionaryObject(dict[Any, Any], PdfObject):
 
         for k, v in src.items():
             if k not in ignore_fields:
+                # The type check does not change the result. It only skips the
+                # slower isinstance() check for the most common values.
                 if type(v) not in _SCALAR_TYPES and isinstance(v, StreamObject):
                     if not hasattr(v, "indirect_reference"):
                         v.indirect_reference = None

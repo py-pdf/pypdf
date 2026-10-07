@@ -1,5 +1,7 @@
 """Test the pypdf.generic._image_inline module."""
+from base64 import a85encode
 from io import BytesIO
+from typing import Callable
 
 import pytest
 
@@ -7,12 +9,68 @@ from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 from pypdf.generic._image_inline import (
     BUFFER_SIZE,
+    _check_end_image_marker,
     extract_inline__ascii85_decode,
     extract_inline__ascii_hex_decode,
+    extract_inline__dct_decode,
+    extract_inline__run_length_decode,
     extract_inline_default,
     is_followed_by_binary_data,
 )
 from tests import get_data_from_url
+
+
+@pytest.mark.parametrize("tail", [b"", b"\n", b" ", b"\r", b"\t", b"\f", b"\x00", b"\nQ\n"])
+def test_check_end_image_marker_at_end_of_stream(tail: bytes) -> None:
+    """An accepted marker leaves the stream at `E`, including at EOF."""
+    stream = BytesIO(b"image\nEI" + tail)
+    stream.seek(len(b"image"))
+
+    assert _check_end_image_marker(stream)
+    assert stream.tell() == len(b"image\n")
+    assert stream.read(2) == b"EI"
+
+
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+@pytest.mark.parametrize(
+    ("extractor", "image_data"),
+    [
+        (extract_inline__ascii_hex_decode, b"41>"),
+        (extract_inline__ascii85_decode, a85encode(b"A") + b"~>"),
+        (extract_inline__run_length_decode, b"\x00A\x80"),
+        # JPEG start/end markers suffice to exercise the extractor's cursor contract.
+        (extract_inline__dct_decode, b"\xff\xd8\xff\xd9"),
+    ],
+    ids=["ASCIIHex", "ASCII85", "RunLength", "DCT"],
+)
+def test_extract_filtered_inline_image_at_end_of_stream(
+    extractor: Callable[[BytesIO], bytes], image_data: bytes, tail: bytes
+) -> None:
+    """Filtered extraction returns exact data and leaves the stream at `EI`."""
+    stream = BytesIO(image_data + b"\nEI" + tail)
+
+    assert extractor(stream) == image_data
+    assert stream.tell() == len(image_data) + 1
+    assert stream.read() == b"EI" + tail
+
+
+@pytest.mark.parametrize("marker", [b"", b"\nE", b"\nEX", b"\nEIX"])
+@pytest.mark.parametrize(
+    ("extractor", "image_data"),
+    [
+        (extract_inline__ascii_hex_decode, b"41>"),
+        (extract_inline__ascii85_decode, a85encode(b"A") + b"~>"),
+        (extract_inline__run_length_decode, b"\x00A\x80"),
+        (extract_inline__dct_decode, b"\xff\xd8\xff\xd9"),
+    ],
+    ids=["ASCIIHex", "ASCII85", "RunLength", "DCT"],
+)
+def test_extract_filtered_inline_image_rejects_invalid_marker(
+    extractor: Callable[[BytesIO], bytes], image_data: bytes, marker: bytes
+) -> None:
+    """Missing, incomplete and undelimited markers retain the existing error."""
+    with pytest.raises(PdfReadError, match=r"^EI stream not found\.$"):
+        extractor(BytesIO(image_data + marker))
 
 
 def test_is_followed_by_binary_data() -> None:

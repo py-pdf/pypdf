@@ -17,24 +17,25 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from ._cmap import get_encoding
-from ._codecs import encoding_dict_from_named_encoding
-from ._codecs.adobe_glyphs import adobe_glyphs
-from ._utils import logger_warning
-from .constants import FontFlags
-from .errors import LimitReachedError, PdfReadError
+from .._cmap import get_encoding
+from .._codecs import encoding_dict_from_named_encoding
+from .._codecs.adobe_glyphs import adobe_glyphs
+from .._utils import logger_warning
+from ..constants import FontFlags
+from ..errors import LimitReachedError, PdfReadError
 
 if TYPE_CHECKING:
     from fontTools.ttLib.tables._h_e_a_d import table__h_e_a_d
     from fontTools.ttLib.tables._p_o_s_t import table__p_o_s_t
+    from fontTools.ttLib.tables.DefaultTable import DefaultTable
     from fontTools.ttLib.tables.O_S_2f_2 import table_O_S_2f_2
 
-    from ._writer import PdfWriter
+    from .._writer import PdfWriter
 
 try:
     from io import BytesIO
 
-    from fontTools.ttLib import TTFont, TTLibError
+    from fontTools.ttLib import TTFont
     HAS_FONTTOOLS = True
 except ImportError:
     HAS_FONTTOOLS = False
@@ -163,6 +164,12 @@ class Font:
             len(widths_array), MAX_SIMPLE_FONT_CHARACTER_CODE + 1
         )
         first_char = pdf_font_dict.get("/FirstChar", 0)
+        if not isinstance(first_char, (int, float)):
+            logger_warning(
+                "Ignoring invalid /FirstChar %(code)s.", source=__name__, code=first_char
+            )
+            return
+        first_char = int(first_char)
         if first_char < 0:
             logger_warning(
                 "Ignoring invalid /FirstChar %(code)d < 0.", source=__name__, code=first_char
@@ -481,49 +488,89 @@ class Font:
         )
 
     @staticmethod
-    def _font_flags_from_truetype_font_tables(
-            header: table__h_e_a_d,
-            postscript: table__p_o_s_t,
-            os2: table_O_S_2f_2
+    def _load_fonttools_table(table_name: str, is_critical: bool, tt_font_object: TTFont) -> DefaultTable | None:
+        """Once we have a TTFont object, we can try to get the necessary font tables from
+        which we collect the information to instantiate a Font class. However, some of
+        these tables might be missing from the embedded font file, and others might be
+        corrupt in some form and then throw a struct.error on decompilation. We decompile
+        all tables we need using this method to guard against fontTools exceptions.
+
+        This method distinguishes between optional tables and critical tables without which
+        we cannot instantiate a Font. For critical tables, raises PdfReadError if missing
+        OR if binary data is corrupt. For optional tables, it logs warnings instead.
+        """
+        try:
+            # tt_font.get() automatically triggers table.decompile() under the hood
+            table = tt_font_object.get(table_name)
+            if table is None:
+                if is_critical:
+                    raise PdfReadError(f"Font file does not have a {table_name!r} table")
+                logger_warning(
+                    "Optional font table %(table_name)r is missing from font file",
+                    source=__name__,
+                    table_name=table_name
+                )
+                return None
+            return table
+        except Exception as exception:
+            if is_critical:
+                raise PdfReadError(
+                    f"Font table {table_name!r} is corrupt or truncated: {exception}"
+                ) from exception
+            logger_warning(
+                "Optional font table %(table_name)r is corrupt and will be ignored: %(exception)s",
+                source=__name__,
+                table_name=table_name,
+                exception=exception
+            )
+            return None
+
+    @staticmethod
+    def _get_font_flags_from_truetype_font_tables(
+            header_table: table__h_e_a_d,
+            postscript_table: table__p_o_s_t,
+            os2_table: table_O_S_2f_2
         ) -> int:
         # Get the font flags
-        if os2:
-            panose = os2.panose
+        if os2_table:
+            panose = os2_table.panose
             # sFamilyClass is a two-byte field. The high byte describes the family class, whereas the low
             # byte only describes the subclass. We only need the high byte, hence the bit shift below:
-            family_class = os2.sFamilyClass >> 8
+            family_class = os2_table.sFamilyClass >> 8
         flags: int = 0
 
         # ITALIC
-        if header.macStyle & HEADER_MACSTYLE_ITALIC or (os2 and os2.fsSelection & OS2_FSSELECTION_ITALIC):
+        if header_table.macStyle & HEADER_MACSTYLE_ITALIC or (
+            os2_table and os2_table.fsSelection & OS2_FSSELECTION_ITALIC
+        ):
             flags |= FontFlags.ITALIC
-        if postscript:
-            italic_angle = postscript.italicAngle
+        if postscript_table:
+            italic_angle = postscript_table.italicAngle
             if italic_angle != 0.0:
                 flags |= FontFlags.ITALIC
 
         # FIXED_PITCH
         if (
-            (os2 and panose.bProportion == OS2_PANOSE_BPROPORTION_MONOSPACED) or
-            (postscript and postscript.isFixedPitch > 0)  # Actually 1, but originally (older versions of the TTF
-        ):                                                # specification) any non-zero value signified monospace.
+            (os2_table and panose.bProportion == OS2_PANOSE_BPROPORTION_MONOSPACED) or
+            (postscript_table and postscript_table.isFixedPitch > 0)  # Actually 1, but originally (older TTF spec.
+        ):                                                            # version) any non-zero value signified monospace.
             flags |= FontFlags.FIXED_PITCH
 
         # SCRIPT
-        if os2 and (
+        if os2_table and (
             family_class == OS2_SFAMILYSCLASS_SCRIPTS or panose.bFamilyType == OS2_PANOSE_BFAMILYTYPE_SCRIPT
         ):
             flags |= FontFlags.SCRIPT
 
         # SERIF
-        if os2 and (
+        if os2_table and (
             2 <= panose.bSerifStyle <= 10
             or 1 <= family_class <= 5 or family_class == 7  # 6 is reserved, all 8 and above are not serif
         ):
             flags |= FontFlags.SERIF
 
         # SYMBOLIC
-        if os2 and (
+        if os2_table and (
             family_class == OS2_SFAMILYSCLASS_SYMBOLIC or
             panose.bFamilyType in {OS2_PANOSE_BFAMILYTYPE_DECORATIVE, OS2_PANOSE_BFAMILYTYPE_PICTORIAL}
         ):
@@ -537,48 +584,78 @@ class Font:
     def from_truetype_font_file(cls, font_file: BytesIO) -> Font:
         if not HAS_FONTTOOLS:
             raise ImportError("The 'fontTools' library is required to use 'from_truetype_font_file'")
-        with TTFont(font_file) as tt_font_object:
+        try:
+            tt_font_object = TTFont(font_file)
+        except Exception as exception:
+            raise PdfReadError(f"Could not open font file: {exception}") from exception
+        with tt_font_object:
             # See Chapter 6 of the TrueType reference manual for the definition of the head, OS/2 and post tables:
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6head.html
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html
             # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6post.html
-            header = tt_font_object["head"]
-            horizontal_header = tt_font_object["hhea"]
-            metrics = tt_font_object["hmtx"].metrics
 
-            # Collect additional font tables to derive font information
-            postscript = tt_font_object.get("post", None)
-            os2 = tt_font_object.get("OS/2", None)
+            # Collect all font tables.
+            (
+                cmap_table,
+                header_table,
+                metrics_table,
+                horizontal_header_table,
+                name_table,
+                os2_table,
+                postscript_table
+            ) = (
+                cls._load_fonttools_table(
+                    table_name=table_name,
+                    is_critical=table_name in {"head", "hmtx", "cmap"},
+                    tt_font_object=tt_font_object
+                )
+                for table_name in ("cmap", "head", "hmtx", "hhea", "name", "OS/2", "post")
+            )
+
+            if TYPE_CHECKING:
+                assert header_table is not None
+                assert metrics_table is not None
+                assert cmap_table is not None
 
             # Get the scaling factor to convert font file's units per em to PDF's 1000 units per em
-            units_per_em = header.unitsPerEm
-            if not units_per_em:
-                raise PdfReadError("Font file has an invalid unitsPerEm of 0")
+            if (units_per_em := header_table.unitsPerEm) <= 0:
+                raise PdfReadError(f"Font file has an invalid unitsPerEm of {units_per_em}")
             scale_factor = 1000.0 / units_per_em
 
             # Get the font descriptor
             font_descriptor_kwargs: dict[Any, Any] = {}
-            names = tt_font_object.get("name", None)
-            if names:
-                font_descriptor_kwargs["name"] = names.getBestFullName()
-                font_descriptor_kwargs["family"] = names.getBestFamilyName()
-                font_descriptor_kwargs["weight"] = names.getBestSubFamilyName()
-            font_descriptor_kwargs["ascent"] = int(round(horizontal_header.ascent * scale_factor, 0))
-            font_descriptor_kwargs["descent"] = int(round(horizontal_header.descent * scale_factor, 0))
-            if os2:
+
+            if name_table:
+                for name, getter in (
+                    ("name", name_table.getBestFullName),
+                    ("family", name_table.getBestFamilyName),
+                    ("weight", name_table.getBestSubFamilyName)
+                ):
+                    if (value := getter()) is not None:
+                        font_descriptor_kwargs[name] = value
+
+            if horizontal_header_table:
+                font_descriptor_kwargs["ascent"] = int(round(horizontal_header_table.ascent * scale_factor, 0))
+                font_descriptor_kwargs["descent"] = int(round(horizontal_header_table.descent * scale_factor, 0))
+
+            if os2_table:
                 try:
-                    font_descriptor_kwargs["cap_height"] = int(round(os2.sCapHeight * scale_factor, 0))
-                    font_descriptor_kwargs["x_height"] = int(round(os2.sxHeight * scale_factor, 0))
+                    font_descriptor_kwargs["cap_height"] = int(round(os2_table.sCapHeight * scale_factor, 0))
+                    font_descriptor_kwargs["x_height"] = int(round(os2_table.sxHeight * scale_factor, 0))
                 except AttributeError:
                     pass
 
-            font_descriptor_kwargs["flags"] = cls._font_flags_from_truetype_font_tables(header, postscript, os2)
+            font_descriptor_kwargs["flags"] = cls._get_font_flags_from_truetype_font_tables(
+                header_table,
+                postscript_table,
+                os2_table
+            )
 
             font_descriptor_kwargs["bbox"] = (
-                round(header.xMin * scale_factor, 0),
-                round(header.yMin * scale_factor, 0),
-                round(header.xMax * scale_factor, 0),
-                round(header.yMax * scale_factor, 0)
+                round(header_table.xMin * scale_factor, 0),
+                round(header_table.yMin * scale_factor, 0),
+                round(header_table.xMax * scale_factor, 0),
+                round(header_table.yMax * scale_factor, 0)
             )
 
             font_file_data = StreamObject()
@@ -593,28 +670,22 @@ class Font:
             character_widths: dict[str, float] = {}
             character_map: dict[str, str] = {}
 
-            glyph_order = tt_font_object.getGlyphOrder()
             # Note that one glyph can be mapped to multiple unicode code points. However, buildReversedMin()
             # creates a dictionary mapping glyphs to the minimum Unicode codepoint.
-            tt_font_cmap_table = tt_font_object.get("cmap")
-            if tt_font_cmap_table:
-                try:
-                    reverse_cmap = tt_font_cmap_table.buildReversedMin()
-                except AttributeError:
-                    # use buildReversed on fonttools < 4.57 and build a list of minimums from it
-                    reverse_cmap = {k: min(r) for k, r in tt_font_cmap_table.buildReversed().items()}
-                for gid, glyph in enumerate(glyph_order):
-                    # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
-                    gid_bytes = gid.to_bytes(2, "big")
-                    gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
-                    # Always map character width
-                    character_widths[gid_key_string] = int(round(metrics[glyph][0] * scale_factor, 0))
-                    # Add GID to character_map when we can find it in the cmap
-                    char_code = reverse_cmap.get(glyph)
-                    if char_code is not None:
-                        character_map[gid_key_string] = chr(char_code)
-            else:
-                raise PdfReadError("Font file does not have a cmap table")
+            try:
+                reverse_cmap = cmap_table.buildReversedMin()
+            except AttributeError:
+                # Use buildReversed on fonttools < 4.57 and build a list of minimums from it
+                reverse_cmap = {k: min(r) for k, r in cmap_table.buildReversed().items()}
+            metrics = metrics_table.metrics
+            for gid, glyph in enumerate(tt_font_object.getGlyphOrder()):
+                # The following is to comply with how font_glyph_byte_map works in _appearance_stream.py
+                gid_key_string = gid.to_bytes(2, "big").decode("utf-16-be", "surrogatepass")
+                # Always map character width
+                character_widths[gid_key_string] = round(metrics[glyph][0] * scale_factor)
+                # Add GID to character_map when we can find it in the cmap
+                if (char_code := reverse_cmap.get(glyph)) is not None:
+                    character_map[gid_key_string] = chr(char_code)
 
             space_char = cls._get_space_char(encoding, character_map)
             cls._add_default_width(character_widths, font_descriptor_kwargs["flags"], space_char)
@@ -669,25 +740,27 @@ class Font:
             HAS_FONTTOOLS
             and getattr(self.font_descriptor, "font_file", None)
             and isinstance(self.encoding, str)
+            and (font_file_data := cast(StreamObject, self.font_descriptor.font_file).get_data()) is not None
         ):
             try:
-                font_file_data = cast(StreamObject, self.font_descriptor.font_file).get_data()
-                with TTFont(BytesIO(font_file_data)) as tt_font_object:
-                    tt_font_cmap_table = tt_font_object.get("cmap")
-                    best_cmap = tt_font_cmap_table.getBestCmap()
-                    for unicode_int, glyph_name in best_cmap.items():
-                        gid = tt_font_object.getGlyphID(glyph_name)
-                        gid_bytes = gid.to_bytes(2, "big")
-                        gid_key_string = gid_bytes.decode("utf-16-be", "surrogatepass")
-                        unicode_char = chr(unicode_int)
-                        reverse_cmap[unicode_char] = gid_key_string
-                        encoding_cmap[gid_key_string] = gid_key_string.encode(self.encoding)
+                tt_font_object = TTFont(BytesIO(font_file_data))
+            except Exception as exception:  # Font file data is corrupt.
+                logger_warning("Could not open font file: %(exception)s", source=__name__, exception=exception)
+            else:
+                with tt_font_object:
+                    # Read reverse_cmap and encoding_cmap from the font file if we can get a cmap
+                    tt_font_cmap_table = self._load_fonttools_table(
+                        table_name="cmap", is_critical=False, tt_font_object=tt_font_object
+                    )
+                    if tt_font_cmap_table and (best_cmap := tt_font_cmap_table.getBestCmap()):
+                        for unicode_int, glyph_name in best_cmap.items():
+                            gid = tt_font_object.getGlyphID(glyph_name)
+                            gid_key_string = gid.to_bytes(2, "big").decode("utf-16-be", "surrogatepass")
+                            unicode_char = chr(unicode_int)
+                            reverse_cmap[unicode_char] = gid_key_string
+                            encoding_cmap[gid_key_string] = gid_key_string.encode(self.encoding)
 
-                return reverse_cmap, encoding_cmap
-
-            except (AttributeError, TTLibError):  # Cmap table is missing or the font is corrupt.
-                reverse_cmap.clear()
-                encoding_cmap.clear()
+                        return reverse_cmap, encoding_cmap
 
         if isinstance(self.encoding, str):
             for glyph_id, unicode_char in self.character_map.items():

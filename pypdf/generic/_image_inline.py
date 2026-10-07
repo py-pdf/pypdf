@@ -49,7 +49,7 @@ BUFFER_SIZE = 8192
 def _check_end_image_marker(stream: StreamType) -> bool:
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
-    stream.seek(-3, 1)
+    stream.seek(-len(ei_tok), 1)
     return ei_tok[:2] == b"EI" and (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES)
 
 
