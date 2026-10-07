@@ -224,11 +224,12 @@ class ReaderDummy:
         return IndirectObject(idnum=1, generation=1, pdf=self)
 
 
-def count_function_calls(func: Callable[[], T]) -> tuple[T, int]:
+def count_function_calls(func: Callable[..., T], *args: Any, **kwargs: Any) -> tuple[T, int]:
     """
-    Run func and count the calls of Python functions meanwhile.
+    Run func with the given arguments and count the calls of Python functions meanwhile.
 
-    The count measures the work independently of the machine speed.
+    The count measures the work independently of the machine speed. Creating
+    the arguments beforehand keeps their calls out of the count.
     """
     calls = 0
 
@@ -240,7 +241,7 @@ def count_function_calls(func: Callable[[], T]) -> tuple[T, int]:
     previous_profile = sys.getprofile()
     sys.setprofile(count_calls)
     try:
-        result = func()
+        result = func(*args, **kwargs)
     finally:
         sys.setprofile(previous_profile)
     return result, calls

@@ -442,7 +442,7 @@ def test_read_array_of_numbers_and_references__function_calls():
     """
     stream = BytesIO(b"[" + b" ".join([b"123", b"4.5", b"12 0 R"] * 100) + b"]")
 
-    array, calls = count_function_calls(lambda: ArrayObject.read_from_stream(stream, ReaderDummy()))
+    array, calls = count_function_calls(ArrayObject.read_from_stream, stream, ReaderDummy())
 
     assert len(array) == 300
     assert array[:3] == [123, 4.5, IndirectObject(12, 0, array[2].pdf)]
@@ -480,13 +480,13 @@ def test_array_of_nulls__function_calls():
     """
     stream = BytesIO(b"[" + b" ".join([b"null"] * 1000) + b"]")
 
-    array, calls = count_function_calls(lambda: ArrayObject.read_from_stream(stream, ReaderDummy()))
+    array, calls = count_function_calls(ArrayObject.read_from_stream, stream, ReaderDummy())
 
     assert array == [NullObject()] * 1000
     # No calls per element; it was two before
     assert calls < len(array)
 
-    clone, calls = count_function_calls(lambda: array.clone(PdfWriter()))
+    clone, calls = count_function_calls(array.clone, PdfWriter())
 
     assert clone == array
     # One call per element; it was three before
