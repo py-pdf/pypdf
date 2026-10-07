@@ -650,11 +650,10 @@ class BrotliDecode:
         #       https://github.com/google/brotli/issues/1396
         #       https://github.com/google/brotli/pull/1525
         output = bytearray()
-        view = memoryview(data)
         remaining = configuration.brotli_maximum_output_length
         chunk_size = 65_535
-        for offset in range(0, len(view), chunk_size):
-            chunk = view[offset:offset + chunk_size]
+        for offset in range(0, len(data), chunk_size):
+            chunk = data[offset:offset + chunk_size]
             try:
                 part = decompressor.process(chunk, output_buffer_limit=remaining)
             except brotli.error as exception:  # pragma: no cover
