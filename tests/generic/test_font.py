@@ -21,8 +21,11 @@ from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
     EncodedStreamObject,
+    FloatObject,
     NameObject,
+    NullObject,
     NumberObject,
+    PdfObject,
     RectangleObject,
     StreamObject,
     TextStringObject,
@@ -582,6 +585,37 @@ def test_font__collect_tt_t1_character_widths__out_of_range(
     )
     assert current_widths == expected_widths
     assert caplog.messages == [expected_message]
+
+
+@pytest.mark.parametrize(
+    ("first_character_code", "expected_widths", "expected_messages"),
+    [
+        pytest.param(NullObject(), {}, ["Ignoring invalid /FirstChar NullObject."], id="null"),
+        pytest.param(NameObject("/A"), {}, ["Ignoring invalid /FirstChar /A."], id="name"),
+        pytest.param(TextStringObject("a"), {}, ["Ignoring invalid /FirstChar a."], id="string"),
+        pytest.param(FloatObject(65.0), {"A": 42, "B": 42}, [], id="float"),
+    ],
+)
+def test_font__collect_tt_t1_character_widths__first_char_not_an_integer(
+        caplog: pytest.LogCaptureFixture,
+        first_character_code: PdfObject,
+        expected_widths: dict[str, int],
+        expected_messages: list[str],
+) -> None:
+    """A /FirstChar which is not a number is reported and the widths are skipped; a float is used as an integer."""
+    font_resource = DictionaryObject({
+        NameObject("/Widths"): ArrayObject([NumberObject(42)] * 2),
+        NameObject("/FirstChar"): first_character_code,
+    })
+    current_widths: dict[str, float] = {}
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+    assert current_widths == expected_widths
+    assert caplog.messages == expected_messages
 
 
 def test_simple_font_space_char_with_tounicode_cmap() -> None:

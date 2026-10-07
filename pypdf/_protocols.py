@@ -34,7 +34,7 @@ class PdfObjectProtocol(Protocol):
         ...  # pragma: no cover
 
 
-class XmpInformationProtocol(PdfObjectProtocol):
+class XmpInformationProtocol(PdfObjectProtocol, Protocol):
     pass
 
 
