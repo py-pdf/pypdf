@@ -788,8 +788,8 @@ class PdfReader(PdfDocCommon):
         stream.seek(0, os.SEEK_SET)
         try:
             header_byte = stream.read(5)
-        except UnicodeDecodeError as exception:  # pragma: no cover
-            raise UnsupportedOperation("cannot read header") from exception  # pragma: no cover
+        except UnicodeDecodeError as exception:
+            raise UnsupportedOperation("cannot read header") from exception
         if header_byte == b"":
             raise EmptyFileError("Cannot read an empty file")
         if header_byte != b"%PDF-":
@@ -884,25 +884,26 @@ class PdfReader(PdfDocCommon):
             logger_warning(
                 "Duplicate %%EOF marker(s) found, skipping them", source=__name__
             )
-        if line.strip().isdigit():
+        try:
             startxref = int(line)
-            line = read_previous_line(stream)
-        else:  # pragma: no cover
+        except ValueError as exception:  # pragma: no cover
             # 'startxref' may be on the same line as the location
             if not line.startswith(b"startxref"):
-                raise PdfReadError("startxref not found")
+                raise PdfReadError("startxref not found") from exception
             startxref = int(line[9:].strip())
             logger_warning("startxref on same line as offset", source=__name__)
-        if not line.startswith(b"startxref"):
-            # The 'startxref' keyword expected just above the offset is
-            # missing or corrupt (for example a truncated 'tartxref').
-            # Some producers append a broken trailing cross-reference
-            # pointer while an earlier, intact 'startxref' from a previous
-            # revision is still present. Recovering from this violates the
-            # standard, so only attempt it in non-strict mode (#3238).
-            if self.strict:
-                raise PdfReadError("startxref not found")
-            startxref = self._find_previous_startxref_pos(stream)
+        else:
+            line = read_previous_line(stream)
+            if not line.startswith(b"startxref"):
+                # The 'startxref' keyword expected just above the offset is
+                # missing or corrupt (for example a truncated 'tartxref').
+                # Some producers append a broken trailing cross-reference
+                # pointer while an earlier, intact 'startxref' from a previous
+                # revision is still present. Recovering from this violates the
+                # standard, so only attempt it in non-strict mode (#3238).
+                if self.strict:
+                    raise PdfReadError("startxref not found")
+                startxref = self._find_previous_startxref_pos(stream)
         return startxref
 
     # Upper bound on the number of lines _find_previous_startxref_pos scans
