@@ -614,6 +614,12 @@ def test_tm_operator_with_wrong_operand_count():
     assert "Hello" in page.extract_text()
 
 
+def test_do_operator_without_operand_is_skipped() -> None:
+    """A Do operator without an operand is skipped and the text around it is kept."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj ET Do BT /F1 12 Tf (World) Tj ET")).pages[0]
+    assert page.extract_text() == "HelloWorld"
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
