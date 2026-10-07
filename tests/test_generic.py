@@ -1103,8 +1103,10 @@ def _clone_and_count(container: Union[ArrayObject, DictionaryObject], writer: Pd
     [
         # 7,600 to 9,600 before the fix, depending on the Python version.
         pytest.param(True, 3600, id="array"),
-        # 10,600 to 11,600 before the fix, depending on the Python version.
-        pytest.param(False, 8600, id="dictionary"),
+        # 10,600 to 11,600 before the fix, depending on the Python version, and
+        # 8,600 while PdfObject inherited from a Protocol, as the isinstance()
+        # checks in DictionaryObject.__setitem__() ran Python code.
+        pytest.param(False, 4600, id="dictionary"),
     ],
 )
 def test_cloning_direct_objects__function_calls_and_exceptions(as_array, calls_per_1000_elements):

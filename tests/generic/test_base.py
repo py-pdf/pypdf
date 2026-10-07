@@ -2,15 +2,39 @@
 from contextlib import nullcontext
 from functools import partial
 from io import BytesIO
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._utils import StreamType
 from pypdf.errors import LimitReachedError, PdfReadError
-from pypdf.generic import FloatObject, IndirectObject, NameObject, NumberObject, read_hex_string_from_stream
+from pypdf.generic import (
+    FloatObject,
+    IndirectObject,
+    NameObject,
+    NumberObject,
+    PdfObject,
+    read_hex_string_from_stream,
+)
 from tests import RESOURCE_ROOT, get_data_from_url
+
+if TYPE_CHECKING:
+    from pypdf._protocols import PdfObjectProtocol
+
+
+def test_pdf_object__satisfies_protocol_without_inheriting_from_it() -> None:
+    """
+    PdfObject satisfies PdfObjectProtocol without inheriting from it.
+
+    mypy checks the annotated assignment below structurally. Inheriting from a
+    Protocol would make typing._ProtocolMeta the metaclass, and every isinstance()
+    check against a PDF object class would run Python code, see #2136.
+    """
+    pdf_object: PdfObjectProtocol = PdfObject()
+
+    assert pdf_object.get_object() is pdf_object
+    assert type(PdfObject) is type
 
 
 @pytest.mark.parametrize(
