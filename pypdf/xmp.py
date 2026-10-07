@@ -24,7 +24,6 @@ from xml.dom.xmlbuilder import Options
 from xml.parsers.expat import ExpatError, XMLParserType
 
 from ._configuration import get_configuration
-from ._protocols import XmpInformationProtocol
 from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
 from .errors import LimitReachedError, PdfReadError, XmpDocumentError
 from .generic import ContentStream, PdfObject, StreamObject
@@ -213,7 +212,7 @@ class _XmpBuilder(ExpatBuilderNS):
         parser.StartElementHandler = self.start_element_handler
 
 
-class XmpInformation(PdfObject, XmpInformationProtocol):
+class XmpInformation(PdfObject):
     """
     An object that represents Extensible Metadata Platform (XMP) metadata.
     Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`.
