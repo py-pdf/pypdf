@@ -1,6 +1,10 @@
 """Test the pypdf._encryption module."""
 import hashlib
+import os
+import re
 import secrets
+import subprocess
+import sys
 from io import BytesIO
 from typing import NoReturn
 
@@ -10,9 +14,9 @@ import pypdf
 from pypdf import PasswordType, PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
-from pypdf._encryption import AlgV5, CryptAES, CryptRC4
-from pypdf.errors import DependencyError, PdfReadError
-from tests import RESOURCE_ROOT, SAMPLE_ROOT
+from pypdf._encryption import AlgV5, CryptAES, CryptRC4, EncryptAlgorithm, Encryption, _saslprep
+from pypdf.errors import DependencyError, PdfReadError, PdfStreamError
+from tests import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
 USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
@@ -215,6 +219,20 @@ def test_encrypt_decrypt_with_cipher_class(cryptcls):
     assert crypt.decrypt(crypt.encrypt(message)) == message
 
 
+@pytest.mark.parametrize(("idnum", "low_three_bytes"), [(2**31, 0), (2**32 + 1, 1), (0x01020304, 0x020304)])
+def test_make_crypt_filter_large_object_number(idnum, low_three_bytes):
+    """Object numbers above the signed 32-bit range use only their low-order three bytes."""
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r3-user-password.pdf", password="asdfzxcv")
+    encryption = reader._encryption
+    # Object numbers are unsigned and may exceed 2**31 in a crafted file. Only
+    # the low-order three bytes feed the per-object key, so a large number must
+    # not raise and must encrypt the same as the small object number formed by
+    # those three bytes (given here as an independent literal).
+    reference = encryption._make_crypt_filter(low_three_bytes, 0)
+    crypt_filter = encryption._make_crypt_filter(idnum, 0)
+    assert crypt_filter.stm_crypt.encrypt(b"hello world") == reference.stm_crypt.encrypt(b"hello world")
+
+
 def test_attempt_decrypt_unencrypted_pdf():
     """Attempting to decrypt an unencrypted PDF raises a PdfReadError."""
     path = RESOURCE_ROOT / "crazyones.pdf"
@@ -359,7 +377,7 @@ def test_aes_decrypt__empty_data_section():
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_aes_decrypt__wrong_padding():
+def test_aes_decrypt__wrong_padding(caplog):
     # Use fixed values for reliability in testing these.
     # Depending on the input and values chosen during encryption, some cases might
     # not raise the desired exception, but this is out of our control.
@@ -371,13 +389,39 @@ def test_aes_decrypt__wrong_padding():
     )
 
     assert aes.decrypt(encrypted) == original
+    assert aes.decrypt(encrypted, strict=False) == original
+
     for i in range(256):
         broken = encrypted[:-1] + bytes([i])
         if broken == encrypted:
             # We will at some point in time generate the original valid encrypted bytes.
             continue
-        with pytest.raises(ValueError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
+        with pytest.raises(PdfStreamError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
             aes.decrypt(broken)
+
+        assert aes.decrypt(broken, strict=False) != original
+        assert caplog.messages != []
+        assert re.match(
+            r"^Ignoring padding error: (Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$",
+            caplog.messages[0]
+        )
+        caplog.clear()
+
+    with pytest.raises(
+            PdfStreamError,
+            match=(
+                r"^(The length of the provided data is not a multiple of the block length\.|"
+                r"Data must be padded to 16 byte boundary in CBC mode)$"
+            )
+    ):
+        aes.decrypt(encrypted[:-2])
+
+    assert aes.decrypt(encrypted[:-2], strict=False) != original
+    assert caplog.messages[0] == "Adding missing padding."
+    assert re.match(
+        r"^Ignoring padding error: (Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$",
+        caplog.messages[1]
+    )
 
 
 @pytest.mark.samples
@@ -479,3 +523,181 @@ def test_aes256_decrypt_does_not_call_md5(monkeypatch):
     assert result != PasswordType.NOT_DECRYPTED
     assert len(reader.pages) > 0
     reader.pages[0].extract_text()
+
+
+@pytest.mark.enable_socket
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_reader__decryption_error_handling(caplog) -> None:
+    url = "https://github.com/user-attachments/files/26631168/757.pdf"
+    name = "issue3725.pdf"
+    data = get_data_from_url(url=url, name=name)
+
+    reader = PdfReader(BytesIO(data), strict=False)
+    assert len(reader.pages) == 7
+    assert caplog.messages != []
+    assert re.match(
+        r"^Ignoring padding error: (Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$",
+        caplog.messages[0]
+    )
+
+    with pytest.raises(PdfStreamError, match=r"^(Invalid padding bytes|(PKCS#7 p|P)adding is incorrect)\.$"):
+        reader = PdfReader(BytesIO(data), strict=True)
+        _ = list(reader.pages)
+
+
+@pytest.mark.parametrize(("password", "expected"), [
+    ("password", "password"),          # plain ASCII unchanged
+    ("USER", "USER"),                  # case preserved (RFC 4013 example 3)
+    ("I\u00adX", "IX"),                # B.1 soft hyphen mapped to nothing (RFC 4013 example 1)
+    ("a\u00a0b", "a b"),               # C.1.2 non-ASCII space mapped to U+0020
+    ("\u00aa", "a"),                   # NFKC normalization (RFC 4013 example 4)
+    ("\u2168", "IX"),                  # NFKC normalization (RFC 4013 example 5)
+    ("pässwört", "pässwört"),          # normal unicode passthrough after NFKC
+    ("", ""),                          # empty string passes through
+    ("\u0627\u0628", "\u0627\u0628"),  # pure RandALCat at both edges passes
+])
+def test_saslprep_valid(password: str, expected: str) -> None:
+    assert _saslprep(password) == expected
+
+
+@pytest.mark.parametrize(("password", "match"), [
+    ("\u0007", "ASCII control character"),                            # RFC 4013 example 6
+    ("\u06dd", "non-ASCII control character"),                        # U+06DD ARABIC END OF AYAH
+    ("\ue000", "private use character"),
+    ("\ufdd0", "non-character code point"),
+    ("\ufffd", "inappropriate for plain text"),                       # U+FFFD REPLACEMENT CHARACTER
+    ("\u2ff0", "inappropriate for canonical representation"),
+    ("\u200e", "change display properties"),
+    ("\U000e0001", "tagging character"),
+    ("\u0627a\u0628", r"RandALCat.*must not.*LCat"),                  # RFC 4013 example 7
+    ("\u0627\u0628\u0030", "must start and end"),                     # RandALCat not at edges
+])
+def test_saslprep_invalid(password: str, match: str) -> None:
+    with pytest.raises(ValueError, match=match):
+        _saslprep(password)
+
+
+@pytest.mark.parametrize(("alg", "password", "expected"), [
+    (EncryptAlgorithm.AES_256, b"raw bytes", b"raw bytes"),           # bytes passthrough, V5
+    (EncryptAlgorithm.AES_128, b"raw bytes", b"raw bytes"),           # bytes passthrough, V4
+    (EncryptAlgorithm.AES_256, "pässwört", "pässwört".encode()),      # normal unicode SASLprepped + UTF-8, V5
+    (EncryptAlgorithm.AES_128, "pässwört", "pässwört".encode("latin-1")),  # V4 uses latin-1
+    (EncryptAlgorithm.AES_128, "\u4e2d", "\u4e2d".encode()),          # V4 non-latin-1 falls back to UTF-8
+])
+def test_encode_password_valid(alg: EncryptAlgorithm, password, expected: bytes) -> None:
+    enc = Encryption.make(alg, -1, b"\x00" * 16)
+    assert enc._encode_password(password, strict=True) == expected
+
+
+def test_encode_password_strict_raises_on_prohibited() -> None:
+    """strict=True raises ValueError on SASLprep-prohibited characters."""
+    enc = Encryption.make(EncryptAlgorithm.AES_256, -1, b"\x00" * 16)
+    with pytest.raises(ValueError, match="SASLprep normalization failed"):
+        enc._encode_password("pass\x07word", strict=True)
+
+
+def test_encode_password_nonstrict_warns_and_falls_back(caplog) -> None:
+    """strict=False logs a warning and returns plain UTF-8."""
+    enc = Encryption.make(EncryptAlgorithm.AES_256, -1, b"\x00" * 16)
+    result = enc._encode_password("pass\x07word", strict=False)
+    assert result == b"pass\x07word"
+    assert any("SASLprep normalization failed" in m for m in caplog.messages)
+
+
+def _assert_rc4_fallback(operations: str) -> None:
+    """Run ``operations`` in a subprocess where cryptography's ARC4 is unavailable.
+
+    ``CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1`` makes ARC4 raise ``UnsupportedAlgorithm``.
+    Each snippet first runs the operation under test (taking the ``UnsupportedAlgorithm`` branch that activates the
+    pure-Python fallback) and then the reverse operation (taking the already-activated fallback path).
+    """
+    code = (
+        "from pypdf._crypt_providers import rc4_encrypt, rc4_decrypt, CryptRC4; "
+        "key = b'mykey'; pt = b'Encrypted text'; ct = bytes.fromhex('1308e61c0d34c903eef093fd2478'); "
+        + operations
+    )
+    env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
+    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_rc4_encrypt() -> None:
+    """The module-level rc4_encrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert rc4_encrypt(key, pt) == ct; assert rc4_decrypt(key, ct) == pt")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_rc4_decrypt() -> None:
+    """The module-level rc4_decrypt helper falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert rc4_decrypt(key, ct) == pt; assert rc4_encrypt(key, pt) == ct")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_encrypt() -> None:
+    """CryptRC4.encrypt falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert CryptRC4(key).encrypt(pt) == ct; assert CryptRC4(key).decrypt(ct) == pt")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_when_cryptography_drops_rc4_cryptrc4_decrypt() -> None:
+    """CryptRC4.decrypt falls back to pure-Python RC4 when ARC4 is rejected."""
+    _assert_rc4_fallback("assert CryptRC4(key).decrypt(ct) == pt; assert CryptRC4(key).encrypt(pt) == ct")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider's RC4 fallback")
+def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
+    """Ciphers constructed before the fallback latches warn only once between them."""
+    from cryptography.exceptions import UnsupportedAlgorithm  # noqa: PLC0415
+
+    class _RejectingCipher:
+        def encryptor(self) -> NoReturn:
+            raise UnsupportedAlgorithm("cipher RC4 in None mode is not supported")
+
+        def decryptor(self) -> NoReturn:
+            raise UnsupportedAlgorithm("cipher RC4 in None mode is not supported")
+
+    monkeypatch.setattr(CryptRC4, "_is_rc4_supported", True)  # restored on teardown
+    first, second = CryptRC4(b"mykey"), CryptRC4(b"mykey")
+    first.cipher = second.cipher = _RejectingCipher()
+
+    plaintext, ciphertext = b"Encrypted text", bytes.fromhex("1308e61c0d34c903eef093fd2478")
+    assert first.encrypt(plaintext) == ciphertext
+    assert second.decrypt(ciphertext) == plaintext  # already latched: no second warning
+    assert CryptRC4._is_rc4_supported is False
+    assert sum("RC4 is not supported" in message for message in caplog.messages) == 1
+
+
+@pytest.mark.parametrize(
+    ("algorithm", "requires_aes"),
+    [
+        ("RC4-128", False),
+        ("AES-128", True),
+        ("AES-256", True),
+    ],
+)
+def test_xmp_metadata_of_encrypted_document(algorithm, requires_aes):
+    """The document metadata stream is decrypted when /EncryptMetadata is true."""
+    if requires_aes and not HAS_AES:
+        pytest.skip("No AES implementation")
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    writer.encrypt(user_password="user", owner_password="owner", algorithm=algorithm)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, password="user")
+    assert reader.xmp_metadata.stream.get_data().startswith(b"<?xpacket")
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_xmp_metadata_with_cleartext_metadata():
+    """The document metadata stream is read as-is when /EncryptMetadata is false."""
+    # created by:
+    # qpdf --encrypt "foo" "bar" 256 --cleartext-metadata -- commented-xmp.pdf r6-cleartext-metadata.pdf
+    path = RESOURCE_ROOT / "encryption" / "r6-cleartext-metadata.pdf"
+    reader = PdfReader(path, password="foo")
+    assert reader.xmp_metadata.stream.get_data().startswith(b"<?xpacket")
+
+    # Cleartext metadata is readable without knowing the password.
+    reader = PdfReader(path)
+    assert reader.xmp_metadata.stream.get_data().startswith(b"<?xpacket")

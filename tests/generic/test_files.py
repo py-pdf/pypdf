@@ -3,9 +3,9 @@ import datetime
 import shutil
 import subprocess
 from io import BytesIO
+from pathlib import Path
 
 import pytest
-from py import path
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import AFRelationship
@@ -28,12 +28,12 @@ PDFATTACH_BINARY = shutil.which("pdfattach")
 
 
 @pytest.mark.skipif(PDFATTACH_BINARY is None, reason="Requires poppler-utils")
-def test_embedded_file__basic(tmpdir: path.LocalPath) -> None:
+def test_embedded_file__basic(tmp_path: Path) -> None:
     assert PDFATTACH_BINARY is not None
     clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
-    attached_path = tmpdir / "attached.pdf"
-    file_path = tmpdir / "test.txt"
-    file_path.write_binary(b"Hello World\n")
+    attached_path = tmp_path / "attached.pdf"
+    file_path = tmp_path / "test.txt"
+    file_path.write_bytes(b"Hello World\n")
     subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path])  # noqa: S603
     with PdfReader(str(attached_path)) as reader:
         attachment = next(iter(EmbeddedFile._load(reader.root_object)))
@@ -101,7 +101,7 @@ def test_embedded_file__kids() -> None:
     #   * The input PDF file has been the `002-trivial-libre-office-writer.pdf` file.
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
     name = "embedded_files_kids.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     attachments = list(EmbeddedFile._load(reader.root_object))
     assert len(attachments) == 1
     attachment = attachments[0]
@@ -140,11 +140,148 @@ def test_embedded_file__kids() -> None:
     assert attachments == []
 
 
+MALFORMED_NAME_TREE_CATALOGS = [
+    pytest.param(
+        DictionaryObject({NameObject("/Names"): NumberObject(1)}),
+        id="names-tree-is-no-dictionary",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): NumberObject(1)}
+            )}
+        ),
+        id="embedded-files-entry-is-no-dictionary",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): NumberObject(1)}
+                )}
+            )}
+        ),
+        id="kids-entry-is-no-array",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([NumberObject(1)])}
+                )}
+            )}
+        ),
+        id="kid-is-no-dictionary",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([DictionaryObject(
+                        {NameObject("/Names"): NumberObject(1)}
+                    )])}
+                )}
+            )}
+        ),
+        id="kid-name-list-is-no-array",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Names"): NumberObject(1)}
+                )}
+            )}
+        ),
+        id="name-list-is-no-array",
+    ),
+]
+
+
+@pytest.mark.parametrize("catalog", MALFORMED_NAME_TREE_CATALOGS)
+def test_embedded_file__load_malformed_tree(catalog: DictionaryObject) -> None:
+    # A malformed embedded files name tree must not crash attachment loading.
+    assert list(EmbeddedFile._load(catalog)) == []
+
+
+@pytest.mark.parametrize("catalog", MALFORMED_NAME_TREE_CATALOGS)
+def test_embedded_file__load_malformed_tree__strict(catalog: DictionaryObject) -> None:
+    # In strict mode, a malformed embedded files name tree raises instead.
+    with pytest.raises(PdfReadError, match="is not a"):
+        list(EmbeddedFile._load(catalog, strict=True))
+
+
+SPEC_CONFORMANT_EMPTY_CATALOGS = [
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/Dests"): DictionaryObject()}
+            )}
+        ),
+        id="no-embedded-files-entry",
+    ),
+    pytest.param(
+        DictionaryObject({NameObject("/Names"): NullObject()}),
+        id="null-names-tree",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): NullObject()}
+            )}
+        ),
+        id="null-embedded-files-entry",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): NullObject()}
+                )}
+            )}
+        ),
+        id="null-kids-entry",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([DictionaryObject(
+                        {NameObject("/Names"): NullObject()}
+                    )])}
+                )}
+            )}
+        ),
+        id="null-kid-name-list",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Names"): NullObject()}
+                )}
+            )}
+        ),
+        id="null-name-list",
+    ),
+]
+
+
+@pytest.mark.parametrize("catalog", SPEC_CONFORMANT_EMPTY_CATALOGS)
+def test_embedded_file__load_absent_or_null_entries(
+    catalog: DictionaryObject, caplog: pytest.LogCaptureFixture
+) -> None:
+    # A null value is equivalent to an omitted entry, thus neither warns nor raises.
+    assert list(EmbeddedFile._load(catalog)) == []
+    assert list(EmbeddedFile._load(catalog, strict=True)) == []
+    assert caplog.text == ""
+
+
 @pytest.mark.enable_socket
 def test_embedded_file__ensure_params__existing_params() -> None:
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
     name = "embedded_files_kids.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     attachments = list(EmbeddedFile._load(reader.root_object))
     assert len(attachments) == 1
     attachment = attachments[0]
@@ -468,7 +605,7 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     """Test for issue #3473."""
     url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
     name = "embedded_files_kids.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
 
     writer.add_attachment("test.pdf", b"content")
 
@@ -501,7 +638,7 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     assert isinstance(embedded, DictionaryObject)
 
     result = embedded["/Names"]
-    assert result == [
+    assert result == [  # type: ignore[comparison-overlap]
         "factur-x.xml",
         attachments[0].pdf_object.indirect_reference,
         "test.pdf",
@@ -605,7 +742,7 @@ def test_embedded_file__order() -> None:
     assert isinstance(names, DictionaryObject)
     files = names["/EmbeddedFiles"]
     assert isinstance(files, DictionaryObject)
-    assert files["/Names"] == [
+    assert files["/Names"] == [  # type: ignore[comparison-overlap]
         "abc.txt", attachment2.pdf_object.indirect_reference,
         "test.txt", attachment1.pdf_object.indirect_reference,
         "test.txt", attachment4.pdf_object.indirect_reference,

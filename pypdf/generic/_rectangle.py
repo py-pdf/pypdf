@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any, Union
 
 from ._base import FloatObject, NumberObject
@@ -17,17 +18,15 @@ class RectangleObject(ArrayObject):
     * :attr:`trimbox <pypdf._page.PageObject.trimbox>`
     """
 
-    def __init__(
-        self, arr: Union["RectangleObject", tuple[float, float, float, float]]
-    ) -> None:
-        # must have four points
-        assert len(arr) == 4
+    def __init__(self, arr: Sequence[Any]) -> None:
+        if (length := len(arr)) != 4:
+            raise ValueError(f"Expected four values for a rectangle, got {length}: {arr}")
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
         ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])
 
     def _ensure_is_number(self, value: Any) -> Union[FloatObject, NumberObject]:
         if not isinstance(value, (FloatObject, NumberObject)):
-            value = FloatObject(value)
+            return FloatObject(value)
         return value
 
     def scale(self, sx: float, sy: float) -> "RectangleObject":
@@ -45,7 +44,8 @@ class RectangleObject(ArrayObject):
 
     @property
     def left(self) -> FloatObject:
-        return self[0]
+        value: FloatObject = self[0]
+        return value
 
     @left.setter
     def left(self, f: float) -> None:
@@ -53,7 +53,8 @@ class RectangleObject(ArrayObject):
 
     @property
     def bottom(self) -> FloatObject:
-        return self[1]
+        value: FloatObject = self[1]
+        return value
 
     @bottom.setter
     def bottom(self, f: float) -> None:
@@ -61,7 +62,8 @@ class RectangleObject(ArrayObject):
 
     @property
     def right(self) -> FloatObject:
-        return self[2]
+        value: FloatObject = self[2]
+        return value
 
     @right.setter
     def right(self, f: float) -> None:
@@ -69,7 +71,8 @@ class RectangleObject(ArrayObject):
 
     @property
     def top(self) -> FloatObject:
-        return self[3]
+        value: FloatObject = self[3]
+        return value
 
     @top.setter
     def top(self, f: float) -> None:

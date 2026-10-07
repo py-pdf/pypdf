@@ -1,0 +1,636 @@
+"""Test font-related functionality."""
+from __future__ import annotations
+
+import os
+import re
+import subprocess
+import sys
+import unicodedata
+from io import BytesIO
+from types import FrameType
+from typing import TYPE_CHECKING, Any, cast
+from unittest import mock
+
+import pytest
+from fontTools.ttLib import TTFont
+
+from pypdf import PdfReader, PdfWriter
+from pypdf._cmap import _parse_to_unicode
+from pypdf.errors import LimitReachedError, PdfReadError
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    EncodedStreamObject,
+    FloatObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+    PdfObject,
+    RectangleObject,
+    StreamObject,
+    TextStringObject,
+)
+from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
+from pypdf.generic._font import Font, FontDescriptor
+
+from .. import RESOURCE_ROOT
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+def test_font_descriptor() -> None:
+    font_res = DictionaryObject({
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+    })
+    my_font = Font.from_font_resource(font_res)
+    assert my_font.font_descriptor.family == "Helvetica"
+    assert my_font.font_descriptor.weight == "Medium"
+    assert my_font.font_descriptor.ascent == 718
+    assert my_font.font_descriptor.descent == -207
+
+    test_string = "This is a long sentence. !@%%^€€€. çûiö¶´"
+    reverse_map = {char: byte for byte, char in cast(dict[int, str], my_font.encoding).items()}
+    encoded_string = "".join(chr(reverse_map[char]) for char in test_string)
+    charwidth = my_font.get_text_width(encoded_string)
+    assert charwidth == 19251
+
+    font_res[NameObject("/BaseFont")] = NameObject("/Palatino")
+    my_font = Font.from_font_resource(font_res)
+    assert my_font.font_descriptor.weight == "Unknown"
+
+    font_res[NameObject("/BaseFont")] = NameObject("/Courier-Bold")
+    my_font = Font.from_font_resource(font_res)
+    assert my_font.font_descriptor.italic_angle == 0
+    assert my_font.font_descriptor.flags == 33
+    assert my_font.font_descriptor.bbox == (-113.0, -250.0, 749.0, 801.0)
+    font_descriptor_resource = my_font.font_descriptor.as_font_descriptor_resource()
+    assert font_descriptor_resource == {
+        "/Type": "/FontDescriptor",
+        "/FontName": "/Courier-Bold",
+        "/Flags": 33,
+        "/FontBBox": [-113, -250, 749, 801],
+        "/ItalicAngle": 0.0,
+        "/Ascent": 629,
+        "/Descent": -157,
+        "/CapHeight": 562,
+        "/XHeight": 439
+    }
+
+
+@pytest.mark.parametrize("w_array", [[45], [45, 65]])
+def test_collect_cid_character_widths_truncated_w(w_array: list[list[int]]) -> None:
+    # A /W array that ends mid-entry must not read past its bounds.
+    d_font = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/CIDFontType2"),
+        NameObject("/W"): ArrayObject(NumberObject(v) for v in w_array),
+    })
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/DescendantFonts"): ArrayObject([d_font]),
+    })
+    Font.from_font_resource(font_res)
+
+
+@pytest.mark.parametrize(
+    ("descendant_fonts", "expected"),
+    [
+        pytest.param(None, "", id="absent"),
+        pytest.param(
+            DictionaryObject(),
+            "Expected an array for /DescendantFonts, got {}. Ignoring it.",
+            id="dictionary",
+        ),
+        pytest.param(
+            TextStringObject("x"),
+            "Expected an array for /DescendantFonts, got x. Ignoring it.",
+            id="string",
+        ),
+    ],
+)
+def test_font__from_font_resource__descendant_fonts_not_an_array(
+    descendant_fonts: DictionaryObject, expected: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A composite font whose /DescendantFonts cannot be read still builds a font."""
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Foo"),
+    })
+    if descendant_fonts is not None:
+        font_res[NameObject("/DescendantFonts")] = descendant_fonts
+
+    font = Font.from_font_resource(font_res)
+
+    assert font is not None
+    assert expected in caplog.text
+
+
+@pytest.mark.parametrize("bbox", [
+    pytest.param(ArrayObject([NumberObject(0), NumberObject(0), NumberObject(100)]), id="too-short"),
+    pytest.param(ArrayObject(NumberObject(v) for v in range(6)), id="too-long"),
+    pytest.param(ArrayObject([NameObject("/x"), NumberObject(0), NumberObject(1), NumberObject(2)]), id="non-numeric"),
+    pytest.param(NumberObject(0), id="not-a-sequence"),
+])
+def test_font_descriptor_malformed_bbox(bbox: ArrayObject | NumberObject) -> None:
+    # A /FontBBox that is not four numbers must fall back to the default
+    # bounding box instead of crashing text extraction.
+    font_res = DictionaryObject({
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/FontDescriptor"): DictionaryObject({
+            NameObject("/FontBBox"): bbox,
+        }),
+    })
+    font = Font.from_font_resource(font_res)
+    assert font.font_descriptor.bbox == FontDescriptor._DEFAULT_BBOX
+
+
+@pytest.mark.parametrize("bbox", [
+    pytest.param(ArrayObject([NumberObject(0), NumberObject(0)]), id="too-short"),
+    pytest.param(ArrayObject([NameObject("/x"), NumberObject(0), NumberObject(1), NumberObject(2)]), id="non-numeric"),
+])
+def test_type3_font_malformed_bbox(bbox: ArrayObject) -> None:
+    # Type3 font without a /FontDescriptor but carrying a malformed /FontBBox.
+    font_res = DictionaryObject({
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/Subtype"): NameObject("/Type3"),
+        NameObject("/ToUnicode"): NumberObject(0),
+        NameObject("/FontBBox"): bbox,
+    })
+    font = Font.from_font_resource(font_res)
+    assert font.font_descriptor.bbox == FontDescriptor._DEFAULT_BBOX
+
+
+def test_font_file() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
+
+    # /FontFile
+    font = Font.from_font_resource(cast(ArrayObject, reader.pages)[0]["/Resources"]["/Font"]["/F2"])
+    assert isinstance(font.font_descriptor.font_file, EncodedStreamObject)
+    assert len(font.font_descriptor.font_file.get_data()) == 5116
+
+    # /FontFile2
+    font_resource = cast(ArrayObject, reader.pages)[0]["/Resources"]["/Font"]["/F1"]
+    font = Font.from_font_resource(font_resource)
+    assert isinstance(font.font_descriptor.font_file, EncodedStreamObject)
+    assert len(font.font_descriptor.font_file.get_data()) == 28464
+
+    with pytest.raises(PdfReadError, match=r"^More than one /FontFile found in .+$"):
+        font_resource[NameObject("/FontDescriptor")][NameObject("/FontFile")] = NameObject("xyz")
+        font = Font.from_font_resource(font_resource)
+
+    # /FontFile3
+    reader = PdfReader(RESOURCE_ROOT / "attachment.pdf")
+    font = Font.from_font_resource(cast(ArrayObject, reader.pages)[0]["/Resources"]["/Font"]["/F1"])
+    assert isinstance(font.font_descriptor.font_file, EncodedStreamObject)
+    assert len(font.font_descriptor.font_file.get_data()) == 2168
+
+
+def test_font_from_font_file_and__get_typographic_maps(caplog: pytest.LogCaptureFixture) -> None:
+    reader = PdfReader(RESOURCE_ROOT / "fontsampler.pdf")
+    font_resources = cast(ArrayObject, reader.pages)[0]["/Resources"]["/Font"]
+    for font_resource in font_resources:
+        font_data = font_resources[font_resource]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+        font = Font.from_truetype_font_file(BytesIO(font_data))
+
+        # Test an empty name table
+        with mock.patch("fontTools.ttLib.tables._n_a_m_e.table__n_a_m_e.getBestFullName", return_value=None):
+            font = Font.from_truetype_font_file(BytesIO(font_data))
+            assert font.font_descriptor.name == "Unknown"
+
+        if font_resource == "/F1":
+            assert font.font_descriptor.flags == 33
+            assert len(font.character_map) == 872
+        if font_resource == "/F2":
+            assert font.font_descriptor.flags == 32
+        if font_resource == "/F3":
+            assert font.font_descriptor.flags == 98
+        if font_resource == "/F4":
+            assert len(font.character_map) == 697
+            assert len(font.character_widths) == 1825
+        if font_resource == "/F6":
+            crippled_font_data = BytesIO()
+            with TTFont(BytesIO(font_data)) as tt_font_object:
+                # Test zero units per em
+                tt_font_object["head"].unitsPerEm = 0
+                tt_font_object.save(crippled_font_data)
+                with pytest.raises(PdfReadError, match=r"invalid unitsPerEm"):
+                    Font.from_truetype_font_file(crippled_font_data)
+                tt_font_object["head"].unitsPerEm = 2048
+
+                # Test a crippled optional table
+                os_2_table_offset = tt_font_object.reader.tables["OS/2"].offset
+                stream_data = bytearray(font_data)
+                stream_data[os_2_table_offset : os_2_table_offset + 2] = b"\x03\x09"
+                crippled_font_data = BytesIO(stream_data)
+                crippled_font_data.seek(0)
+                assert Font.from_truetype_font_file(crippled_font_data) is not None
+                assert (
+                    "Optional font table 'OS/2' is corrupt and will be ignored: "
+                    "unknown format for OS/2 table: version 777"
+                ) in caplog.text
+
+                # Test a crippled optional table (that in turn causes critical table 'cmap' to fail)
+                post_table_offset = tt_font_object.reader.tables["post"].offset
+                stream_data = bytearray(font_data)
+                stream_data[post_table_offset : post_table_offset + 16] = b"\xff" * 16
+                crippled_font_data = BytesIO(stream_data)
+                crippled_font_data.seek(0)
+                with pytest.raises(
+                    PdfReadError,
+                    match=r"^Font table 'cmap' is corrupt or truncated: 'post' table format -0\.000015 not supported$"
+                ):
+                    Font.from_truetype_font_file(crippled_font_data)
+
+                # Test various missing tables
+                del tt_font_object["name"]
+                del tt_font_object["OS/2"]
+                del tt_font_object["post"]
+                del tt_font_object["hhea"]
+                crippled_font_data.seek(0)
+                tt_font_object.save(crippled_font_data)
+                font = Font.from_truetype_font_file(crippled_font_data)
+
+                # Test missing cmap table in from_truetype_font_file and _get_typographic_maps
+                del tt_font_object["cmap"]
+                crippled_font_data.seek(0)
+                tt_font_object.save(crippled_font_data)
+                with pytest.raises(
+                    PdfReadError,
+                    match=r"^Font table 'cmap' is corrupt or truncated: Font file does not have a 'cmap' table$"
+                ):
+                    Font.from_truetype_font_file(crippled_font_data)
+
+                crippled_font_data_value = crippled_font_data.getvalue()
+                cast(StreamObject, font.font_descriptor.font_file).set_data(crippled_font_data_value)
+                font._get_typographic_maps()
+                assert "Optional font table 'cmap' is missing from font file" in caplog.text
+
+                # Test raising TTLibError in from_truetype_font_file and _get_typographic_maps due to corrupt font data
+                garbage_bytes = b"CORRUPT_HEADER!!" + crippled_font_data_value[16:]
+                with pytest.raises(PdfReadError, match=r"^Could not open font file: "):
+                    Font.from_truetype_font_file(BytesIO(garbage_bytes))
+
+                cast(StreamObject, font.font_descriptor.font_file).set_data(garbage_bytes)
+                font._get_typographic_maps()
+                assert "Could not open font file: Not a TrueType or OpenType font (bad sfntVersion)" in caplog.text
+
+
+def test_font_old_fonttools_substitution(caplog: pytest.LogCaptureFixture) -> None:
+    import inspect  # noqa: PLC0415
+    from unittest import mock  # noqa: PLC0415
+
+    from fontTools.ttLib.tables._c_m_a_p import table__c_m_a_p  # noqa: PLC0415
+
+    original_build_reversed_min = table__c_m_a_p.buildReversedMin
+
+    def build_reversed_min(_self: table__c_m_a_p) -> Any:
+        caller = cast(FrameType, inspect.currentframe()).f_back
+        caller_name = cast(FrameType, caller).f_code.co_name
+        # Check the backwards-compatible substitution works when calling from pypdf
+        if caller_name == "from_truetype_font_file":
+            raise AttributeError
+        # Internal code relies on this, thus allow these calls.
+        return original_build_reversed_min(_self)
+
+    with mock.patch("fontTools.ttLib.tables._c_m_a_p.table__c_m_a_p.buildReversedMin", build_reversed_min):
+        test_font_from_font_file_and__get_typographic_maps(caplog)
+
+
+def test_font_as_font_resource() -> None:
+    writer = PdfWriter(RESOURCE_ROOT / "fontsampler.pdf")
+    font_resources = cast(ArrayObject, writer.pages)[0]["/Resources"]["/Font"]
+    font_data = font_resources["/F7"]["/DescendantFonts"][0]["/FontDescriptor"]["/FontFile2"].get_data()
+    font = Font.from_truetype_font_file(BytesIO(font_data))
+    font._add_to_writer(writer, font_resources, NameObject("/" + font.name))
+
+
+def test_font_from_font_file_no_fonttools(tmp_path: Path) -> None:
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
+
+    source_file = tmp_path / "script.py"
+    source_file.write_text(
+        """
+import sys
+from io import BytesIO
+
+import pytest
+
+sys.modules["fontTools.ttLib"] = None
+from pypdf.generic._font import Font
+
+with pytest.raises(ImportError, match=r"^The 'fontTools' library is required to use 'from_truetype_font_file'$"):
+    Font.from_truetype_font_file(BytesIO(b""))
+"""
+    )
+
+    try:
+        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
+    except KeyError:
+        env["PYTHONPATH"] = "."
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, source_file],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert result.stdout == b""
+
+
+def test_font__collect_cid_character_widths__limits() -> None:
+    # Format 1 exceeding length.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), ArrayObject([NumberObject(42)] * 100_000),
+        ])
+    })
+    current_widths: dict[str, float] = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^CID width range too large: 100000 > 65536\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {}
+
+    # Format 1 exceeding entry count.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), ArrayObject([NumberObject(42)] * 55_000),
+            NumberObject(1), ArrayObject([NumberObject(13)] * 60_000),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Too many character widths: 115000 > 100000\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {
+        chr(character_index): 42
+        for character_index in range(1, 55_001, 1)
+    }
+
+    # Format 2 exceeding length.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), NumberObject(100_000), NumberObject(42),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^CID width range too large: 100000 > 65536\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {}
+
+    # Format 2 exceeding entry count.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), NumberObject(55_000), NumberObject(42),
+            NumberObject(1), NumberObject(60_000), NumberObject(13),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Too many character widths: 115000 > 100000\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {
+        chr(character_index): 42
+        for character_index in range(1, 55_001, 1)
+    }
+
+    # Inverted range.
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(13), NumberObject(1), NumberObject(42),
+        ])
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Invalid CID width range: 13\.\.2\.$"
+    ):
+        Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+    assert current_widths == {}
+
+
+def test_simple_font_reverse_cmap_from_character_map() -> None:
+    pdf_path = RESOURCE_ROOT / "side-by-side-subfig.pdf"
+    reader = PdfReader(pdf_path)
+    extracted_text = reader.pages[0].extract_text()
+    font = Font.from_font_resource(cast(ArrayObject, reader.pages)[0]["/Resources"]["/Font"]["/F33"])
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    cast(ArrayObject, writer.pages)[0]["/Resources"][NameObject("/Font")] = DictionaryObject()
+    font._add_to_writer(writer, cast(ArrayObject, writer.pages)[0]["/Resources"]["/Font"], NameObject(f"/{font.name}"))
+    appearance_stream = TextStreamAppearance(
+        layout=BaseStreamConfig(rectangle=RectangleObject((0.0, 0.0, 512, 692))),
+        text=extracted_text,
+        font=font,
+        font_resource=cast(ArrayObject, writer.pages)[0]["/Resources"]["/Font"][f"/{font.name}"],
+        is_multiline=True
+    )
+    writer._add_apstream_object(
+        page,
+        appearance_stream,
+        "LoremIpsum",
+        x_offset=100,
+        y_offset=692
+    )
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    reader2 = PdfReader(stream)
+    assert extracted_text == reader2.pages[0].extract_text()
+
+
+def test__create_widths_list_and_unicode_stream() -> None:
+    font = Font.from_core_font_name("Helvetica")
+    # Make sure that we have some encoding difference so that we will include a
+    # ToUnicode CMap in a font resource.
+    cast(dict[int, str], font.encoding)[255] = font.encoding[0]
+    # Assert that the ToUnicode CMap can be parsed and reflects the original encoding.
+    map_dict, _ = _parse_to_unicode(font.as_font_resource())
+    assert all(
+        map_dict[chr(chr_code)] == unicodedata.normalize("NFKC", unipoint)
+        for chr_code, unipoint in cast(dict[int, str], font.encoding).items()
+    )
+    # Test that we observe CMAP_MAX_ENTRIES_PER_GROUP; we're using a core font which
+    # has 256 characters. Hence, we should have two groups of 100 bfchar lines
+    # and one group with the remaining 56 bfchar lines.
+    _widths_list, to_unicode_stream = font._create_widths_list_and_unicode_stream()
+    assert all(
+        val in ("56", "100") for val in re.findall(r"([0-9]*) beginbfchar", to_unicode_stream.get_data().decode())
+    )
+
+
+@pytest.mark.parametrize(
+    ("widths", "expected"),
+    [
+        pytest.param(
+            TextStringObject("bad"),
+            "Expected an array for /Widths, got bad. Ignoring it.",
+            id="string",
+        ),
+        pytest.param(
+            NumberObject(5),
+            "Expected an array for /Widths, got 5. Ignoring it.",
+            id="number",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Expected an array for /Widths, got {}. Ignoring it.",
+            id="dictionary",
+        ),
+    ],
+)
+def test_font__collect_tt_t1_character_widths__not_an_array(
+    widths: DictionaryObject | NumberObject | TextStringObject, expected: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A /Widths entry which is not an array is reported and the widths are skipped."""
+    font_resource = DictionaryObject({NameObject("/Widths"): widths})
+    current_widths: dict[str, float] = {}
+
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+
+    assert current_widths == {}
+    assert expected in caplog.text
+
+
+def test_font__collect_tt_t1_character_widths__limits() -> None:
+    font_resource = DictionaryObject({
+        NameObject("/Widths"): ArrayObject([NumberObject(42)] * 256),
+    })
+    current_widths: dict[str, float] = {}
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+    assert len(current_widths) == 256
+
+    font_resource = DictionaryObject({
+        NameObject("/Widths"): ArrayObject([NumberObject(42)] * 257),
+    })
+    current_widths = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Too many character widths: 257 > 256\.$",
+    ):
+        Font._collect_tt_t1_character_widths(
+            pdf_font_dict=font_resource,
+            char_map={},
+            encoding={},
+            current_widths=current_widths,
+        )
+    assert current_widths == {}
+
+
+def test_font__collect_tt_t1_character_widths() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
+    font = Font.from_font_resource(cast(ArrayObject, reader.pages)[0]["/Resources"]["/Font"]["/F2"])
+    assert font.character_widths == {
+        "\x00": 1000,
+        "\x01": 1000,
+        "\x02": 1000,
+        "\x03": 1000,
+        "\x04": 1000,
+        "\x05": 1000,
+        "\x06": 1000,
+        "\x07": 1000,
+        "\x08": 1000,
+        "\t": 1000,
+        "default": 1000
+    }
+
+
+@pytest.mark.parametrize(
+    ("first_character_code", "expected_widths", "expected_message"),
+    [
+        (-1, {}, "Ignoring invalid /FirstChar -1 < 0."),
+        (
+            250,
+            {"ú": 42, "û": 42, "ü": 42, "ý": 42, "þ": 42, "ÿ": 42},
+            "Ignoring invalid character codes > 255 (starting at 256)."
+        ),
+    ],
+    ids=["negative", "too-large"]
+)
+def test_font__collect_tt_t1_character_widths__out_of_range(
+        caplog: pytest.LogCaptureFixture,
+        first_character_code: int,
+        expected_widths: dict[str, int],
+        expected_message: str
+) -> None:
+    font_resource = DictionaryObject({
+        NameObject("/Widths"): ArrayObject([NumberObject(42)] * 10),
+        NameObject("/FirstChar"): NumberObject(first_character_code),
+    })
+    current_widths: dict[str, float] = {}
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+    assert current_widths == expected_widths
+    assert caplog.messages == [expected_message]
+
+
+@pytest.mark.parametrize(
+    ("first_character_code", "expected_widths", "expected_messages"),
+    [
+        pytest.param(NullObject(), {}, ["Ignoring invalid /FirstChar NullObject."], id="null"),
+        pytest.param(NameObject("/A"), {}, ["Ignoring invalid /FirstChar /A."], id="name"),
+        pytest.param(TextStringObject("a"), {}, ["Ignoring invalid /FirstChar a."], id="string"),
+        pytest.param(FloatObject(65.0), {"A": 42, "B": 42}, [], id="float"),
+    ],
+)
+def test_font__collect_tt_t1_character_widths__first_char_not_an_integer(
+        caplog: pytest.LogCaptureFixture,
+        first_character_code: PdfObject,
+        expected_widths: dict[str, int],
+        expected_messages: list[str],
+) -> None:
+    """A /FirstChar which is not a number is reported and the widths are skipped; a float is used as an integer."""
+    font_resource = DictionaryObject({
+        NameObject("/Widths"): ArrayObject([NumberObject(42)] * 2),
+        NameObject("/FirstChar"): first_character_code,
+    })
+    current_widths: dict[str, float] = {}
+    Font._collect_tt_t1_character_widths(
+        pdf_font_dict=font_resource,
+        char_map={},
+        encoding={},
+        current_widths=current_widths,
+    )
+    assert current_widths == expected_widths
+    assert caplog.messages == expected_messages
+
+
+def test_simple_font_space_char_with_tounicode_cmap() -> None:
+    """Font should read space_char from character_map when present."""
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfchar\n"
+        b"<25> <0020>\n"  # Map "%" to space
+        b"endbfchar\n"
+    )
+    font_resource = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    })
+    font = Font.from_font_resource(font_resource)
+    assert font.space_char == "%"

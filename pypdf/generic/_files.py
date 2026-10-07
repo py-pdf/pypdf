@@ -4,7 +4,7 @@ import bisect
 from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
-from pypdf._utils import format_iso8824_date, parse_iso8824_date
+from pypdf._utils import format_iso8824_date, logger_warning, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
 from pypdf.constants import PageAttributes as PG
@@ -24,7 +24,7 @@ from pypdf.generic import (
 
 if TYPE_CHECKING:
     import datetime
-    from collections.abc import Generator
+    from collections.abc import Iterator
 
     from pypdf._writer import PdfWriter
 
@@ -50,7 +50,14 @@ class EmbeddedFile:
 
     @property
     def name(self) -> str:
-        """The (primary) name of the embedded file as provided in the name tree."""
+        """
+        The (primary) name of the embedded file as provided in the name tree.
+
+        .. warning::
+
+            This value can contain arbitrary characters. Please make sure to sanitize it before
+            using it to write the file content to the disk for example.
+        """
         return self._name
 
     @classmethod
@@ -165,7 +172,14 @@ class EmbeddedFile:
 
     @property
     def alternative_name(self) -> str | None:
-        """Retrieve the alternative name (file specification)."""
+        """
+        Retrieve the alternative name (as per the file specification dictionary).
+
+        .. warning::
+
+            This value can contain arbitrary characters. Please make sure to sanitize it before
+            using it to write the file content to the disk for example.
+        """
         for key in [FileSpecificationDictionaryEntries.UF, FileSpecificationDictionaryEntries.F]:
             # PDF 2.0 reference, table 43:
             #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
@@ -177,7 +191,7 @@ class EmbeddedFile:
 
     @alternative_name.setter
     def alternative_name(self, value: TextStringObject | None) -> None:
-        """Set the alternative name (file specification)."""
+        """Set the alternative name (as per the file specification dictionary)."""
         if value is None:
             if FileSpecificationDictionaryEntries.UF in self.pdf_object:
                 self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = NullObject()
@@ -206,7 +220,10 @@ class EmbeddedFile:
     @property
     def associated_file_relationship(self) -> str:
         """Retrieve the relationship of the referring document to this embedded file."""
-        return self.pdf_object.get("/AFRelationship", "/Unspecified")
+        return cast(
+            NameObject,
+            self.pdf_object.get("/AFRelationship", NameObject("/Unspecified")),
+        )
 
     @associated_file_relationship.setter
     def associated_file_relationship(self, value: NameObject) -> None:
@@ -227,7 +244,7 @@ class EmbeddedFile:
     @property
     def _params(self) -> DictionaryObject:
         """Retrieve the file-specific parameters."""
-        return self._embedded_file.get("/Params", DictionaryObject()).get_object()
+        return cast(DictionaryObject, self._embedded_file.get("/Params", DictionaryObject()).get_object())
 
     @cached_property
     def _ensure_params(self) -> DictionaryObject:
@@ -330,6 +347,12 @@ class EmbeddedFile:
         else:
             params[NameObject("/CheckSum")] = value
 
+    @property
+    def _names(self) -> Iterator[str]:
+        yield self.name
+        if self.alternative_name is not None and self.alternative_name != self.name:
+            yield self.alternative_name
+
     def delete(self) -> None:
         """Delete the file from the document."""
         if not self._parent:
@@ -350,8 +373,15 @@ class EmbeddedFile:
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} name={self.name!r}>"
 
+    @staticmethod
+    def _report_malformed(message: str, strict: bool) -> None:
+        """Raise an exception in strict mode, warn otherwise."""
+        if strict:
+            raise PdfReadError(message)
+        logger_warning(message, source=__name__)
+
     @classmethod
-    def _load_from_names(cls, names: ArrayObject) -> Generator[EmbeddedFile]:
+    def _load_from_names(cls, names: ArrayObject) -> Iterator[EmbeddedFile]:
         """
         Convert the given name tree into class instances.
 
@@ -370,7 +400,7 @@ class EmbeddedFile:
                 yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary, parent=names)
 
     @classmethod
-    def _load(cls, catalog: DictionaryObject) -> Generator[EmbeddedFile]:
+    def _load(cls, catalog: DictionaryObject, strict: bool = False) -> Iterator[EmbeddedFile]:
         """
         Load the embedded files for the given document catalog.
 
@@ -378,24 +408,58 @@ class EmbeddedFile:
 
         Args:
             catalog: The document catalog to load from.
+            strict: Whether to raise an exception on malformed name trees
+                instead of issuing a warning and skipping them.
 
         Returns:
             Iterable of class instances for the files found.
         """
-        try:
-            container = cast(
-                DictionaryObject,
-                cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-            )
-        except KeyError:
+        if "/Names" not in catalog:
+            return
+        names = catalog["/Names"]
+        if isinstance(names, NullObject):
+            # A null value is equivalent to an omitted entry.
+            return
+        if not isinstance(names, DictionaryObject):
+            cls._report_malformed(f"Names tree is not a dictionary: {names}", strict=strict)
+            return
+        if "/EmbeddedFiles" not in names:
+            return
+        container = names["/EmbeddedFiles"]
+        if isinstance(container, NullObject):
+            return
+        if not isinstance(container, DictionaryObject):
+            cls._report_malformed(f"Embedded files entry is not a dictionary: {container}", strict=strict)
             return
 
         if "/Kids" in container:
-            for kid in cast(ArrayObject, container["/Kids"].get_object()):
+            kids = container["/Kids"].get_object()
+            if isinstance(kids, NullObject):
+                kids = ArrayObject()
+            elif not isinstance(kids, ArrayObject):
+                cls._report_malformed(f"Embedded files /Kids is not an array: {kids}", strict=strict)
+                return
+            for kid in kids:
                 # There might be further (nested) kids here.
                 # Wait for an example before evaluating an implementation.
                 kid = kid.get_object()
-                if "/Names" in kid:
-                    yield from cls._load_from_names(cast(ArrayObject, kid["/Names"]))
+                if not isinstance(kid, DictionaryObject):
+                    cls._report_malformed(f"Embedded files kid is not a dictionary: {kid}", strict=strict)
+                    continue
+                if "/Names" not in kid:
+                    continue
+                kid_names = kid["/Names"].get_object()
+                if isinstance(kid_names, NullObject):
+                    continue
+                if not isinstance(kid_names, ArrayObject):
+                    cls._report_malformed(f"Embedded files name list is not an array: {kid_names}", strict=strict)
+                    continue
+                yield from cls._load_from_names(kid_names)
         if "/Names" in container:
-            yield from cls._load_from_names(cast(ArrayObject, container["/Names"]))
+            container_names = container["/Names"].get_object()
+            if isinstance(container_names, NullObject):
+                return
+            if not isinstance(container_names, ArrayObject):
+                cls._report_malformed(f"Embedded files name list is not an array: {container_names}", strict=strict)
+                return
+            yield from cls._load_from_names(container_names)

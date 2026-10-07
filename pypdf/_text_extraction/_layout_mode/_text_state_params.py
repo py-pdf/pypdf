@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Union
 
-from ..._font import Font
+from ...generic._font import Font
 from .. import mult, orient
 
 
@@ -15,7 +15,7 @@ class TextStateParams:
     TJ or Tj PDF operation.
 
     Attributes:
-        txt (str): the text to be rendered.
+        value (bytes | str): the raw text to be rendered.
         font (Font): font object
         font_size (int | float): font size
         Tc (float): character spacing. Defaults to 0.0.
@@ -34,7 +34,7 @@ class TextStateParams:
 
     """
 
-    txt: str
+    value: Union[bytes, str]
     font: Font
     font_size: Union[int, float]
     Tc: float = 0.0
@@ -52,8 +52,28 @@ class TextStateParams:
     font_height: float = field(default=0.0, init=False)
     flip_vertical: bool = field(default=False, init=False)
     rotated: bool = field(default=False, init=False)
+    text: str = ""
+    _raw_chars: str = ""
 
     def __post_init__(self) -> None:
+        decoded_value: str = ""
+        if isinstance(self.value, bytes):
+            if isinstance(self.font.encoding, str):
+                try:
+                    # Decode 2-byte UTF-16-BE units
+                    self._raw_chars = self.value.decode(self.font.encoding, "surrogatepass")
+                except UnicodeDecodeError:
+                    # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
+                    self._raw_chars = self.value.decode(self.font.encoding, "surrogateescape")
+            else:
+                self._raw_chars = "".join(chr(byte) for byte in self.value)
+                decoded_value = "".join(self.font.encoding.get(x, chr(x)) for x in self.value)
+            self.text = "".join(
+                self.font.character_map.get(x, x) for x in (decoded_value or self._raw_chars)
+            )
+        else:
+            self.text = self.value
+
         if orient(self.transform) in (90, 270):
             self.transform = mult(
                 [1.0, -self.transform[1], -self.transform[2], 1.0, 0.0, 0.0],
@@ -68,7 +88,7 @@ class TextStateParams:
         self.displaced_tx = self.displaced_transform()[4]
         self.tx = self.transform[4]
         self.ty = self.render_transform()[5]
-        self.space_tx = round(self.word_tx(" "), 3)
+        self.space_tx = round(self.word_tx(self.font.space_char), 3)
         if self.space_tx < 1e-6:
             # if the " " char is assigned 0 width (e.g. for fine tuned spacing
             # with TJ int operators a la crazyones.pdf), calculate space_tx as
@@ -101,32 +121,36 @@ class TextStateParams:
         return mult(self.font_size_matrix(), self.transform)
 
     def displacement_matrix(
-        self, word: Union[str, None] = None, td_offset: float = 0.0
+        self, word: Union[bytes, str, None] = None, td_offset: float = 0.0
     ) -> list[float]:
         """
         Text displacement matrix
 
         Args:
-            word (str, optional): Defaults to None in which case self.txt displacement is
+            word (bytes | str, optional): Defaults to None in which case self.text displacement is
                 returned.
             td_offset (float, optional): translation applied by TD operator. Defaults to 0.0.
 
         """
-        word = word if word is not None else self.txt
+        word = word if word is not None else self.value
         return [1.0, 0.0, 0.0, 1.0, self.word_tx(word, td_offset), 0.0]
 
-    def word_tx(self, word: str, td_offset: float = 0.0) -> float:
+    def word_tx(self, word: Union[bytes, str], td_offset: float = 0.0) -> float:
         """Horizontal text displacement for any word according this text state"""
         width: float = 0.0
+        if isinstance(word, bytes):
+            word = self._raw_chars
+
         for char in word:
-            if char == " ":
+            if char == self.font.space_char:
                 width += self.font.space_width
             else:
-                width += self.font.text_width(char)
+                width += self.font.get_text_width(char)
+
         return (
             (self.font_size * ((width - td_offset) / 1000.0))
-            + self.Tc
-            + word.count(" ") * self.Tw
+            + len(word) * self.Tc
+            + word.count(self.font.space_char) * self.Tw
         ) * (self.Tz / 100.0)
 
     @staticmethod

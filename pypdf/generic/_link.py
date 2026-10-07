@@ -65,8 +65,10 @@ class DirectReferenceLink:
         """reference: an ArrayObject whose first element is the Page indirect object"""
         self._reference = reference
 
-    def find_referenced_page(self) -> IndirectObject:
-        return self._reference[0]
+    def find_referenced_page(self) -> Union[IndirectObject, None]:
+        if not self._reference:
+            return None
+        return cast(IndirectObject, self._reference[0])
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
         """target_pdf: PdfWriter which the new link went into"""
@@ -91,8 +93,10 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
         old_annotations = ArrayObject()
     if not isinstance(new_annotations, ArrayObject) or not isinstance(old_annotations, ArrayObject):
         logger_warning(
-            f"Expected annotation arrays: {old_annotations} {new_annotations}. Ignoring annotations.",
-            __name__
+            "Expected annotation arrays: %(old_annotations)s %(new_annotations)s. Ignoring annotations.",
+            source=__name__,
+            old_annotations=old_annotations,
+            new_annotations=new_annotations,
         )
         return []
     new_links = [
@@ -108,8 +112,10 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
 
     if len(new_links) != len(old_links):
         logger_warning(
-            f"Annotation sizes differ: {old_links} vs. {new_links}",
-            __name__,
+            "Annotation sizes differ: %(old_count)d vs. %(new_count)d",
+            source=__name__,
+            old_count=len(old_links),
+            new_count=len(new_links),
         )
 
     return list(zip(new_links, old_links))

@@ -26,7 +26,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import hashlib
 import secrets
+import stringprep
 import struct
+import unicodedata
 from enum import Enum, IntEnum
 from typing import Any, Optional, Union, cast
 
@@ -79,11 +81,11 @@ class CryptFilter:
             obj2 = StreamObject()
             obj2.update(obj)
             obj2.set_data(self.stm_crypt.encrypt(obj._data))
-            for key, value in obj.items():  # Dont forget the Stream dict.
+            for key, value in obj.items():  # Don't forget the Stream dict.
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
         elif isinstance(obj, DictionaryObject):
-            obj2 = DictionaryObject()  # type: ignore
+            obj2 = DictionaryObject()  # type: ignore[assignment]
             for key, value in obj.items():
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
@@ -91,20 +93,20 @@ class CryptFilter:
             obj = ArrayObject(self.encrypt_object(x) for x in obj)
         return obj
 
-    def decrypt_object(self, obj: PdfObject) -> PdfObject:
+    def decrypt_object(self, obj: PdfObject, *, strict: bool = True) -> PdfObject:
         if isinstance(obj, (ByteStringObject, TextStringObject)):
-            data = self.str_crypt.decrypt(obj.original_bytes)
+            data = self.str_crypt.decrypt(obj.original_bytes, strict=strict)
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
-            obj._data = self.stm_crypt.decrypt(obj._data)
-            for key, value in obj.items():  # Dont forget the Stream dict.
-                obj[key] = self.decrypt_object(value)
+            obj._data = self.stm_crypt.decrypt(obj._data, strict=strict)
+            for key, value in obj.items():  # Don't forget the Stream dict.
+                obj[key] = self.decrypt_object(value, strict=strict)
         elif isinstance(obj, DictionaryObject):
             for key, value in obj.items():
-                obj[key] = self.decrypt_object(value)
+                obj[key] = self.decrypt_object(value, strict=strict)
         elif isinstance(obj, ArrayObject):
             for i in range(len(obj)):
-                obj[i] = self.decrypt_object(obj[i])
+                obj[i] = self.decrypt_object(obj[i], strict=strict)
         return obj
 
 
@@ -116,6 +118,22 @@ _PADDING = (
 
 def _padding(data: bytes) -> bytes:
     return (data + _PADDING)[:32]
+
+
+# Module-level constant for SASLprep prohibited character checks (RFC 4013 §2.3)
+_SASLPREP_PROHIBITED_CHECKS = (
+    (stringprep.in_table_c12, "non-ASCII space character"),
+    (stringprep.in_table_c21, "ASCII control character"),
+    (stringprep.in_table_c22, "non-ASCII control character"),
+    (stringprep.in_table_c3, "private use character"),
+    (stringprep.in_table_c4, "non-character code point"),
+    (stringprep.in_table_c5, "surrogate code point"),
+    (stringprep.in_table_c6, "inappropriate for plain text"),
+    (stringprep.in_table_c7, "inappropriate for canonical representation"),
+    (stringprep.in_table_c8, "change display properties/deprecated"),
+    (stringprep.in_table_c9, "tagging character"),
+    (stringprep.in_table_a1, "unassigned code point"),
+)
 
 
 class AlgV4:
@@ -144,7 +162,6 @@ class AlgV4:
            of the password string. If the password string is empty
            (zero-length), meaning there is no user password,
            substitute the entire padding string in its place.
-
         b) Initialize the MD5 hash function and pass the result of step (a)
            as input to this function.
         c) Pass the value of the encryption dictionary’s O entry to the
@@ -767,6 +784,73 @@ class PasswordType(IntEnum):
     OWNER_PASSWORD = 2
 
 
+def _saslprep(password: str) -> str:
+    """
+    Apply the SASLprep profile (RFC 4013) of stringprep (RFC 3454).
+
+    This normalizes Unicode passwords for PDF 2.0 (AES-256, revision 5/6)
+    encryption as required by the PDF specification.
+
+    Args:
+        password: The Unicode password string to normalize.
+
+    Returns:
+        The SASLprep-normalized string.
+
+    Raises:
+        ValueError: If the password contains prohibited characters
+            or fails the bidirectional character check.
+
+    """
+    # Mapping (RFC 4013 §2.1)
+    #    - Map characters in table B.1 to nothing
+    #    - Map characters in table C.1.2 (non-ASCII spaces) to U+0020 (SPACE)
+    mapped: list[str] = []
+    for character in password:
+        if stringprep.in_table_b1(character):
+            continue  # map to nothing
+        if stringprep.in_table_c12(character):
+            mapped.append(" ")  # map to SPACE
+        else:
+            mapped.append(character)
+    password = "".join(mapped)
+
+    # Normalization (RFC 4013 §2.2) — Unicode NFKC
+    password = unicodedata.normalize("NFKC", password)
+
+    for character in password:
+        for check, description in _SASLPREP_PROHIBITED_CHECKS:
+            if check(character):
+                raise ValueError(
+                    f"SASLprep: {description} U+{ord(character):04X}"
+                )
+
+    # Bidirectional check (RFC 4013 §2.4, RFC 3454 §6)
+    has_r_and_al = False
+    has_l = False
+    for character in password:
+        if stringprep.in_table_d1(character):
+            has_r_and_al = True
+        if stringprep.in_table_d2(character):
+            has_l = True
+
+    if has_r_and_al:
+        if has_l:
+            raise ValueError(
+                "SASLprep: string with RandALCat characters must not "
+                "contain LCat characters"
+            )
+        if not stringprep.in_table_d1(password[0]) or not stringprep.in_table_d1(
+            password[-1]
+        ):
+            raise ValueError(
+                "SASLprep: string with RandALCat characters must start "
+                "and end with RandALCat characters"
+            )
+
+    return password
+
+
 class EncryptAlgorithm(tuple, Enum):  # type: ignore # noqa: SLOT001
     # V, R, Length
     RC4_40 = (1, 2, 40)
@@ -851,13 +935,13 @@ class Encryption:
         cf = self._make_crypt_filter(idnum, generation)
         return cf.encrypt_object(obj)
 
-    def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
+    def decrypt_object(self, obj: PdfObject, idnum: int, generation: int, *, strict: bool = True) -> PdfObject:
         # skip calculate key
         if not self._is_encryption_object(obj):
             return obj
 
         cf = self._make_crypt_filter(idnum, generation)
-        return cf.decrypt_object(obj)
+        return cf.decrypt_object(obj, strict=strict)
 
     @staticmethod
     def _is_encryption_object(obj: PdfObject) -> bool:
@@ -916,8 +1000,8 @@ class Encryption:
            that is stored as the first 16 bytes of the encrypted stream or string.
            The output is the encrypted data to be stored in the PDF file.
         """
-        pack1 = struct.pack("<i", idnum)[:3]
-        pack2 = struct.pack("<i", generation)[:2]
+        pack1 = (idnum & 0xFFFFFF).to_bytes(3, "little")
+        pack2 = (generation & 0xFFFF).to_bytes(2, "little")
 
         assert self._key
         key = self._key
@@ -958,19 +1042,39 @@ class Encryption:
 
         return CryptRC4(rc4_key)
 
-    @staticmethod
-    def _encode_password(password: Union[bytes, str]) -> bytes:
+    def _encode_password(
+        self, password: Union[bytes, str], *, strict: bool = False
+    ) -> bytes:
         if isinstance(password, str):
-            try:
-                pwd = password.encode("latin-1")
-            except Exception:
+            if self.V >= 5:
+                # PDF 2.0 §7.6.4.3.3: AES-256 (R5/R6) requires SASLprep
+                # normalization followed by UTF-8 encoding.
+                try:
+                    password = _saslprep(password)
+                except (ValueError, IndexError) as e:
+                    if strict:
+                        raise ValueError(
+                            f"Password SASLprep normalization failed: {e}"
+                        ) from e
+                    logger_warning(
+                        "SASLprep normalization failed, using plain UTF-8: %(err)s",
+                        source=__name__,
+                        err=str(e),
+                    )
                 pwd = password.encode("utf-8")
+            else:
+                try:
+                    pwd = password.encode("latin-1")
+                except Exception:
+                    pwd = password.encode("utf-8")
         else:
             pwd = password
         return pwd
 
-    def verify(self, password: Union[bytes, str]) -> PasswordType:
-        pwd = self._encode_password(password)
+    def verify(
+        self, password: Union[bytes, str], *, strict: bool = False
+    ) -> PasswordType:
+        pwd = self._encode_password(password, strict=strict)
         key, rc = self.verify_v4(pwd) if self.V <= 4 else self.verify_v5(pwd)
         if rc != PasswordType.NOT_DECRYPTED:
             self._password_type = rc
@@ -1006,7 +1110,6 @@ class Encryption:
         return b"", PasswordType.NOT_DECRYPTED
 
     def verify_v5(self, password: bytes) -> tuple[bytes, PasswordType]:
-        # TODO: use SASLprep process
         # verify owner password first
         key = AlgV5.verify_owner_password(
             self.R, password, self.values.O, self.values.OE, self.values.U
@@ -1023,14 +1126,22 @@ class Encryption:
         # verify Perms
         self._are_permissions_valid = AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata)
         if not self._are_permissions_valid:
-            logger_warning("ignore '/Perms' verify failed", __name__)
+            logger_warning("ignore '/Perms' verify failed", source=__name__)
         return key, rc
 
     def write_entry(
-        self, user_password: str, owner_password: Optional[str]
+        self,
+        user_password: str,
+        owner_password: Optional[str],
+        *,
+        strict: bool = False,
     ) -> DictionaryObject:
-        user_pwd = self._encode_password(user_password)
-        owner_pwd = self._encode_password(owner_password) if owner_password else None
+        user_pwd = self._encode_password(user_password, strict=strict)
+        owner_pwd = (
+            self._encode_password(owner_password, strict=strict)
+            if owner_password
+            else None
+        )
         if owner_pwd is None:
             owner_pwd = user_pwd
 
@@ -1121,11 +1232,11 @@ class Encryption:
             ef_filter = encryption_entry.get("/EFF", stm_filter)
 
             if stm_filter != "/Identity":
-                stm_filter = filters[stm_filter]["/CFM"]  # type: ignore
+                stm_filter = filters[stm_filter]["/CFM"]  # type: ignore[index]
             if str_filter != "/Identity":
-                str_filter = filters[str_filter]["/CFM"]  # type: ignore
+                str_filter = filters[str_filter]["/CFM"]  # type: ignore[index]
             if ef_filter != "/Identity":
-                ef_filter = filters[ef_filter]["/CFM"]  # type: ignore
+                ef_filter = filters[ef_filter]["/CFM"]  # type: ignore[index]
 
             allowed_methods = ("/Identity", "/V2", "/AESV2", "/AESV3")
             if stm_filter not in allowed_methods:

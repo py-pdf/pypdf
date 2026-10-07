@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.11,<4"]
+requires = ["flit_core >=3.11,<5"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -39,14 +39,24 @@ Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
 
 [project.optional-dependencies]
-crypto = ["cryptography"]
-cryptodome = ["PyCryptodome"]
-image = ["Pillow>=8.0.0"]
 brotli = ["brotli"]
+# This is due to the backend parameter being required back then:
+# https://cryptography.io/en/latest/changelog/#v3-1
+crypto = ["cryptography>3.0"]
+cryptodome = ["PyCryptodome"]
+fonts = ["fonttools"]
+image = ["Pillow>=8.0.0"]
+rtl_text = [
+    "arabic-reshaper",
+    "python-bidi",
+]
 full = [
-    "cryptography",
-    "Pillow>=8.0.0",
+    "arabic-reshaper",
     "brotli",
+    "cryptography>3.0",
+    "fonttools",
+    "Pillow>=8.0.0",
+    "python-bidi"
 ]
 dev = [
     "flit",
@@ -125,7 +135,6 @@ exclude_lines = [
     # Don't complain about missing debug-only code:
     "def __repr__",
     "def __str__",
-    "if self\\.debug",
 
     # Don't complain if tests don't hit defensive assertion code:
     "raise AssertionError",
@@ -154,6 +163,7 @@ ignore = [
     "B905",    # `zip()` without an explicit `strict=` parameter
     "BLE001",  # Do not catch blind exception: `Exception`
     "COM812",  # Yes, they make the diff smaller
+    "CPY001",  # We do not have a policy for copyrights per file at the moment
     "D101",    # Missing docstring in public class
     "D102",    # Missing docstring in public method
     "D105",    # Missing docstring in magic method
@@ -174,8 +184,6 @@ ignore = [
     "FBT002",  # Boolean default value in function definition
     "FBT003",  # Boolean positional value in function call
     "FIX002",  # TODOs should typically not be in the code, but sometimes are ok
-    "G004",    # f-string in logging statement
-    "N806",    # non-lowercase-variable-in-function
     "N814",    # Camelcase `PageAttributes` imported as constant `PG`
     "N817",    # CamelCase `PagesAttributes` imported as acronym `PA`
     "PERF203", # `try`-`except` within a loop incurs performance overhead
@@ -201,7 +209,6 @@ ignore = [
     "TRY002",  # Create your own exception
     "TRY003",  # Avoid specifying long messages outside the exception class
     "TRY004",  # Prefer `TypeError` exception for invalid type
-    "TRY201",  # Use `raise` without specifying exception name
     "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
@@ -241,17 +248,10 @@ wrap-summaries = 0
 wrap-descriptions = 0
 
 [tool.mypy]
-show_error_codes = true
+strict = true
 ignore_missing_imports = true
-check_untyped_defs = true
-disallow_any_generics = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_unused_configs = true
-exclude = ['venv', '.venv']
-
+show_error_codes = true
+exclude = ['venv', '.venv', 'sample-files']
 
 [[tool.mypy.overrides]]
 module = "tests.*"

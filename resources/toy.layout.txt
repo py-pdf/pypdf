@@ -1,9 +1,9 @@
 AWAY again1
-   AWAY again2
+  AWAY again2
 
 
-    Something[cited]
+   Something[cited]
 
-              Single quote operator
-              Double quote operator
-              Last Txt
+          Single quote operator
+          Double quote operator
+          Last Txt

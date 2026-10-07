@@ -8,21 +8,28 @@ import datetime
 import decimal
 import re
 from collections.abc import Iterator
+from string import hexdigits
 from typing import (
     Any,
     Callable,
     Optional,
     TypeVar,
     Union,
+    cast,
 )
-from xml.dom.minidom import Document, parseString
+from xml.dom.expatbuilder import ExpatBuilderNS
+from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
-from xml.parsers.expat import ExpatError
+from xml.dom.xmlbuilder import Options
+from xml.parsers.expat import ExpatError, XMLParserType
 
-from ._protocols import XmpInformationProtocol
+from ._configuration import get_configuration
 from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
-from .errors import PdfReadError, XmpDocumentError
-from .generic import ContentStream, PdfObject
+from .errors import LimitReachedError, PdfReadError, XmpDocumentError
+from .generic import ContentStream, PdfObject, StreamObject
+
+XMP_MAX_INPUT_LENGTH = 5_000_000  # DEPRECATED: Use pypdf.Configuration.
+XMP_MAX_ELEMENT_COUNT = 100_000  # DEPRECATED: Use pypdf.Configuration.
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -161,7 +168,51 @@ def _generic_get(
     return None
 
 
-class XmpInformation(XmpInformationProtocol, PdfObject):
+class _XmpBuilder(ExpatBuilderNS):
+    """
+    Custom XML parser denying all entity declarations.
+
+    This is a stripped down and typed version inspired by what *defusedxml* does.
+
+    Why do we need this? The default limits of *libexpat* used by Python only block exponential entity expansion,
+    but not cases like quadratic entity expansion which can still cause quite some memory usage.
+    """
+
+    def __init__(self, options: Optional[Options] = None) -> None:
+        super().__init__(options=options)
+        self._element_count = 0
+        self._configuration = get_configuration()
+
+    def custom_entity_declaration_handler(
+            self,
+            entity_name: str,
+            # expat passes an int here rather than a bool, but typeshed declares
+            # the handler with a bool, so the annotation follows typeshed.
+            is_parameter_entity: bool,
+            value: Optional[str],
+            base: Optional[str],
+            system_id: str,
+            public_id: Optional[str],
+            notation_name: Optional[str],
+    ) -> None:
+        raise ExpatError(f"Forbidden entities: {entity_name!r}")
+
+    def start_element_handler(self, name: str, attributes: list[str]) -> None:
+        self._element_count += 1
+        if self._element_count > self._configuration.xmp_maximum_element_count:
+            raise LimitReachedError(
+                f"XMP metadata exceeds limit of {self._configuration.xmp_maximum_element_count} elements."
+            )
+        super().start_element_handler(name=name, attributes=attributes)
+
+    def install(self, parser: XMLParserType) -> None:
+        super().install(parser)
+
+        parser.EntityDeclHandler = self.custom_entity_declaration_handler
+        parser.StartElementHandler = self.start_element_handler
+
+
+class XmpInformation(PdfObject):
     """
     An object that represents Extensible Metadata Platform (XMP) metadata.
     Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`.
@@ -171,16 +222,24 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
     """
 
-    def __init__(self, stream: ContentStream) -> None:
+    def __init__(self, stream: StreamObject) -> None:
         self.stream = stream
         try:
             data = self.stream.get_data()
-            doc_root: Document = parseString(data)  # noqa: S318
+            configuration = get_configuration()
+            if (length := len(data)) > configuration.xmp_maximum_input_length:
+                raise LimitReachedError(
+                    f"XMP stream size {length} exceeds limit of {configuration.xmp_maximum_input_length}."
+                )
+            doc_root: Document = _XmpBuilder().parseString(data)
         except (AttributeError, ExpatError) as e:
             raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
-        self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
-            RDF_NAMESPACE, "RDF"
-        )[0]
+        rdf_roots = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")
+        if not rdf_roots:
+            raise PdfReadError(
+                "XML in XmpInformation was invalid: Missing rdf:RDF root element"
+            )
+        self.rdf_root: XmlElement = rdf_roots[0]
         self.cache: dict[Any, Any] = {}
 
     @classmethod
@@ -196,7 +255,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         return cls(stream)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
     ) -> None:
         deprecate_with_replacement(
             "XmpInformation.write_to_stream",
@@ -260,7 +319,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     def _getter_bag(self, namespace: str, name: str) -> Optional[list[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
-            return cached
+            return cast(list[str], cached)
         retval: list[str] = []
         for element in self.get_element("", namespace, name):
             if (bags := _generic_get(element, self, list_type="Bag")) is not None:
@@ -280,7 +339,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     ) -> Optional[list[Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
-            return cached
+            return cast(list[Any], cached)
         retval: list[Any] = []
         for element in self.get_element("", namespace, name):
             if (seqs := _generic_get(element, self, list_type="Seq", converter=converter)) is not None:
@@ -304,7 +363,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     def _get_langalt_values(self, namespace: str, name: str) -> Optional[dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
-            return cached
+            return cast(dict[Any, Any], cached)
         retval: dict[Any, Any] = {}
         for element in self.get_element("", namespace, name):
             alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
@@ -588,16 +647,20 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             self._custom_properties = {}
             for node in self.get_nodes_in_namespace("", PDFX_NAMESPACE):
                 key = node.localName
+                start = 0
                 while True:
                     # see documentation about PDFX_NAMESPACE earlier in file
-                    idx = key.find("\u2182")
+                    idx = key.find("\u2182", start)
                     if idx == -1:
                         break
-                    key = (
-                        key[:idx]
-                        + chr(int(key[idx + 1 : idx + 5], base=16))
-                        + key[idx + 5 :]
-                    )
+                    hex_id = key[idx + 1 : idx + 5]
+                    if len(hex_id) != 4 or not all(c in hexdigits for c in hex_id):
+                        # Not a well-formed escape; leave the marker untouched
+                        # and continue past it instead of crashing.
+                        start = idx + 1
+                        continue
+                    key = key[:idx] + chr(int(hex_id, base=16)) + key[idx + 5 :]
+                    start = idx + 1
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:

@@ -26,6 +26,10 @@ def rev_encoding(enc: list[str]) -> dict[str, int]:
     return rev
 
 
+def encoding_dict_from_named_encoding(encoding: str) -> dict[int, str]:
+    return dict(zip(range(256), fill_from_encoding(encoding)))
+
+
 _win_encoding = fill_from_encoding("cp1252")
 _mac_encoding = fill_from_encoding("mac_roman")
 

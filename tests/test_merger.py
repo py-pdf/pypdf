@@ -6,7 +6,7 @@ import pytest
 
 import pypdf
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import ArrayObject, Destination, DictionaryObject, Fit, NameObject, NullObject
+from pypdf.generic import ArrayObject, Destination, DictionaryObject, Fit, NameObject, NullObject, TextStringObject
 
 from . import RESOURCE_ROOT, get_data_from_url
 from .test_encryption import HAS_AES
@@ -219,7 +219,7 @@ def test_merge_write_closed_fh_with_writer(pdf_file_path):
 def test_trim_outline_list_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381771/tika-995175.pdf"
     name = "tika-995175.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.add_outline_item_dict(merger.outline[0])
@@ -231,7 +231,7 @@ def test_trim_outline_list_with_writer(pdf_file_path):
 def test_zoom_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381769/tika-994759.pdf"
     name = "tika-994759.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -243,7 +243,7 @@ def test_zoom_with_writer(pdf_file_path):
 def test_zoom_xyz_no_left_with_add_page(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381704/tika-933322.pdf"
     name = "tika-933322.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     for p in reader.pages:
         merger.add_page(p)
@@ -255,7 +255,7 @@ def test_zoom_xyz_no_left_with_add_page(pdf_file_path):
 def test_zoom_xyz_no_left_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381704/tika-933322.pdf"
     name = "tika-933322.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -267,7 +267,7 @@ def test_zoom_xyz_no_left_with_writer(pdf_file_path):
 def test_outline_item_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381773/tika-997511.pdf"
     name = "tika-997511.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -279,7 +279,7 @@ def test_outline_item_with_writer(pdf_file_path):
 def test_trim_outline_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381759/tika-982336.pdf"
     name = "tika-982336.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -291,7 +291,7 @@ def test_trim_outline_with_writer(pdf_file_path):
 def test1_with_writer(pdf_file_path):
     url = "https://github.com/user-attachments/files/18381696/tika-923621.pdf"
     name = "tika-923621.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -304,7 +304,7 @@ def test_sweep_recursion1_with_writer(pdf_file_path):
     # TODO: This test looks like an infinite loop.
     url = "https://github.com/user-attachments/files/18381697/tika-924546.pdf"
     name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -331,7 +331,7 @@ def test_sweep_recursion1_with_writer(pdf_file_path):
     ],
 )
 def test_sweep_recursion2_with_writer(url, name, pdf_file_path):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -345,7 +345,7 @@ def test_sweep_recursion2_with_writer(url, name, pdf_file_path):
 def test_sweep_indirect_list_newobj_is_none_with_writer(caplog, pdf_file_path):
     url = "https://github.com/user-attachments/files/18381681/tika-906769.pdf"
     name = "tika-906769.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -362,7 +362,7 @@ def test_iss1145_with_writer():
     url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
     name = "iss1145.pdf"
     merger = PdfWriter()
-    merger.append(PdfReader(BytesIO(get_data_from_url(url, name=name))))
+    merger.append(PdfReader(BytesIO(get_data_from_url(url=url, name=name))))
     merger.close()
 
 
@@ -371,7 +371,7 @@ def test_iss1344_with_writer(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9549001/input.pdf"
     name = "iss1344.pdf"
     m = PdfWriter()
-    m.append(PdfReader(BytesIO(get_data_from_url(url, name=name))))
+    m.append(PdfReader(BytesIO(get_data_from_url(url=url, name=name))))
     b = BytesIO()
     m.write(b)
     p = PdfReader(b).pages[0]
@@ -384,7 +384,7 @@ def test_articles_with_writer(caplog):
     url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "924666.pdf"
     m = PdfWriter()
-    m.append(PdfReader(BytesIO(get_data_from_url(url, name=name))), (2, 10))
+    m.append(PdfReader(BytesIO(get_data_from_url(url=url, name=name))), (2, 10))
     b = BytesIO()
     m.write(b)
     r = PdfReader(b)
@@ -534,3 +534,138 @@ def test_merge__null_destination():
 
     writer.merge(position=1, fileobj=data)
     assert writer.pages[0].annotations is None
+
+
+def test_merge_annotation_without_subtype():
+    """Regression test for #3356."""
+    src = PdfWriter()
+    src.add_blank_page(width=612, height=792)
+    annot = DictionaryObject()
+    src.pages[0][NameObject("/Annots")] = ArrayObject([src._add_object(annot)])
+
+    source = BytesIO()
+    src.write(source)
+    source.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(source), import_outline=False)
+
+    merged = BytesIO()
+    writer.write(merged)
+    merged.seek(0)
+
+    reread = PdfReader(merged)
+    merged_annot = reread.pages[0]["/Annots"][0].get_object()
+    assert "/Subtype" not in merged_annot
+
+
+@pytest.mark.enable_socket
+def test_append_page_with_non_terminal_fields():
+    """
+    This test is a regression test for issue #3736.
+    Appending a single page must not pull in the other pages through fields
+    sharing a non-terminal parent field.
+    """
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-3736.pdf")))
+    writer = PdfWriter()
+    writer.append(reader, pages=[0])
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    # Only the appended page and its page tree may be written.
+    page_types = [
+        obj.get("/Type")
+        for obj in writer._objects
+        if isinstance(obj, DictionaryObject)
+    ]
+    assert page_types.count("/Page") == 1
+    assert page_types.count("/Pages") == 1
+
+    result = PdfReader(output)
+    assert len(result.pages) == 1
+    assert list(result.get_fields()) == [
+        "common", "common.Text1", "common.Text2", "common.Button1"
+    ]
+    page_reference = result.pages[0].indirect_reference
+    for annotation in result.pages[0]["/Annots"]:
+        assert annotation.get_object().raw_get("/P") == page_reference
+
+    # Appending the whole document keeps all fields in their original order.
+    writer = PdfWriter()
+    writer.append(reader)
+    assert list(writer.get_fields()) == list(reader.get_fields())
+
+
+def test_merge_widget_with_non_dictionary_parent():
+    """
+    A ``/Widget`` whose ``/Parent`` does not resolve to a dictionary must not
+    abort the merge. The malformed reference is dropped and the widget itself
+    is still carried over.
+    """
+    input_writer = PdfWriter()
+    input_writer.add_blank_page(width=612, height=792)
+    annotation = DictionaryObject()
+    annotation[NameObject("/Subtype")] = NameObject("/Widget")
+    # An indirect reference to something that is not a dictionary.
+    annotation[NameObject("/Parent")] = input_writer._add_object(NullObject())
+    input_writer.pages[0][NameObject("/Annots")] = ArrayObject([input_writer._add_object(annotation)])
+
+    input_pdf = BytesIO()
+    input_writer.write(input_pdf)
+    input_pdf.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(input_pdf), import_outline=False)
+
+    merged = BytesIO()
+    writer.write(merged)
+    merged.seek(0)
+
+    reader = PdfReader(merged)
+    assert len(reader.pages) == 1
+    merged_annotation = reader.pages[0]["/Annots"][0].get_object()
+    assert merged_annotation["/Subtype"] == "/Widget"
+    assert "/Parent" not in merged_annotation
+
+
+def test_merge_widget_with_cyclic_parent_chain():
+    """
+    A ``/Parent`` chain that loops back on itself must not hang the merge.
+    Every field in the loop is cloned once and keeps its ``/Parent`` and ``/Kids``.
+    """
+    input_writer = PdfWriter()
+    input_writer.add_blank_page(width=612, height=792)
+    first_field = DictionaryObject({NameObject("/T"): TextStringObject("first")})
+    second_field = DictionaryObject({NameObject("/T"): TextStringObject("second")})
+    first_reference = input_writer._add_object(first_field)
+    second_reference = input_writer._add_object(second_field)
+    widget = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Widget"),
+        NameObject("/Parent"): first_reference,
+    })
+    widget_reference = input_writer._add_object(widget)
+    first_field[NameObject("/Parent")] = second_reference
+    first_field[NameObject("/Kids")] = ArrayObject([widget_reference])
+    second_field[NameObject("/Parent")] = first_reference
+    second_field[NameObject("/Kids")] = ArrayObject([first_reference])
+    input_writer.pages[0][NameObject("/Annots")] = ArrayObject([widget_reference])
+
+    input_pdf = BytesIO()
+    input_writer.write(input_pdf)
+    input_pdf.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(input_pdf), import_outline=False)
+
+    merged_widget = writer.pages[0]["/Annots"][0].get_object()
+    merged_first = merged_widget["/Parent"].get_object()
+    merged_second = merged_first["/Parent"].get_object()
+    assert merged_first["/T"] == "first"
+    assert merged_second["/T"] == "second"
+    assert merged_second.raw_get("/Parent") == merged_widget.raw_get("/Parent")
+    assert merged_first["/Kids"] == [merged_widget.indirect_reference]
+    assert merged_second["/Kids"] == [merged_widget.raw_get("/Parent")]
+    fields = [obj for obj in writer._objects if isinstance(obj, DictionaryObject) and "/T" in obj]
+    assert len(fields) == 2

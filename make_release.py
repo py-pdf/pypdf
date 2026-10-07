@@ -38,7 +38,7 @@ def main(changelog_path: str) -> None:
         print("No changes")
         return
 
-    new_version = version_bump(git_tag)
+    new_version = version_bump(git_tag, changes)
     new_version = get_version_interactive(new_version, changes)
     adjust_version_py(new_version)
 
@@ -140,20 +140,47 @@ def strip_header(md: str) -> str:
     return md.removeprefix("# CHANGELOG").lstrip()
 
 
-def version_bump(git_tag: str) -> str:
+def version_bump(git_tag: str, changes: str = "") -> str:
     """
-    Increase the patch version of the git tag by one.
+    Increase the version of the git tag according to the release policy.
+
+    The patch version is increased for regular changes and the minor version
+    for enhancements or deprecations, which are the ``ENH`` and ``DEP``
+    sections of the formatted changes. Major bumps stay manual.
 
     Args:
         git_tag: Old version tag
+        changes: The formatted changes, as returned by
+            :func:`get_formatted_changes`. When empty, a patch bump is assumed.
 
     Returns:
-        The new version where the patch version is bumped.
+        The new version.
 
     """
-    # just assume a patch version change
     major, minor, patch = git_tag.split(".")
+    if has_minor_changes(changes):
+        return f"{major}.{int(minor) + 1}.0"
     return f"{major}.{minor}.{int(patch) + 1}"
+
+
+def has_minor_changes(changes: str) -> bool:
+    """
+    Report whether the changes warrant a minor version bump.
+
+    Args:
+        changes: The formatted changes, as returned by
+            :func:`get_formatted_changes`.
+
+    Returns:
+        Whether an enhancement or deprecation section is present.
+
+    """
+    return any(
+        f"({prefix})" in line
+        for line in changes.splitlines()
+        if line.startswith("### ")
+        for prefix in ("ENH", "DEP")
+    )
 
 
 def get_changelog(changelog_path: str) -> str:

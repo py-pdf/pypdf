@@ -1,14 +1,18 @@
+arabic-reshaper
 coverage
+fonttools
 fpdf2
 mypy
 pillow
 cryptography
+pycryptodome
 pytest
 pytest-benchmark
 pytest-socket
 pytest-timeout
 pytest-xdist
 pytest-cov
+python-bidi
 # ruff  # only take this for 3.11
 typeguard
 pyyaml

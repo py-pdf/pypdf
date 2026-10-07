@@ -19,10 +19,32 @@ from pypdf.annotations import (
     Rectangle,
     Text,
 )
+from pypdf.constants import AnnotationFlag
 from pypdf.errors import PdfReadError
-from pypdf.generic import ArrayObject, FloatObject, NumberObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    Fit,
+    FloatObject,
+    NameObject,
+    NumberObject,
+    RectangleObject,
+)
 
 from . import RESOURCE_ROOT, get_data_from_url
+
+
+def test_annotation_flags_returns_annotation_flag_type():
+    annot = Text(rect=(0, 0, 100, 100), text="test")
+
+    # Without /F key, should return AnnotationFlag(0)
+    assert isinstance(annot.flags, AnnotationFlag)
+    assert annot.flags == 0
+
+    # With /F key set as a NumberObject (as stored in PDFs)
+    annot[NameObject("/F")] = NumberObject(4)
+    assert isinstance(annot.flags, AnnotationFlag)
+    assert annot.flags == AnnotationFlag.PRINT
 
 
 def test_ellipse(pdf_file_path):
@@ -126,10 +148,44 @@ def test_free_text__font_specifier():
     assert free_text_annotation["/DS"] == "font: italic bold 20pt Arial;text-align:left;color:#00ff00"
 
 
+@pytest.mark.parametrize("border_color", ["0000ff", None, ""])
+@pytest.mark.parametrize(
+    ("font_color", "expected_appearance"),
+    [
+        ("00ff00", "0.0 1.0 0.0 rg"),
+        ("ff0000", "1.0 0.0 0.0 rg"),
+        ("000000", "0.0 0.0 0.0 rg"),
+        ("", ""),
+    ],
+)
+def test_free_text__font_color(font_color, border_color, expected_appearance):
+    free_text_annotation = FreeText(
+        text="Hello World",
+        rect=(50, 550, 200, 650),
+        font_color=font_color,
+        border_color=border_color,
+    )
+    assert free_text_annotation["/DA"] == expected_appearance
+    if border_color is None:
+        assert free_text_annotation["/BS"]["/W"] == 0
+    else:
+        assert "/BS" not in free_text_annotation
+
+    writer = PdfWriter()
+    writer.add_blank_page(width=300, height=700)
+    writer.add_annotation(0, free_text_annotation)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output)
+    annotation = reader.pages[0]["/Annots"][0].get_object()
+    assert annotation["/DA"] == expected_appearance
+
+
 def test_annotation_dictionary():
     a = AnnotationDictionary()
-    a.flags = 123
-    assert a.flags == 123
+    a.flags = AnnotationFlag.HIDDEN | AnnotationFlag.PRINT | AnnotationFlag.NO_ZOOM
+    assert a.flags == AnnotationFlag.HIDDEN | AnnotationFlag.PRINT | AnnotationFlag.NO_ZOOM
 
 
 def test_polygon(pdf_file_path):
@@ -293,9 +349,9 @@ def test_link(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    for page in reader.pages:
+        writer.add_page(page)
 
     # Act
     # Part 1: Too many args
@@ -328,12 +384,94 @@ def test_link(pdf_file_path):
     )
     writer.add_annotation(0, link_annotation)
 
-    for page in reader.pages[1:]:
-        writer.add_page(page)
-
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
+
+
+def test_link__existing_target_uses_indirect_reference():
+    # Arrange
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    writer.add_blank_page(width=200, height=200)
+
+    link_annotation = Link(
+        rect=(100, 100, 300, 200),
+        target_page_index=1,
+        border=[50, 10, 4],
+        fit=Fit(fit_type="/XYZ", fit_args=(0, 0, 0)),
+    )
+
+    # Act
+    added_annotation = writer.add_annotation(0, link_annotation)
+
+    # Assert
+    destination = added_annotation["/Dest"]
+
+    assert isinstance(destination, ArrayObject)
+    assert destination[0] == writer.pages[1].indirect_reference
+    assert destination[1] == "/XYZ"
+    assert destination[2:] == [0, 0, 0]
+
+
+def test_link__future_target_preserves_page_index():
+    # Arrange
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+
+    link_annotation = Link(
+        rect=(100, 100, 300, 200),
+        target_page_index=1,
+        border=[50, 10, 4],
+        fit=Fit(fit_type="/Fit"),
+    )
+
+    # Act
+    added_annotation = writer.add_annotation(0, link_annotation)
+
+    # Assert
+    destination = added_annotation["/Dest"]
+
+    assert isinstance(destination, ArrayObject)
+    # Preserve the existing page-index representation when the target page
+    # has not yet been added to the writer. See #2450.
+    assert destination[0] == NumberObject(1)
+    assert destination[1] == "/Fit"
+
+
+def test_link__completed_destination_is_preserved():
+    # Arrange
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    writer.add_blank_page(width=200, height=200)
+
+    target_page_reference = writer.pages[1].indirect_reference
+    assert target_page_reference is not None
+
+    destination = ArrayObject(
+        [
+            target_page_reference,
+            NameObject("/Fit"),
+        ]
+    )
+    link_annotation = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Link"),
+            NameObject("/Rect"): RectangleObject((100, 100, 300, 200)),
+            NameObject("/Dest"): destination,
+        }
+    )
+
+    # Act
+    added_annotation = writer.add_annotation(0, link_annotation)
+
+    # Assert
+    added_destination = added_annotation["/Dest"]
+
+    assert isinstance(added_destination, ArrayObject)
+    assert added_destination[0] == target_page_reference
+    assert added_destination[1] == "/Fit"
 
 
 def test_popup(caplog):

@@ -1,4 +1,25 @@
-# manually generated from https://www.unicode.org/Public/MAPPINGS/VENDORS/ADOBE/symbol.txt
+# Generated from https://www.unicode.org/Public/MAPPINGS/VENDORS/ADOBE/symbol.txt
+#
+# Name:             Adobe Symbol Encoding to Unicode
+# Unicode version:  2.0
+# Table version:    1.0
+# Date:             2011 July 12
+#
+# Copyright (c) 1991-2011 Unicode, Inc. All Rights reserved.
+#
+# This file is provided as-is by Unicode, Inc. (The Unicode Consortium). No
+# claims are made as to fitness for any particular purpose. No warranties of
+# any kind are expressed or implied. The recipient agrees to determine
+# applicability of information provided. If this file has been provided on
+# magnetic media by Unicode, Inc., the sole remedy for any claim will be
+# exchange of defective media within 90 days of receipt.
+#
+# Unicode, Inc. hereby grants the right to freely use the information
+# supplied in this file in the creation of products supporting the
+# Unicode Standard, and to make copies of this file in any form for
+# internal or external distribution as long as this notice remains
+# attached.
+
 _symbol_encoding = [
     "\u0000",
     "\u0001",
@@ -32,7 +53,7 @@ _symbol_encoding = [
     "\u001D",
     "\u001E",
     "\u001F",
-    "\u0020",
+    "\u00A0",
     "\u0021",
     "\u2200",
     "\u0023",
@@ -68,7 +89,7 @@ _symbol_encoding = [
     "\u0391",
     "\u0392",
     "\u03A7",
-    "\u0394",
+    "\u2206",
     "\u0395",
     "\u03A6",
     "\u0393",
@@ -87,7 +108,7 @@ _symbol_encoding = [
     "\u03A4",
     "\u03A5",
     "\u03C2",
-    "\u03A9",
+    "\u2126",
     "\u039E",
     "\u03A8",
     "\u0396",
@@ -109,7 +130,7 @@ _symbol_encoding = [
     "\u03D5",
     "\u03BA",
     "\u03BB",
-    "\u00B5",
+    "\u03BC",
     "\u03BD",
     "\u03BF",
     "\u03C0",
@@ -164,7 +185,7 @@ _symbol_encoding = [
     "\u03D2",
     "\u2032",
     "\u2264",
-    "\u2044",
+    "\u2215",
     "\u221E",
     "\u0192",
     "\u2663",

@@ -83,7 +83,7 @@ def test_lzw_decoder_large_stream_performance(caplog):
 def test_lzw_decoder__output_limit():
     url = "https://github.com/user-attachments/files/23057035/lzw__output_limit.pdf"
     name = "lzw__output_limit.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     page = reader.pages[0]
 
     with pytest.raises(

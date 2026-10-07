@@ -7,6 +7,11 @@ PDF documents can contain attachments, from time to time named embedded file as 
 Attachments have a name, but it might not be unique. For this reason, the value of `reader.attachments["attachment_name"]`
 is a list.
 
+```{warning}
+The names can contain arbitrary characters. Please make sure to sanitize them before
+using them to write the file content to the disk for example.
+```
+
 You can extract all attachments like this:
 
 ```{testsetup}

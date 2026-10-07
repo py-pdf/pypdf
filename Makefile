@@ -23,7 +23,7 @@ benchmark:
 	pytest tests/bench.py
 
 mypy:
-	mypy pypdf --ignore-missing-imports --check-untyped --strict
+	mypy pypdf
 
 ruff:
 	ruff check pypdf tests make_release.py

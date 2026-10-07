@@ -182,3 +182,54 @@ def test_get_formatted_changes__other() -> None:
 - FIX: Broken test due to expired test file URL (#2468) by @pubpub-zz
 """
     )
+
+
+@pytest.mark.parametrize(
+    ("changes", "expected"),
+    [
+        ("\n### New Features (ENH)\n- Add a thing\n", True),
+        ("\n### Deprecations (DEP)\n- Deprecate a thing\n", True),
+        ("\n### Bug Fixes (BUG)\n- Fix a thing\n", False),
+        ("", False),
+        # The prefix only counts inside a section header, not in a message,
+        # including when it appears parenthesised exactly as the header spells it.
+        ("\n### Bug Fixes (BUG)\n- Mention ENH here\n", False),
+        ("\n### Bug Fixes (BUG)\n- Revert the (ENH) from #123\n", False),
+    ],
+    ids=[
+        "enhancement",
+        "deprecation",
+        "regular-changes",
+        "no-changes",
+        "prefix-inside-message",
+        "parenthesised-prefix-inside-message",
+    ],
+)
+def test_has_minor_changes(changes: str, expected: bool) -> None:
+    """Enhancements and deprecations are the sections that warrant a minor bump."""
+    make_release = pytest.importorskip("make_release")
+    assert make_release.has_minor_changes(changes) is expected
+
+
+@pytest.mark.parametrize(
+    ("git_tag", "changes", "expected"),
+    [
+        ("6.16.1", "\n### Bug Fixes (BUG)\n- Fix a thing\n", "6.16.2"),
+        ("6.16.1", "\n### New Features (ENH)\n- Add a thing\n", "6.17.0"),
+        ("6.15.0", "\n### Deprecations (DEP)\n- Deprecate a thing\n", "6.16.0"),
+        ("6.9.9", "\n### New Features (ENH)\n- Add a thing\n", "6.10.0"),
+        # Without the changes, the previous patch-only behaviour is kept.
+        ("6.16.1", "", "6.16.2"),
+    ],
+    ids=[
+        "patch-bump",
+        "minor-bump-resets-patch",
+        "deprecation-bumps-minor",
+        "minor-rolls-over",
+        "defaults-to-patch",
+    ],
+)
+def test_version_bump(git_tag: str, changes: str, expected: str) -> None:
+    """The version is bumped according to the release policy."""
+    make_release = pytest.importorskip("make_release")
+    assert make_release.version_bump(git_tag, changes) == expected

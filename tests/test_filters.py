@@ -4,6 +4,7 @@ import string
 import subprocess
 import sys
 import zlib
+from copy import deepcopy
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -13,7 +14,7 @@ from unittest import mock
 import pytest
 from PIL import Image, ImageOps
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf.errors import DependencyError, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
@@ -24,6 +25,7 @@ from pypdf.filters import (
     CCITTParameters,
     FlateDecode,
     JBIG2Decode,
+    LZWDecode,
     RunLengthDecode,
     decode_stream_data,
     decompress,
@@ -39,11 +41,13 @@ from pypdf.generic import (
     ArrayObject,
     BooleanObject,
     ContentStream,
+    DecodedStreamObject,
     DictionaryObject,
     IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     StreamObject,
     TextStringObject,
 )
@@ -144,6 +148,12 @@ def test_ascii_hex_decode_missing_eod(caplog):
     """ASCIIHexDecode.decode() logs warning when no EOD character is present."""
     ASCIIHexDecode.decode("")
     assert "missing EOD in ASCIIHexDecode, check if output is OK" in caplog.text
+
+
+def test_ascii_hex_decode_non_hex():
+    """ASCIIHexDecode.decode() raises a proper error on invalid bytes."""
+    with pytest.raises(PdfStreamError, match="Invalid hexadecimal character"):
+        ASCIIHexDecode.decode(b"41ZZ42>")
 
 
 @pytest.mark.enable_socket
@@ -257,11 +267,23 @@ def test_ccitt_fax_decode():
     )
 
 
+def test_ccitt_fax_decode__unsigned_columns():
+    # /Columns above 2**31 - 1 is a valid unsigned TIFF LONG and must not
+    # overflow the packed header.
+    data = b"\x00\x01\x02\x03"
+    parameters = DictionaryObject(
+        {"/K": NumberObject(-1), "/Columns": NumberObject(3_000_000_000)}
+    )
+    result = CCITTFaxDecode.decode(data, parameters, height=10)
+    assert result.endswith(data)
+    assert result[18:22] == (3_000_000_000).to_bytes(4, "little")
+
+
 @pytest.mark.enable_socket
 def test_decompress_zlib_error(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-952445.pdf")))
     for page in reader.pages:
-        page.extract_text()
+        assert page.extract_text() == ""
     assert "incorrect startxref pointer(3)" in caplog.text
 
 
@@ -492,11 +514,22 @@ def test_index_lookup():
 
 @pytest.mark.enable_socket
 def test_2bits_image():
-    """From #1954, test with 2bits image. TODO: 4bits also"""
+    """From #1954, test with 2bits image."""
     reader = PdfReader(BytesIO(get_data_from_url(name="paid.pdf")))
     url_png = "https://user-images.githubusercontent.com/4083478/253568117-ca95cc85-9dea-4145-a5e0-032f1c1aa322.png"
     name_png = "Paid.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
+    data = reader.pages[0].images[0]
+    assert image_similarity(data.image, refimg) > 0.99
+
+
+@pytest.mark.enable_socket
+def test_4bits_image():
+    """From #1954, test with 4bits image."""
+    reader = PdfReader(BytesIO(get_data_from_url(name="4bits_image.pdf")))
+    url_png = "https://github.com/user-attachments/files/27492549/4bits_image.png.txt"
+    name_png = "4bits_image.png"
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert image_similarity(data.image, refimg) > 0.99
 
@@ -509,10 +542,10 @@ def test_gray_devicen_cmyk():
     """
     url = "https://github.com/py-pdf/pypdf/files/12080338/example_121.pdf"
     name = "gray_cmyk.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/254545494-42df4949-1557-4f2d-acca-6be6e8de1122.png"
     name_png = "velo.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert data.image.mode == "L"
     assert image_similarity(data.image, refimg) > 0.999
@@ -520,22 +553,33 @@ def test_gray_devicen_cmyk():
 
 @pytest.mark.enable_socket
 def test_runlengthdecode():
-    """From #1954, test with 2bits image. TODO: 4bits also"""
+    """From #1954, test with 2bits image."""
     url = "https://github.com/py-pdf/pypdf/files/12159941/out.pdf"
     name = "RunLengthDecode.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/255940800-6d63972e-a3d6-4cf9-aa6f-0793af24cded.png"
     name_png = "RunLengthDecode.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert image_similarity(data.image, refimg) > 0.999
     url = "https://github.com/py-pdf/pypdf/files/12162905/out.pdf"
     name = "FailedRLE1.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].images[0]
     url = "https://github.com/py-pdf/pypdf/files/12162926/out.pdf"
     name = "FailedRLE2.pdf"
     reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket
+def test_4bits_runlengthdecode():
+    """From #1954, test with 4bits RunLengthDecode image."""
+    reader = PdfReader(BytesIO(get_data_from_url(name="4bits_rle.pdf")))
+    url_png = "https://github.com/user-attachments/files/27605287/4bit_rle_ref.png.txt"
+    name_png = "4bits_rle.png"
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
+    data = reader.pages[0].images[0]
+    assert image_similarity(data.image, refimg) > 0.99
 
 
 @pytest.mark.enable_socket
@@ -546,10 +590,10 @@ def test_gray_separation_cmyk():
     """
     url = "https://github.com/py-pdf/pypdf/files/12143372/tt.pdf"
     name = "TestWithSeparationBlack.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/254545494-42df4949-1557-4f2d-acca-6be6e8de1122.png"
     name_png = "velo.png"  # reused
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert data.image.mode == "L"
     assert image_similarity(data.image, refimg) > 0.999
@@ -560,7 +604,7 @@ def test_singleton_device():
     """From #2023"""
     url = "https://github.com/py-pdf/pypdf/files/12177287/tt.pdf"
     name = "pypdf_with_arr_deviceRGB.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].images[0]
 
 
@@ -569,7 +613,7 @@ def test_jpx_no_spacecode():
     """From #2061"""
     url = "https://github.com/py-pdf/pypdf/files/12253581/tt2.pdf"
     name = "jpx_no_spacecode.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     im = reader.pages[0].images[0]
     # create an object without filter and without colorspace
     # just for coverage
@@ -584,7 +628,7 @@ def test_encodedstream_lookup():
     """From #2124"""
     url = "https://github.com/py-pdf/pypdf/files/12455580/10.pdf"
     name = "iss2124.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[12].images[0]
 
 
@@ -593,7 +637,7 @@ def test_convert_1_to_la():
     """From #2165"""
     url = "https://github.com/py-pdf/pypdf/files/12543290/whitepaper.WBT.token.blockchain.whitepaper.pdf"
     name = "iss2165.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     for i in reader.pages[13].images:
         _ = i
 
@@ -603,7 +647,7 @@ def test_nested_device_n_color_space():
     """From #2240"""
     url = "https://github.com/py-pdf/pypdf/files/12814018/out1.pdf"
     name = "issue2240.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].images[0]
 
 
@@ -613,7 +657,7 @@ def test_flate_decode_with_image_mode_1():
     """From #2248"""
     url = "https://github.com/py-pdf/pypdf/files/12847339/Prototype-Declaration-VDE4110-HYD-5000-20000-ZSS-DE.pdf"
     name = "issue2248.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     for image in reader.pages[7].images:
         _ = image
 
@@ -623,7 +667,7 @@ def test_flate_decode_with_image_mode_1__whitespace_at_end_of_lookup():
     """From #2331"""
     url = "https://github.com/py-pdf/pypdf/files/13611048/out1.pdf"
     name = "issue2331.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].images[0]
 
 
@@ -632,7 +676,7 @@ def test_ascii85decode__invalid_end__recoverable(caplog):
     """From #2996"""
     url = "https://github.com/user-attachments/files/18050808/1af7d56a-5c8c-4914-85b3-b2536a5525cd.pdf"
     name = "issue2996.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[1]
     assert page.extract_text() == ""
@@ -664,7 +708,7 @@ def test_ascii85decode__ignore_whitespaces(caplog):
 def test_ccitt_fax_decode__black_is_1():
     url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
     name = "issue3193.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     other_reader = PdfReader(RESOURCE_ROOT / "imagemagick-CCITTFaxDecode.pdf")
 
     actual_image = reader.pages[0].images[0].image
@@ -674,7 +718,7 @@ def test_ccitt_fax_decode__black_is_1():
     assert expected_pixels == actual_pixels
 
     # AttributeError: 'NullObject' object has no attribute 'get'
-    data_modified = get_data_from_url(url, name=name).replace(
+    data_modified = get_data_from_url(url=url, name=name).replace(
         b"/DecodeParms [ << /K -1 /BlackIs1 true /Columns 16 /Rows 16 >> ]",
         b"/DecodeParms [ null ]"
     )
@@ -687,8 +731,8 @@ def test_flate_decode__image_is_none_due_to_size_limit(caplog):
     url = "https://github.com/user-attachments/files/19464256/file.pdf"
     name = "issue3220.pdf"
 
-    with mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", 0):
-        reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    with apply_configuration(zlib_maximum_output_length=0, image_maximum_buffer_size=sys.maxsize):
+        reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
         images = reader.pages[0].images
         assert len(images) == 1
         image = images[0]
@@ -705,7 +749,7 @@ def test_flate_decode__image_is_none_due_to_size_limit(caplog):
 def test_flate_decode__not_rectangular(caplog):
     url = "https://github.com/user-attachments/files/19663603/issue3241_compressed.txt"
     name = "issue3241.txt"
-    data = get_data_from_url(url, name=name)
+    data = get_data_from_url(url=url, name=name)
     decode_parms = DictionaryObject()
     decode_parms[NameObject("/Predictor")] = NumberObject(15)
     decode_parms[NameObject("/Columns")] = NumberObject(4881)
@@ -714,13 +758,13 @@ def test_flate_decode__not_rectangular(caplog):
 
     url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
     name = "issue3241.png"
-    expected_data = BytesIO(get_data_from_url(url, name=name))
+    expected_data = BytesIO(get_data_from_url(url=url, name=name))
     assert image_similarity(expected_data, actual_image) == 1
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
 def test_jbig2decode__binary_errors():
-    with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
+    with apply_configuration(jbig2dec_binary=None), \
             pytest.raises(DependencyError, match=r"jbig2dec binary is not available\."):
         JBIG2Decode.decode(b"dummy")
 
@@ -733,7 +777,7 @@ def test_jbig2decode__binary_errors():
         )
     )
     with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
-            mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
+            apply_configuration(jbig2dec_binary="/usr/bin/jbig2dec"), \
             pytest.raises(DependencyError, match=r"jbig2dec>=0.19 is required\."):
         JBIG2Decode.decode(b"dummy")
 
@@ -746,7 +790,7 @@ def test_jbig2decode__binary_errors():
         )
     )
     with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
-            mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
+            apply_configuration(jbig2dec_binary="/usr/bin/jbig2dec"), \
             pytest.raises(DependencyError, match=r"jbig2dec>=0.19 is required\."):
         JBIG2Decode.decode(b"dummy")
 
@@ -956,6 +1000,14 @@ def test_brotli_pdf_roundtrip():
     assert original_text.encode() in raw_data
 
 
+def test_rle_decode_truncated_after_run_length(caplog):
+    # A replicate run (length byte > 128) that is not followed by the byte to
+    # repeat must be handled like any other truncated input instead of reading
+    # past the end of the data.
+    assert RunLengthDecode.decode(b"\x00A\xff") == b"A"
+    assert caplog.messages == ["Missing EOD in RunLengthDecode, check if output is OK"]
+
+
 def test_decompress():
     data = string.printable.encode("utf-8") + string.printable[::-1].encode("utf-8")
     compressed = FlateDecode.encode(data)
@@ -971,16 +1023,16 @@ def test_decompress():
 
     # Decompress byte-wise with very low output limit.
     with mock.patch("pypdf.filters._decompress_with_limit", side_effect=zlib.error), \
-            mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", len(compressed) - 13), \
+            apply_configuration(zlib_maximum_output_length=len(compressed) - 13), \
             pytest.raises(
                 LimitReachedError, match=r"^Limit reached while decompressing\. 12 bytes remaining\.$"
             ):
         decompress(compressed)
 
     # Decompress byte-wise with input limit.
-    with mock.patch("pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH", 1000), \
+    with apply_configuration(zlib_maximum_recovery_input_length=1000), \
             pytest.raises(
-                LimitReachedError, match=r"^Recovery limit reached while decompressing\. 336 bytes remaining\.$"
+                LimitReachedError, match=r"^Recovery limit reached while decompressing\. 337 bytes remaining\.$"
             ):
         decompress(b"A" * 1337)
 
@@ -1103,8 +1155,19 @@ def test_deprecate_inline_image_filters():
     assert decode_stream_data(stream).startswith(b"II*")
 
 
+def test_decode_stream_data__default_parms_are_dictionary_objects():
+    """A stream without /DecodeParms hands the decoders a DictionaryObject."""
+    stream = DecodedStreamObject()
+    stream[NameObject("/Filter")] = NameObject("/FlateDecode")
+    stream._data = zlib.compress(b"hello")
+
+    with mock.patch.object(FlateDecode, "decode", return_value=b"hello") as decode:
+        assert decode_stream_data(stream) == b"hello"
+
+    assert isinstance(decode.call_args.args[1], DictionaryObject)
+
+
 def test_flatedecode__columns_is_zero():
-    codec = FlateDecode()
     data = b"Hello World!"
     parameters = DictionaryObject({
         NameObject("/Predictor"): NumberObject(13),
@@ -1112,7 +1175,7 @@ def test_flatedecode__columns_is_zero():
     })
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Expected positive number for /Columns, got 0!$"):
-        codec.decode(codec.encode(data), parameters)
+        FlateDecode.decode(FlateDecode.encode(data), parameters)
 
 
 def test_runlengthdecode__decode_limit():
@@ -1128,7 +1191,7 @@ def test_runlengthdecode__decode_limit():
     encoded = (b"\x81A" * runs) + b"\x80"
 
     # Use a very low limit for this exact comparison, otherwise *pytest* takes ages to render a failure diff.
-    with mock.patch("pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH", uncompressed_size):
+    with apply_configuration(run_length_maximum_output_length=uncompressed_size):
         assert RunLengthDecode.decode(encoded) == b"A" * uncompressed_size
 
 
@@ -1136,3 +1199,218 @@ def test_runlengthdecode__decode_limit():
 def test_asciihexdecode__speed():
     encoded = (b"41" * 1_200_000) + b">"
     ASCIIHexDecode.decode(encoded)
+
+
+def test_flatedecode__upper_limits():
+    data = b"Hello World!"
+    default_parameters = DictionaryObject({
+        NameObject("/Predictor"): NumberObject(13),
+        NameObject("/Columns"): NumberObject(200_000),
+        NameObject("/Colors"): NumberObject(8),
+        NameObject("/BitsPerComponent"): NumberObject(16),
+    })
+    encoded = FlateDecode.encode(data)
+
+    # Colors
+    parameters = deepcopy(default_parameters)
+    parameters[NameObject("/Colors")] = NumberObject(128)
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Color value 128 exceeds limit of 16\. Please open an issue if this limits valid use cases\.$"
+    ):
+        FlateDecode.decode(data=encoded, decode_parms=parameters)
+
+    # BitsPerComponent
+    parameters = deepcopy(default_parameters)
+    parameters[NameObject("/BitsPerComponent")] = NumberObject(32)
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^More than 16 bits per component are not allowed: 32$"
+    ):
+        FlateDecode.decode(data=encoded, decode_parms=parameters)
+
+    # Columns
+    parameters = deepcopy(default_parameters)
+    parameters[NameObject("/Columns")] = NumberObject(300_000)
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Number of columns 300000 exceeds defined limit of 250000\.$"
+    ):
+        FlateDecode.decode(data=encoded, decode_parms=parameters)
+
+    # Row length
+    parameters = deepcopy(default_parameters)
+    parameters[NameObject("/Columns")] = NumberObject(130_000)
+    parameters[NameObject("/Colors")] = NumberObject(16)
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Row length of 4160001 exceeds defined limit of 4000000\.$"
+    ):
+        FlateDecode.decode(data=encoded, decode_parms=parameters)
+
+
+def test_lzwdecode__invalid_first_code():
+    lzw_data = bytes([0x81, 0x00, 0x00])  # first 9 bits = 100000010 = 258 (>= _table_index)
+
+    with pytest.raises(
+            expected_exception=PdfStreamError,
+            match=r"^LZW code 258 out of range with empty base at table index 258\.$"
+    ):
+        LZWDecode.decode(data=lzw_data)
+
+
+@pytest.mark.timeout(10)  # Has been 20 seconds before.
+def test_flatedecode__decode_png_prediction__speed():
+    columns = 4096
+    rows = 120000
+    row_length = columns + 1  # +1 for PNG filter byte
+
+    # Build raw PNG-predicted data: every row starts with filter byte 0 (PNG None)
+    raw = bytearray(rows * row_length)
+    for row in range(rows):
+        raw[row * row_length] = 0
+    data = bytes(raw)
+
+    FlateDecode._decode_png_prediction(data=data, columns=columns, row_length=row_length)
+
+
+_FLATE_IMAGE_DATA = (
+    b"\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff"
+    b"\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff"
+    b"\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff"
+)
+
+
+def _generate_flate_pdf(decode_parms_type: type[PdfObject]) -> bytes:
+    compressed = zlib.compress(_FLATE_IMAGE_DATA)
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=10, height=10)
+
+    if decode_parms_type is DictionaryObject or decode_parms_type is IndirectObject:
+        decode_parms = DictionaryObject({
+            NameObject("/Predictor"): NumberObject(15),
+            NameObject("/Colors"): NumberObject(3),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+            NameObject("/Columns"): NumberObject(10),
+        })
+        if decode_parms_type is IndirectObject:
+            decode_parms = writer._add_object(decode_parms)
+    else:
+        decode_parms = decode_parms_type()
+
+    image_stream = DecodedStreamObject()
+    image_stream.set_data(compressed)
+    image_stream.update({
+        NameObject("/Type"): NameObject("/XObject"),
+        NameObject("/Subtype"): NameObject("/Image"),
+        NameObject("/Width"): NumberObject(10),
+        NameObject("/Height"): NumberObject(10),
+        NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+        NameObject("/BitsPerComponent"): NumberObject(8),
+        NameObject("/Filter"): NameObject("/FlateDecode"),
+        NameObject("/DecodeParms"): decode_parms,
+    })
+
+    image_reference = writer._add_object(image_stream)
+    resources = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/Im0"): image_reference
+        })
+    })
+    page[NameObject("/Resources")] = resources
+
+    contents = ContentStream(stream=None, pdf=writer)
+    contents.set_data(b"q\n10 0 0 10 0 0 cm\n/Im0 Do\nQ\n")
+    page.replace_contents(contents)
+
+    data = BytesIO()
+    writer.write(data)
+    return data.getvalue()
+
+
+@pytest.mark.parametrize(
+    "decode_params_type",
+    [
+        DictionaryObject,
+        IndirectObject,
+    ]
+)
+def test_flate_decode__decode__decode_parms_types__valid(decode_params_type: type[PdfObject]) -> None:
+    reader = PdfReader(BytesIO(_generate_flate_pdf(decode_params_type)))
+    page = reader.pages[0]
+    images = page.images
+    assert len(images) == 1
+    image = images[0]
+    for i in range(10):
+        for j in range(10):
+            pixel = (255, 255, 255) if i == j else (0, 0, 0)
+            assert image.image.getpixel((i, j)) == pixel
+
+
+def test_flate_decode__decode__decode_parms_types__array_object(caplog) -> None:
+    compressed = zlib.compress(_FLATE_IMAGE_DATA)
+    _ = FlateDecode.decode(decode_parms=ArrayObject([NumberObject(10)]), data=compressed)
+    assert caplog.messages == ["Detected invalid /DecodeParms, results might be incorrect: [10] (type ArrayObject)"]
+
+
+def test_flate_decode__decode__decode_parms_types__null_object(caplog) -> None:
+    compressed = zlib.compress(_FLATE_IMAGE_DATA)
+    _ = FlateDecode.decode(decode_parms=NullObject(), data=compressed)
+    assert caplog.messages == []
+
+
+@pytest.mark.timeout(10)  # Previously took about 28-33 seconds.
+def test_decompress__fallback__speed() -> None:
+    # `gzip` is an optional module: https://docs.python.org/3/library/gzip.html
+    gzip = pytest.importorskip("gzip")
+
+    buf = BytesIO()
+    size = 1_000_000
+    with gzip.GzipFile(fileobj=buf, mode="wb", compresslevel=1, mtime=0) as f:
+        f.write(os.urandom(size))  # incompressible: stream size ~= input size
+    compressed = buf.getvalue()
+
+    result = decompress(compressed)
+    assert len(result) == size
+
+
+@pytest.mark.parametrize(
+    ("parameters", "rows", "expected_message"),
+    [
+        (
+            DictionaryObject({"/Columns": NumberObject(-1)}),
+            42,
+            r"^Expected valid 32 bit unsigned value for /Columns, got -1!$"
+        ),
+        (
+            DictionaryObject({"/Columns": NumberObject(CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10)}),
+            42,
+            rf"^Expected valid 32 bit unsigned value for /Columns, got {CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10}!$"
+        ),
+        (
+            DictionaryObject({"/Columns": NumberObject(42)}),
+            -1,
+            r"^Expected valid 32 bit unsigned value for /Rows, got -1!$"
+        ),
+    (
+            DictionaryObject({"/Columns": NumberObject(42)}),
+            CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10,
+            fr"^Expected valid 32 bit unsigned value for /Rows, got {CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10}!$"
+        ),
+    ],
+    ids=["columns-negative", "columns-large", "rows-negative", "rows-large"]
+)
+def test_ccitt_get_parameters__limits(parameters, rows, expected_message):
+    with pytest.raises(expected_exception=PdfReadError, match=expected_message):
+        CCITTFaxDecode._get_parameters(parameters=parameters, rows=rows)

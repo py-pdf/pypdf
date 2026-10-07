@@ -9,7 +9,7 @@ import io
 from abc import ABC, abstractmethod
 
 from pypdf._utils import logger_warning
-from pypdf.errors import LimitReachedError
+from pypdf.errors import LimitReachedError, PdfStreamError
 
 
 class Codec(ABC):
@@ -249,11 +249,14 @@ class LzwCodec(Codec):
                 old_code = code
             else:
                 # The code is not in the table and not one of the special codes
-                decoded = (
-                    self.decoding_table[old_code] + self.decoding_table[old_code][:1]
-                )
+                base = self.decoding_table[old_code]
+                if not base:
+                    raise PdfStreamError(
+                        f"LZW code {code} out of range with empty base at table index {self._table_index}."
+                    )
+                decoded = base + base[:1]
                 output_stream.write(decoded)
-                self._add_entry_decode(self.decoding_table[old_code], decoded[0])
+                self._add_entry_decode(base, decoded[0])
                 old_code = code
 
             output_length += len(decoded)
@@ -267,7 +270,7 @@ class LzwCodec(Codec):
     def _add_entry_decode(self, old_string: bytes, new_char: int) -> None:
         new_string = old_string + bytes([new_char])
         if self._table_index > self.max_code_value:
-            logger_warning("Ignoring too large LZW table index.", __name__)
+            logger_warning("Ignoring too large LZW table index.", source=__name__)
             return
         self.decoding_table[self._table_index] = new_string
         self._table_index += 1

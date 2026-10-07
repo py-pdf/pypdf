@@ -46,9 +46,10 @@ from base64 import a85decode
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Optional, Union, cast
+from typing import Any, NoReturn, Optional, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
+from ._configuration import get_configuration
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
@@ -58,9 +59,8 @@ from ._utils import (
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import FilterTypeAbbreviations as FTA
 from .constants import FilterTypes as FT
-from .constants import ImageAttributes as IA
+from .constants import ImageAttributes, StreamAttributes
 from .constants import LzwFilterParameters as LZW
-from .constants import StreamAttributes as SA
 from .errors import DependencyError, LimitReachedError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
@@ -68,6 +68,7 @@ from .generic import (
     IndirectObject,
     NullObject,
     NumberObject,
+    PdfObject,
     StreamObject,
     is_null_or_none,
 )
@@ -77,15 +78,20 @@ try:
 except ImportError:
     brotli = None
 
-MAX_DECLARED_STREAM_LENGTH = 75_000_000
-MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH = 75_000_000
 
-BROTLI_MAX_OUTPUT_LENGTH = 75_000_000
-JBIG2_MAX_OUTPUT_LENGTH = 75_000_000
-LZW_MAX_OUTPUT_LENGTH = 75_000_000
-RUN_LENGTH_MAX_OUTPUT_LENGTH = 75_000_000
-ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
-ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000
+MAX_DECLARED_STREAM_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
+MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
+
+JBIG2_MAX_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
+LZW_MAX_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
+RUN_LENGTH_MAX_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
+ZLIB_MAX_OUTPUT_LENGTH = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
+ZLIB_MAX_RECOVERY_INPUT_LENGTH = 5_000_000  # DEPRECATED: Use pypdf.Configuration.
+FLATE_MAX_COLUMNS = 250_000  # DEPRECATED: Use pypdf.Configuration.
+FLATE_MAX_ROW_LENGTH = 4_000_000  # DEPRECATED: Use pypdf.Configuration.
+FLATE_MAX_BUFFER_SIZE = 75_000_000  # DEPRECATED: Use pypdf.Configuration.
+
+BROTLI_MAX_OUTPUT_LENGTH = 75_000_000  # TODO: Migrate.
 
 # Reuse cached 1-byte values in the fallback loop to avoid per-byte allocations.
 _SINGLE_BYTES = tuple(bytes((i,)) for i in range(256))
@@ -93,7 +99,8 @@ _SINGLE_BYTES = tuple(bytes((i,)) for i in range(256))
 
 def _decompress_with_limit(data: bytes) -> bytes:
     decompressor = zlib.decompressobj()
-    result = decompressor.decompress(data, max_length=ZLIB_MAX_OUTPUT_LENGTH)
+    configuration = get_configuration()
+    result = decompressor.decompress(data, max_length=configuration.zlib_maximum_output_length)
     if decompressor.unconsumed_tail:
         raise LimitReachedError(
             f"Limit reached while decompressing. {len(decompressor.unconsumed_tail)} bytes remaining."
@@ -111,7 +118,7 @@ def decompress(data: bytes) -> bytes:
 
     Please note that the output length is limited to avoid memory
     issues. If you need to process larger content streams, consider
-    adapting ``pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH``. In case you
+    adapting ``pypdf.Configuration.zlib_maximum_output_length``. In case you
     are only dealing with trusted inputs and/or want to disable these
     limits, set the value to `0`.
 
@@ -145,38 +152,40 @@ def decompress(data: bytes) -> bytes:
 
         # If still failing, then try with increased window size.
         decompressor = zlib.decompressobj(zlib.MAX_WBITS | 32)
-        result_str = b""
-        remaining_limit = ZLIB_MAX_OUTPUT_LENGTH
+        result = bytearray()
+        configuration = get_configuration()
+        remaining_limit = configuration.zlib_maximum_output_length
         data_length = len(data)
         known_errors = set()
         for index in range(data_length):
+            if index >= configuration.zlib_maximum_recovery_input_length:
+                raise LimitReachedError(
+                    f"Recovery limit reached while decompressing. {data_length - index} bytes remaining."
+                )
+
             chunk = _SINGLE_BYTES[data[index]]
             try:
                 decompressed = decompressor.decompress(chunk, max_length=remaining_limit)
-                result_str += decompressed
+                result += decompressed
                 remaining_limit -= len(decompressed)
                 if remaining_limit <= 0:
                     raise LimitReachedError(
                         f"Limit reached while decompressing. {data_length - index} bytes remaining."
                     )
             except zlib.error as error:
-                if index > ZLIB_MAX_RECOVERY_INPUT_LENGTH:
-                    raise LimitReachedError(
-                        f"Recovery limit reached while decompressing. {data_length - index} bytes remaining."
-                    )
                 error_str = str(error)
                 if error_str in known_errors:
                     continue
-                logger_warning(error_str, __name__)
+                logger_warning(error_str, source=__name__)
                 known_errors.add(error_str)
-        return result_str
+        return bytes(result)
 
 
 class FlateDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: Optional[Union[DictionaryObject, IndirectObject]] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -195,9 +204,17 @@ class FlateDecode:
         """
         str_data = decompress(data)
 
-        if isinstance(decode_parms, DictionaryObject):
-            parameters = decode_parms
+        processed_parms: Optional[PdfObject] = decode_parms
+        if isinstance(decode_parms, IndirectObject) and processed_parms is not None:
+            processed_parms = processed_parms.get_object()
+        if isinstance(processed_parms, dict):
+            parameters = processed_parms
         else:
+            if not is_null_or_none(processed_parms):
+                logger_warning(
+                    "Detected invalid /DecodeParms, results might be incorrect: %(value)s (type %(type_name)s)",
+                    source=__name__, value=decode_parms, type_name=decode_parms.__class__.__name__,
+                )
             parameters = DictionaryObject()
 
         predictor = parameters.get("/Predictor", 1)
@@ -205,25 +222,30 @@ class FlateDecode:
         # predictor 1 == no predictor
         if predictor != 1:
             columns, colors, bits_per_component = FlateDecode._get_parameters(parameters)
+            configuration = get_configuration()
 
             # PNG predictor can vary by row and so is the lead byte on each row
-            rowlength = (
+            row_length = (
                 math.ceil(columns * colors * bits_per_component / 8) + 1
             )  # number of bytes
+            if row_length > configuration.flate_maximum_row_length:
+                raise LimitReachedError(
+                    f"Row length of {row_length} exceeds defined limit of {configuration.flate_maximum_row_length}."
+                )
 
             # TIFF prediction:
             if predictor == 2:
-                rowlength -= 1  # remove the predictor byte
-                bpp = rowlength // columns
-                str_data = bytearray(str_data)
-                for i in range(len(str_data)):
-                    if i % rowlength >= bpp:
-                        str_data[i] = (str_data[i] + str_data[i - bpp]) % 256
-                str_data = bytes(str_data)
+                row_length -= 1  # remove the predictor byte
+                bpp = row_length // columns
+                str_data_mut = bytearray(str_data)
+                for i in range(len(str_data_mut)):
+                    if i % row_length >= bpp:
+                        str_data_mut[i] = (str_data_mut[i] + str_data_mut[i - bpp]) % 256
+                str_data = bytes(str_data_mut)
             # PNG prediction:
             elif 10 <= predictor <= 15:
                 str_data = FlateDecode._decode_png_prediction(
-                    str_data, columns, rowlength
+                    str_data, columns, row_length
                 )
             else:
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
@@ -238,53 +260,68 @@ class FlateDecode:
                 raise PdfReadError(f"Expected positive number for {key}, got {_value}!")
             return _value
 
+        configuration = get_configuration()
         columns = get(key=LZW.COLUMNS, default=1)
+        if columns > configuration.flate_maximum_columns:
+            raise LimitReachedError(
+                f"Number of columns {columns} exceeds defined limit of {configuration.flate_maximum_columns}."
+            )
+
         colors = get(key=LZW.COLORS, default=1)
+        if colors > 16:
+            raise LimitReachedError(
+                f"Color value {colors} exceeds limit of 16. "
+                f"Please open an issue if this limits valid use cases."
+            )
+
         bits_per_component = get(key=LZW.BITS_PER_COMPONENT, default=8)
+        if bits_per_component > 16:
+            raise PdfReadError(f"More than 16 bits per component are not allowed: {bits_per_component}")
+
         return columns, colors, bits_per_component
 
     @staticmethod
-    def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
+    def _decode_png_prediction(data: bytes, columns: int, row_length: int) -> bytes:
         # PNG prediction can vary from row to row
-        if (remainder := len(data) % rowlength) != 0:
-            logger_warning("Image data is not rectangular. Adding padding.", __name__)
-            data += b"\x00" * (rowlength - remainder)
-            assert len(data) % rowlength == 0
-        output = []
-        prev_rowdata = (0,) * rowlength
-        bpp = (rowlength - 1) // columns  # recomputed locally to not change params
-        for row in range(0, len(data), rowlength):
-            rowdata: list[int] = list(data[row : row + rowlength])
-            filter_byte = rowdata[0]
+        if (remainder := len(data) % row_length) != 0:
+            logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
+            data += b"\x00" * (row_length - remainder)
+            assert len(data) % row_length == 0
+        output = bytearray()
+        previous_row_data = bytes(row_length)
+        bpp = (row_length - 1) // columns  # recomputed locally to not change params
+        for row in range(0, len(data), row_length):
+            row_data = bytearray(data[row : row + row_length])
+            filter_byte = row_data[0]
 
             if filter_byte == 0:
                 # PNG None Predictor
                 pass
             elif filter_byte == 1:
                 # PNG Sub Predictor
-                for i in range(bpp + 1, rowlength):
-                    rowdata[i] = (rowdata[i] + rowdata[i - bpp]) % 256
+                for i in range(bpp + 1, row_length):
+                    row_data[i] = (row_data[i] + row_data[i - bpp]) % 256
             elif filter_byte == 2:
                 # PNG Up Predictor
-                for i in range(1, rowlength):
-                    rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
+                for i in range(1, row_length):
+                    row_data[i] = (row_data[i] + previous_row_data[i]) % 256
             elif filter_byte == 3:
                 # PNG Average Predictor
                 for i in range(1, bpp + 1):
-                    floor = prev_rowdata[i] // 2
-                    rowdata[i] = (rowdata[i] + floor) % 256
-                for i in range(bpp + 1, rowlength):
-                    left = rowdata[i - bpp]
-                    floor = (left + prev_rowdata[i]) // 2
-                    rowdata[i] = (rowdata[i] + floor) % 256
+                    floor = previous_row_data[i] // 2
+                    row_data[i] = (row_data[i] + floor) % 256
+                for i in range(bpp + 1, row_length):
+                    left = row_data[i - bpp]
+                    floor = (left + previous_row_data[i]) // 2
+                    row_data[i] = (row_data[i] + floor) % 256
             elif filter_byte == 4:
                 # PNG Paeth Predictor
                 for i in range(1, bpp + 1):
-                    rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
-                for i in range(bpp + 1, rowlength):
-                    left = rowdata[i - bpp]
-                    up = prev_rowdata[i]
-                    up_left = prev_rowdata[i - bpp]
+                    row_data[i] = (row_data[i] + previous_row_data[i]) % 256
+                for i in range(bpp + 1, row_length):
+                    left = row_data[i - bpp]
+                    up = previous_row_data[i]
+                    up_left = previous_row_data[i - bpp]
 
                     p = left + up - up_left
                     dist_left = abs(p - left)
@@ -298,13 +335,13 @@ class FlateDecode:
                     else:
                         paeth = up_left
 
-                    rowdata[i] = (rowdata[i] + paeth) % 256
+                    row_data[i] = (row_data[i] + paeth) % 256
             else:
                 raise PdfReadError(
                     f"Unsupported PNG filter {filter_byte!r}"
                 )  # pragma: no cover
-            prev_rowdata = tuple(rowdata)
-            output.extend(rowdata[1:])
+            previous_row_data = bytes(row_data)
+            output += row_data[1:]
         return bytes(output)
 
     @staticmethod
@@ -359,7 +396,7 @@ class ASCIIHexDecode:
         if eod == -1:
             logger_warning(
                 "missing EOD in ASCIIHexDecode, check if output is OK",
-                __name__,
+                source=__name__,
             )
             hex_data = data
         else:
@@ -372,7 +409,13 @@ class ASCIIHexDecode:
         if len(hex_data) % 2 == 1:
             hex_data += b"0"
 
-        return binascii.unhexlify(hex_data)
+        # The spec permits only 0-9, A-F, a-f and whitespace inside the stream.
+        # Stray bytes used to surface as an uncaught binascii.Error; turn them
+        # into a proper PdfStreamError instead.
+        try:
+            return binascii.unhexlify(hex_data)
+        except binascii.Error as error:
+            raise PdfStreamError(f"Invalid hexadecimal character in ASCIIHexDecode stream: {error}")
 
 
 class RunLengthDecode:
@@ -413,10 +456,11 @@ class RunLengthDecode:
         index = 0
         data_length = len(data)
         total_length = 0
+        configuration = get_configuration()
         while True:
             if index >= data_length:
                 logger_warning(
-                    "missing EOD in RunLengthDecode, check if output is OK", __name__
+                    "missing EOD in RunLengthDecode, check if output is OK", source=__name__
                 )
                 break  # Reached end of string without an EOD
             length = data[index]
@@ -428,14 +472,14 @@ class RunLengthDecode:
                     # We will just ignore the last byte and raise a warning ...
                     if (index == data_length - 1) and (data[index : index + 1] == b"\n"):
                         logger_warning(
-                            "Found trailing newline in stream data, check if output is OK", __name__
+                            "Found trailing newline in stream data, check if output is OK", source=__name__
                         )
                         break
                     # Raising an exception here breaks all image extraction for this file, which might
                     # not be desirable. For this reason, indicate that the output is most likely wrong,
                     # as processing stopped after the first EOD marker. See issue #3517.
                     logger_warning(
-                        "Early EOD in RunLengthDecode, check if output is OK", __name__
+                        "Early EOD in RunLengthDecode, check if output is OK", source=__name__
                     )
                 break
             if length < 128:
@@ -443,11 +487,16 @@ class RunLengthDecode:
                 lst.append(data[index : (index + length)])
                 index += length
             else:  # >128
+                if index >= data_length:
+                    logger_warning(
+                        "Missing EOD in RunLengthDecode, check if output is OK", source=__name__
+                    )
+                    break  # Reached end of string without the replicated byte
                 length = 257 - length
                 lst.append(bytes((data[index],)) * length)
                 index += 1
             total_length += length
-            if total_length > RUN_LENGTH_MAX_OUTPUT_LENGTH:
+            if total_length > configuration.run_length_maximum_output_length:
                 raise LimitReachedError("Limit reached while decompressing.")
         return b"".join(lst)
 
@@ -461,7 +510,8 @@ class LZWDecode:
             self.data = data
 
         def decode(self) -> bytes:
-            return _LzwCodec(max_output_length=LZW_MAX_OUTPUT_LENGTH).decode(self.data)
+            configuration = get_configuration()
+            return _LzwCodec(max_output_length=configuration.lzw_maximum_output_length).decode(self.data)
 
     @staticmethod
     def decode(
@@ -513,7 +563,7 @@ class ASCII85Decode:
             return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
         except ValueError as error:
             if error.args[0] == "Ascii85 encoded byte sequences must end with b'~>'":
-                logger_warning("Ignoring missing Ascii85 end marker.", __name__)
+                logger_warning("Ignoring missing Ascii85 end marker.", source=__name__)
                 return a85decode(data, adobe=False, ignorechars=WHITESPACES_AS_BYTES)
             raise
 
@@ -647,21 +697,20 @@ class CCITTParameters:
     def group(self) -> int:
         if self.K < 0:
             # Pure two-dimensional encoding (Group 4)
-            CCITTgroup = 4
+            ccitt_group = 4
         else:
             # K == 0: Pure one-dimensional encoding (Group 3, 1-D)
             # K > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
-            CCITTgroup = 3
-        return CCITTgroup
+            ccitt_group = 3
+        return ccitt_group
 
 
 def __create_old_class_instance(
     K: int = 0,
     columns: int = 0,
     rows: int = 0
-) -> CCITTParameters:
+) -> NoReturn:
     deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
-    return CCITTParameters(K, columns, rows)
 
 
 # Create an alias for the old class name
@@ -678,9 +727,14 @@ class CCITTFaxDecode:
     §7.4.6, optional parameters for the CCITTFaxDecode filter.
     """
 
+    # We use the `L` with standard size, thus have 4 bytes, which corresponds to an upper limit of
+    # 2 ** (struct.calcsize("<L") * 8) - 1 = 2 ** (4 * 8) - 1 = 2 ** 32 - 1 = 4_294_967_295
+    # https://docs.python.org/3/library/struct.html#format-characters
+    _MAXIMUM_UNSIGNED_LONG = 0xFFFFFFFF
+
     @staticmethod
     def _get_parameters(
-        parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
+        parameters: Union[ArrayObject, DictionaryObject, IndirectObject, None],
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
         ccitt_parameters = CCITTParameters(rows=int(rows))
@@ -698,11 +752,20 @@ class CCITTFaxDecode:
                         ccitt_parameters.BlackIs1 = decode_parm[CCITT.BLACK_IS_1].get_object().value
             else:
                 if CCITT.K in parameters_unwrapped:
-                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore[assignment]
                 if CCITT.COLUMNS in parameters_unwrapped:
-                    ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
+                    ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore[assignment]
                 if CCITT.BLACK_IS_1 in parameters_unwrapped:
-                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore
+                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore[union-attr]
+
+        if ccitt_parameters.columns < 0 or ccitt_parameters.columns > CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG:
+            raise PdfReadError(
+                f"Expected valid 32 bit unsigned value for {CCITT.COLUMNS}, got {ccitt_parameters.columns}!"
+            )
+        if ccitt_parameters.rows < 0 or ccitt_parameters.rows > CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG:
+            raise PdfReadError(
+                f"Expected valid 32 bit unsigned value for {CCITT.ROWS}, got {ccitt_parameters.rows}!"
+            )
         return ccitt_parameters
 
     @staticmethod
@@ -715,7 +778,9 @@ class CCITTFaxDecode:
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
-        tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
+        # TIFF SHORT and LONG fields are unsigned (TIFF 6.0, §2); pack them with
+        # unsigned codes so dimensions with the high bit set do not overflow.
+        tiff_header_struct = "<2sHLH" + "HHLL" * 8 + "H"
         tiff_header = struct.pack(
             tiff_header_struct,
             b"II",  # Byte order indication: Little endian
@@ -745,7 +810,7 @@ class CCITTFaxDecode:
             273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
-              struct.calcsize(
+            struct.calcsize(
                 tiff_header_struct
             ),
             278,    # RowsPerStrip, LONG, 1, length
@@ -762,7 +827,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-JBIG2DEC_BINARY = shutil.which("jbig2dec")
+JBIG2DEC_BINARY = shutil.which("jbig2dec")  # DEPRECATED: Use pypdf.Configuration.
 
 
 class JBIG2Decode:
@@ -772,7 +837,8 @@ class JBIG2Decode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if JBIG2DEC_BINARY is None:
+        configuration = get_configuration()
+        if configuration.jbig2dec_binary is None:
             raise DependencyError("jbig2dec binary is not available.")
 
         with TemporaryDirectory() as tempdir:
@@ -796,11 +862,11 @@ class JBIG2Decode:
             environment["LC_ALL"] = "C"
             result = subprocess.run(  # noqa: S603
                 [
-                    JBIG2DEC_BINARY,
+                    configuration.jbig2dec_binary,
                     "--embedded",
                     "--format", "png",
                     "--output", "-",
-                    "-M", str(JBIG2_MAX_OUTPUT_LENGTH),
+                    "-M", str(configuration.jbig2_maximum_output_length),
                     *paths
                 ],
                 capture_output=True,
@@ -814,17 +880,18 @@ class JBIG2Decode:
                 )
             if result.stderr:
                 for line in result.stderr.decode("utf-8").splitlines():
-                    logger_warning(line, __name__)
+                    logger_warning(line, source=__name__)
             if result.returncode != 0:
                 raise PdfStreamError(f"Unable to decode JBIG2 data. Exit code: {result.returncode}")
         return result.stdout
 
     @staticmethod
     def _is_binary_compatible() -> bool:
-        if not JBIG2DEC_BINARY:  # pragma: no cover
+        configuration = get_configuration()
+        if not configuration.jbig2dec_binary:  # pragma: no cover
             return False
         result = subprocess.run(  # noqa: S603
-            [JBIG2DEC_BINARY, "--version"],
+            [configuration.jbig2dec_binary, "--version"],
             capture_output=True,
             text=True,
         )
@@ -860,13 +927,13 @@ def decode_stream_data(stream: StreamObject) -> bytes:
         NotImplementedError: If an unsupported filter type is encountered.
 
     """
-    filters = stream.get(SA.FILTER, ())
+    filters = stream.get(StreamAttributes.FILTER, ())
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
     if not isinstance(filters, ArrayObject):
         # We have a single filter instance
         filters = (filters,)
-    decode_parms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
+    decode_parms = stream.get(StreamAttributes.DECODE_PARMS, (DictionaryObject(),) * len(filters))
     if not isinstance(decode_parms, (list, tuple)):
         decode_parms = (decode_parms,)
     data: bytes = stream._data
@@ -875,7 +942,9 @@ def decode_stream_data(stream: StreamObject) -> bytes:
         return data
     for filter_name, params in zip(filters, decode_parms):
         if isinstance(params, NullObject):
-            params = {}
+            # The decoders are typed for a DictionaryObject; a plain {} is not
+            # one, so a null /DecodeParms entry would hand them the wrong type.
+            params = DictionaryObject()
         if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.AHx, new_name=FT.ASCII_HEX_DECODE)
             data = ASCIIHexDecode.decode(data)
@@ -893,7 +962,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
             data = RunLengthDecode.decode(data)
         elif filter_name in (FT.CCITT_FAX_DECODE, FTA.CCF):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.CCF, new_name=FT.CCITT_FAX_DECODE)
-            height = stream.get(IA.HEIGHT, ())
+            height = stream.get(ImageAttributes.HEIGHT, ())
             data = CCITTFaxDecode.decode(data, params, height)
         elif filter_name in (FT.DCT_DECODE, FTA.DCT):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.DCT, new_name=FT.DCT_DECODE)

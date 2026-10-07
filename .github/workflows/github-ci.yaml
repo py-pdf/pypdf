@@ -18,18 +18,25 @@ on:
       - '**/*.rst'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   test_windows:
     name: pytest on windows
     runs-on: windows-latest
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       with:
         submodules: 'recursive'
+        persist-credentials: false
     - name: Cache Downloaded Files
       id: cache-downloaded-files-windows
-      uses: actions/cache@v5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref == 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
@@ -39,7 +46,7 @@ jobs:
           cache-downloaded-files
         enableCrossOsArchive: true
     - name: Restore Downloaded Files
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref != 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
@@ -49,7 +56,7 @@ jobs:
           cache-downloaded-files
         enableCrossOsArchive: true
     - name: Setup Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: '3.x'
         allow-prereleases: true
@@ -77,12 +84,13 @@ jobs:
     runs-on: macos-latest
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       with:
         submodules: 'recursive'
+        persist-credentials: false
     - name: Cache Downloaded Files
       id: cache-downloaded-files-mac
-      uses: actions/cache@v5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref == 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
@@ -91,7 +99,7 @@ jobs:
           cache-downloaded-files-main-
           cache-downloaded-files
     - name: Restore Downloaded Files
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref != 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
@@ -100,7 +108,7 @@ jobs:
           cache-downloaded-files-main-
           cache-downloaded-files
     - name: Setup Python (3.11+)
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: '3.x'
         allow-prereleases: true
@@ -128,10 +136,10 @@ jobs:
 
   tests:
     name: "pytest on ${{ matrix.python-version }} (crypto-lib: ${{ matrix.use-crypto-lib }})"
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-24.04' || 'ubuntu-26.04' }}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']  # , 'pypy3.11']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15-dev', 'pypy3.11-7.3.23']
         use-crypto-lib: ['cryptography']
         include:
           - python-version: '3.9'
@@ -146,12 +154,13 @@ jobs:
       run:
         sudo apt-get install ghostscript jbig2dec poppler-utils
     - name: Checkout Code
-      uses: actions/checkout@v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       with:
         submodules: 'recursive'
+        persist-credentials: false
     - name: Cache Downloaded Files
       id: cache-downloaded-files
-      uses: actions/cache@v5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref == 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
@@ -160,7 +169,7 @@ jobs:
           cache-downloaded-files-main-
           cache-downloaded-files
     - name: Restore Downloaded Files
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
       if: github.ref != 'refs/heads/main'
       with:
         path: '**/tests/pdf_cache/*'
@@ -169,14 +178,14 @@ jobs:
           cache-downloaded-files-main-
           cache-downloaded-files
     - name: Setup Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
     - name: Setup Python (3.11+)
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
       with:
         python-version: ${{ matrix.python-version }}
@@ -225,7 +234,7 @@ jobs:
       run: mv .coverage ".coverage.$RANDOM"
       if: ${{ !startsWith(matrix.python-version, 'pypy') }}
     - name: Upload coverage data
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
       if: ${{ !startsWith(matrix.python-version, 'pypy') }}
       with:
         name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
@@ -235,14 +244,15 @@ jobs:
 
   codestyle:
     name: Check code style issues
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       with:
         submodules: 'recursive'
+        persist-credentials: false
     - name: Setup Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: '3.x'
         cache: 'pip'
@@ -284,8 +294,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: '3.x'
 
@@ -312,14 +324,16 @@ jobs:
     needs: tests
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: '3.x'
 
       - run: python -m pip install --upgrade coverage[toml]
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           pattern: coverage-data*
           merge-multiple: true
@@ -327,10 +341,10 @@ jobs:
       - name: Check Number of Downloaded Files
         run: |
           downloaded_files_count=$(find \.coverage* -type f | wc -l)
-          if [ $downloaded_files_count -eq 8 ]; then
-            echo "The expected number of files (8) were downloaded."
+          if [ $downloaded_files_count -eq 9 ]; then
+            echo "The expected number of files (9) were downloaded."
           else
-            echo "ERROR: Expected 8 files, but found $downloaded_files_count files."
+            echo "ERROR: Expected 9 files, but found $downloaded_files_count files."
             exit 1
           fi
 
@@ -339,7 +353,7 @@ jobs:
           python -m coverage combine
           python -m coverage xml
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

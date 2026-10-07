@@ -4,30 +4,36 @@ We strive to provide a library with secure defaults.
 
 ## Configuration
 
-### Filters
+### Global
 
-*pypdf* currently employs output size limits for some filters which are known to possibly have large compression ratios.
+*pypdf* currently employs a set of global configuration values, whose descriptions and defaults are
+available at {py:class}`~pypdf._configuration.Configuration`. They internally rely on
+{py:mod}`contextvars`.
 
-The usual limit is at 75 MB of uncompressed data during decompression. If this is too low for your use case, and you are
-aware of the possible side effects, you can modify the following constants which define the desired maximal output size in bytes:
+```{testsetup}
+pypdf_test_setup("user/security", {
+    "example.pdf": "../resources/example.pdf",
+})
+```
 
-* `pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH` for the *FlateDecode* filter (zlib compression)
-* `pypdf.filters.LZW_MAX_OUTPUT_LENGTH` for the *LZWDecode* filter (LZW compression)
-* `pypdf.filters.RUN_LENGTH_MAX_OUTPUT_LENGTH` for the *RunLengthDecode* filter (run-length compression)
+```{testcode}
+from pypdf import Configuration, PdfReader, apply_configuration, overwrite_configuration
 
-For JBIG2 images, there is a similar parameter to limit the memory usage during decoding: `pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH`
-It defaults to 75 MB as well.
+# Limit the values to the current scope.
+# The changed configuration value will be reset when exiting the context manager.
+with apply_configuration(maximum_declared_stream_length=10_000):
+    reader = PdfReader("example.pdf")
+    for page in reader.pages:
+        # Do something with the page.
+        pass
 
-For all streams, the maximum allowed value for the `/Length` field is limited to `pypdf.filters.MAX_DECLARED_STREAM_LENGTH`, which
-defaults to 75 MB as well.
-
-For all array-based streams, the maximum allowed output length is limited to `pypdf.filters.MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH`,
-which defaults to 75 MB as well.
-
-For the *FlateDecode* filter, the number of bytes to attempt recovery with can be set by `pypdf.filters.ZLIB_MAX_RECOVERY_INPUT_LENGTH`.
-It defaults to 5 MB due to the much more complex recovery approach.
-
-For the *JBIG2Decode* filter, calling the external *jbig2dec* tool can be disabled by setting `pypdf.filters.JBIG2DEC_BINARY = None`.
+# Overwrite the values globally.
+overwrite_configuration(maximum_declared_stream_length=5_000)
+reader = PdfReader("example.pdf")
+for page in reader.pages:
+    # Do something with the page.
+    pass
+```
 
 ### Reading
 
@@ -39,6 +45,13 @@ For the *JBIG2Decode* filter, calling the external *jbig2dec* tool can be disabl
 If you want to employ custom limits for the *PdfWriter* as well, the currently preferred way
 is to initialize it from the reader, id est something like
 `PdfWriter(clone_from=PdfReader("file.pdf", root_object_recovery_limit=42))`.
+
+For *PdfWriter* instances, the following limits are employed for incremental reading:
+
+* `incremental_clone_object_count_limit` limits the number of objects to read during cloning. It defaults to
+  500 000. Setting it to `None` will fully disable this limit.
+* `incremental_clone_object_id_limit` limits the maximum object ID to read during cloning. It defaults to
+  1 000 000. Setting it to `None` will fully disable this limit.
 
 ## Reporting possible vulnerabilities
 

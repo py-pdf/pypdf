@@ -1,14 +1,35 @@
 """Test the pypdf_cmap module."""
+import sys
 from io import BytesIO
+from unittest import mock
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import get_encoding, parse_bfchar, parse_bfrange
+from pypdf._cmap import (
+    __parse_bfrange__decode,
+    _check_token_length,
+    _parse_to_unicode,
+    get_encoding,
+    parse_bfchar,
+    parse_bfrange,
+)
 from pypdf._codecs import charset_encoding
-from pypdf._font import Font
 from pypdf.errors import LimitReachedError
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject, StreamObject
+from pypdf.generic import (
+    ArrayObject,
+    DecodedStreamObject,
+    DictionaryObject,
+    EncodedStreamObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+    PdfObject,
+    StreamObject,
+    TextStringObject,
+)
+from pypdf.generic._font import Font
 
 from . import RESOURCE_ROOT, get_data_from_url
 
@@ -44,7 +65,7 @@ from . import RESOURCE_ROOT, get_data_from_url
     ],
 )
 def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=strict)
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()
     assert caplog.text == ""
@@ -81,7 +102,7 @@ def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
 )
 def test_text_extraction_fast(caplog, url: str, name: str, strict: bool):
     """Text extraction runs without exceptions or warnings"""
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=strict)
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()
     assert caplog.text == ""
@@ -125,7 +146,7 @@ def test_ascii_charset():
 def test_text_extraction_of_specific_pages(
     url: str, name: str, page_nb: int, within_text
 ):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert within_text in reader.pages[page_nb].extract_text()
 
 
@@ -135,6 +156,8 @@ def test_iss1533():
     reader.pages[0].extract_text()  # no error
     font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F"])
     assert font.character_map["\x01"] == "Ü"
+    assert isinstance(font.font_descriptor.font_file, EncodedStreamObject)
+    assert font.font_descriptor.font_file["/Subtype"] == "/CIDFontType0C"
 
 
 @pytest.mark.enable_socket
@@ -158,7 +181,7 @@ def test_iss1533():
     ],
 )
 def test_cmap_encodings(caplog, url, name, page_index, within_text, caplog_text):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     extracted = reader.pages[page_index].extract_text()  # no error
     for contained in within_text:
         assert contained in extracted
@@ -246,7 +269,7 @@ def test_unigb_utf16():
         "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
     )
     name = "iss2812.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "《中国能源展望 2060（2024 年版）》编写委员会" in reader.pages[1].extract_text()
 
 
@@ -257,7 +280,7 @@ def test_too_many_differences():
         "https://github.com/user-attachments/files/16911741/dumb_extract_text_crash.pdf"
     )
     name = "iss2836.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert reader.pages[0].extract_text() == ""
 
 
@@ -267,7 +290,7 @@ def test_iss2925():
         "https://github.com/user-attachments/files/17621508/2305.09315.pdf"
     )
     name = "iss2925.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "slicing on the PDG to extract the relevant contextual" in reader.pages[3].extract_text()
 
 
@@ -278,7 +301,7 @@ def test_iss2966():
         "https://github.com/user-attachments/files/17904233/repro_out.pdf"
     )
     name = "iss2966.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "Lorem ipsum dolor sit amet" in reader.pages[0].extract_text()
 
 
@@ -287,11 +310,14 @@ def test_binascii_odd_length_string(caplog):
     """Tests for #2216"""
     url = "https://github.com/user-attachments/files/18199642/iss2216.pdf"
     name = "iss2216.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[0]
     assert "\n(Many other theorems may\n" in page.extract_text()
-    assert "Skipping broken line b'143f   143f   10300': Odd-length string\n" in caplog.text
+    if sys.version_info >= (3, 15):
+        assert "Skipping broken line b'143f   143f   10300': Odd number of hexadecimal digits\n" in caplog.text
+    else:
+        assert "Skipping broken line b'143f   143f   10300': Odd-length string\n" in caplog.text
 
 
 @pytest.mark.enable_socket
@@ -299,7 +325,7 @@ def test_standard_encoding(caplog):
     """Tests for #3156"""
     url = "https://github.com/user-attachments/files/18983503/standard-encoding.pdf"
     name = "issue3156.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[0]
     assert page.extract_text() == "Lorem ipsum"
@@ -311,7 +337,7 @@ def test_function_in_font_widths(caplog):
     """Tests for #3153"""
     url = "https://github.com/user-attachments/files/18945709/Marseille_pypdf_level_0.2._compressed.pdf"
     name = "issue3153.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     page = reader.pages[455]
     assert "La vulnérabilité correspond aux conséquences potentielles" in page.extract_text()
@@ -327,6 +353,35 @@ def test_get_encoding__encoding_value_is_none():
     )
 
 
+def _type1_font(font_file_data: bytes) -> DictionaryObject:
+    font_file = DecodedStreamObject()
+    font_file.set_data(font_file_data)
+    font_descriptor = DictionaryObject()
+    font_descriptor[NameObject("/FontFile")] = font_file
+    ft = DictionaryObject()
+    ft[NameObject("/Subtype")] = NameObject("/Type1")
+    ft[NameObject("/FontDescriptor")] = font_descriptor
+    return ft
+
+
+def test_get_encoding__type1_font_file_without_encoding():
+    # Clear part of the embedded Type1 program has no /Encoding section.
+    ft = _type1_font(b"%!PS-AdobeFont\n/FontName /Foo def\neexec\nbinary")
+    assert get_encoding(ft) == (
+        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        {}
+    )
+
+
+def test_get_encoding__type1_font_file_truncated_dup_line():
+    # A "dup" entry missing the glyph name must be skipped, not crash.
+    ft = _type1_font(
+        b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
+    )
+    _encoding, character_map = get_encoding(ft)
+    assert character_map == {"a": "a"}
+
+
 def test_parse_bfchar(caplog):
     map_dict = {}
     int_entry = []
@@ -335,7 +390,42 @@ def test_parse_bfchar(caplog):
 
     assert map_dict == {-1: 2, "ծ": "", "վ": "ጷ"}
     assert int_entry == [1406, 1390]
-    assert caplog.messages == ["Got invalid hex string: Odd-length string (b'1f310')"]
+    if sys.version_info >= (3, 15):
+        assert caplog.messages == ["Got invalid hex string: Odd number of hexadecimal digits (b'1f310')"]
+    else:
+        assert caplog.messages == ["Got invalid hex string: Odd-length string (b'1f310')"]
+
+
+def test_parse_bfrange__multibyte_source_codes():
+    """Source codes are decoded straight from their integer value."""
+    # Range without list: <0041>..<0043> -> <0061>..
+    map_dict = {}
+    int_entry = []
+    result = parse_bfrange(line=b"0041 0043 0061", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
+    assert result is None  # closure found
+    assert map_dict == {-1: 2, "A": "a", "B": "b", "C": "c"}
+    assert int_entry == [0x41, 0x42, 0x43]
+
+    # Range with an explicit list of destinations.
+    map_dict = {}
+    int_entry = []
+    parse_bfrange(line=b"0041 0042 [ 0078 0079 ]", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
+    assert map_dict == {-1: 2, "A": "x", "B": "y"}
+    assert int_entry == [0x41, 0x42]
+
+    # Single-byte source codes are decoded via the charmap branch.
+    map_dict = {}
+    int_entry = []
+    parse_bfrange(line=b"20 22 0061", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
+    assert map_dict == {-1: 1, " ": "a", "!": "b", '"': "c"}
+    assert int_entry == [0x20, 0x21, 0x22]
+
+
+def test_parse_bfrange__decode_out_of_range_code():
+    """A source code that exceeds its declared byte width raises OverflowError."""
+    # 0x100 needs two bytes but the declared width is one.
+    with pytest.raises(OverflowError):
+        __parse_bfrange__decode(map_dict={-1: 1}, code=0x100)
 
 
 def test_parse_bfrange__iteration_limit():
@@ -411,6 +501,126 @@ def test_parse_bfrange__iteration_limit():
     assert map_dict == {-1: 1, "\x01": "�", "\x02": "�", "\x03": "�", "\x04": "\uffff", "\x05": "ﾫ"}
 
 
+def test_parse_bfrange__entry_size_limit():
+    writer = PdfWriter()
+
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<00000000> <0000FFFF> <00000000>\n"
+        b"endbfrange\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+
+    # multiline_rg
+    int_entry = []
+    map_dict = {-1: 1}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1200 > 1024\.$"
+    ):
+        line = "0020  0021  0022  0023  0024  0025  0026  " + "1234567890" * 120 + " 9876543210" * 100
+        _ = parse_bfrange(line=line.encode("utf-8"), map_dict=map_dict, int_entry=int_entry, multiline_rg=(32, 251))
+    assert map_dict == {-1: 1, " ": " ", "!": "!", '"': '"', "#": "#", "$": "$", "%": "%", "&": "&"}
+
+    # No multiline_rg with early failure.
+    int_entry = []
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 30 > 16\.$"
+    ):
+        _ = parse_bfrange(
+            line=("21" * 15 + " BBBB").encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {}
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 32 > 16\.$"
+    ):
+        _ = parse_bfrange(
+            line=("BBBB " + "12" * 16).encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {}
+
+    # No multiline_rg, but list.
+    int_entry = []
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1337 > 1024\.$"
+    ):
+        _ = parse_bfrange(
+            line=("01 8A [ " + "1" * 1337 + " BBBB").encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {-1: 1}
+
+    # No multiline_rg and no list.
+    int_entry = []
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1337 > 1024\.$"
+    ):
+        _ = parse_bfrange(
+            line=("01 8A  " + "1" * 1337 + " BBBB").encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+        )
+    assert map_dict == {-1: 1}
+
+
+def test_check_token_length__unknown_limit():
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode token length exceeded: 5 > 1\.$"
+    ):
+        _check_token_length(token=b"ABCDE", limit=1)
+
+
+def test_parse_to_unicode_skips_truncated_lines(caplog):
+    """A truncated bfrange or malformed bfchar line must not crash extraction."""
+    writer = PdfWriter()
+
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<0001> <0005>\n"  # missing destination token
+        b"endbfrange\n"
+        b"beginbfchar\n"
+        b"<0001> <0041>\n"  # valid
+        b"zz <0042>\n"  # non-hex source
+        b"endbfchar\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+
+    # No exception, broken lines reported.
+    page.extract_text()
+    assert "Skipping broken line b'0001   0005': list index out of range" in caplog.text
+    assert "Skipping broken line b'zz  0042': Non-hexadecimal digit found" in caplog.text
+
+
 def test_parse_bfchar__iteration_limit():
     int_entry = [0] * 99_995
     map_dict = {}
@@ -422,3 +632,213 @@ def test_parse_bfchar__iteration_limit():
             map_dict=map_dict, int_entry=int_entry,
         )
     assert map_dict == {}
+
+
+def test_parse_bfchar__entry_size_limit():
+    int_entry = []
+    map_dict = {}
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 18 > 16\.$",
+    ):
+        parse_bfchar(
+            line=(b"01" * 9 + b" 0041"),
+            map_dict=map_dict,
+            int_entry=int_entry,
+        )
+    assert map_dict == {-1: 9}
+
+    map_dict = {}
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1026 > 1024\.$",
+    ):
+        parse_bfchar(
+            line=(b"01 " + b"ab" * 513),
+            map_dict=map_dict,
+            int_entry=int_entry,
+        )
+    assert map_dict == {-1: 1}
+
+
+def test_parse_bfchar__invalid_tokens(caplog):
+    map_dict = {}
+    int_entry = []
+
+    parse_bfchar(b"", map_dict, int_entry)
+    assert map_dict == {}
+    assert caplog.messages == ["Skipping broken line b'': Line is empty."]
+    caplog.clear()
+
+    parse_bfchar(b"01 0041 02", map_dict, int_entry)
+    assert map_dict == {-1: 1, "\x01": "A"}
+    assert caplog.messages == ["Ignoring final token of odd-length line b'01 0041 02'."]
+
+
+def _make_japanese_cmap_pdf(cmap_name: str, encoding: str) -> bytes:
+    """Minimal PDF with a CIDFont using *cmap_name* as /Encoding, no /ToUnicode."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    cid_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/CIDFontType2"),
+        NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
+        NameObject("/CIDSystemInfo"): DictionaryObject({
+            NameObject("/Registry"): TextStringObject("Adobe"),
+            NameObject("/Ordering"): TextStringObject("Japan1"),
+            NameObject("/Supplement"): NumberObject(2),
+        }),
+        NameObject("/DW"): NumberObject(1000)
+    })
+    cid_font_ref = writer._add_object(cid_font)
+
+    type0_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
+        NameObject("/Encoding"): NameObject(cmap_name),
+        NameObject("/DescendantFonts"): ArrayObject([cid_font_ref])
+    })
+    type0_font_ref = writer._add_object(type0_font)
+
+    type1_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+    })
+    type1_font_ref = writer._add_object(type1_font)
+
+    char_hex = "日本語テスト".encode(encoding).hex().upper()
+    content_data = (
+        "BT\n/F0 14 Tf\n72 720 Td\n(Hello ASCII) Tj\n"
+        f"0 -28 Td\n/F1 14 Tf\n<{char_hex}> Tj\nET\n"
+    ).encode("latin-1")
+    content_stream = DecodedStreamObject()
+    content_stream.set_data(content_data)
+    content_ref = writer._add_object(content_stream)
+
+    page.update({
+        NameObject("/Contents"): content_ref,
+        NameObject("/Resources"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F0"): type1_font_ref,
+                NameObject("/F1"): type0_font_ref
+            })
+        })
+    })
+
+    buf = BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+@pytest.mark.parametrize(
+    ("cmap_name", "python_codec"),
+    [
+        ("/90ms-RKSJ-H", "cp932"),
+        ("/90ms-RKSJ-V", "cp932"),
+        ("/UniJIS-UTF16-H", "utf-16-be"),
+        ("/UniJIS-UTF16-V", "utf-16-be"),
+    ],
+    ids=["90ms-RKSJ-H", "90ms-RKSJ-V", "UniJIS-UTF16-H", "UniJIS-UTF16-V"],
+)
+def test_japanese_cmap_encodings(cmap_name: str, python_codec: str, caplog) -> None:
+    """Japanese predefined CMaps must be decoded correctly. Resolves #3799."""
+    pdf_bytes = _make_japanese_cmap_pdf(cmap_name, python_codec)
+    reader = PdfReader(BytesIO(pdf_bytes))
+    text = reader.pages[0].extract_text()
+    assert "日本語テスト" in text, f"Japanese text garbled for {cmap_name}"
+    assert "Hello ASCII"  in text, f"ASCII baseline broken for {cmap_name}"
+    assert "Advanced encoding" not in caplog.text
+
+
+def test__character_map_from_cff_type1_font_file_guards(caplog):
+    font_file_stream = StreamObject()
+    font_dict = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/VSGOOE+Times-Roman"),
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Name"): NameObject("/R77"),
+        }
+    )
+    font_file_stream.update({NameObject("/Subtype"): NameObject("/Type1C")})
+    font_descriptor = DictionaryObject({NameObject("/FontFile3"): font_file_stream})
+    font_dict[NameObject("/FontDescriptor")] = font_descriptor
+    # Ensure a warning is logged when fontTools is missing for CFF Type1 font parsing
+    with mock.patch("pypdf.generic._font.HAS_FONTTOOLS", False):
+        _parse_to_unicode(font_dict)
+    assert (
+        "fontTools is required to fully parse the encoding of a CFF Type1 font in font dictionary"
+        in caplog.text
+    )
+
+    # Test with fontTools
+    pytest.importorskip("fontTools", reason="Requires fontTools")
+
+    # Test raising an exception while parsing font data
+    font_file_stream.set_data(b"Corrupt font data")
+    font_file_stream.update({NameObject("/Subtype"): NameObject("/Type1C")})
+    font_descriptor = DictionaryObject({NameObject("/FontFile3"): font_file_stream})
+    font_dict[NameObject("/FontDescriptor")] = font_descriptor
+    _parse_to_unicode(font_dict)
+
+    # Ensure we return early when encoding is a string
+    mock_cff_set = mock.MagicMock()
+    mock_font_str_encoding = mock.MagicMock()
+    mock_font_str_encoding.Encoding = "StandardEncoding"
+    mock_cff_set.topDictIndex = [mock_font_str_encoding]
+
+    with mock.patch("fontTools.cffLib.CFFFontSet", return_value=mock_cff_set):
+        _parse_to_unicode(font_dict)
+
+
+def _generate_font_with_differences(differences: PdfObject) -> DictionaryObject:
+    """A Type1 font resource whose /Encoding carries the given /Differences."""
+    font = DictionaryObject()
+    font[NameObject("/Type")] = NameObject("/Font")
+    font[NameObject("/Subtype")] = NameObject("/Type1")
+    font[NameObject("/BaseFont")] = NameObject("/Helvetica")
+    encoding = DictionaryObject()
+    encoding[NameObject("/Differences")] = differences
+    font[NameObject("/Encoding")] = encoding
+    return font
+
+
+@pytest.mark.parametrize(
+    ("differences", "expected"),
+    [
+        pytest.param(
+            NumberObject(5),
+            "Font encoding differences are not an array: 5",
+            id="number",
+        ),
+        pytest.param(
+            TextStringObject("abc"),
+            "Font encoding differences are not an array: abc",
+            id="string",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Font encoding differences are not an array: {}",
+            id="dictionary",
+        ),
+    ],
+)
+def test_get_encoding__differences_not_an_array(caplog, differences, expected):
+    """/Differences must be an array; iterating a non-array raised a TypeError."""
+    encoding, _ = get_encoding(_generate_font_with_differences(differences))
+
+    assert encoding == dict(enumerate(charset_encoding["/StandardEncoding"]))
+    assert expected in caplog.text
+
+
+def test_get_encoding__differences_is_an_array(caplog):
+    """The regular path: a proper /Differences array is still applied."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), NameObject("/quotesingle")]))
+    )
+
+    assert encoding[65] == "'"
+    assert caplog.text == ""

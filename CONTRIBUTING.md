@@ -31,6 +31,11 @@ people. That means:
 Before you make bigger changes, open an issue to make the suggestion.
 Note which interface changes you want to make.
 
+After applying changes requested by a review, consider re-requesting a review to
+indicate to the maintainers that they can have another look. For specific review
+comments, please prefer answering them in the specific thread instead of the main
+PR thread to keep references clear.
+
 ## AI Policy
 
 You may ask AI (i.e., LLMs) for (coding) assistance. However, you should ensure

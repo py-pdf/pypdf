@@ -7,7 +7,7 @@ import pytest
 import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import PdfReadError, XmpDocumentError
+from pypdf.errors import LimitReachedError, PdfReadError, XmpDocumentError
 from pypdf.generic import ContentStream, NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
@@ -152,7 +152,7 @@ def test_identity_function(x):
 )
 def test_xmpmm_instance_id(url, name, xmpmm_instance_id):
     """XMPMM instance id is correctly extracted."""
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
     # cache hit:
@@ -164,7 +164,7 @@ def test_xmp_dc_description_extraction():
     """XMP dc_description is correctly extracted."""
     url = "https://github.com/user-attachments/files/18381721/tika-953770.pdf"
     name = "tika-953770.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.dc_description == {
         "x-default": "U.S. Title 50 Certification Form"
@@ -180,7 +180,7 @@ def test_dc_creator_extraction():
     """XMP dc_creator is correctly extracted."""
     url = "https://github.com/user-attachments/files/18381721/tika-953770.pdf"
     name = "tika-953770.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.dc_creator == ["U.S. Fish and Wildlife Service"]
     # cache hit:
@@ -192,7 +192,7 @@ def test_custom_properties_extraction():
     """XMP custom_properties is correctly extracted."""
     url = "https://github.com/user-attachments/files/18381764/tika-986065.pdf"
     name = "tika-986065.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.custom_properties == {"Style": "Searchable Image (Exact)"}
     # cache hit:
@@ -204,7 +204,7 @@ def test_dc_subject_extraction():
     """XMP dc_subject is correctly extracted."""
     url = "https://github.com/user-attachments/files/18381730/tika-959519.pdf"
     name = "tika-959519.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.dc_subject == [
         "P&P",
@@ -240,7 +240,7 @@ def test_invalid_xmp_information_handling():
     """
     url = "https://github.com/py-pdf/pypdf/files/5536984/test.pdf"
     name = "pypdf-5536984.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     with pytest.raises(PdfReadError) as exc:
         reader.xmp_metadata
     assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
@@ -267,11 +267,23 @@ def test_pdfa_xmp_metadata_without_values():
     assert xmp.pdfaid_conformance is None
 
 
+def test_xmp_information__missing_rdf_root():
+    """Well-formed XML without an rdf:RDF root raises PdfReadError, not IndexError."""
+    co = ContentStream(None, None)
+    co.set_data(
+        b'<?xml version="1.0"?>'
+        b'<x:xmpmeta xmlns:x="adobe:ns:meta/"><foo>bar</foo></x:xmpmeta>'
+    )
+    with pytest.raises(PdfReadError) as exc:
+        XmpInformation(co)
+    assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
+
+
 @pytest.mark.enable_socket
 def test_xmp_metadata__content_stream_is_dictionary_object():
     url = "https://github.com/user-attachments/files/18943249/testing.pdf"
     name = "issue3107.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     with pytest.raises(
             PdfReadError,
@@ -284,7 +296,7 @@ def test_xmp_metadata__content_stream_is_dictionary_object():
 def test_dc_creator__bag_instead_of_seq():
     url = "https://github.com/user-attachments/files/18381698/tika-924562.pdf"
     name = "tika-924562.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
     assert reader.xmp_metadata is not None
     assert reader.xmp_metadata.dc_creator == ["William J. Hussar"]
@@ -395,6 +407,20 @@ def test_xmp_information__create():
     assert xmp.dc_description == {}
     assert xmp.xmp_create_date is None
     assert xmp.pdf_producer is None
+
+
+def test_xmp_information__does_not_inherit_from_protocol():
+    """
+    XmpInformation does not inherit from XmpInformationProtocol.
+
+    Inheriting from a Protocol would make typing._ProtocolMeta the metaclass, see
+    #2136. mypy checks that XmpInformation satisfies the protocol where
+    DictionaryObject.xmp_metadata returns it.
+    """
+    xmp = XmpInformation.create()
+    assert xmp.get_object() is xmp
+    assert xmp.hash_value().startswith(b"XmpInformation:")
+    assert type(XmpInformation) is type
 
 
 def test_xmp_information__set_dc_title():
@@ -906,8 +932,11 @@ def test_xmp_information__external_entity_expansion(tmpdir):
   </rdf:RDF>
 </x:xmpmeta>""".encode())
 
-    xmp = XmpInformation(stream)
-    assert xmp.dc_creator == ["abc"]
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'xxe'$"
+    ):
+        XmpInformation(stream)
 
 
 @pytest.mark.timeout(10)
@@ -935,9 +964,91 @@ def test_xmp_information__exponential_entity_expansion():
 
     with pytest.raises(
             expected_exception=PdfReadError,
-            match=(
-                r"^XML in XmpInformation was invalid: limit on input amplification factor "
-                r"\(from DTD and entities\) breached: line 16, column 60$"
-            )
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'lol'$"
     ):
         XmpInformation(stream)
+
+
+@pytest.mark.timeout(10)
+def test_xmp_information__quadratic_entity_expansion():
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(f"""<?xml version="1.0"?>
+<!DOCTYPE lolz [
+  <!ENTITY a "{'A' * 10_000}">
+]>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="">
+      <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">{'&a;' * 99}</dc:title>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>""".encode())
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^XML in XmpInformation was invalid: Forbidden entities: 'a'$"
+    ):
+        XmpInformation(stream)
+
+
+@pytest.mark.timeout(10)
+def test_xmp_information__input_limit():
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(b"A" * 10_000_000)
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^XMP stream size 10000000 exceeds limit of 5000000\.$"
+    ):
+        XmpInformation(stream)
+
+
+@pytest.mark.timeout(10)
+def test_xmp_information__element_limit():
+    stream = ContentStream(pdf=None, stream=None)
+
+    xmp = b'<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>\n'
+    xmp += b'<x:xmpmeta xmlns:x="adobe:ns:meta/">'
+    xmp += b'<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+    xmp += b'<rdf:Description rdf:about="" xmlns:custom="urn:custom">'
+    xmp += b"<custom:a/>" * 100_010
+    xmp += b"</rdf:Description></rdf:RDF></x:xmpmeta>"
+    stream.set_data(xmp)
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^XMP metadata exceeds limit of 100000 elements\.$"
+    ):
+        XmpInformation(stream)
+
+
+@pytest.mark.parametrize(
+    ("local_name", "expected"),
+    [
+        # Non-hex digits, a marker at the end and a truncated escape are all kept as-is.
+        ("fooↂzz", {"fooↂzz": "val"}),
+        ("fooↂ", {"fooↂ": "val"}),
+        ("fooↂ0", {"fooↂ0": "val"}),
+        # A well-formed escape is still decoded (Adobe stores "my car" this way).
+        ("myↂ0020car", {"my car": "val"}),
+    ],
+)
+def test_custom_properties__malformed_escape(local_name, expected):
+    """A pdfx key with a broken ↂ escape is kept verbatim instead of crashing.
+
+    Custom property keys encode invalid identifier characters as ``ↂ`` followed
+    by a four digit hex id (see ``custom_properties``). ``ↂ`` is itself a valid
+    XML name character, so a crafted key may carry the marker without the four
+    hex digits.
+    """
+    stream = ContentStream(pdf=None, stream=None)
+    stream.set_data(
+        (
+            '<x:xmpmeta xmlns:x="adobe:ns:meta/">'
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:pdfx="{pypdf.xmp.PDFX_NAMESPACE}">'
+            f"<pdfx:{local_name}>val</pdfx:{local_name}>"
+            "</rdf:Description></rdf:RDF></x:xmpmeta>"
+        ).encode()
+    )
+    assert XmpInformation(stream).custom_properties == expected

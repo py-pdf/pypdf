@@ -2,16 +2,19 @@
 
 import codecs
 import gc
+import re
+import sys
 import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
+from typing import Union
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.constants import CheckboxRadioButtonAttributes
-from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
+from pypdf.constants import CheckboxRadioButtonAttributes, OutlineFontFlag
+from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, DeprecationError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -139,9 +142,8 @@ def test_null_object_exception():
 @pytest.mark.parametrize("value", [b"", b"False", b"foo ", b"foo  ", b"foo bar"])
 def test_indirect_object_premature(value):
     stream = BytesIO(value)
-    with pytest.raises(PdfStreamError) as exc:
+    with pytest.raises(expected_exception=PdfStreamError, match=re.escape(STREAM_TRUNCATED_PREMATURELY)):
         IndirectObject.read_from_stream(stream, None)
-    assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_read_hex_string_from_stream():
@@ -154,6 +156,13 @@ def test_read_hex_string_from_stream_exception():
     with pytest.raises(PdfStreamError) as exc:
         read_hex_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
+
+
+def test_read_hex_string_from_stream_non_hex():
+    stream = BytesIO(b"<41ZZ42>")
+    with pytest.raises(PdfStreamError) as exc:
+        read_hex_string_from_stream(stream)
+    assert "Invalid hexadecimal character" in exc.value.args[0]
 
 
 def test_read_string_from_stream_exception():
@@ -180,12 +189,12 @@ def test_read_string_from_stream_multichar_eol2():
     assert read_string_from_stream(stream) == ""
 
 
-def test_read_string_from_stream_excape_digit():
+def test_read_string_from_stream_escape_digit():
     stream = BytesIO(b"x\\1a )")
     assert read_string_from_stream(stream) == "\x01a "
 
 
-def test_read_string_from_stream_excape_digit2():
+def test_read_string_from_stream_escape_digit2():
     stream = BytesIO(b"(hello \\1\\2\\3\\4)")
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
@@ -284,6 +293,14 @@ def test_destination_fit_r():
     d.empty_tree()
 
 
+def test_destination_color_and_font_format_defaults():
+    d = Destination(NameObject("title"), NullObject(), Fit.fit_rectangle(0, 0, 0, 0))
+    assert isinstance(d.color, ArrayObject)
+    assert d.color == [FloatObject(0), FloatObject(0), FloatObject(0)]
+    assert isinstance(d.font_format, OutlineFontFlag)
+    assert d.font_format == 0
+
+
 def test_destination_fit_v():
     d = Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
 
@@ -292,6 +309,22 @@ def test_destination_fit_v():
 
     # Trigger Exception
     Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
+
+
+def test_destination_malformed_fit_arguments():
+    # /XYZ with surplus arguments keeps the first three coordinates
+    d = Destination(NameObject("title"), NullObject(), Fit(fit_type="/XYZ", fit_args=(1, 2, 3, 4)))
+    assert d.left == FloatObject(1)
+    assert d.top == FloatObject(2)
+    assert d.zoom == FloatObject(3)
+
+    # /FitR with a wrong number of arguments falls back to null coordinates
+    d = Destination(NameObject("title"), NullObject(), Fit(fit_type="/FitR", fit_args=(1, 2)))
+    assert d.typ == "/FitR"
+    assert isinstance(d.left, NullObject)
+    assert isinstance(d.bottom, NullObject)
+    assert isinstance(d.right, NullObject)
+    assert isinstance(d.top, NullObject)
 
 
 def test_outline_item_write_to_stream():
@@ -512,6 +545,31 @@ def test_rectangleobject():
     assert ro.upper_right == (14, 18)
 
 
+def test_rectangleobject__accepts_an_array_object():
+    """A /MediaBox read from a PDF arrives as an ArrayObject, not a tuple."""
+    ro = RectangleObject(ArrayObject([
+        NumberObject(0), NumberObject(0), NumberObject(612), NumberObject(792)
+    ]))
+
+    assert list(ro) == [0, 0, 612, 792]
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        pytest.param((0, 0), id="too-few"),
+        pytest.param((0, 0, 1, 1, 2), id="too-many"),
+        pytest.param((), id="empty"),
+    ],
+)
+def test_rectangleobject__requires_four_values(values):
+    """A rectangle built from the wrong number of values reports it."""
+    with pytest.raises(
+        ValueError, match=f"Expected four values for a rectangle, got {len(values)}"
+    ):
+        RectangleObject(values)
+
+
 def test_textstringobject_exc():
     tso = TextStringObject("foo")
     assert tso.get_original_bytes() == b"foo"
@@ -652,6 +710,37 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
+def test_insert_child_before_last_with_multiple_existing():
+    """Cover TreeObject.insert_child try-success path.
+
+    Inserts a child before the existing /Last node when the tree already
+    has multiple children, so the node being inserted before has a /Prev.
+    """
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    child1 = TreeObject()
+    child1[NameObject("/Foo")] = TextStringObject("1")
+    child1_ref = writer._add_object(child1)
+    tree.add_child(child1_ref, writer)
+
+    child2 = TreeObject()
+    child2[NameObject("/Foo")] = TextStringObject("2")
+    child2_ref = writer._add_object(child2)
+    tree.add_child(child2_ref, writer)
+
+    # /Last is now child2, /First is child1, child2 has /Prev pointing at child1.
+    # Inserting before child2_ref hits the try block successfully.
+    new_child = TreeObject()
+    new_child[NameObject("/Foo")] = TextStringObject("new")
+    new_child_ref = writer._add_object(new_child)
+    tree.insert_child(new_child_ref, child2_ref, writer)
+
+    assert tree[NameObject("/Count")] == 3
+    assert len(list(tree.children())) == 3
+
+
 @pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "caplog_content"),
@@ -691,7 +780,7 @@ def test_remove_child_in_tree():
     ],
 )
 def test_extract_text(caplog, url: str, name: str, caplog_content: str):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     for page in reader.pages:
         page.extract_text()
     if caplog_content == "":
@@ -706,7 +795,7 @@ def test_text_string_write_to_stream():
     url = "https://github.com/user-attachments/files/18381698/tika-924562.pdf"
     name = "tika-924562.pdf"
 
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     for page in writer.pages:
@@ -718,7 +807,7 @@ def test_bool_repr(tmp_path):
     url = "https://github.com/user-attachments/files/18381703/tika-932449.pdf"
     name = "tika-932449.pdf"
 
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     write_path = tmp_path / "tmp-fields-report.txt"
     with open(write_path, "w") as fp:
         fields = reader.get_fields(fileobj=fp)
@@ -742,14 +831,14 @@ def test_issue_997(pdf_file_path):
     name = "gh-issue-997.pdf"
 
     merger = PdfWriter()
-    merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
+    merger.append(BytesIO(get_data_from_url(url=url, name=name)))  # here the error raises
     with open(pdf_file_path, "wb") as f:
         merger.write(f)
     merger.close()
 
     # Strict
     merger = PdfWriter()
-    merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
+    merger.append(BytesIO(get_data_from_url(url=url, name=name)))  # here the error raises
     with open(pdf_file_path, "wb") as f:
         merger.write(f)
     merger.close()
@@ -971,6 +1060,78 @@ def test_cloning_null_obj_keeps_hard_reference():
     assert obj_weakref() is not None
 
 
+def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayObject, DictionaryObject]:
+    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
+    elements = elements * (size // len(elements))
+    if as_array:
+        return ArrayObject(elements)
+    return DictionaryObject({NameObject(f"/K{i}"): element for i, element in enumerate(elements)})
+
+
+def _clone_and_count(container: Union[ArrayObject, DictionaryObject], writer: PdfWriter) -> tuple[int, int]:
+    """Clone the container and return the number of Python function calls and raised exceptions."""
+    calls = 0
+    exceptions = 0
+
+    def trace(frame, event, arg):  # noqa: ANN202
+        nonlocal calls, exceptions
+        if event == "call":
+            calls += 1
+        elif event == "exception":
+            exceptions += 1
+        return trace
+
+    # Otherwise, finalizers and weakref callbacks of unrelated objects might be counted.
+    gc.collect()
+    gc_was_enabled = gc.isenabled()
+    gc.disable()
+    previous_trace = sys.gettrace()
+    sys.settrace(trace)
+    try:
+        clone = container.clone(writer)
+    finally:
+        sys.settrace(previous_trace)
+        if gc_was_enabled:
+            gc.enable()
+
+    assert clone == container
+    return calls, exceptions
+
+
+@pytest.mark.parametrize(
+    ("as_array", "calls_per_1000_elements"),
+    [
+        # 7,600 to 9,600 before the fix, depending on the Python version.
+        pytest.param(True, 3600, id="array"),
+        # 10,600 to 11,600 before the fix, depending on the Python version, and
+        # 8,600 while PdfObject inherited from a Protocol, as the isinstance()
+        # checks in DictionaryObject.__setitem__() ran Python code.
+        pytest.param(False, 4600, id="dictionary"),
+    ],
+)
+def test_cloning_direct_objects__function_calls_and_exceptions(as_array, calls_per_1000_elements):
+    """
+    Cloning direct objects must stay cheap, see #2136.
+
+    Documents can contain arrays with thousands of direct objects, for example
+    in the /ParentTree of the structure tree. Counting the Python function calls
+    and the raised exceptions measures the work per element independently of the
+    machine speed. Comparing 1,000 with 2,000 elements leaves out the work for
+    the container itself.
+    """
+    writer = PdfWriter()
+    # The first clone fills caches, for example of isinstance(), which takes additional calls.
+    _create_direct_objects_container(as_array, size=5).clone(writer)
+
+    calls_1000, exceptions_1000 = _clone_and_count(_create_direct_objects_container(as_array, size=1000), writer)
+    calls_2000, exceptions_2000 = _clone_and_count(_create_direct_objects_container(as_array, size=2000), writer)
+
+    assert calls_2000 - calls_1000 == calls_per_1000_elements
+    # Direct objects have no indirect reference, which must not be handled by
+    # catching an AttributeError per element.
+    assert exceptions_2000 == exceptions_1000
+
+
 @pytest.mark.enable_socket
 def test_append_with_indirectobject_not_pointing(caplog):
     """
@@ -979,7 +1140,7 @@ def test_append_with_indirectobject_not_pointing(caplog):
     """
     url = "https://github.com/py-pdf/pypdf/files/10729142/document.pdf"
     name = "tst_iss1631.pdf"
-    data = BytesIO(get_data_from_url(url, name=name))
+    data = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(data, strict=False)
     writer = PdfWriter()
     writer.append(reader)
@@ -995,7 +1156,7 @@ def test_iss1615_1673():
     # #1615
     url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
     name = "graph_letter.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
     assert (
@@ -1007,7 +1168,7 @@ def test_iss1615_1673():
     # #1673
     url = "https://github.com/py-pdf/pypdf/files/10848750/budgeting-loan-form-sf500.pdf"
     name = "budgeting-loan-form-sf500.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
@@ -1017,7 +1178,7 @@ def test_destination_withoutzoom():
     """Cf issue #1832"""
     url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
     name = "2021_book_security.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.outline
 
     out = BytesIO()
@@ -1071,7 +1232,7 @@ def test_set_data_2():
     """
     url = "https://github.com/user-attachments/files/16796095/f5471sm-2.pdf"
     name = "iss2780.pdf"
-    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(BytesIO(get_data_from_url(url=url, name=name)))
     writer.root_object["/AcroForm"]["/XFA"][7].set_data(b"test")
     assert writer.root_object["/AcroForm"]["/XFA"][7].get_object()["/Filter"] == [
         "/FlateDecode"
@@ -1084,7 +1245,7 @@ def test_calling_indirect_objects():
     """Cope with cases where attributes/items are called from indirectObject"""
     url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
     name = "2021_book_security.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.trailer.get("/Info")["/Creator"]
     reader.pages[0]["/Contents"][0].get_data()
     writer = PdfWriter(clone_from=reader)
@@ -1103,7 +1264,7 @@ def test_calling_indirect_objects():
 def test_indirect_object_page_dimensions():
     url = "https://github.com/py-pdf/pypdf/files/13302338/Zymeworks_Corporate.Presentation_FINAL1101.pdf.pdf"
     name = "issue2287.pdf"
-    data = BytesIO(get_data_from_url(url, name=name))
+    data = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(data, strict=False)
     mediabox = reader.pages[0].mediabox
     assert mediabox == RectangleObject((0, 0, 792, 612))
@@ -1241,11 +1402,81 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
     assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
 
 
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+@pytest.mark.parametrize(
+    ("filter_name", "image_data"),
+    [
+        (b"AHx", b"41>"),
+        (b"A85", a85encode(b"A") + b"~>"),
+        (b"RL", b"\x00A\x80"),
+        (b"DCT", b"\xff\xd8\xff\xd9"),
+    ],
+    ids=["ASCIIHex", "ASCII85", "RunLength", "DCT"],
+)
+def test_content_stream_filtered_inline_image_at_end_of_stream(filter_name, image_data, tail):
+    """The separator before `EI` is excluded from filtered inline image data."""
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(
+        b"BI /W 1 /H 1 /BPC 8 /CS /G /F /" + filter_name + b" ID\n" + image_data + b"\nEI" + tail
+    )
+    operations = ContentStream(stream_object, None).operations
+
+    assert operations[0][1] == b"INLINE IMAGE"
+    assert operations[0][0]["data"] == image_data
+    assert operations[1:] == ([([], b"Q")] if tail == b"\nQ\n" else [])
+
+
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+def test_inline_image_at_end_of_stream(tail):
+    # An inline image whose `EI` marker is the very end of the content stream
+    # (no trailing whitespace or operator) must not raise (#3468).
+    image = b"abcdefghijklmnop"  # 4 * 4 * 1 byte
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 4 /H 4 /CS /G\nID\n" + image + b"\nEI" + tail
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert inline_images[0][0]["data"] == image
+
+
+def test_inline_image_at_end_of_stream_default_extractor():
+    # An unrecognized colorspace forces extraction through
+    # `extract_inline_default`, which must also accept an `EI` marker at the
+    # very end of the stream without raising (#3468).
+    image = b"abcdefghijklmnop"  # 4 * 4 * 1 byte
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 4 /H 4 /CS /Unknown\nID\n" + image + b"\nEI"
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert image in inline_images[0][0]["data"]
+
+
+def test_inline_image_at_end_of_stream_fallback_extractor():
+    # A recognized colorspace with oversized `/W`/`/H` makes the primary
+    # dimension-based read overshoot the `EI` marker, so extraction falls back
+    # to `extract_inline_default`. With the marker at the very end of the
+    # stream the fallback `read(3)` returns only two bytes (`b"EI"`), which
+    # exercises the `len(ei) != 3` path of the fallback branch (#3468).
+    image = b"abcdefghijklmnop"  # 16 bytes; `/W 8` * `/H 4` would expect 32
+    content = b"q 100 0 0 100 100 100 cm\nBI\n/W 8 /H 4 /CS /G\nID\n" + image + b"\nEI"
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(content)
+    content_stream = ContentStream(stream_object, None)
+    inline_images = [op for op in content_stream.operations if op[1] == b"INLINE IMAGE"]
+    assert len(inline_images) == 1
+    assert image in inline_images[0][0]["data"]
+
+
 def test_missing_hashbin():
     assert NullObject().hash_bin() == hash((NullObject,))
     assert hash(NullObject()) == NullObject().hash_bin()
     t = ByteStringObject(b"123")
     assert t.hash_bin() == hash((ByteStringObject, b"123"))
+    assert FloatObject(1.5).hash_bin() == hash((FloatObject, 1.5))
+    assert FloatObject(1.5).hash_bin() == FloatObject(1.5).hash_bin()
 
 
 def test_is_null_or_none():
@@ -1327,7 +1558,7 @@ def test_dictionaryobject__length_0_stream():
     """Test for issue #3052."""
     url = "https://github.com/user-attachments/files/18734105/correct.pdf"
     name = "issue3052.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
     output = BytesIO()
     writer.write(output)
     assert b"\n8 0 obj\n<<\n/Length 0\n>>\nstream\n\nendstream\nendobj\n" in output.getvalue()

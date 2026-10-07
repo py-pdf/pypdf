@@ -30,7 +30,7 @@ class CryptBase:
     def encrypt(self, data: bytes) -> bytes:  # pragma: no cover
         return data
 
-    def decrypt(self, data: bytes) -> bytes:  # pragma: no cover
+    def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:  # pragma: no cover
         return data
 
 

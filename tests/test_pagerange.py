@@ -70,6 +70,30 @@ def test_str_init_error():
     assert exc.value.args[0] == "1-2"
 
 
+@pytest.mark.parametrize("init_str", ["::0", "1:5:0", "0:0:0"])
+def test_str_init_zero_step(init_str):
+    """A zero stride selects nothing and only raised once the range was applied."""
+    assert PageRange.valid(init_str) is False
+    with pytest.raises(ParseError) as exc:
+        PageRange(init_str)
+    assert exc.value.args[0] == init_str
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (slice(1, 5), True),
+        (PageRange("1:5"), True),
+        ("1:5", True),
+        (5, False),
+        (None, False),
+        (["1:5"], False),
+    ],
+)
+def test_valid(value, expected):
+    assert PageRange.valid(value) is expected
+
+
 @pytest.mark.parametrize(
     ("params", "expected"),
     [
@@ -115,6 +139,36 @@ def test_addition(a, b, expected):
     ],
 )
 def test_addition_gap(a: PageRange, b: PageRange):
+    with pytest.raises(ValueError) as exc:
+        a + b
+    assert exc.value.args[0] == "Can't add PageRanges with gap"
+
+
+@pytest.mark.parametrize(
+    ("a", "b", "expected"),
+    [
+        # None start ("beginning") absorbs the other range's start.
+        (PageRange(slice(None, 5)), PageRange(slice(2, 10)), slice(None, 10)),
+        (PageRange(slice(0, 5)), PageRange(slice(None, 10)), slice(None, 10)),
+        # None stop ("end") absorbs the other range's stop.
+        (PageRange(slice(0, None)), PageRange(slice(2, 10)), slice(0, None)),
+        # Both None on one side: fully open range swallows a bounded one.
+        (PageRange(slice(None, None)), PageRange(slice(2, 5)), slice(None, None)),
+        (PageRange(":"), PageRange(":"), slice(None, None)),
+        # None start on one operand, None stop on the other: union covers everything.
+        (PageRange(slice(0, None)), PageRange(slice(None, 5)), slice(None, None)),
+    ],
+)
+def test_addition_none_bounds(a: PageRange, b: PageRange, expected: slice):
+    assert a + b == PageRange(expected)
+    assert b + a == PageRange(expected)  # addition is commutative
+
+
+def test_addition_gap_with_none_start():
+    # A None start ("beginning") must not be treated as covering the whole
+    # range: the stop is still finite, so a real gap past it must still raise.
+    a = PageRange(slice(None, 5))
+    b = PageRange(slice(20, 30))
     with pytest.raises(ValueError) as exc:
         a + b
     assert exc.value.args[0] == "Can't add PageRanges with gap"

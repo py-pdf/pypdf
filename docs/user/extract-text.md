@@ -158,7 +158,7 @@ operator, operand-arguments, current transformation matrix, and text matrix.
 The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y > 720) and footer (y < 50). In this file we also need to include new line characters (y == 0).
 
 ```{testcode}
-from pypdf import PdfReader
+from pypdf import PdfReader, mult
 
 reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
 page = reader.pages[3]
@@ -167,7 +167,8 @@ parts = []
 
 
 def visitor_body(text, cm, tm, font_dict, font_size):
-    y = tm[5]
+    txt2user = mult(tm, cm)
+    y = txt2user[5]
     if 50 < y < 720 or y == 0:
         parts.append(text)
 
@@ -208,7 +209,7 @@ Such an SVG export may help to understand what is going on in a page.
 ```{testcode}
 :skipif: True
 
-from pypdf import PdfReader
+from pypdf import PdfReader, mult
 import svgwrite
 
 reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
@@ -224,7 +225,8 @@ def visitor_svg_rect(op, args, cm, tm):
 
 
 def visitor_svg_text(text, cm, tm, font_dict, font_size):
-    (x, y) = (cm[4], cm[5])
+    txt2user = mult(tm, cm)
+    (x, y) = (txt2user[4], txt2user[5])
     dwg.add(dwg.text(text, insert=(x, y), fill="blue"))
 
 

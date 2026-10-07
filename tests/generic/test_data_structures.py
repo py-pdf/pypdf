@@ -5,6 +5,7 @@ import sys
 from io import BytesIO
 from pathlib import Path
 from typing import Callable
+from unittest import mock
 
 import pytest
 
@@ -12,14 +13,19 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
+    ByteStringObject,
     ContentStream,
+    Destination,
     DictionaryObject,
     NameObject,
     NullObject,
+    NumberObject,
     RectangleObject,
     StreamObject,
+    TextStringObject,
     TreeObject,
 )
+from pypdf.types import OutlineType
 from tests import RESOURCE_ROOT, get_data_from_url
 
 try:
@@ -49,6 +55,50 @@ def test_dictionary_object__get_next_object_position() -> None:
     ) == 15
 
 
+def test_dictionary_object__duplicate_key_with_falsy_first_value__strict() -> None:
+    stream = BytesIO(b"<< /Count 0 /Count 5 >>")
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^Multiple definitions in dictionary"
+    ):
+        DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+
+def test_dictionary_object__duplicate_key_with_falsy_first_value__non_strict(
+        caplog: pytest.LogCaptureFixture
+) -> None:
+    stream = BytesIO(b"<< /Count 0 /Count 5 >>")
+
+    dictionary = DictionaryObject.read_from_stream(stream, mock.Mock(strict=False))
+
+    assert caplog.messages == ["Multiple definitions in dictionary at byte 0x14 for key /Count"]
+    # The first value wins, which is how a duplicate with a non-falsy first value
+    # has always behaved. Before the fix this case kept 5 and logged nothing.
+    assert dictionary == {NameObject("/Count"): NumberObject(0)}
+
+
+def test_dictionary_object__duplicate_key_with_non_falsy_first_value__strict() -> None:
+    stream = BytesIO(b"<< /Count 7 /Count 5 >>")
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^Multiple definitions in dictionary"
+    ):
+        DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+
+def test_dictionary_object__different_keys_with_falsy_first_value() -> None:
+    stream = BytesIO(b"<< /Count 0 /Size 5 >>")
+
+    dictionary = DictionaryObject.read_from_stream(stream, mock.Mock(strict=True))
+
+    assert dictionary == {
+        NameObject("/Count"): NumberObject(0),
+        NameObject("/Size"): NumberObject(5),
+    }
+
+
 def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None:
     writer = PdfWriter()
     child1_object = DictionaryObject()
@@ -62,6 +112,58 @@ def test_tree_object__cyclic_reference(caplog: pytest.LogCaptureFixture) -> None
 
     assert list(tree.children()) == [child2.get_object(), child1.get_object(), child3.get_object()]
     assert "Detected cycle in outline structure for " in caplog.text
+
+
+def test_tree_object__insert_child_without_next_key() -> None:
+    """Regression test for TreeObject.insert_child without /Next."""
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    first_child_ref = writer._add_object(DictionaryObject())
+    tree.add_child(first_child_ref, writer)
+
+    fresh_child = DictionaryObject()
+    fresh_child_ref = writer._add_object(fresh_child)
+    assert "/Next" not in fresh_child
+
+    # Must not raise KeyError("/Next") even though the new child has no /Next.
+    tree.insert_child(fresh_child_ref, first_child_ref, writer)
+
+    # The new child is linked before the existing one.
+    first_child = first_child_ref.get_object()
+    assert isinstance(first_child, DictionaryObject)
+    assert fresh_child["/Next"] == first_child
+    assert first_child["/Prev"] == fresh_child
+
+
+def test_tree_object__insert_child_in_first_position_with_next() -> None:
+    """Regression test: child with /Next inserted in first position."""
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+
+    # Create a single child A as the /First (and /Last)
+    child_a = DictionaryObject()
+    child_a_ref = writer._add_object(child_a)
+    tree.add_child(child_a_ref, writer)
+
+    # prev = tree["/Last"] = A, prev == before, so no while loop.
+    # try: prev["/Prev"] — A has no /Prev → KeyError → except block fires.
+
+    # Create child C with a /Next pointer pointing to something
+    child_c = DictionaryObject()
+    child_c[NameObject("/Next")] = child_a_ref  # C -> A
+    child_c_ref = writer._add_object(child_c)
+    assert "/Next" in child_c
+
+    # Insert C before A (first position)
+    tree.insert_child(child_c_ref, child_a_ref, writer)
+
+    # C is now first, linked to A
+    c_obj = child_c_ref.get_object()
+    assert isinstance(c_obj, DictionaryObject)
+    assert c_obj["/Next"] == child_a
 
 
 @pytest.mark.enable_socket
@@ -122,6 +224,23 @@ def test_array_object__clone_same_stream_multiple_times() -> None:
     )
 
 
+def test_array_object__to_lst_conversion() -> None:
+    arr = ArrayObject()
+
+    # str not starting with "/" -> TextStringObject
+    arr += "hello"
+    assert isinstance(arr[0], TextStringObject)
+
+    # bytes -> ByteStringObject
+    arr += b"data"
+    assert isinstance(arr[1], ByteStringObject)
+
+    # number (else branch) - should pass through unwrapped
+    arr += 42
+    assert arr[2] == 42
+    assert type(arr[2]) is int
+
+
 @pytest.mark.enable_socket
 def test_dictionary_object__read_from_stream__limit() -> None:
     name = "read_from_stream__length_2gb.pdf"
@@ -173,9 +292,9 @@ def test_dictionary_object__read_from_stream__no_limit(tmp_path: Path) -> None:
     source_file.write_text(
         f"""
 import sys
-from pypdf import filters, PdfReader
+from pypdf import PdfReader, overwrite_configuration
 
-filters.MAX_DECLARED_STREAM_LENGTH = sys.maxsize
+overwrite_configuration(maximum_declared_stream_length=sys.maxsize)
 
 with open({pdf_path_str!r}, mode="rb") as fd:
     reader = PdfReader(fd)
@@ -205,9 +324,9 @@ def test_dictionary_object__read_from_stream__no_limit__path(tmp_path: Path) -> 
     source_file.write_text(
         f"""
 import sys
-from pypdf import filters, PdfReader
+from pypdf import PdfReader, overwrite_configuration
 
-filters.MAX_DECLARED_STREAM_LENGTH = sys.maxsize
+overwrite_configuration(maximum_declared_stream_length=sys.maxsize)
 
 reader = PdfReader({pdf_path_str!r})
 print(reader.pages[0].extract_text())
@@ -265,7 +384,7 @@ def test_content_stream__array_based__output_length() -> None:
     reader = PdfReader(buffer)
     with pytest.raises(
             expected_exception=LimitReachedError,
-            match=r"^Array\-based stream has at least 75003501 > 75000000 output bytes\.$"
+            match=r"^Array\-based stream has at least 75002550 > 75000000 output bytes\.$"
     ):
         _ = reader.pages[0].get_contents()
 
@@ -287,3 +406,234 @@ startxref
     reader = PdfReader(buffer, strict=False)
     with pytest.raises(expected_exception=PdfReadError, match=r"^Cannot find Root object in pdf$"):
         assert len(reader.pages) == 0
+
+
+@pytest.mark.timeout(5)
+def test_dictionary_object__get_inherited__cyclic() -> None:
+    writer = PdfWriter()
+
+    dictionary1 = DictionaryObject()
+    reference1 = writer._add_object(dictionary1)
+    dictionary2 = DictionaryObject()
+    reference2 = writer._add_object(dictionary2)
+    dictionary3 = DictionaryObject({NameObject("/Parent"): reference2})
+    reference3 = writer._add_object(dictionary3)
+    dictionary1[NameObject("/Parent")] = reference3
+    dictionary2[NameObject("/Parent")] = reference1
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Detected cycle in /Parent hierarchy when retrieving value for key '/FT'\.$"
+    ):
+        writer.get_pages_showing_field(reference1)
+
+
+def _make_pdf__read_from_stream__limit() -> bytes:
+    offsets = []
+    pdf = bytearray(b"%PDF-1.4\n")
+
+    def add_obj(n: int, body: bytes) -> None:
+        offsets.append((n, len(pdf)))
+        pdf.extend(f"{n} 0 obj\n".encode())
+        pdf.extend(body)
+        pdf.extend(b"\nendobj\n")
+
+    add_obj(1, b"<< /Type /Catalog /Pages 2 0 R >>")
+    add_obj(2, b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    add_obj(3, b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 10 10] /Contents 4 0 R /Resources << >> >>")
+    offsets.append((4, len(pdf)))
+    pdf.extend(b"4 0 obj\n")
+    pdf.extend(b"<< >>\nstream\n")
+    pdf.extend(b"A" * 75_000_001)
+    pdf.extend(b"\nendstream\nendobj\n")
+    xref_offset = len(pdf)
+    pdf.extend(b"xref\n0 5\n0000000000 65535 f \n")
+    offset_map = dict(offsets)
+    for n in range(1, 5):
+        pdf.extend(f"{offset_map[n]:010d} 00000 n \n".encode())
+    pdf.extend(f"trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n".encode())
+    return bytes(pdf)
+
+
+@pytest.mark.timeout(5)
+def test_dictionary_object__read_from_stream__missing_length__limit() -> None:
+    reader = PdfReader(BytesIO(_make_pdf__read_from_stream__limit()))
+    page = reader.pages[0]
+
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Read stream length of 75000187 exceeds maximum allowed length of 75000000\.$"
+    ):
+        page.get_contents()
+
+
+def test_dictionary_object__read_from_stream__read_unsized__limit() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "issue-301.pdf")
+
+    with mock.patch.object(DictionaryObject, "_read_unsized_from_stream", return_value=b"dummy") as read_mock:
+        obj = reader.get_object(13)
+        assert obj is not None
+        assert obj == DictionaryObject({
+            NameObject("/Filter"): NameObject("/FlateDecode"),
+            NameObject("/Length1"): NumberObject(218)
+        })
+    read_mock.assert_called_once_with(stream=reader.stream, pdf=reader, length=75_000_000)
+
+
+def test_dictionary_object__read_unsized_from_stream__limit() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "issue-301.pdf")
+
+    reader.stream.seek(63101, 0)  # pstart value from the corresponding call
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Requested length of 236 exceeds maximum allowed length\.$"
+    ):
+        DictionaryObject._read_unsized_from_stream(stream=reader.stream, pdf=reader, length=137)
+
+
+def test_content_stream__parse_content_stream__limits() -> None:
+    content_stream = ContentStream(stream=None, pdf=None)
+
+    stream = BytesIO(b"/Do TESTING\n")
+    content_stream._parse_content_stream(stream)
+    assert content_stream.operations == [(["/Do"], b"TESTING")]
+
+    stream = BytesIO(f"/Do {'TESTING' * 100}\n".encode())
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Read stream length of 240 exceeds maximum allowed length of 128\.$"
+    ):
+        content_stream._parse_content_stream(stream)
+
+
+@pytest.mark.timeout(5)
+def test_content_stream__read_inline_image__end_of_stream() -> None:
+    # Broken content stream, for example due to filter errors.
+    # Specific example:
+    #   Error -3 while decompressing data: invalid distance too far back
+    #   b'q 0.1 0 0 0.1 0 0 cm\n/R7 gs\n0 g\nq 4.8 0 0 -135.6 2155.08 7150.48 cm\nBI\n/IM true\n/W001'
+    content_stream = ContentStream(stream=None, pdf=None)
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
+        content_stream._read_inline_image(BytesIO(b"\n/IM true\n/W001"))
+
+
+def test_tree_object__insert_child__cycle() -> None:
+    writer = PdfWriter()
+
+    previous1 = TreeObject()
+    previous2 = TreeObject()
+    previous3 = TreeObject()
+    previous1[NameObject("/Next")] = writer._add_object(previous2)
+    previous2[NameObject("/Next")] = writer._add_object(previous3)
+    previous3[NameObject("/Next")] = writer._add_object(previous1)
+
+    tree = TreeObject()
+    tree[NameObject("/Last")] = writer._add_object(previous1)
+    tree[NameObject("/First")] = writer._add_object(DictionaryObject())
+    writer._add_object(tree)
+
+    with pytest.raises(LimitReachedError, match=r"^Detected cycle in tree structure\.$"):
+        tree.insert_child(
+            child=writer._add_object(DictionaryObject()),
+            before=None,
+            pdf=writer,
+        )
+
+
+def _outlined_pdf(nested: bool = False) -> BytesIO:
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(200, 200)
+    cover = writer.add_outline_item("Cover", 0)
+    writer.add_outline_item("Body", 1)
+    if nested:
+        writer.add_outline_item("Sub", 2, parent=cover)
+    writer.add_outline_item("End", 3)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    return stream
+
+
+def _flat_outline(outline: OutlineType) -> list[Destination]:
+    """The outline items, asserting the outline holds no nested children."""
+    items = []
+    for entry in outline:
+        assert isinstance(entry, Destination), f"unexpected nested entry: {entry!r}"
+        items.append(entry)
+    return items
+
+
+@pytest.mark.parametrize(
+    ("index", "expected"),
+    [(0, ["Body", "End"]), (1, ["Cover", "End"]), (2, ["Cover", "Body"])],
+)
+def test_remove_from_tree_on_outline_item(index: int, expected: list[str]) -> None:
+    """
+    reader.outline and writer.outline yield detached copies which never carry
+    /Parent, so removal has to act on the node they were built from.
+    """
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+
+    _flat_outline(writer.outline)[index].remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == expected
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    assert [item.title for item in _flat_outline(PdfReader(stream).outline)] == expected
+
+
+def test_remove_from_tree_on_outline_item_without_clone() -> None:
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(200, 200)
+    for page_number, title in enumerate(["Cover", "Body", "End"]):
+        writer.add_outline_item(title, page_number)
+
+    _flat_outline(writer.outline)[0].remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == ["Body", "End"]
+
+
+def test_remove_from_tree_on_nested_outline_item() -> None:
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf(nested=True)))
+    children = writer.outline[1]
+    assert isinstance(children, list)
+    sub = children[0]
+    assert isinstance(sub, Destination)
+    assert sub.title == "Sub"
+
+    sub.remove_from_tree()
+
+    assert [item.title for item in _flat_outline(writer.outline)] == [
+        "Cover",
+        "Body",
+        "End",
+    ]
+
+
+def test_remove_from_tree_on_destination_without_node() -> None:
+    """A destination carrying no node falls back to the plain tree behaviour."""
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+    item = _flat_outline(writer.outline)[0]
+    item.node = None
+
+    with pytest.raises(
+        ValueError, match=r"^Removed child does not appear to be a tree item$"
+    ):
+        item.remove_from_tree()
+
+
+def test_remove_from_tree_on_node_already_detached() -> None:
+    """A node whose /Parent has gone is no longer part of any tree."""
+    writer = PdfWriter(clone_from=PdfReader(_outlined_pdf()))
+    item = _flat_outline(writer.outline)[0]
+    assert item.node is not None
+    del item.node[NameObject("/Parent")]
+
+    with pytest.raises(
+        ValueError, match=r"^Removed child does not appear to be a tree item$"
+    ):
+        item.remove_from_tree()

@@ -42,6 +42,7 @@ you can use {class}`~pypdf.annotations.FreeText`:
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import FreeText
+from pypdf.constants import AnnotationFlag
 
 # Fill the writer with the pages you want
 reader = PdfReader("crazyones.pdf")
@@ -62,9 +63,9 @@ annotation = FreeText(
     background_color="cdcdcd",
 )
 
-# Set annotation flags to 4 for printable annotations.
+# Mark the annotation as printable.
 # See "AnnotationFlag" for other options, e.g. hidden etc.
-annotation.flags = 4
+annotation.flags = AnnotationFlag.PRINT
 
 writer.add_annotation(page_number=0, annotation=annotation)
 
@@ -299,12 +300,17 @@ reader = PdfReader("crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
+writer.add_blank_page(
+    width=page.mediabox.width,
+    height=page.mediabox.height,
+)
 
 # Add the link
 annotation = Link(
     rect=(50, 550, 200, 650),
-    target_page_index=3,
+    target_page_index=1,
     fit=Fit(fit_type="/FitH", fit_args=(123,)),
+    border=[0, 0, 2],
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 

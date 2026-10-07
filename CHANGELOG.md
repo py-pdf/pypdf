@@ -1,5 +1,348 @@
 # CHANGELOG
 
+## Version 6.19.0, 2026-09-16
+
+### Security (SEC)
+- Limit size of alphabetical page labels (#4096)
+
+### Deprecations (DEP)
+- Replace PdfWriter method add_js (#3979)
+
+### Performance Improvements (PI)
+- Move static value out of loop body for appearance stream data (#4087)
+- Reduce number of full data lookups for attachment mapping API (#4081)
+
+### Bug Fixes (BUG)
+- Do not copy unrelated pages when appending pages with non-terminal fields (#4078)
+- Use page reference for existing internal link targets (#4076)
+- Arabic-Indic digits are reversed during text extraction (#4077)
+- Parse a string rect for add_uri into a rectangle (#4074)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.18.1...6.19.0)
+
+## Version 6.18.1, 2026-09-11
+
+### Security (SEC)
+- Further restrict FlateDecode recovery (#4073)
+- Limit entry count for TrueType and Type1 font `/Widths` (#4072)
+- Limit allowed length of tokens in parse_bfchar (#4071)
+
+### Bug Fixes (BUG)
+- Use current text matrix for visitor_text (#4062)
+- Repeat the letter for /S /A and /S /a page labels past Z (#4065)
+- Use font color for FreeText default appearance (#4051)
+
+### Robustness (ROB)
+- Fix compatibility with fonttools < 4.58.0 (#4050, #4059)
+
+### Documentation (DOC)
+- Use combined matrix in visitor examples (#4066)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.18.0...6.18.1)
+
+## Version 6.18.0, 2026-09-07
+
+### Security (SEC)
+- Limit allowed length of indirect object tokens (#4055)
+
+### Deprecations (DEP)
+- Rework configuration value handling (#4044)
+
+### New Features (ENH)
+- Draw borders and backgrounds for appearance streams and annotations (#4033)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.17.0...6.18.0)
+
+## Version 6.17.0, 2026-09-04
+
+### Security (SEC)
+- Limit value for Roman numerals (#4047)
+
+### New Features (ENH)
+- _cmap.py: Also parse encoding for embedded CFF Type1 fonts (#4032)
+
+### Performance Improvements (PI)
+- Cache repeated text extraction character lookups (#4036)
+
+### Bug Fixes (BUG)
+- Treat an empty /Filter array as no filter when extracting images (#4026)
+- Detect a duplicate dictionary key whose first value is falsy (#4024)
+- Make is_open=False collapse outline items (#3998)
+
+### Robustness (ROB)
+- Multiple changes for wrong inputs
+- Skip trailing duplicate %%EOF markers when locating startxref (#4015)
+- Do not crash on a non-array destination (#3976)
+- Handle annotations without subtype during merge (#3999)
+
+### Documentation (DOC)
+- Use AnnotationFlag enum instead of plain integers (#3997)
+
+### Code Style (STY)
+- Multiple small changes detected from test runs
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.2...6.17.0)
+
+## Version 6.16.2, 2026-08-23
+
+### Bug Fixes (BUG)
+- Make remove_from_tree() work on outline items (#3939)
+- Be more lenient about space width in layout mode text extraction (#3992)
+- Do not scale the text leading by the font size (#3987)
+- Update annotation appearance stream matrix on page transform (#3968)
+- Allow repeated page references (#3959)
+
+### Robustness (ROB)
+- Improve RC4 fallback when cryptography can't provide it (#3853)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.1...6.16.2)
+
+## Version 6.16.1, 2026-08-14
+
+### Security (SEC)
+- Limit iterations for outline retrieval and XForm text extraction (#3966)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.16.0...6.16.1)
+
+## Version 6.16.0, 2026-08-13
+
+### Security (SEC)
+- Detect cycles in TreeObject.insert_child (#3964)
+
+### New Features (ENH)
+- AppearanceStream: Allow arbitrary rotations and apply rotations for annotation appearance streams (#3917)
+- AppearanceStream: Consider more encodings for Type1 core fonts (#3905)
+
+### Performance Improvements (PI)
+- Build /ToUnicode source-code bytes directly in parse_bfrange (#3952)
+
+### Bug Fixes (BUG)
+- Preserve internal Link annotations when appending/merging (#3953) (#3954)
+- Fix false inline image end markers (#3922)
+- Reject typeless non-page /Kids entries in strict mode (#3955)
+- Apply character spacing (Tc) per glyph in layout-mode extraction (#3951)
+- Keep the Adobe CMYK inversion when an explicit /Decode is present (#3943)
+
+### Robustness (ROB)
+- AppearanceStream: Only escape parentheses for 8-bit fonts (#3961)
+- Recover the trailer from a cross-reference stream when rebuilding the xref (#3950)
+
+### Maintenance (MAINT)
+- Deduplicate CatalogAttributes and CatalogDictionary (#3940)
+
+### Code Style (STY)
+- Type pages as a Sequence rather than a list (#3957)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.15.0...6.16.0)
+
+## Version 6.15.0, 2026-08-06
+
+### Security (SEC)
+- Improve performance of read_until_whitespace (#3947)
+- Limit CID width range and width count when loading fonts (#3946)
+- Limit token length for ToUnicode entries (#3944)
+
+### Deprecations (DEP)
+- Deprecate previously missed inline_images setter as well (#3897)
+
+### New Features (ENH)
+- Add ActualText tag when we produce RTL appearance stream (#3901)
+- Allow keeping original PDF header in non-incremental clone mode (#3918)
+- AppearanceStream: Add support for RTL appearance streams with Arabic characters (#3831)
+- Add actions base class (#3552)
+
+### Bug Fixes (BUG)
+- Expand low-bit samples for images without a filter (#3938)
+- Decode low-bit DeviceRGB images as RGB instead of palette (#3929)
+- Correctly handle IndirectObject in FlateDecode.decode DecodeParms (#3937)
+
+### Documentation (DOC)
+- Image and attachment filenames are unsanitized (#3942)
+
+### Maintenance (MAINT)
+- Update charset mappings (#3935)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.2...6.15.0)
+
+## Version 6.14.2, 2026-06-23
+
+### Security (SEC)
+- Avoid infinite loops for incomplete ASCII85 and ASCIIHex inline images (#3892)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.1...6.14.2)
+
+## Version 6.14.1, 2026-06-23
+
+### Security (SEC)
+- Detect end of stream during inline image end marker detection (#3891)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.14.0...6.14.1)
+
+## Version 6.14.0, 2026-06-22
+
+### Security (SEC)
+- Apply general limit for requested image size (#3888)
+- Speed up recovery when reading broken cross-reference table (#3887)
+
+### New Features (ENH)
+- Check whether image is displayed on a given page (#3738)
+
+### Robustness (ROB)
+- Several fixes
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.3...6.14.0)
+
+## Version 6.13.3, 2026-06-17
+
+### Security (SEC)
+- Apply MAX_DECLARED_STREAM_LENGTH to streams without length as well (#3871)
+
+### Performance Improvements (PI)
+- Avoid per-pixel getpixel loop for 1-bit indexed images (#3854)
+
+### Robustness (ROB)
+- Several fixes
+
+### Maintenance (MAINT)
+- Make mypy assert messages consistent (#3849)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.2...6.13.3)
+
+## Version 6.13.2, 2026-06-10
+
+### Security (SEC)
+- Detect multi-hop cyclic /Pages trees in _flatten to prevent SIGSEGV (#3847)
+
+### Robustness (ROB)
+- Fix UnboundLocalError in _read_standard_xref_table on a malformed entry (#3841)
+- Raise PdfStreamError on non-hexadecimal bytes in hex readers (#3832)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.1...6.13.2)
+
+## Version 6.13.1, 2026-06-08
+
+### Security (SEC)
+- Prevent infinite loops when processing threads/articles (#3839)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.13.0...6.13.1)
+
+## Version 6.13.0, 2026-06-05
+
+### Security (SEC)
+- Avoid infinite loops for outlines and text extraction (#3830)
+
+### New Features (ENH)
+- Add Japanese predefined CMaps (#3800)
+- Font: Collect all character widths, not only those that can be unicode mapped (#3798)
+
+### Robustness (ROB)
+- Recover a corrupt trailing startxref pointer (closes #3238) (#3826)
+- Handle /Pages node without /Kids during flattening (#3825)
+- Accept inline image EI marker at the end of a content stream (#3827)
+
+### Maintenance (MAINT)
+- Type the always-raising deprecation helpers as `NoReturn` (#3819)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.12.2...6.13.0)
+
+## Version 6.12.2, 2026-05-26
+
+### Security (SEC)
+- Optimize _decode_png_prediction regarding memory and speed (#3806)
+- Improve loop control in text extraction (#3805)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.12.1...6.12.2)
+
+## Version 6.12.1, 2026-05-22
+
+### Security (SEC)
+- Limit input size and element count for XMP metadata (#3796)
+
+### Robustness (ROB)
+- Prevent cyclic parent hierarchies for inherited dictionaries (#3795)
+- Deal with invalid first code in LZW decoder (#3794)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.12.0...6.12.1)
+
+## Version 6.12.0, 2026-05-21
+
+### Security (SEC)
+- Disallow cross-reference streams with zero-only width values (#3791)
+- Avoid excessive whitespace in layout mode text extraction (#3790)
+
+### New Features (ENH)
+- Implement SASLprep (RFC 4013) for AES-256 password normalization (#3780)
+- CID font resource from font file to encode more characters (#3652)
+
+### Performance Improvements (PI)
+- Optimize retrieval of named destinatinos in reader (#3442)
+
+### Bug Fixes (BUG)
+- Fix TreeObject.insert_child KeyError on fresh children (#3786)
+
+### Robustness (ROB)
+- AppearanceStream: Also honor user-set font name when not flattening annotations (#3781)
+
+### Documentation (DOC)
+- Block encrypting writer in incremental mode (#3789)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.11.0...6.12.0)
+
+## Version 6.11.0, 2026-05-09
+
+### New Features (ENH)
+- Initialise a Font from an embedded font file (#3704)
+
+### Robustness (ROB)
+- Allow to fix AES padding length in non-strict mode (#3742)
+
+### Developer Experience (DEV)
+- Enable PyPy testing again (#3752)
+- Align mypy Makefile target with strict mode (#3690)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.2...6.11.0)
+
+## Version 6.10.2, 2026-04-15
+
+### Security (SEC)
+- Do not rely on possibly invalid /Size for incremental cloning (#3735)
+- Introduce limits for FlateDecode parameters and image decoding (#3734)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.1...6.10.2)
+
+## Version 6.10.1, 2026-04-14
+
+### Security (SEC)
+- Limit the allowed size of xref and object streams (#3733)
+
+### Robustness (ROB)
+- Consider strict mode setting for decryption errors (#3731)
+
+### Documentation (DOC)
+- Use new parameter names for compress_identical_objects
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.10.0...6.10.1)
+
+## Version 6.10.0, 2026-04-10
+
+### Security (SEC)
+- Disallow custom XML entity declarations for XMP metadata (#3724)
+
+### New Features (ENH)
+- Skip MD5 key derivation for AES-256 encrypted PDFs (#3694)
+
+### Bug Fixes (BUG)
+- Use remove_orphans in compress_identical_objects (#3310)
+- Fix PdfReadError when xref table contains comments before trailer (#3710)
+- Correctly verify AES padding during decryption (#3699)
+- Fix stale object cache from non-authoritative object streams (#3698)
+- Fix extract_links pairing when annotations include non-links (#3687)
+
+### Documentation (DOC)
+- Add AI policy (#3717)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.9.2...6.10.0)
+
 ## Version 6.9.2, 2026-03-23
 
 ### Security (SEC)
