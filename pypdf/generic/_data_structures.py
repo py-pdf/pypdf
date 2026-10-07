@@ -55,6 +55,7 @@ from .._utils import (
     read_until_regex,
     read_until_whitespace,
     skip_over_comment,
+    skip_over_comments,
 )
 from ..constants import (
     CheckboxRadioButtonAttributes,
@@ -1557,18 +1558,9 @@ def read_object(
     pdf: Optional[PdfReaderProtocol],
     forced_encoding: Union[str, list[str], dict[int, str], None] = None,
 ) -> PdfObject:
+    skip_over_comments(stream, limit=_MAX_LEADING_COMMENTS)
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
-    comment_count = 0
-    while tok == b"%":
-        if comment_count >= _MAX_LEADING_COMMENTS:
-            raise LimitReachedError(f"Maximum number of leading comments exceeded: {_MAX_LEADING_COMMENTS}.")
-        skip_over_comment(stream)
-        read_non_whitespace(stream)
-        stream.seek(-1, 1)
-        tok = stream.read(1)
-        stream.seek(-1, 1)
-        comment_count += 1
     if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
     if tok == b"<":

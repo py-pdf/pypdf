@@ -400,7 +400,7 @@ def test_read_object_leading_comments_limit(count):
     stream = BytesIO(b"% comment\n" * count + b"42 ")
     with pytest.raises(
         expected_exception=LimitReachedError,
-        match=r"^Maximum number of leading comments exceeded: 1000\.$",
+        match=r"^Maximum number of leading comments reached: 1000\.$",
     ):
         read_object(stream, None)
 
@@ -410,7 +410,7 @@ def test_read_object_leading_comments_limit_before_scanning():
     stream = BytesIO(prefix + b"%" + b"x" * 100_000)
     with pytest.raises(
         expected_exception=LimitReachedError,
-        match=r"^Maximum number of leading comments exceeded: 1000\.$",
+        match=r"^Maximum number of leading comments reached: 1000\.$",
     ):
         read_object(stream, None)
     assert stream.tell() == len(prefix)
