@@ -627,6 +627,8 @@ class BrotliDecode:
 
         Announcement: https://pdfa.org/brotli-compression-coming-to-pdf/
 
+        Specification: https://pdfa.org/download-area/publications/pdf-extension-brotli.pdf
+
         Args:
           data: text to decode.
           decode_parms: this filter does not use parameters.
