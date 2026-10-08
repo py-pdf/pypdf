@@ -43,6 +43,10 @@ except ImportError:
 
 DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
+# Used when a field provides no usable default appearance. The zero font size requests
+# auto-sizing, as per Table 230, "Entries in a variable text field", PDF Specification 2.0.
+DEFAULT_APPEARANCE = "/Helv 0 Tf 0 g"
+
 # "The glyph widths shall be measured in units in which 1000 units correspond to 1 unit in text space"
 # (Table 111, PDF Specification 2.0)
 TEXT_SPACE_TO_GLYPH_SPACE_FACTOR = 1000
@@ -725,7 +729,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         )
         if not default_appearance:
             # Create a default appearance if none was found in the annotation
-            default_appearance = TextStringObject("/Helv 0 Tf 0 g")
+            default_appearance = TextStringObject(DEFAULT_APPEARANCE)
         else:
             default_appearance = default_appearance.get_object()
 
@@ -752,6 +756,19 @@ class TextStreamAppearance(BaseStreamAppearance):
         # font) operator along with its two operands, font and size" (Section 12.7.4.3
         # "Variable text" of the PDF 2.0 specification).
         font_properties = [prop for prop in re.split(r"\s", default_appearance) if prop]
+        if not _has_complete_tf_operator(font_properties):
+            # The specification demands a Tf operator with both its operands, but files in the
+            # wild may provide neither or only one of them. Fall back to the default appearance
+            # rather than failing, matching the behavior for a field without any /DA entry.
+            logger_warning(
+                "Could not read a complete Tf operator from the default appearance "
+                "%(default_appearance)r. Using %(default)r instead.",
+                source=__name__,
+                default_appearance=str(default_appearance),
+                default=DEFAULT_APPEARANCE,
+            )
+            default_appearance = TextStringObject(DEFAULT_APPEARANCE)
+            font_properties = [prop for prop in re.split(r"\s", default_appearance) if prop]
         da_font_name = font_properties.pop(font_properties.index("Tf") - 2)
         font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
         font_properties.remove("Tf")
@@ -848,6 +865,26 @@ class TextStreamAppearance(BaseStreamAppearance):
                     new_appearance_stream[key] = value
 
         return new_appearance_stream
+
+
+def _has_complete_tf_operator(font_properties: list[str]) -> bool:
+    """
+    Report whether the default appearance properties hold a usable Tf operator.
+
+    A usable operator needs both of its operands, the font name and the font size, in front
+    of it, and the size has to be a number. See Section 12.7.4.3, "Variable text", of the
+    PDF Specification 2.0.
+    """
+    if "Tf" not in font_properties:
+        return False
+    operator_index = font_properties.index("Tf")
+    if operator_index < 2:
+        return False
+    try:
+        float(font_properties[operator_index - 1])
+    except ValueError:
+        return False
+    return True
 
 
 def transform_annotation_appearance(annotation_obj: DictionaryObject, transformation: Transformation) -> None:
