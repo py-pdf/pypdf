@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791384575683,
+  "lastUpdate": 1791446424007,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -115373,6 +115373,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003992534041564727",
             "extra": "mean: 651.0870871999884 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4a50fe80d925058ea661856a48e187e15bf1eecf",
+          "message": "ENH: Add support for BrotliDecode filter (PDF 2.0) (#4168)\n\nCloses #3223.\n\nThis builds upon the work from #3254, which has not been touched lately. At the moment, output limits are not working correctly while the official bindings do not support it, thus we implement our own basic mechanism.\n\nCloses #3254.\n\n---------\n\nCo-authored-by: Ashish Thirunagari <53890434+ash01ish@users.noreply.github.com>",
+          "timestamp": "2026-10-08T09:57:38+02:00",
+          "tree_id": "eae92117feb8072e02bf2127b075fbacf829e64f",
+          "url": "https://github.com/py-pdf/pypdf/commit/4a50fe80d925058ea661856a48e187e15bf1eecf"
+        },
+        "date": 1791446414397,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.801832709194669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0067922717864417935",
+            "extra": "mean: 263.0310370000018 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.356961310059233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05633847594347167",
+            "extra": "mean: 65.11704886206702 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3292728222417857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012534662365941961",
+            "extra": "mean: 3.0369952588000046 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.966006400104572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005332220244215259",
+            "extra": "mean: 45.52488885714062 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09101174012185113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4203789987432079",
+            "extra": "mean: 10.987593453999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.113779390827808,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016913851804386257",
+            "extra": "mean: 473.08626640000284 msec\nrounds: 5"
           }
         ]
       }
