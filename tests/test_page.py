@@ -1855,9 +1855,12 @@ def test_extract_text__resources_is_a_dictionary():
     "resources",
     [
         # /Resources present but ColorSpace entry missing for the custom name
-        DictionaryObject({NameObject("/ColorSpace"): DictionaryObject({})}),
+        pytest.param(
+            DictionaryObject({NameObject("/ColorSpace"): DictionaryObject({})}),
+            id="with-resources-no-colorspace",
+        ),
         # /Resources absent entirely
-        None,
+        pytest.param(None, id="without-resources"),
     ],
 )
 def test_translate_value_inline_image_colorspace_not_found(resources):
@@ -1866,5 +1869,5 @@ def test_translate_value_inline_image_colorspace_not_found(resources):
     if resources is not None:
         page[NameObject("/Resources")] = resources
     custom_name = NameObject("/CustomCS")
-    with pytest.raises(PdfReadError, match="Cannot find resource entry"):
+    with pytest.raises(PdfReadError, match=r"^Cannot find resource entry .+ for .+$"):
         page._translate_value_inline_image("/CS", custom_name)

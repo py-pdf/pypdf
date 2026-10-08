@@ -1218,10 +1218,12 @@ def test_read_not_binary_mode(caplog):
             PdfReader(f)
     assert normalize_warnings(caplog.text) == [msg]
 
+
 def test_invalid_unicode_stream():
     data = io.TextIOWrapper(io.BytesIO(b"\xff" * 10), encoding="utf-8")
     with pytest.raises(io.UnsupportedOperation):
         PdfReader(data)
+
 
 @pytest.mark.enable_socket
 @pytest.mark.skipif(not HAS_AES, reason="No AES algorithm available")
