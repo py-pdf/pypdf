@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791455571436,
+  "lastUpdate": 1791455589023,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -145009,6 +145009,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04549327626810833",
             "extra": "mean: 821.3994194000009 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "68938002+marshalltech81@users.noreply.github.com",
+            "name": "marshalltech81",
+            "username": "marshalltech81"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b6a77a3dae3dc0521ca265176cb9e1cd2097d2e",
+          "message": "PI: Parse an embedded CFF font program once per stream (#4164)\n\n* PI: Parse an embedded CFF font program once per stream\n\nSince #4032, `extract_text()` parses an embedded `/FontFile3` (`/Type1C`)\nfont program with fontTools each time it builds the character map of a\nfont resource. The result is not cached, so one font program is parsed\nonce per page and resource name referencing it, and a small file can\nmake text extraction take orders of magnitude longer with fontTools\ninstalled than without it.\n\nThe character map derived from an embedded font program depends only on\nits decoded data, so it is now cached on the font file stream together\nwith a SHA-256 digest of that data. The stream is parsed once per\ndocument, however many font dictionaries, resource names or pages refer\nto it, for reader and writer pages alike. A writer replacing the font\nprogram changes the digest and triggers a fresh parse, so nothing has to\nbe invalidated explicitly, and only the digest and the small character\nmap are kept, not a copy of the data.\n\nCloses #4156\n\n* STY: Document the font file character map cache in an attribute docstring\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* STY: Start the embedded font file character map helpers with a verb\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* STY: Keep the cached font file character map in a named tuple\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",
+          "timestamp": "2026-10-08T12:29:50+02:00",
+          "tree_id": "d928e40748f0e6ed7f8e40d5fb00399462f04dfa",
+          "url": "https://github.com/py-pdf/pypdf/commit/5b6a77a3dae3dc0521ca265176cb9e1cd2097d2e"
+        },
+        "date": 1791455578379,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.660302538116632,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017954679341555584",
+            "extra": "mean: 68.21141633332672 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.587077717777735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006017844517345787",
+            "extra": "mean: 37.612256999998884 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9572280571542184,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03562502232904695",
+            "extra": "mean: 1.044683126999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5059345212710384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038884956152035806",
+            "extra": "mean: 1.9765403584000183 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3593705956966038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012314607670346912",
+            "extra": "mean: 2.782642798200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1545100369924222,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03801958211715829",
+            "extra": "mean: 866.1683034000021 msec\nrounds: 5"
           }
         ]
       }
