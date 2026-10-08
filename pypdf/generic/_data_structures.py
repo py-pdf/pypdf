@@ -272,11 +272,16 @@ class ArrayObject(list[Any], PdfObject):
                 stream.seek(-1, 1)
                 skip_over_comment(stream)
                 continue
-            stream.seek(-1, 1)
             # check for array ending
-            peek_ahead = stream.read(1)
-            if peek_ahead == b"]":
+            if tok == b"]":
                 break
+            if tok == b"n":
+                # Shortcut for null, as some arrays consist mostly of nulls
+                rest = stream.read(3)
+                if rest == b"ull":
+                    arr.append(NullObject())
+                    continue
+                stream.seek(-len(rest), 1)
             stream.seek(-1, 1)
             # read and append object
             arr.append(read_object(stream, pdf, forced_encoding))
@@ -1561,7 +1566,7 @@ class ContentStream(DecodedStreamObject):
         super().write_to_stream(stream, encryption_key)
 
 
-def read_object(
+def read_object(  # noqa: PLR0911
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
     forced_encoding: Union[str, list[str], dict[int, str], None] = None,
@@ -1596,10 +1601,22 @@ def read_object(
     if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)
-        stream.seek(-len(peek), 1)  # reset to start
-        if IndirectPattern.match(peek) is not None:
+        match = IndirectPattern.match(peek)
+        if match is not None:
             assert pdf is not None, "mypy"
-            return IndirectObject.read_from_stream(stream, pdf)
+            # Continue after the "R", the match includes the character following it
+            stream.seek(match.end() - 1 - len(peek), 1)
+            # The object number includes an optional sign
+            return IndirectObject(int(peek[: match.end(1)]), int(match[2]), pdf)
+        number_end = NumberObject.NumberPattern.search(peek)
+        if number_end is not None:
+            # The whole number is in the peek, there is no need to read it again
+            num = peek[: number_end.start()]
+            stream.seek(len(num) - len(peek), 1)
+            if b"." in num:
+                return FloatObject(num)
+            return NumberObject(num)
+        stream.seek(-len(peek), 1)  # reset to start
         return NumberObject.read_from_stream(stream)
     pos = stream.tell()
     stream.seek(-20, 1)
