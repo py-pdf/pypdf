@@ -528,14 +528,12 @@ def test_generate_appearance_stream_data__selection__speed() -> None:
     ("default_appearance", "expected"),
     [
         ("/Helv 10 Tf 0 g", ("/Helv", 10, DeviceGray(0))),
-        # Regression test for #4143: a graphics state operator, as written by WeasyPrint.
         ("/a1.0 gs 0 0 0 rg /ESSOFH 10.2 Tf", ("/ESSOFH", 10.2, DeviceRGB(0, 0, 0))),
         ("/Helv 10 Tf .5 g", ("/Helv", 10, DeviceGray(0.5))),
         ("1 0 0 rg /Helv 10 Tf 0 0 1 rg", ("/Helv", 10, DeviceRGB(0, 0, 1))),
         ("/Helv 10 Tf /Cour 12 Tf", ("/Cour", 12, None)),
         ("/Helv 10 Tf 0 1 0 0 k 1 0 0 RG [1 2] 0 d", ("/Helv", 10, DeviceCMYK(0, 1, 0, 0))),
         ("/Helv 10 Tf 0.5 g 0 0 g", ("/Helv", 10, DeviceGray(0.5))),
-        # Regression test for #4159: no complete Tf operator.
         ("0 g", (None, 0, DeviceGray(0))),
         ("/Helv Tf 0 g", (None, 0, DeviceGray(0))),
         ("10 Tf", (None, 0, None)),
