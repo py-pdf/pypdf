@@ -679,6 +679,27 @@ def test_no_filter_with_colorspace_as_list():
     page.images.items()
 
 
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+def test_run_length_inline_image_at_end_of_stream(tail, caplog):
+    """EOF extraction preserves pixels without warning about a spurious newline."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=10, height=10)
+    stream = DecodedStreamObject()
+    stream.set_data(b"BI /W 1 /H 1 /BPC 8 /CS /G /F /RL ID\n\x00A\x80\nEI" + tail)
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    images = list(PdfReader(output).pages[0].images)
+
+    assert len(images) == 1
+    assert images[0].image.mode == "L"
+    assert images[0].image.size == (1, 1)
+    assert images[0].image.tobytes() == b"A"
+    assert "Found trailing newline in stream data" not in caplog.text
+
+
 def test_contentstream__read_inline_image__fallback_is_successful():
     stream = ContentStream(stream=None, pdf=None)
     stream.set_data(

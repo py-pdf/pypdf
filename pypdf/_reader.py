@@ -226,16 +226,18 @@ class PdfReader(PdfDocCommon):
         """Provide access to "/Root". Standardized with PdfWriter."""
         if self._validated_root:
             return self._validated_root
-        root = self.trailer.get(TK.ROOT)
+        root = self.trailer.get(TK.ROOT, NullObject()).get_object()
+        root_dictionary: DictionaryObject
+        if isinstance(root, DictionaryObject):
+            root_dictionary = root
+        else:
+            # The catalog has to be a dictionary. Anything else cannot be used,
+            # thus treat it like an empty one and attempt the recovery below.
+            root_dictionary = DictionaryObject()
         if is_null_or_none(root):
             logger_warning('Cannot find "/Root" key in trailer', source=__name__)
-        elif (
-            cast(DictionaryObject, cast(PdfObject, root).get_object()).get("/Type")
-            == "/Catalog"
-        ):
-            self._validated_root = cast(
-                DictionaryObject, cast(PdfObject, root).get_object()
-            )
+        elif root_dictionary.get("/Type") == "/Catalog":
+            self._validated_root = root_dictionary
         else:
             logger_warning("Invalid Root object in trailer", source=__name__)
         if self._validated_root is None:
@@ -257,15 +259,13 @@ class PdfReader(PdfDocCommon):
                     )
                     break
         if self._validated_root is None:
-            if not is_null_or_none(root) and "/Pages" in cast(DictionaryObject, cast(PdfObject, root).get_object()):
+            if "/Pages" in root_dictionary:
                 logger_warning(
                     "Possible root found at %(root_ref)r, but missing /Catalog key",
                     source=__name__,
-                    root_ref=cast(PdfObject, root).indirect_reference,
+                    root_ref=root_dictionary.indirect_reference,
                 )
-                self._validated_root = cast(
-                    DictionaryObject, cast(PdfObject, root).get_object()
-                )
+                self._validated_root = root_dictionary
             else:
                 raise PdfReadError("Cannot find Root object in pdf")
         return self._validated_root
@@ -325,7 +325,11 @@ class PdfReader(PdfDocCommon):
     def xmp_metadata(self) -> Optional[XmpInformation]:
         """XMP (Extensible Metadata Platform) data."""
         try:
-            self._override_encryption = True
+            # The document-level metadata stream is exempt from encryption
+            # only if /EncryptMetadata is false (ISO 32000-2, Table 21).
+            self._override_encryption = (
+                self._encryption is not None and not self._encryption.EncryptMetadata
+            )
             return cast(XmpInformation, self.root_object.xmp_metadata)
         finally:
             self._override_encryption = False
@@ -707,6 +711,16 @@ class PdfReader(PdfDocCommon):
         self._basic_validation(stream)
         self._find_eof_marker(stream)
         startxref = self._find_startxref_pos(stream)
+        if startxref < 0:
+            # A negative offset cannot point into the file. Treat it like the
+            # zero case (#3157) so the xref table is repaired instead of
+            # leaking a ValueError from a negative seek.
+            logger_warning(
+                "Negative startxref pointer (%(startxref)d), treating it as zero.",
+                source=__name__,
+                startxref=startxref,
+            )
+            startxref = 0
         self._startxref = startxref
 
         # check and eventually correct the startxref only if not strict
@@ -794,11 +808,32 @@ class PdfReader(PdfDocCommon):
         According to the specs, the %%EOF marker should be at the very end of
         the file. Hence for standard-compliant PDF documents this function will
         read only the last part (DEFAULT_BUFFER_SIZE).
+
+        Producers that omit the line break before the marker (``startxref
+        256%%EOF`` or ``256%%EOF``) are accepted as well (#4127).
         """
         header_size = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         first = True
-        while not line.startswith(b"%%EOF"):
+        # Bytes of `line` end at this position. An inline %%EOF therefore
+        # begins at end_position - len(line) + marker_index.
+        end_position = stream.tell()
+        while True:
+            marker_index = line.find(b"%%EOF")
+            if marker_index == 0:
+                break
+            if marker_index > 0 and first:
+                # Only the trailing line is allowed to carry an inline marker.
+                # Earlier lines keep the historical "starts with %%EOF" rule so
+                # a %%EOF buried in stream data is not treated as the trailer.
+                # Leading whitespace in front of the marker is ignored.
+                if line[:marker_index].lstrip(WHITESPACES_AS_BYTES):
+                    logger_warning(
+                        "EOF marker not at start of line",
+                        source=__name__,
+                    )
+                    stream.seek(end_position - len(line) + marker_index)
+                break
             if line != b"" and first:
                 if any(
                     line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
@@ -818,6 +853,7 @@ class PdfReader(PdfDocCommon):
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
                 logger_warning("EOF marker not found", source=__name__)
+            end_position = stream.tell()
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
@@ -978,6 +1014,8 @@ class PdfReader(PdfDocCommon):
                 while line[0] in b"\x0D\x0A":
                     stream.seek(-20 + 1, 1)
                     line = stream.read(20)
+                    if len(line) != 20:
+                        raise PdfReadError("Unexpected EOF in Xref table.")
 
                 # On the other hand, some malformed PDF files
                 # use a single character EOL without a preceding

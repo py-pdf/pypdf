@@ -3,10 +3,12 @@
 import codecs
 import gc
 import re
+import sys
 import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
+from typing import Union
 
 import pytest
 
@@ -48,7 +50,7 @@ from pypdf.generic._image_inline import (
 )
 
 from . import RESOURCE_ROOT, get_data_from_url
-from .utils import ReaderDummy
+from .utils import ReaderDummy, count_function_calls
 
 
 class ChildDummy(DictionaryObject):
@@ -463,6 +465,110 @@ def test_read_object_leading_comments_truncated(data):
 def test_read_object_leading_comments_without_object(data):
     with pytest.raises(expected_exception=PdfReadError, match="Invalid Elementary Object"):
         read_object(BytesIO(data), None)
+
+
+@pytest.mark.parametrize(
+    ("data", "idnum", "generation", "remainder"),
+    [
+        (b"12 0 R/Next", 12, 0, b"/Next"),
+        (b"12\n0\r\nR>>", 12, 0, b">>"),
+        (b"-12 3 R ", -12, 3, b" "),
+        # A vertical tab is no whitespace in PDF, but the intention is clear
+        (b"12 0 \x0bR ", 12, 0, b" "),
+    ],
+)
+def test_read_object__indirect_object(data, idnum, generation, remainder):
+    """The stream continues right after the "R"."""
+    stream = BytesIO(data)
+    result = read_object(stream, ReaderDummy())
+    assert isinstance(result, IndirectObject)
+    assert (result.idnum, result.generation) == (idnum, generation)
+    assert stream.read() == remainder
+
+    written = BytesIO()
+    result.write_to_stream(written)
+    assert written.getvalue() == f"{idnum} {generation} R".encode()
+
+
+@pytest.mark.parametrize(
+    ("data", "expected", "remainder"),
+    [
+        (b"123/Next", NumberObject(123), b"/Next"),
+        (b"-4.5]", FloatObject(-4.5), b"]"),
+        (b"12 0 obj", NumberObject(12), b" 0 obj"),
+        # The number ends with the stream
+        (b"123", NumberObject(123), b""),
+        # The number is longer than the peek of the reference check
+        (b"1" * 25 + b" ", NumberObject(int("1" * 25)), b" "),
+    ],
+)
+def test_read_object__number(data, expected, remainder):
+    """The stream continues right after the number."""
+    stream = BytesIO(data)
+    result = read_object(stream, ReaderDummy())
+    assert type(result) is type(expected)
+    assert result == expected
+    assert stream.read() == remainder
+
+
+def test_read_array_of_numbers_and_references__function_calls():
+    """
+    Parsing numbers and indirect references must stay cheap, see #2136.
+
+    Counting the Python function calls measures the work per element
+    independently of the machine speed.
+    """
+    stream = BytesIO(b"[" + b" ".join([b"123", b"4.5", b"12 0 R"] * 100) + b"]")
+
+    array, calls = count_function_calls(ArrayObject.read_from_stream, stream, ReaderDummy())
+
+    assert len(array) == 300
+    assert array[:3] == [123, 4.5, IndirectObject(12, 0, array[2].pdf)]
+    # Two calls per element; numbers took four and references six before
+    assert calls < 3 * len(array)
+
+
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        (b"[null null]", [NullObject(), NullObject()]),
+        (b"[null]", [NullObject()]),
+        (b"[nullnull 1]", [NullObject(), NullObject(), NumberObject(1)]),
+        (b"[ null\n/A ]", [NullObject(), NameObject("/A")]),
+    ],
+)
+def test_read_array_of_nulls(data, expected):
+    array = ArrayObject.read_from_stream(BytesIO(data), ReaderDummy())
+    assert array == expected
+    assert all(type(value) is type(other) for value, other in zip(array, expected))
+
+
+@pytest.mark.parametrize("data", [b"[nul]", b"[nu", b"[n"])
+def test_read_array_of_nulls__invalid(data):
+    with pytest.raises(PdfReadError, match=r"^Could not read Null object$"):
+        ArrayObject.read_from_stream(BytesIO(data), ReaderDummy())
+
+
+def test_array_of_nulls__function_calls():
+    """
+    Parsing and cloning nulls must stay cheap, see #2136.
+
+    Tagged documents can contain arrays with thousands of nulls in the
+    /ParentTree of the structure tree.
+    """
+    stream = BytesIO(b"[" + b" ".join([b"null"] * 1000) + b"]")
+
+    array, calls = count_function_calls(ArrayObject.read_from_stream, stream, ReaderDummy())
+
+    assert array == [NullObject()] * 1000
+    # No calls per element; it was two before
+    assert calls < len(array)
+
+    clone, calls = count_function_calls(array.clone, PdfWriter())
+
+    assert clone == array
+    # One call per element; it was three before
+    assert calls < 2 * len(array)
 
 
 def test_bytestringobject():
@@ -1136,6 +1242,80 @@ def test_cloning_null_obj_keeps_hard_reference():
     assert obj_weakref() is not None
 
 
+def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayObject, DictionaryObject]:
+    elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
+    elements = elements * (size // len(elements))
+    if as_array:
+        return ArrayObject(elements)
+    return DictionaryObject({NameObject(f"/K{i}"): element for i, element in enumerate(elements)})
+
+
+def _clone_and_count(container: Union[ArrayObject, DictionaryObject], writer: PdfWriter) -> tuple[int, int]:
+    """Clone the container and return the number of Python function calls and raised exceptions."""
+    calls = 0
+    exceptions = 0
+
+    def trace(frame, event, arg):  # noqa: ANN202
+        nonlocal calls, exceptions
+        if event == "call":
+            calls += 1
+        elif event == "exception":
+            exceptions += 1
+        return trace
+
+    # Otherwise, finalizers and weakref callbacks of unrelated objects might be counted.
+    gc.collect()
+    gc_was_enabled = gc.isenabled()
+    gc.disable()
+    previous_trace = sys.gettrace()
+    sys.settrace(trace)
+    try:
+        clone = container.clone(writer)
+    finally:
+        sys.settrace(previous_trace)
+        if gc_was_enabled:
+            gc.enable()
+
+    assert clone == container
+    return calls, exceptions
+
+
+@pytest.mark.parametrize(
+    ("as_array", "calls_per_1000_elements"),
+    [
+        # 7,600 to 9,600 before the fix, depending on the Python version, and
+        # 3,600 before the shortcut for nulls in NullObject.clone().
+        pytest.param(True, 3200, id="array"),
+        # 10,600 to 11,600 before the fix, depending on the Python version,
+        # 8,600 while PdfObject inherited from a Protocol, as the isinstance()
+        # checks in DictionaryObject.__setitem__() ran Python code, and 4,600
+        # before the shortcut for nulls in NullObject.clone().
+        pytest.param(False, 4200, id="dictionary"),
+    ],
+)
+def test_cloning_direct_objects__function_calls_and_exceptions(as_array, calls_per_1000_elements):
+    """
+    Cloning direct objects must stay cheap, see #2136.
+
+    Documents can contain arrays with thousands of direct objects, for example
+    in the /ParentTree of the structure tree. Counting the Python function calls
+    and the raised exceptions measures the work per element independently of the
+    machine speed. Comparing 1,000 with 2,000 elements leaves out the work for
+    the container itself.
+    """
+    writer = PdfWriter()
+    # The first clone fills caches, for example of isinstance(), which takes additional calls.
+    _create_direct_objects_container(as_array, size=5).clone(writer)
+
+    calls_1000, exceptions_1000 = _clone_and_count(_create_direct_objects_container(as_array, size=1000), writer)
+    calls_2000, exceptions_2000 = _clone_and_count(_create_direct_objects_container(as_array, size=2000), writer)
+
+    assert calls_2000 - calls_1000 == calls_per_1000_elements
+    # Direct objects have no indirect reference, which must not be handled by
+    # catching an AttributeError per element.
+    assert exceptions_2000 == exceptions_1000
+
+
 @pytest.mark.enable_socket
 def test_append_with_indirectobject_not_pointing(caplog):
     """
@@ -1404,6 +1584,30 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
     ec.set_data(b)
     co = ContentStream(ec, None)
     assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
+
+
+@pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])
+@pytest.mark.parametrize(
+    ("filter_name", "image_data"),
+    [
+        (b"AHx", b"41>"),
+        (b"A85", a85encode(b"A") + b"~>"),
+        (b"RL", b"\x00A\x80"),
+        (b"DCT", b"\xff\xd8\xff\xd9"),
+    ],
+    ids=["ASCIIHex", "ASCII85", "RunLength", "DCT"],
+)
+def test_content_stream_filtered_inline_image_at_end_of_stream(filter_name, image_data, tail):
+    """The separator before `EI` is excluded from filtered inline image data."""
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(
+        b"BI /W 1 /H 1 /BPC 8 /CS /G /F /" + filter_name + b" ID\n" + image_data + b"\nEI" + tail
+    )
+    operations = ContentStream(stream_object, None).operations
+
+    assert operations[0][1] == b"INLINE IMAGE"
+    assert operations[0][0]["data"] == image_data
+    assert operations[1:] == ([([], b"Q")] if tail == b"\nQ\n" else [])
 
 
 @pytest.mark.parametrize("tail", [b"", b"\n", b"\nQ\n"])

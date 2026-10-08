@@ -14,7 +14,7 @@
 # -----------------------------------------------------------------------------------------------
 
 
-from pypdf._font import CoreFontMetrics, FontDescriptor
+from pypdf.generic._font import CoreFontMetrics, FontDescriptor
 
 CORE_FONT_METRICS: dict[str, CoreFontMetrics] = {
     # Generated from Courier.afm
