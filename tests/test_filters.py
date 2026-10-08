@@ -933,7 +933,7 @@ def test_brotli_decode_encode(s):
 )
 def test_brotli_missing_installation(function: Callable[[bytes], bytes]) -> None:
     """BrotliDecode raises DependencyError when brotli is not installed."""
-    with mock.patch("pypdf.filters.BrotliDecode._check_brotli_available", side_effect=DependencyError("Dummy")), \
+    with mock.patch("pypdf.filters.find_spec", return_value=None), \
             pytest.raises(DependencyError):
         function(b"test data")
 
@@ -942,8 +942,19 @@ def test_brotli_decode_output_limit():
     """BrotliDecode raises LimitReachedError when output exceeds limit."""
     pytest.importorskip("brotli", reason="Requires brotli")
 
-    large_data = b"A" * 1000
-    compressed = BrotliDecode.encode(large_data)
+    data = b"A" * 100
+    compressed = BrotliDecode.encode(data)
+    with apply_configuration(brotli_maximum_output_length=100):
+        assert BrotliDecode.decode(compressed) == data
+
+    data = b"A" * 101
+    compressed = BrotliDecode.encode(data)
+    with apply_configuration(brotli_maximum_output_length=100), \
+            pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
+        BrotliDecode.decode(compressed)
+
+    data = b"A" * 1000
+    compressed = BrotliDecode.encode(data)
     with apply_configuration(brotli_maximum_output_length=100), \
             pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
         BrotliDecode.decode(compressed)
