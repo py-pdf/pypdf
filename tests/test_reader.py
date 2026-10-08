@@ -3058,3 +3058,13 @@ def test_get_object_from_stream__read_object_raises_and_warns(caplog):
     assert cached[(0, 1)] is result
     assert "Invalid stream (index 0) within object 1 0: malformed stream" in caplog.text
     assert reader._object_stream_resolution_stack == []
+
+
+@pytest.mark.timeout(5)
+def test_read_standard_xref_table__end_of_file():
+    body = b"%PDF-1.0\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\n"
+    tail = b"\nstartxref\n%d\n%%%%EOF" % len(body)  # 19 bytes, starts with LF
+    data = body + b"xref\n0 3\n0000000000 65535 f \n" + tail
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected EOF in Xref table\.$"):
+        PdfReader(BytesIO(data))
