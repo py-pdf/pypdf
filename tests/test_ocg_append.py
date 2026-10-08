@@ -49,8 +49,9 @@ def test_ocg_append_metadata_reverse_order(tmp_path):
     writer.write(tmp_path / "output-ocg_append_metadata_reverse_order.pdf")
 
 def test_ocg_insert_with_merge(tmp_path):
-    # This test is meant to output a PDF that can be compared with the test_workflows.py
-    # "test_merge_output" test of expected vs actual size.
+    # This test is meant to output a PDF that is comparable to the test_workflows.py
+    # "test_merge_output" test of expected vs actual size. Though it might be different due to
+    # the metadata being preserved.
     # Should be named "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf" in the Resource root
     # or https://github.com/py-pdf/pypdf/blob/main/resources/Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf")
@@ -61,3 +62,21 @@ def test_ocg_insert_with_merge(tmp_path):
     writer.merge(1, reader_append)
 
     writer.write(tmp_path / "output-ocg_insert_with_merge.pdf")
+
+def test_ocg_insert_with_merge_no_clone(tmp_path):
+    # This test is meant to output a PDF that is comparable to the test_workflows.py output
+    # but without the old metadata preserved by "clone_from" parameter and
+    # results in a differing file size.
+    # The difference between the following for
+    # the test_workflows.py "test_merge_output" test:
+    # cloning which preserves metadata: 220,005
+    # no cloning, metadata not preserved: 217,997
+    writer = PdfWriter()
+    writer.append(RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf")
+
+    reader_append = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    # Trigger the append with the modified merge code that include the OCGs
+    writer.merge(1, reader_append)
+
+    writer.write(tmp_path / "output-ocg_insert_with_merge_no_clone.pdf")
