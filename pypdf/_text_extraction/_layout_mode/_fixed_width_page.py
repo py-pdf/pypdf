@@ -207,7 +207,7 @@ def recurse_to_target_op(
             )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
-        elif op == b"Tj":
+        elif op == b"Tj" and operands and isinstance(operands[0], (str, bytes)):
             tj_ops.append(text_state_mgr.text_state_params(operands[0]))
         elif op == b"TJ" and operands and isinstance(operands[0], ArrayObject):
             _tj = text_state_mgr.text_state_params()
