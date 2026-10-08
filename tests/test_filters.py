@@ -933,9 +933,13 @@ def test_brotli_decode_encode(s):
 )
 def test_brotli_missing_installation(function: Callable[[bytes], bytes]) -> None:
     """BrotliDecode raises DependencyError when brotli is not installed."""
-    with mock.patch("pypdf.filters.find_spec", return_value=None), \
-            pytest.raises(DependencyError):
-        function(b"test data")
+    BrotliDecode._check_brotli_available.cache_clear()
+    try:
+        with mock.patch("pypdf.filters.find_spec", return_value=None), \
+                pytest.raises(DependencyError):
+            function(b"test data")
+    finally:
+        BrotliDecode._check_brotli_available.cache_clear()
 
 
 def test_brotli_decode_output_limit():
