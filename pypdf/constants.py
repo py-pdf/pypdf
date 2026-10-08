@@ -287,7 +287,6 @@ class FilterTypeAbbreviations:
     RL = "/RL"
     CCF = "/CCF"
     DCT = "/DCT"
-    BR = "/Br"
 
 
 class LzwFilterParameters:

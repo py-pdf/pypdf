@@ -974,8 +974,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
-        elif filter_name in (FT.BROTLI_DECODE, FTA.BR):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.BR, new_name=FT.BROTLI_DECODE)
+        elif filter_name == FT.BROTLI_DECODE:
             data = BrotliDecode.decode(data)
         elif filter_name == FT.JBIG2_DECODE:
             data = JBIG2Decode.decode(data, params)
