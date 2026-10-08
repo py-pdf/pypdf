@@ -1956,7 +1956,7 @@ class PageObject(DictionaryObject):
             elif operator == b"TD" and len(operands) >= 2:
                 extractor.process_operation(b"TL", [-operands[1]])
                 extractor.process_operation(b"Td", operands)
-            elif operator == b"Do":
+            elif operator == b"Do" and operands:
                 extractor.output += extractor.text
                 if visitor_text is not None:
                     visitor_text(
