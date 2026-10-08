@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791461620794,
+  "lastUpdate": 1791462231657,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -115703,6 +115703,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0036040241866928872",
             "extra": "mean: 657.219888000003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "164994318+Dmao233@users.noreply.github.com",
+            "name": "CenFangyu",
+            "username": "Dmao233"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "921d77833e58d2c52699a39ae38f7da4bb28491e",
+          "message": "ROB: Accept an %%EOF marker that is not at the start of a line (#4136)\n\n* BUG: Accept an %%EOF marker that is not at the start of a line\n\n_find_eof_marker() only treated a line as the trailer when it started\nwith %%EOF. Files that glue the marker to the startxref offset\n(startxref 256%%EOF or startxref\\n256%%EOF) never matched, so strict\nmode raised \"EOF marker not found\" and non-strict mode then read past\nthe start of the stream (#4127).\n\nOn the trailing line, seek to an inline %%EOF so the glued prefix is\nparsed as the offset. A marker that already owns the line, including\none indented with whitespace, keeps the previous position. Lines above\nthe trailer still have to start with %%EOF.\n\nVerified: python3 -m pytest tests/test_reader.py -m \"not enable_socket and not samples\"\n(130 passed, 68 deselected). ruff check is clean on pypdf/_reader.py\nand tests/test_reader.py.\n\nCo-authored-by: CenFangyu <Dmao233@users.noreply.github.com>\n\n* Address review: use WHITESPACES_AS_BYTES, spell out names, parametrize warnings\n\n* Address review: add readable test IDs\n\n---------\n\nCo-authored-by: CenFangyu <Dmao233@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-08T14:21:17+02:00",
+          "tree_id": "c798ab419dc2ea4516f9b391d1ff32855b179792",
+          "url": "https://github.com/py-pdf/pypdf/commit/921d77833e58d2c52699a39ae38f7da4bb28491e"
+        },
+        "date": 1791462222495,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.077722915685927,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008226079117456814",
+            "extra": "mean: 245.23490699999826 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.41665658349005,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007560138965324741",
+            "extra": "mean: 35.1906283225802 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3599816854421778,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027855600595276406",
+            "extra": "mean: 2.777919101000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.279054605250302,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005409004128287566",
+            "extra": "mean: 44.8852079999992 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0937034698553809,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06835018158562385",
+            "extra": "mean: 10.671963391999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.131666357054194,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033876866792470735",
+            "extra": "mean: 469.1165654000031 msec\nrounds: 5"
           }
         ]
       }
