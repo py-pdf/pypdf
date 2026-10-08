@@ -299,11 +299,11 @@ class PdfReader(PdfDocCommon):
             /ID array; None if the entry does not exist
 
         """
-        file_id = self.trailer.get(TK.ID, None)
-        if is_null_or_none(file_id):
+        file_identifiers = self.trailer.get(TK.ID, None)
+        if is_null_or_none(file_identifiers):
             return None
-        assert file_id is not None, "mypy"
-        return cast(ArrayObject, file_id.get_object())
+        assert file_identifiers is not None, "mypy"
+        return cast(ArrayObject, file_identifiers.get_object())
 
     @property
     def pdf_header(self) -> str:
