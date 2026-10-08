@@ -992,6 +992,8 @@ class PdfReader(PdfDocCommon):
                 while line[0] in b"\x0D\x0A":
                     stream.seek(-20 + 1, 1)
                     line = stream.read(20)
+                    if len(line) != 20:
+                        raise PdfReadError("Unexpected EOF in Xref table.")
 
                 # On the other hand, some malformed PDF files
                 # use a single character EOL without a preceding
