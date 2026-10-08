@@ -47,15 +47,6 @@ DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 # (Table 111, PDF Specification 2.0)
 TEXT_SPACE_TO_GLYPH_SPACE_FACTOR = 1000
 
-# Used when a field's default appearance has no usable Tf operator. The zero font size requests
-# auto-sizing (Table 230, "Entries in a variable text field", PDF Specification 2.0).
-DEFAULT_FONT_NAME = "/Helv"
-DEFAULT_FONT_SIZE = 0.0
-
-# The non-stroking colour operators of the device colour spaces, mapped to their operand count
-# (Table 73, PDF Specification 2.0)
-COLOR_OPERAND_COUNTS = {b"g": 1, b"rg": 3, b"k": 4}
-
 
 @dataclass
 class BaseStreamConfig:
@@ -682,6 +673,45 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         return font_resource_reference
 
+    @staticmethod
+    def _parse_default_appearance(default_appearance: str | bytes) -> tuple[str | None, float, Color | None]:
+        """
+        Read the font name, font size and font color from a default appearance string.
+
+        A default appearance is a content stream fragment of graphics and text state operators, such as
+        `/a1.0 gs 0 0 0 rg /Helv 10 Tf` (Section 12.7.4.3 "Variable text" of the PDF 2.0 specification).
+        Where an operator occurs more than once, the last one is in effect. Operators other than `Tf` and
+        the non-stroking color operators are ignored.
+
+        Args:
+            default_appearance: The /DA string of a variable text field.
+
+        Returns:
+            The font name and font size of the last complete Tf operator, or None and 0 if there is none,
+            and the color of the last complete color operator, or None if there is none.
+        """
+        data = getattr(default_appearance, "original_bytes", default_appearance)
+        if isinstance(data, str):
+            data = data.encode("latin-1", errors="replace")
+        stream = ContentStream(None, None)
+        stream.set_data(data)
+        try:
+            operations = stream.operations
+        except PdfReadError:
+            # The parser keeps the operations read before the error, and those still apply.
+            operations = stream._operations
+
+        font_name: str | None = None
+        font_size = 0.0
+        font_color: Color | None = None
+        for operands, operator in operations:
+            if operator == b"Tf":
+                if len(operands) == 2 and isinstance(operands[0], NameObject) and isinstance(operands[1], (int, float)):
+                    font_name, font_size = str(operands[0]), float(operands[1])
+            elif (color := Color.from_normalized_values(operands, operator.decode("latin-1"))) is not None:
+                font_color = color
+        return font_name, font_size, font_color
+
     @classmethod
     def from_text_annotation(
         cls,
@@ -760,17 +790,15 @@ class TextStreamAppearance(BaseStreamAppearance):
         # "At a minimum, the string [that is, default_appearance] shall include a Tf (text
         # font) operator along with its two operands, font and size" (Section 12.7.4.3
         # "Variable text" of the PDF 2.0 specification).
-        da_font_name, font_size, font_color = _parse_default_appearance(default_appearance)
+        da_font_name, font_size, font_color = cls._parse_default_appearance(default_appearance)
         if da_font_name is None:
             logger_warning(
-                "Could not read a complete Tf operator from the default appearance "
-                "%(default_appearance)r. Using %(font_name)s %(font_size)s Tf instead.",
+                "Could not read a complete Tf operator from the default appearance %(default_appearance)r; "
+                "defaulting to /Helv 0 Tf.",
                 source=__name__,
                 default_appearance=str(default_appearance),
-                font_name=DEFAULT_FONT_NAME,
-                font_size=DEFAULT_FONT_SIZE,
             )
-            da_font_name, font_size = DEFAULT_FONT_NAME, DEFAULT_FONT_SIZE
+            da_font_name, font_size = "/Helv", 0.0
         # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name
@@ -863,47 +891,6 @@ class TextStreamAppearance(BaseStreamAppearance):
                     new_appearance_stream[key] = value
 
         return new_appearance_stream
-
-
-def _parse_default_appearance(default_appearance: str | bytes) -> tuple[str | None, float, Color | None]:
-    """
-    Read the font and the font colour from a default appearance string.
-
-    A default appearance is a content stream fragment of graphics and text state operators
-    (Section 12.7.4.3, "Variable text", PDF Specification 2.0), such as
-    `/a1.0 gs 0 0 0 rg /Helv 10 Tf`. Where an operator occurs more than once, the last one is in
-    effect. Operators other than `Tf` and the device colour operators are ignored.
-
-    Args:
-        default_appearance: The /DA string of a variable text field.
-
-    Returns:
-        The font name and size of the last complete `Tf` operator, or None and 0 when there is
-        none, and the colour of the last complete colour operator, or None when there is none.
-
-    """
-    data = getattr(default_appearance, "original_bytes", default_appearance)
-    if isinstance(data, str):
-        data = data.encode("latin-1", errors="replace")
-    stream = ContentStream(None, None)
-    stream.set_data(data)
-    try:
-        operations = stream.operations
-    except PdfReadError:
-        # The parser keeps the operations read before the error, and those still apply.
-        operations = stream._operations
-
-    font_name: str | None = None
-    font_size = 0.0
-    font_color: Color | None = None
-    for operands, operator in operations:
-        numbers = [float(operand) for operand in operands if isinstance(operand, (int, float))]
-        if operator == b"Tf":
-            if len(operands) == 2 and isinstance(operands[0], NameObject) and len(numbers) == 1:
-                font_name, font_size = str(operands[0]), numbers[0]
-        elif COLOR_OPERAND_COUNTS.get(operator) == len(operands) == len(numbers):
-            font_color = Color.from_normalized_values(numbers)
-    return font_name, font_size, font_color
 
 
 def transform_annotation_appearance(annotation_obj: DictionaryObject, transformation: Transformation) -> None:

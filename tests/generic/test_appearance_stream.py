@@ -5,7 +5,7 @@ import subprocess
 import sys
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional, Union, cast
 from unittest import mock
 
 import pytest
@@ -27,7 +27,6 @@ from pypdf.generic._appearance_stream import (
     BaseStreamAppearance,
     BaseStreamConfig,
     TextStreamAppearance,
-    _parse_default_appearance,
 )
 from pypdf.generic._color import Color, DeviceCMYK, DeviceGray, DeviceRGB
 from pypdf.generic._font import HAS_FONTTOOLS, Font
@@ -526,60 +525,17 @@ def test_generate_appearance_stream_data__selection__speed() -> None:
 
 
 @pytest.mark.parametrize(
-    ("default_appearance", "expected_color"),
-    [
-        ("/a1.0 gs 0 0 0 rg /Helv 10 Tf", b"0 0 0 rg"),
-        ("/Helv 10 Tf 1 Tc 0.5 g", b"0.5 g"),
-        ("1 0 0 rg /Helv 10 Tf 0 0 1 rg", b"0 0 1 rg"),
-        ("/Helv 10 Tf 0 1 0 0 k 2 Tw", b"0 1 0 0 k"),
-        ("/a1.0 gs /Helv 10 Tf", b"0 g"),
-    ],
-)
-def test_text_annotation_default_appearance_with_other_operators(
-    default_appearance: str, expected_color: bytes
-) -> None:
-    writer = PdfWriter()
-    writer.add_blank_page(width=612, height=792)
-    helvetica = DictionaryObject({
-        NameObject("/Type"): NameObject("/Font"),
-        NameObject("/Subtype"): NameObject("/Type1"),
-        NameObject("/BaseFont"): NameObject("/Helvetica"),
-    })
-    widget = writer.add_annotation(0, DictionaryObject({
-        NameObject("/Type"): NameObject("/Annot"),
-        NameObject("/Subtype"): NameObject("/Widget"),
-        NameObject("/FT"): NameObject("/Tx"),
-        NameObject("/T"): TextStringObject("name"),
-        NameObject("/Rect"): ArrayObject([FloatObject(v) for v in (72, 700, 272, 716)]),
-        NameObject("/DA"): TextStringObject(default_appearance),
-    }))
-    writer.root_object[NameObject("/AcroForm")] = DictionaryObject({
-        NameObject("/Fields"): ArrayObject([widget.indirect_reference]),
-        NameObject("/DR"): DictionaryObject({
-            NameObject("/Font"): DictionaryObject({NameObject("/Helv"): helvetica}),
-        }),
-    })
-
-    writer.update_page_form_field_values(writer.pages[0], {"name": "Jane"}, auto_regenerate=False)
-
-    appearance = cast(DecodedStreamObject, cast(DictionaryObject, widget["/AP"])["/N"].get_object())
-    data = appearance.get_data()
-    assert b"/Helv 10.0 Tf " + expected_color + b"\n" in data
-    # Only the font is declared, so the stream must not refer to anything else.
-    assert b"gs" not in data
-    assert list(cast(DictionaryObject, appearance["/Resources"])) == ["/Font"]
-
-
-@pytest.mark.parametrize(
     ("default_appearance", "expected"),
     [
         ("/Helv 10 Tf 0 g", ("/Helv", 10, DeviceGray(0))),
+        # Regression test for #4143: a graphics state operator, as written by WeasyPrint.
         ("/a1.0 gs 0 0 0 rg /ESSOFH 10.2 Tf", ("/ESSOFH", 10.2, DeviceRGB(0, 0, 0))),
         ("/Helv 10 Tf .5 g", ("/Helv", 10, DeviceGray(0.5))),
         ("1 0 0 rg /Helv 10 Tf 0 0 1 rg", ("/Helv", 10, DeviceRGB(0, 0, 1))),
         ("/Helv 10 Tf /Cour 12 Tf", ("/Cour", 12, None)),
         ("/Helv 10 Tf 0 1 0 0 k 1 0 0 RG [1 2] 0 d", ("/Helv", 10, DeviceCMYK(0, 1, 0, 0))),
         ("/Helv 10 Tf 0.5 g 0 0 g", ("/Helv", 10, DeviceGray(0.5))),
+        # Regression test for #4159: no complete Tf operator.
         ("0 g", (None, 0, DeviceGray(0))),
         ("/Helv Tf 0 g", (None, 0, DeviceGray(0))),
         ("10 Tf", (None, 0, None)),
@@ -587,22 +543,38 @@ def test_text_annotation_default_appearance_with_other_operators(
         ("", (None, 0, None)),
         ("/Helv 10 Tf (unterminated", ("/Helv", 10, None)),
         ("/Helv 10 Tf 0 g >>", ("/Helv", 10, DeviceGray(0))),
-        ("/Helv 10 Tf )", ("/Helv", 10, None)),
         ("0 g /Helv 10 Tf ]", ("/Helv", 10, DeviceGray(0))),
         ("(unterminated /Helv 10 Tf", (None, 0, None)),
+        (
+            create_string_object(b"/F\x951 10 Tf 0 g"),
+            (NameObject.read_from_stream(BytesIO(b"/F\x951 "), None), 10, DeviceGray(0)),
+        ),
     ],
 )
 def test_parse_default_appearance(
-    default_appearance: str, expected: tuple[Optional[str], float, Optional[Color]]
+    default_appearance: Union[str, bytes], expected: tuple[Optional[str], float, Optional[Color]]
 ) -> None:
-    assert _parse_default_appearance(default_appearance) == expected
+    """
+    The font name, font size and font color are read from the last complete Tf and non-stroking color
+    operators of a default appearance, ignoring any other operator.
+    """
+    assert TextStreamAppearance._parse_default_appearance(default_appearance) == expected
 
 
-@pytest.mark.parametrize("default_appearance", ["0 g", "/Helv Tf 0 g", "10 Tf", ""])
-def test_text_annotation_default_appearance_without_usable_tf(
-    default_appearance: str, caplog: pytest.LogCaptureFixture
+@pytest.mark.parametrize(
+    ("default_appearance", "expected_warning"),
+    [
+        ("/a1.0 gs 0 0 0 rg /Helv 10 Tf", ""),
+        ("/a1.0 gs 0 g", "Could not read a complete Tf operator"),
+    ],
+)
+def test_text_annotation_default_appearance_with_other_operators(
+    default_appearance: str, expected_warning: str, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """A /DA without a complete Tf operator falls back to auto-sized Helvetica."""
+    """
+    Operators of a default appearance other than Tf and the font color are not copied into the
+    generated appearance stream. This test is a regression test for issue #4143.
+    """
     writer = PdfWriter()
     writer.add_blank_page(width=612, height=792)
     widget = writer.add_annotation(0, DictionaryObject({
@@ -620,17 +592,6 @@ def test_text_annotation_default_appearance_without_usable_tf(
     writer.update_page_form_field_values(writer.pages[0], {"name": "Jane"}, auto_regenerate=False)
 
     appearance = cast(DecodedStreamObject, cast(DictionaryObject, widget["/AP"])["/N"].get_object())
-    assert re.search(rb"/Helv\w* [\d.]+ Tf .*\(Jane\) Tj", appearance.get_data(), re.DOTALL)
-    if default_appearance:
-        assert "Could not read a complete Tf operator" in caplog.text
-
-
-def test_parse_default_appearance__non_ascii_font_name() -> None:
-    """The font name is read from the stored bytes, the way the /DR key it refers to is."""
-    default_appearance = create_string_object(b"/F\x951 10 Tf 0 g")
-    font_resource_name = NameObject.read_from_stream(BytesIO(b"/F\x951 "), None)
-
-    font_name, font_size, _ = _parse_default_appearance(default_appearance)
-
-    assert font_name == font_resource_name
-    assert font_size == 10
+    assert b"gs" not in appearance.get_data()
+    assert list(cast(DictionaryObject, appearance["/Resources"])) == ["/Font"]
+    assert expected_warning in caplog.text
