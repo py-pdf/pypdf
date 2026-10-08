@@ -1593,9 +1593,13 @@ def read_object(  # noqa: PLR0911
     pdf: Optional[PdfReaderProtocol],
     forced_encoding: Union[str, list[str], dict[int, str], None] = None,
 ) -> PdfObject:
-    skip_over_comments(stream, limit=_MAX_LEADING_COMMENTS)
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
+    if tok == b"%":
+        # Skip consecutive comments in a loop instead of recursing per comment.
+        skip_over_comments(stream, limit=_MAX_LEADING_COMMENTS)
+        tok = stream.read(1)
+        stream.seek(-1, 1)  # reset to start
     if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
     if tok == b"<":
