@@ -63,6 +63,11 @@ class Configuration:
     The maximum allowed number of bytes to attempt the recovery with when using the ``/FlateDecode`` filter
     (zlib compression).
     """
+    brotli_maximum_output_length: int = 75_000_000
+    """
+    The maximum allowed number of uncompressed bytes during decompression when using the ``/BrotliDecode`` filter
+    (Brotli compression).
+    """
 
     flate_maximum_columns: int = 250_000
     """The maximum allowed number of columns when using the ``/FlateDecode`` filter."""

@@ -44,6 +44,8 @@ import subprocess
 import zlib
 from base64 import a85decode
 from dataclasses import dataclass
+from functools import lru_cache
+from importlib.util import find_spec
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, NoReturn, Optional, Union, cast
@@ -605,6 +607,84 @@ class JPXDecode:
         return data
 
 
+class BrotliDecode:
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def _check_brotli_available() -> None:
+        if find_spec("brotli") is not None:
+            return
+        raise DependencyError("brotli is required for BrotliDecode. Install it with: pip install pypdf[brotli]")
+
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> bytes:
+        """
+        Decompresses data encoded using the Brotli compression method,
+        reproducing the original data.
+
+        Announcement: https://pdfa.org/brotli-compression-coming-to-pdf/
+
+        Specification: https://pdfa.org/download-area/publications/pdf-extension-brotli.pdf
+
+        Args:
+          data: text to decode.
+          decode_parms: this filter does not use parameters.
+
+        Returns:
+          decoded data.
+
+        Raises:
+          DependencyError: If the ``brotli`` package is not installed.
+
+        """
+        BrotliDecode._check_brotli_available()
+        import brotli  # noqa: PLC0415
+
+        decompressor = brotli.Decompressor()
+        configuration = get_configuration()
+
+        # TODO: Simplify once fixed upstream.
+        #       https://github.com/google/brotli/issues/1396
+        #       https://github.com/google/brotli/pull/1525
+        output = bytearray()
+        remaining = configuration.brotli_maximum_output_length
+        chunk_size = 65_535
+        for offset in range(0, len(data), chunk_size):
+            chunk = data[offset:offset + chunk_size]
+            try:
+                part = decompressor.process(chunk, output_buffer_limit=remaining)
+            except brotli.error as exception:  # pragma: no cover
+                raise LimitReachedError("Limit reached while decompressing.") from exception
+            output.extend(part)
+            remaining -= len(part)
+            if remaining < 0:
+                raise LimitReachedError("Limit reached while decompressing.")
+        return bytes(output)
+
+    @staticmethod
+    def encode(data: bytes, **kwargs: Any) -> bytes:
+        """
+        Compresses data using the Brotli compression method.
+
+        Args:
+            data: The data to be compressed.
+
+        Returns:
+            The compressed data.
+
+        Raises:
+            DependencyError: If the ``brotli`` package is not installed.
+
+        """
+        BrotliDecode._check_brotli_available()
+        import brotli  # noqa: PLC0415
+
+        return bytes(brotli.compress(data))
+
+
 @dataclass
 class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
@@ -894,6 +974,8 @@ def decode_stream_data(stream: StreamObject) -> bytes:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
+        elif filter_name == FT.BROTLI_DECODE:
+            data = BrotliDecode.decode(data)
         elif filter_name == FT.JBIG2_DECODE:
             data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":
