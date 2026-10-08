@@ -510,16 +510,37 @@ def test_duplicate_eof_markers_without_startxref(pdf_data):
 @pytest.mark.parametrize(
     ("after_startxref", "before_marker", "after_marker", "expected_warnings"),
     [
-        (b" ", b"", b"", ["EOF marker not at start of line", "startxref on same line as offset"]),
-        (b"\n", b"", b"", ["EOF marker not at start of line"]),
-        (b" ", b"", b"\n", ["EOF marker not at start of line", "startxref on same line as offset"]),
-        (b"\n", b"", b"\n", ["EOF marker not at start of line"]),
-        (b"\r\n", b"", b"\r\n", ["EOF marker not at start of line"]),
-        (b"\n", b" ", b"", ["EOF marker not at start of line"]),
-        (b"\n", b"\n  ", b"", []),
+        pytest.param(
+            b" ", b"", b"", ["EOF marker not at start of line", "startxref on same line as offset"],
+            id="offset-on-startxref-line",
+        ),
+        pytest.param(
+            b"\n", b"", b"", ["EOF marker not at start of line"],
+            id="offset-on-own-line",
+        ),
+        pytest.param(
+            b" ", b"", b"\n", ["EOF marker not at start of line", "startxref on same line as offset"],
+            id="offset-on-startxref-line-newline-after-marker",
+        ),
+        pytest.param(
+            b"\n", b"", b"\n", ["EOF marker not at start of line"],
+            id="offset-on-own-line-newline-after-marker",
+        ),
+        pytest.param(
+            b"\r\n", b"", b"\r\n", ["EOF marker not at start of line"],
+            id="crlf",
+        ),
+        pytest.param(
+            b"\n", b" ", b"", ["EOF marker not at start of line"],
+            id="space-before-marker",
+        ),
+        pytest.param(
+            b"\n", b"\n  ", b"", [],
+            id="marker-on-own-line-after-indentation",
+        ),
     ],
 )
-@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("strict", [False, True], ids=["non-strict", "strict"])
 def test_eof_marker_not_at_line_start(
     caplog, after_startxref, before_marker, after_marker, expected_warnings, strict
 ):
