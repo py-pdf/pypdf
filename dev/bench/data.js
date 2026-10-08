@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791446459917,
+  "lastUpdate": 1791448564660,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -144679,6 +144679,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.048267456714017755",
             "extra": "mean: 897.9313196000021 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "37e1cd681744bac38b159f7e1c614eee8d639c58",
+          "message": "ROB: Handle EOF when reading standard xref table (#4170)\n\nCloses #4169.",
+          "timestamp": "2026-10-08T10:33:12+02:00",
+          "tree_id": "40da2809392dec85f308f82ce190b1c7dddda6b4",
+          "url": "https://github.com/py-pdf/pypdf/commit/37e1cd681744bac38b159f7e1c614eee8d639c58"
+        },
+        "date": 1791448556011,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 17.179083584447707,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018720339557997297",
+            "extra": "mean: 58.210322750004195 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.63499735727423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02221880568703945",
+            "extra": "mean: 36.18599947999542 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1333294727900414,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027301993053622017",
+            "extra": "mean: 882.3559467999985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5259725829511659,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020210073871275658",
+            "extra": "mean: 1.9012397840000061 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4558698022394834,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02742939980362474",
+            "extra": "mean: 2.1936087783999936 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.512953353018906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040095147048805665",
+            "extra": "mean: 660.9589106000044 msec\nrounds: 5"
           }
         ]
       }
