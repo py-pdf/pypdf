@@ -934,7 +934,7 @@ class PdfDocCommon(ABC):
                 fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
             except Exception as exc:
-                raise Exception(f"Invalid Destination {oa}: {exc}")
+                raise Exception(f"Invalid Destination {oa}: {exc}") from exc
         else:
             return None
 
@@ -1131,9 +1131,9 @@ class PdfDocCommon(ABC):
 
         # title required for valid outline
         # §12.3.3, entries in an outline item dictionary
-        try:
+        if "/Title" in node:
             title = cast("str", node["/Title"])
-        except KeyError:
+        else:
             if self.strict:
                 raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
             title = ""

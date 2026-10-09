@@ -1051,15 +1051,15 @@ class Encryption:
                 # normalization followed by UTF-8 encoding.
                 try:
                     password = _saslprep(password)
-                except (ValueError, IndexError) as e:
+                except (ValueError, IndexError) as exception:
                     if strict:
                         raise ValueError(
-                            f"Password SASLprep normalization failed: {e}"
-                        ) from e
+                            f"Password SASLprep normalization failed: {exception}"
+                        ) from exception
                     logger_warning(
                         "SASLprep normalization failed, using plain UTF-8: %(err)s",
                         source=__name__,
-                        err=str(e),
+                        err=str(exception),
                     )
                 pwd = password.encode("utf-8")
             else:

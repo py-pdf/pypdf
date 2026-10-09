@@ -232,8 +232,8 @@ class XmpInformation(PdfObject):
                     f"XMP stream size {length} exceeds limit of {configuration.xmp_maximum_input_length}."
                 )
             doc_root: Document = _XmpBuilder().parseString(data)
-        except (AttributeError, ExpatError) as e:
-            raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
+        except (AttributeError, ExpatError) as exception:
+            raise PdfReadError(f"XML in XmpInformation was invalid: {exception}") from exception
         rdf_roots = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")
         if not rdf_roots:
             raise PdfReadError(
