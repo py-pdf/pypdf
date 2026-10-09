@@ -36,7 +36,7 @@ def test_get_display_str_caches_repeated_character_lookups(monkeypatch) -> None:
     monkeypatch.setattr(text_extraction, "is_char_rtl", counted_rtl)
 
     operands = "A" * 10_000
-    text, rtl_dir = text_extraction.get_display_str(
+    text, rtl_dir, _ = text_extraction.get_display_str(
         text="",
         cm_matrix=[1, 0, 0, 1, 0, 0],
         tm_matrix=[1, 0, 0, 1, 0, 0],

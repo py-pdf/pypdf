@@ -409,6 +409,20 @@ def test_xmp_information__create():
     assert xmp.pdf_producer is None
 
 
+def test_xmp_information__does_not_inherit_from_protocol():
+    """
+    XmpInformation does not inherit from XmpInformationProtocol.
+
+    Inheriting from a Protocol would make typing._ProtocolMeta the metaclass, see
+    #2136. mypy checks that XmpInformation satisfies the protocol where
+    DictionaryObject.xmp_metadata returns it.
+    """
+    xmp = XmpInformation.create()
+    assert xmp.get_object() is xmp
+    assert xmp.hash_value().startswith(b"XmpInformation:")
+    assert type(XmpInformation) is type
+
+
 def test_xmp_information__set_dc_title():
     """Test setting dc:title metadata."""
     xmp = XmpInformation.create()

@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
@@ -39,6 +40,7 @@ Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
 
 [project.optional-dependencies]
+brotli = ["brotli>=1.2.0"]
 # This is due to the backend parameter being required back then:
 # https://cryptography.io/en/latest/changelog/#v3-1
 crypto = ["cryptography>3.0"]
@@ -51,6 +53,7 @@ rtl_text = [
 ]
 full = [
     "arabic-reshaper",
+    "brotli>=1.2.0",
     "cryptography>3.0",
     "fonttools",
     "Pillow>=8.0.0",
@@ -151,7 +154,6 @@ exclude = [
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "A001",    # Variable is shadowing a Python builtin
     "A002",    # Function argument is shadowing a Python builtin
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "ARG001",  # Unused function argument

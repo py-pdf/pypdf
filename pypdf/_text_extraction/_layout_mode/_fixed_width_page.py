@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
 
 from ..._utils import logger_warning
+from ...generic import ArrayObject
 from ...generic._font import Font
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
 from ._text_state_manager import TextStateManager
@@ -206,9 +207,9 @@ def recurse_to_target_op(
             )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
-        elif op == b"Tj":
+        elif op == b"Tj" and operands and isinstance(operands[0], (str, bytes)):
             tj_ops.append(text_state_mgr.text_state_params(operands[0]))
-        elif op == b"TJ":
+        elif op == b"TJ" and operands and isinstance(operands[0], ArrayObject):
             _tj = text_state_mgr.text_state_params()
             for tj_op in operands[0]:
                 if isinstance(tj_op, bytes):

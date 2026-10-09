@@ -45,7 +45,7 @@ else:
     from typing_extensions import Self
 
 from .._codecs import _pdfdoc_encoding_rev
-from .._protocols import PdfObjectProtocol, PdfWriterProtocol
+from .._protocols import PdfWriterProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,
@@ -62,7 +62,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
-class PdfObject(PdfObjectProtocol):
+class PdfObject:
     # function for calculating a hash value
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
     indirect_reference: Optional["IndirectObject"]
@@ -216,6 +216,9 @@ class NullObject(PdfObject):
         ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "NullObject":
         """Clone object into pdf_dest."""
+        if not hasattr(self, "indirect_reference"):
+            # Direct object: shortcut, as some arrays consist mostly of nulls
+            return NullObject()
         return cast(
             "NullObject", self._reference_clone(NullObject(), pdf_dest, force_duplicate)
         )
@@ -894,6 +897,8 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
     @staticmethod
     def unnumber(sin: bytes) -> bytes:
+        if b"#" not in sin:
+            return bytes(sin)
         result = bytearray()
         i = 0
         while i < len(sin):

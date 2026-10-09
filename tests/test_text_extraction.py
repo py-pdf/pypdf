@@ -614,6 +614,26 @@ def test_tm_operator_with_wrong_operand_count():
     assert "Hello" in page.extract_text()
 
 
+def test_do_operator_without_operand_is_skipped() -> None:
+    """A Do operator without an operand is skipped and the text around it is kept."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj ET Do BT /F1 12 Tf (World) Tj ET")).pages[0]
+    assert page.extract_text() == "HelloWorld"
+
+
+def test_tj_operator_without_an_array_is_skipped() -> None:
+    """A TJ operator whose operand is not an array is skipped and the text around it is kept."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj 5 TJ (World) Tj ET")).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
+def test_tj_operator_without_a_string_is_skipped() -> None:
+    """A Tj operator whose operand is not a string is skipped and the text around it is kept."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj 5 Tj (World) Tj ET")).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
@@ -1117,6 +1137,25 @@ def test_arabic_indic_digits_keep_their_order(shown: str, expected: str) -> None
     assert PdfReader(_page_with_cid_font(shown)).pages[0].extract_text() == expected
 
 
+@pytest.mark.parametrize(
+    ("shown", "expected"),
+    [
+        pytest.param("١٢٣٤ ابحرم", "١٢٣٤ مرحبا", id="arabic-indic-digits-before"),
+        pytest.param("۱۲۳۴ ابحرم", "۱۲۳۴ مرحبا", id="persian-digits-before"),
+        pytest.param("AB ابحرم", "AB مرحبا", id="latin-before"),
+        pytest.param("ابحرمAB", "مرحباAB", id="latin-after"),
+    ],
+)
+def test_text_before_a_change_of_direction_is_kept(shown: str, expected: str) -> None:
+    """Text shown before a change of direction stays in the output and reaches the visitor once. Related: #4142."""
+    page = PdfReader(_page_with_cid_font(shown)).pages[0]
+    assert page.extract_text() == expected
+
+    parts: list[str] = []
+    page.extract_text(visitor_text=lambda text, *_: parts.append(text))
+    assert "".join(parts) == expected
+
+
 def test_text_leading_is_not_scaled_by_font_size() -> None:
     """Tests for #3982"""
     buffer = _page_with_helvetica(
@@ -1148,6 +1187,21 @@ def test_line_breaks_with_scaled_current_matrix() -> None:
     )
 
     assert PdfReader(buffer).pages[0].extract_text() == "Line one\nLine two"
+
+
+def test_wrapped_table_cell_line_is_not_split():
+    """The second wrapped line of a cell stays with the row label. Regression #4130."""
+    # Label baseline sits between the two wrapped cell baselines. Comparing only
+    # to the previous fragment used to insert a break before BBB (#4130).
+    text = PdfReader(
+        _page_with_helvetica(
+            b"BT /F1 12 Tf "
+            b"1 0 0 1 40 700 Tm (LBL) Tj "
+            b"1 0 0 1 100 694 Tm (AAA) Tj "
+            b"1 0 0 1 100 706 Tm (BBB) Tj ET"
+        )
+    ).pages[0].extract_text()
+    assert [line for line in text.splitlines() if "LBL" in line] == ["LBL AAABBB"]
 
 
 def test_visitor_text_uses_current_text_matrix():
