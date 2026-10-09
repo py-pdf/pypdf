@@ -299,11 +299,11 @@ class PdfReader(PdfDocCommon):
             /ID array; None if the entry does not exist
 
         """
-        id = self.trailer.get(TK.ID, None)
-        if is_null_or_none(id):
+        file_identifiers = self.trailer.get(TK.ID, None)
+        if is_null_or_none(file_identifiers):
             return None
-        assert id is not None, "mypy"
-        return cast(ArrayObject, id.get_object())
+        assert file_identifiers is not None, "mypy"
+        return cast(ArrayObject, file_identifiers.get_object())
 
     @property
     def pdf_header(self) -> str:
@@ -746,17 +746,17 @@ class PdfReader(PdfDocCommon):
                 xref_k = sorted(
                     xref_entry.keys()
                 )  # ensure ascending to prevent damage
-                for id in xref_k:
-                    stream.seek(xref_entry[id], 0)
+                for xref_id in xref_k:
+                    stream.seek(xref_entry[xref_id], 0)
                     try:
                         pid, _pgen = self.read_object_header(stream)
                     except ValueError:
                         self._rebuild_xref_table(stream)
                         break
-                    if pid == id - self.xref_index:
+                    if pid == xref_id - self.xref_index:
                         # fixing index item per item is required for revised PDF.
-                        self.xref[gen][pid] = self.xref[gen][id]
-                        del self.xref[gen][id]
+                        self.xref[gen][pid] = self.xref[gen][xref_id]
+                        del self.xref[gen][xref_id]
                     # if not, then either it's just plain wrong, or the
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
@@ -768,19 +768,19 @@ class PdfReader(PdfDocCommon):
                 if gen == 65535:
                     continue
                 ids = list(xref_entry.keys())
-                for id in ids:
-                    stream.seek(xref_entry[id], 0)
+                for xref_id in ids:
+                    stream.seek(xref_entry[xref_id], 0)
                     try:
                         self.read_object_header(stream)
                     except ValueError:
                         logger_warning(
                             "Ignoring wrong pointing object %(id)d %(gen)d (offset %(offset)d)",
                             source=__name__,
-                            id=id,
+                            id=xref_id,
                             gen=gen,
-                            offset=xref_entry[id],
+                            offset=xref_entry[xref_id],
                         )
-                        del xref_entry[id]  # we can delete the id, we are parsing ids
+                        del xref_entry[xref_id]  # we can delete the id, we are parsing ids
             stream.seek(loc, 0)  # return to where it was
 
     def _basic_validation(self, stream: StreamType) -> None:
@@ -808,11 +808,32 @@ class PdfReader(PdfDocCommon):
         According to the specs, the %%EOF marker should be at the very end of
         the file. Hence for standard-compliant PDF documents this function will
         read only the last part (DEFAULT_BUFFER_SIZE).
+
+        Producers that omit the line break before the marker (``startxref
+        256%%EOF`` or ``256%%EOF``) are accepted as well (#4127).
         """
         header_size = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         first = True
-        while not line.startswith(b"%%EOF"):
+        # Bytes of `line` end at this position. An inline %%EOF therefore
+        # begins at end_position - len(line) + marker_index.
+        end_position = stream.tell()
+        while True:
+            marker_index = line.find(b"%%EOF")
+            if marker_index == 0:
+                break
+            if marker_index > 0 and first:
+                # Only the trailing line is allowed to carry an inline marker.
+                # Earlier lines keep the historical "starts with %%EOF" rule so
+                # a %%EOF buried in stream data is not treated as the trailer.
+                # Leading whitespace in front of the marker is ignored.
+                if line[:marker_index].lstrip(WHITESPACES_AS_BYTES):
+                    logger_warning(
+                        "EOF marker not at start of line",
+                        source=__name__,
+                    )
+                    stream.seek(end_position - len(line) + marker_index)
+                break
             if line != b"" and first:
                 if any(
                     line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
@@ -832,6 +853,7 @@ class PdfReader(PdfDocCommon):
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
                 logger_warning("EOF marker not found", source=__name__)
+            end_position = stream.tell()
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:

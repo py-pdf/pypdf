@@ -728,50 +728,50 @@ class PageObject(DictionaryObject):
 
     def _get_image(
         self,
-        id: Union[str, list[str], tuple[str]],
+        image_id: Union[str, list[str], tuple[str]],
         obj: Optional[DictionaryObject] = None,
     ) -> ImageFile:
         if obj is None:
             obj = cast(DictionaryObject, self)
-        if isinstance(id, tuple):
-            id = list(id)
-        if isinstance(id, list) and len(id) == 1:
-            id = id[0]
+        if isinstance(image_id, tuple):
+            image_id = list(image_id)
+        if isinstance(image_id, list) and len(image_id) == 1:
+            image_id = image_id[0]
         xobjs: Optional[DictionaryObject] = None
         try:
             xobjs = cast(
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
         except KeyError as exc:
-            if not (id[0] == "~" and id[-1] == "~"):
+            if not (image_id[0] == "~" and image_id[-1] == "~"):
                 raise KeyError(
-                    f"Cannot access image object {id} without XObject resources"
+                    f"Cannot access image object {image_id} without XObject resources"
                 ) from exc
-        if isinstance(id, str):
-            if id[0] == "~" and id[-1] == "~":
+        if isinstance(image_id, str):
+            if image_id[0] == "~" and image_id[-1] == "~":
                 if self._content_stream_images is None:
                     self._content_stream_images = self._parse_images_from_content_stream()
-                if id not in self._content_stream_images:
-                    raise KeyError(f"Image {id} not found")
-                image_file = self._content_stream_images[id]
+                if image_id not in self._content_stream_images:
+                    raise KeyError(f"Image {image_id} not found")
+                image_file = self._content_stream_images[image_id]
                 assert image_file is not None
                 return image_file
 
             # Do-referenced image name (non-inline string keys like /Im0)
             assert xobjs is not None
-            if id not in xobjs:
-                raise KeyError(f"Image {id} not found")
-            xobj = cast(DictionaryObject, xobjs[id])
+            if image_id not in xobjs:
+                raise KeyError(f"Image {image_id} not found")
+            xobj = cast(DictionaryObject, xobjs[image_id])
             if xobj.get(ImageAttributes.SUBTYPE, "") != "/Image":
-                raise KeyError(f"XObject {id} is not an image")
+                raise KeyError(f"XObject {image_id} is not an image")
 
             # Check if displayed (in content stream)
-            is_displayed = self._content_stream_images is not None and id in self._content_stream_images
+            is_displayed = self._content_stream_images is not None and image_id in self._content_stream_images
 
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             extension, byte_stream, img = _xobj_to_image(xobj)
             return ImageFile(
-                name=f"{id[1:]}{extension}",
+                name=f"{image_id[1:]}{extension}",
                 data=byte_stream,
                 image=img,
                 indirect_reference=xobj.indirect_reference,
@@ -780,8 +780,8 @@ class PageObject(DictionaryObject):
             )
         # in a subobject
         assert xobjs is not None
-        ids = id[1:]
-        return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
+        ids = image_id[1:]
+        return self._get_image(ids, cast(DictionaryObject, xobjs[image_id[0]]))
 
     @property
     def images(self) -> VirtualListImages:
@@ -1943,7 +1943,7 @@ class PageObject(DictionaryObject):
             elif operator == b"TJ":
                 # The space width may be smaller than the font width, so the width should be 95%.
                 _confirm_space_width = extractor._space_width * 0.95
-                if operands:
+                if operands and isinstance(operands[0], ArrayObject):
                     for op in operands[0]:
                         if isinstance(op, (str, bytes)):
                             extractor.process_operation(b"Tj", [op])

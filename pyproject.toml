@@ -153,7 +153,6 @@ exclude = [
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "A001",    # Variable is shadowing a Python builtin
     "A002",    # Function argument is shadowing a Python builtin
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "ARG001",  # Unused function argument
