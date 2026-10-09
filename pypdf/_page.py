@@ -2100,16 +2100,27 @@ class PageObject(DictionaryObject):
                 break
             visited.add(obj_id)
 
-            resources_dict: Any = obj.get(PG.RESOURCES, {})
+            resources_dict: Any = obj.get(PG.RESOURCES, DictionaryObject()).get_object()
+            if not isinstance(resources_dict, DictionaryObject):
+                logger_warning(
+                    "Page resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources_dict,
+                )
+                resources_dict = DictionaryObject()
             if self.pdf is not None and (font_resources := _get_font_resources(resources_dict)):
                 for font_name in font_resources:
-                    fonts[font_name] = Font.from_font_resource(
-                        cast(DictionaryObject, font_resources[font_name].get_object())
-                    )
+                    try:
+                        fonts[font_name] = Font.from_font_resource(
+                            cast(DictionaryObject, font_resources[font_name].get_object())
+                        )
+                    except (AttributeError, TypeError):
+                        pass
 
-            if "/Parent" not in obj:
+            parent = obj.get("/Parent", NullObject()).get_object()
+            if not isinstance(parent, DictionaryObject):
                 break
-            obj = obj["/Parent"].get_object()
+            obj = parent
 
         return fonts
 
@@ -2156,9 +2167,12 @@ class PageObject(DictionaryObject):
                 "utf-8"
             )
 
-        ops = iter(
-            ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations
-        )
+        try:
+            content = ContentStream(self["/Contents"].get_object(), self.pdf, "bytes")
+        except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
+            return ""
+
+        ops = iter(content.operations)
         bt_groups = _layout_mode.text_show_operations(
             ops, fonts, strip_rotated, debug_path
         )

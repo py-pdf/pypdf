@@ -11,6 +11,7 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration, mult
+from pypdf._page import PageObject
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import (
     BTGroup,
@@ -27,6 +28,7 @@ from pypdf.generic import (
     DecodedStreamObject,
     DictionaryObject,
     NameObject,
+    NullObject,
     NumberObject,
     RectangleObject,
     StreamObject,
@@ -910,6 +912,59 @@ def test_page_object__layout_mode_fonts__cyclic(caplog) -> None:
 
     assert page._layout_mode_fonts() == fonts
     assert caplog.messages == ["Detected cycle in /Parent hierarchy when retrieving fonts."]
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "expected_font_names", "expected_messages"),
+    [
+        ("/Resources", NullObject(), [], ["Page resources are not a dictionary: NullObject"]),
+        ("/Resources", NumberObject(1), [], ["Page resources are not a dictionary: 1"]),
+        ("/Parent", NullObject(), ["/F1", "/F2", "/F3"], []),
+        ("/Parent", NumberObject(1), ["/F1", "/F2", "/F3"], []),
+    ],
+)
+def test_page_object__layout_mode_fonts__malformed_hierarchy(
+    key, value, expected_font_names, expected_messages, caplog
+) -> None:
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    page[NameObject(key)] = value
+
+    assert list(page._layout_mode_fonts()) == expected_font_names
+    assert caplog.messages == expected_messages
+
+
+def test_page_object__layout_mode_fonts__malformed_font_resource() -> None:
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/BaseFont"): NullObject(),
+            }),
+            NameObject("/F2"): NumberObject(1),
+        })
+    })
+
+    assert page._layout_mode_fonts() == {}
+    assert page.extract_text(extraction_mode="layout") == ""
+
+
+@pytest.mark.parametrize("value", [NullObject(), NumberObject(1)])
+def test_page_object__layout_mode_text__malformed_contents(value) -> None:
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    page[NameObject("/Contents")] = value
+
+    assert page.extract_text(extraction_mode="layout") == page.extract_text() == ""
+
+
+def test_page_object__layout_mode_text__without_contents() -> None:
+    page = PageObject.create_blank_page(width=10, height=10)
+
+    assert page.extract_text(extraction_mode="layout") == page.extract_text() == ""
 
 
 def _generate_dag_with_forms(depth: int) -> bytes:
