@@ -285,6 +285,35 @@ def skip_over_comment(stream: StreamType) -> None:
                 raise PdfStreamError("File ended unexpectedly.")
 
 
+def skip_over_comments(stream: StreamType, *, limit: Optional[int] = None) -> None:
+    """
+    Skip consecutive leading comments and the whitespace following each one.
+
+    The stream must be positioned at the first comment, if any. If the next
+    character is not ``%``, the stream position is unchanged. If only whitespace
+    follows the last comment before EOF, leave the stream at the last whitespace
+    byte, preserving the existing read_object behaviour for a missing object.
+
+    Args:
+        stream: The stream to read from.
+        limit: The maximum number of comments to skip, or None for no limit.
+            Exactly this many comments are allowed. If another comment follows,
+            raise LimitReachedError before reading its body, leaving the stream
+            positioned at its ``%``.
+
+    """
+    tok = stream.read(1)
+    stream.seek(-len(tok), 1)
+    comment_count = 0
+    while tok == b"%":
+        if limit is not None and comment_count >= limit:
+            raise LimitReachedError(f"Maximum number of leading comments reached: {limit}.")
+        skip_over_comment(stream)
+        tok = read_non_whitespace(stream)
+        stream.seek(-1, 1)
+        comment_count += 1
+
+
 def read_until_regex(*, stream: StreamType, regex: Pattern[bytes], length: int = sys.maxsize) -> bytes:
     """
     Read until the regular expression pattern matched (ignore the match).

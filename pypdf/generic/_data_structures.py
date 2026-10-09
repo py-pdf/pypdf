@@ -56,6 +56,7 @@ from .._utils import (
     read_until_regex,
     read_until_whitespace,
     skip_over_comment,
+    skip_over_comments,
 )
 from ..constants import (
     CheckboxRadioButtonAttributes,
@@ -1583,6 +1584,10 @@ class ContentStream(DecodedStreamObject):
         super().write_to_stream(stream, encryption_key)
 
 
+# Bound comment scanning without consuming Python recursion depth.
+_MAX_LEADING_COMMENTS = 1000
+
+
 def read_object(  # noqa: PLR0911
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
@@ -1590,6 +1595,11 @@ def read_object(  # noqa: PLR0911
 ) -> PdfObject:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
+    if tok == b"%":
+        # Skip consecutive comments in a loop instead of recursing per comment.
+        skip_over_comments(stream, limit=_MAX_LEADING_COMMENTS)
+        tok = stream.read(1)
+        stream.seek(-1, 1)  # reset to start
     if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
     if tok == b"<":
@@ -1609,12 +1619,6 @@ def read_object(  # noqa: PLR0911
         return NullObject()
     if tok == b"n":
         return NullObject.read_from_stream(stream)
-    if tok == b"%":
-        # comment
-        skip_over_comment(stream)
-        tok = read_non_whitespace(stream)
-        stream.seek(-1, 1)
-        return read_object(stream, pdf, forced_encoding)
     if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)
