@@ -1430,3 +1430,39 @@ def test_decompress__fallback__speed() -> None:
 def test_ccitt_get_parameters__limits(parameters, rows, expected_message):
     with pytest.raises(expected_exception=PdfReadError, match=expected_message):
         CCITTFaxDecode._get_parameters(parameters=parameters, rows=rows)
+
+
+def test_decode_stream_data__filter_limit() -> None:
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(b"INVALID")
+    content_stream[NameObject("/Filter")] = ArrayObject([NullObject()] * 50)
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum filter count 16 exceeded: 50$"):
+        decode_stream_data(content_stream)
+
+
+def test_decode_stream_data__data_limit() -> None:
+    runs = 585_937
+    # A large run of `A` is invalid for `CCITTFaxDecode`, but this is not checked anywhere.
+    encoded_rle = b"\x81A" * runs + b"\x80"
+
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(encoded_rle)
+    content_stream[NameObject("/Filter")] = ArrayObject(
+        [NameObject("/RunLengthDecode")] + [NameObject("/CCITTFaxDecode")] * 10
+    )
+    content_stream[NameObject("/Height")] = NumberObject(42)
+    content_stream[NameObject("/DecodeParms")] = ArrayObject(
+        [
+            DictionaryObject({
+                NameObject("/Height"): NumberObject(42),
+            })
+        ] * 10
+    )
+
+    # Would accumulate to 1_426_179_407 bytes.
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Stream decoding exceeded the maximum accumulated decoding work of 300000000 bytes\.$"
+    ):
+        decode_stream_data(content_stream)

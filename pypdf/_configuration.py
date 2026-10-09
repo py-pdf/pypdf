@@ -77,6 +77,11 @@ class Configuration:
     image_maximum_buffer_size: int = 75_000_000
     """The maximum allowed number of bytes to allocate for images."""
 
+    stream_filters_maximum_length: int = 16
+    """The maximum allowed number of filters per stream."""
+    stream_decoding_work_maximum_length: int = 300_000_000
+    """The maximum allowed accumulated decoding work in bytes per stream."""
+
     xmp_maximum_input_length: int = 5_000_000
     """The maximum allowed actual decompressed stream length in bytes for XMP data."""
     xmp_maximum_element_count: int = 100_000
