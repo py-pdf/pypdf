@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791462272708,
+  "lastUpdate": 1791538564501,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -145339,6 +145339,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03771046444694721",
             "extra": "mean: 865.4519454000365 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107306613+prateek-dagar@users.noreply.github.com",
+            "name": "Prateek Dagar",
+            "username": "prateek-dagar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4714175aabdad4a5956eb2a70902dc09b7f6b15e",
+          "message": "MAINT: Fix A001 (Variable is shadowing a Python builtin) (#4167)",
+          "timestamp": "2026-10-09T11:33:10+02:00",
+          "tree_id": "6ae9500170ee3584764bb898b6409e252f263263",
+          "url": "https://github.com/py-pdf/pypdf/commit/4714175aabdad4a5956eb2a70902dc09b7f6b15e"
+        },
+        "date": 1791538555382,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.348051897380113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0172659873140699",
+            "extra": "mean: 54.50169890476429 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 33.505042040995534,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0072324594427520955",
+            "extra": "mean: 29.846254148149903 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.2141764838297124,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0290559428429033",
+            "extra": "mean: 823.6034986000021 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5425024375583896,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04847778704099156",
+            "extra": "mean: 1.843309690000001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4638394269435778,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015433462920154434",
+            "extra": "mean: 2.155918496599992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5376201782481476,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03354585801558543",
+            "extra": "mean: 650.3556692000018 msec\nrounds: 5"
           }
         ]
       }
