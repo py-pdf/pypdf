@@ -674,7 +674,9 @@ class TextStreamAppearance(BaseStreamAppearance):
         return font_resource_reference
 
     @staticmethod
-    def _parse_default_appearance(default_appearance: str | bytes) -> tuple[str | None, float, Color | None]:
+    def _parse_default_appearance(
+        default_appearance: TextStringObject | ByteStringObject,
+    ) -> tuple[str | None, float, Color | None]:
         """
         Read the font name, font size and font color from a default appearance string.
 
@@ -690,16 +692,13 @@ class TextStreamAppearance(BaseStreamAppearance):
             The font name and font size of the last complete Tf operator, or None and 0 if there is none,
             and the color of the last complete color operator, or None if there is none.
         """
-        data = getattr(default_appearance, "original_bytes", default_appearance)
-        if isinstance(data, str):
-            data = data.encode("latin-1", errors="replace")
         stream = ContentStream(None, None)
-        stream.set_data(data)
+        stream.set_data(default_appearance.original_bytes)
         try:
             operations = stream.operations
         except PdfReadError:
-            # The parser keeps the operations read before the error, and those still apply.
-            operations = stream._operations
+            # Ignore a malformed default appearance altogether.
+            return None, 0.0, None
 
         font_name: str | None = None
         font_size = 0.0
@@ -793,8 +792,10 @@ class TextStreamAppearance(BaseStreamAppearance):
         da_font_name, font_size, font_color = cls._parse_default_appearance(default_appearance)
         if da_font_name is None:
             logger_warning(
-                "Could not read a complete Tf operator from the default appearance %(default_appearance)r; "
-                "defaulting to /Helv 0 Tf.",
+                (
+                    "Could not read a complete Tf operator from the default appearance %(default_appearance)r; "
+                    "defaulting to /Helv 0 Tf."
+                ),
                 source=__name__,
                 default_appearance=str(default_appearance),
             )

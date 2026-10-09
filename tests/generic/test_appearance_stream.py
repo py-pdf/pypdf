@@ -5,7 +5,7 @@ import subprocess
 import sys
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, Union, cast
+from typing import Optional, cast
 from unittest import mock
 
 import pytest
@@ -527,43 +527,48 @@ def test_generate_appearance_stream_data__selection__speed() -> None:
 @pytest.mark.parametrize(
     ("default_appearance", "expected"),
     [
-        ("/Helv 10 Tf 0 g", ("/Helv", 10, DeviceGray(0))),
-        ("/a1.0 gs 0 0 0 rg /ESSOFH 10.2 Tf", ("/ESSOFH", 10.2, DeviceRGB(0, 0, 0))),
-        ("/Helv 10 Tf .5 g", ("/Helv", 10, DeviceGray(0.5))),
-        ("1 0 0 rg /Helv 10 Tf 0 0 1 rg", ("/Helv", 10, DeviceRGB(0, 0, 1))),
-        ("/Helv 10 Tf /Cour 12 Tf", ("/Cour", 12, None)),
-        ("/Helv 10 Tf 0 1 0 0 k 1 0 0 RG [1 2] 0 d", ("/Helv", 10, DeviceCMYK(0, 1, 0, 0))),
-        ("/Helv 10 Tf 0.5 g 0 0 g", ("/Helv", 10, DeviceGray(0.5))),
-        ("0 g", (None, 0, DeviceGray(0))),
-        ("/Helv Tf 0 g", (None, 0, DeviceGray(0))),
-        ("10 Tf", (None, 0, None)),
-        ("/Helv (10) Tf", (None, 0, None)),
-        ("", (None, 0, None)),
-        ("/Helv 10 Tf (unterminated", ("/Helv", 10, None)),
-        ("/Helv 10 Tf 0 g >>", ("/Helv", 10, DeviceGray(0))),
-        ("0 g /Helv 10 Tf ]", ("/Helv", 10, DeviceGray(0))),
-        ("(unterminated /Helv 10 Tf", (None, 0, None)),
-        (
-            create_string_object(b"/F\x951 10 Tf 0 g"),
+        pytest.param(b"/Helv 10 Tf 0 g", ("/Helv", 10, DeviceGray(0)), id="font-and-gray"),
+        pytest.param(
+            b"/a1.0 gs 0 0 0 rg /ESSOFH 10.2 Tf", ("/ESSOFH", 10.2, DeviceRGB(0, 0, 0)), id="graphics-state-operator"
+        ),
+        pytest.param(b"/Helv 10 Tf .5 g", ("/Helv", 10, DeviceGray(0.5)), id="number-with-leading-period"),
+        pytest.param(b"1 0 0 rg /Helv 10 Tf 0 0 1 rg", ("/Helv", 10, DeviceRGB(0, 0, 1)), id="last-color-wins"),
+        pytest.param(b"/Helv 10 Tf /Cour 12 Tf", ("/Cour", 12, None), id="last-font-wins"),
+        pytest.param(
+            b"/Helv 10 Tf 0 1 0 0 k 1 0 0 RG [1 2] 0 d",
+            ("/Helv", 10, DeviceCMYK(0, 1, 0, 0)),
+            id="stroking-color-and-other-operators-ignored",
+        ),
+        pytest.param(b"/Helv 10 Tf 0.5 g 0 0 g", ("/Helv", 10, DeviceGray(0.5)), id="color-with-wrong-operand-count"),
+        pytest.param(b"0 g", (None, 0, DeviceGray(0)), id="no-tf"),
+        pytest.param(b"/Helv Tf 0 g", (None, 0, DeviceGray(0)), id="tf-without-size"),
+        pytest.param(b"10 Tf", (None, 0, None), id="tf-without-font-name"),
+        pytest.param(b"/Helv (10) Tf", (None, 0, None), id="tf-with-non-numeric-size"),
+        pytest.param(b"", (None, 0, None), id="empty"),
+        pytest.param(b"/Helv 10 Tf (unterminated", (None, 0, None), id="unterminated-string"),
+        pytest.param(b"/Helv 10 Tf 0 g >>", (None, 0, None), id="stray-delimiter"),
+        pytest.param(
+            b"/F\x951 10 Tf 0 g",
             (NameObject.read_from_stream(BytesIO(b"/F\x951 "), None), 10, DeviceGray(0)),
+            id="non-ascii-font-name",
         ),
     ],
 )
 def test_parse_default_appearance(
-    default_appearance: Union[str, bytes], expected: tuple[Optional[str], float, Optional[Color]]
+    default_appearance: bytes, expected: tuple[Optional[str], float, Optional[Color]]
 ) -> None:
     """
     The font name, font size and font color are read from the last complete Tf and non-stroking color
     operators of a default appearance, ignoring any other operator.
     """
-    assert TextStreamAppearance._parse_default_appearance(default_appearance) == expected
+    assert TextStreamAppearance._parse_default_appearance(create_string_object(default_appearance)) == expected
 
 
 @pytest.mark.parametrize(
     ("default_appearance", "expected_warning"),
     [
-        ("/a1.0 gs 0 0 0 rg /Helv 10 Tf", ""),
-        ("/a1.0 gs 0 g", "Could not read a complete Tf operator"),
+        pytest.param("/a1.0 gs 0 0 0 rg /Helv 10 Tf", "", id="graphics-state-operator"),
+        pytest.param("/a1.0 gs 0 g", "Could not read a complete Tf operator", id="no-tf"),
     ],
 )
 def test_text_annotation_default_appearance_with_other_operators(
