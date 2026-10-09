@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import re
 from dataclasses import dataclass, field
 from enum import IntEnum
 from io import BytesIO
@@ -16,6 +15,7 @@ from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDicti
 from ..errors import PdfReadError
 from ..generic import (
     ArrayObject,
+    ContentStream,
     DecodedStreamObject,
     DictionaryObject,
     FloatObject,
@@ -673,6 +673,44 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         return font_resource_reference
 
+    @staticmethod
+    def _parse_default_appearance(
+        default_appearance: TextStringObject | ByteStringObject,
+    ) -> tuple[str | None, float, Color | None]:
+        """
+        Read the font name, font size and font color from a default appearance string.
+
+        A default appearance is a content stream fragment of graphics and text state operators, such as
+        `/a1.0 gs 0 0 0 rg /Helv 10 Tf` (Section 12.7.4.3 "Variable text" of the PDF 2.0 specification).
+        Where an operator occurs more than once, the last one is in effect. Operators other than `Tf` and
+        the non-stroking color operators are ignored.
+
+        Args:
+            default_appearance: The /DA string of a variable text field.
+
+        Returns:
+            The font name and font size of the last complete Tf operator, or None and 0 if there is none,
+            and the color of the last complete color operator, or None if there is none.
+        """
+        stream = ContentStream(None, None)
+        stream.set_data(default_appearance.original_bytes)
+        try:
+            operations = stream.operations
+        except PdfReadError:
+            # Ignore a malformed default appearance altogether.
+            return None, 0.0, None
+
+        font_name: str | None = None
+        font_size = 0.0
+        font_color: Color | None = None
+        for operands, operator in operations:
+            if operator == b"Tf":
+                if len(operands) == 2 and isinstance(operands[0], NameObject) and isinstance(operands[1], (int, float)):
+                    font_name, font_size = str(operands[0]), float(operands[1])
+            elif (color := Color.from_normalized_values(operands, operator.decode("latin-1"))) is not None:
+                font_color = color
+        return font_name, font_size, font_color
+
     @classmethod
     def from_text_annotation(
         cls,
@@ -746,16 +784,22 @@ class TextStreamAppearance(BaseStreamAppearance):
         # Derive font name, size and color from the default appearance. Also set
         # user-provided font name and font size in the default appearance, if given.
         # For a font name, this presumes that we can find an associated font resource
-        # dictionary. Uses the variable font_properties as an intermediate.
+        # dictionary.
         # As per the PDF spec:
         # "At a minimum, the string [that is, default_appearance] shall include a Tf (text
         # font) operator along with its two operands, font and size" (Section 12.7.4.3
         # "Variable text" of the PDF 2.0 specification).
-        font_properties = [prop for prop in re.split(r"\s", default_appearance) if prop]
-        da_font_name = font_properties.pop(font_properties.index("Tf") - 2)
-        font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
-        font_properties.remove("Tf")
-        font_color = Color.from_normalized_values(tuple(float(val) for val in font_properties[:-1]))
+        da_font_name, font_size, font_color = cls._parse_default_appearance(default_appearance)
+        if da_font_name is None:
+            logger_warning(
+                (
+                    "Could not read a complete Tf operator from the default appearance %(default_appearance)r; "
+                    "defaulting to /Helv 0 Tf."
+                ),
+                source=__name__,
+                default_appearance=str(default_appearance),
+            )
+            da_font_name, font_size = "/Helv", 0.0
         # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name

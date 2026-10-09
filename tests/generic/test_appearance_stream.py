@@ -5,7 +5,7 @@ import subprocess
 import sys
 from io import BytesIO
 from pathlib import Path
-from typing import cast
+from typing import Optional, cast
 from unittest import mock
 
 import pytest
@@ -20,6 +20,7 @@ from pypdf.generic import (
     NumberObject,
     RectangleObject,
     TextStringObject,
+    create_string_object,
 )
 from pypdf.generic._appearance_stream import (
     HAS_RTL_SUPPORT,
@@ -27,7 +28,7 @@ from pypdf.generic._appearance_stream import (
     BaseStreamConfig,
     TextStreamAppearance,
 )
-from pypdf.generic._color import Color
+from pypdf.generic._color import Color, DeviceCMYK, DeviceGray, DeviceRGB
 from pypdf.generic._font import HAS_FONTTOOLS, Font
 
 from .. import RESOURCE_ROOT
@@ -521,3 +522,79 @@ def test_generate_appearance_stream_data__selection__speed() -> None:
         {"fld": ["test"] * 1000},
         flatten=True,
     )
+
+
+@pytest.mark.parametrize(
+    ("default_appearance", "expected"),
+    [
+        pytest.param(b"/Helv 10 Tf 0 g", ("/Helv", 10, DeviceGray(0)), id="font-and-gray"),
+        pytest.param(
+            b"/a1.0 gs 0 0 0 rg /ESSOFH 10.2 Tf", ("/ESSOFH", 10.2, DeviceRGB(0, 0, 0)), id="graphics-state-operator"
+        ),
+        pytest.param(b"/Helv 10 Tf .5 g", ("/Helv", 10, DeviceGray(0.5)), id="number-with-leading-period"),
+        pytest.param(b"1 0 0 rg /Helv 10 Tf 0 0 1 rg", ("/Helv", 10, DeviceRGB(0, 0, 1)), id="last-color-wins"),
+        pytest.param(b"/Helv 10 Tf /Cour 12 Tf", ("/Cour", 12, None), id="last-font-wins"),
+        pytest.param(
+            b"/Helv 10 Tf 0 1 0 0 k 1 0 0 RG [1 2] 0 d",
+            ("/Helv", 10, DeviceCMYK(0, 1, 0, 0)),
+            id="stroking-color-and-other-operators-ignored",
+        ),
+        pytest.param(b"/Helv 10 Tf 0.5 g 0 0 g", ("/Helv", 10, DeviceGray(0.5)), id="color-with-wrong-operand-count"),
+        pytest.param(b"0 g", (None, 0, DeviceGray(0)), id="no-tf"),
+        pytest.param(b"/Helv Tf 0 g", (None, 0, DeviceGray(0)), id="tf-without-size"),
+        pytest.param(b"10 Tf", (None, 0, None), id="tf-without-font-name"),
+        pytest.param(b"/Helv (10) Tf", (None, 0, None), id="tf-with-non-numeric-size"),
+        pytest.param(b"", (None, 0, None), id="empty"),
+        pytest.param(b"/Helv 10 Tf (unterminated", (None, 0, None), id="unterminated-string"),
+        pytest.param(b"/Helv 10 Tf 0 g >>", (None, 0, None), id="stray-delimiter"),
+        pytest.param(
+            b"/F\x951 10 Tf 0 g",
+            (NameObject.read_from_stream(BytesIO(b"/F\x951 "), None), 10, DeviceGray(0)),
+            id="non-ascii-font-name",
+        ),
+    ],
+)
+def test_parse_default_appearance(
+    default_appearance: bytes, expected: tuple[Optional[str], float, Optional[Color]]
+) -> None:
+    """
+    The font name, font size and font color are read from the last complete Tf and non-stroking color
+    operators of a default appearance, ignoring any other operator.
+    """
+    assert TextStreamAppearance._parse_default_appearance(create_string_object(default_appearance)) == expected
+
+
+@pytest.mark.parametrize(
+    ("default_appearance", "expected_warning"),
+    [
+        pytest.param("/a1.0 gs 0 0 0 rg /Helv 10 Tf", "", id="graphics-state-operator"),
+        pytest.param("/a1.0 gs 0 g", "Could not read a complete Tf operator", id="no-tf"),
+    ],
+)
+def test_text_annotation_default_appearance_with_other_operators(
+    default_appearance: str, expected_warning: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Operators of a default appearance other than Tf and the font color are not copied into the
+    generated appearance stream. This test is a regression test for issue #4143.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    widget = writer.add_annotation(0, DictionaryObject({
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Widget"),
+        NameObject("/FT"): NameObject("/Tx"),
+        NameObject("/T"): TextStringObject("name"),
+        NameObject("/Rect"): ArrayObject([FloatObject(v) for v in (72, 700, 272, 716)]),
+        NameObject("/DA"): TextStringObject(default_appearance),
+    }))
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject({
+        NameObject("/Fields"): ArrayObject([widget.indirect_reference]),
+    })
+
+    writer.update_page_form_field_values(writer.pages[0], {"name": "Jane"}, auto_regenerate=False)
+
+    appearance = cast(DecodedStreamObject, cast(DictionaryObject, widget["/AP"])["/N"].get_object())
+    assert b"gs" not in appearance.get_data()
+    assert list(cast(DictionaryObject, appearance["/Resources"])) == ["/Font"]
+    assert expected_warning in caplog.text
