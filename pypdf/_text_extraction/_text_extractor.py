@@ -35,6 +35,14 @@ from ..generic._font import Font, FontDescriptor
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
 
+def _number_operand(operands: list[Any], index: int, default: float) -> float:
+    """The operand at index as a float, or default if it is missing or not a number."""
+    try:
+        return float(operands[index])
+    except (IndexError, TypeError, ValueError):
+        return default
+
+
 class TextExtraction:
     """
     A class to handle PDF text extraction operations.
@@ -268,17 +276,17 @@ class TextExtraction:
 
     def _handle_tz(self, operands: list[Any]) -> None:
         """Handle Tz (Set horizontal text scaling) operation - Table 5.2 page 398."""
-        self.char_scale = float(operands[0]) / 100 if operands else 1.0
+        self.char_scale = _number_operand(operands, 0, 100.0) / 100
 
     def _handle_tw(self, operands: list[Any]) -> None:
         """Handle Tw (Set word spacing) operation - Table 5.2 page 398."""
-        self.space_scale = 1.0 + float(operands[0] if operands else 0.0)
+        self.space_scale = 1.0 + _number_operand(operands, 0, 0.0)
 
     def _handle_tl(self, operands: list[Any]) -> None:
         """Handle TL (Set Text Leading) operation - Table 5.2 page 398."""
         # The leading is measured in unscaled text space units (PDF 32000-1, 9.3.5)
         # and T* applies the text matrix to it, so it must not be scaled here.
-        self.TL = float(operands[0] if operands else 0.0)
+        self.TL = _number_operand(operands, 0, 0.0)
 
     def _handle_tf(self, operands: list[Any]) -> None:
         """Handle Tf (Set font size) operation - Table 5.2 page 398."""
@@ -314,8 +322,8 @@ class TextExtraction:
         # A special case is a translating only tm:
         # tm = [1, 0, 0, 1, e, f]
         # i.e. tm[4] += tx, tm[5] += ty.
-        tx = float(operands[0]) if len(operands) > 0 else 0.0
-        ty = float(operands[1]) if len(operands) > 1 else 0.0
+        tx = _number_operand(operands, 0, 0.0)
+        ty = _number_operand(operands, 1, 0.0)
         self.tm_matrix[4] += tx * self.tm_matrix[0] + ty * self.tm_matrix[2]
         self.tm_matrix[5] += tx * self.tm_matrix[1] + ty * self.tm_matrix[3]
         str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])

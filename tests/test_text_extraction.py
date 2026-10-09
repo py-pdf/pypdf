@@ -634,6 +634,13 @@ def test_tj_operator_without_a_string_is_skipped() -> None:
     assert page.extract_text(extraction_mode="layout") == "HelloWorld"
 
 
+@pytest.mark.parametrize("operator", [b"/X 5 Td", b"/X TL", b"/X Tz", b"/X Tw"])
+def test_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
+    """A text operator whose operand is not a number is treated as having none, and the text is kept."""
+    content = b"BT /F1 12 Tf (Hello) Tj " + operator + b" (World) Tj ET"
+    assert PdfReader(_page_with_helvetica(content)).pages[0].extract_text() == "HelloWorld"
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
