@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791540842211,
+  "lastUpdate": 1791542745372,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -116033,6 +116033,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006199158864234031",
             "extra": "mean: 571.1264337999978 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "0309ab701a192fbd3228701a44dd009765a1629b",
+          "message": "REL: 6.20.0\n\n## What's new\n\n### Security (SEC)\n- Limit work per stream (filter count, accumulated decoding work) (#4173) by @stefan6419846\n\n### New Features (ENH)\n- Add support for BrotliDecode filter (PDF 2.0) (#4168) by @stefan6419846\n\n### Performance Improvements (PI)\n- Parse an embedded CFF font program once per stream (#4164) by @marshalltech81\n- Parse numbers, indirect references, names and nulls faster (#4148) by @MartinThoma\n- Do not inherit PdfObject from a Protocol (#4149) by @MartinThoma\n- Speed up cloning direct objects (#4152) by @MartinThoma\n\n### Bug Fixes (BUG)\n- Report the correct page number for identical pages (#4154) by @pasmud\n- Decrypt the XMP metadata stream unless /EncryptMetadata is false (#4151) by @metsw24-max\n\n### Robustness (ROB)\n- Multiple changes by @RavSinghChandan\n- Accept an %%EOF marker that is not at the start of a line (#4136) by @Dmao233\n- Font / _cmapy.py: More robust guards around fontTools (#4157) by @PJBrs\n- Flatten the page tree iteratively (#4107) by @MartinThoma\n- Ignore invalid character codes for TrueType and Type1 font widths (#4117) by @stefan6419846\n- Restrict values to allowed range in CCITTFaxDecode (#4115) by @stefan6419846\n- Drop a /Kids entry resolving to null instead of raising a cycle error (#4108) by @MartinThoma\n\n### Developer Experience (DEV)\n- Declare official support for Python 3.15 by @stefan6419846\n- Declare protocol data members on PdfReader and PdfWriter (#4106) by @ihsandeniz\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.19.0...6.20.0)",
+          "timestamp": "2026-10-09T12:42:34+02:00",
+          "tree_id": "4ab2bcf1d6ed77ca2015de828fc177f3fd814197",
+          "url": "https://github.com/py-pdf/pypdf/commit/0309ab701a192fbd3228701a44dd009765a1629b"
+        },
+        "date": 1791542735812,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.926622458017013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008656988458690153",
+            "extra": "mean: 341.6908106000008 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.240308555961892,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007917678323915649",
+            "extra": "mean: 44.96340495833332 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25905408618554066,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030456661204495986",
+            "extra": "mean: 3.8601977475999987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.506223512909568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001201401972471841",
+            "extra": "mean: 54.03587605555612 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0764907177118254,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08189446087554836",
+            "extra": "mean: 13.0734817232 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.512814957321793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004612294758259763",
+            "extra": "mean: 661.0193765999952 msec\nrounds: 5"
           }
         ]
       }
