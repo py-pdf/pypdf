@@ -1,7 +1,8 @@
-import struct
 from binascii import Error as BinasciiError
 from binascii import unhexlify
+from collections.abc import Callable
 from functools import partial
+from hashlib import sha256
 from io import BytesIO
 from typing import Any, Union, cast
 
@@ -15,6 +16,7 @@ from .generic import (
     NullObject,
     StreamObject,
 )
+from .generic._data_structures import _FontFileCharacterMap
 
 _predefined_cmap: dict[str, str] = {
     "/Identity-H": "utf-16-be",
@@ -76,7 +78,7 @@ def _parse_encoding(
             )
 
         # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
-        # to overwrite this, which we do for Type1 fonts in _character_map_from_(cff_)type1_font_file.
+        # to overwrite this, which we do for Type1 fonts in _derive_character_map_from_(cff_)type1_font_file.
         return dict(
             zip(range(256), charset_encoding["/StandardEncoding"])
         )
@@ -97,8 +99,15 @@ def _parse_encoding(
             else:
                 raise Exception("not found")
         except Exception:
-            logger_error("Advanced encoding %(encoding)s not implemented yet", source=__name__, encoding=enc)
-            encoding = enc
+            encoding = (
+                "utf-16-be" if ft.get("/Subtype", "") == "/Type0" else charset_encoding["/StandardEncoding"].copy()
+            )
+            logger_error(
+                "Advanced encoding %(encoding)s not implemented yet, using %(new_encoding)s instead.",
+                source=__name__,
+                encoding=enc,
+                new_encoding=encoding
+            )
     elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
         try:
             encoding = charset_encoding[cast(str, enc["/BaseEncoding"])].copy()
@@ -139,7 +148,7 @@ def _parse_encoding(
 def _parse_to_unicode(
     ft: DictionaryObject
 ) -> tuple[dict[Any, Any], list[int]]:
-    from ._font import HAS_FONTTOOLS  # noqa: PLC0415
+    from .generic._font import HAS_FONTTOOLS  # noqa: PLC0415
 
     # We store all character mappings in map_dict. In map_dict[-1] we store the byte length
     # of the character codes (or CIDs) encoded inside the ToUnicode stream.
@@ -161,13 +170,13 @@ def _parse_to_unicode(
                 (
                     "/FontFile",
                     lambda _: True,
-                    _character_map_from_type1_font_file
+                    _derive_character_map_from_type1_font_file
                 ),
                 # A CFF Type1 font file, as part of a Type1 or MMType1 font dictionary, when subtype is Type1C.
                 (
                     "/FontFile3",
                     lambda stream: stream.get("/Subtype") == "/Type1C",
-                    _character_map_from_cff_type1_font_file,
+                    _derive_character_map_from_cff_type1_font_file,
                 )
             )
             for font_file, condition, font_file_processor in font_file_handlers:
@@ -192,7 +201,9 @@ def _parse_to_unicode(
                     if not font_file_data:
                         return map_dict, int_entry
 
-                    return font_file_processor(font_file_data, map_dict, int_entry)
+                    return _derive_character_map_from_font_file(
+                        font_file_dict, font_file_data, font_file_processor, map_dict, int_entry
+                    )
 
             return map_dict, int_entry
 
@@ -287,7 +298,7 @@ def process_cm_line(
     elif process_char:
         try:
             parse_bfchar(line, map_dict, int_entry)
-        except (ValueError, IndexError) as error:
+        except ValueError as error:
             logger_warning("Skipping broken line %(line)r: %(error)s", source=__name__, line=line, error=error)
     return process_rg, process_char, multiline_rg
 
@@ -400,30 +411,44 @@ def parse_bfrange(
 
 def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) -> None:
     lst = [x for x in line.split(b" ") if x]
-    new_count = len(lst) // 2
+    lst_length = len(lst)
+    if lst_length == 0:
+        logger_warning("Skipping broken line %(line)r: Line is empty.", source=__name__, line=line)
+        return
+    if lst_length % 2:
+        logger_warning("Ignoring final token of odd-length line %(line)r.", source=__name__, line=line)
+
+    new_count = lst_length // 2
     _check_mapping_size(len(int_entry) + new_count)  # This can be checked beforehand.
     map_dict[-1] = len(lst[0]) // 2
+
     while len(lst) > 1:
+        source = lst[0]
+        destination = lst[1]
+
+        _check_token_length(source, limit=MAX_CMAP_CODE_BYTES_LIMIT)
+
         map_to = ""
         # placeholder (see above) means empty string
-        if lst[1] != b".":
+        if destination != b".":
+            _check_token_length(destination, limit=MAX_CMAP_STRING_BYTES_LIMIT)
             try:
-                map_to = unhexlify(lst[1]).decode(
-                    "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
+                map_to = unhexlify(destination).decode(
+                    "charmap" if len(destination) < 4 else "utf-16-be", "surrogatepass"
                 )  # join is here as some cases where the code was split
             except BinasciiError as exception:
                 logger_warning(
-                    "Got invalid hex string: %(exception)s (%(lst_value)r)",
+                    "Got invalid hex string: %(exception)s (%(destination)r)",
                     source=__name__,
                     exception=exception,
-                    lst_value=lst[1],
+                    destination=destination,
                 )
         map_dict[
-            unhexlify(lst[0]).decode(
+            unhexlify(source).decode(
                 "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
             )
         ] = map_to
-        int_entry.append(int(lst[0], 16))
+        int_entry.append(int(source, 16))
         lst = lst[2:]
 
 
@@ -439,7 +464,33 @@ def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
             return None
 
 
-def _character_map_from_cff_type1_font_file(
+def _derive_character_map_from_font_file(
+    font_file: StreamObject,
+    font_data: bytes,
+    font_file_processor: Callable[[bytes, dict[Any, Any], list[int]], tuple[dict[Any, Any], list[int]]],
+    map_dict: dict[Any, Any],
+    int_entry: list[int],
+) -> tuple[dict[Any, Any], list[int]]:
+    """
+    Derive the character map from an embedded font program, caching the result on its stream.
+
+    The character map depends only on the decoded font data, and the same font program is reached from every
+    font dictionary, resource name and page referencing its stream. Parsing a CFF font program with fontTools is
+    expensive, so each stream is parsed once and reused until its data changes, which a digest of the data
+    detects (a writer may replace the font program). See #4156.
+    """
+    digest = sha256(font_data).digest()
+    cached = font_file._font_file_character_map
+    if cached is None or cached.digest != digest:
+        cached_map_dict, cached_int_entry = font_file_processor(font_data, {}, [])
+        cached = _FontFileCharacterMap(digest, cached_map_dict, cached_int_entry)
+        font_file._font_file_character_map = cached
+    map_dict.update(cached.map_dict)
+    int_entry.extend(cached.int_entry)
+    return map_dict, int_entry
+
+
+def _derive_character_map_from_cff_type1_font_file(
     font_data: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
@@ -447,9 +498,9 @@ def _character_map_from_cff_type1_font_file(
     try:
         from fontTools.cffLib import CFFFontSet  # noqa: PLC0415
         cff_set = CFFFontSet()
-        cff_set.decompile(BytesIO(font_data), None)  # This can raise ValueError, AssertionError, struct.error.
-        cff_font = cff_set.topDictIndex[0]           # First font in CFF set; Can raise AttributeError or IndexError.
-        cff_encoding = cff_font.Encoding             # Can raise AttributeError.
+        cff_set.decompile(BytesIO(font_data), None)
+        cff_font = cff_set.topDictIndex[0]
+        cff_encoding = cff_font.Encoding
         # Encoding can fall back to literal strings "StandardEncoding" or "ExpertEncoding", which we do not parse.
         if isinstance(cff_encoding, str):
             return map_dict, int_entry
@@ -462,11 +513,11 @@ def _character_map_from_cff_type1_font_file(
                 int_entry.append(i)
         return map_dict, int_entry
 
-    except (struct.error, AssertionError, AttributeError, IndexError, NotImplementedError, ValueError):
+    except Exception:
         return map_dict, int_entry
 
 
-def _character_map_from_type1_font_file(
+def _derive_character_map_from_type1_font_file(
     font_data: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],

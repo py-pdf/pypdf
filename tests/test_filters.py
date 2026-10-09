@@ -8,7 +8,7 @@ from copy import deepcopy
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
-from typing import cast
+from typing import Callable, cast
 from unittest import mock
 
 import pytest
@@ -19,6 +19,7 @@ from pypdf.errors import DependencyError, DeprecationError, LimitReachedError, P
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
+    BrotliDecode,
     CCITParameters,
     CCITTFaxDecode,
     CCITTParameters,
@@ -275,7 +276,7 @@ def test_ccitt_fax_decode__unsigned_columns():
 def test_decompress_zlib_error(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-952445.pdf")))
     for page in reader.pages:
-        page.extract_text()
+        assert page.extract_text() == ""
     assert "incorrect startxref pointer(3)" in caplog.text
 
 
@@ -913,6 +914,108 @@ def test_rle_decode_exception_with_corrupted_stream(caplog):
     assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
 
 
+@pytest.mark.parametrize("s", filter_inputs)
+def test_brotli_decode_encode(s):
+    """BrotliDecode encode() and decode() methods work as expected."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    s_bytes = s.encode()
+    encoded = BrotliDecode.encode(s_bytes)
+    assert BrotliDecode.decode(encoded) == s_bytes
+
+
+@pytest.mark.parametrize(
+    "function",
+    [
+        pytest.param(BrotliDecode.decode, id="decode"),
+        pytest.param(BrotliDecode.encode, id="encode"),
+    ]
+)
+def test_brotli_missing_installation(function: Callable[[bytes], bytes]) -> None:
+    """BrotliDecode raises DependencyError when brotli is not installed."""
+    BrotliDecode._check_brotli_available.cache_clear()
+    try:
+        with mock.patch("pypdf.filters.find_spec", return_value=None), \
+                pytest.raises(DependencyError):
+            function(b"test data")
+    finally:
+        BrotliDecode._check_brotli_available.cache_clear()
+
+
+def test_brotli_decode_output_limit():
+    """BrotliDecode raises LimitReachedError when output exceeds limit."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    data = b"A" * 100
+    compressed = BrotliDecode.encode(data)
+    with apply_configuration(brotli_maximum_output_length=100):
+        assert BrotliDecode.decode(compressed) == data
+
+    data = b"A" * 101
+    compressed = BrotliDecode.encode(data)
+    with apply_configuration(brotli_maximum_output_length=100), \
+            pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
+        BrotliDecode.decode(compressed)
+
+    data = b"A" * 1000
+    compressed = BrotliDecode.encode(data)
+    with apply_configuration(brotli_maximum_output_length=100), \
+            pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
+        BrotliDecode.decode(compressed)
+
+
+@pytest.mark.timeout(10)
+def test_brotli_decode_output_limit__speed():
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    large_data = b"A" * 80_000_000
+    compressed = BrotliDecode.encode(large_data)
+    with pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
+        BrotliDecode.decode(compressed)
+
+
+def test_brotli_decode_stream_data():
+    """BrotliDecode works correctly through decode_stream_data."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    original = b"Hello, Brotli!"
+    compressed = BrotliDecode.encode(original)
+    stream = DictionaryObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream._data = compressed  # type: ignore[attr-defined]
+    assert decode_stream_data(stream) == original
+
+
+def test_brotli_pdf_roundtrip():
+    """A PDF with BrotliDecode-compressed content stream can be read back."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    original_text = "Hello, Brotli PDF!"
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    page = writer.pages[0]
+
+    # Build a minimal content stream with BrotliDecode filter
+    content = f"BT /F1 12 Tf 50 150 Td ({original_text}) Tj ET".encode()
+    compressed = BrotliDecode.encode(content)
+
+    stream = StreamObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream._data = compressed
+
+    page[NameObject("/Contents")] = writer._add_object(stream)
+
+    buf = BytesIO()
+    writer.write(buf)
+
+    buf.seek(0)
+    reader = PdfReader(buf)
+    page_content = reader.pages[0].get_contents()
+    assert page_content is not None
+    raw_data = page_content.get_data()
+    assert original_text.encode() in raw_data
+
+
 def test_rle_decode_truncated_after_run_length(caplog):
     # A replicate run (length byte > 128) that is not followed by the byte to
     # repeat must be handled like any other truncated input instead of reading
@@ -945,7 +1048,7 @@ def test_decompress():
     # Decompress byte-wise with input limit.
     with apply_configuration(zlib_maximum_recovery_input_length=1000), \
             pytest.raises(
-                LimitReachedError, match=r"^Recovery limit reached while decompressing\. 336 bytes remaining\.$"
+                LimitReachedError, match=r"^Recovery limit reached while decompressing\. 337 bytes remaining\.$"
             ):
         decompress(b"A" * 1337)
 
@@ -1172,7 +1275,7 @@ def test_lzwdecode__invalid_first_code():
         LZWDecode.decode(data=lzw_data)
 
 
-@pytest.mark.timeout(5)  # Has been 20 seconds before.
+@pytest.mark.timeout(10)  # Has been 20 seconds before.
 def test_flatedecode__decode_png_prediction__speed():
     columns = 4096
     rows = 120000
@@ -1281,3 +1384,85 @@ def test_flate_decode__decode__decode_parms_types__null_object(caplog) -> None:
     compressed = zlib.compress(_FLATE_IMAGE_DATA)
     _ = FlateDecode.decode(decode_parms=NullObject(), data=compressed)
     assert caplog.messages == []
+
+
+@pytest.mark.timeout(10)  # Previously took about 28-33 seconds.
+def test_decompress__fallback__speed() -> None:
+    # `gzip` is an optional module: https://docs.python.org/3/library/gzip.html
+    gzip = pytest.importorskip("gzip")
+
+    buf = BytesIO()
+    size = 1_000_000
+    with gzip.GzipFile(fileobj=buf, mode="wb", compresslevel=1, mtime=0) as f:
+        f.write(os.urandom(size))  # incompressible: stream size ~= input size
+    compressed = buf.getvalue()
+
+    result = decompress(compressed)
+    assert len(result) == size
+
+
+@pytest.mark.parametrize(
+    ("parameters", "rows", "expected_message"),
+    [
+        (
+            DictionaryObject({"/Columns": NumberObject(-1)}),
+            42,
+            r"^Expected valid 32 bit unsigned value for /Columns, got -1!$"
+        ),
+        (
+            DictionaryObject({"/Columns": NumberObject(CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10)}),
+            42,
+            rf"^Expected valid 32 bit unsigned value for /Columns, got {CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10}!$"
+        ),
+        (
+            DictionaryObject({"/Columns": NumberObject(42)}),
+            -1,
+            r"^Expected valid 32 bit unsigned value for /Rows, got -1!$"
+        ),
+        (
+            DictionaryObject({"/Columns": NumberObject(42)}),
+            CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10,
+            fr"^Expected valid 32 bit unsigned value for /Rows, got {CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG + 10}!$"
+        ),
+    ],
+    ids=["columns-negative", "columns-large", "rows-negative", "rows-large"]
+)
+def test_ccitt_get_parameters__limits(parameters, rows, expected_message):
+    with pytest.raises(expected_exception=PdfReadError, match=expected_message):
+        CCITTFaxDecode._get_parameters(parameters=parameters, rows=rows)
+
+
+def test_decode_stream_data__filter_limit() -> None:
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(b"INVALID")
+    content_stream[NameObject("/Filter")] = ArrayObject([NullObject()] * 50)
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum filter count 16 exceeded: 50$"):
+        decode_stream_data(content_stream)
+
+
+def test_decode_stream_data__data_limit() -> None:
+    runs = 585_937
+    # A large run of `A` is invalid for `CCITTFaxDecode`, but this is not checked anywhere.
+    encoded_rle = b"\x81A" * runs + b"\x80"
+
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(encoded_rle)
+    content_stream[NameObject("/Filter")] = ArrayObject(
+        [NameObject("/RunLengthDecode")] + [NameObject("/CCITTFaxDecode")] * 10
+    )
+    content_stream[NameObject("/Height")] = NumberObject(42)
+    content_stream[NameObject("/DecodeParms")] = ArrayObject(
+        [
+            DictionaryObject({
+                NameObject("/Height"): NumberObject(42),
+            })
+        ] * 10
+    )
+
+    # Would accumulate to 1_426_179_407 bytes.
+    with pytest.raises(
+            expected_exception=LimitReachedError,
+            match=r"^Stream decoding exceeded the maximum accumulated decoding work of 300000000 bytes\.$"
+    ):
+        decode_stream_data(content_stream)

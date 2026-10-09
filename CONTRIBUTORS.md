@@ -65,6 +65,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [sietzeberends](https://github.com/sietzeberends)
 * [Stober, Marc](https://github.com/marcstober)
 * [Stüber, Timo](https://github.com/omit66)
+* [Syamjith-NK](https://github.com/Syamjith-NK): Arabic and RTL text handling | [syamjithnk.com](https://syamjithnk.com)
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf from April 2022 to January 2025. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 * [Thomas, Reuben](https://github.com/rrthomas)
 * [Tobeabellwether](https://github.com/Tobeabellwether)

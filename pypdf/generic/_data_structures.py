@@ -39,6 +39,7 @@ from math import ceil
 from typing import (
     Any,
     Callable,
+    NamedTuple,
     Optional,
     Union,
     cast,
@@ -97,6 +98,14 @@ logger = logging.getLogger(__name__)
 
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
+# Direct objects of these types are neither streams nor indirect objects.
+# Large arrays consist mostly of them, for example in the /ParentTree of the
+# structure tree, so the clone loops check the exact type first and skip the
+# slower isinstance() checks.
+_SCALAR_TYPES = frozenset(
+    (BooleanObject, ByteStringObject, FloatObject, NameObject, NullObject, NumberObject, TextStringObject)
+)
+
 
 class ArrayObject(list[Any], PdfObject):
     def replicate(
@@ -131,7 +140,10 @@ class ArrayObject(list[Any], PdfObject):
             self._reference_clone(ArrayObject(), pdf_dest, force_duplicate=True),
         )
         for data in self:
-            if isinstance(data, StreamObject):
+            if type(data) in _SCALAR_TYPES:
+                # Same as the generic case below, but without the isinstance() checks.
+                arr.append(data.clone(pdf_dest, force_duplicate, ignore_fields))
+            elif isinstance(data, StreamObject):
                 dup = data._reference_clone(
                     data.clone(pdf_dest, force_duplicate, ignore_fields),
                     pdf_dest,
@@ -261,11 +273,16 @@ class ArrayObject(list[Any], PdfObject):
                 stream.seek(-1, 1)
                 skip_over_comment(stream)
                 continue
-            stream.seek(-1, 1)
             # check for array ending
-            peek_ahead = stream.read(1)
-            if peek_ahead == b"]":
+            if tok == b"]":
                 break
+            if tok == b"n":
+                # Shortcut for null, as some arrays consist mostly of nulls
+                rest = stream.read(3)
+                if rest == b"ull":
+                    arr.append(NullObject())
+                    continue
+                stream.seek(-len(rest), 1)
             stream.seek(-1, 1)
             # read and append object
             arr.append(read_object(stream, pdf, forced_encoding))
@@ -411,7 +428,9 @@ class DictionaryObject(dict[Any, Any], PdfObject):
 
         for k, v in src.items():
             if k not in ignore_fields:
-                if isinstance(v, StreamObject):
+                # The type check does not change the result. It only skips the
+                # slower isinstance() check for the most common values.
+                if type(v) not in _SCALAR_TYPES and isinstance(v, StreamObject):
                     if not hasattr(v, "indirect_reference"):
                         v.indirect_reference = None
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
@@ -965,7 +984,23 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         del child_obj[NameObject("/Prev")]
 
 
+class _FontFileCharacterMap(NamedTuple):
+    """The character map pypdf._cmap derived from an embedded font program. See #4156."""
+
+    digest: bytes
+    """SHA-256 digest of the decoded font data the map was derived from."""
+    map_dict: dict[Any, Any]
+    int_entry: list[int]
+
+
 class StreamObject(DictionaryObject):
+    _font_file_character_map: Optional[_FontFileCharacterMap] = None
+    """
+    The character map pypdf._cmap derived from this stream as an embedded font program. Parsing a CFF font
+    program with fontTools is expensive, and the same program is reached from every font resource and page
+    referencing it. See #4156.
+    """
+
     def __init__(self) -> None:
         self._data: bytes = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
@@ -1548,7 +1583,7 @@ class ContentStream(DecodedStreamObject):
         super().write_to_stream(stream, encryption_key)
 
 
-def read_object(
+def read_object(  # noqa: PLR0911
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
     forced_encoding: Union[str, list[str], dict[int, str], None] = None,
@@ -1583,10 +1618,22 @@ def read_object(
     if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)
-        stream.seek(-len(peek), 1)  # reset to start
-        if IndirectPattern.match(peek) is not None:
+        match = IndirectPattern.match(peek)
+        if match is not None:
             assert pdf is not None, "mypy"
-            return IndirectObject.read_from_stream(stream, pdf)
+            # Continue after the "R", the match includes the character following it
+            stream.seek(match.end() - 1 - len(peek), 1)
+            # The object number includes an optional sign
+            return IndirectObject(int(peek[: match.end(1)]), int(match[2]), pdf)
+        number_end = NumberObject.NumberPattern.search(peek)
+        if number_end is not None:
+            # The whole number is in the peek, there is no need to read it again
+            num = peek[: number_end.start()]
+            stream.seek(len(num) - len(peek), 1)
+            if b"." in num:
+                return FloatObject(num)
+            return NumberObject(num)
+        stream.seek(-len(peek), 1)  # reset to start
         return NumberObject.read_from_stream(stream)
     pos = stream.tell()
     stream.seek(-20, 1)

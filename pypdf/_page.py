@@ -45,7 +45,6 @@ from typing import (
 )
 
 from ._configuration import get_configuration
-from ._font import Font
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     _layout_mode,
@@ -87,6 +86,7 @@ from .generic import (
     StreamObject,
     is_null_or_none,
 )
+from .generic._font import Font
 
 try:
     from PIL.Image import Image
@@ -112,6 +112,22 @@ def _get_page_resources(obj: Any) -> DictionaryObject:
         )
         return DictionaryObject()
     return resources
+
+
+def _get_font_resources(resources: Any) -> DictionaryObject:
+    """Return the /Font resources, or an empty dictionary if missing or malformed."""
+    fonts = resources.get(RES.FONT)
+    if is_null_or_none(fonts):
+        return DictionaryObject()
+    fonts = fonts.get_object()
+    if not isinstance(fonts, DictionaryObject):
+        logger_warning(
+            "Font resources are not a dictionary: %(fonts)s",
+            source=__name__,
+            fonts=fonts,
+        )
+        return DictionaryObject()
+    return fonts
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -712,50 +728,50 @@ class PageObject(DictionaryObject):
 
     def _get_image(
         self,
-        id: Union[str, list[str], tuple[str]],
+        image_id: Union[str, list[str], tuple[str]],
         obj: Optional[DictionaryObject] = None,
     ) -> ImageFile:
         if obj is None:
             obj = cast(DictionaryObject, self)
-        if isinstance(id, tuple):
-            id = list(id)
-        if isinstance(id, list) and len(id) == 1:
-            id = id[0]
+        if isinstance(image_id, tuple):
+            image_id = list(image_id)
+        if isinstance(image_id, list) and len(image_id) == 1:
+            image_id = image_id[0]
         xobjs: Optional[DictionaryObject] = None
         try:
             xobjs = cast(
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
         except KeyError as exc:
-            if not (id[0] == "~" and id[-1] == "~"):
+            if not (image_id[0] == "~" and image_id[-1] == "~"):
                 raise KeyError(
-                    f"Cannot access image object {id} without XObject resources"
+                    f"Cannot access image object {image_id} without XObject resources"
                 ) from exc
-        if isinstance(id, str):
-            if id[0] == "~" and id[-1] == "~":
+        if isinstance(image_id, str):
+            if image_id[0] == "~" and image_id[-1] == "~":
                 if self._content_stream_images is None:
                     self._content_stream_images = self._parse_images_from_content_stream()
-                if id not in self._content_stream_images:
-                    raise KeyError(f"Image {id} not found")
-                image_file = self._content_stream_images[id]
+                if image_id not in self._content_stream_images:
+                    raise KeyError(f"Image {image_id} not found")
+                image_file = self._content_stream_images[image_id]
                 assert image_file is not None
                 return image_file
 
             # Do-referenced image name (non-inline string keys like /Im0)
             assert xobjs is not None
-            if id not in xobjs:
-                raise KeyError(f"Image {id} not found")
-            xobj = cast(DictionaryObject, xobjs[id])
+            if image_id not in xobjs:
+                raise KeyError(f"Image {image_id} not found")
+            xobj = cast(DictionaryObject, xobjs[image_id])
             if xobj.get(ImageAttributes.SUBTYPE, "") != "/Image":
-                raise KeyError(f"XObject {id} is not an image")
+                raise KeyError(f"XObject {image_id} is not an image")
 
             # Check if displayed (in content stream)
-            is_displayed = self._content_stream_images is not None and id in self._content_stream_images
+            is_displayed = self._content_stream_images is not None and image_id in self._content_stream_images
 
             from .generic._image_xobject import _xobj_to_image  # noqa: PLC0415
             extension, byte_stream, img = _xobj_to_image(xobj)
             return ImageFile(
-                name=f"{id[1:]}{extension}",
+                name=f"{image_id[1:]}{extension}",
                 data=byte_stream,
                 image=img,
                 indirect_reference=xobj.indirect_reference,
@@ -764,8 +780,8 @@ class PageObject(DictionaryObject):
             )
         # in a subobject
         assert xobjs is not None
-        ids = id[1:]
-        return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
+        ids = image_id[1:]
+        return self._get_image(ids, cast(DictionaryObject, xobjs[image_id[0]]))
 
     @property
     def images(self) -> VirtualListImages:
@@ -1174,11 +1190,19 @@ class PageObject(DictionaryObject):
             )
 
         writer = self.indirect_reference.pdf
-        if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
-            content_array = cast(ArrayObject, self[PG.CONTENTS])
-            for reference in content_array:
+        # Resolve /Contents because it may be an indirect reference to an
+        # ArrayObject. Without resolving it, an indirect contents array is not
+        # recognized and its stream objects are left in the writer's object list.
+        old_contents = self.get(PG.CONTENTS, None)
+        if old_contents is not None:
+            old_contents = old_contents.get_object()
+        if isinstance(old_contents, ArrayObject):
+            for reference in old_contents:
+                if not isinstance(reference, IndirectObject):
+                    # Direct objects are not part of the writer's object list.
+                    continue
                 try:
-                    writer._replace_object(indirect_reference=reference.indirect_reference, obj=NullObject())
+                    writer._replace_object(indirect_reference=reference, obj=NullObject())
                 except ValueError:
                     # Occurs when called on PdfReader.
                     pass
@@ -1793,11 +1817,13 @@ class PageObject(DictionaryObject):
         """
         if self.indirect_reference is None:
             return None
-        try:
-            lst = self.indirect_reference.pdf.pages
-            return int(lst.index(self))
-        except ValueError:
-            return None
+        # Compare the indirect references, not the pages themselves: two pages
+        # with identical contents compare equal, so `list.index` would return
+        # the position of the first match for all of them.
+        for number, page in enumerate(self.indirect_reference.pdf.pages):
+            if page.indirect_reference == self.indirect_reference:
+                return number
+        return None
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
@@ -1875,10 +1901,7 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if (
-            "/Font" in resources_dict
-            and (font_resources_dict := cast(DictionaryObject, resources_dict["/Font"]))
-        ):
+        if font_resources_dict := _get_font_resources(resources_dict):
             for font_resource in font_resources_dict:
                 try:
                     font_resource_object = cast(DictionaryObject, font_resources_dict[font_resource].get_object())
@@ -1920,7 +1943,7 @@ class PageObject(DictionaryObject):
             elif operator == b"TJ":
                 # The space width may be smaller than the font width, so the width should be 95%.
                 _confirm_space_width = extractor._space_width * 0.95
-                if operands:
+                if operands and isinstance(operands[0], ArrayObject):
                     for op in operands[0]:
                         if isinstance(op, (str, bytes)):
                             extractor.process_operation(b"Tj", [op])
@@ -1933,7 +1956,7 @@ class PageObject(DictionaryObject):
             elif operator == b"TD" and len(operands) >= 2:
                 extractor.process_operation(b"TL", [-operands[1]])
                 extractor.process_operation(b"Td", operands)
-            elif operator == b"Do":
+            elif operator == b"Do" and operands:
                 extractor.output += extractor.text
                 if visitor_text is not None:
                     visitor_text(
@@ -1971,14 +1994,9 @@ class PageObject(DictionaryObject):
                     if xform_text is not None:
                         text = xform_text
                         extractor.output += text
-                        if visitor_text is not None:
-                            visitor_text(
-                                text,
-                                extractor.memo_cm,
-                                extractor.memo_tm,
-                                extractor.font_resource,
-                                extractor.font_size,
-                            )
+                        # Nothing else to do: each text piece inside the form has
+                        # already been reported via visitor_text while the form was
+                        # being extracted recursively (issue #4079).
                 except Exception as exception:
                     logger_warning(
                         "Impossible to decode XFormObject %(operand)s: %(exception)s",
@@ -2083,10 +2101,10 @@ class PageObject(DictionaryObject):
             visited.add(obj_id)
 
             resources_dict: Any = obj.get(PG.RESOURCES, {})
-            if "/Font" in resources_dict and self.pdf is not None:
-                for font_name in resources_dict["/Font"]:
+            if self.pdf is not None and (font_resources := _get_font_resources(resources_dict)):
+                for font_name in font_resources:
                     fonts[font_name] = Font.from_font_resource(
-                        resources_dict["/Font"][font_name].get_object()
+                        cast(DictionaryObject, font_resources[font_name].get_object())
                     )
 
             if "/Parent" not in obj:

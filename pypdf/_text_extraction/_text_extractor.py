@@ -30,8 +30,8 @@
 from typing import Any, Callable, Optional, Union
 
 from .._codecs import encoding_dict_from_named_encoding
-from .._font import Font, FontDescriptor
 from ..generic import DictionaryObject, TextStringObject
+from ..generic._font import Font, FontDescriptor
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
 
@@ -77,6 +77,8 @@ class TextExtraction:
         }  # will be set to string length calculation result
         self.TL = 0.0
         self.font_size = 12.0  # init just in case of
+        # (axis index, min, max) of baselines kept on the current extracted line.
+        self._line_span: Optional[tuple[int, float, float]] = None
 
         # Text extraction variables
         self.text: str = ""
@@ -127,6 +129,7 @@ class TextExtraction:
         self.text = ""
         self.output = ""
         self.rtl_dir = False
+        self._line_span = None
 
     def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
@@ -144,7 +147,7 @@ class TextExtraction:
         """Handle common post-processing for text positioning operations."""
         text_was_empty = self.text == ""
         try:
-            self.text, self.output, self.cm_prev, self.tm_prev = crlf_space_check(
+            self.text, self.output, self.cm_prev, self.tm_prev, self._line_span = crlf_space_check(
                 self.text,
                 (self.cm_prev, self.tm_prev),
                 (self.cm_matrix, self.tm_matrix),
@@ -157,6 +160,7 @@ class TextExtraction:
                 str_widths,
                 self.compute_str_widths(self.font_size * self._space_width),
                 self._actual_str_size["str_height"],
+                self._line_span,
             )
             if text_was_empty or self.text == "":
                 self.memo_cm = self.cm_matrix.copy()
@@ -178,16 +182,13 @@ class TextExtraction:
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
-        text_operands, is_str_operands = get_text_operands(
+        text_operands, is_str_operands, font_widths = get_text_operands(
             operands, cm_matrix, tm_matrix, font, orientations
         )
         if is_str_operands:
             text += text_operands
-            font_widths = sum(
-                [font.space_width if x == font.space_char else font.get_text_width(x) for x in text_operands]
-            )
         else:
-            text, rtl_dir, font_widths = get_display_str(
+            text, rtl_dir, completed = get_display_str(
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix
@@ -198,6 +199,7 @@ class TextExtraction:
                 rtl_dir,
                 visitor_text,
             )
+            self.output += completed
         actual_str_size["str_widths"] += font_widths * font_size
         actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size
@@ -344,6 +346,8 @@ class TextExtraction:
 
     def _handle_tj_operation(self, operands: list[Any]) -> float:
         """Handle Tj (Show text) operation - Table 5.5 page 406."""
+        if not operands or not isinstance(operands[0], (str, bytes)):
+            return 0.0
         self.text, self.rtl_dir, self._actual_str_size = self._handle_tj(
             self.text,
             operands,

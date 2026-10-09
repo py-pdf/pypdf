@@ -288,6 +288,67 @@ def test_index2label__malformed_kid_limits(limits, caplog):
 
 
 @pytest.mark.parametrize(
+    ("kids", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "Page label kids are not an array: 1", id="number"
+        ),
+        pytest.param(
+            DictionaryObject(), "Page label kids are not an array: {}", id="dictionary"
+        ),
+        pytest.param(
+            TextStringObject("x"), "Page label kids are not an array: x", id="string"
+        ),
+    ],
+)
+def test_index2label__kids_not_an_array(caplog, kids, expected):
+    """A /Kids entry which is not an array is reported instead of being iterated."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    number_tree = DictionaryObject()
+    number_tree[NameObject("/Kids")] = kids
+    reader.root_object[NameObject("/PageLabels")] = number_tree
+
+    assert index2label(reader, 5) == "6"
+    assert expected in caplog.text
+    assert "Could not reliably determine page label" in caplog.text
+
+
+def test_index2label__kid_not_a_dictionary(caplog):
+    """A kid which is not a dictionary is skipped rather than being looked up."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    number_tree = DictionaryObject()
+    number_tree[NameObject("/Kids")] = ArrayObject([NumberObject(5)])
+    reader.root_object[NameObject("/PageLabels")] = number_tree
+
+    assert index2label(reader, 5) == "6"
+    assert "Ignoring kid which is not a dictionary in /PageLabels." in caplog.text
+    assert "Could not reliably determine page label" in caplog.text
+
+
+def test_index2label__kids_in_indirect_objects(caplog):
+    """Both the kids array and the kid itself may be stored indirectly."""
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    label = DictionaryObject()
+    label[NameObject("/S")] = NameObject("/D")
+    kid = DictionaryObject()
+    kid[NameObject("/Limits")] = ArrayObject([NumberObject(0), NumberObject(1)])
+    kid[NameObject("/Nums")] = ArrayObject([NumberObject(0), label])
+    number_tree = DictionaryObject()
+    number_tree[NameObject("/Kids")] = writer._add_object(
+        ArrayObject([writer._add_object(kid)])
+    )
+    writer.root_object[NameObject("/PageLabels")] = number_tree
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == ["1", "2"]
+    assert caplog.text == ""
+
+
+@pytest.mark.parametrize(
     ("value", "expected"),
     [
         pytest.param(
@@ -344,4 +405,50 @@ def test_get_label_from_nums__roman__limits(caplog):
     assert get_label_from_nums(labels_negative, 0) == "1"
     assert caplog.messages == [
         "Ignoring malformed page label entry in /Nums (/St=1, /P=''): Number is out of range."
+    ]
+
+
+def test_get_label_from_nums__regular__limits(caplog):
+    with pytest.raises(expected_exception=ValueError, match=r"^Number is too large\.$"):
+        number2lowercase_letter(15_000)
+    assert caplog.messages == []
+
+    labels_at_limit = DictionaryObject({
+        NameObject("/Nums"): ArrayObject([
+            NumberObject(0),
+            DictionaryObject({
+                NameObject("/S"): NameObject("/A"),
+                NameObject("/St"): NumberObject(13_312)
+            })
+        ])
+    })
+    assert get_label_from_nums(labels_at_limit, 0) == "Z" * 512
+    assert caplog.messages == []
+
+    labels_over_limit = DictionaryObject({
+        NameObject("/Nums"): ArrayObject([
+            NumberObject(0),
+            DictionaryObject({
+                NameObject("/S"): NameObject("/A"),
+                NameObject("/St"): NumberObject(13_313)
+            })
+        ])
+    })
+    assert get_label_from_nums(labels_over_limit, 0) == "1"
+    assert caplog.messages == [
+        "Ignoring malformed page label entry in /Nums (/St=13313, /P=''): Number is too large."]
+
+    caplog.clear()
+    labels_large = DictionaryObject({
+        NameObject("/Nums"): ArrayObject([
+            NumberObject(0),
+            DictionaryObject({
+                NameObject("/S"): NameObject("/A"),
+                NameObject("/St"): NumberObject(15_000)
+            })
+        ])
+    })
+    assert get_label_from_nums(labels_large, 0) == "1"
+    assert caplog.messages == [
+        "Ignoring malformed page label entry in /Nums (/St=15000, /P=''): Number is too large."
     ]

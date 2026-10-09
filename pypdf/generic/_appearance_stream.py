@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
 from .._codecs import encoding_dict_from_named_encoding
 from .._codecs.core_font_metrics import CORE_FONT_METRICS
-from .._font import Font
 from .._page import Transformation
 from .._utils import is_char_rtl, logger_warning
 from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes, PageAttributes
@@ -28,6 +27,7 @@ from ..generic import (
 )
 from ..generic._base import ByteStringObject, TextStringObject
 from ._color import Color, DeviceGray
+from ._font import Font
 
 if TYPE_CHECKING:
     from pypdf._writer import PdfWriter
@@ -403,7 +403,8 @@ class TextStreamAppearance(BaseStreamAppearance):
             )
         default_appearance = f"{font_name} {font_size} Tf {font_color.as_operator()}"
 
-        ap_stream = (
+        ap_stream = bytearray()
+        ap_stream += (
             f"q\n/Tx BMC \nq\n"
             f"{2 * max(margin, 1)} {margin} "
             f"{round(field_width - 2 * max(margin, 1), 3)} {round(field_height - margin, 3)} re\n"
@@ -411,8 +412,9 @@ class TextStreamAppearance(BaseStreamAppearance):
         ).encode()
         current_x_pos: float = 0  # Initial virtual position within the text object.
 
+        selection_glyphs = _unicode_to_glyph_id("".join(selection), reverse_cmap) if selection else ""
         for line_number, (line_width, original_text, line) in enumerate(lines):
-            if selection and line in _unicode_to_glyph_id("".join(selection), reverse_cmap):
+            if selection_glyphs and line in selection_glyphs:
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {round(y_offset - (line_number * font_size * leading_factor) - 1, 3)} "
@@ -480,7 +482,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 ap_stream += b"EMC\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
 
-        return ap_stream
+        return bytes(ap_stream)
 
     def __init__(
         self,

@@ -30,10 +30,11 @@
 
 import struct
 from abc import ABC, abstractmethod
-from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from datetime import datetime
 from typing import (
     Any,
+    NamedTuple,
     NoReturn,
     Optional,
     Union,
@@ -94,6 +95,30 @@ def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
     return cast(int, struct.unpack(">Q", d)[0])
+
+
+# Attributes a page inherits from its ancestors in the page tree.
+_INHERITABLE_PAGE_ATTRIBUTES = (
+    NameObject(PG.RESOURCES),
+    NameObject(PG.MEDIABOX),
+    NameObject(PG.CROPBOX),
+    NameObject(PG.ROTATE),
+)
+
+
+class _PageTreeItem(NamedTuple):
+    """A page tree node waiting to be flattened by :meth:`PdfDocCommon._flatten`."""
+
+    node: DictionaryObject
+    #: Inherited attributes. Shared read-only between the kids of one node.
+    inherit: dict[str, Any]
+    indirect_reference: Optional[IndirectObject]
+    depth: int
+
+
+#: A ``/Pages`` node currently being walked: the node - carrying the attributes its
+#: kids inherit - and the part of its ``/Kids`` which has not been reached yet.
+_PageTreeFrame = tuple[_PageTreeItem, Iterator[PdfObject]]
 
 
 class DocumentInformation(DictionaryObject):
@@ -1084,11 +1109,16 @@ class PdfDocCommon(ABC):
         if not isinstance(array, ArrayObject) or len(array) < 2:
             page = NullObject()
             return Destination(title, page, Fit.fit())
-        page, typ, *array = array  # type: ignore[assignment]
+        page, typ, *fit_args = array
         try:
-            return Destination(title, page, Fit(fit_type=typ, fit_args=array))
+            return Destination(title, page, Fit(fit_type=typ, fit_args=fit_args))
         except PdfReadError:
-            logger_warning("Unknown destination: %(title)r %(array)s", source=__name__, title=title, array=array)
+            logger_warning(
+                "Unknown destination: %(title)r %(fit_args)s",
+                source=__name__,
+                title=title,
+                fit_args=fit_args,
+            )
             if self.strict:
                 raise
             # create a link to first Page
@@ -1111,12 +1141,15 @@ class PdfDocCommon(ABC):
         if "/A" in node:
             # Action, PDF 1.7 and PDF 2.0 §12.6 (only type GoTo supported)
             action = cast(DictionaryObject, node["/A"])
-            action_type = cast(NameObject, action[GoToActionArguments.S])
-            if action_type == "/GoTo":
-                if GoToActionArguments.D in action:
-                    dest = action[GoToActionArguments.D]
-                elif self.strict:
-                    raise PdfReadError(f"Outline Action Missing /D attribute: {node!r}")
+            if GoToActionArguments.S in action:
+                action_type = cast(NameObject, action[GoToActionArguments.S])
+                if action_type == "/GoTo":
+                    if GoToActionArguments.D in action:
+                        dest = action[GoToActionArguments.D]
+                    elif self.strict:
+                        raise PdfReadError(f"Outline Action Missing /D attribute: {node!r}")
+            elif self.strict:
+                raise PdfReadError(f"Outline Action Missing /S attribute: {node!r}")
         elif "/Dest" in node:
             # Destination, PDF 1.7 and PDF 2.0 §12.3.2
             dest = node["/Dest"]
@@ -1268,16 +1301,7 @@ class PdfDocCommon(ABC):
         except KeyError:
             return None
 
-    def _flatten(
-        self,
-        list_only: bool = False,
-        pages: Union[DictionaryObject, PageObject, None] = None,
-        inherit: Optional[dict[str, Any]] = None,
-        indirect_reference: Optional[IndirectObject] = None,
-        visited: Optional[set[int]] = None,
-        depth: int = 0,
-        traversal_state: Optional[_TraversalState] = None,
-    ) -> None:
+    def _flatten(self, list_only: bool = False) -> None:
         """
         Process the document pages to ease searching.
 
@@ -1285,126 +1309,162 @@ class PdfDocCommon(ABC):
         in the page tree. Flattening means moving
         any inheritance data into descendant nodes,
         effectively removing the inheritance dependency.
+        The result is stored in ``self.flattened_pages``.
 
         Note: It is distinct from another use of "flattening" applied to PDFs.
         Flattening a PDF also means combining all the contents into one single layer
         and making the file less editable.
 
+        The page tree is walked with an explicit stack instead of recursion, so the
+        traversal is bound by ``Configuration.page_tree_maximum_depth`` and
+        ``Configuration.page_tree_maximum_entries`` only, not by the interpreter
+        recursion limit.
+
         Args:
-            list_only: Will only list the pages within _flatten_pages.
-            pages:
-            inherit:
-            indirect_reference: Used recursively to flatten the /Pages object.
-            visited: Set of id() values on the active page-tree traversal path.
-                Detects multi-hop cycles such as A→B→C→A that the single-parent
-                check misses.
-            depth: Current page-tree traversal depth.
-            traversal_state: State shared across the complete traversal.
+            list_only: If True, the page's own entries are not copied into the
+                generated :class:`PageObject`. Attributes inherited from ancestor
+                nodes are applied either way. Note that a page reached through an
+                indirect reference is already populated by :class:`PageObject`
+                itself, so this only has an effect for ``/Kids`` entries that are
+                inline dictionaries.
 
         """
-        inheritable_page_attributes = (
-            NameObject(PG.RESOURCES),
-            NameObject(PG.MEDIABOX),
-            NameObject(PG.CROPBOX),
-            NameObject(PG.ROTATE),
-        )
-        if inherit is None:
-            inherit = {}
-        if visited is None:
-            visited = set()
-        if traversal_state is None:
-            traversal_state = _TraversalState()
         configuration = get_configuration()
-        if depth > configuration.page_tree_maximum_depth:
-            raise LimitReachedError(
-                f"Maximum page tree depth reached: {depth} > {configuration.page_tree_maximum_depth}."
-            )
-        if is_null_or_none(pages):
-            # Fix issue 327: set flattened_pages attribute only for
-            # decrypted file
-            catalog = self.root_object
-            pages = catalog.get("/Pages").get_object()  # type: ignore[union-attr]
-            if not isinstance(pages, DictionaryObject):
-                raise PdfReadError("Invalid object in /Pages")
-            self.flattened_pages = []
-        assert pages is not None, "mypy"
+        self.flattened_pages = None
+        pages = self.root_object.get("/Pages", NullObject()).get_object()
+        if not isinstance(pages, DictionaryObject):
+            raise PdfReadError("Invalid object in /Pages")
 
-        if PagesAttributes.TYPE in pages:
-            t = cast(str, pages[PagesAttributes.TYPE])
-        # if the page tree node has no /Type, consider as a page if /Kids is also missing
-        elif PagesAttributes.KIDS not in pages:
-            # Without /Type, only accept it as a page if it carries a structural page key.
-            if self.strict and not any(
-                key in pages for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)
-            ):
-                raise PdfReadError(f"Non-page object reached through /Kids: {pages!r}")
-            t = "/Page"
-        else:
-            t = "/Pages"
-
-        if t == "/Pages":
-            for attr in inheritable_page_attributes:
-                if attr in pages:
-                    inherit[attr] = pages[attr]
-            pages_reference = getattr(pages, "indirect_reference", object())
-            kids = pages.get(PagesAttributes.KIDS, ArrayObject()).get_object()
-            if isinstance(kids, NullObject):
-                kids = ArrayObject()
-            elif not isinstance(kids, ArrayObject):
-                raise PdfReadError(
-                    f"Expected /Kids to be an array, got {type(kids).__name__}."
+        flattened_pages: list[PageObject] = []
+        traversal_state = _TraversalState()
+        # id() values of the nodes on the path from the root to the current node.
+        # Detects multi-hop cycles such as A→B→C→A that the single-parent check misses.
+        ancestor_ids: set[int] = set()
+        # The /Pages nodes of that path whose /Kids are not exhausted yet.
+        stack: list[_PageTreeFrame] = []
+        item: Optional[_PageTreeItem] = _PageTreeItem(
+            node=pages, inherit={}, indirect_reference=None, depth=0
+        )
+        while item is not None:
+            if item.depth > configuration.page_tree_maximum_depth:
+                raise LimitReachedError(
+                    f"Maximum page tree depth reached: {item.depth} > {configuration.page_tree_maximum_depth}."
                 )
+
+            # Get the current node_type
+            node = item.node
+            if PagesAttributes.TYPE in node:
+                node_type = cast(str, node[PagesAttributes.TYPE])
+            # if the page tree node has no /Type, consider as a page if /Kids is also missing
+            elif PagesAttributes.KIDS not in node:
+                # Without /Type, only accept it as a page if it carries a structural page key.
+                if self.strict and not any(key in node for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)):
+                    raise PdfReadError(f"Non-page object reached through /Kids: {node!r}")
+                node_type = "/Page"
+            else:
+                node_type = "/Pages"
+
+            # Flatten that type of node
+            if node_type == "/Pages":
+                ancestor_ids.add(id(node))
+                stack.append(self._enter_page_tree_node(item))
+            elif node_type == "/Page":
+                flattened_pages.append(self._flatten_leaf_page(item, list_only))
+
+            item = self._pop_next_page_tree_kid(stack, ancestor_ids, traversal_state)
+
+        # Assigned only here, so that a failed traversal does not leave a partial page list behind.
+        self.flattened_pages = flattened_pages
+
+    def _enter_page_tree_node(self, item: _PageTreeItem) -> _PageTreeFrame:
+        """
+        Start walking an intermediate ``/Pages`` node: propagate its inheritable
+        attributes and pair it with an iterator over its ``/Kids``.
+        """
+        pages = item.node
+        # Copied before being modified, as the kids of the enclosing node share it.
+        inherit = dict(item.inherit)
+        for attr in _INHERITABLE_PAGE_ATTRIBUTES:
+            if attr in pages:
+                inherit[attr] = pages[attr]
+
+        kids = pages.get(PagesAttributes.KIDS, ArrayObject()).get_object()
+        if isinstance(kids, NullObject):
+            kids = ArrayObject()
+        elif not isinstance(kids, ArrayObject):
+            raise PdfReadError(f"Expected /Kids to be an array, got {type(kids).__name__}.")
+
+        return item._replace(inherit=inherit), iter(kids)
+
+    def _pop_next_page_tree_kid(
+        self,
+        stack: list[_PageTreeFrame],
+        ancestor_ids: set[int],
+        traversal_state: _TraversalState,
+    ) -> Optional[_PageTreeItem]:
+        """
+        Return the next page tree node to flatten, leaving the ``/Pages`` nodes whose
+        ``/Kids`` are exhausted, or ``None`` when the traversal is complete.
+
+        Cyclic references and the configured page-tree entry limit are enforced here.
+        """
+        configuration = get_configuration()
+        while stack:
+            parent, kids = stack[-1]
+            pages_reference = getattr(parent.node, "indirect_reference", object())
             for page in kids:
                 if getattr(page, "indirect_reference", object()) == pages_reference:
                     raise PdfReadError("Detected cyclic page references.")
 
-                additional_arguments = {}
-                if isinstance(page, IndirectObject):
-                    additional_arguments["indirect_reference"] = page
                 obj = page.get_object()
-                if not is_null_or_none(obj) and not isinstance(obj, DictionaryObject):
-                    logger_warning(
-                        "Ignoring page tree entry that is not a dictionary: %(entry)s",
-                        source=__name__,
-                        entry=obj,
-                    )
-                    continue
-                if obj:
+                if not isinstance(obj, DictionaryObject):
+                    if not is_null_or_none(obj):
+                        logger_warning(
+                            "Ignoring page tree entry that is not a dictionary: %(entry)s",
+                            source=__name__,
+                            entry=obj,
+                        )
                     # damaged file may have invalid child in /Pages
-                    obj_id = id(obj)
-                    if obj_id in visited:
-                        raise PdfReadError("Detected cyclic page references.")
-                    traversal_state.entry_count += 1
-                    if traversal_state.entry_count > configuration.page_tree_maximum_entries:
-                        raise LimitReachedError(
-                            "Maximum page tree entry limit reached: "
-                            f"{traversal_state.entry_count} > {configuration.page_tree_maximum_entries}."
-                        )
-                    visited.add(obj_id)
-                    try:
-                        self._flatten(
-                            list_only,
-                            cast(DictionaryObject, obj),
-                            inherit.copy(),
-                            visited=visited,
-                            depth=depth + 1,
-                            traversal_state=traversal_state,
-                            **additional_arguments,
-                        )
-                    finally:
-                        visited.remove(obj_id)
-        elif t == "/Page":
-            page_obj = PageObject(self, indirect_reference)
-            if not list_only:
-                page_obj.update(pages)
-            for attr_in, value in inherit.items():
-                # if the page has its own value, it does not inherit the
-                # parent's value
-                if attr_in not in page_obj:
-                    page_obj[attr_in] = value
+                    continue
+                if not obj:
+                    # An empty dictionary would otherwise be read as a blank page.
+                    continue
+                if id(obj) in ancestor_ids:
+                    raise PdfReadError("Detected cyclic page references.")
+                traversal_state.entry_count += 1
+                if traversal_state.entry_count > configuration.page_tree_maximum_entries:
+                    raise LimitReachedError(
+                        "Maximum page tree entry limit reached: "
+                        f"{traversal_state.entry_count} > {configuration.page_tree_maximum_entries}."
+                    )
+                return _PageTreeItem(
+                    node=obj,
+                    inherit=parent.inherit,
+                    indirect_reference=page if isinstance(page, IndirectObject) else None,
+                    depth=parent.depth + 1,
+                )
+            stack.pop()
+            ancestor_ids.discard(id(parent.node))
+        return None
 
-            # TODO: Could flattened_pages be None at this point?
-            self.flattened_pages.append(page_obj)  # type: ignore[union-attr]
+    def _flatten_leaf_page(self, item: _PageTreeItem, list_only: bool) -> PageObject:
+        """
+        Build the :class:`PageObject` for a leaf ``/Page`` node.
+
+        ``list_only`` suppresses copying the page's own entries; the inherited
+        attributes are applied regardless. When the node has an indirect reference,
+        :class:`PageObject` has already copied those entries in its constructor,
+        so the flag only matters for inline ``/Kids`` dictionaries.
+        """
+        page_obj = PageObject(self, item.indirect_reference)
+        if not list_only:
+            page_obj.update(item.node)
+        for attr, value in item.inherit.items():
+            # if the page has its own value, it does not inherit the parent's value
+            if attr not in page_obj:
+                page_obj[attr] = value
+
+        return page_obj
 
     def remove_page(
         self,
@@ -1559,80 +1619,27 @@ class PdfDocCommon(ABC):
     @property
     def attachments(self) -> Mapping[str, list[bytes]]:
         """Mapping of attachment filenames to their content."""
+        entries: dict[str, list[EmbeddedFile]] = {}
+
+        for entry in self.attachment_list:
+            for name in entry._names:
+                entries.setdefault(name, []).append(entry)
+
         return LazyDict(
             {
-                name: (self._get_attachment_list, name)
-                for name in self._list_attachments()
+                name: (self._get_attachment_contents, attachment_entries)
+                for name, attachment_entries in entries.items()
             }
         )
 
+    @classmethod
+    def _get_attachment_contents(cls, entries: list[EmbeddedFile]) -> list[bytes]:
+        return [entry.content for entry in entries]
+
     @property
-    def attachment_list(self) -> Generator[EmbeddedFile, None, None]:
+    def attachment_list(self) -> Iterator[EmbeddedFile]:
         """Iterable of attachment objects."""
         yield from EmbeddedFile._load(self.root_object, strict=self.strict)
-
-    def _list_attachments(self) -> list[str]:
-        """
-        Retrieves the list of filenames of file attachments.
-
-        Returns:
-            list of filenames
-
-        """
-        names = []
-        for entry in self.attachment_list:
-            names.append(entry.name)
-            if (name := entry.alternative_name) != entry.name and name:
-                names.append(name)
-        return names
-
-    def _get_attachment_list(self, name: str) -> list[bytes]:
-        out = self._get_attachments(name)[name]
-        if isinstance(out, list):
-            return out
-        return [out]
-
-    def _get_attachments(
-        self, filename: Optional[str] = None
-    ) -> dict[str, Union[bytes, list[bytes]]]:
-        """
-        Retrieves all or selected file attachments of the PDF as a dictionary of file names
-        and the file data as a bytestring.
-
-        Args:
-            filename: If filename is None, then a dictionary of all attachments
-                will be returned, where the key is the filename and the value
-                is the content. Otherwise, a dictionary with just a single key
-                - the filename - and its content will be returned.
-
-        Returns:
-            dictionary of filename -> Union[bytestring or List[ByteString]]
-            If the filename exists multiple times a list of the different versions will be provided.
-
-        """
-        attachments: dict[str, Union[bytes, list[bytes]]] = {}
-        for entry in self.attachment_list:
-            names = set()
-            alternative_name = entry.alternative_name
-            if filename is not None:
-                if filename in {entry.name, alternative_name}:
-                    name = entry.name if filename == entry.name else alternative_name
-                    names.add(name)
-                else:
-                    continue
-            else:
-                names = {entry.name, alternative_name}
-
-            for name in names:
-                if name is None:
-                    continue
-                if name in attachments:
-                    if not isinstance(attachments[name], list):
-                        attachments[name] = [attachments[name]]  # type:ignore
-                    attachments[name].append(entry.content)  # type:ignore
-                else:
-                    attachments[name] = entry.content
-        return attachments
 
     @abstractmethod
     def _repr_mimebundle_(

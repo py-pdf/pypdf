@@ -8,9 +8,9 @@ import math
 from collections.abc import Mapping
 from typing import Any, Callable, Literal, Optional, Union
 
-from .._font import Font
 from .._utils import is_char_neutral, is_char_rtl
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
+from ..generic._font import Font
 
 CUSTOM_RTL_MIN: str = ""
 CUSTOM_RTL_MAX: str = ""
@@ -99,7 +99,7 @@ def orient(m: list[float]) -> int:
     return 270
 
 
-def crlf_space_check(
+def crlf_space_check(  # noqa: PLR0913, PLR0917
     text: str,
     cmtm_prev: tuple[list[float], list[float]],
     cmtm_matrix: tuple[list[float], list[float]],
@@ -112,7 +112,8 @@ def crlf_space_check(
     str_widths: float,
     spacewidth: float,
     str_height: float,
-) -> tuple[str, str, list[float], list[float]]:
+    line_span: Optional[tuple[int, float, float]],
+) -> tuple[str, str, list[float], list[float], Optional[tuple[int, float, float]]]:
     cm_prev = cmtm_prev[0]
     tm_prev = cmtm_prev[1]
     cm_matrix = cmtm_matrix[0]
@@ -143,29 +144,44 @@ def crlf_space_check(
     elif orientation in (90, 270):
         moved_height = delta_x
         moved_width = delta_y
-    try:
-        if abs(moved_height) > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
-            if (output + text)[-1] != "\n":
-                output += text + "\n"
-                if visitor_text is not None:
-                    visitor_text(
-                        text + "\n",
-                        memo_cm,
-                        memo_tm,
-                        font_resource,
-                        font_size,
-                    )
-                text = ""
-        elif (
+    # Keep track of the baseline range of the current extracted line. A centered
+    # row label can fall between the two baselines of a wrapped cell (#4130), so
+    # comparing only with the immediately preceding fragment can incorrectly
+    # insert a line break. Use the established baseline range for that case.
+    axis_index = 5 if orientation in (0, 180) else 4
+    axis = m[axis_index]
+    if line_span is None or line_span[0] != axis_index:
+        distance = abs(moved_height)
+    else:
+        lower, upper = line_span[1], line_span[2]
+        distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
+    last = (output + text)[-1:]
+    if distance > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
+        if last not in ("", "\n"):
+            output += text + "\n"
+            if visitor_text is not None:
+                visitor_text(
+                    text + "\n",
+                    memo_cm,
+                    memo_tm,
+                    font_resource,
+                    font_size,
+                )
+            text = ""
+        line_span = (axis_index, axis, axis)
+    else:
+        if (
             (moved_width >= (spacewidth + str_widths) * scale_prev_x)
-            and (output + text)[-1] != " "
+            and last not in ("", " ")
         ):
             text += " "
-    except Exception:
-        pass
+        if last in ("", "\n") or line_span is None or line_span[0] != axis_index:
+            line_span = (axis_index, axis, axis)
+        else:
+            line_span = (axis_index, min(line_span[1], axis), max(line_span[2], axis))
     tm_prev = tm_matrix.copy()
     cm_prev = cm_matrix.copy()
-    return text, output, cm_prev, tm_prev
+    return text, output, cm_prev, tm_prev, line_span
 
 
 def get_text_operands(
@@ -174,17 +190,20 @@ def get_text_operands(
     tm_matrix: list[float],
     font: Font,
     orientations: tuple[int, ...]
-) -> tuple[str, bool]:
-    t: str = ""
+) -> tuple[str, bool, float]:
+    text: str = ""
     is_str_operands = False
+    widths: float = 0.0
+    width_cache: dict[str, float] = {}
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
+    raw_characters: str = ""
     if orientation in orientations and len(operands) > 0:
         if isinstance(operands[0], str):
-            t = operands[0]
+            text = operands[0]
             is_str_operands = True
         else:
-            t = ""
+            text = ""
             tt: bytes = (
                 encode_pdfdocencoding(operands[0])
                 if isinstance(operands[0], str)
@@ -192,17 +211,23 @@ def get_text_operands(
             )
             if isinstance(font.encoding, str):  # Apply named encoding
                 try:
-                    t = tt.decode(font.encoding, "surrogatepass")
-                except Exception:
-                    # The data does not match the expectation,
-                    # we use "charmap" encoding as an alternative;
-                    # text extraction may not be good.
-                    t = tt.decode("charmap", "surrogatepass")
+                    text = tt.decode(font.encoding, "surrogatepass")
+                except UnicodeDecodeError:
+                    # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
+                    text = tt.decode(font.encoding, "surrogateescape")
             else:  # Apply dict encoding
-                t = "".join(
-                    [font.encoding[x] if x in font.encoding else bytes((x,)).decode() for x in tt]
-                )
-    return (t, is_str_operands)
+                text = "".join(font.encoding.get(x, chr(x)) for x in tt)
+                raw_characters = "".join(chr(byte) for byte in tt)
+        for char in (raw_characters or text):
+            if char == font.space_char:
+                widths += font.space_width
+            else:
+                if char not in width_cache:
+                    width_cache[char] = font.get_text_width(char)
+                widths += width_cache[char]
+
+    width_cache.clear()
+    return (text, is_str_operands, widths)
 
 
 def get_display_str(
@@ -215,25 +240,25 @@ def get_display_str(
     font_size: float,
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
-) -> tuple[str, bool, float]:
+) -> tuple[str, bool, str]:
+    """
+    Add the characters of ``text_operands`` to ``text`` in display order.
+
+    Returns:
+        A tuple containing the current text run, its direction, and any text runs completed
+        because of a direction change. The completed runs precede the current run in display order.
+
+    """
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
-    widths: float = 0.0
-    width_cache: dict[str, float] = {}
+    completed_text: list[str] = []
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
 
     def clear_character_caches() -> None:
-        width_cache.clear()
         neutral_cache.clear()
         rtl_cache.clear()
 
     for raw_character in text_operands:
-        if raw_character == font.space_char:
-            widths += font.space_width
-        else:
-            if raw_character not in width_cache:
-                width_cache[raw_character] = font.get_text_width(raw_character)
-            widths += width_cache[raw_character]
         x = font.character_map.get(raw_character, raw_character)
         # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
@@ -252,6 +277,7 @@ def get_display_str(
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                             clear_character_caches()
+                        completed_text.append(text)
                         text = ""
                     text = x + text
                 else:
@@ -261,9 +287,10 @@ def get_display_str(
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                             clear_character_caches()
+                        completed_text.append(text)
                         text = ""
                     text = text + x
         else:
             # Treat a sequence of bytes as a neutral character.
             text = x + text if rtl_dir else text + x
-    return text, rtl_dir, widths
+    return text, rtl_dir, "".join(completed_text)
