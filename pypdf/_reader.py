@@ -299,11 +299,11 @@ class PdfReader(PdfDocCommon):
             /ID array; None if the entry does not exist
 
         """
-        id = self.trailer.get(TK.ID, None)
-        if is_null_or_none(id):
+        file_identifiers = self.trailer.get(TK.ID, None)
+        if is_null_or_none(file_identifiers):
             return None
-        assert id is not None, "mypy"
-        return cast(ArrayObject, id.get_object())
+        assert file_identifiers is not None, "mypy"
+        return cast(ArrayObject, file_identifiers.get_object())
 
     @property
     def pdf_header(self) -> str:
@@ -746,17 +746,17 @@ class PdfReader(PdfDocCommon):
                 xref_k = sorted(
                     xref_entry.keys()
                 )  # ensure ascending to prevent damage
-                for id in xref_k:
-                    stream.seek(xref_entry[id], 0)
+                for xref_id in xref_k:
+                    stream.seek(xref_entry[xref_id], 0)
                     try:
                         pid, _pgen = self.read_object_header(stream)
                     except ValueError:
                         self._rebuild_xref_table(stream)
                         break
-                    if pid == id - self.xref_index:
+                    if pid == xref_id - self.xref_index:
                         # fixing index item per item is required for revised PDF.
-                        self.xref[gen][pid] = self.xref[gen][id]
-                        del self.xref[gen][id]
+                        self.xref[gen][pid] = self.xref[gen][xref_id]
+                        del self.xref[gen][xref_id]
                     # if not, then either it's just plain wrong, or the
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
@@ -768,19 +768,19 @@ class PdfReader(PdfDocCommon):
                 if gen == 65535:
                     continue
                 ids = list(xref_entry.keys())
-                for id in ids:
-                    stream.seek(xref_entry[id], 0)
+                for xref_id in ids:
+                    stream.seek(xref_entry[xref_id], 0)
                     try:
                         self.read_object_header(stream)
                     except ValueError:
                         logger_warning(
                             "Ignoring wrong pointing object %(id)d %(gen)d (offset %(offset)d)",
                             source=__name__,
-                            id=id,
+                            id=xref_id,
                             gen=gen,
-                            offset=xref_entry[id],
+                            offset=xref_entry[xref_id],
                         )
-                        del xref_entry[id]  # we can delete the id, we are parsing ids
+                        del xref_entry[xref_id]  # we can delete the id, we are parsing ids
             stream.seek(loc, 0)  # return to where it was
 
     def _basic_validation(self, stream: StreamType) -> None:
