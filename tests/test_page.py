@@ -1687,6 +1687,24 @@ def test_get_rectangle__value_is_not_an_array(value, expected):
         _ = PdfReader(stream).pages[0].mediabox
 
 
+def test_get_rectangle__indirect_box_on_a_writer_page():
+    """An indirect page box on a writer page raised an AttributeError, as the page has no pdf."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=100, height=200)
+    page[NameObject("/MediaBox")] = writer._add_object(RectangleObject([0, 0, 100, 200]))
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(stream))
+    page = writer.pages[0]
+    assert page.mediabox == RectangleObject([0, 0, 100, 200])
+
+    page.scale_by(0.5)
+    assert page.mediabox == RectangleObject([0, 0, 50, 100])
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
