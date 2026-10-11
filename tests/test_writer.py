@@ -877,17 +877,57 @@ def test_add_named_destination(pdf_file_path):
         pytest.param([0, 100, 200, 500], 500, id="offset-origin"),
     ],
 )
-def test_add_named_destination__fit_h_uses_the_page_top(media_box, expected_top):
+@pytest.mark.parametrize("kwargs", [{}, {"fit": None}])
+def test_add_named_destination__fit_h_uses_the_page_top(media_box, expected_top, kwargs):
     """The /FitH top must be the page's own top edge, whatever its size."""
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=400)
     writer.pages[0][NameObject("/MediaBox")] = RectangleObject(media_box)
 
-    writer.add_named_destination("Target", 0)
+    writer.add_named_destination("Target", 0, **kwargs)
 
     destination = writer.get_named_dest_root()[1].get_object()["/D"]
     assert destination[1] == "/FitH"
     assert destination[2] == expected_top
+
+
+@pytest.mark.parametrize(
+    ("fit", "expected"),
+    [
+        (Fit.fit(), ["/Fit"]),
+        (Fit.xyz(left=10, top=20, zoom=1.5), ["/XYZ", 10, 20, 1.5]),
+        (Fit.xyz(), ["/XYZ", NullObject(), NullObject(), NullObject()]),
+        (Fit.xyz(left=0, top=None, zoom=0), ["/XYZ", 0, NullObject(), 0]),
+        (Fit.fit_horizontally(top=25), ["/FitH", 25]),
+        (Fit.fit_horizontally(), ["/FitH", NullObject()]),
+        (Fit.fit_vertically(left=30), ["/FitV", 30]),
+        (Fit.fit_vertically(), ["/FitV", NullObject()]),
+        (Fit.fit_rectangle(left=10, bottom=20, right=100, top=200), ["/FitR", 10, 20, 100, 200]),
+        (Fit.fit_box(), ["/FitB"]),
+        (Fit.fit_box_horizontally(top=40), ["/FitBH", 40]),
+        (Fit.fit_box_horizontally(), ["/FitBH", NullObject()]),
+        (Fit.fit_box_vertically(left=50), ["/FitBV", 50]),
+        (Fit.fit_box_vertically(), ["/FitBV", NullObject()]),
+    ],
+)
+def test_add_named_destination_with_fit(fit, expected):
+    """Custom fit modes and arguments survive a round trip (issue #3522)."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=400)
+    writer.add_blank_page(width=300, height=500)
+
+    destination_ref = writer.add_named_destination("Target", 1, fit=fit)
+    action = destination_ref.get_object()
+    assert action["/S"] == "/GoTo"
+    assert action["/D"][0] == writer.pages[1].indirect_reference
+    assert action["/D"][1:] == expected
+
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+    destination = reader.named_destinations["Target"]
+    assert reader.get_destination_page_number(destination) == 1
+    assert destination.dest_array[1:] == expected
 
 
 def test_append_with_direct_dests_dictionary():
