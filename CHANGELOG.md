@@ -1,5 +1,37 @@
 # CHANGELOG
 
+## Version 6.20.0, 2026-10-09
+
+### Security (SEC)
+- Limit work per stream (filter count, accumulated decoding work) (#4173)
+
+### New Features (ENH)
+- Add support for BrotliDecode filter (PDF 2.0) (#4168)
+
+### Performance Improvements (PI)
+- Parse an embedded CFF font program once per stream (#4164)
+- Parse numbers, indirect references, names and nulls faster (#4148)
+- Do not inherit PdfObject from a Protocol (#4149)
+- Speed up cloning direct objects (#4152)
+
+### Bug Fixes (BUG)
+- Report the correct page number for identical pages (#4154)
+- Decrypt the XMP metadata stream unless /EncryptMetadata is false (#4151)
+
+### Robustness (ROB)
+- Accept an %%EOF marker that is not at the start of a line (#4136)
+- Font / _cmapy.py: More robust guards around fontTools (#4157)
+- Flatten the page tree iteratively (#4107)
+- Ignore invalid character codes for TrueType and Type1 font widths (#4117)
+- Restrict values to allowed range in CCITTFaxDecode (#4115)
+- Drop a /Kids entry resolving to null instead of raising a cycle error (#4108)
+
+### Developer Experience (DEV)
+- Declare official support for Python 3.15
+- Declare protocol data members on PdfReader and PdfWriter (#4106)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.19.0...6.20.0)
+
 ## Version 6.19.0, 2026-09-16
 
 ### Security (SEC)

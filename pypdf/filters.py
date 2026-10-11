@@ -932,12 +932,18 @@ def decode_stream_data(stream: StreamObject) -> bytes:
         NotImplementedError: If an unsupported filter type is encountered.
 
     """
+    configuration = get_configuration()
     filters = stream.get(StreamAttributes.FILTER, ())
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
     if not isinstance(filters, ArrayObject):
         # We have a single filter instance
         filters = (filters,)
+    if (filter_count := len(filters)) > configuration.stream_filters_maximum_length:
+        raise LimitReachedError(
+            f"Maximum filter count {configuration.stream_filters_maximum_length} exceeded: {filter_count}"
+        )
+
     decode_parms = stream.get(StreamAttributes.DECODE_PARMS, (DictionaryObject(),) * len(filters))
     if not isinstance(decode_parms, (list, tuple)):
         decode_parms = (decode_parms,)
@@ -945,7 +951,22 @@ def decode_stream_data(stream: StreamObject) -> bytes:
     # If there is no data to decode, we should not try to decode it.
     if not data:
         return data
+
+    accumulated_decoding_work = 0
+    decoding_work_maximum_length = configuration.stream_decoding_work_maximum_length
+
+    def _check_decoding_work(amount: int) -> None:
+        nonlocal accumulated_decoding_work
+        accumulated_decoding_work += amount
+        if accumulated_decoding_work > decoding_work_maximum_length:
+            raise LimitReachedError(
+                "Stream decoding exceeded the maximum accumulated "
+                f"decoding work of {decoding_work_maximum_length} bytes."
+            )
+
     for filter_name, params in zip(filters, decode_parms):
+        _check_decoding_work(amount=len(data))
+
         if isinstance(params, NullObject):
             # The decoders are typed for a DictionaryObject; a plain {} is not
             # one, so a null /DecodeParms entry would hand them the wrong type.
@@ -985,4 +1006,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
                 )
         else:
             raise NotImplementedError(f"Unsupported filter {filter_name}")
+
+        _check_decoding_work(amount=len(data))
+
     return data
