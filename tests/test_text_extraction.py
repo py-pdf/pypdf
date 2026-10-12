@@ -634,6 +634,12 @@ def test_tj_operator_without_a_string_is_skipped() -> None:
     assert page.extract_text(extraction_mode="layout") == "HelloWorld"
 
 
+def test_layout_mode_text_with_zero_font_size() -> None:
+    """Text drawn with a font size of 0 is extracted in layout mode instead of dividing by a zero width."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 0 Tf (Hello) Tj ET")).pages[0]
+    assert page.extract_text(extraction_mode="layout") == "Hello"
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
