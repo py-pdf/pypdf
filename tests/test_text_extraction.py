@@ -634,6 +634,12 @@ def test_tj_operator_without_a_string_is_skipped() -> None:
     assert page.extract_text(extraction_mode="layout") == "HelloWorld"
 
 
+def test_layout_mode_text_with_zero_font_size() -> None:
+    """Text drawn with a font size of 0 is extracted in layout mode instead of dividing by a zero width."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 0 Tf (Hello) Tj ET")).pages[0]
+    assert page.extract_text(extraction_mode="layout") == "Hello"
+
+
 @pytest.mark.parametrize("operator", [b"/X 5 Td", b"/X TL", b"/X Tz", b"/X Tw"])
 def test_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
     """A text operator whose operand is not a number is treated as having none, and the text is kept."""

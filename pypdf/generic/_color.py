@@ -9,13 +9,14 @@ class Color:
     A factory class to generate one of class DeviceGray, DeviceRGB or DeviceCMYK. Call with
     Color.from_normalized_values() on a tuple of length 1 for grayscale, 3 for RGB, or 4 for CMYK.
     """
-    color_operator: str = field(init=False)
+    color_operator: ClassVar[str] = field(init=False)
     _ordered_fields: ClassVar[tuple[str, ...]]
 
     @classmethod
     def from_normalized_values(
         cls,
-        color: Union[Sequence[float], None]
+        color: Union[Sequence[float], None],
+        operator: Union[str, None] = None,
     ) -> Union["Color", None]:
         """
         Method to instantiate a color class. Can be called with value of None for cases where an appearance
@@ -26,6 +27,9 @@ class Color:
         Args:
             color: A sequence of 1 (for DeviceGray), 3 (for DeviceRGB) or 4 (for DeviceCMYK) float values
                 in the range of 0.0 to 1.0 (representing normalized color channel values), or None to return None.
+            operator: The non-stroking color operator the values are the operands of, that is, "g", "rg" or "k"
+                (Table 73, "Colour operators" of the PDF specification 2.0), as in a default appearance string.
+                If given, None is returned unless it is the operator of the color class the values result in.
         """
         color_types: dict[int, type[Color]] = {
             1: DeviceGray,
@@ -36,6 +40,7 @@ class Color:
         if (
             color is not None
             and (color_length := len(color)) in color_types
+            and (operator is None or color_types[color_length].color_operator == operator)
             and all(isinstance(val, (int, float)) and 0.0 <= val <= 1.0 for val in color)
         ):
             # Create instance of the appropriate subclass

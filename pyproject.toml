@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
@@ -158,7 +159,6 @@ ignore = [
     "ARG001",  # Unused function argument
     "ARG002",  # Unused method argument
     "ARG004",  # Unused static method argument
-    "B904",    # Within an `except` clause, raise exceptions with
     "B905",    # `zip()` without an explicit `strict=` parameter
     "BLE001",  # Do not catch blind exception: `Exception`
     "COM812",  # Yes, they make the diff smaller
@@ -210,8 +210,8 @@ ignore = [
     "TRY004",  # Prefer `TypeError` exception for invalid type
     "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
-    "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
-    "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
+    "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.9+
+    "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.10+
 ]
 
 [tool.ruff.lint.mccabe]
