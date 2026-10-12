@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791804353402,
+  "lastUpdate": 1791804373267,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -116165,6 +116165,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005453583957313133",
             "extra": "mean: 467.2123257999999 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yaourt.ongit@gmail.com",
+            "name": "yaourtv",
+            "username": "yaourtv"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b5557f06cc4675245a206a1a66cd866e2f453261",
+          "message": "BUG: Only read the colour operator from a text field's default appearance (#4158)\n\n* BUG: Only read the colour operator from a text field's default appearance\n\n* fix: mypy check\n\n* ROB: Parse the default appearance with ContentStream\n\nRead the font and colour from the last complete Tf and g/rg/k\noperators instead of from token positions. A /DA without a usable\nTf falls back to auto-sized /Helv, and operations parsed before a\nsyntax error are kept.\n\n* MAINT: Check the color operator in Color.from_normalized_values\n\n* TST: Remove redundant comment in default appearance tests\n\n* MAINT: Address review of the default appearance parser",
+          "timestamp": "2026-10-12T13:23:37+02:00",
+          "tree_id": "40b786bb28962ed846cd1198293501ec6f9a6e83",
+          "url": "https://github.com/py-pdf/pypdf/commit/b5557f06cc4675245a206a1a66cd866e2f453261"
+        },
+        "date": 1791804363718,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.048201530807154,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008604573835604262",
+            "extra": "mean: 247.0232750000008 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.886859315495137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013487339850720316",
+            "extra": "mean: 38.62963783333224 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3527222285790494,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03706874298766433",
+            "extra": "mean: 2.8350920893999954 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.16999467158113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001109664977304199",
+            "extra": "mean: 49.57859515000109 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09327501504219168,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04434124564475883",
+            "extra": "mean: 10.720984601799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.114137467559738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013874971072408474",
+            "extra": "mean: 473.00613859999316 msec\nrounds: 5"
           }
         ]
       }
