@@ -211,8 +211,8 @@ ignore = [
     "TRY004",  # Prefer `TypeError` exception for invalid type
     "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
-    "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
-    "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
+    "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.9+
+    "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.10+
 ]
 
 [tool.ruff.lint.mccabe]
