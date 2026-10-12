@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791811110492,
+  "lastUpdate": 1791820623496,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -116561,6 +116561,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002071597326235664",
             "extra": "mean: 353.8688047999983 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c9c35b4471c2eb5fe078094f6c816e69d4ed25a0",
+          "message": "SEC: Prevent cyclic tree handling (#4188)\n\nThis affects the generic TreeObject.remove_child method as well as\nPdfWriter.find_outline_item. Some related changes have been done for\nreadability.\n\nPlease note that this changes the function signature of\n`find_outline_item` by adding a new parameter (which should not hurt)\nand fixing the existing types for the `outline_item` parameter.",
+          "timestamp": "2026-10-12T17:54:05+02:00",
+          "tree_id": "addec3a0bb1bdecdf819d12b5376dae825758ffe",
+          "url": "https://github.com/py-pdf/pypdf/commit/c9c35b4471c2eb5fe078094f6c816e69d4ed25a0"
+        },
+        "date": 1791820613820,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.019322683289287,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006202938972793716",
+            "extra": "mean: 331.20010840000305 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.4322247133147,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007357079052074326",
+            "extra": "mean: 44.578726041668425 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2432535336434981,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029808014052754857",
+            "extra": "mean: 4.110937197999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.92890793567509,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003596846004964857",
+            "extra": "mean: 55.775845555556224 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07681957294517619,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037041022804443734",
+            "extra": "mean: 13.017515740599986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5253917617213466,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035750641865435495",
+            "extra": "mean: 655.5692937999993 msec\nrounds: 5"
           }
         ]
       }
