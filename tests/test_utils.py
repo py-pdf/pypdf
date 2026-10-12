@@ -558,6 +558,16 @@ def test_format_iso8824_date_roundtrip():
     assert parsed == dt_negative
 
 
+@pytest.mark.parametrize("year", [1, 99, 999, 1000])
+@pytest.mark.parametrize("tzinfo", [None, timezone.utc])
+def test_format_iso8824_date_early_year_roundtrip(year, tzinfo):
+    """PDF dates retain four-digit years across supported Python versions."""
+    value = datetime(year, 1, 2, 3, 4, 5, tzinfo=tzinfo)
+    formatted = format_iso8824_date(value)
+    assert formatted.startswith(f"D:{year:04d}0102030405")
+    assert parse_iso8824_date(formatted) == value
+
+
 def test_is_sublist():
     # Basic checks:
     assert is_sublist([0, 1], [0, 1, 2]) is True

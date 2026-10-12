@@ -483,6 +483,21 @@ def test_embedded_file__modification_date_setter() -> None:
     assert embedded_file._ensure_params[NameObject("/ModDate")] == NullObject()
 
 
+@pytest.mark.parametrize("year", [1, 99, 999, 1000])
+def test_embedded_file__early_year_dates_roundtrip(year: int) -> None:
+    """Attachment date setters retain the year after PDF serialization."""
+    value = datetime.datetime(year, 1, 2, 3, 4, 5)
+    writer = PdfWriter()
+    attachment = writer.add_attachment("test.txt", b"content")
+    attachment.creation_date = value
+    attachment.modification_date = value
+    output = BytesIO()
+    writer.write(output)
+    restored = next(PdfReader(output).attachment_list)
+    assert restored.creation_date == value
+    assert restored.modification_date == value
+
+
 def test_embedded_file__checksum_setter() -> None:
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")

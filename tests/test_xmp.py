@@ -615,6 +615,26 @@ def test_xmp_information__set_xmp_date_fields():
     assert xmp.xmp_metadata_date is None
 
 
+@pytest.mark.parametrize("year", [1, 99, 999, 1000])
+def test_xmp_early_year_dates_roundtrip(year):
+    """Early-year XMP dates can be read back from a generated PDF."""
+    value = datetime(year, 1, 2, 3, 4, 5, 123000)
+    xmp = XmpInformation.create()
+    xmp.xmp_create_date = value
+    xmp.xmp_modify_date = value
+    xmp.xmp_metadata_date = value
+    xmp.dc_date = [value]
+    writer = PdfWriter()
+    writer.xmp_metadata = xmp
+    output = BytesIO()
+    writer.write(output)
+    metadata = PdfReader(output).xmp_metadata
+    assert metadata.xmp_create_date == value
+    assert metadata.xmp_modify_date == value
+    assert metadata.xmp_metadata_date == value
+    assert metadata.dc_date == [value]
+
+
 def test_xmp_information__set_xmp_creator_tool():
     """Test setting xmp:CreatorTool metadata."""
     xmp = XmpInformation.create()

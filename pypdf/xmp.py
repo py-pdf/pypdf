@@ -150,7 +150,7 @@ def _format_datetime_utc(value: datetime.datetime) -> str:
         value = value.astimezone(datetime.timezone.utc)
 
     value = value.replace(tzinfo=None)
-    return value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    return value.isoformat(timespec="microseconds") + "Z"
 
 
 def _generic_get(

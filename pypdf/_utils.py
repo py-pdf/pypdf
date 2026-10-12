@@ -122,7 +122,7 @@ def format_iso8824_date(dt: datetime) -> str:
     Returns:
         A date string in PDF format.
     """
-    date_str = dt.strftime("D:%Y%m%d%H%M%S")
+    date_str = f"D:{dt.year:04d}{dt:%m%d%H%M%S}"
     if dt.tzinfo is not None:
         offset = dt.utcoffset()
         assert offset is not None
