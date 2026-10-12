@@ -37,6 +37,7 @@ from pypdf.generic import (
     RectangleObject,
     StreamObject,
     TextStringObject,
+    TreeObject,
 )
 from pypdf.generic._font import Font
 from pypdf.generic._viewerpref import BOX_NAMES
@@ -3868,3 +3869,32 @@ def test_update_page_form_field_values__skips_unannotated_page_in_list(caplog):
         r for r in caplog.records
         if r.levelname == "WARNING"
     ]
+
+
+@pytest.mark.parametrize("name", ["/Next", "/First"])
+def test_find_outline_item__cyclic(name: str) -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    entry1 = DictionaryObject()
+    reference1 = writer._add_object(entry1)
+    entry2 = DictionaryObject({
+        NameObject(name): reference1
+    })
+    reference2 = writer._add_object(entry2)
+    entry3 = DictionaryObject({
+        NameObject(name): reference2
+    })
+    reference3 = writer._add_object(entry3)
+    entry1[NameObject(name)] = reference3
+
+    outlines = TreeObject(
+        DictionaryObject({
+            NameObject(name): reference3,
+            NameObject("/Last"): NullObject(),
+        })
+    )
+    writer.root_object[NameObject("/Outlines")] = writer._add_object(outlines)
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Detected cyclic outline hierarchy\.$"):
+        writer.find_outline_item("Dummy")
