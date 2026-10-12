@@ -1688,7 +1688,7 @@ def test_get_rectangle__value_is_not_an_array(value, expected):
 
 
 def test_get_rectangle__indirect_box_on_a_writer_page():
-    """An indirect page box on a writer page raised an AttributeError, as the page has no pdf."""
+    """An indirect page box on a writer page can be read and scaled."""
     writer = PdfWriter()
     page = writer.add_blank_page(width=100, height=200)
     page[NameObject("/MediaBox")] = writer._add_object(RectangleObject([0, 0, 100, 200]))
