@@ -346,6 +346,8 @@ class TextExtraction:
 
     def _handle_tj_operation(self, operands: list[Any]) -> float:
         """Handle Tj (Show text) operation - Table 5.5 page 406."""
+        if not operands or not isinstance(operands[0], (str, bytes)):
+            return 0.0
         self.text, self.rtl_dir, self._actual_str_size = self._handle_tj(
             self.text,
             operands,

@@ -63,6 +63,11 @@ class Configuration:
     The maximum allowed number of bytes to attempt the recovery with when using the ``/FlateDecode`` filter
     (zlib compression).
     """
+    brotli_maximum_output_length: int = 75_000_000
+    """
+    The maximum allowed number of uncompressed bytes during decompression when using the ``/BrotliDecode`` filter
+    (Brotli compression).
+    """
 
     flate_maximum_columns: int = 250_000
     """The maximum allowed number of columns when using the ``/FlateDecode`` filter."""
@@ -71,6 +76,11 @@ class Configuration:
 
     image_maximum_buffer_size: int = 75_000_000
     """The maximum allowed number of bytes to allocate for images."""
+
+    stream_filters_maximum_length: int = 16
+    """The maximum allowed number of filters per stream."""
+    stream_decoding_work_maximum_length: int = 300_000_000
+    """The maximum allowed accumulated decoding work in bytes per stream."""
 
     xmp_maximum_input_length: int = 5_000_000
     """The maximum allowed actual decompressed stream length in bytes for XMP data."""

@@ -299,11 +299,11 @@ class PdfReader(PdfDocCommon):
             /ID array; None if the entry does not exist
 
         """
-        id = self.trailer.get(TK.ID, None)
-        if is_null_or_none(id):
+        file_identifiers = self.trailer.get(TK.ID, None)
+        if is_null_or_none(file_identifiers):
             return None
-        assert id is not None, "mypy"
-        return cast(ArrayObject, id.get_object())
+        assert file_identifiers is not None, "mypy"
+        return cast(ArrayObject, file_identifiers.get_object())
 
     @property
     def pdf_header(self) -> str:
@@ -454,7 +454,7 @@ class PdfReader(PdfDocCommon):
                     if self.strict:  # pragma: no cover
                         raise PdfReadError(
                             f"Cannot read object stream: {exc}"
-                        )  # pragma: no cover
+                        ) from exc  # pragma: no cover
                     obj = NullObject()  # pragma: no cover
 
                 # Only cache if this stream is the authoritative source for the object.
@@ -662,19 +662,19 @@ class PdfReader(PdfDocCommon):
 
         try:
             return int(idnum), int(generation)
-        except (ValueError, OverflowError) as e:
+        except (ValueError, OverflowError) as exception:
             # Only raise a ValueError here as other types would break future processing.
             raise ValueError(
-                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {e}"
-            ) from e
+                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {exception}"
+            ) from exception
 
     def cache_get_indirect_object(
         self, generation: int, idnum: int
     ) -> Optional[PdfObject]:
         try:
             return self.resolved_objects.get((generation, idnum))
-        except RecursionError:
-            raise PdfReadError("Maximum recursion depth reached.")
+        except RecursionError as exception:  # pragma: no cover
+            raise PdfReadError("Maximum recursion depth reached.") from exception  # pragma: no cover
 
     def cache_indirect_object(
         self, generation: int, idnum: int, obj: Optional[PdfObject]
@@ -746,17 +746,17 @@ class PdfReader(PdfDocCommon):
                 xref_k = sorted(
                     xref_entry.keys()
                 )  # ensure ascending to prevent damage
-                for id in xref_k:
-                    stream.seek(xref_entry[id], 0)
+                for xref_id in xref_k:
+                    stream.seek(xref_entry[xref_id], 0)
                     try:
                         pid, _pgen = self.read_object_header(stream)
                     except ValueError:
                         self._rebuild_xref_table(stream)
                         break
-                    if pid == id - self.xref_index:
+                    if pid == xref_id - self.xref_index:
                         # fixing index item per item is required for revised PDF.
-                        self.xref[gen][pid] = self.xref[gen][id]
-                        del self.xref[gen][id]
+                        self.xref[gen][pid] = self.xref[gen][xref_id]
+                        del self.xref[gen][xref_id]
                     # if not, then either it's just plain wrong, or the
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
@@ -768,19 +768,19 @@ class PdfReader(PdfDocCommon):
                 if gen == 65535:
                     continue
                 ids = list(xref_entry.keys())
-                for id in ids:
-                    stream.seek(xref_entry[id], 0)
+                for xref_id in ids:
+                    stream.seek(xref_entry[xref_id], 0)
                     try:
                         self.read_object_header(stream)
                     except ValueError:
                         logger_warning(
                             "Ignoring wrong pointing object %(id)d %(gen)d (offset %(offset)d)",
                             source=__name__,
-                            id=id,
+                            id=xref_id,
                             gen=gen,
-                            offset=xref_entry[id],
+                            offset=xref_entry[xref_id],
                         )
-                        del xref_entry[id]  # we can delete the id, we are parsing ids
+                        del xref_entry[xref_id]  # we can delete the id, we are parsing ids
             stream.seek(loc, 0)  # return to where it was
 
     def _basic_validation(self, stream: StreamType) -> None:
@@ -788,8 +788,8 @@ class PdfReader(PdfDocCommon):
         stream.seek(0, os.SEEK_SET)
         try:
             header_byte = stream.read(5)
-        except UnicodeDecodeError:
-            raise UnsupportedOperation("cannot read header")
+        except UnicodeDecodeError as exception:
+            raise UnsupportedOperation("cannot read header") from exception
         if header_byte == b"":
             raise EmptyFileError("Cannot read an empty file")
         if header_byte != b"%PDF-":
@@ -808,11 +808,32 @@ class PdfReader(PdfDocCommon):
         According to the specs, the %%EOF marker should be at the very end of
         the file. Hence for standard-compliant PDF documents this function will
         read only the last part (DEFAULT_BUFFER_SIZE).
+
+        Producers that omit the line break before the marker (``startxref
+        256%%EOF`` or ``256%%EOF``) are accepted as well (#4127).
         """
         header_size = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         first = True
-        while not line.startswith(b"%%EOF"):
+        # Bytes of `line` end at this position. An inline %%EOF therefore
+        # begins at end_position - len(line) + marker_index.
+        end_position = stream.tell()
+        while True:
+            marker_index = line.find(b"%%EOF")
+            if marker_index == 0:
+                break
+            if marker_index > 0 and first:
+                # Only the trailing line is allowed to carry an inline marker.
+                # Earlier lines keep the historical "starts with %%EOF" rule so
+                # a %%EOF buried in stream data is not treated as the trailer.
+                # Leading whitespace in front of the marker is ignored.
+                if line[:marker_index].lstrip(WHITESPACES_AS_BYTES):
+                    logger_warning(
+                        "EOF marker not at start of line",
+                        source=__name__,
+                    )
+                    stream.seek(end_position - len(line) + marker_index)
+                break
             if line != b"" and first:
                 if any(
                     line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
@@ -832,6 +853,7 @@ class PdfReader(PdfDocCommon):
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
                 logger_warning("EOF marker not found", source=__name__)
+            end_position = stream.tell()
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
@@ -864,10 +886,10 @@ class PdfReader(PdfDocCommon):
             )
         try:
             startxref = int(line)
-        except ValueError:
+        except ValueError as exception:  # pragma: no cover
             # 'startxref' may be on the same line as the location
             if not line.startswith(b"startxref"):
-                raise PdfReadError("startxref not found")
+                raise PdfReadError("startxref not found") from exception
             startxref = int(line[9:].strip())
             logger_warning("startxref on same line as offset", source=__name__)
         else:
@@ -992,6 +1014,8 @@ class PdfReader(PdfDocCommon):
                 while line[0] in b"\x0D\x0A":
                     stream.seek(-20 + 1, 1)
                     line = stream.read(20)
+                    if len(line) != 20:
+                        raise PdfReadError("Unexpected EOF in Xref table.")
 
                 # On the other hand, some malformed PDF files
                 # use a single character EOL without a preceding
@@ -1112,15 +1136,15 @@ class PdfReader(PdfDocCommon):
             elif x.isdigit():
                 try:
                     xrefstream = self._read_pdf15_xref_stream(stream)
-                except Exception as e:
+                except Exception as exception:  # pragma: no cover
                     if TK.ROOT in self.trailer:
                         logger_warning(
                             "Previous trailer cannot be read: %(args)s",
                             source=__name__,
-                            args=e.args,
+                            args=exception.args,
                         )
                         break
-                    raise PdfReadError(f"Trailer cannot be read: {e!s}")
+                    raise PdfReadError(f"Trailer cannot be read: {exception!s}") from exception  # pragma: no cover
                 self._process_xref_stream(xrefstream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
@@ -1208,8 +1232,8 @@ class PdfReader(PdfDocCommon):
             try:
                 self._rebuild_xref_table(stream)
                 return None
-            except Exception:
-                raise PdfReadError("Cannot rebuild xref")
+            except Exception as exception:  # pragma: no cover
+                raise PdfReadError("Cannot rebuild xref") from exception  # pragma: no cover
         raise PdfReadError("Could not find xref table at specified location")
 
     def _sanitize_pdf15_xref_stream_index_pairs(
