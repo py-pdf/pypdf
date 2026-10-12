@@ -296,10 +296,12 @@ def skip_over_comments(stream: StreamType, *, limit: Optional[int] = None) -> No
 
     Args:
         stream: The stream to read from.
-        limit: The maximum number of comments to skip, or None for no limit.
-            Exactly this many comments are allowed. If another comment follows,
-            raise LimitReachedError before reading its body, leaving the stream
-            positioned at its ``%``.
+        limit: The maximum number of comments to skip, or ``None`` for no limit.
+
+    Raises:
+        LimitReachedError: If another comment follows after ``limit`` comments;
+            the stream remains at its ``%`` without reading its body.
+        PdfStreamError: If a comment ends before a line ending.
 
     """
     tok = stream.read(1)

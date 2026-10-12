@@ -42,6 +42,7 @@ from pypdf.generic import (
     read_object,
     read_string_from_stream,
 )
+from pypdf.generic._data_structures import _MAX_LEADING_COMMENTS
 from pypdf.generic._image_inline import (
     extract_inline__ascii85_decode,
     extract_inline__ascii_hex_decode,
@@ -389,30 +390,30 @@ def test_read_object_comment():
     assert out == 1
 
 
-@pytest.mark.parametrize("count", [0, 1, 999, 1000])
+@pytest.mark.parametrize("count", [0, 1, _MAX_LEADING_COMMENTS - 1, _MAX_LEADING_COMMENTS])
 @pytest.mark.parametrize("newline", [b"\n", b"\r", b"\r\n"])
-def test_read_object_leading_comments(count, newline):
+def test_read_object__leading_comments(count, newline):
     stream = BytesIO((b"% comment" + newline + b" \t") * count + b"42 next")
     assert read_object(stream, None) == 42
     assert stream.read() == b" next"
 
 
-@pytest.mark.parametrize("count", [1001, 2000])
-def test_read_object_leading_comments_limit(count):
+@pytest.mark.parametrize("count", [_MAX_LEADING_COMMENTS + 1, 2 * _MAX_LEADING_COMMENTS])
+def test_read_object__leading_comments_limit(count):
     stream = BytesIO(b"% comment\n" * count + b"42 ")
     with pytest.raises(
         expected_exception=LimitReachedError,
-        match=r"^Maximum number of leading comments reached: 1000\.$",
+        match=rf"^Maximum number of leading comments reached: {_MAX_LEADING_COMMENTS}\.$",
     ):
         read_object(stream, None)
 
 
-def test_read_object_leading_comments_limit_before_scanning():
-    prefix = b"% comment\n" * 1000
+def test_read_object__leading_comments_limit_before_scanning():
+    prefix = b"% comment\n" * _MAX_LEADING_COMMENTS
     stream = BytesIO(prefix + b"%" + b"x" * 100_000)
     with pytest.raises(
         expected_exception=LimitReachedError,
-        match=r"^Maximum number of leading comments reached: 1000\.$",
+        match=rf"^Maximum number of leading comments reached: {_MAX_LEADING_COMMENTS}\.$",
     ):
         read_object(stream, None)
     assert stream.tell() == len(prefix)
@@ -428,15 +429,15 @@ def test_read_object_leading_comments_limit_before_scanning():
         (b"[42]", ArrayObject),
     ],
 )
-def test_read_object_leading_comments_dispatch(token, expected_type):
-    stream = BytesIO(b"% comment\n" * 1000 + token + b" tail")
+def test_read_object__leading_comments_dispatch(token, expected_type):
+    stream = BytesIO(b"% comment\n" * _MAX_LEADING_COMMENTS + token + b" tail")
     assert isinstance(read_object(stream, ReaderDummy()), expected_type)
     assert stream.read() == b" tail"
 
 
 @pytest.mark.parametrize("strict", [False, True])
-def test_read_object_leading_comments_limit_in_dictionary(strict):
-    stream = BytesIO(b"<< /Value " + b"% comment\n" * 1001 + b"42 >>")
+def test_read_object__leading_comments_limit_in_dictionary(strict):
+    stream = BytesIO(b"<< /Value " + b"% comment\n" * (_MAX_LEADING_COMMENTS + 1) + b"42 >>")
     pdf = ReaderDummy()
     pdf.strict = strict
     with pytest.raises(expected_exception=PdfReadError, match="LimitReachedError"):
@@ -444,25 +445,25 @@ def test_read_object_leading_comments_limit_in_dictionary(strict):
 
 
 @pytest.mark.parametrize(("prefix", "suffix"), [(b"[", b"]"), (b"<< /Value ", b">>")])
-def test_read_object_leading_comments_in_container(prefix, suffix):
-    result = read_object(BytesIO(prefix + b"% comment\n" * 1000 + b"42 " + suffix), None)
+def test_read_object__leading_comments_in_container(prefix, suffix):
+    result = read_object(BytesIO(prefix + b"% comment\n" * _MAX_LEADING_COMMENTS + b"42 " + suffix), None)
     assert (result[0] if isinstance(result, ArrayObject) else result["/Value"]) == 42
 
 
 @pytest.mark.parametrize("token", [b"(A)", b"<41>"])
-def test_read_object_leading_comments_forced_encoding(token):
-    result = read_object(BytesIO(b"% comment\n" * 1000 + token), None, {65: "Z"})
+def test_read_object__leading_comments_forced_encoding(token):
+    result = read_object(BytesIO(b"% comment\n" * _MAX_LEADING_COMMENTS + token), None, {65: "Z"})
     assert result == "Z"
 
 
 @pytest.mark.parametrize("data", [b"% comment", b"% first\n% comment"])
-def test_read_object_leading_comments_truncated(data):
+def test_read_object__leading_comments_truncated(data):
     with pytest.raises(expected_exception=PdfStreamError, match=r"^File ended unexpectedly\.$"):
         read_object(BytesIO(data), None)
 
 
 @pytest.mark.parametrize("data", [b"% comment\n", b"% comment\n \t"])
-def test_read_object_leading_comments_without_object(data):
+def test_read_object__leading_comments_without_object(data):
     with pytest.raises(expected_exception=PdfReadError, match="Invalid Elementary Object"):
         read_object(BytesIO(data), None)
 
