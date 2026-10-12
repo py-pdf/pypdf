@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791806323880,
+  "lastUpdate": 1791806897510,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -146527,6 +146527,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03866567312557743",
             "extra": "mean: 852.0685015999959 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107306613+prateek-dagar@users.noreply.github.com",
+            "name": "Prateek Dagar",
+            "username": "prateek-dagar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b3f28fa8e1184aa319f62339dfeaaf7c3422eb0c",
+          "message": "MAINT: Enforce B904 (#4140)\n\n* MAINT: Enforce B904\n\n* Refactor KeyError blocks and address unused exception assignment warnings\n\n* Fix negative startxref parsing and test invalid unicode streams\n\n* Add test for _translate_value_inline_image ColorSpace resolution failure\n\n* MAINT: fix logger format, test IDs, match anchors, spacing",
+          "timestamp": "2026-10-12T14:05:26+02:00",
+          "tree_id": "64736784c22bf847e9f8cc6cc18454baa0160c18",
+          "url": "https://github.com/py-pdf/pypdf/commit/b3f28fa8e1184aa319f62339dfeaaf7c3422eb0c"
+        },
+        "date": 1791806888970,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.472531066906612,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017297843260096854",
+            "extra": "mean: 54.1344332499996 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.5453335075349,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008595048346338086",
+            "extra": "mean: 28.13308812500015 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1982571416976449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03162013484113359",
+            "extra": "mean: 834.5454119999971 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5441587470568954,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025767655505449006",
+            "extra": "mean: 1.8376990270000078 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.46195575087306723,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00951650965275578",
+            "extra": "mean: 2.164709494599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5384202955435267,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03732500646134067",
+            "extra": "mean: 650.0174256000037 msec\nrounds: 5"
           }
         ]
       }
