@@ -428,7 +428,8 @@ def fixed_width_page(
         last_disp = 0.0
         for bt_op in line_data:
             tx = bt_op["tx"]
-            offset = int(tx // char_width)
+            # Text drawn with no width (a font size or horizontal scaling of 0) has no column to align to.
+            offset = int(tx // char_width) if char_width else current_len
             needed_spaces = offset - current_len
             if needed_spaces > 0 and ceil(last_disp) < int(tx):
                 if needed_spaces > WHITESPACE_LIMIT:

@@ -132,14 +132,14 @@ class CryptAES(CryptBase):
             padded_data = decryptor.update(data) + decryptor.finalize()
         except ValueError as exception:
             # Only raised in strict mode. Non-strict mode fixes padding.
-            raise PdfStreamError(exception)
+            raise PdfStreamError(exception) from exception
 
         unpadder = PKCS7(128).unpadder()
         try:
             return unpadder.update(padded_data) + unpadder.finalize()
         except ValueError as exception:
             if strict:
-                raise PdfStreamError(exception)
+                raise PdfStreamError(exception) from exception
             logger_warning("Ignoring padding error: %(exception)s", source=__name__, exception=exception)
             return padded_data[: -padded_data[-1]]
 
