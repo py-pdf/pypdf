@@ -75,13 +75,13 @@ class CryptAES(CryptBase):
             padded_data = aes.decrypt(data)
         except ValueError as exception:
             # Only raised in strict mode. Non-strict mode fixes padding.
-            raise PdfStreamError(exception)
+            raise PdfStreamError(exception) from exception
 
         try:
             return unpad(padded_data, 16)
         except ValueError as exception:
             if strict:
-                raise PdfStreamError(exception)
+                raise PdfStreamError(exception) from exception
             logger_warning("Ignoring padding error: %(exception)s", source=__name__, exception=exception)
             return padded_data[: -padded_data[-1]]
 

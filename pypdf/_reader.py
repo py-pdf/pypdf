@@ -454,7 +454,7 @@ class PdfReader(PdfDocCommon):
                     if self.strict:  # pragma: no cover
                         raise PdfReadError(
                             f"Cannot read object stream: {exc}"
-                        )  # pragma: no cover
+                        ) from exc  # pragma: no cover
                     obj = NullObject()  # pragma: no cover
 
                 # Only cache if this stream is the authoritative source for the object.
@@ -662,19 +662,19 @@ class PdfReader(PdfDocCommon):
 
         try:
             return int(idnum), int(generation)
-        except (ValueError, OverflowError) as e:
+        except (ValueError, OverflowError) as exception:
             # Only raise a ValueError here as other types would break future processing.
             raise ValueError(
-                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {e}"
-            ) from e
+                f"Invalid indirect object reference ({idnum!r} {generation!r} R): {exception}"
+            ) from exception
 
     def cache_get_indirect_object(
         self, generation: int, idnum: int
     ) -> Optional[PdfObject]:
         try:
             return self.resolved_objects.get((generation, idnum))
-        except RecursionError:
-            raise PdfReadError("Maximum recursion depth reached.")
+        except RecursionError as exception:  # pragma: no cover
+            raise PdfReadError("Maximum recursion depth reached.") from exception  # pragma: no cover
 
     def cache_indirect_object(
         self, generation: int, idnum: int, obj: Optional[PdfObject]
@@ -788,8 +788,8 @@ class PdfReader(PdfDocCommon):
         stream.seek(0, os.SEEK_SET)
         try:
             header_byte = stream.read(5)
-        except UnicodeDecodeError:
-            raise UnsupportedOperation("cannot read header")
+        except UnicodeDecodeError as exception:
+            raise UnsupportedOperation("cannot read header") from exception
         if header_byte == b"":
             raise EmptyFileError("Cannot read an empty file")
         if header_byte != b"%PDF-":
@@ -886,10 +886,10 @@ class PdfReader(PdfDocCommon):
             )
         try:
             startxref = int(line)
-        except ValueError:
+        except ValueError as exception:  # pragma: no cover
             # 'startxref' may be on the same line as the location
             if not line.startswith(b"startxref"):
-                raise PdfReadError("startxref not found")
+                raise PdfReadError("startxref not found") from exception
             startxref = int(line[9:].strip())
             logger_warning("startxref on same line as offset", source=__name__)
         else:
@@ -1136,15 +1136,15 @@ class PdfReader(PdfDocCommon):
             elif x.isdigit():
                 try:
                     xrefstream = self._read_pdf15_xref_stream(stream)
-                except Exception as e:
+                except Exception as exception:  # pragma: no cover
                     if TK.ROOT in self.trailer:
                         logger_warning(
                             "Previous trailer cannot be read: %(args)s",
                             source=__name__,
-                            args=e.args,
+                            args=exception.args,
                         )
                         break
-                    raise PdfReadError(f"Trailer cannot be read: {e!s}")
+                    raise PdfReadError(f"Trailer cannot be read: {exception!s}") from exception  # pragma: no cover
                 self._process_xref_stream(xrefstream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
@@ -1232,8 +1232,8 @@ class PdfReader(PdfDocCommon):
             try:
                 self._rebuild_xref_table(stream)
                 return None
-            except Exception:
-                raise PdfReadError("Cannot rebuild xref")
+            except Exception as exception:  # pragma: no cover
+                raise PdfReadError("Cannot rebuild xref") from exception  # pragma: no cover
         raise PdfReadError("Could not find xref table at specified location")
 
     def _sanitize_pdf15_xref_stream_index_pairs(

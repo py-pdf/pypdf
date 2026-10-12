@@ -599,8 +599,12 @@ class TextStreamAppearance(BaseStreamAppearance):
                     font = font.from_truetype_font_file(BytesIO(font.font_descriptor.font_file.get_data()))
                     font_name = "/PYPDF1"  # This means we most probably do not clash with an existing font name
                     encodable = font.can_encode(text)
-                except (ImportError, PdfReadError) as e:
-                    logger_warning("Unable to use embedded font for encoding: %(e)s", source=__name__, e=e)
+                except (ImportError, PdfReadError) as exception:
+                    logger_warning(
+                        "Unable to use embedded font for encoding: %(exception)s",
+                        source=__name__,
+                        exception=exception,
+                    )
 
             # If it's one of the unembedded 14 Adobe Core Fonts, we can test other supported encodings
             elif font.sub_type == "Type1" and font.name in CORE_FONT_METRICS:
