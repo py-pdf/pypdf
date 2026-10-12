@@ -1586,7 +1586,7 @@ class PdfReader(PdfDocCommon):
         interim = DictionaryObject()
         interim[NameObject("/T")] = TextStringObject(name)
         interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
-        # The resolved-object cache does not include unread objects.
+        # Allocate the new object_id beyond the source-file range and all cached object IDs.
         object_id = max(
             cast(int, self.trailer.get("/Size", 0)) - 1,
             max((i for entries in self.xref.values() for i in entries), default=0),
