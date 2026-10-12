@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791805865460,
+  "lastUpdate": 1791805909358,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -116231,6 +116231,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0013874971072408474",
             "extra": "mean: 473.00613859999316 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e49724119f53c039fdc85832565c9c762a329460",
+          "message": "DEV: Fix for latest mypy\n\npypdf/generic/_color.py:43: error: Cannot access instance-only attribute \"color_operator\" on class object  [misc]",
+          "timestamp": "2026-10-12T13:48:43+02:00",
+          "tree_id": "f773af80357ccf4edf637d7c2ff81a69a64ded96",
+          "url": "https://github.com/py-pdf/pypdf/commit/e49724119f53c039fdc85832565c9c762a329460"
+        },
+        "date": 1791805900186,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.058041903897433,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007947890626501062",
+            "extra": "mean: 246.42426660000183 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.161411581652466,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052163580936577934",
+            "extra": "mean: 47.2558267741944 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.34705186583687203,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04716173899994619",
+            "extra": "mean: 2.8814136975999984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.198014453567186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001089316530021007",
+            "extra": "mean: 45.0490741904757 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0922124501173694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05960237435457943",
+            "extra": "mean: 10.844522607600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1250745171724215,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019961411781342104",
+            "extra": "mean: 470.5717337999886 msec\nrounds: 5"
           }
         ]
       }
