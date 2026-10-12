@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## Version 6.20.1, 2026-10-12
+
+### Security (SEC)
+- Prevent cyclic tree handling (#4188)
+
+### Bug Fixes (BUG)
+- Only read the color operator from a text field's default appearance (#4158)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.20.0...6.20.1)
+
 ## Version 6.20.0, 2026-10-09
 
 ### Security (SEC)
