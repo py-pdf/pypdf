@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791820645230,
+  "lastUpdate": 1791821361207,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -116627,6 +116627,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0035750641865435495",
             "extra": "mean: 655.5692937999993 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "628c06057308b76a21cc9779df601c7a321399fb",
+          "message": "REL: 6.20.1\n\n## What's new\n\n### Security (SEC)\n- Prevent cyclic tree handling (#4188) by @stefan6419846\n\n### Bug Fixes (BUG)\n- Only read the color operator from a text field's default appearance (#4158) by @yaourtv\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.20.0...6.20.1)",
+          "timestamp": "2026-10-12T18:06:05+02:00",
+          "tree_id": "3b5d660b41a300ab99fa3962575d0d67bc7eb6f9",
+          "url": "https://github.com/py-pdf/pypdf/commit/628c06057308b76a21cc9779df601c7a321399fb"
+        },
+        "date": 1791821351403,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.983552240390095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00936230642156009",
+            "extra": "mean: 335.1709370000009 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.581937920765153,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008605507702087841",
+            "extra": "mean: 46.33504199999786 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.241059093431691,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03663971831141398",
+            "extra": "mean: 4.148360411399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.695203395131138,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002250076050909708",
+            "extra": "mean: 56.512489722223336 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07476043412051206,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11770595573022614",
+            "extra": "mean: 13.376059298799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.517206546591837,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00616032085775223",
+            "extra": "mean: 659.1060408000089 msec\nrounds: 5"
           }
         ]
       }
