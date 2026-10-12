@@ -1576,9 +1576,9 @@ def test_outline__outlines_entry_is_null(indirect):
 
 def test_outline__outlines_entry_references_a_free_object():
     """
-    A reference to a free object resolves to None, which raised an AttributeError.
+    An /Outlines entry referencing a free object yields no outline.
 
-    PDF files exported by Google apps, such as Slides and Sheets, reference a free object.
+    PDF files exported by Google apps, such as Slides and Sheets, contain such a reference.
     """
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
