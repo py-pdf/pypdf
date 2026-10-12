@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791809079204,
+  "lastUpdate": 1791809082029,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -146725,6 +146725,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03732500646134067",
             "extra": "mean: 650.0174256000037 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74809554+xiehuanyi@users.noreply.github.com",
+            "name": "Huanyi Xie",
+            "username": "xiehuanyi"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8ed783efc5e18c907b0d9b0ff92de43c3e7f89e9",
+          "message": "BUG: Apply the sign of zero-hour XMP timezone offsets (#4182)",
+          "timestamp": "2026-10-12T14:41:36+02:00",
+          "tree_id": "ca7c4998468559868bcc09f000d294d2a9824e99",
+          "url": "https://github.com/py-pdf/pypdf/commit/8ed783efc5e18c907b0d9b0ff92de43c3e7f89e9"
+        },
+        "date": 1791809068963,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.588451264565814,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003194071855035591",
+            "extra": "mean: 73.59190392857126 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 42.58939737527688,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004726610251687222",
+            "extra": "mean: 23.480022297298323 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.083130700898811,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06730939565646771",
+            "extra": "mean: 923.2496126000058 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3843039467071783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011683388346014359",
+            "extra": "mean: 2.6021070264 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5088376326465254,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017695653459883085",
+            "extra": "mean: 1.9652634472000046 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6409804640087622,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008444357322497702",
+            "extra": "mean: 609.3917764000025 msec\nrounds: 5"
           }
         ]
       }
