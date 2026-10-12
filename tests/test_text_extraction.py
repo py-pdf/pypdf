@@ -634,6 +634,14 @@ def test_tj_operator_without_a_string_is_skipped() -> None:
     assert page.extract_text(extraction_mode="layout") == "HelloWorld"
 
 
+@pytest.mark.parametrize("item", [b"/X", b"[(x)]", b"<</A 1>>"])
+def test_tj_array_item_that_is_neither_a_string_nor_a_number_is_skipped(item: bytes) -> None:
+    """A TJ array item that is neither a string nor a number is skipped and the text around it is kept."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf [(Hello) " + item + b" (World)] TJ ET")).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
 def test_layout_mode_text_with_zero_font_size() -> None:
     """Text drawn with a font size of 0 is extracted in layout mode instead of dividing by a zero width."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 0 Tf (Hello) Tj ET")).pages[0]
