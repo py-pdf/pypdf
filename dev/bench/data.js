@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791809082029,
+  "lastUpdate": 1791811035246,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -116495,6 +116495,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003421900691160377",
             "extra": "mean: 600.8248595999987 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b4c61200924cec66b4d7624d8803c6734321ea66",
+          "message": "MAINT: Correct comments (#4184)\n\nPEP 585 (Type Hinting Generics In Standard Collections) was added in\nPython 3.9.\nPEP 604 (Allow writing union types as X | Y) was added in Python 3.10.",
+          "timestamp": "2026-10-12T15:15:13+02:00",
+          "tree_id": "06681be48a16dc175c6451c2ea246d54cd8af247",
+          "url": "https://github.com/py-pdf/pypdf/commit/b4c61200924cec66b4d7624d8803c6734321ea66"
+        },
+        "date": 1791811028024,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.67949265546474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008177179731641454",
+            "extra": "mean: 176.0720649999982 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 36.02764714445669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006828514709651398",
+            "extra": "mean: 27.75646147499984 msec\nrounds: 40"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.46774302587283245,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01650006847892609",
+            "extra": "mean: 2.1379260506000035 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 35.651418332749145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003177576115851687",
+            "extra": "mean: 28.049374941176097 msec\nrounds: 34"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1491945933899449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016798185369827634",
+            "extra": "mean: 6.7026557550000065 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.82590606019987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002071597326235664",
+            "extra": "mean: 353.8688047999983 msec\nrounds: 5"
           }
         ]
       }
