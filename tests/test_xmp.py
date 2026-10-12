@@ -1,4 +1,5 @@
 """Test the pypdf.xmp module."""
+import decimal
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
@@ -117,6 +118,98 @@ def test_converter_date():
 
     date = pypdf.xmp._converter_date("2021-04-28T12:23:01-03:00")
     assert date == datetime(2021, 4, 28, 15, 23, 1)
+
+
+@pytest.mark.parametrize("precision", [3, 28])
+@pytest.mark.parametrize(
+    ("fraction", "microsecond"),
+    [
+        ("9999999999999999999999999999999999", 999999),
+        ("1234567890123456789012345678901234", 123456),
+        ("123456", 123456),
+        ("1", 100000),
+        ("000001", 1),
+        ("", 0),
+    ],
+)
+def test_converter_date_fractional_precision(precision, fraction, microsecond):
+    suffix = f".{fraction}" if fraction else ""
+    value = f"2026-10-12T03:04:59{suffix}Z"
+    with decimal.localcontext() as context:
+        context.prec = precision
+        assert pypdf.xmp._converter_date(value) == datetime(
+            2026, 10, 12, 3, 4, 59, microsecond
+        )
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("2026", datetime(2026, 1, 1)),
+        ("2026-10", datetime(2026, 10, 1)),
+        ("2026-10-12", datetime(2026, 10, 12)),
+        ("2026-10-12T03:04", datetime(2026, 10, 12, 3, 4)),
+        ("2026-10-12T03:04:05", datetime(2026, 10, 12, 3, 4, 5)),
+        ("2026-10-12T03:04:05.123456", datetime(2026, 10, 12, 3, 4, 5, 123456)),
+        ("2026-10-12T03:04Z", datetime(2026, 10, 12, 3, 4)),
+        ("2026-10-12T03:04:05+02:30", datetime(2026, 10, 12, 0, 34, 5)),
+        ("2026-10-12T03:04:05-03:30", datetime(2026, 10, 12, 6, 34, 5)),
+    ],
+)
+def test_converter_date_optional_timezone(value, expected):
+    actual = pypdf.xmp._converter_date(value)
+    assert actual == expected
+    assert actual.tzinfo is None
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "today",
+        "2026-13-12T03:04:05Z",
+        "2026-10-32T03:04:05Z",
+        "2026-10-12T24:04:05Z",
+        "2026-10-12T03:04:05+02",
+        "2026-10-12T03:04:05.123Zgarbage",
+    ],
+)
+def test_converter_date_invalid_complete_value(value):
+    with pytest.raises(ValueError):
+        pypdf.xmp._converter_date(value)
+
+
+@pytest.mark.parametrize("precision", [3, 28])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (
+            "2026-10-12T03:04:59.9999999999999999999999999999999999Z",
+            datetime(2026, 10, 12, 3, 4, 59, 999999),
+        ),
+        ("2026-10-12T03:04:05.123456", datetime(2026, 10, 12, 3, 4, 5, 123456)),
+    ],
+)
+def test_xmp_date_reader_supported_forms(precision, value, expected):
+    stream = StreamObject()
+    stream.set_data(
+        (
+            '<x:xmpmeta xmlns:x="adobe:ns:meta/">'
+            '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+            '<rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/">'
+            f'<xmp:CreateDate>{value}</xmp:CreateDate>'
+            '</rdf:Description></rdf:RDF></x:xmpmeta>'
+        ).encode()
+    )
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    writer.xmp_metadata = XmpInformation(stream)
+    output = BytesIO()
+    writer.write(output)
+    metadata = PdfReader(output).xmp_metadata
+    assert metadata is not None
+    with decimal.localcontext() as context:
+        context.prec = precision
+        assert metadata.xmp_create_date == expected
 
 
 def test_modify_date():

@@ -5,7 +5,6 @@ https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
 """
 
 import datetime
-import decimal
 import re
 from collections.abc import Iterator
 from string import hexdigits
@@ -71,7 +70,7 @@ _NAMESPACE_PREFIX_MAP = {
 }
 
 iso8601 = re.compile(
-    """
+    r"""
         (?P<year>[0-9]{4})
         (-
             (?P<month>[0-9]{2})
@@ -80,8 +79,8 @@ iso8601 = re.compile(
                 (T
                     (?P<hour>[0-9]{2}):
                     (?P<minute>[0-9]{2})
-                    (:(?P<second>[0-9]{2}(.[0-9]+)?))?
-                    (?P<tzd>Z|[-+][0-9]{2}:[0-9]{2})
+                    (:(?P<second>[0-9]{2}(\.[0-9]+)?))?
+                    (?P<tzd>Z|[-+][0-9]{2}:[0-9]{2})?
                 )?
             )?
         )?
@@ -114,7 +113,7 @@ def _identity(value: K) -> K:
 
 
 def _converter_date(value: str) -> datetime.datetime:
-    matches = iso8601.match(value)
+    matches = iso8601.fullmatch(value)
     if matches is None:
         raise ValueError(f"Invalid date format: {value}")
     year = int(matches.group("year"))
@@ -122,16 +121,12 @@ def _converter_date(value: str) -> datetime.datetime:
     day = int(matches.group("day") or "1")
     hour = int(matches.group("hour") or "0")
     minute = int(matches.group("minute") or "0")
-    second = decimal.Decimal(matches.group("second") or "0")
-    seconds_dec = second.to_integral(decimal.ROUND_FLOOR)
-    milliseconds_dec = (second - seconds_dec) * 1_000_000
+    seconds, _, fraction = (matches.group("second") or "0").partition(".")
+    microseconds = int(fraction[:6].ljust(6, "0"))
 
-    seconds = int(seconds_dec)
-    milliseconds = int(milliseconds_dec)
-
-    tzd = matches.group("tzd") or "Z"
-    dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
-    if tzd != "Z":
+    tzd = matches.group("tzd")
+    dt = datetime.datetime(year, month, day, hour, minute, int(seconds), microseconds)
+    if tzd and tzd != "Z":
         tzd_hours, tzd_minutes = (int(x) for x in tzd.split(":"))
         tzd_hours *= -1
         if tzd_hours < 0:
@@ -551,7 +546,11 @@ class XmpInformation(PdfObject):
 
     @property
     def xmp_create_date(self) -> Optional[datetime.datetime]:
-        """The date and time the resource was originally created. Returned as a UTC datetime object."""
+        """The date and time the resource was originally created.
+
+        Returns a timezone-naive datetime. Explicit time zones are converted to UTC;
+        dates without a time zone retain their local time.
+        """
         return self._get_single_value(XMP_NAMESPACE, "CreateDate", _converter_date)
 
     @xmp_create_date.setter
@@ -564,7 +563,11 @@ class XmpInformation(PdfObject):
 
     @property
     def xmp_modify_date(self) -> Optional[datetime.datetime]:
-        """The date and time the resource was last modified. Returned as a UTC datetime object."""
+        """The date and time the resource was last modified.
+
+        Returns a timezone-naive datetime. Explicit time zones are converted to UTC;
+        dates without a time zone retain their local time.
+        """
         return self._get_single_value(XMP_NAMESPACE, "ModifyDate", _converter_date)
 
     @xmp_modify_date.setter
@@ -577,7 +580,11 @@ class XmpInformation(PdfObject):
 
     @property
     def xmp_metadata_date(self) -> Optional[datetime.datetime]:
-        """The date and time that any metadata for this resource was last changed. Returned as a UTC datetime object."""
+        """The date and time that any metadata for this resource was last changed.
+
+        Returns a timezone-naive datetime. Explicit time zones are converted to UTC;
+        dates without a time zone retain their local time.
+        """
         return self._get_single_value(XMP_NAMESPACE, "MetadataDate", _converter_date)
 
     @xmp_metadata_date.setter
