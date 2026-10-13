@@ -132,11 +132,9 @@ def _converter_date(value: str) -> datetime.datetime:
     tzd = matches.group("tzd") or "Z"
     dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
     if tzd != "Z":
-        tzd_hours, tzd_minutes = (int(x) for x in tzd.split(":"))
-        tzd_hours *= -1
-        if tzd_hours < 0:
-            tzd_minutes *= -1
-        dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
+        tzd_hours, tzd_minutes = (int(x) for x in tzd[1:].split(":"))
+        offset = datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
+        dt = dt - offset if tzd.startswith("+") else dt + offset
     return dt
 
 
@@ -232,8 +230,8 @@ class XmpInformation(PdfObject):
                     f"XMP stream size {length} exceeds limit of {configuration.xmp_maximum_input_length}."
                 )
             doc_root: Document = _XmpBuilder().parseString(data)
-        except (AttributeError, ExpatError) as e:
-            raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
+        except (AttributeError, ExpatError) as exception:
+            raise PdfReadError(f"XML in XmpInformation was invalid: {exception}") from exception
         rdf_roots = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")
         if not rdf_roots:
             raise PdfReadError(

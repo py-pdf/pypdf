@@ -56,6 +56,7 @@ from .._utils import (
     read_until_regex,
     read_until_whitespace,
     skip_over_comment,
+    skip_over_comments,
 )
 from ..constants import (
     CheckboxRadioButtonAttributes,
@@ -640,10 +641,10 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 stream.seek(-1, 1)
                 value = read_object(stream, pdf, forced_encoding)
             except (RecursionError, LimitReachedError) as exc:
-                raise PdfReadError(exc.__repr__())
+                raise PdfReadError(exc.__repr__()) from exc
             except Exception as exc:
                 if pdf is not None and pdf.strict:
-                    raise PdfReadError(exc.__repr__())
+                    raise PdfReadError(exc.__repr__()) from exc
                 logger_warning("%(exception)r", source=__name__, exception=exc)
                 retval = DictionaryObject()
                 retval.update(data)
@@ -869,25 +870,16 @@ class TreeObject(DictionaryObject):
         return child_reference
 
     def _remove_node_from_tree(
-        self, prev: Any, prev_ref: Any, cur: Any, last: Any
+        self, *, previous: Any, previous_reference: Any, current: Any, last: Any
     ) -> None:
-        """
-        Adjust the pointers of the linked list and tree node count.
-
-        Args:
-            prev:
-            prev_ref:
-            cur:
-            last:
-
-        """
-        next_ref = cur.get(NameObject("/Next"), None)
-        if prev is None:
-            if next_ref:
+        """Adjust the pointers of the linked list and tree node count."""
+        next_reference = current.get("/Next", None)
+        if previous is None:
+            if next_reference:
                 # Removing first tree node
-                next_obj = next_ref.get_object()
-                del next_obj[NameObject("/Prev")]
-                self[NameObject("/First")] = next_ref
+                next_object = next_reference.get_object()
+                del next_object["/Prev"]
+                self[NameObject("/First")] = next_reference
                 self[NameObject("/Count")] = NumberObject(
                     self[NameObject("/Count")] - 1  # type: ignore[operator]
                 )
@@ -895,58 +887,62 @@ class TreeObject(DictionaryObject):
             else:
                 # Removing only tree node
                 self[NameObject("/Count")] = NumberObject(0)
-                del self[NameObject("/First")]
+                del self["/First"]
                 if NameObject("/Last") in self:
                     del self[NameObject("/Last")]
         else:
-            if next_ref:
+            if next_reference:
                 # Removing middle tree node
-                next_obj = next_ref.get_object()
-                next_obj[NameObject("/Prev")] = prev_ref
-                prev[NameObject("/Next")] = next_ref
+                next_object = next_reference.get_object()
+                next_object[NameObject("/Prev")] = previous_reference
+                previous[NameObject("/Next")] = next_reference
             else:
                 # Removing last tree node
-                assert cur == last
-                del prev[NameObject("/Next")]
-                self[NameObject("/Last")] = prev_ref
-            self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] - 1)  # type: ignore[operator]
+                assert current == last
+                del previous["/Next"]
+                self[NameObject("/Last")] = previous_reference
+            self[NameObject("/Count")] = NumberObject(self["/Count"] - 1)  # type: ignore[operator]
 
     def remove_child(self, child: Any) -> None:
-        child_obj = child.get_object()
-        child = child_obj.indirect_reference
+        child_object = child.get_object()
 
-        if NameObject("/Parent") not in child_obj:
+        if "/Parent" not in child_object:
             raise ValueError("Removed child does not appear to be a tree item")
-        if child_obj[NameObject("/Parent")] != self:
+        if child_object["/Parent"] != self:
             raise ValueError("Removed child is not a member of this tree")
 
         found = False
-        prev_ref = None
-        prev = None
-        cur_ref: Optional[Any] = self[NameObject("/First")]
-        cur: Optional[dict[str, Any]] = cur_ref.get_object()  # type: ignore[union-attr]
-        last_ref = self[NameObject("/Last")]
-        last = last_ref.get_object()
-        while cur is not None:
-            if cur == child_obj:
-                TreeObject._remove_node_from_tree(self, prev, prev_ref, cur, last)
+        previous_reference = None
+        previous = None
+        current_reference: Optional[Any] = self["/First"]
+        current: Optional[dict[str, Any]] = current_reference.get_object()  # type: ignore[union-attr]
+        last_reference = self["/Last"]
+        last = last_reference.get_object()
+        visited: set[int] = set()
+        while current is not None:
+            if current == child_object:
+                TreeObject._remove_node_from_tree(
+                    self, previous=previous, previous_reference=previous_reference, current=current, last=last
+                )
                 found = True
                 break
+            current_id = id(current)
+            if current_id in visited:
+                raise LimitReachedError("Detected cyclic /Next hierarchy.")
+            visited.add(current_id)
 
-            # Go to the next node
-            prev_ref = cur_ref
-            prev = cur
-            if NameObject("/Next") in cur:
-                cur_ref = cur[NameObject("/Next")]
-                cur = cur_ref.get_object()
-            else:
-                cur_ref = None
-                cur = None
+            # Go to the next node.
+            previous_reference = current_reference
+            previous = current
+            if "/Next" not in current:
+                break
+            current_reference = current["/Next"]
+            current = current_reference.get_object()
 
         if not found:
             raise ValueError("Removal couldn't find item in tree")
 
-        _reset_node_tree_relationship(child_obj)
+        _reset_node_tree_relationship(child_object)
 
     def remove_from_tree(self) -> None:
         """Remove the object from the tree it is in."""
@@ -1583,6 +1579,10 @@ class ContentStream(DecodedStreamObject):
         super().write_to_stream(stream, encryption_key)
 
 
+# Bound comment scanning without consuming Python recursion depth.
+_MAX_LEADING_COMMENTS = 1000
+
+
 def read_object(  # noqa: PLR0911
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
@@ -1590,6 +1590,11 @@ def read_object(  # noqa: PLR0911
 ) -> PdfObject:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
+    if tok == b"%":
+        # Skip consecutive comments in a loop instead of recursing per comment.
+        skip_over_comments(stream, limit=_MAX_LEADING_COMMENTS)
+        tok = stream.read(1)
+        stream.seek(-1, 1)  # reset to start
     if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
     if tok == b"<":
@@ -1609,12 +1614,6 @@ def read_object(  # noqa: PLR0911
         return NullObject()
     if tok == b"n":
         return NullObject.read_from_stream(stream)
-    if tok == b"%":
-        # comment
-        skip_over_comment(stream)
-        tok = read_non_whitespace(stream)
-        stream.seek(-1, 1)
-        return read_object(stream, pdf, forced_encoding)
     if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)

@@ -211,7 +211,8 @@ def recurse_to_target_op(
             tj_ops.append(text_state_mgr.text_state_params(operands[0]))
         elif op == b"TJ" and operands and isinstance(operands[0], ArrayObject):
             _tj = text_state_mgr.text_state_params()
-            for tj_op in operands[0]:
+            # Only strings and numbers are valid TJ array items
+            for tj_op in (item for item in operands[0] if isinstance(item, (bytes, int, float))):
                 if isinstance(tj_op, bytes):
                     _tj = text_state_mgr.text_state_params(tj_op)
                     tj_ops.append(_tj)
@@ -428,7 +429,8 @@ def fixed_width_page(
         last_disp = 0.0
         for bt_op in line_data:
             tx = bt_op["tx"]
-            offset = int(tx // char_width)
+            # Text drawn with no width (a font size or horizontal scaling of 0) has no column to align to.
+            offset = int(tx // char_width) if char_width else current_len
             needed_spaces = offset - current_len
             if needed_spaces > 0 and ceil(last_disp) < int(tx):
                 if needed_spaces > WHITESPACE_LIMIT:

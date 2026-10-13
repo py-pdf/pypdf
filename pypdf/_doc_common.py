@@ -934,7 +934,7 @@ class PdfDocCommon(ABC):
                 fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
             except Exception as exc:
-                raise Exception(f"Invalid Destination {oa}: {exc}")
+                raise Exception(f"Invalid Destination {oa}: {exc}") from exc
         else:
             return None
 
@@ -969,9 +969,11 @@ class PdfDocCommon(ABC):
 
             # get the outline dictionary and named destinations
             if Core.OUTLINES in catalog:
-                lines = catalog[Core.OUTLINES].get_object()
+                lines = catalog[Core.OUTLINES]
 
-                if isinstance(lines, NullObject):
+                # A reference to an object which is missing or free in the xref table
+                # resolves to None.
+                if is_null_or_none(lines):
                     return outline
 
                 if not isinstance(lines, DictionaryObject):
@@ -1131,9 +1133,9 @@ class PdfDocCommon(ABC):
 
         # title required for valid outline
         # §12.3.3, entries in an outline item dictionary
-        try:
+        if "/Title" in node:
             title = cast("str", node["/Title"])
-        except KeyError:
+        else:
             if self.strict:
                 raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
             title = ""

@@ -226,3 +226,14 @@ class PILContext:
             # Error.
             return None
         return True
+
+
+def get_subprocess_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    environment["COVERAGE_PROCESS_START"] = "pyproject.toml"
+
+    if "PYTHONPATH" in environment:
+        environment["PYTHONPATH"] = "." + os.pathsep + environment["PYTHONPATH"]
+    else:
+        environment["PYTHONPATH"] = "."
+    return environment

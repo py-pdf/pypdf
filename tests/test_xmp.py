@@ -119,6 +119,42 @@ def test_converter_date():
     assert date == datetime(2021, 4, 28, 15, 23, 1)
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("2024-01-02T03:04:05+00:15", datetime(2024, 1, 2, 2, 49, 5)),
+        ("2024-01-02T03:04:05+00:30", datetime(2024, 1, 2, 2, 34, 5)),
+        ("2024-01-02T03:04:05+00:45", datetime(2024, 1, 2, 2, 19, 5)),
+        ("2024-01-02T03:04:05-00:30", datetime(2024, 1, 2, 3, 34, 5)),
+        ("2024-01-02T03:04:05+01:30", datetime(2024, 1, 2, 1, 34, 5)),
+        ("2024-01-02T03:04:05-01:30", datetime(2024, 1, 2, 4, 34, 5)),
+        ("2024-01-01T00:15:00+00:30", datetime(2023, 12, 31, 23, 45)),
+        ("2024-01-01T23:45:00-00:30", datetime(2024, 1, 2, 0, 15)),
+    ],
+)
+def test_converter_date_minute_offsets(value, expected):
+    """Minute timezone offsets are applied with their stated sign."""
+    assert pypdf.xmp._converter_date(value) == expected
+
+
+def test_read_xmp_date_with_positive_zero_hour_offset():
+    """A PDF's XMP creation date is converted to the correct UTC time."""
+    xmp = XmpInformation.create()
+    xmp.xmp_create_date = datetime(2024, 1, 2, 3, 4, 5)
+    xmp.stream.set_data(
+        xmp.stream.get_data().replace(
+            b"2024-01-02T03:04:05.000000Z", b"2024-01-02T03:04:05+00:30"
+        )
+    )
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.xmp_metadata = xmp
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    assert reader.xmp_metadata.xmp_create_date == datetime(2024, 1, 2, 2, 34, 5)
+
+
 def test_modify_date():
     """
     xmp_modify_date is extracted correctly.

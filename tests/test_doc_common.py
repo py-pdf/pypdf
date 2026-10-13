@@ -1574,6 +1574,24 @@ def test_outline__outlines_entry_is_null(indirect):
     assert PdfReader(stream).outline == []
 
 
+def test_outline__outlines_entry_references_a_free_object():
+    """
+    An /Outlines entry referencing a free object yields no outline.
+
+    PDF files exported by Google apps, such as Slides and Sheets, contain such a reference.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    reference = writer._add_object(DictionaryObject())
+    writer.root_object[NameObject("/Outlines")] = reference
+    writer._objects[reference.idnum - 1] = None
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).outline == []
+
+
 def test_outline__reads_a_well_formed_outlines_entry():
     writer = PdfWriter()
     for _ in range(2):

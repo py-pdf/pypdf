@@ -1216,8 +1216,8 @@ class PdfWriter(PdfDocCommon):
 
         try:
             self._flatten()
-        except IndexError:
-            raise PdfReadError("Got index error while flattening.")
+        except IndexError as exception:  # pragma: no cover
+            raise PdfReadError("Got index error while flattening.") from exception  # pragma: no cover
 
         assert self.flattened_pages is not None
         for p in self.flattened_pages:
@@ -1345,8 +1345,8 @@ class PdfWriter(PdfDocCommon):
         if algorithm is not None:
             try:
                 alg = getattr(EncryptAlgorithm, algorithm.replace("-", "_"))
-            except AttributeError:
-                raise ValueError(f"Algorithm '{algorithm}' NOT supported")
+            except AttributeError as exception:  # pragma: no cover
+                raise ValueError(f"Algorithm '{algorithm}' NOT supported") from exception  # pragma: no cover
         else:
             alg = EncryptAlgorithm.RC4_128
             if not use_128bit:
@@ -3281,30 +3281,42 @@ class PdfWriter(PdfDocCommon):
 
     def find_outline_item(
         self,
-        outline_item: dict[str, Any],
+        outline_item: Union[IndirectObject, str],
         root: Optional[OutlineType] = None,
+        *,
+        visited: Optional[set[int]] = None,
     ) -> Optional[list[int]]:
         if root is None:
-            o = self.get_outline_root()
+            outline = self.get_outline_root()
         else:
-            o = cast("TreeObject", root)
+            outline = cast("TreeObject", root)
+        if visited is None:
+            visited = set()
 
-        i = 0
-        while o is not None:
+        index = 0
+        while outline is not None:
             if (
-                o.indirect_reference == outline_item
-                or o.get("/Title", None) == outline_item
+                outline.indirect_reference == outline_item
+                or outline.get("/Title", None) == outline_item
             ):
-                return [i]
-            if "/First" in o:
-                res = self.find_outline_item(
-                    outline_item, cast(OutlineType, o["/First"])
+                return [index]
+
+            outline_id = id(outline)
+            if outline_id in visited:
+                raise LimitReachedError("Detected cyclic outline hierarchy.")
+            visited.add(outline_id)
+
+            if "/First" in outline:
+                result = self.find_outline_item(
+                    outline_item=outline_item,
+                    root=cast(OutlineType, outline["/First"]),
+                    visited=visited,
                 )
-                if res:
-                    return ([i] if "/Title" in o else []) + res
-            if "/Next" in o:
-                i += 1
-                o = cast(TreeObject, o["/Next"])
+                if result:
+                    return ([index] if "/Title" in outline else []) + result
+            if "/Next" in outline:
+                index += 1
+                outline = cast(TreeObject, outline["/Next"])
             else:
                 return None
         raise PyPdfError("This line is theoretically unreachable.")  # pragma: no cover

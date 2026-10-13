@@ -1,5 +1,4 @@
 """Test the pypdf.generic._data_structures module."""
-import os
 import subprocess
 import sys
 from io import BytesIO
@@ -26,7 +25,7 @@ from pypdf.generic import (
     TreeObject,
 )
 from pypdf.types import OutlineType
-from tests import RESOURCE_ROOT, get_data_from_url
+from tests import RESOURCE_ROOT, get_data_from_url, get_subprocess_environment
 
 try:
     import resource
@@ -259,9 +258,6 @@ def test_dictionary_object__read_from_stream__limit() -> None:
 def _prepare_test_dictionary_object__read_from_stream__no_limit(
         path: Path
 ) -> tuple[str, dict[str, str], Callable[[], None]]:
-    env = os.environ.copy()
-    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
-
     name = "read_from_stream__length_2gb.pdf"
     url = "https://github.com/user-attachments/files/25842437/read_from_stream__length_2gb.pdf"
     data = get_data_from_url(url=url, name=name)
@@ -269,17 +265,12 @@ def _prepare_test_dictionary_object__read_from_stream__no_limit(
     pdf_path.write_bytes(data)
     pdf_path_str = pdf_path.resolve().as_posix()
 
-    try:
-        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
-    except KeyError:
-        env["PYTHONPATH"] = "."
-
     def limit_virtual_memory() -> None:
         limit_kb = 1_000_000
         limit_bytes = limit_kb * 1024
         resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, limit_bytes))
 
-    return pdf_path_str, env, limit_virtual_memory
+    return pdf_path_str, get_subprocess_environment(), limit_virtual_memory
 
 
 @pytest.mark.enable_socket
@@ -637,3 +628,34 @@ def test_remove_from_tree_on_node_already_detached() -> None:
         ValueError, match=r"^Removed child does not appear to be a tree item$"
     ):
         item.remove_from_tree()
+
+
+def test_tree_object__remove_child__cyclic() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    entry1 = DictionaryObject()
+    reference1 = writer._add_object(entry1)
+    entry2 = DictionaryObject({
+        NameObject("/Next"): reference1
+    })
+    reference2 = writer._add_object(entry2)
+    entry3 = DictionaryObject({
+        NameObject("/Next"): reference2
+    })
+    reference3 = writer._add_object(entry3)
+    entry1[NameObject("/Next")] = reference3
+
+    tree = TreeObject(
+        DictionaryObject({
+            NameObject("/First"): reference3,
+            NameObject("/Last"): NullObject(),
+        })
+    )
+    child = DictionaryObject({
+        NameObject("/Parent"): writer._add_object(tree)
+    })
+    writer._add_object(child)
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Detected cyclic /Next hierarchy\.$"):
+        tree.remove_child(child)

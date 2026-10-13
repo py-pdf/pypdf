@@ -131,7 +131,7 @@ def _get_font_resources(resources: Any) -> DictionaryObject:
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: Union[RectangleObject, ArrayObject, IndirectObject, None] = self.get(name)
+    retval: Optional[PdfObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
@@ -140,7 +140,8 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
             if retval is not None:
                 break
     if isinstance(retval, IndirectObject):
-        retval = self.pdf.get_object(retval)
+        # Pages of a writer have no `pdf`, the reference knows its own document.
+        retval = retval.get_object()
     if not isinstance(retval, ArrayObject):
         raise ValueError(f"Expected an array of four values for {name}, got {retval}")
     if (length := len(retval)) != 4:
@@ -855,15 +856,16 @@ class PageObject(DictionaryObject):
         """Translate values used in inline image"""
         try:
             v = NameObject(_INLINE_IMAGE_VALUE_MAPPING[cast(str, v)])
-        except (TypeError, KeyError):
+        except (TypeError, KeyError) as exception:
             if isinstance(v, NameObject):
                 # It is a custom name, thus we have to look in resources.
                 # The only applicable case is for ColorSpace.
-                try:
-                    res = cast(DictionaryObject, self["/Resources"])["/ColorSpace"]
-                    v = cast(DictionaryObject, res)[v]
-                except KeyError:  # for res and v
-                    raise PdfReadError(f"Cannot find resource entry {v} for {k}")
+                if "/Resources" in self:
+                    resources = cast(DictionaryObject, self["/Resources"])
+                    if "/ColorSpace" in resources and v in cast(DictionaryObject, resources["/ColorSpace"]):
+                        color_space = cast(DictionaryObject, resources["/ColorSpace"])
+                        return color_space[v]
+                raise PdfReadError(f"Cannot find resource entry {v} for {k}") from exception
         return v
 
     def _parse_images_from_content_stream(self) -> dict[str, Optional[ImageFile]]:
@@ -1798,13 +1800,13 @@ class PageObject(DictionaryObject):
                 content.indirect_reference.pdf._objects[  # type: ignore[union-attr]
                     content.indirect_reference.idnum - 1  # type: ignore[union-attr]
                 ] = content_obj
-            except AttributeError:
+            except AttributeError as exception:
                 if self.indirect_reference is not None and hasattr(
                     self.indirect_reference.pdf, "_add_object"
                 ):
                     self.replace_contents(content_obj)
                 else:
-                    raise ValueError("Page must be part of a PdfWriter")
+                    raise ValueError("Page must be part of a PdfWriter") from exception
 
     @property
     def page_number(self) -> Optional[int]:
@@ -1945,7 +1947,8 @@ class PageObject(DictionaryObject):
                 _confirm_space_width = extractor._space_width * 0.95
                 if operands and isinstance(operands[0], ArrayObject):
                     for op in operands[0]:
-                        if isinstance(op, (str, bytes)):
+                        # A name is a str too, but not text to show
+                        if isinstance(op, (str, bytes)) and not isinstance(op, NameObject):
                             extractor.process_operation(b"Tj", [op])
                         if isinstance(op, (int, float, NumberObject, FloatObject)) and (
                             abs(float(op)) >= _confirm_space_width
@@ -2100,16 +2103,24 @@ class PageObject(DictionaryObject):
                 break
             visited.add(obj_id)
 
-            resources_dict: Any = obj.get(PG.RESOURCES, {})
+            resources_dict: Any = obj.get(PG.RESOURCES, DictionaryObject()).get_object()
+            if not isinstance(resources_dict, DictionaryObject):
+                logger_warning(
+                    "Page resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources_dict,
+                )
+                resources_dict = DictionaryObject()
             if self.pdf is not None and (font_resources := _get_font_resources(resources_dict)):
                 for font_name in font_resources:
-                    fonts[font_name] = Font.from_font_resource(
-                        cast(DictionaryObject, font_resources[font_name].get_object())
-                    )
+                    font_object = font_resources[font_name].get_object()
+                    if isinstance(font_object, DictionaryObject):
+                        fonts[font_name] = Font.from_font_resource(font_object)
 
-            if "/Parent" not in obj:
+            parent = obj.get("/Parent", NullObject()).get_object()
+            if not isinstance(parent, DictionaryObject):
                 break
-            obj = obj["/Parent"].get_object()
+            obj = parent
 
         return fonts
 
@@ -2156,9 +2167,14 @@ class PageObject(DictionaryObject):
                 "utf-8"
             )
 
-        ops = iter(
-            ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations
-        )
+        contents = self.get("/Contents")
+        if contents is not None:
+            contents = contents.get_object()
+        if not isinstance(contents, (ArrayObject, StreamObject)):
+            # No content can be extracted (certainly an empty page).
+            return ""
+
+        ops = iter(ContentStream(contents, self.pdf, "bytes").operations)
         bt_groups = _layout_mode.text_show_operations(
             ops, fonts, strip_rotated, debug_path
         )
@@ -2553,9 +2569,9 @@ class _VirtualList(Sequence[PageObject]):
                     # No more objects in this part of this subtree
                     ind = parent.indirect_reference
                 parent = parent.get("/Parent", None)
-            except ValueError:  # from index
+            except ValueError as exception:  # from index
                 if first:
-                    raise PdfReadError(f"Page not found in page tree: {ind}")
+                    raise PdfReadError(f"Page not found in page tree: {ind}") from exception
                 break
 
     def __iter__(self) -> Iterator[PageObject]:
