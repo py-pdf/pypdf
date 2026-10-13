@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791892397239,
+  "lastUpdate": 1791892443618,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -148309,6 +148309,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.037360690478257325",
             "extra": "mean: 866.6635901999825 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2573438329@qq.com",
+            "name": "Nor.na",
+            "username": "Master-Norna"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ccd8dc470e13915d384fb8b4c93a351cc1d79ae6",
+          "message": "ROB: Bound leading comment handling in read_object (#4150)\n\n* ROB: Bound leading comment handling in read_object\n\n* ROB: Move leading-comment limiting into a utility function\n\nAddress review: the error says the limit is reached rather than exceeded, and the consecutive-comment loop now lives in _utils.skip_over_comments, which reuses skip_over_comment.\n\n* ROB: Check for a leading comment before calling the utility\n\nCalling skip_over_comments for every object added one Python function call per read_object, so test_read_array_of_numbers_and_references__function_calls from #4148 exceeded its budget (901 calls for 300 elements, limit 900). Peek the first token and only enter the utility when it is a comment; objects that do not start with a comment keep the previous cost.\n\n* TST: Address leading-comment review feedback\n\n* TST: Align comment utility test names with review feedback\n\n---------\n\nCo-authored-by: Master-Norna <263870076+Master-Norna@users.noreply.github.com>",
+          "timestamp": "2026-10-13T13:49:55+02:00",
+          "tree_id": "e2c49537798518fe90f41b98de3ed6b617772a0e",
+          "url": "https://github.com/py-pdf/pypdf/commit/ccd8dc470e13915d384fb8b4c93a351cc1d79ae6"
+        },
+        "date": 1791892433379,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.74386007013685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018024462806904503",
+            "extra": "mean: 67.8248433750035 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.276060968418196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008207765852486741",
+            "extra": "mean: 38.05745469999948 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9957190695566608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03435815494160874",
+            "extra": "mean: 1.0042993355999954 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4886421688363748,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08640176679221695",
+            "extra": "mean: 2.046487314799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.35973103418514246,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017287960297771042",
+            "extra": "mean: 2.7798546829999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1513542320931587,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039952492189657046",
+            "extra": "mean: 868.5424278000028 msec\nrounds: 5"
           }
         ]
       }
