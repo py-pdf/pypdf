@@ -1,6 +1,8 @@
 from binascii import Error as BinasciiError
 from binascii import unhexlify
+from collections.abc import Callable
 from functools import partial
+from hashlib import sha256
 from io import BytesIO
 from typing import Any, Union, cast
 
@@ -14,6 +16,7 @@ from .generic import (
     NullObject,
     StreamObject,
 )
+from .generic._data_structures import _FontFileCharacterMap
 
 _predefined_cmap: dict[str, str] = {
     "/Identity-H": "utf-16-be",
@@ -75,7 +78,7 @@ def _parse_encoding(
             )
 
         # Return StandardEncoding as fallback option. Note that a font's internal encoding can be used
-        # to overwrite this, which we do for Type1 fonts in _character_map_from_(cff_)type1_font_file.
+        # to overwrite this, which we do for Type1 fonts in _derive_character_map_from_(cff_)type1_font_file.
         return dict(
             zip(range(256), charset_encoding["/StandardEncoding"])
         )
@@ -167,13 +170,13 @@ def _parse_to_unicode(
                 (
                     "/FontFile",
                     lambda _: True,
-                    _character_map_from_type1_font_file
+                    _derive_character_map_from_type1_font_file
                 ),
                 # A CFF Type1 font file, as part of a Type1 or MMType1 font dictionary, when subtype is Type1C.
                 (
                     "/FontFile3",
                     lambda stream: stream.get("/Subtype") == "/Type1C",
-                    _character_map_from_cff_type1_font_file,
+                    _derive_character_map_from_cff_type1_font_file,
                 )
             )
             for font_file, condition, font_file_processor in font_file_handlers:
@@ -198,7 +201,9 @@ def _parse_to_unicode(
                     if not font_file_data:
                         return map_dict, int_entry
 
-                    return font_file_processor(font_file_data, map_dict, int_entry)
+                    return _derive_character_map_from_font_file(
+                        font_file_dict, font_file_data, font_file_processor, map_dict, int_entry
+                    )
 
             return map_dict, int_entry
 
@@ -459,7 +464,33 @@ def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
             return None
 
 
-def _character_map_from_cff_type1_font_file(
+def _derive_character_map_from_font_file(
+    font_file: StreamObject,
+    font_data: bytes,
+    font_file_processor: Callable[[bytes, dict[Any, Any], list[int]], tuple[dict[Any, Any], list[int]]],
+    map_dict: dict[Any, Any],
+    int_entry: list[int],
+) -> tuple[dict[Any, Any], list[int]]:
+    """
+    Derive the character map from an embedded font program, caching the result on its stream.
+
+    The character map depends only on the decoded font data, and the same font program is reached from every
+    font dictionary, resource name and page referencing its stream. Parsing a CFF font program with fontTools is
+    expensive, so each stream is parsed once and reused until its data changes, which a digest of the data
+    detects (a writer may replace the font program). See #4156.
+    """
+    digest = sha256(font_data).digest()
+    cached = font_file._font_file_character_map
+    if cached is None or cached.digest != digest:
+        cached_map_dict, cached_int_entry = font_file_processor(font_data, {}, [])
+        cached = _FontFileCharacterMap(digest, cached_map_dict, cached_int_entry)
+        font_file._font_file_character_map = cached
+    map_dict.update(cached.map_dict)
+    int_entry.extend(cached.int_entry)
+    return map_dict, int_entry
+
+
+def _derive_character_map_from_cff_type1_font_file(
     font_data: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
@@ -486,7 +517,7 @@ def _character_map_from_cff_type1_font_file(
         return map_dict, int_entry
 
 
-def _character_map_from_type1_font_file(
+def _derive_character_map_from_type1_font_file(
     font_data: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],

@@ -27,7 +27,7 @@ shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
 # -- Project information -----------------------------------------------------
 
 project = py_pkg.__name__
-copyright = f"2006 - {datetime.datetime.now(tz=datetime.timezone.utc).year}, Mathieu Fenniak and pypdf contributors"
+copyright = f"2006 - {datetime.datetime.now(tz=datetime.timezone.utc).year}, Mathieu Fenniak and pypdf contributors"  # noqa: A001
 author = "Mathieu Fenniak"
 
 # The version info for the project you're documenting, acts as replacement for

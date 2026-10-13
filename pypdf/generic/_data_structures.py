@@ -39,6 +39,7 @@ from math import ceil
 from typing import (
     Any,
     Callable,
+    NamedTuple,
     Optional,
     Union,
     cast,
@@ -272,11 +273,16 @@ class ArrayObject(list[Any], PdfObject):
                 stream.seek(-1, 1)
                 skip_over_comment(stream)
                 continue
-            stream.seek(-1, 1)
             # check for array ending
-            peek_ahead = stream.read(1)
-            if peek_ahead == b"]":
+            if tok == b"]":
                 break
+            if tok == b"n":
+                # Shortcut for null, as some arrays consist mostly of nulls
+                rest = stream.read(3)
+                if rest == b"ull":
+                    arr.append(NullObject())
+                    continue
+                stream.seek(-len(rest), 1)
             stream.seek(-1, 1)
             # read and append object
             arr.append(read_object(stream, pdf, forced_encoding))
@@ -634,10 +640,10 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 stream.seek(-1, 1)
                 value = read_object(stream, pdf, forced_encoding)
             except (RecursionError, LimitReachedError) as exc:
-                raise PdfReadError(exc.__repr__())
+                raise PdfReadError(exc.__repr__()) from exc
             except Exception as exc:
                 if pdf is not None and pdf.strict:
-                    raise PdfReadError(exc.__repr__())
+                    raise PdfReadError(exc.__repr__()) from exc
                 logger_warning("%(exception)r", source=__name__, exception=exc)
                 retval = DictionaryObject()
                 retval.update(data)
@@ -863,25 +869,16 @@ class TreeObject(DictionaryObject):
         return child_reference
 
     def _remove_node_from_tree(
-        self, prev: Any, prev_ref: Any, cur: Any, last: Any
+        self, *, previous: Any, previous_reference: Any, current: Any, last: Any
     ) -> None:
-        """
-        Adjust the pointers of the linked list and tree node count.
-
-        Args:
-            prev:
-            prev_ref:
-            cur:
-            last:
-
-        """
-        next_ref = cur.get(NameObject("/Next"), None)
-        if prev is None:
-            if next_ref:
+        """Adjust the pointers of the linked list and tree node count."""
+        next_reference = current.get("/Next", None)
+        if previous is None:
+            if next_reference:
                 # Removing first tree node
-                next_obj = next_ref.get_object()
-                del next_obj[NameObject("/Prev")]
-                self[NameObject("/First")] = next_ref
+                next_object = next_reference.get_object()
+                del next_object["/Prev"]
+                self[NameObject("/First")] = next_reference
                 self[NameObject("/Count")] = NumberObject(
                     self[NameObject("/Count")] - 1  # type: ignore[operator]
                 )
@@ -889,58 +886,62 @@ class TreeObject(DictionaryObject):
             else:
                 # Removing only tree node
                 self[NameObject("/Count")] = NumberObject(0)
-                del self[NameObject("/First")]
+                del self["/First"]
                 if NameObject("/Last") in self:
                     del self[NameObject("/Last")]
         else:
-            if next_ref:
+            if next_reference:
                 # Removing middle tree node
-                next_obj = next_ref.get_object()
-                next_obj[NameObject("/Prev")] = prev_ref
-                prev[NameObject("/Next")] = next_ref
+                next_object = next_reference.get_object()
+                next_object[NameObject("/Prev")] = previous_reference
+                previous[NameObject("/Next")] = next_reference
             else:
                 # Removing last tree node
-                assert cur == last
-                del prev[NameObject("/Next")]
-                self[NameObject("/Last")] = prev_ref
-            self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] - 1)  # type: ignore[operator]
+                assert current == last
+                del previous["/Next"]
+                self[NameObject("/Last")] = previous_reference
+            self[NameObject("/Count")] = NumberObject(self["/Count"] - 1)  # type: ignore[operator]
 
     def remove_child(self, child: Any) -> None:
-        child_obj = child.get_object()
-        child = child_obj.indirect_reference
+        child_object = child.get_object()
 
-        if NameObject("/Parent") not in child_obj:
+        if "/Parent" not in child_object:
             raise ValueError("Removed child does not appear to be a tree item")
-        if child_obj[NameObject("/Parent")] != self:
+        if child_object["/Parent"] != self:
             raise ValueError("Removed child is not a member of this tree")
 
         found = False
-        prev_ref = None
-        prev = None
-        cur_ref: Optional[Any] = self[NameObject("/First")]
-        cur: Optional[dict[str, Any]] = cur_ref.get_object()  # type: ignore[union-attr]
-        last_ref = self[NameObject("/Last")]
-        last = last_ref.get_object()
-        while cur is not None:
-            if cur == child_obj:
-                TreeObject._remove_node_from_tree(self, prev, prev_ref, cur, last)
+        previous_reference = None
+        previous = None
+        current_reference: Optional[Any] = self["/First"]
+        current: Optional[dict[str, Any]] = current_reference.get_object()  # type: ignore[union-attr]
+        last_reference = self["/Last"]
+        last = last_reference.get_object()
+        visited: set[int] = set()
+        while current is not None:
+            if current == child_object:
+                TreeObject._remove_node_from_tree(
+                    self, previous=previous, previous_reference=previous_reference, current=current, last=last
+                )
                 found = True
                 break
+            current_id = id(current)
+            if current_id in visited:
+                raise LimitReachedError("Detected cyclic /Next hierarchy.")
+            visited.add(current_id)
 
-            # Go to the next node
-            prev_ref = cur_ref
-            prev = cur
-            if NameObject("/Next") in cur:
-                cur_ref = cur[NameObject("/Next")]
-                cur = cur_ref.get_object()
-            else:
-                cur_ref = None
-                cur = None
+            # Go to the next node.
+            previous_reference = current_reference
+            previous = current
+            if "/Next" not in current:
+                break
+            current_reference = current["/Next"]
+            current = current_reference.get_object()
 
         if not found:
             raise ValueError("Removal couldn't find item in tree")
 
-        _reset_node_tree_relationship(child_obj)
+        _reset_node_tree_relationship(child_object)
 
     def remove_from_tree(self) -> None:
         """Remove the object from the tree it is in."""
@@ -978,7 +979,23 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         del child_obj[NameObject("/Prev")]
 
 
+class _FontFileCharacterMap(NamedTuple):
+    """The character map pypdf._cmap derived from an embedded font program. See #4156."""
+
+    digest: bytes
+    """SHA-256 digest of the decoded font data the map was derived from."""
+    map_dict: dict[Any, Any]
+    int_entry: list[int]
+
+
 class StreamObject(DictionaryObject):
+    _font_file_character_map: Optional[_FontFileCharacterMap] = None
+    """
+    The character map pypdf._cmap derived from this stream as an embedded font program. Parsing a CFF font
+    program with fontTools is expensive, and the same program is reached from every font resource and page
+    referencing it. See #4156.
+    """
+
     def __init__(self) -> None:
         self._data: bytes = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
@@ -1561,7 +1578,7 @@ class ContentStream(DecodedStreamObject):
         super().write_to_stream(stream, encryption_key)
 
 
-def read_object(
+def read_object(  # noqa: PLR0911
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
     forced_encoding: Union[str, list[str], dict[int, str], None] = None,
@@ -1596,10 +1613,22 @@ def read_object(
     if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)
-        stream.seek(-len(peek), 1)  # reset to start
-        if IndirectPattern.match(peek) is not None:
+        match = IndirectPattern.match(peek)
+        if match is not None:
             assert pdf is not None, "mypy"
-            return IndirectObject.read_from_stream(stream, pdf)
+            # Continue after the "R", the match includes the character following it
+            stream.seek(match.end() - 1 - len(peek), 1)
+            # The object number includes an optional sign
+            return IndirectObject(int(peek[: match.end(1)]), int(match[2]), pdf)
+        number_end = NumberObject.NumberPattern.search(peek)
+        if number_end is not None:
+            # The whole number is in the peek, there is no need to read it again
+            num = peek[: number_end.start()]
+            stream.seek(len(num) - len(peek), 1)
+            if b"." in num:
+                return FloatObject(num)
+            return NumberObject(num)
+        stream.seek(-len(peek), 1)  # reset to start
         return NumberObject.read_from_stream(stream)
     pos = stream.tell()
     stream.seek(-20, 1)
