@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791889238837,
+  "lastUpdate": 1791890676615,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -117089,6 +117089,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004158470448001793",
             "extra": "mean: 668.2185844000003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ecde8be9ee8554938d181a6d0be17371b525028e",
+          "message": "MAINT: Remove one exclusion of Ruff rule S324 (#4191)\n\nS324 checks for uses of weak or broken cryptographic hash functions\nin hashlib and crypt libraries.\nThe rule is unnecessary with usedforsecurity=False, since the hashing\nalgorithm is not used in a security context.",
+          "timestamp": "2026-10-13T13:21:38+02:00",
+          "tree_id": "8fa5045fac149a4d1834fd6e80f14d3d2edcd0f7",
+          "url": "https://github.com/py-pdf/pypdf/commit/ecde8be9ee8554938d181a6d0be17371b525028e"
+        },
+        "date": 1791890663390,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4587996320686645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009722508409400806",
+            "extra": "mean: 289.1176438000002 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.19339846645785,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008165651552948044",
+            "extra": "mean: 35.46929616128813 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29324426090988354,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05049461589322433",
+            "extra": "mean: 3.4101264144000027 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.90560920340571,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011619967336497707",
+            "extra": "mean: 55.84842094117615 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08479639475846444,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01923381203035455",
+            "extra": "mean: 11.792954203400011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5602318256603296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00944423382703208",
+            "extra": "mean: 640.9303948000002 msec\nrounds: 5"
           }
         ]
       }
