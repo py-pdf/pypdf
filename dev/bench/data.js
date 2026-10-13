@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791821377947,
+  "lastUpdate": 1791880314882,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -116693,6 +116693,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00616032085775223",
             "extra": "mean: 659.1060408000089 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74776275+usmanmateen@users.noreply.github.com",
+            "name": "Muhammad Usman Mateen",
+            "username": "usmanmateen"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "55ffd5013ad08eedb4c09727815762eb1f1eb62a",
+          "message": "BUG: Do not crash on an /Outlines reference to a free object (#4177)\n\nSince 6.17.0, reader.outline raised \"AttributeError: 'NoneType' object has\nno attribute 'get_object'\" when /Outlines referenced an object that is\nmissing or free in the xref table, as in PDF files exported by Google\napps such as Slides and Sheets. Such a reference resolves to None, which\nthe is_null_or_none check dropped in #4023 covered.\n\nCloses #4176.",
+          "timestamp": "2026-10-13T10:29:50+02:00",
+          "tree_id": "ff79543b4df8dd4386035d568fe8bb308ee974d9",
+          "url": "https://github.com/py-pdf/pypdf/commit/55ffd5013ad08eedb4c09727815762eb1f1eb62a"
+        },
+        "date": 1791880308151,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.911154473413682,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006850384176413493",
+            "extra": "mean: 169.17169133333468 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 38.35480287391941,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004483051201982055",
+            "extra": "mean: 26.072354048780223 msec\nrounds: 41"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4999204464095614,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012471718889821693",
+            "extra": "mean: 2.0003182650000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 36.646845853615666,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00030884525932248116",
+            "extra": "mean: 27.287478000001947 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14763270406007548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09498431062909929",
+            "extra": "mean: 6.773566916400005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.893160508322727,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004256417692950139",
+            "extra": "mean: 345.64276579999955 msec\nrounds: 5"
           }
         ]
       }
