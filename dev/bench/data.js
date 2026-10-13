@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791880380372,
+  "lastUpdate": 1791883012158,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -116759,6 +116759,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004256417692950139",
             "extra": "mean: 345.64276579999955 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74776275+usmanmateen@users.noreply.github.com",
+            "name": "Muhammad Usman Mateen",
+            "username": "usmanmateen"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "42c5f114b88f54e1baf338d36e4889d6f71fe746",
+          "message": "BUG: Read an indirect page box on a writer page (#4179)\n\nPages of a PdfWriter have no pdf, so _get_rectangle raised\n\"AttributeError: 'NoneType' object has no attribute 'get_object'\" for\nmediabox, scale_by() and the other page boxes when the box was an\nindirect object, for example after writer.append(). Resolve the\nreference itself instead, as it knows its own document.\n\nCloses #4178.",
+          "timestamp": "2026-10-13T11:13:53+02:00",
+          "tree_id": "29f1f914118a6f40e4a7d7c02fa9649770cfe33b",
+          "url": "https://github.com/py-pdf/pypdf/commit/42c5f114b88f54e1baf338d36e4889d6f71fe746"
+        },
+        "date": 1791883002154,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.062977382369181,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008745163038634853",
+            "extra": "mean: 326.4797205999969 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.69998558191647,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0071739543055844785",
+            "extra": "mean: 44.0528914166638 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26831932316920415,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014903799559149548",
+            "extra": "mean: 3.726902662799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.224279593543372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005443792999039744",
+            "extra": "mean: 54.871853500002665 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07659076104531276,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04205036875984483",
+            "extra": "mean: 13.056405059200003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5188033650832231,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003784608593498218",
+            "extra": "mean: 658.4130789999961 msec\nrounds: 5"
           }
         ]
       }
