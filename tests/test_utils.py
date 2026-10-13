@@ -37,7 +37,7 @@ from pypdf._utils import (
 from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.generic import DictionaryObject, NameObject, TextStringObject
 
-from . import is_sublist
+from . import get_subprocess_environment, is_sublist
 
 
 @pytest.mark.parametrize(
@@ -443,7 +443,12 @@ warnings.simplefilter("always")
 foo(old_param=12)
     """)
 
-    result = subprocess.run([sys.executable, script], capture_output=True, text=True)  # noqa: S603
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, script],
+        capture_output=True,
+        text=True,
+        env=get_subprocess_environment(),
+    )
     assert result.returncode == 0
     assert result.stderr == (
         f"{script}:23: DeprecationWarning: old_param is deprecated as an argument. "

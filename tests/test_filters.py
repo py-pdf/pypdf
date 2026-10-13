@@ -45,7 +45,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import RESOURCE_ROOT, PILContext, get_data_from_url
+from . import RESOURCE_ROOT, PILContext, get_data_from_url, get_subprocess_environment
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
 from .utils import get_image_data
@@ -295,10 +295,8 @@ def test_issue_399():
 
 @pytest.mark.enable_socket
 def test_image_without_pillow(tmp_path):
-    env = os.environ.copy()
-    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
-
     name = "tika-914102.pdf"
+    _ = get_data_from_url(name=name)  # Ensure file is available.
     pdf_path = Path(__file__).parent / "pdf_cache" / name
     pdf_path_str = pdf_path.resolve().as_posix()
 
@@ -324,14 +322,10 @@ for page in reader.pages:
 """
     )
 
-    try:
-        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
-    except KeyError:
-        env["PYTHONPATH"] = "."
     result = subprocess.run(  # noqa: S603  # We have the control here.
         [sys.executable, source_file],
         capture_output=True,
-        env=env,
+        env=get_subprocess_environment(),
     )
     assert result.returncode == 0
     assert result.stdout == b""
