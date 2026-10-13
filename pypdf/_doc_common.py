@@ -969,9 +969,11 @@ class PdfDocCommon(ABC):
 
             # get the outline dictionary and named destinations
             if Core.OUTLINES in catalog:
-                lines = catalog[Core.OUTLINES].get_object()
+                lines = catalog[Core.OUTLINES]
 
-                if isinstance(lines, NullObject):
+                # A reference to an object which is missing or free in the xref table
+                # resolves to None.
+                if is_null_or_none(lines):
                     return outline
 
                 if not isinstance(lines, DictionaryObject):
