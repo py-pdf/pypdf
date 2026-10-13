@@ -1200,8 +1200,8 @@ def test_form_topname_with_and_without_acroform(caplog):
 _TOPNAME_CONTENT = b"BT /F1 12 Tf 20 100 Td (Example) Tj ET\n"
 
 
-def _form_topname_reader(font_id: int = 6, generation: int = 0, compressed: bool = False) -> PdfReader:
-    def stream(data: bytes, attributes: bytes = b"") -> bytes:
+def _make_form_topname_reader(font_id: int = 6, generation: int = 0, compressed: bool = False) -> PdfReader:
+    def make_stream(data: bytes, attributes: bytes = b"") -> bytes:
         return b"<< /Length %d " % len(data) + attributes + b" >>\nstream\n" + data + b"\nendstream"
 
     font_ref = f"{font_id} {generation} R".encode()
@@ -1221,12 +1221,12 @@ def _form_topname_reader(font_id: int = 6, generation: int = 0, compressed: bool
         7: (b"<< /Type /Annot /Subtype /Widget /FT /Tx /T (value) /V (example) /Rect [20 20 180 40] /P 4 0 R >>"),
         8: b"[7 0 R 9 0 R]",
         9: b"<< /Type /Annot /Subtype /Text /Rect [100 100 120 120] /Contents (note) /P 4 0 R >>",
-        10: stream(FlateDecode.encode(_TOPNAME_CONTENT), b"/Filter /FlateDecode"),
+        10: make_stream(FlateDecode.encode(_TOPNAME_CONTENT), b"/Filter /FlateDecode"),
     }
     if compressed:
         assert generation == 0
         header = f"{font_id} 0 ".encode()
-        objects[11] = stream(header + objects.pop(font_id), b"/Type /ObjStm /N 1 /First %d" % len(header))
+        objects[11] = make_stream(header + objects.pop(font_id), b"/Type /ObjStm /N 1 /First %d" % len(header))
     data = bytearray(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n")
     entries = {}
     for number, body in objects.items():
@@ -1243,7 +1243,7 @@ def _form_topname_reader(font_id: int = 6, generation: int = 0, compressed: bool
     for number, following in zip(free_ids, [*free_ids[1:], 0]):
         entries[number] = (0, following, 65535 if number == 0 else 0)
     xref = b"".join(struct.pack(">BIH", *entries[number]) for number in range(size))
-    data.extend(b"1 0 obj\n" + stream(xref, b"/Type /XRef /Root 2 0 R /Size %d /W [1 4 2]" % size) + b"\nendobj\n")
+    data.extend(b"1 0 obj\n" + make_stream(xref, b"/Type /XRef /Root 2 0 R /Size %d /W [1 4 2]" % size) + b"\nendobj\n")
     data.extend(f"startxref\n{xref_offset}\n%%EOF\n".encode())
     return PdfReader(BytesIO(data), strict=True)
 
@@ -1282,8 +1282,9 @@ def _assert_topname_resources(reader: PdfReader) -> None:
     ids=["unread-font", "unread-annots", "unread-content", "sparse", "nonzero-generation", "object-stream"],
 )
 def test_form_topname_preserves_unread_objects(priming, font_id, generation, compressed, caplog):
-    _assert_topname_resources(_form_topname_reader(font_id, generation, compressed))
-    reader = _form_topname_reader(font_id, generation, compressed)
+    """Repeated form grouping preserves unread resources and field ancestry through serialization."""
+    _assert_topname_resources(_make_form_topname_reader(font_id, generation, compressed))
+    reader = _make_form_topname_reader(font_id, generation, compressed)
     if priming == "fields":
         assert reader.get_fields()["value"]["/V"] == "example"
     elif priming == "annotations":
@@ -1322,7 +1323,8 @@ def test_form_topname_preserves_unread_objects(priming, font_id, generation, com
     ids=["missing-size", "underreported-size", "declared-range", "cached-object", "cached-nonzero-generation"],
 )
 def test_form_topname_allocation_bounds(compressed, size, cached_generation, expected_id):
-    reader = _form_topname_reader(42, 0 if compressed else 7, compressed)
+    """New parent IDs respect file bounds and cached allocations despite missing or underreported /Size."""
+    reader = _make_form_topname_reader(42, 0 if compressed else 7, compressed)
     # Alter parsed metadata separately from the valid PDF fixtures above.
     del reader.trailer["/Size"]
     if size is not None:
