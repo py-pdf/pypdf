@@ -2110,12 +2110,9 @@ class PageObject(DictionaryObject):
                 resources_dict = DictionaryObject()
             if self.pdf is not None and (font_resources := _get_font_resources(resources_dict)):
                 for font_name in font_resources:
-                    try:
-                        fonts[font_name] = Font.from_font_resource(
-                            cast(DictionaryObject, font_resources[font_name].get_object())
-                        )
-                    except (AttributeError, TypeError):
-                        pass
+                    font_object = font_resources[font_name].get_object()
+                    if isinstance(font_object, DictionaryObject):
+                        fonts[font_name] = Font.from_font_resource(font_object)
 
             parent = obj.get("/Parent", NullObject()).get_object()
             if not isinstance(parent, DictionaryObject):
@@ -2167,12 +2164,14 @@ class PageObject(DictionaryObject):
                 "utf-8"
             )
 
-        try:
-            content = ContentStream(self["/Contents"].get_object(), self.pdf, "bytes")
-        except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
+        contents = self.get("/Contents")
+        if contents is not None:
+            contents = contents.get_object()
+        if not isinstance(contents, (ArrayObject, StreamObject)):
+            # No content can be extracted (certainly an empty page).
             return ""
 
-        ops = iter(content.operations)
+        ops = iter(ContentStream(contents, self.pdf, "bytes").operations)
         bt_groups = _layout_mode.text_show_operations(
             ops, fonts, strip_rotated, debug_path
         )

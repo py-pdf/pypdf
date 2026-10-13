@@ -402,9 +402,13 @@ class Font:
     ) -> Font:
         from pypdf._codecs.core_font_metrics import CORE_FONT_METRICS  # noqa: PLC0415
 
-        # Can collect base_font, name and encoding directly from font resource
-        name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
-        sub_type = pdf_font_dict.get("/Subtype", "Unknown").removeprefix("/")
+        # Can collect base_font, name and encoding directly from font resource.
+        # A malformed resource may carry a non-string value here, so fall back
+        # to "Unknown" rather than failing on it.
+        base_font = pdf_font_dict.get("/BaseFont", "Unknown")
+        name = base_font.removeprefix("/") if isinstance(base_font, str) else "Unknown"
+        sub_type_value = pdf_font_dict.get("/Subtype", "Unknown")
+        sub_type = sub_type_value.removeprefix("/") if isinstance(sub_type_value, str) else "Unknown"
         encoding, character_map = get_encoding(pdf_font_dict)
         font_descriptor = None
         character_widths: dict[str, float] = {}

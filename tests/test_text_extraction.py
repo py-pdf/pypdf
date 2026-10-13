@@ -908,6 +908,12 @@ def test_page_object__layout_mode_fonts__cyclic(caplog) -> None:
         ("/Parent", NullObject(), ["/F1", "/F2", "/F3"], []),
         ("/Parent", NumberObject(1), ["/F1", "/F2", "/F3"], []),
     ],
+    ids=[
+        "resources-null",
+        "resources-not-a-dictionary",
+        "parent-null",
+        "parent-not-a-dictionary",
+    ],
 )
 def test_page_object__layout_mode_fonts__malformed_hierarchy(
     key, value, expected_font_names, expected_messages, caplog
@@ -925,20 +931,30 @@ def test_page_object__layout_mode_fonts__malformed_font_resource() -> None:
     page = writer.pages[0]
     page[NameObject("/Resources")] = DictionaryObject({
         NameObject("/Font"): DictionaryObject({
+            # Valid dictionary, but with a non-string /BaseFont.
             NameObject("/F1"): DictionaryObject({
                 NameObject("/Type"): NameObject("/Font"),
                 NameObject("/Subtype"): NameObject("/Type1"),
                 NameObject("/BaseFont"): NullObject(),
             }),
+            # Font resource that is not a dictionary at all.
             NameObject("/F2"): NumberObject(1),
         })
     })
 
-    assert page._layout_mode_fonts() == {}
-    assert page.extract_text(extraction_mode="layout") == ""
+    fonts = page._layout_mode_fonts()
+    # The non-dictionary entry is skipped; the one with a missing name falls
+    # back to "Unknown" so extraction keeps going rather than aborting.
+    assert list(fonts) == ["/F1"]
+    assert fonts["/F1"].name == "Unknown"
+    assert "Crazy Ones" in page.extract_text(extraction_mode="layout")
 
 
-@pytest.mark.parametrize("value", [NullObject(), NumberObject(1)])
+@pytest.mark.parametrize(
+    "value",
+    [NullObject(), NumberObject(1)],
+    ids=["contents-null", "contents-not-a-stream"],
+)
 def test_page_object__layout_mode_text__malformed_contents(value) -> None:
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     page = writer.pages[0]
