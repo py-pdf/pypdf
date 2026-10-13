@@ -30,7 +30,7 @@ import stringprep
 import struct
 import unicodedata
 from enum import Enum, IntEnum
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union
 
 from pypdf._crypt_providers import (
     CryptAES,
@@ -46,11 +46,14 @@ from pypdf._crypt_providers import (
 )
 
 from ._utils import logger_warning
+from .errors import PdfReadError
 from .generic import (
     ArrayObject,
+    BooleanObject,
     ByteStringObject,
     DictionaryObject,
     NameObject,
+    NullObject,
     NumberObject,
     PdfObject,
     StreamObject,
@@ -868,6 +871,44 @@ class EncryptionValues:
     Perms: bytes
 
 
+def _get_name_entry(dictionary: DictionaryObject, key: str, default: str) -> str:
+    value = dictionary.get(key, NullObject()).get_object()
+    if isinstance(value, NullObject):
+        return default
+    if not isinstance(value, str):
+        raise PdfReadError(f"{key} entry of the encryption dictionary is not a name")
+    return value
+
+
+def _get_int_entry(dictionary: DictionaryObject, key: str, default: Optional[int] = None) -> int:
+    value = dictionary.get(key, NullObject()).get_object()
+    if isinstance(value, NullObject):
+        if default is None:
+            raise PdfReadError(f"{key} entry of the encryption dictionary is missing")
+        return default
+    if not isinstance(value, (int, float)):
+        raise PdfReadError(f"{key} entry of the encryption dictionary is not a number")
+    return int(value)
+
+
+def _get_string_entry_bytes(dictionary: DictionaryObject, key: str, required: bool = False) -> bytes:
+    value = dictionary.get(key, NullObject()).get_object()
+    if isinstance(value, NullObject):
+        if required:
+            raise PdfReadError(f"{key} entry of the encryption dictionary is missing")
+        return b""
+    if not isinstance(value, (ByteStringObject, TextStringObject)):
+        raise PdfReadError(f"{key} entry of the encryption dictionary is not a string")
+    return value.original_bytes
+
+
+def _get_crypt_filter(filters: DictionaryObject, name: str) -> DictionaryObject:
+    crypt_filter = filters.get(name, NullObject()).get_object()
+    if not isinstance(crypt_filter, DictionaryObject):
+        raise PdfReadError(f"Crypt filter {name} is missing from /CF or not a dictionary")
+    return crypt_filter
+
+
 class Encryption:
     """
     Collects and manages parameters for PDF document encryption and decryption.
@@ -1224,19 +1265,25 @@ class Encryption:
         alg_ver = encryption_entry.get("/V", 0)
         if alg_ver not in (1, 2, 3, 4, 5):
             raise NotImplementedError(f"Encryption V={alg_ver} NOT supported")
+        stm_crypt_filter: Optional[DictionaryObject] = None
         if alg_ver >= 4:
-            filters = encryption_entry["/CF"]
+            # /CF is only needed to look up named crypt filters;
+            # /StmF, /StrF and /EFF default to /Identity.
+            filters = encryption_entry.get("/CF", DictionaryObject()).get_object()
+            if not isinstance(filters, DictionaryObject):
+                raise PdfReadError("/CF entry of the encryption dictionary is not a dictionary")
 
-            stm_filter = encryption_entry.get("/StmF", "/Identity")
-            str_filter = encryption_entry.get("/StrF", "/Identity")
-            ef_filter = encryption_entry.get("/EFF", stm_filter)
+            stm_filter = _get_name_entry(encryption_entry, "/StmF", "/Identity")
+            str_filter = _get_name_entry(encryption_entry, "/StrF", "/Identity")
+            ef_filter = _get_name_entry(encryption_entry, "/EFF", stm_filter)
 
             if stm_filter != "/Identity":
-                stm_filter = filters[stm_filter]["/CFM"]  # type: ignore[index]
+                stm_crypt_filter = _get_crypt_filter(filters, stm_filter)
+                stm_filter = _get_name_entry(stm_crypt_filter, "/CFM", "/None")
             if str_filter != "/Identity":
-                str_filter = filters[str_filter]["/CFM"]  # type: ignore[index]
+                str_filter = _get_name_entry(_get_crypt_filter(filters, str_filter), "/CFM", "/None")
             if ef_filter != "/Identity":
-                ef_filter = filters[ef_filter]["/CFM"]  # type: ignore[index]
+                ef_filter = _get_name_entry(_get_crypt_filter(filters, ef_filter), "/CFM", "/None")
 
             allowed_methods = ("/Identity", "/V2", "/AESV2", "/AESV3")
             if stm_filter not in allowed_methods:
@@ -1246,23 +1293,28 @@ class Encryption:
             if ef_filter not in allowed_methods:
                 raise NotImplementedError(f"EFF Method {ef_filter} NOT supported!")
 
-        alg_rev = cast(int, encryption_entry["/R"])
-        perm_flags = cast(int, encryption_entry["/P"])
-        key_bits = encryption_entry.get("/Length", 40)
-        if alg_ver == 4 and stm_filter == "/AESV2":
-            cf_dict = cast(DictionaryObject, filters[encryption_entry["/StmF"]])  # type: ignore[index]
+        alg_rev = _get_int_entry(encryption_entry, "/R")
+        perm_flags = _get_int_entry(encryption_entry, "/P")
+        key_bits = _get_int_entry(encryption_entry, "/Length", 40)
+        if alg_ver == 4 and stm_filter == "/AESV2" and stm_crypt_filter is not None:
             # CF /Length is in bytes (default 16 for AES-128), convert to bits
-            key_bits = cast(int, cf_dict.get("/Length", 16)) * 8
-        encrypt_metadata = encryption_entry.get("/EncryptMetadata")
-        encrypt_metadata = (
-            encrypt_metadata.value if encrypt_metadata is not None else True
-        )
+            key_bits = _get_int_entry(stm_crypt_filter, "/Length", 16) * 8
+        encrypt_metadata = encryption_entry.get("/EncryptMetadata", NullObject()).get_object()
+        if isinstance(encrypt_metadata, BooleanObject):
+            encrypt_metadata = encrypt_metadata.value
+        else:
+            if not isinstance(encrypt_metadata, NullObject):
+                logger_warning(
+                    "Ignoring non-boolean /EncryptMetadata entry of the encryption dictionary",
+                    source=__name__,
+                )
+            encrypt_metadata = True
         values = EncryptionValues()
-        values.O = cast(ByteStringObject, encryption_entry["/O"]).original_bytes
-        values.U = cast(ByteStringObject, encryption_entry["/U"]).original_bytes
-        values.OE = encryption_entry.get("/OE", ByteStringObject()).original_bytes
-        values.UE = encryption_entry.get("/UE", ByteStringObject()).original_bytes
-        values.Perms = encryption_entry.get("/Perms", ByteStringObject()).original_bytes
+        values.O = _get_string_entry_bytes(encryption_entry, "/O", required=True)
+        values.U = _get_string_entry_bytes(encryption_entry, "/U", required=True)
+        values.OE = _get_string_entry_bytes(encryption_entry, "/OE")
+        values.UE = _get_string_entry_bytes(encryption_entry, "/UE")
+        values.Perms = _get_string_entry_bytes(encryption_entry, "/Perms")
         return Encryption(
             V=alg_ver,
             R=alg_rev,
