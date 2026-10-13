@@ -113,7 +113,7 @@ def test_skip_over_comment(stream, remainder):
 @pytest.mark.parametrize("newline", [b"\n", b"\r", b"\r\n"])
 @pytest.mark.parametrize("limit", [None, 0, 1, 2])
 @pytest.mark.parametrize("count", [0, 1, 2, 3])
-def test_skip_over_comments_limit(count, limit, newline):
+def test_skip_over_comments__limit(count, limit, newline):
     comment = b"% comment" + newline + b" \t\x00\f"
     stream = io.BytesIO(b"prefix" + comment * count + b"42 tail")
     stream.seek(len(b"prefix"))
@@ -131,14 +131,14 @@ def test_skip_over_comments_limit(count, limit, newline):
         assert stream.read() == b"42 tail"
 
 
-def test_skip_over_comments_no_limit():
+def test_skip_over_comments__no_limit():
     stream = io.BytesIO(b"% comment\n" * 2000 + b"42 tail")
     skip_over_comments(stream)
     assert stream.read() == b"42 tail"
 
 
 @pytest.mark.parametrize("data", [b"", b" ", b" \t% comment\n42", b"42"])
-def test_skip_over_comments_no_comment(data):
+def test_skip_over_comments__no_comment(data):
     stream = io.BytesIO(b"prefix" + data)
     stream.seek(len(b"prefix"))
     skip_over_comments(stream)
@@ -147,20 +147,20 @@ def test_skip_over_comments_no_comment(data):
 
 
 @pytest.mark.parametrize("data", [b"% comment", b"% first\n% comment"])
-def test_skip_over_comments_truncated(data):
+def test_skip_over_comments__truncated(data):
     with pytest.raises(expected_exception=PdfStreamError, match=r"^File ended unexpectedly\.$"):
         skip_over_comments(io.BytesIO(data))
 
 
 @pytest.mark.parametrize("data", [b"% comment\n", b"% comment\r", b"% comment\r\n \t"])
-def test_skip_over_comments_without_object(data):
+def test_skip_over_comments__without_object(data):
     stream = io.BytesIO(data)
     skip_over_comments(stream)
     assert stream.tell() == len(data) - 1
     assert stream.read() == data[-1:]
 
 
-def test_skip_over_comments_limit_before_scanning():
+def test_skip_over_comments__limit_before_scanning():
     prefix = b"% comment\n"
     stream = io.BytesIO(prefix + b"%" + b"x" * 100_000)
     with pytest.raises(
@@ -171,7 +171,7 @@ def test_skip_over_comments_limit_before_scanning():
     assert stream.tell() == len(prefix)
 
 
-def test_skip_over_comment_only_skips_one():
+def test_skip_over_comment__only_skips_one():
     stream = io.BytesIO(b"% first\r\n \t% second\n42")
     skip_over_comment(stream)
     assert stream.read() == b"\n \t% second\n42"
