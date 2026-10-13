@@ -224,7 +224,6 @@ max-complexity = 30  # Recommended: 10
 "types.py" = ["A005"]  # Module shadows a Python standard-library module
 "pypdf/_text_extraction/__init__.py" = ["PLW0603"]  # Using the global statement to update is discouraged
 "docs/conf.py" = ["INP001", "PTH100"]
-"json_consistency.py" = ["T201"]
 "make_release.py" = ["S603", "S607", "T201"]
 "pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff
 "tests/*" = ["ANN001", "ANN201", "B017", "B018", "D103", "D104", "S105", "S106"]
