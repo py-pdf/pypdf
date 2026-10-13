@@ -31,10 +31,20 @@ people. That means:
 Before you make bigger changes, open an issue to make the suggestion.
 Note which interface changes you want to make.
 
+Be careful with changes for issues which have no tags assigned - this usually
+means that the maintainers did not yet have a look at it and thus the issue
+might receive further refinement.
+
+In general, there is no need to ask for permission to work on an issue, unless
+there is an open PR for it already which seems to have stalled. For issues tagged
+as **is-feature** or **needs-discussion**, you should outline your intended
+solution in the issue beforehand, as this usually means that some aspects are
+not yet fully defined.
+
 After applying changes requested by a review, consider re-requesting a review to
 indicate to the maintainers that they can have another look. For specific review
-comments, please prefer answering them in the specific thread instead of the main
-PR thread to keep references clear.
+comments, please answer them in the specific thread instead of the main PR thread
+to keep references clear.
 
 ## AI Policy
 
@@ -57,4 +67,5 @@ over direct code rewrites.
 
 Make sure to align the changes with the existing coding style and implementation
 approaches. Additionally, **clearly indicate in your pull request when you used AI
-and include the corresponding tool and model.**
+and include the corresponding tool and model.** Consider setting `Co-authored-by:`
+accordingly as well.
