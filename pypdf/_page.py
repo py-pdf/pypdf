@@ -131,7 +131,7 @@ def _get_font_resources(resources: Any) -> DictionaryObject:
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: Union[RectangleObject, ArrayObject, IndirectObject, None] = self.get(name)
+    retval: Optional[PdfObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
@@ -140,7 +140,8 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
             if retval is not None:
                 break
     if isinstance(retval, IndirectObject):
-        retval = self.pdf.get_object(retval)
+        # Pages of a writer have no `pdf`, the reference knows its own document.
+        retval = retval.get_object()
     if not isinstance(retval, ArrayObject):
         raise ValueError(f"Expected an array of four values for {name}, got {retval}")
     if (length := len(retval)) != 4:
@@ -1946,7 +1947,8 @@ class PageObject(DictionaryObject):
                 _confirm_space_width = extractor._space_width * 0.95
                 if operands and isinstance(operands[0], ArrayObject):
                     for op in operands[0]:
-                        if isinstance(op, (str, bytes)):
+                        # A name is a str too, but not text to show
+                        if isinstance(op, (str, bytes)) and not isinstance(op, NameObject):
                             extractor.process_operation(b"Tj", [op])
                         if isinstance(op, (int, float, NumberObject, FloatObject)) and (
                             abs(float(op)) >= _confirm_space_width
@@ -2101,16 +2103,24 @@ class PageObject(DictionaryObject):
                 break
             visited.add(obj_id)
 
-            resources_dict: Any = obj.get(PG.RESOURCES, {})
+            resources_dict: Any = obj.get(PG.RESOURCES, DictionaryObject()).get_object()
+            if not isinstance(resources_dict, DictionaryObject):
+                logger_warning(
+                    "Page resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources_dict,
+                )
+                resources_dict = DictionaryObject()
             if self.pdf is not None and (font_resources := _get_font_resources(resources_dict)):
                 for font_name in font_resources:
-                    fonts[font_name] = Font.from_font_resource(
-                        cast(DictionaryObject, font_resources[font_name].get_object())
-                    )
+                    font_object = font_resources[font_name].get_object()
+                    if isinstance(font_object, DictionaryObject):
+                        fonts[font_name] = Font.from_font_resource(font_object)
 
-            if "/Parent" not in obj:
+            parent = obj.get("/Parent", NullObject()).get_object()
+            if not isinstance(parent, DictionaryObject):
                 break
-            obj = obj["/Parent"].get_object()
+            obj = parent
 
         return fonts
 
@@ -2157,9 +2167,14 @@ class PageObject(DictionaryObject):
                 "utf-8"
             )
 
-        ops = iter(
-            ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations
-        )
+        contents = self.get("/Contents")
+        if contents is not None:
+            contents = contents.get_object()
+        if not isinstance(contents, (ArrayObject, StreamObject)):
+            # No content can be extracted (certainly an empty page).
+            return ""
+
+        ops = iter(ContentStream(contents, self.pdf, "bytes").operations)
         bt_groups = _layout_mode.text_show_operations(
             ops, fonts, strip_rotated, debug_path
         )

@@ -24,7 +24,9 @@ Additional aspects to consider:
   which includes some information about possibly invalid reports.
 * Respect our [AI policy](https://github.com/py-pdf/pypdf/blob/main/CONTRIBUTING.md#ai-policy).
 * Reported issues we are unable to reproduce due to an invalid or missing proof-of-concept might be closed directly.
+* Recommendations regarding possible fixes are highly appreciated.
 * If you propose to add limits, please tell us which you would propose and why.
 * If you provide a fix, please make sure it is self-explanatory and can actually be executed.
+* Please remain available for further requests from our side.
 * Issues related to vulnerable OS or third-party libraries, as well as improper library usage
   from our users, are usually not considered security issues on our side.

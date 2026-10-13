@@ -1,7 +1,6 @@
 """Test the pypdf._page module."""
 import json
 import math
-import os
 import re
 import shutil
 import subprocess
@@ -34,7 +33,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, normalize_warnings
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, get_subprocess_environment, normalize_warnings
 from .test_images import image_similarity
 from .utils import extract_cell_text, extract_table, extract_text_and_rectangles
 
@@ -899,7 +898,7 @@ def test_empty_password_1088():
     len(reader.pages)
 
 
-@pytest.mark.enable_socket
+@pytest.mark.samples
 def test_old_habibi():
     # this habibi has multiple characters associated with the h
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
@@ -1612,9 +1611,6 @@ def test_merge_page__coverage():
 
 @pytest.mark.enable_socket
 def test_importing_without_pillow(tmp_path):
-    env = os.environ.copy()
-    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
-
     source_file = tmp_path / "script.py"
     source_file.write_text(
         """
@@ -1628,14 +1624,10 @@ print(pil_not_imported)
 """
     )
 
-    try:
-        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
-    except KeyError:
-        env["PYTHONPATH"] = "."
     result = subprocess.run(  # noqa: S603  # We have the control here.
         [sys.executable, source_file],
         capture_output=True,
-        env=env,
+        env=get_subprocess_environment(),
     )
     assert result.returncode == 0
     assert result.stdout.replace(b"\r\n", b"\n") == b"True\n"
@@ -1685,6 +1677,24 @@ def test_get_rectangle__value_is_not_an_array(value, expected):
         ValueError, match=f"Expected an array of four values for /MediaBox, {expected}"
     ):
         _ = PdfReader(stream).pages[0].mediabox
+
+
+def test_get_rectangle__indirect_box_on_a_writer_page():
+    """An indirect page box on a writer page can be read and scaled."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=100, height=200)
+    page[NameObject("/MediaBox")] = writer._add_object(RectangleObject([0, 0, 100, 200]))
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(stream))
+    page = writer.pages[0]
+    assert page.mediabox == RectangleObject([0, 0, 100, 200])
+
+    page.scale_by(0.5)
+    assert page.mediabox == RectangleObject([0, 0, 50, 100])
 
 
 @pytest.mark.parametrize(

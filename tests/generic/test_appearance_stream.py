@@ -1,5 +1,4 @@
 """Test the pypdf.generic._appearance_stream module."""
-import os
 import re
 import subprocess
 import sys
@@ -31,7 +30,7 @@ from pypdf.generic._appearance_stream import (
 from pypdf.generic._color import Color, DeviceCMYK, DeviceGray, DeviceRGB
 from pypdf.generic._font import HAS_FONTTOOLS, Font
 
-from .. import RESOURCE_ROOT
+from .. import RESOURCE_ROOT, get_subprocess_environment
 
 
 def test_comb() -> None:
@@ -205,9 +204,6 @@ def test_appearance_stream_rtl() -> None:
 
 @pytest.mark.parametrize("module", ["arabic_reshaper", "bidi"])
 def test_appearance_stream__no_rtl_support(module: str, tmp_path: Path) -> None:
-    env = os.environ.copy()
-    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
-
     source_file = tmp_path / "script.py"
     source_file.write_text(
         f"""
@@ -223,14 +219,10 @@ assert HAS_RTL_SUPPORT is False
 """
     )
 
-    try:
-        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
-    except KeyError:
-        env["PYTHONPATH"] = "."
     result = subprocess.run(  # noqa: S603
         [sys.executable, source_file],
         capture_output=True,
-        env=env,
+        env=get_subprocess_environment(),
     )
     assert result.returncode == 0
     assert result.stdout == b""

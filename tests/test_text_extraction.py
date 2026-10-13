@@ -11,6 +11,7 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration, mult
+from pypdf._page import PageObject
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import (
     BTGroup,
@@ -27,6 +28,7 @@ from pypdf.generic import (
     DecodedStreamObject,
     DictionaryObject,
     NameObject,
+    NullObject,
     NumberObject,
     RectangleObject,
     StreamObject,
@@ -634,10 +636,25 @@ def test_tj_operator_without_a_string_is_skipped() -> None:
     assert page.extract_text(extraction_mode="layout") == "HelloWorld"
 
 
+@pytest.mark.parametrize("item", [b"/X", b"[(x)]", b"<</A 1>>"])
+def test_tj_array_item_that_is_neither_a_string_nor_a_number_is_skipped(item: bytes) -> None:
+    """A TJ array item that is neither a string nor a number is skipped and the text around it is kept."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf [(Hello) " + item + b" (World)] TJ ET")).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
 def test_layout_mode_text_with_zero_font_size() -> None:
     """Text drawn with a font size of 0 is extracted in layout mode instead of dividing by a zero width."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 0 Tf (Hello) Tj ET")).pages[0]
     assert page.extract_text(extraction_mode="layout") == "Hello"
+
+
+@pytest.mark.parametrize("operator", [b"/X 5 Td", b"/X TL", b"/X Tz", b"/X Tw"])
+def test_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
+    """A text operator whose operand is not a number is treated as having none, and the text is kept."""
+    content = b"BT /F1 12 Tf (Hello) Tj " + operator + b" (World) Tj ET"
+    assert PdfReader(_page_with_helvetica(content)).pages[0].extract_text() == "HelloWorld"
 
 
 def test_process_operation__cm_multiplication_issue():
@@ -916,6 +933,75 @@ def test_page_object__layout_mode_fonts__cyclic(caplog) -> None:
 
     assert page._layout_mode_fonts() == fonts
     assert caplog.messages == ["Detected cycle in /Parent hierarchy when retrieving fonts."]
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "expected_font_names", "expected_messages"),
+    [
+        ("/Resources", NullObject(), [], ["Page resources are not a dictionary: NullObject"]),
+        ("/Resources", NumberObject(1), [], ["Page resources are not a dictionary: 1"]),
+        ("/Parent", NullObject(), ["/F1", "/F2", "/F3"], []),
+        ("/Parent", NumberObject(1), ["/F1", "/F2", "/F3"], []),
+    ],
+    ids=[
+        "resources-null",
+        "resources-not-a-dictionary",
+        "parent-null",
+        "parent-not-a-dictionary",
+    ],
+)
+def test_page_object__layout_mode_fonts__malformed_hierarchy(
+    key, value, expected_font_names, expected_messages, caplog
+) -> None:
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    page[NameObject(key)] = value
+
+    assert list(page._layout_mode_fonts()) == expected_font_names
+    assert caplog.messages == expected_messages
+
+
+def test_page_object__layout_mode_fonts__malformed_font_resource() -> None:
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            # Valid dictionary, but with a non-string /BaseFont.
+            NameObject("/F1"): DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/BaseFont"): NullObject(),
+            }),
+            # Font resource that is not a dictionary at all.
+            NameObject("/F2"): NumberObject(1),
+        })
+    })
+
+    fonts = page._layout_mode_fonts()
+    # The non-dictionary entry is skipped; the one with a missing name falls
+    # back to "Unknown" so extraction keeps going rather than aborting.
+    assert list(fonts) == ["/F1"]
+    assert fonts["/F1"].name == "Unknown"
+    assert "Crazy Ones" in page.extract_text(extraction_mode="layout")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [NullObject(), NumberObject(1)],
+    ids=["contents-null", "contents-not-a-stream"],
+)
+def test_page_object__layout_mode_text__malformed_contents(value) -> None:
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    page[NameObject("/Contents")] = value
+
+    assert page.extract_text(extraction_mode="layout") == page.extract_text() == ""
+
+
+def test_page_object__layout_mode_text__without_contents() -> None:
+    page = PageObject.create_blank_page(width=10, height=10)
+
+    assert page.extract_text(extraction_mode="layout") == page.extract_text() == ""
 
 
 def _generate_dag_with_forms(depth: int) -> bytes:

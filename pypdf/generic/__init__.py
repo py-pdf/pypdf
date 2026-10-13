@@ -69,7 +69,7 @@ from ._utils import (
 )
 from ._viewerpref import ViewerPreferences
 
-PAGE_FIT = Fit.fit()
+PAGE_FIT: Fit = Fit.fit()
 
 
 __all__ = [
