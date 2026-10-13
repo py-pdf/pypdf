@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791900261928,
+  "lastUpdate": 1791905728374,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -117353,6 +117353,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0028504394417384264",
             "extra": "mean: 662.0726097999977 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9320408086bb6a51e42460e8ae4f2515e10236a2",
+          "message": "DEV: Fix type hint for latest mypy\n\npypdf/_writer.py:1856: error: Cannot determine type of \"PAGE_FIT\"  [has-type]",
+          "timestamp": "2026-10-13T17:33:36+02:00",
+          "tree_id": "b54e28a98936fa6e47cad784707419734d3bdd62",
+          "url": "https://github.com/py-pdf/pypdf/commit/9320408086bb6a51e42460e8ae4f2515e10236a2"
+        },
+        "date": 1791905720570,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.805600169200735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010841965426084876",
+            "extra": "mean: 172.2474801666666 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 37.87207412294232,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005486857824568084",
+            "extra": "mean: 26.404680048780726 msec\nrounds: 41"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.47597306039999343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02588712746281199",
+            "extra": "mean: 2.1009592415999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 34.94970241844486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00027201687758896914",
+            "extra": "mean: 28.612546911765566 msec\nrounds: 34"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14944864901212848,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03133960536071431",
+            "extra": "mean: 6.691261557799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.871964450249629,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004806989328043371",
+            "extra": "mean: 348.19372500000156 msec\nrounds: 5"
           }
         ]
       }
