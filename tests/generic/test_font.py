@@ -1,7 +1,6 @@
 """Test font-related functionality."""
 from __future__ import annotations
 
-import os
 import re
 import subprocess
 import sys
@@ -33,7 +32,7 @@ from pypdf.generic import (
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 from pypdf.generic._font import Font, FontDescriptor
 
-from .. import RESOURCE_ROOT
+from .. import RESOURCE_ROOT, get_subprocess_environment
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -309,9 +308,6 @@ def test_font_as_font_resource() -> None:
 
 
 def test_font_from_font_file_no_fonttools(tmp_path: Path) -> None:
-    env = os.environ.copy()
-    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
-
     source_file = tmp_path / "script.py"
     source_file.write_text(
         """
@@ -328,14 +324,10 @@ with pytest.raises(ImportError, match=r"^The 'fontTools' library is required to 
 """
     )
 
-    try:
-        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
-    except KeyError:
-        env["PYTHONPATH"] = "."
     result = subprocess.run(  # noqa: S603
         [sys.executable, source_file],
         capture_output=True,
-        env=env,
+        env=get_subprocess_environment(),
     )
     assert result.returncode == 0
     assert result.stdout == b""

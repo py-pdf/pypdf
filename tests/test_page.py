@@ -1,7 +1,6 @@
 """Test the pypdf._page module."""
 import json
 import math
-import os
 import re
 import shutil
 import subprocess
@@ -34,7 +33,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, normalize_warnings
+from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, get_subprocess_environment, normalize_warnings
 from .test_images import image_similarity
 from .utils import extract_cell_text, extract_table, extract_text_and_rectangles
 
@@ -899,7 +898,7 @@ def test_empty_password_1088():
     len(reader.pages)
 
 
-@pytest.mark.enable_socket
+@pytest.mark.samples
 def test_old_habibi():
     # this habibi has multiple characters associated with the h
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
@@ -1612,9 +1611,6 @@ def test_merge_page__coverage():
 
 @pytest.mark.enable_socket
 def test_importing_without_pillow(tmp_path):
-    env = os.environ.copy()
-    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
-
     source_file = tmp_path / "script.py"
     source_file.write_text(
         """
@@ -1628,14 +1624,10 @@ print(pil_not_imported)
 """
     )
 
-    try:
-        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
-    except KeyError:
-        env["PYTHONPATH"] = "."
     result = subprocess.run(  # noqa: S603  # We have the control here.
         [sys.executable, source_file],
         capture_output=True,
-        env=env,
+        env=get_subprocess_environment(),
     )
     assert result.returncode == 0
     assert result.stdout.replace(b"\r\n", b"\n") == b"True\n"
