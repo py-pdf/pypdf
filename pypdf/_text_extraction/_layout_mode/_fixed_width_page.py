@@ -219,15 +219,20 @@ def recurse_to_target_op(
                 else:
                     text_state_mgr.add_trm(_tj.displacement_matrix(td_offset=tj_op))
         elif op == b"'":
+            # Move to the next line, then show the string if there is one, like Tj
             text_state_mgr.reset_trm()
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            tj_ops.append(text_state_mgr.text_state_params(operands[0]))
-        elif op == b'"':
+            tj_ops.extend(
+                text_state_mgr.text_state_params(text) for text in operands[:1] if isinstance(text, (str, bytes))
+            )
+        elif op == b'"' and len(operands) >= 3:
             text_state_mgr.reset_trm()
             text_state_mgr.set_state_param(b"Tw", operands[0])
             text_state_mgr.set_state_param(b"Tc", operands[1])
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            tj_ops.append(text_state_mgr.text_state_params(operands[2]))
+            tj_ops.extend(
+                text_state_mgr.text_state_params(text) for text in operands[2:3] if isinstance(text, (str, bytes))
+            )
         elif op in (b"Td", b"Tm", b"TD", b"T*"):
             text_state_mgr.reset_trm()
             if op == b"Tm":
