@@ -266,7 +266,7 @@ class ArrayObject(list[Any], PdfObject):
         while True:
             # skip leading whitespace
             tok = stream.read(1)
-            while tok.isspace():
+            while tok.isspace() or tok in WHITESPACES:
                 tok = stream.read(1)
             if tok == b"":
                 break
