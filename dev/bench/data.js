@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791977851156,
+  "lastUpdate": 1791977968683,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -117683,6 +117683,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005254662797312575",
             "extra": "mean: 658.5270959999946 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pfay.us@gmail.com",
+            "name": "Patrick Fay",
+            "username": "tigger0jk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4a296e43c59fde5efeafc2d057581155d9558268",
+          "message": "BUG: Avoid overwriting unread objects in add_form_topname (#4190)\n\n* BUG: Avoid overwriting unread objects in add_form_topname\n\n* DOC: Clarify object ID allocation comment\n\n* TST: Clarify form topname helper names and test intent",
+          "timestamp": "2026-10-14T13:33:41+02:00",
+          "tree_id": "dca531059529ac39ff60dfa489d3ea5ad6f25a54",
+          "url": "https://github.com/py-pdf/pypdf/commit/4a296e43c59fde5efeafc2d057581155d9558268"
+        },
+        "date": 1791977958622,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8924281333711717,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010242452526751577",
+            "extra": "mean: 345.7302839999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.072516648893632,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002671932323248248",
+            "extra": "mean: 45.305209909089555 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2466852825198929,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12818365298971335",
+            "extra": "mean: 4.053748119000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.10750401594534,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001060858276836831",
+            "extra": "mean: 55.22572294444375 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07604989530117674,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0397577048154405",
+            "extra": "mean: 13.149262021200006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5029832425809173,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025137346897865984",
+            "extra": "mean: 665.3434128000015 msec\nrounds: 5"
           }
         ]
       }
