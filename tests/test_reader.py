@@ -1262,6 +1262,150 @@ def test_form_topname_with_and_without_acroform(caplog):
     assert "has a non-expected parent" in caplog.text
 
 
+_TOPNAME_CONTENT = b"BT /F1 12 Tf 20 100 Td (Example) Tj ET\n"
+
+
+def _make_form_topname_reader(font_id: int = 6, generation: int = 0, compressed: bool = False) -> PdfReader:
+    def make_stream(data: bytes, attributes: bytes = b"") -> bytes:
+        return b"<< /Length %d " % len(data) + attributes + b" >>\nstream\n" + data + b"\nendstream"
+
+    font_ref = f"{font_id} {generation} R".encode()
+    objects = {
+        2: b"<< /Type /Catalog /Pages 3 0 R /AcroForm 5 0 R >>",
+        3: b"<< /Type /Pages /Kids [4 0 R] /Count 1 >>",
+        4: (
+            b"<< /Type /Page /Parent 3 0 R /MediaBox [0 0 200 200] /Annots 8 0 R /Contents 10 0 R "
+            b"/Resources << /Font << /F1 " + font_ref + b" >> >> >>"
+        ),
+        5: (
+            b"<< /Fields [7 0 R] /DA (/F1 12 Tf 0 g) /NeedAppearances true /DR << /Font << /F1 "
+            + font_ref
+            + b" >> >> >>"
+        ),
+        font_id: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        7: (b"<< /Type /Annot /Subtype /Widget /FT /Tx /T (value) /V (example) /Rect [20 20 180 40] /P 4 0 R >>"),
+        8: b"[7 0 R 9 0 R]",
+        9: b"<< /Type /Annot /Subtype /Text /Rect [100 100 120 120] /Contents (note) /P 4 0 R >>",
+        10: make_stream(FlateDecode.encode(_TOPNAME_CONTENT), b"/Filter /FlateDecode"),
+    }
+    if compressed:
+        assert generation == 0
+        header = f"{font_id} 0 ".encode()
+        objects[11] = make_stream(header + objects.pop(font_id), b"/Type /ObjStm /N 1 /First %d" % len(header))
+    data = bytearray(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n")
+    entries = {}
+    for number, body in objects.items():
+        object_generation = generation if number == font_id else 0
+        entries[number] = (1, len(data), object_generation)
+        data.extend(f"{number} {object_generation} obj\n".encode() + body + b"\nendobj\n")
+    if compressed:
+        entries[font_id] = (2, 11, 0)
+    # A low-numbered xref stream leaves higher resource IDs unread after initialization.
+    xref_offset = len(data)
+    entries[1] = (1, xref_offset, 0)
+    size = max(entries) + 1
+    free_ids = [number for number in range(size) if number not in entries]
+    for number, following in zip(free_ids, [*free_ids[1:], 0]):
+        entries[number] = (0, following, 65535 if number == 0 else 0)
+    xref = b"".join(struct.pack(">BIH", *entries[number]) for number in range(size))
+    data.extend(b"1 0 obj\n" + make_stream(xref, b"/Type /XRef /Root 2 0 R /Size %d /W [1 4 2]" % size) + b"\nendobj\n")
+    data.extend(f"startxref\n{xref_offset}\n%%EOF\n".encode())
+    return PdfReader(BytesIO(data), strict=True)
+
+
+def _assert_topname_resources(reader: PdfReader) -> None:
+    page = reader.pages[0]
+    font = page["/Resources"]["/Font"]["/F1"]
+    assert font["/Type"] == "/Font"
+    assert font["/Subtype"] == "/Type1"
+    assert font["/BaseFont"] == "/Helvetica"
+    contents = page["/Contents"]
+    assert isinstance(contents, StreamObject)
+    assert contents._data == FlateDecode.encode(_TOPNAME_CONTENT)
+    assert contents.get_data() == _TOPNAME_CONTENT
+    annotations = page["/Annots"]
+    assert isinstance(annotations, ArrayObject)
+    assert len(annotations) == 2
+    field, note = (entry.get_object() for entry in annotations)
+    assert field["/T"] == "value"
+    assert field["/V"] == "example"
+    assert note["/Subtype"] == "/Text"
+    assert note["/Contents"] == "note"
+    assert field.raw_get("/P") == note.raw_get("/P") == page.indirect_reference
+
+
+@pytest.mark.parametrize(
+    ("priming", "font_id", "generation", "compressed"),
+    [
+        ("none", 6, 0, False),
+        ("fields", 6, 0, False),
+        ("annotations", 6, 0, False),
+        ("none", 42, 0, False),
+        ("none", 42, 7, False),
+        ("none", 12, 0, True),
+    ],
+    ids=["unread-font", "unread-annots", "unread-content", "sparse", "nonzero-generation", "object-stream"],
+)
+def test_form_topname_preserves_unread_objects(priming, font_id, generation, compressed, caplog):
+    """Repeated form grouping preserves unread resources and field ancestry through serialization."""
+    _assert_topname_resources(_make_form_topname_reader(font_id, generation, compressed))
+    reader = _make_form_topname_reader(font_id, generation, compressed)
+    if priming == "fields":
+        assert reader.get_fields()["value"]["/V"] == "example"
+    elif priming == "annotations":
+        for annotation in reader.pages[0]["/Annots"]:
+            annotation.get_object()
+    assert (generation, font_id) not in reader.resolved_objects
+    if compressed:
+        assert reader.xref_objStm == {font_id: (11, 0)}
+    source_size = reader.trailer["/Size"]
+    inner = reader.add_form_topname("inner")
+    cached_after = set(reader.resolved_objects)
+    _assert_topname_resources(reader)
+    assert (generation, font_id) not in cached_after
+    assert inner.indirect_reference.idnum == source_size
+    outer = reader.add_form_topname("outer")
+    assert outer.indirect_reference.idnum == source_size + 1
+    assert outer["/Kids"][0].get_object() is inner
+    assert inner["/Parent"] is outer
+    writer = PdfWriter()
+    writer.append(reader)
+    output = BytesIO()
+    writer.write(output)
+    for document in (reader, PdfReader(output, strict=True)):
+        _assert_topname_resources(document)
+        assert document.get_fields()["outer.inner.value"]["/V"] == "example"
+        field = document.pages[0]["/Annots"][0].get_object()
+        assert field["/Parent"]["/T"] == "inner"
+        assert field["/Parent"]["/Parent"]["/T"] == "outer"
+    assert not caplog.text
+
+
+@pytest.mark.parametrize("compressed", [False, True])
+@pytest.mark.parametrize(
+    ("size", "cached_generation", "expected_id"),
+    [(None, None, 43), (1, None, 43), (100, None, 100), (1, 0, 201), (1, 7, 201)],
+    ids=["missing-size", "underreported-size", "declared-range", "cached-object", "cached-nonzero-generation"],
+)
+def test_form_topname_allocation_bounds(compressed, size, cached_generation, expected_id):
+    """New parent IDs respect file bounds and cached allocations despite missing or underreported /Size."""
+    reader = _make_form_topname_reader(42, 0 if compressed else 7, compressed)
+    # Alter parsed metadata separately from the valid PDF fixtures above.
+    del reader.trailer["/Size"]
+    if size is not None:
+        reader.trailer[NameObject("/Size")] = NumberObject(size)
+    cached = DictionaryObject({NameObject("/Marker"): TextStringObject("example")})
+    if cached_generation is not None:
+        reader.cache_indirect_object(cached_generation, 200, cached)
+    parent = reader.add_form_topname("top")
+    assert parent.indirect_reference.idnum == expected_id
+    assert parent.indirect_reference.generation == 0
+    assert reader.get_object(parent.indirect_reference) is parent
+    if cached_generation is not None:
+        assert reader.get_object(cached.indirect_reference) is cached
+    _assert_topname_resources(reader)
+
+
 @pytest.mark.enable_socket
 def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf

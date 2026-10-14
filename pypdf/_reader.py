@@ -1610,11 +1610,14 @@ class PdfReader(PdfDocCommon):
         interim = DictionaryObject()
         interim[NameObject("/T")] = TextStringObject(name)
         interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
-        self.cache_indirect_object(
-            0,
-            max(i for (g, i) in self.resolved_objects if g == 0) + 1,
-            interim,
-        )
+        # Allocate the new object_id beyond the source-file range and all cached object IDs.
+        object_id = max(
+            cast(int, self.trailer.get("/Size", 0)) - 1,
+            max((i for entries in self.xref.values() for i in entries), default=0),
+            max(self.xref_objStm, default=0),
+            max((i for _, i in self.resolved_objects), default=0),
+        ) + 1
+        self.cache_indirect_object(0, object_id, interim)
         arr = ArrayObject()
         arr.append(interim.indirect_reference)
         acroform[NameObject("/Fields")] = arr
