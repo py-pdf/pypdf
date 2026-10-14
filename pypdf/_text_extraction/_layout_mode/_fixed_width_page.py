@@ -89,6 +89,14 @@ def bt_group(tj_op: TextStateParams, rendered_text: str, displaced_tx: float) ->
     )
 
 
+def _show_text_operand(
+    operands: list[Any], index: int, text_state_mgr: TextStateManager, tj_ops: list[TextStateParams]
+) -> None:
+    """Show the operand at index like Tj if it is a string. A missing or non-string operand shows no text."""
+    if index < len(operands) and isinstance(text := operands[index], (str, bytes)):
+        tj_ops.append(text_state_mgr.text_state_params(text))
+
+
 def recurse_to_target_op(
     ops: Iterator[tuple[list[Any], bytes]],
     text_state_mgr: TextStateManager,
@@ -222,17 +230,13 @@ def recurse_to_target_op(
             # Move to the next line, then show the string if there is one, like Tj
             text_state_mgr.reset_trm()
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            tj_ops.extend(
-                text_state_mgr.text_state_params(text) for text in operands[:1] if isinstance(text, (str, bytes))
-            )
+            _show_text_operand(operands, 0, text_state_mgr, tj_ops)
         elif op == b'"' and len(operands) >= 3:
             text_state_mgr.reset_trm()
             text_state_mgr.set_state_param(b"Tw", operands[0])
             text_state_mgr.set_state_param(b"Tc", operands[1])
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            tj_ops.extend(
-                text_state_mgr.text_state_params(text) for text in operands[2:3] if isinstance(text, (str, bytes))
-            )
+            _show_text_operand(operands, 2, text_state_mgr, tj_ops)
         elif op in (b"Td", b"Tm", b"TD", b"T*"):
             text_state_mgr.reset_trm()
             if op == b"Tm":
