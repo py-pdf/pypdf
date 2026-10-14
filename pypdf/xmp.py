@@ -130,7 +130,12 @@ def _converter_date(value: str) -> datetime.datetime:
     milliseconds = int(milliseconds_dec)
 
     tzd = matches.group("tzd") or "Z"
-    dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
+    try:
+        dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
+    except ValueError:
+        # The format matched but a field is out of range (e.g. 2024-02-31);
+        # give the same clear error as a format mismatch above.
+        raise ValueError(f"Invalid date format: {value}") from None
     if tzd != "Z":
         tzd_hours, tzd_minutes = (int(x) for x in tzd[1:].split(":"))
         offset = datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
