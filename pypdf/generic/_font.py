@@ -515,7 +515,6 @@ class Font:
                     table_name=table_name
                 )
                 return None
-            return table
         except Exception as exception:
             if is_critical:
                 raise PdfReadError(
@@ -528,6 +527,7 @@ class Font:
                 exception=exception
             )
             return None
+        return table
 
     @staticmethod
     def _get_font_flags_from_truetype_font_tables(

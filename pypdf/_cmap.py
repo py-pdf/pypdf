@@ -501,20 +501,20 @@ def _derive_character_map_from_cff_type1_font_file(
         cff_set.decompile(BytesIO(font_data), None)
         cff_font = cff_set.topDictIndex[0]
         cff_encoding = cff_font.Encoding
-        # Encoding can fall back to literal strings "StandardEncoding" or "ExpertEncoding", which we do not parse.
-        if isinstance(cff_encoding, str):
-            return map_dict, int_entry
-        for i in range(min(len(cff_encoding), 256)):
-            glyph_name = cff_encoding[i]
-            if not glyph_name or glyph_name == ".notdef":
-                continue
-            if unipoint := _glyph_name_to_unicode(f"/{glyph_name}"):
-                map_dict[chr(i)] = unipoint
-                int_entry.append(i)
-        return map_dict, int_entry
-
     except Exception:
         return map_dict, int_entry
+
+    # Encoding can fall back to literal strings "StandardEncoding" or "ExpertEncoding", which we do not parse.
+    if isinstance(cff_encoding, str):
+        return map_dict, int_entry
+    for i in range(min(len(cff_encoding), 256)):
+        glyph_name = cff_encoding[i]
+        if not glyph_name or glyph_name == ".notdef":
+            continue
+        if unipoint := _glyph_name_to_unicode(f"/{glyph_name}"):
+            map_dict[chr(i)] = unipoint
+            int_entry.append(i)
+    return map_dict, int_entry
 
 
 def _derive_character_map_from_type1_font_file(
