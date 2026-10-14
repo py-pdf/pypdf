@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791976417147,
+  "lastUpdate": 1791976419911,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -149101,6 +149101,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03882219116030645",
             "extra": "mean: 876.8894611999997 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b29ac76fcd890db1b2f1ba5f387241a776520b1b",
+          "message": "MAINT: Reduce Ruff maximum configuration values (#4194)\n\n\n\nValues reduced:\nMaximum number of branches allowed for a function or method body.\nMaximum number of return statements allowed for a function or method body.\nMaximum number of statements allowed for a function or method body.\n\nread_from_stream in pypdf/generic/_data_structures.py has 33 branches.\n_handle_font in resources/afm_to_dataclass.py has 33 branches.\n\n_load in pypdf/generic/_files.py has 9 return statements.\ncreate_string_object in pypdf/generic/_utils.py has 9 return statements.\n\nread_from_stream in pypdf/generic/_data_structures.py has 102 statements.",
+          "timestamp": "2026-10-14T13:10:34+02:00",
+          "tree_id": "1aea812088d581d1ab43621730d2fc3fc5310d09",
+          "url": "https://github.com/py-pdf/pypdf/commit/b29ac76fcd890db1b2f1ba5f387241a776520b1b"
+        },
+        "date": 1791976409218,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 17.621545327777845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01900022382734694",
+            "extra": "mean: 56.74871195454368 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 30.256101713994603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012568715567356885",
+            "extra": "mean: 33.051184499999934 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1805635425926218,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035467070749427745",
+            "extra": "mean: 847.053092799996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.49792825001303914,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022972249493991806",
+            "extra": "mean: 2.0083214800000064 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.45578386775153024,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014312129469756853",
+            "extra": "mean: 2.1940223661999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5240006275663873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0402275860698404",
+            "extra": "mean: 656.167708800001 msec\nrounds: 5"
           }
         ]
       }
