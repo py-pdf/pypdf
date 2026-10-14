@@ -1975,8 +1975,8 @@ class PdfWriter(PdfDocCommon):
         Args:
             title: Name of the destination.
             page_number: Index of the destination page, starting at zero.
-            fit: A :class:`~pypdf.generic.Fit` describing how the destination is
-                displayed. Defaults to fitting the page horizontally with its
+            fit: How the destination is displayed.
+                Defaults to fitting the page horizontally with its
                 top edge at the top of the window.
 
         Returns:

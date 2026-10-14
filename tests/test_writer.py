@@ -877,7 +877,10 @@ def test_add_named_destination(pdf_file_path):
         pytest.param([0, 100, 200, 500], 500, id="offset-origin"),
     ],
 )
-@pytest.mark.parametrize("kwargs", [{}, {"fit": None}])
+@pytest.mark.parametrize(
+    "kwargs",
+    [pytest.param({}, id="omitted-fit"), pytest.param({"fit": None}, id="none-fit")],
+)
 def test_add_named_destination__fit_h_uses_the_page_top(media_box, expected_top, kwargs):
     """The /FitH top must be the page's own top edge, whatever its size."""
     writer = PdfWriter()
@@ -894,20 +897,24 @@ def test_add_named_destination__fit_h_uses_the_page_top(media_box, expected_top,
 @pytest.mark.parametrize(
     ("fit", "expected"),
     [
-        (Fit.fit(), ["/Fit"]),
-        (Fit.xyz(left=10, top=20, zoom=1.5), ["/XYZ", 10, 20, 1.5]),
-        (Fit.xyz(), ["/XYZ", NullObject(), NullObject(), NullObject()]),
-        (Fit.xyz(left=0, top=None, zoom=0), ["/XYZ", 0, NullObject(), 0]),
-        (Fit.fit_horizontally(top=25), ["/FitH", 25]),
-        (Fit.fit_horizontally(), ["/FitH", NullObject()]),
-        (Fit.fit_vertically(left=30), ["/FitV", 30]),
-        (Fit.fit_vertically(), ["/FitV", NullObject()]),
-        (Fit.fit_rectangle(left=10, bottom=20, right=100, top=200), ["/FitR", 10, 20, 100, 200]),
-        (Fit.fit_box(), ["/FitB"]),
-        (Fit.fit_box_horizontally(top=40), ["/FitBH", 40]),
-        (Fit.fit_box_horizontally(), ["/FitBH", NullObject()]),
-        (Fit.fit_box_vertically(left=50), ["/FitBV", 50]),
-        (Fit.fit_box_vertically(), ["/FitBV", NullObject()]),
+        pytest.param(Fit.fit(), ["/Fit"], id="fit-page"),
+        pytest.param(Fit.xyz(left=10, top=20, zoom=1.5), ["/XYZ", 10, 20, 1.5], id="xyz-coordinates"),
+        pytest.param(Fit.xyz(), ["/XYZ", NullObject(), NullObject(), NullObject()], id="xyz-null"),
+        pytest.param(Fit.xyz(left=0, top=None, zoom=0), ["/XYZ", 0, NullObject(), 0], id="xyz-zero-and-null"),
+        pytest.param(Fit.fit_horizontally(top=25), ["/FitH", 25], id="fit-h-top"),
+        pytest.param(Fit.fit_horizontally(), ["/FitH", NullObject()], id="fit-h-null"),
+        pytest.param(Fit.fit_vertically(left=30), ["/FitV", 30], id="fit-v-left"),
+        pytest.param(Fit.fit_vertically(), ["/FitV", NullObject()], id="fit-v-null"),
+        pytest.param(
+            Fit.fit_rectangle(left=10, bottom=20, right=100, top=200),
+            ["/FitR", 10, 20, 100, 200],
+            id="fit-rectangle",
+        ),
+        pytest.param(Fit.fit_box(), ["/FitB"], id="fit-box"),
+        pytest.param(Fit.fit_box_horizontally(top=40), ["/FitBH", 40], id="fit-box-h-top"),
+        pytest.param(Fit.fit_box_horizontally(), ["/FitBH", NullObject()], id="fit-box-h-null"),
+        pytest.param(Fit.fit_box_vertically(left=50), ["/FitBV", 50], id="fit-box-v-left"),
+        pytest.param(Fit.fit_box_vertically(), ["/FitBV", NullObject()], id="fit-box-v-null"),
     ],
 )
 def test_add_named_destination_with_fit(fit, expected):
