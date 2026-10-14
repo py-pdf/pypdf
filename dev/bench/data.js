@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791909667804,
+  "lastUpdate": 1791975849465,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -117551,6 +117551,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002720128015576245",
             "extra": "mean: 658.9860671999986 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "75d8003c14de900f6317ef4a2b57f372794c481d",
+          "message": "MAINT: Fix type alias (#4193)\n\n* MAINT: Move an ignored Ruff rule\n\nPYI042 checks for type aliases that do not use the CamelCase naming\nconvention.\nThe rule is only triggered by one file, so only ignore this file.\n\n* MAINT: Use CamelCase for type aliases\n\nRuff rule PYI042 checks for type aliases that do not use the CamelCase\nnaming convention. Ignoring this rule is also removed.",
+          "timestamp": "2026-10-14T13:01:00+02:00",
+          "tree_id": "0b024834908ea2f142763a66062c417069c11144",
+          "url": "https://github.com/py-pdf/pypdf/commit/75d8003c14de900f6317ef4a2b57f372794c481d"
+        },
+        "date": 1791975838130,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.950716257749617,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008492430741694897",
+            "extra": "mean: 338.90076600000043 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.07265360902433,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008325907156555797",
+            "extra": "mean: 45.304928791667955 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.257733323753111,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044744440068732974",
+            "extra": "mean: 3.879979450999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.254065449622697,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006566815510201704",
+            "extra": "mean: 54.7823170000012 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07618438594042932,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06366918469518018",
+            "extra": "mean: 13.126049224600006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5170688322538008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026628250795205943",
+            "extra": "mean: 659.165872199992 msec\nrounds: 5"
           }
         ]
       }
