@@ -201,13 +201,13 @@ def create_string_object(
             # possible is to try.
             # Some strings are strings, some are just byte arrays.
             retval = TextStringObject(decode_pdfdocencoding(string))
-            retval._original_bytes = string
-            retval.autodetect_pdfdocencoding = True
-            return retval
         except UnicodeDecodeError:
             return ByteStringObject(string)
-    else:
-        raise TypeError("create_string_object should have str or unicode arg")
+
+        retval._original_bytes = string
+        retval.autodetect_pdfdocencoding = True
+        return retval
+    raise TypeError("create_string_object should have str or unicode arg")
 
 
 def decode_pdfdocencoding(byte_array: bytes) -> str:
