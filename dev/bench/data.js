@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791980592351,
+  "lastUpdate": 1791980615268,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -149365,6 +149365,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0051854103762421664",
             "extra": "mean: 559.1245650000076 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hwzhao761@gmail.com",
+            "name": "Zephyr761",
+            "username": "Zephyr761"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f2f158a2b051818f4981b34ff15d1ca67b324611",
+          "message": "BUG: Treat NUL as whitespace in ArrayObject (#4198)\n\n* BUG: Treat NUL as whitespace in ArrayObject\n\nCloses #4189\n\n* Do not use built-in name\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-14T14:20:10+02:00",
+          "tree_id": "4dd9138a1d177a9b1c54da7726586095bc1f4f75",
+          "url": "https://github.com/py-pdf/pypdf/commit/f2f158a2b051818f4981b34ff15d1ca67b324611"
+        },
+        "date": 1791980603925,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.420256736828899,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017691784097550373",
+            "extra": "mean: 69.3468929333297 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.71400374186782,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012197187972574252",
+            "extra": "mean: 38.88931533333291 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9819587729263748,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026887100933916594",
+            "extra": "mean: 1.0183726929999921 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.47424754029525845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014165223780504277",
+            "extra": "mean: 2.1086034508000124 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3581286158786967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02826229445454699",
+            "extra": "mean: 2.792292924000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.162302001310708,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03732873628092796",
+            "extra": "mean: 860.3615917999946 msec\nrounds: 5"
           }
         ]
       }
