@@ -78,7 +78,6 @@ from .constants import (
     OutlineFontFlag,
     PageLabelStyle,
     PagesAttributes,
-    TypFitArguments,
     UserAccessPermissions,
 )
 from .constants import FieldDictionaryAttributes as FA
@@ -1968,24 +1967,38 @@ class PdfWriter(PdfDocCommon):
         self,
         title: str,
         page_number: int,
+        fit: Optional[Fit] = None,
     ) -> IndirectObject:
+        """
+        Add a named destination to a page in this PDF.
+
+        Args:
+            title: Name of the destination.
+            page_number: Index of the destination page, starting at zero.
+            fit: How the destination is displayed.
+                Defaults to fitting the page horizontally with its
+                top edge at the top of the window.
+
+        Returns:
+            A reference to the destination's GoTo action.
+
+        """
         page_ref = self._get_page_reference(page_number)
-        top = cast(DictionaryObject, page_ref.get_object()).get(PG.MEDIABOX)
-        top = RectangleObject(top).top if top is not None else 0
+        if fit is None:
+            top = cast(DictionaryObject, page_ref.get_object()).get(PG.MEDIABOX)
+            top = RectangleObject(top).top if top is not None else 0
+            fit = Fit.fit_horizontally(top=top)
+        if not isinstance(title, TextStringObject):
+            title = TextStringObject(str(title))
         dest = DictionaryObject()
         dest.update(
             {
-                NameObject(GoToActionArguments.D): ArrayObject(
-                    [page_ref, NameObject(TypFitArguments.FIT_H), FloatObject(top)]
-                ),
+                NameObject(GoToActionArguments.D): Destination(title, page_ref, fit).dest_array,
                 NameObject(GoToActionArguments.S): NameObject("/GoTo"),
             }
         )
 
         dest_ref = self._add_object(dest)
-        if not isinstance(title, TextStringObject):
-            title = TextStringObject(str(title))
-
         self.add_named_destination_array(title, dest_ref)
         return dest_ref
 
