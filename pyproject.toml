@@ -193,7 +193,6 @@ ignore = [
     "PT012",   # `pytest.raises()` block should contain a single simple statement
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123",  # `open()` should be replaced by `Path.open()`
-    "PYI042",  # Type alias `mode_str_type` should be CamelCase
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected

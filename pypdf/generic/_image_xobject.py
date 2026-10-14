@@ -32,7 +32,7 @@ except ImportError as exception:
         "It can be installed via 'pip install pypdf[image]'"
     ) from exception
 
-mode_str_type: TypeAlias = Literal[
+ImageMode: TypeAlias = Literal[
     "", "1", "RGB", "2bits", "4bits", "P", "L", "RGBA", "CMYK"
 ]
 
@@ -42,9 +42,9 @@ MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 def _get_image_mode(
     color_space: Union[str, list[Any], Any],
     color_components: int,
-    prev_mode: mode_str_type,
+    prev_mode: ImageMode,
     depth: int = 0,
-) -> tuple[mode_str_type, bool]:
+) -> tuple[ImageMode, bool]:
     """
     Returns:
         Image mode, not taking into account mask (transparency).
@@ -103,7 +103,7 @@ def _get_image_mode(
         )
         return mode, invert_color
 
-    mode_map: dict[str, mode_str_type] = {
+    mode_map: dict[str, ImageMode] = {
         "1bit": "1",  # must be zeroth position: color_components may index the values
         "/DeviceGray": "L",  # must be first position: color_components may index the values
         "palette": "P",  # must be second position: color_components may index the values
@@ -174,11 +174,11 @@ def bits2byte(
 
 
 def _expand_low_bit_samples(
-    mode: mode_str_type,
+    mode: ImageMode,
     size: tuple[int, int],
     data: bytes,
     color_space: Union[str, ArrayObject],
-) -> tuple[mode_str_type, bytes]:
+) -> tuple[ImageMode, bytes]:
     """
     Expand 2- or 4-bit-per-component samples to one byte per component.
 
@@ -251,7 +251,7 @@ def __handle_flate__indexed(color_space: ArrayObject) -> tuple[Any, Any, Any, An
 def _handle_flate(
     size: tuple[int, int],
     data: bytes,
-    mode: mode_str_type,
+    mode: ImageMode,
     color_space: Union[str, ArrayObject],
     colors: int,
     obj_as_text: str,
@@ -376,7 +376,7 @@ def _handle_flate(
 def _handle_jpx(
     size: tuple[int, int],
     data: bytes,
-    mode: mode_str_type,
+    mode: ImageMode,
     color_space: str,
     colors: int,
 ) -> tuple[Image.Image, str, str, bool]:
@@ -387,7 +387,7 @@ def _handle_jpx(
     img1: Image.Image = Image.open(BytesIO(data), formats=("JPEG2000",))
     mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
-        mode = cast(mode_str_type, img1.mode)
+        mode = cast(ImageMode, img1.mode)
         invert_color = mode == "CMYK"
     if img1.mode == "RGBA" and mode == "RGB":
         mode = "RGBA"
@@ -481,13 +481,13 @@ def _apply_decode(
 
 def _get_mode_and_invert_color(
     x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
-) -> tuple[mode_str_type, bool]:
+) -> tuple[ImageMode, bool]:
     if (
         ImageAttributes.COLOR_SPACE in x_object
         and x_object[ImageAttributes.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: mode_str_type = "RGB"
+        mode: ImageMode = "RGB"
     if x_object.get("/BitsPerComponent", 8) < 8:
         mode, invert_color = _get_image_mode(
             f"{x_object.get('/BitsPerComponent', 8)}bit", 0, ""
