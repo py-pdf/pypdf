@@ -576,9 +576,9 @@ def test_read_array_with_nul_whitespace():
     """NUL separates array values (regression test for #4189)."""
     stream = BytesIO(b"[(Invoice)\x00-185\x00(Total)]")
 
-    array = ArrayObject.read_from_stream(stream, None)
+    array_object = ArrayObject.read_from_stream(stream, None)
 
-    assert array == ["Invoice", -185, "Total"]
+    assert array_object == ["Invoice", -185, "Total"]
 
 
 def test_bytestringobject():
