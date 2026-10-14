@@ -230,10 +230,8 @@ def test_get_label_from_nums__truncated_pair(caplog):
 
 
 def test_get_label_from_nums__non_numeric_key(caplog):
-    # A /Nums whose next key is not a number must fall back to the page
-    # position, not raise a raw TypeError from the key comparison.
-    value = DictionaryObject()
-    value[NameObject("/S")] = NameObject("/D")
+    """A /Nums whose next key is not a number falls back to the page position."""
+    value = DictionaryObject({NameObject("/S"): NameObject("/D")})
     dictionary_object = DictionaryObject()
     dictionary_object[NameObject("/Nums")] = ArrayObject(
         [NumberObject(0), value, DictionaryObject(), value]

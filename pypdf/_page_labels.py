@@ -156,16 +156,13 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
         value = nums[i + 1].get_object()
         if i + 2 == nums_length:
             break
-        try:
-            past_index = nums[i + 2] > index
-        except TypeError:
-            # A malformed /Nums with a non-numeric key; fall back to the page
-            # position like the other malformed-/Nums cases below.
+        next_key = nums[i + 2]
+        if not isinstance(next_key, (int, float)):
             logger_warning(
                 "Ignoring malformed page label key in /Nums.", source=__name__
             )
             return str(index + 1)  # Fallback
-        if past_index:
+        if next_key > index:
             break
         i += 2
     m: dict[Optional[str], Callable[[int], str]] = {
