@@ -80,3 +80,31 @@ There are several online validators that allow you to simply upload the document
 
 At the moment, pypdf does not make any guarantees regarding PDF/A.
 [Support is very welcome](https://github.com/py-pdf/pypdf/labels/is-pdf%2Fa-compliance).
+
+To copy an existing PDF/A-1b document using the supported writer API:
+
+```python
+from pypdf import PdfWriter
+
+PdfWriter(clone_from="source-pdfa-1b.pdf").write("copy.pdf")
+```
+
+Check **both** files with an independent validator such as veraPDF, using the
+same PDF/A-1b profile:
+
+```bash
+verapdf --flavour 1b --format xml source-pdfa-1b.pdf
+verapdf --flavour 1b --format xml copy.pdf
+```
+
+Check that each XML validation report has `isCompliant="true"`. A successful
+Python write or the presence of PDF/A identification metadata alone does not
+establish compliance. PDF/A-1b covers visual preservation; PDF/A-1a additionally
+requires accessibility features such as document structure and Unicode mappings.
+Cloning a PDF/A-1b file does not make it PDF/A-1a compliant or convert an
+arbitrary PDF to PDF/A.
+
+If you change document information (for example, with
+`PdfWriter.add_metadata()`), make sure its analogous XMP metadata remains
+consistent. pypdf does not automatically synchronize the two representations
+when document information is modified; validate the resulting file again.

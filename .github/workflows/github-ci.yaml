@@ -242,6 +242,121 @@ jobs:
         if-no-files-found: ignore
         include-hidden-files: true
 
+  pdfa_preservation:
+    name: Validate PDF/A-1b document cloning
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        submodules: 'recursive'
+        persist-credentials: false
+    - name: Setup Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      with:
+        python-version: '3.12'
+    - name: Setup Java
+      uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00  # v4.7.1
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+    - name: Install veraPDF 1.30.3
+      run: |
+        curl --fail --location --silent --show-error --retry 3 \
+          https://software.verapdf.org/releases/1.30/verapdf-greenfield-1.30.3-installer.zip \
+          --output "$RUNNER_TEMP/verapdf-installer.zip"
+        echo "b512bf24945503a33fc10738ecffc1f2dccaaf8593a448e94ee9ac86a9559a59  $RUNNER_TEMP/verapdf-installer.zip" | sha256sum --check -
+        unzip -q "$RUNNER_TEMP/verapdf-installer.zip" -d "$RUNNER_TEMP"
+        cat > "$RUNNER_TEMP/verapdf-install.xml" <<EOF
+        <AutomatedInstallation langpack="eng">
+          <com.izforge.izpack.panels.htmlhello.HTMLHelloPanel id="welcome"/>
+          <com.izforge.izpack.panels.target.TargetPanel id="install_dir">
+            <installpath>$RUNNER_TEMP/verapdf</installpath>
+          </com.izforge.izpack.panels.target.TargetPanel>
+          <com.izforge.izpack.panels.packs.PacksPanel id="sdk_pack_select">
+            <pack index="0" name="veraPDF GUI" selected="false"/>
+            <pack index="1" name="veraPDF CLI" selected="true"/>
+            <pack index="2" name="veraPDF Documentation" selected="false"/>
+            <pack index="3" name="veraPDF Sample Plugins" selected="false"/>
+          </com.izforge.izpack.panels.packs.PacksPanel>
+          <com.izforge.izpack.panels.install.InstallPanel id="install"/>
+          <com.izforge.izpack.panels.finish.FinishPanel id="finish"/>
+        </AutomatedInstallation>
+        EOF
+        java -Xmx1536m -jar "$RUNNER_TEMP/verapdf-greenfield-1.30.3/verapdf-izpack-installer-1.30.3.jar" "$RUNNER_TEMP/verapdf-install.xml"
+        "$RUNNER_TEMP/verapdf/verapdf" --version
+    - name: Install pypdf
+      run: python -m pip install .
+    - name: Check source and cloned PDF/A-1b with veraPDF
+      env:
+        JAVA_TOOL_OPTIONS: '-Xmx1536m'
+      run: |
+        python - <<'PY'
+        import os
+        import subprocess
+        import sys
+        import xml.etree.ElementTree as ET
+        from pathlib import Path
+
+        from pypdf import PdfWriter
+
+        original = Path("sample-files/021-pdfa/crazyones-pdfa.pdf")
+        directory = Path(os.environ["RUNNER_TEMP"])
+        validator = directory / "verapdf" / "verapdf"
+
+        def is_compliant(path):
+            result = subprocess.run(
+                [str(validator), "--flavour", "1b", "--format", "xml", str(path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            (directory / f"{path.stem}.verapdf.xml").write_text(result.stdout, encoding="utf-8")
+            try:
+                report = ET.fromstring(result.stdout)
+            except ET.ParseError as error:
+                print(f"{path}: veraPDF returned invalid XML: {error}", file=sys.stderr)
+                print(result.stderr, file=sys.stderr)
+                return False
+
+            jobs = report.findall("./jobs/job")
+            validation = report.find("./jobs/job/validationReport")
+            summary = report.find("./batchSummary")
+            reports = summary.find("validationReports") if summary is not None else None
+            ok = (
+                result.returncode == 0
+                and len(jobs) == 1
+                and validation is not None
+                and validation.get("jobEndStatus") == "normal"
+                and validation.get("profileName") == "PDF/A-1b validation profile"
+                and validation.get("isCompliant") == "true"
+                and summary is not None
+                and summary.get("totalJobs") == "1"
+                and summary.get("failedToParse") == "0"
+                and summary.get("veraExceptions") == "0"
+                and reports is not None
+                and reports.get("failedJobs") == "0"
+                and reports.get("compliant") == "1"
+            )
+            print(f"{path}: veraPDF PDF/A-1b isCompliant={validation.get('isCompliant') if validation is not None else 'missing'}")
+            if not ok:
+                print(f"veraPDF exit status: {result.returncode}; {result.stderr}", file=sys.stderr)
+                if validation is not None:
+                    for rule in validation.findall("./details/rule[@status='failed']"):
+                        print(f"Rule {rule.get('clause')}/{rule.get('testNumber')}: {rule.findtext('description')}", file=sys.stderr)
+                        for check in rule.findall("./check[@status='failed']")[:3]:
+                            print(f"  {check.findtext('context')}: {check.findtext('errorMessage')}", file=sys.stderr)
+            return ok
+
+        if not is_compliant(original):
+            sys.exit("Source sample is not PDF/A-1b compliant")
+
+        clone = directory / "pypdf-1012-clone.pdf"
+        PdfWriter(clone_from=original).write(clone)
+        if not is_compliant(clone):
+            sys.exit("PdfWriter clone is not PDF/A-1b compliant")
+        PY
+
   codestyle:
     name: Check code style issues
     runs-on: ubuntu-26.04
