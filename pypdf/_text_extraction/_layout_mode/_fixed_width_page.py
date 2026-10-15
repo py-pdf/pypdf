@@ -42,6 +42,28 @@ class BTGroup(TypedDict):
     flip_sort: Literal[-1, 1]
 
 
+def set_font_operation(state_mgr: TextStateManager, fonts: dict[str, Font], operands: list[Any]) -> None:
+    """
+    Apply a Tf (Set font and size) operation to a text state manager.
+
+    A missing font name resolves the same uninterpretable placeholder font as
+    an unknown one (see resolve_font()). A missing or non-numeric size leaves
+    the current size in place, matching the ROB handling of plain-mode Tf.
+
+    Args:
+        state_mgr: the text state manager to update
+        fonts: font dictionary as returned by PageObject._layout_mode_fonts()
+        operands: the Tf operator's operands: [name, size]
+
+    """
+    name = operands[0] if operands else ""
+    try:
+        size = float(operands[1])
+    except (IndexError, TypeError, ValueError):
+        size = state_mgr.font_size
+    state_mgr.set_font(resolve_font(fonts, name), size)
+
+
 def resolve_font(fonts: dict[str, Font], name: str) -> Font:
     """
     Resolve a Tf font name to a layout mode Font.
@@ -247,7 +269,7 @@ def recurse_to_target_op(
                 operands = [0, -text_state_mgr.TL]
             text_state_mgr.add_tm(operands)
         elif op == b"Tf":
-            text_state_mgr.set_font(resolve_font(fonts, operands[0]), operands[1])
+            set_font_operation(text_state_mgr, fonts, operands)
         else:  # handle Tc, Tw, Tz, TL, and Ts operators
             text_state_mgr.set_state_param(op, operands)
     else:
@@ -337,7 +359,7 @@ def text_show_operations(
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
         elif op == b"Tf":
-            state_mgr.set_font(resolve_font(fonts, operands[0]), operands[1])
+            set_font_operation(state_mgr, fonts, operands)
         else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
             state_mgr.set_state_param(op, operands)
 
