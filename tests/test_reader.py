@@ -3277,3 +3277,59 @@ def test_read_standard_xref_table__end_of_file():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected EOF in Xref table\.$"):
         PdfReader(BytesIO(data))
+
+
+def _build_objstm_pdf(n_value, first_value=b"4") -> bytes:
+    """One page in an object stream (obj 4); xref is a stream (obj 5).
+
+    n_value and first_value are raw header entries (None = omitted).
+    """
+    objects = {
+        1: b"<< /Type /Catalog /Pages 2 0 R >>",
+        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    }
+    inner = b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>"
+    header = b"3 0 "
+    n_entry = b"" if n_value is None else b" /N " + n_value
+    first_entry = b"" if first_value is None else b" /First " + first_value
+    objects[4] = (
+        b"<< /Type /ObjStm" + n_entry + first_entry + b" /Length %d >>\nstream\n"
+        % len(header + inner) + header + inner + b"\nendstream"
+    )
+    out = bytearray(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n")
+    offsets = {}
+    for num in sorted(objects):
+        offsets[num] = len(out)
+        out += b"%d 0 obj\n" % num + objects[num] + b"\nendobj\n"
+    xref_offset = len(out)
+    entries = bytearray()
+    entries += bytes([0]) + (0).to_bytes(4, "big") + (65535).to_bytes(2, "big")
+    for num in (1, 2):
+        entries += bytes([1]) + offsets[num].to_bytes(4, "big") + (0).to_bytes(2, "big")
+    entries += bytes([2]) + (4).to_bytes(4, "big") + (0).to_bytes(2, "big")
+    entries += bytes([1]) + offsets[4].to_bytes(4, "big") + (0).to_bytes(2, "big")
+    entries += bytes([1]) + xref_offset.to_bytes(4, "big") + (0).to_bytes(2, "big")
+    objects[5] = (
+        b"<< /Type /XRef /Size 6 /Root 1 0 R /W [1 4 2] /Index [0 6] "
+        b"/Length %d >>\nstream\n" % len(entries) + bytes(entries) + b"\nendstream"
+    )
+    out += b"5 0 obj\n" + objects[5] + b"\nendobj\n"
+    out += b"startxref\n%d\n%%%%EOF\n" % xref_offset
+    return bytes(out)
+
+
+def test_issue4215_valid_objstm_still_resolves():
+    page = PdfReader(BytesIO(_build_objstm_pdf(b"1"))).pages[0]
+    assert page is not None
+
+
+@pytest.mark.parametrize("n_value", [b"/Foo", b"<< /a 1 >>", b"[1 2]", None])
+def test_issue4215_malformed_n_raises_pdfreaderror(n_value):
+    with pytest.raises(PdfReadError):
+        PdfReader(BytesIO(_build_objstm_pdf(n_value))).pages[0]
+
+
+@pytest.mark.parametrize("first_value", [b"/Foo", None])
+def test_issue4215_malformed_first_raises_pdfreaderror(first_value):
+    with pytest.raises(PdfReadError):
+        PdfReader(BytesIO(_build_objstm_pdf(b"1", first_value))).pages[0]
