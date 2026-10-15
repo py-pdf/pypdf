@@ -890,7 +890,12 @@ class PdfReader(PdfDocCommon):
             # 'startxref' may be on the same line as the location
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found") from exception
-            startxref = int(line[9:].strip())
+            try:
+                startxref = int(line[9:].strip())
+            except ValueError as inner:
+                # Same-line garbage after the keyword must stay a PdfReadError
+                # instead of leaking the builtin ValueError (#4208).
+                raise PdfReadError("startxref not found") from inner
             logger_warning("startxref on same line as offset", source=__name__)
         else:
             line = read_previous_line(stream)
@@ -945,7 +950,13 @@ class PdfReader(PdfDocCommon):
                 continue
             if len(line) > 9:
                 # 'startxref' on the same line as the offset
-                return int(line[9:].strip())
+                try:
+                    return int(line[9:].strip())
+                except ValueError:
+                    # Garbage after the keyword; keep scanning for an
+                    # earlier intact startxref instead of leaking ValueError
+                    # (#4208).
+                    continue
             if offset is not None:
                 logger_warning(
                     "found startxref pointing to a previous revision after "
