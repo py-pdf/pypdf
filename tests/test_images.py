@@ -23,6 +23,7 @@ from pypdf.generic import (
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
+    FloatObject,
     NameObject,
     NullObject,
     NumberObject,
@@ -666,6 +667,82 @@ def test_low_bit_devicergb_image_without_filter():
     assert img.tobytes() == bytes(
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
+
+
+@pytest.mark.parametrize("decode_form", ["default", "direct", "indirect"])
+def test_page_images_extracts_one_ink_devicen_cmyk_color(
+    decode_form: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """An NChannel colorant with a Type 2 alternate remains colored via page.images."""
+    writer = PdfWriter()
+    tint = DictionaryObject(
+        {
+            NameObject("/FunctionType"): NumberObject(2),
+            NameObject("/Domain"): ArrayObject([NumberObject(0), NumberObject(1)]),
+            NameObject("/N"): NumberObject(1),
+            NameObject("/C0"): ArrayObject([NumberObject(0)] * 4),
+            NameObject("/C1"): ArrayObject(
+                [NumberObject(1), FloatObject(0.5), NumberObject(0), NumberObject(0)]
+            ),
+        }
+    )
+    spot = NameObject("/SpotBlue")
+    separation = ArrayObject(
+        [NameObject("/Separation"), spot, NameObject("/DeviceCMYK"), tint]
+    )
+    attrs = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/NChannel"),
+            NameObject("/Colorants"): DictionaryObject({spot: separation}),
+        }
+    )
+    type4 = DecodedStreamObject()
+    type4[NameObject("/FunctionType")] = NumberObject(4)
+    type4[NameObject("/Domain")] = ArrayObject([NumberObject(0), NumberObject(1)])
+    type4[NameObject("/Range")] = ArrayObject([NumberObject(0), NumberObject(1)] * 4)
+    type4.set_data(b"{ dup 0.5 mul 0 0 }")
+    image = DecodedStreamObject()
+    image.set_data(bytes([0, 128, 255]))
+    image[NameObject("/Type")] = NameObject("/XObject")
+    image[NameObject("/Subtype")] = NameObject("/Image")
+    image[NameObject("/Width")] = NumberObject(3)
+    image[NameObject("/Height")] = NumberObject(1)
+    image[NameObject("/BitsPerComponent")] = NumberObject(8)
+    image[NameObject("/ColorSpace")] = ArrayObject(
+        [
+            NameObject("/DeviceN"),
+            ArrayObject([spot]),
+            NameObject("/DeviceCMYK"),
+            writer._add_object(type4),
+            attrs,
+        ]
+    )
+
+    if decode_form != "default":
+        decode = ArrayObject([NumberObject(1), NumberObject(0)])
+        image[NameObject("/Decode")] = (
+            writer._add_object(decode) if decode_form == "indirect" else decode
+        )
+    page = writer.add_blank_page(width=20, height=20)
+    page[NameObject("/Resources")] = DictionaryObject()
+    page["/Resources"][NameObject("/XObject")] = DictionaryObject()
+    page["/Resources"]["/XObject"][NameObject("/ImSpot")] = writer._add_object(image)
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    extracted = PdfReader(output).pages[0].images["/ImSpot"]
+    assert extracted.name == "ImSpot.png"
+    assert extracted.data.startswith(b"\x89PNG")
+    assert extracted.image.format == "PNG"
+    assert extracted.image.mode == "RGB"
+    expected = (
+        [(255, 255, 255), (127, 191, 255), (0, 128, 255)]
+        if decode_form == "default"
+        else [(0, 128, 255), (128, 192, 255), (255, 255, 255)]
+    )
+    assert [extracted.image.getpixel((x, 0)) for x in range(3)] == expected
+    assert "converted to Gray" not in caplog.text
 
 
 @pytest.mark.enable_socket

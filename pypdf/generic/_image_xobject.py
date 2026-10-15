@@ -1,5 +1,6 @@
 """Functions to convert an image XObject to an image"""
 
+import math
 import sys
 from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
@@ -125,6 +126,127 @@ def _get_image_mode(
     )
 
     return mode, mode == "CMYK"
+
+
+def _get_spot_cmyk_function(
+    color_space: Any,
+) -> Optional[tuple[list[float], list[float], float, list[float], list[float]]]:
+    """Find a one-ink Type 2 CMYK alternate without interpreting Type 4 functions."""
+
+    def resolve(value: Any) -> Any:
+        return value.get_object() if hasattr(value, "get_object") else value
+
+    if (
+        isinstance(color_space, list)
+        and len(color_space) == 4
+        and color_space[0] == "/Separation"
+    ):
+        separation = color_space
+    elif (
+        isinstance(color_space, list)
+        and len(color_space) == 5
+        and color_space[0] == "/DeviceN"
+    ):
+        names = resolve(color_space[1])
+        attrs = resolve(color_space[4])
+        if (
+            not isinstance(names, list)
+            or len(names) != 1
+            or not isinstance(names[0], str)
+            or resolve(color_space[2]) != "/DeviceCMYK"
+            or names[0] == "/Black"
+            or not isinstance(attrs, dict)
+            or attrs.get("/Subtype") != "/NChannel"
+        ):
+            return None
+        colorants = resolve(attrs.get("/Colorants"))
+        if not isinstance(colorants, dict):
+            return None
+        separation = resolve(colorants.get(names[0]))
+        if (
+            not isinstance(separation, list)
+            or len(separation) != 4
+            or separation[1] != names[0]
+        ):
+            return None
+    else:
+        return None
+
+    if (
+        separation[0] != "/Separation"
+        or separation[1] == "/Black"
+        or resolve(separation[2]) != "/DeviceCMYK"
+    ):
+        return None
+    function = resolve(separation[3])
+    if not isinstance(function, dict) or function.get("/FunctionType") != 2:
+        return None
+
+    def values(value: Any, count: int) -> Optional[list[float]]:
+        value = resolve(value)
+        if not isinstance(value, list) or len(value) != count:
+            return None
+        try:
+            result = [float(resolve(v)) for v in value]
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return result if all(math.isfinite(v) for v in result) else None
+
+    c0 = values(function.get("/C0", [0.0] * 4), 4)
+    c1 = values(function.get("/C1", [1.0] * 4), 4)
+    domain = values(function.get("/Domain"), 2)
+    output_range = values(function.get("/Range", [0.0, 1.0] * 4), 8)
+    try:
+        exponent = float(resolve(function["/N"]))
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return None
+    if (
+        c0 is None
+        or c1 is None
+        or domain is None
+        or output_range is None
+        or not math.isfinite(exponent)
+        or exponent <= 0
+        or not 0 <= domain[0] <= domain[1] <= 1
+        or any(not 0 <= value <= 1 for value in c0 + c1 + output_range)
+        or any(output_range[i] > output_range[i + 1] for i in range(0, 8, 2))
+    ):
+        return None
+    return c0, c1, exponent, domain, output_range
+
+
+def _apply_spot_cmyk(
+    img: Image.Image,
+    function: tuple[list[float], list[float], float, list[float], list[float]],
+) -> Image.Image:
+    """Use a 256-entry tint lookup to render the alternate CMYK ink as RGB."""
+    buffer_size = img.width * img.height * 3
+    maximum = get_configuration().image_maximum_buffer_size
+    if buffer_size > maximum:
+        raise LimitReachedError(
+            f"Requested image buffer size {buffer_size} exceeds limit {maximum}."
+        )
+    c0, c1, exponent, domain, output_range = function
+    bands: list[list[int]] = [[], [], []]
+    for sample in range(256):
+        tint = max(domain[0], min(domain[1], sample / 255))
+        factor = tint**exponent
+        cmyk = [
+            max(
+                0.0,
+                min(
+                    1.0,
+                    max(
+                        output_range[2 * i],
+                        min(output_range[2 * i + 1], c0[i] + factor * (c1[i] - c0[i])),
+                    ),
+                ),
+            )
+            for i in range(4)
+        ]
+        for channel in range(3):
+            bands[channel].append(round(255 * (1 - cmyk[channel]) * (1 - cmyk[3])))
+    return Image.merge("RGB", tuple(img.point(lut) for lut in bands))
 
 
 def bits2byte(
@@ -610,7 +732,26 @@ def _xobj_to_image(
     if isinstance(color_space, list) and len(color_space) == 1:
         color_space = color_space[0].get_object()
 
-    mode, invert_color = _get_mode_and_invert_color(x_object, colors, color_space)
+    spot_function = (
+        _get_spot_cmyk_function(color_space)
+        if x_object.get(ImageAttributes.BITS_PER_COMPONENT, 8) == 8
+        else None
+    )
+    decode = x_object.get(ImageAttributes.DECODE)
+    if decode is not None and hasattr(decode, "get_object"):
+        decode = decode.get_object()
+    if spot_function is not None and decode is not None:
+        if not isinstance(decode, list) or len(decode) != 2:
+            spot_function = None
+        else:
+            try:
+                if not all(math.isfinite(float(value)) for value in decode):
+                    spot_function = None
+            except (TypeError, ValueError, OverflowError):
+                spot_function = None
+    # A spot-color image has one encoded tint sample, not four CMYK samples.
+    decode_color_space = "/DeviceGray" if spot_function is not None else color_space
+    mode, invert_color = _get_mode_and_invert_color(x_object, colors, decode_color_space)
 
     # Get filters
     filters = x_object.get(StreamAttributes.FILTER, NullObject()).get_object()
@@ -657,7 +798,7 @@ def _xobj_to_image(
         # invert_color kept unchanged
     elif last_filter == FT.JPX_DECODE:
         img, image_format, extension, invert_color = _handle_jpx(
-            size, data, mode, color_space, colors
+            size, data, mode, decode_color_space, colors
         )
     elif last_filter == FT.CCITT_FAX_DECODE:
         img, image_format, extension, invert_color = (
@@ -693,7 +834,17 @@ def _xobj_to_image(
             False,
         )
 
-    img = _apply_decode(img, x_object, last_filter, color_space, invert_color)
+    img = _apply_decode(img, x_object, last_filter, decode_color_space, invert_color)
+    if spot_function is not None:
+        if img.mode == "L":
+            img = _apply_spot_cmyk(img, spot_function)
+            image_format, extension = "PNG", ".png"
+        else:
+            logger_warning(
+                "Cannot apply spot-color tint transform to image mode %(mode)s.",
+                source=__name__,
+                mode=img.mode,
+            )
     img, extension, image_format = _apply_alpha(
         img=img, x_object=x_object, obj_as_text=obj_as_text, image_format=image_format, extension=extension,
         visited=visited,

@@ -1,6 +1,7 @@
 """Test the pypdf.generic._image_xobject module."""
 import zlib
 from io import BytesIO
+from typing import Optional
 
 import PIL
 import pytest
@@ -13,6 +14,8 @@ from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
+    DictionaryObject,
+    FloatObject,
     NameObject,
     NumberObject,
     PdfObject,
@@ -21,6 +24,7 @@ from pypdf.generic import (
 )
 from pypdf.generic._image_xobject import (
     _get_image_mode,
+    _get_spot_cmyk_function,
     _handle_flate,
     _image_from_bytes,
     _xobj_to_image,
@@ -466,6 +470,188 @@ def _minimal_image_xobject() -> StreamObject:
     stream[NameObject("/BitsPerComponent")] = NumberObject(8)
     stream.set_data(b"\x00")
     return stream
+
+
+def _spot_color_space(*, device_n: bool) -> ArrayObject:
+    """A one-ink CMYK alternate with a documented Type 2 tint function."""
+    fn = DictionaryObject(
+        {
+            NameObject("/FunctionType"): NumberObject(2),
+            NameObject("/Domain"): ArrayObject([NumberObject(0), NumberObject(1)]),
+            NameObject("/Range"): ArrayObject([NumberObject(0), NumberObject(1)] * 4),
+            NameObject("/C0"): ArrayObject([NumberObject(0)] * 4),
+            NameObject("/C1"): ArrayObject(
+                [NumberObject(1), FloatObject(0.5), NumberObject(0), NumberObject(0)]
+            ),
+            NameObject("/N"): NumberObject(1),
+        }
+    )
+    separation = ArrayObject(
+        [NameObject("/Separation"), NameObject("/SpotBlue"), NameObject("/DeviceCMYK"), fn]
+    )
+    if not device_n:
+        return separation
+    type4 = DictionaryObject({NameObject("/FunctionType"): NumberObject(4)})
+    attrs = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/NChannel"),
+            NameObject("/Colorants"): DictionaryObject(
+                {NameObject("/SpotBlue"): separation}
+            ),
+        }
+    )
+    return ArrayObject(
+        [
+            NameObject("/DeviceN"),
+            ArrayObject([NameObject("/SpotBlue")]),
+            NameObject("/DeviceCMYK"),
+            type4,
+            attrs,
+        ]
+    )
+
+
+def _spot_image(
+    color_space: ArrayObject, samples: bytes = bytes([0, 128, 255])
+) -> StreamObject:
+    image = StreamObject()
+    image[NameObject("/Subtype")] = NameObject("/Image")
+    image[NameObject("/Width")] = NumberObject(len(samples))
+    image[NameObject("/Height")] = NumberObject(1)
+    image[NameObject("/BitsPerComponent")] = NumberObject(8)
+    image[NameObject("/ColorSpace")] = color_space
+    image.set_data(samples)
+    return image
+
+
+@pytest.mark.parametrize("device_n", [False, True], ids=["separation", "device-n"])
+@pytest.mark.parametrize("decode", [None, [0, 1], [1, 0]], ids=["default", "identity", "reversed"])
+def test_spot_type2_cmyk_tints(
+    device_n: bool, decode: Optional[list[int]], caplog: pytest.LogCaptureFixture
+) -> None:
+    """Tint samples, including /Decode inversion, use the CMYK alternate."""
+    image = _spot_image(_spot_color_space(device_n=device_n))
+    if decode is not None:
+        image[NameObject("/Decode")] = ArrayObject([NumberObject(x) for x in decode])
+
+    extension, encoded, result = _xobj_to_image(image)
+
+    expected = [(255, 255, 255), (127, 191, 255), (0, 128, 255)]
+    if decode == [1, 0]:
+        expected = [(0, 128, 255), (128, 192, 255), (255, 255, 255)]
+    assert extension == ".png"
+    assert encoded.startswith(b"\x89PNG")
+    assert result.format == "PNG"
+    assert result.mode == "RGB"
+    assert [result.getpixel((x, 0)) for x in range(3)] == expected
+    assert "converted to Gray" not in caplog.text
+
+
+def test_spot_type2_cmyk_range_and_exponent() -> None:
+    color_space = _spot_color_space(device_n=False)
+    function = color_space[3]
+    function[NameObject("/N")] = NumberObject(2)
+    function[NameObject("/Range")] = ArrayObject(
+        [NumberObject(0), FloatObject(0.5)] + [NumberObject(0), NumberObject(1)] * 3
+    )
+    image = _spot_image(color_space)
+    _, _, result = _xobj_to_image(image)
+    assert result.mode == "RGB"
+    assert result.getpixel((0, 0)) == (255, 255, 255)
+    assert result.getpixel((2, 0)) == (128, 128, 255)
+    assert result.getpixel((1, 0))[0] == 191
+
+
+def test_spot_type2_cmyk_domain_clipping() -> None:
+    color_space = _spot_color_space(device_n=False)
+    color_space[3][NameObject("/Domain")] = ArrayObject(
+        [FloatObject(0.25), FloatObject(0.75)]
+    )
+    _, _, result = _xobj_to_image(_spot_image(color_space))
+    assert result.getpixel((0, 0)) == (191, 223, 255)
+    assert result.getpixel((2, 0)) == (64, 159, 255)
+
+
+def test_spot_type2_jpeg_and_smask() -> None:
+    original = Image.frombytes("L", (3, 1), bytes([0, 128, 255]))
+    jpeg = BytesIO()
+    original.save(jpeg, format="JPEG", quality=100)
+
+    image = _spot_image(_spot_color_space(device_n=True), jpeg.getvalue())
+    image[NameObject("/Width")] = NumberObject(3)
+    image[NameObject("/Filter")] = NameObject("/DCTDecode")
+    extension, encoded, rgb = _xobj_to_image(image)
+    assert (extension, rgb.format, rgb.mode) == (".png", "PNG", "RGB")
+    assert encoded.startswith(b"\x89PNG")
+
+    alpha = _minimal_image_xobject()
+    alpha[NameObject("/Width")] = NumberObject(3)
+    alpha.set_data(bytes([0, 128, 255]))
+    image[NameObject("/SMask")] = alpha
+
+    extension, encoded, result = _xobj_to_image(image)
+
+    assert extension == ".png"
+    assert result.mode == "RGBA"
+    assert result.format == "PNG"
+    assert encoded.startswith(b"\x89PNG")
+    assert [result.getpixel((x, 0))[3] for x in range(3)] == [0, 128, 255]
+    assert result.getpixel((0, 0))[:3] == (255, 255, 255)
+    assert result.getpixel((2, 0))[:3] == (0, 128, 255)
+    with Image.open(BytesIO(encoded)) as reopened:
+        assert reopened.format == "PNG"
+        assert reopened.mode == "RGBA"
+        assert reopened.tobytes() == result.tobytes()
+
+
+def test_spot_unsupported_and_invalid_functions_fall_back(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    color_space = _spot_color_space(device_n=True)
+    function = color_space[4]["/Colorants"]["/SpotBlue"][3]
+    function[NameObject("/FunctionType")] = NumberObject(4)
+    assert _get_spot_cmyk_function(color_space) is None
+    _, _, img = _xobj_to_image(_spot_image(color_space))
+    assert img.mode == "L"
+    assert "Color /SpotBlue converted to Gray" in caplog.text
+
+    caplog.clear()
+    function[NameObject("/FunctionType")] = NumberObject(2)
+    function[NameObject("/C1")] = ArrayObject([NumberObject(1)])
+    assert _get_spot_cmyk_function(color_space) is None
+    _, _, img = _xobj_to_image(_spot_image(color_space))
+    assert img.mode == "L"
+    assert "converted to Gray" in caplog.text
+
+    assert _get_spot_cmyk_function(
+        ArrayObject(
+            [
+                NameObject("/DeviceN"),
+                ArrayObject([NameObject("/Blue"), NameObject("/Red")]),
+                NameObject("/DeviceCMYK"),
+                DictionaryObject({NameObject("/FunctionType"): NumberObject(4)}),
+                DictionaryObject({NameObject("/Subtype"): NameObject("/NChannel")}),
+            ]
+        )
+    ) is None
+
+    color_space = _spot_color_space(device_n=True)
+    image = _spot_image(color_space)
+    image[NameObject("/Decode")] = ArrayObject(
+        [NumberObject(0), NumberObject(1), NumberObject(0)]
+    )
+    caplog.clear()
+    _, _, img = _xobj_to_image(image)
+    assert img.mode == "L"
+    assert "converted to Gray" in caplog.text
+    assert "Ignoring malformed /Decode array" in caplog.text
+
+    color_space[1][0] = NameObject("/Black")
+    assert _get_spot_cmyk_function(color_space) is None
+    caplog.clear()
+    _, _, black = _xobj_to_image(_spot_image(color_space))
+    assert black.mode == "L"
+    assert "converted to Gray" not in caplog.text
 
 
 def test_xobj_to_image__self_referential_smask(
