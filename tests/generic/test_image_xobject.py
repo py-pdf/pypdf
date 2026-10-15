@@ -7,7 +7,7 @@ import PIL
 import pytest
 from PIL import Image
 
-from pypdf import PdfReader
+from pypdf import PdfReader, apply_configuration
 from pypdf._utils import Version
 from pypdf.constants import ColorSpaces, FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
@@ -652,6 +652,81 @@ def test_spot_unsupported_and_invalid_functions_fall_back(
     _, _, black = _xobj_to_image(_spot_image(color_space))
     assert black.mode == "L"
     assert "converted to Gray" not in caplog.text
+
+
+@pytest.mark.parametrize("invalid_mapping", ["not-a-dictionary", "missing-ink"])
+def test_spot_missing_colorant_mapping_falls_back(
+    invalid_mapping: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    color_space = _spot_color_space(device_n=True)
+    colorants = color_space[4]["/Colorants"]
+    color_space[4][NameObject("/Colorants")] = (
+        NameObject("/NotADictionary")
+        if invalid_mapping == "not-a-dictionary"
+        else DictionaryObject({NameObject("/OtherInk"): colorants["/SpotBlue"]})
+    )
+    assert _get_spot_cmyk_function(color_space) is None
+    _, _, result = _xobj_to_image(_spot_image(color_space))
+    assert result.mode == "L"
+    assert "Color /SpotBlue converted to Gray" in caplog.text
+
+
+@pytest.mark.parametrize("invalid_operand", ["non-numeric-color", "missing-exponent"])
+def test_spot_invalid_type2_numeric_values_fall_back(
+    invalid_operand: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    color_space = _spot_color_space(device_n=True)
+    function = color_space[4]["/Colorants"]["/SpotBlue"][3]
+    if invalid_operand == "non-numeric-color":
+        function[NameObject("/C1")] = ArrayObject(
+            [TextStringObject("invalid"), NumberObject(0), NumberObject(0), NumberObject(0)]
+        )
+    else:
+        del function[NameObject("/N")]
+    assert _get_spot_cmyk_function(color_space) is None
+    _, _, result = _xobj_to_image(_spot_image(color_space))
+    assert result.mode == "L"
+    assert "Color /SpotBlue converted to Gray" in caplog.text
+
+
+def test_spot_rgb_output_respects_image_buffer_limit() -> None:
+    image = _spot_image(_spot_color_space(device_n=True))
+    with (
+        apply_configuration(image_maximum_buffer_size=4),
+        pytest.raises(LimitReachedError, match=r"Requested image buffer size 9 exceeds limit 4"),
+    ):
+        _xobj_to_image(image)
+
+
+@pytest.mark.parametrize(
+    "invalid_value",
+    ["nan", "invalid"],
+    ids=["non-finite", "non-numeric"],
+)
+def test_spot_rejects_invalid_numeric_decode(
+    invalid_value: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    image = _spot_image(_spot_color_space(device_n=True))
+    image[NameObject("/Decode")] = ArrayObject(
+        [TextStringObject(invalid_value), NumberObject(1)]
+    )
+    with pytest.raises(TypeError):
+        _xobj_to_image(image)
+    assert "Color /SpotBlue converted to Gray" in caplog.text
+
+
+def test_spot_does_not_treat_rgb_jpeg_as_tint_data(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    jpeg = BytesIO()
+    Image.new("RGB", (3, 1), (10, 20, 30)).save(jpeg, format="JPEG")
+    image = _spot_image(_spot_color_space(device_n=True), jpeg.getvalue())
+    image[NameObject("/Filter")] = NameObject("/DCTDecode")
+
+    extension, encoded, result = _xobj_to_image(image)
+    assert (extension, result.mode, result.format) == (".jpg", "RGB", "JPEG")
+    assert encoded.startswith(b"\xff\xd8")
+    assert "Cannot apply spot-color tint transform to image mode RGB" in caplog.text
 
 
 def test_xobj_to_image__self_referential_smask(
