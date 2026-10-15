@@ -23,12 +23,13 @@ from pypdf.generic import (
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
     TextStringObject,
 )
-from pypdf.generic._image_xobject import _handle_flate
+from pypdf.generic._image_xobject import _apply_alpha, _handle_flate, _xobj_to_image
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 from .utils import get_image_data
@@ -595,6 +596,63 @@ def test_extract_image_from_object(caplog):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
     assert "does not seem to be an Image" in caplog.text
+
+
+@pytest.mark.parametrize("mask_kind", ["none", "null", "indirect_none"])
+def test_apply_alpha__null_smask_skips_mask_conversion(mask_kind):
+    image = Image.new("RGB", (1, 1), (12, 34, 56))
+    if mask_kind == "indirect_none":
+        pdf = mock.Mock()
+        pdf.get_object.return_value = None
+        mask = IndirectObject(7, 0, pdf)
+    elif mask_kind == "null":
+        mask = NullObject()
+    else:
+        mask = None
+
+    with mock.patch("pypdf.generic._image_xobject._xobj_to_image") as convert_mask:
+        result = _apply_alpha(
+            img=image,
+            x_object={"/SMask": mask},
+            obj_as_text="test image",
+            image_format="JPEG",
+            extension=".jpg",
+            visited=set(),
+        )
+
+    assert result == (image, ".jpg", "JPEG")
+    assert image.mode == "RGB"
+    assert image.getpixel((0, 0)) == (12, 34, 56)
+    convert_mask.assert_not_called()
+
+
+@pytest.mark.parametrize("indirect", [False, True], ids=["null", "indirect-none"])
+def test_xobj_to_image__null_smask_matches_missing(indirect):
+    image = DecodedStreamObject()
+    image[NameObject("/Subtype")] = NameObject("/Image")
+    image[NameObject("/Width")] = NumberObject(1)
+    image[NameObject("/Height")] = NumberObject(1)
+    image[NameObject("/ColorSpace")] = NameObject("/DeviceGray")
+    image[NameObject("/BitsPerComponent")] = NumberObject(8)
+    image.set_data(b"\x82")
+
+    expected_extension, expected_data, expected_img = _xobj_to_image(image)
+    if indirect:
+        pdf = mock.Mock()
+        pdf.get_object.return_value = None
+        image[NameObject("/SMask")] = IndirectObject(7, 0, pdf)
+    else:
+        image[NameObject("/SMask")] = NullObject()
+
+    extension, data, img = _xobj_to_image(image)
+
+    assert extension == expected_extension == ".png"
+    assert data == expected_data
+    assert img is not None
+    assert expected_img is not None
+    assert (img.mode, img.format, img.tobytes()) == (
+        expected_img.mode, expected_img.format, expected_img.tobytes()
+    )
 
 
 def test_extract_jpeg_with_explicit_quality():

@@ -3238,6 +3238,20 @@ def test_get_object_from_stream__circular_reference(
         _ = list(reader.pages)
 
 
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("obj_stm", [None, NullObject()], ids=["missing", "null"])
+def test_get_object_from_stream__null_object_stream(strict, obj_stm):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf", strict=strict)
+    reader._object_stream_resolution_stack = []
+    reader.xref_objStm = {1: (5, 0)}
+
+    with mock.patch.object(reader, "get_object", return_value=obj_stm), \
+            pytest.raises(PdfReadError, match=r"^Object stream 5 is missing or null$"):
+        reader._get_object_from_stream(IndirectObject(1, 0, reader))
+
+    assert reader._object_stream_resolution_stack == []
+
+
 def test_get_object_from_stream__read_object_raises_and_warns(caplog):
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     reader.strict = False

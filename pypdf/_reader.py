@@ -379,6 +379,8 @@ class PdfReader(PdfDocCommon):
             # read the entire object stream into memory
             stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
             obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
+            if is_null_or_none(obj_stm):
+                raise PdfReadError(f"Object stream {stmnum} is missing or null")
             # This is an xref to a stream, so its type better be a stream
             assert cast(str, obj_stm["/Type"]) == "/ObjStm"
             # Parse ALL objects in this stream in one pass and cache them.

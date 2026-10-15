@@ -522,6 +522,8 @@ def _apply_alpha(
         return img, extension, image_format
 
     s_mask = x_object[ImageAttributes.S_MASK]
+    if is_null_or_none(s_mask):
+        return img, extension, image_format
     if id(s_mask) in visited:
         # A soft mask that refers back to an image already being
         # converted would recurse until the interpreter runs out of
