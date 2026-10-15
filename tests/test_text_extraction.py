@@ -1417,6 +1417,114 @@ def test_visitor_text_reports_form_xobject_text_once() -> None:
     assert reports_b == [(0, "1111"), (1, "2222")]
 
 
+def test_plain_text_compound_operators_preserve_visitor_order_and_matrices() -> None:
+    """Compound operators yield their text but only one pair of operand callbacks each."""
+    content = (
+        b"BT /F1 12 Tf 1 0 0 1 72 700 Tm (A) Tj 14 TL "
+        b"(B) ' 0 0 (C) \" 0 -14 TD [(D) -1000 /Skipped (E)] TJ ET"
+    )
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    before = []
+    after = []
+    text_positions = []
+
+    def visitor_before(operator, operands, cm, tm) -> None:
+        before.append((operator, tuple(tm)))
+
+    def visitor_after(operator, operands, cm, tm) -> None:
+        after.append((operator, tuple(tm)))
+
+    def visitor_text(text, cm, tm, font, size) -> None:
+        if text.strip():
+            text_positions.append((text, tm[5]))
+
+    assert page.extract_text(
+        visitor_operand_before=visitor_before,
+        visitor_operand_after=visitor_after,
+        visitor_text=visitor_text,
+    ) == "A\nB\nC\nD E"
+    original_ops = [b"BT", b"Tf", b"Tm", b"Tj", b"TL", b"'", b'"', b"TD", b"TJ", b"ET"]
+    assert [operator for operator, _ in before] == original_ops
+    assert [operator for operator, _ in after] == original_ops
+    assert [(operator, tm[5]) for operator, tm in before if operator in (b"'", b'"', b"TD", b"TJ")] == [
+        (b"'", 700),
+        (b'"', 686),
+        (b"TD", 672),
+        (b"TJ", 658),
+    ]
+    assert [(operator, tm[5]) for operator, tm in after if operator in (b"'", b'"', b"TD", b"TJ")] == [
+        (b"'", 686),
+        (b'"', 672),
+        (b"TD", 658),
+        (b"TJ", 658),
+    ]
+    assert text_positions == [("A\n", 700), ("B\n", 686), ("C\n", 672), ("D E", 658)]
+
+
+def test_plain_text_form_flushing_and_callback_nesting() -> None:
+    """Do keeps the page/form callback nesting and reports each text fragment once."""
+    content = (
+        b"BT /F1 12 Tf 1 0 0 1 70 700 Tm (Before) Tj ET "
+        b"/Fx Do BT /F1 12 Tf 1 0 0 1 70 680 Tm (After) Tj ET"
+    )
+    form = b"BT /F1 12 Tf 1 0 0 1 120 200 Tm (Inside) Tj ET"
+    page = PdfReader(_page_with_form_xobject(content, [1, 0, 0, 1, 20, 30], form)).pages[0]
+    depth = [0]
+    reported = []
+    operations = []
+
+    def before(op, args, cm, tm) -> None:
+        operations.append(("before", depth[0], op))
+        if op == b"Do":
+            depth[0] += 1
+
+    def after(op, args, cm, tm) -> None:
+        operations.append(("after", depth[0], op))
+        if op == b"Do":
+            depth[0] -= 1
+
+    def visitor_text(text, cm, tm, font, size) -> None:
+        if text.strip():
+            reported.append((depth[0], text))
+
+    assert page.extract_text(
+        visitor_operand_before=before,
+        visitor_operand_after=after,
+        visitor_text=visitor_text,
+    ) == "Before\nInside\nAfter"
+    assert depth == [0]
+    assert reported == [(0, "Before"), (1, "Inside"), (0, "After")]
+    assert [(kind, depth, op) for kind, depth, op in operations if op == b"Do"] == [
+        ("before", 0, b"Do"),
+        ("after", 1, b"Do"),
+    ]
+
+
+def test_plain_text_form_exception_restores_text_state(caplog) -> None:
+    """An invalid Do leaves subsequent text intact and reports one warning."""
+    content = (
+        b"BT /F1 12 Tf 1 0 0 1 72 700 Tm (Before) Tj ET "
+        b"/Missing Do BT /F1 12 Tf 1 0 0 1 72 680 Tm (After) Tj ET"
+    )
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == "Before\nAfter"
+    assert len(caplog.messages) == 1
+    assert "Impossible to decode XFormObject /Missing" in caplog.messages[0]
+
+
+def test_plain_text_stream_without_et_flushes_once() -> None:
+    """Text at the end of an unterminated stream reaches output and the visitor."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Tail) Tj")).pages[0]
+    texts = []
+
+    def visitor_text(text, cm, tm, font, size) -> None:
+        if text:
+            texts.append(text)
+
+    assert page.extract_text(visitor_text=visitor_text) == "Tail"
+    assert texts == ["Tail"]
+
+
 def test_simple_font_character_widths_with_differences_encoding() -> None:
     # This test was written by hpertuz-vzy
     def build() -> bytes:

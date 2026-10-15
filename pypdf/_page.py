@@ -1930,101 +1930,31 @@ class PageObject(DictionaryObject):
         # Initialize the extractor with the necessary parameters
         extractor.initialize_extraction(orientations, visitor_text, font_resources, fonts)
 
-        for operands, operator in content.operations:
-            if visitor_operand_before is not None:
-                visitor_operand_before(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
-            # Multiple operators are handled here
-            if operator == b"'":
-                extractor.process_operation(b"T*", [])
-                extractor.process_operation(b"Tj", operands)
-            elif operator == b'"' and len(operands) >= 3:
-                extractor.process_operation(b"Tw", [operands[0]])
-                extractor.process_operation(b"Tc", [operands[1]])
-                extractor.process_operation(b"T*", [])
-                extractor.process_operation(b"Tj", operands[2:])
-            elif operator == b"TJ":
-                # The space width may be smaller than the font width, so the width should be 95%.
-                _confirm_space_width = extractor._space_width * 0.95
-                if operands and isinstance(operands[0], ArrayObject):
-                    for op in operands[0]:
-                        # A name is a str too, but not text to show
-                        if isinstance(op, (str, bytes)) and not isinstance(op, NameObject):
-                            extractor.process_operation(b"Tj", [op])
-                        if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                            abs(float(op)) >= _confirm_space_width
-                            and extractor.text
-                            and extractor.text[-1] != " "
-                        ):
-                            extractor.process_operation(b"Tj", [" "])
-            elif operator == b"TD" and len(operands) >= 2:
-                extractor.process_operation(b"TL", [-operands[1]])
-                extractor.process_operation(b"Td", operands)
-            elif operator == b"Do" and operands:
-                extractor.output += extractor.text
-                if visitor_text is not None:
-                    visitor_text(
-                        extractor.text,
-                        extractor.memo_cm,
-                        extractor.memo_tm,
-                        extractor.font_resource,
-                        extractor.font_size,
-                    )
-                try:
-                    if extractor.output[-1] != "\n":
-                        extractor.output += "\n"
-                        if visitor_text is not None:
-                            visitor_text(
-                                "\n",
-                                extractor.memo_cm,
-                                extractor.memo_tm,
-                                extractor.font_resource,
-                                extractor.font_size,
-                            )
-                except IndexError:
-                    pass
-                try:
-                    xform_text = self._extract_text__xform(
-                        resources_dict=resources_dict,
-                        operands=operands,
-                        orientations=orientations,
-                        space_width=space_width,
-                        visitor_operand_before=visitor_operand_before,
-                        visitor_operand_after=visitor_operand_after,
-                        visitor_text=visitor_text,
-                        known_ids=known_ids,
-                        traversal_state=traversal_state
-                    )
-                    if xform_text is not None:
-                        text = xform_text
-                        extractor.output += text
-                        # Nothing else to do: each text piece inside the form has
-                        # already been reported via visitor_text while the form was
-                        # being extracted recursively (issue #4079).
-                except Exception as exception:
-                    logger_warning(
-                        "Impossible to decode XFormObject %(operand)s: %(exception)s",
-                        source=__name__,
-                        operand=operands[0],
-                        exception=exception,
-                    )
-                finally:
-                    extractor.text = ""
-                    extractor.memo_cm = extractor.cm_matrix.copy()
-                    extractor.memo_tm = extractor.tm_matrix.copy()
-            else:
-                extractor.process_operation(operator, operands)
-            if visitor_operand_after is not None:
-                visitor_operand_after(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
-        extractor.output += extractor.text  # just in case
-        if extractor.text != "" and visitor_text is not None:
-            visitor_text(
-                extractor.text,
-                extractor.memo_cm,
-                extractor.memo_tm,
-                extractor.font_resource,
-                extractor.font_size,
-            )
-        return extractor.output
+        def extract_xform(operands: Any) -> Optional[str]:
+            try:
+                return self._extract_text__xform(
+                    resources_dict=resources_dict,
+                    operands=operands,
+                    orientations=orientations,
+                    space_width=space_width,
+                    visitor_operand_before=visitor_operand_before,
+                    visitor_operand_after=visitor_operand_after,
+                    visitor_text=visitor_text,
+                    known_ids=known_ids,
+                    traversal_state=traversal_state,
+                )
+            except Exception as exception:
+                logger_warning(
+                    "Impossible to decode XFormObject %(operand)s: %(exception)s",
+                    source=__name__,
+                    operand=operands[0],
+                    exception=exception,
+                )
+                return None
+
+        return extractor.extract_operations(
+            content.operations, visitor_operand_before, visitor_operand_after, extract_xform
+        )
 
     def _extract_text__xform(
         self,

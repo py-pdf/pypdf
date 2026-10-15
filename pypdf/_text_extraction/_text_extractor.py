@@ -27,10 +27,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from collections.abc import Iterable
 from typing import Any, Callable, Optional, Union
 
 from .._codecs import encoding_dict_from_named_encoding
-from ..generic import DictionaryObject, TextStringObject
+from ..generic import (
+    ArrayObject,
+    DictionaryObject,
+    FloatObject,
+    NameObject,
+    NumberObject,
+    TextStringObject,
+)
 from ..generic._font import Font, FontDescriptor
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
@@ -149,6 +157,88 @@ class TextExtraction:
             # Post-process operations that affect text positioning
             if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
                 self._post_process_text_operation(str_widths or 0.0)
+
+    def extract_operations(
+        self,
+        operations: Iterable[tuple[Any, bytes]],
+        visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]],
+        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]],
+        extract_xform: Callable[[Any], Optional[str]],
+    ) -> str:
+        """Process a plain-mode content stream, reporting each original PDF operator once."""
+        for operands, operator in operations:
+            if visitor_operand_before is not None:
+                visitor_operand_before(operator, operands, self.cm_matrix, self.tm_matrix)
+            self._process_content_operation(operator, operands, extract_xform)
+            if visitor_operand_after is not None:
+                visitor_operand_after(operator, operands, self.cm_matrix, self.tm_matrix)
+
+        self.output += self.text  # Just in case the stream ends without ET.
+        if self.text != "" and self.visitor_text is not None:
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
+        return self.output
+
+    def _process_content_operation(
+        self, operator: bytes, operands: list[Any], extract_xform: Callable[[Any], Optional[str]]
+    ) -> None:
+        """Expand compound text operators without emitting extra operand callbacks."""
+        if operator == b"'":
+            self.process_operation(b"T*", [])
+            self.process_operation(b"Tj", operands)
+        elif operator == b'"' and len(operands) >= 3:
+            self.process_operation(b"Tw", [operands[0]])
+            self.process_operation(b"Tc", [operands[1]])
+            self.process_operation(b"T*", [])
+            self.process_operation(b"Tj", operands[2:])
+        elif operator == b"TJ":
+            self._process_tj_array(operands)
+        elif operator == b"TD" and len(operands) >= 2:
+            self.process_operation(b"TL", [-operands[1]])
+            self.process_operation(b"Td", operands)
+        elif operator == b"Do" and operands:
+            self._process_form_xobject(operands, extract_xform)
+        else:
+            self.process_operation(operator, operands)
+
+    def _process_tj_array(self, operands: list[Any]) -> None:
+        """Process text and spacing in a TJ array in their original order."""
+        # The space width may be smaller than the font width, so the width should be 95%.
+        confirm_space_width = self._space_width * 0.95
+        if operands and isinstance(operands[0], ArrayObject):
+            for op in operands[0]:
+                # A name is a str too, but not text to show.
+                if isinstance(op, (str, bytes)) and not isinstance(op, NameObject):
+                    self.process_operation(b"Tj", [op])
+                if isinstance(op, (int, float, NumberObject, FloatObject)) and (
+                    abs(float(op)) >= confirm_space_width
+                    and self.text
+                    and self.text[-1] != " "
+                ):
+                    self.process_operation(b"Tj", [" "])
+
+    def _process_form_xobject(
+        self, operands: list[Any], extract_xform: Callable[[Any], Optional[str]]
+    ) -> None:
+        """Flush page text around a form; the form reports its own visitor text."""
+        self.output += self.text
+        if self.visitor_text is not None:
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
+        try:
+            if self.output[-1] != "\n":
+                self.output += "\n"
+                if self.visitor_text is not None:
+                    self.visitor_text("\n", self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
+        except IndexError:
+            pass
+        try:
+            xform_text = extract_xform(operands)
+            if xform_text is not None:
+                self.output += xform_text
+                # The form already reported its text during recursive extraction.
+        finally:
+            self.text = ""
+            self.memo_cm = self.cm_matrix.copy()
+            self.memo_tm = self.tm_matrix.copy()
 
     def _post_process_text_operation(self, str_widths: float) -> None:
         """Handle common post-processing for text positioning operations."""
