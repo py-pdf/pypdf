@@ -440,7 +440,9 @@ def test_read_object__leading_comments_limit_in_dictionary(strict):
     stream = BytesIO(b"<< /Value " + b"% comment\n" * (_MAX_LEADING_COMMENTS + 1) + b"42 >>")
     pdf = ReaderDummy()
     pdf.strict = strict
-    with pytest.raises(expected_exception=PdfReadError, match="LimitReachedError"):
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum number of leading comments reached: 1000\.$"
+    ):
         read_object(stream, pdf)
 
 
@@ -521,7 +523,9 @@ def test_read_array_of_numbers_and_references__function_calls():
     """
     stream = BytesIO(b"[" + b" ".join([b"123", b"4.5", b"12 0 R"] * 100) + b"]")
 
-    array, calls = count_function_calls(ArrayObject.read_from_stream, stream, ReaderDummy())
+    array, calls = count_function_calls(
+        ArrayObject.read_from_stream, stream, ReaderDummy(), names_to_ignore={"_check_limits"}
+    )
 
     assert len(array) == 300
     assert array[:3] == [123, 4.5, IndirectObject(12, 0, array[2].pdf)]
@@ -559,7 +563,9 @@ def test_array_of_nulls__function_calls():
     """
     stream = BytesIO(b"[" + b" ".join([b"null"] * 1000) + b"]")
 
-    array, calls = count_function_calls(ArrayObject.read_from_stream, stream, ReaderDummy())
+    array, calls = count_function_calls(
+        ArrayObject.read_from_stream, stream, ReaderDummy(), names_to_ignore={"_check_limits"}
+    )
 
     assert array == [NullObject()] * 1000
     # No calls per element; it was two before

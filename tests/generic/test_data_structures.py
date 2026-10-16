@@ -8,7 +8,7 @@ from unittest import mock
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
@@ -21,11 +21,13 @@ from pypdf.generic import (
     NumberObject,
     RectangleObject,
     StreamObject,
+    StreamParsingBudget,
     TextStringObject,
     TreeObject,
 )
 from pypdf.types import OutlineType
 from tests import RESOURCE_ROOT, get_data_from_url, get_subprocess_environment
+from tests.utils import ReaderDummy
 
 try:
     import resource
@@ -506,7 +508,10 @@ def test_content_stream__read_inline_image__end_of_stream() -> None:
     content_stream = ContentStream(stream=None, pdf=None)
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
-        content_stream._read_inline_image(BytesIO(b"\n/IM true\n/W001"))
+        content_stream._read_inline_image(
+            BytesIO(b"\n/IM true\n/W001"),
+            parsing_budget=StreamParsingBudget(remaining_budget=100)
+        )
 
 
 def test_tree_object__insert_child__cycle() -> None:
@@ -659,3 +664,201 @@ def test_tree_object__remove_child__cyclic() -> None:
 
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Detected cyclic /Next hierarchy\.$"):
         tree.remove_child(child)
+
+
+def test_content_stream__parse_content_stream__token_limit() -> None:
+    # Ensure counting works correctly.
+    # This stream has 36 tokens to consider.
+    # `q` = 1 token
+    # `[20 0 0 20 0 0] cm` = 8 tokens
+    # Inline image top-level = 2 tokens
+    # The inline image settings = 22 tokens
+    # `0.0001 0.0001 Td` = 3 tokens
+    data = (
+        b"q 20 0 0 20 0 0 cm\n"
+        b"\nBI\n  /W 16\n  /H 16\n  /CS /G\n  /BPC 1\n  /F [/CCF]\n"
+        b"  /DP [ << /K -1 /BlackIs1 false /Columns 16 /Rows 16 >> ]\nID\n"
+        b"&\xa0\xbf\xcc9\x14|G#\x1f\xff\xf1\xcc9\x18\xfe\xbbX\xfc\x00@\x04"
+        b"\nEI\n"
+        b"\n0.0001 0.0001 Td "
+    )
+    with apply_configuration(stream_parsing_work_maximum_count=36):
+        content_stream = ContentStream(stream=None, pdf=None)
+        content_stream._parse_content_stream(BytesIO(data))
+        assert content_stream.operations == [
+            ([], b"q"),
+            ([20, 0, 0, 20, 0, 0], b"cm"),
+            (
+                {
+                    "data": b"&\xa0\xbf\xcc9\x14|G#\x1f\xff\xf1\xcc9\x18\xfe\xbbX\xfc\x00@\x04\n",
+                    "settings": {
+                        "/BPC": 1,
+                        "/CS": "/G",
+                        "/DP": [{"/BlackIs1": False, "/Columns": 16, "/K": -1, "/Rows": 16}],
+                        "/F": ["/CCF"],
+                        "/H": 16,
+                        "/W": 16
+                    }
+                },
+                b"INLINE IMAGE"
+            ),
+            ([0.0001, 0.0001], b"Td")
+        ]
+
+    # Exceed the limit.
+    data = b"\n0.0001 0.0001 Td " * 50
+    with apply_configuration(stream_parsing_work_maximum_count=100):
+        content_stream = ContentStream(stream=None, pdf=None)
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens per stream\.$"
+        ):
+            content_stream._parse_content_stream(BytesIO(data))
+        assert content_stream.operations == [
+            ([0.0001, 0.0001], b"Td")
+        ] * 33
+
+    # Nested limit.
+    data = b" [ " * 11 + b" /Name " + b" ] " * 11
+    with apply_configuration(stream_parsing_work_maximum_count=10):
+        content_stream = ContentStream(stream=None, pdf=None)
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"
+        ):
+            content_stream._parse_content_stream(BytesIO(data))
+        assert content_stream.operations == []
+
+
+def test_array_object__read_from_stream__token_limit() -> None:
+    pdf = ReaderDummy()
+    data = b"[ null [ [ [ [ /SomeName 42 ] ] ] ] 13 ]"
+    expected = [
+        NullObject(),
+        [[[[NameObject("/SomeName"), NumberObject(42)]]]],
+        NumberObject(13)
+    ]
+
+    # No budget.
+    assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf) == expected  # type: ignore[arg-type]
+
+    # Enough budget.
+    parsing_budget = StreamParsingBudget(remaining_budget=10)
+    assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget) == expected  # type: ignore[arg-type]
+    # Internal array with 2 objects + 4 arrays + `null` + `13` = 8
+    assert parsing_budget.remaining_budget == 2
+
+    # Too strict budget.
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
+        ArrayObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget)  # type: ignore[arg-type]
+    assert parsing_budget.remaining_budget == -1
+
+    # NullObject handling.
+    null_data = b"[ " + b"null " * 11 + b"]"
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
+        ArrayObject.read_from_stream(
+            BytesIO(null_data),
+            pdf=pdf,  # type: ignore[arg-type]
+            parsing_budget=StreamParsingBudget(remaining_budget=10)
+        )
+
+
+def test_array_object__read_from_stream__maximum_element_count() -> None:
+    pdf = ReaderDummy()
+
+    with apply_configuration(array_maximum_element_count=20):
+        data = b"[ " + b"null " * 20 + b"]"
+        assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf) == [NullObject()] * 20  # type: ignore[arg-type]
+
+        data = b"[ " + b"null " * 21 + b"]"
+        with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum array element count\.$"):
+            ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
+
+        data = b"[ null null " + b" 42 " * 19 + b"]"
+        with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum array element count\.$"):
+            ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
+
+
+def test_dictionary_object__read_from_stream__token_limit() -> None:
+    pdf = ReaderDummy()
+    data = b"<< /Key1 << /Key2 << /Key3 << /Key4 << /SomeName 42 >> >> >> >> /Key5 13 >>"
+    expected = {
+        NameObject("/Key1"): {
+            NameObject("/Key2"): {
+                NameObject("/Key3"): {
+                    NameObject("/Key4"): {
+                        NameObject("/SomeName"): NumberObject(42)
+                    }
+                }
+            }
+        },
+        NameObject("/Key5"): NumberObject(13)
+    }
+
+    # No budget.
+    assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf) == expected  # type: ignore[arg-type]
+
+    # Enough budget.
+    parsing_budget = StreamParsingBudget(remaining_budget=14)
+    assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget) == expected  # type: ignore[arg-type]
+    # 6 key-value pairs
+    assert parsing_budget.remaining_budget == 2
+
+    # Too strict budget.
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
+        DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget)  # type: ignore[arg-type]
+    assert parsing_budget.remaining_budget == -2  # Decrements of 2.
+
+
+def test_dictionary_object__read_from_stream__maximum_element_count() -> None:
+    pdf = ReaderDummy()
+
+    with apply_configuration(dictionary_maximum_element_count=20):
+        key_value_pairs = " ".join(f"/Key{index} {index}" for index in range(20))
+        data = b"<< " + key_value_pairs.encode() + b" >>"
+        assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf) == {  # type: ignore[arg-type]
+            NameObject(f"/Key{index}"): NumberObject(index) for index in range(20)
+        }
+
+        key_value_pairs = " ".join(f"/Key{index} {index}" for index in range(21))
+        data = b"<< " + key_value_pairs.encode() + b" >>"
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Reached maximum number of dictionary entries\.$"
+        ):
+            DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
+
+
+def test_content_stream__parse_content_stream__dictionary_limit() -> None:
+    key_value_pairs = " ".join(f"/Key{index} {index}" for index in range(20))
+    data = b"<< " + key_value_pairs.encode() + b" >>"
+
+    with apply_configuration(dictionary_maximum_element_count=10):
+        content_stream = ContentStream(stream=None, pdf=None)
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Reached maximum number of dictionary entries\.$"
+        ):
+            content_stream._parse_content_stream(BytesIO(data))
+
+
+@pytest.mark.parametrize(
+    "budget",
+    [
+        pytest.param(9, id="list-as-key"),
+        pytest.param(15, id="dictionary1"),
+        pytest.param(16, id="dictionary2"),
+    ]
+)
+def test_content_stream__read_inline_image__parsing_budget(budget: int) -> None:
+    data = b"<< [ 0 1 2 3 4 5 6 7 8 9 10 ] << /Key1 42 /Key2 1337 >> >>"
+
+    content_stream = ContentStream(stream=None, pdf=None)
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
+        content_stream._read_inline_image(
+            stream=BytesIO(data),
+            parsing_budget=StreamParsingBudget(remaining_budget=budget)
+        )
+
+
+def test_content_stream__check_limits__read_inline_image_dictionary_limit() -> None:
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
+        ContentStream._check_limits(
+            remaining_elements=0, parsing_budget=StreamParsingBudget(remaining_budget=10), token_decrement=1
+        )

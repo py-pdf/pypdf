@@ -61,6 +61,7 @@ from ._link import DirectReferenceLink, NamedReferenceLink, ReferenceLink, extra
 from ._outline import OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
+    StreamParsingBudget,
     create_string_object,
     decode_pdfdocencoding,
     hex_to_rgb,
@@ -98,6 +99,7 @@ __all__ = [
     "RectangleObject",
     "ReferenceLink",
     "StreamObject",
+    "StreamParsingBudget",
     "TextStringObject",
     "TreeObject",
     "ViewerPreferences",
