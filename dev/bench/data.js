@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792145687068,
+  "lastUpdate": 1792145753716,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -150289,6 +150289,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028803100811909697",
             "extra": "mean: 521.304529400004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "1145329e8c80e1f72fbbb4001460fb8553236aeb",
+          "message": "REL: 6.21.0\n\n## What's new\n\n### Security (SEC)\n- Improve performance and limit field work (#4219) by @stefan6419846\n- Limit stream parsing work (#4218) by @stefan6419846\n\n### New Features (ENH)\n- Allow custom fit modes for named destinations (#4181) by @JackyHsu-X\n\n### Bug Fixes (BUG)\n- Treat NUL as whitespace in ArrayObject (#4198) by @Zephyr761\n- Avoid overwriting unread objects in add_form_topname (#4190) by @tigger0jk\n- Read an indirect page box on a writer page (#4179) by @usmanmateen\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.20.1...6.21.0)",
+          "timestamp": "2026-10-16T12:12:01+02:00",
+          "tree_id": "4e0ba5de39da2497e8d04e58329b754064acd0b1",
+          "url": "https://github.com/py-pdf/pypdf/commit/1145329e8c80e1f72fbbb4001460fb8553236aeb"
+        },
+        "date": 1792145743541,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.405550811375484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019356384476543937",
+            "extra": "mean: 69.41768580000011 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.553407431679478,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012118742104547442",
+            "extra": "mean: 37.65995014285634 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9710138675079392,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030150605488388656",
+            "extra": "mean: 1.029851409400004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.47936514959648785,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03780807793166349",
+            "extra": "mean: 2.0860924095999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.35835741571377644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017664223714782053",
+            "extra": "mean: 2.790510133599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1347810457005403,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03685412574692111",
+            "extra": "mean: 881.2272673999985 msec\nrounds: 5"
           }
         ]
       }
