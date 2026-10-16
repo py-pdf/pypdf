@@ -326,6 +326,7 @@ for page in reader.pages:
         [sys.executable, source_file],
         capture_output=True,
         env=get_subprocess_environment(),
+        check=False,
     )
     assert result.returncode == 0
     assert result.stdout == b""
