@@ -1448,7 +1448,7 @@ class ContentStream(DecodedStreamObject):
         if remaining_elements is not None:
             remaining_elements -= 1
             if remaining_elements < 0:
-                raise LimitReachedError("Reached maximum number of dictionary entries.")
+                raise LimitReachedError("Reached maximum number of tokens.")
         parsing_budget.remaining_budget -= token_decrement
         if parsing_budget.remaining_budget < 0:
             raise LimitReachedError("Reached maximum number of tokens per stream.")

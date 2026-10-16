@@ -855,3 +855,10 @@ def test_content_stream__read_inline_image__parsing_budget(budget: int) -> None:
             stream=BytesIO(data),
             parsing_budget=StreamParsingBudget(remaining_budget=budget)
         )
+
+
+def test_content_stream__check_limits__read_inline_image_dictionary_limit() -> None:
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
+        ContentStream._check_limits(
+            remaining_elements=0, parsing_budget=StreamParsingBudget(remaining_budget=10), token_decrement=1
+        )
