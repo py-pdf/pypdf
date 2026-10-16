@@ -224,17 +224,30 @@ class ReaderDummy:
         return IndirectObject(idnum=1, generation=1, pdf=self)
 
 
-def count_function_calls(func: Callable[..., T], *args: Any, **kwargs: Any) -> tuple[T, int]:
+def count_function_calls(
+        func: Callable[..., T],
+        *args: Any,
+        names_to_ignore: Optional[set[str]] = None,
+        **kwargs: Any
+) -> tuple[T, int]:
     """
     Run func with the given arguments and count the calls of Python functions meanwhile.
 
     The count measures the work independently of the machine speed. Creating
     the arguments beforehand keeps their calls out of the count.
+
+    If you need to legitimately exclude some function names, like re-used code for
+    enforcing security limits, pass them explicitly by name. Counting these as
+    performance-related could keep our code fast, but make it more vulnerable than
+    necessary.
     """
     calls = 0
+    names_to_ignore_set = names_to_ignore or set()
 
     def count_calls(frame: FrameType, event: str, arg: Any) -> None:
         nonlocal calls
+        if frame.f_code.co_name in names_to_ignore_set:
+            return
         if event == "call":
             calls += 1
 
