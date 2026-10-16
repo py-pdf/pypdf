@@ -12,6 +12,7 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration
+from pypdf._utils import _TraversalState
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.filters import FlateDecode
 from pypdf.generic import (
@@ -1764,3 +1765,171 @@ def test_flatten__kid_with_unrecognised_type(caplog):
     reader = PdfReader(stream)
     assert len(reader.pages) == 1  # this calls '_flatten' internally
     assert caplog.text == ""
+
+
+@pytest.mark.slow
+@pytest.mark.timeout(10)  # Previously 25-30 seconds.
+def test_get_fields__speed() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+
+    kids = ArrayObject()
+    for i in range(20_000):
+        field = DictionaryObject({
+            NameObject("/FT"): NameObject("/Tx"),
+            NameObject("/T"): TextStringObject(f"f{i}"),
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/Rect"): ArrayObject([
+                NumberObject(0), NumberObject(0),
+                NumberObject(0), NumberObject(0),
+            ]),
+        })
+        kids.append(writer._add_object(field))
+
+    parent = DictionaryObject({
+        NameObject("/T"): TextStringObject("parent"),
+        NameObject("/Kids"): kids,
+    })
+
+    acro = DictionaryObject({
+        NameObject("/Fields"): ArrayObject([writer._add_object(parent)]),
+    })
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acro)
+
+    _ = writer.get_fields()
+
+
+def test_get_fields__stack_deprecation() -> None:
+    writer = PdfWriter()
+    message = r"^stack is deprecated and will be removed in pypdf 7\.0\.0\.$"
+
+    fields = [DictionaryObject({NameObject("/Key"): NumberObject(i)}) for i in range(2)]
+    tree = DictionaryObject({
+        NameObject("/Fields"): ArrayObject(map(writer._add_object, fields))
+    })
+
+    # Parameter not changed.
+    with mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
+        writer.get_fields(tree=tree)
+    build_mock.assert_not_called()
+
+    # Parameter set to `None` and not `retval`.
+    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
+            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
+        writer.get_fields(tree=tree, stack=None)
+    build_mock.assert_not_called()
+
+    # Parameter set to `None` and `retval`.
+    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
+            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
+        writer.get_fields(tree=tree, retval={}, stack=None)
+    build_mock.assert_has_calls(
+        [
+            mock.call(
+                field=fields[0], retval={}, fileobj=None, field_attributes=mock.ANY,
+                visited=set(), depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
+            ),
+            mock.call(
+                field=fields[1], retval={}, fileobj=None, field_attributes=mock.ANY,
+                visited=set(), depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
+            ),
+        ],
+        any_order=False
+    )
+    assert build_mock.call_count == 2
+
+    # Parameter set to something meaningful and `retval`.
+    stack = [object(), object()]
+    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
+            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
+        writer.get_fields(tree=tree, retval={}, stack=stack)
+    expected_visited = {id(entry) for entry in stack}
+    build_mock.assert_has_calls(
+        [
+            mock.call(
+                field=fields[0], retval={}, fileobj=None, field_attributes=mock.ANY,
+                visited=expected_visited, depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
+            ),
+            mock.call(
+                field=fields[1], retval={}, fileobj=None, field_attributes=mock.ANY,
+                visited=expected_visited, depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
+            ),
+        ],
+        any_order=False
+    )
+    assert build_mock.call_count == 2
+
+
+def test_get_fields__field_count() -> None:
+    writer = PdfWriter()
+
+    fields = [DictionaryObject({NameObject("/Key"): NumberObject(i)}) for i in range(100)]
+    fields_array = ArrayObject(map(writer._add_object, fields))
+    tree = DictionaryObject({
+        NameObject("/Fields"): fields_array
+    })
+    with apply_configuration(form_fields_maximum_entries=100):
+        writer.get_fields(retval={}, tree=tree, _visited=set())
+
+    fields_array.append(
+        writer._add_object(DictionaryObject({NameObject("/Key"): NumberObject(1337)}))
+    )
+    with apply_configuration(form_fields_maximum_entries=100), \
+            pytest.raises(expected_exception=LimitReachedError, match=r"^Exceeded maximum number of fields allowed\.$"):
+        writer.get_fields(retval={}, tree=tree, _visited=set())
+
+
+def test_get_fields__field_count__nested() -> None:
+    writer = PdfWriter()
+
+    fields = [DictionaryObject({NameObject("/Key"): NumberObject(i)}) for i in range(99)]
+    fields.append(
+        DictionaryObject({
+            NameObject("/Key"): NumberObject(100),
+            NameObject("/T"): TextStringObject("dummy"),
+            NameObject("/Kids"): ArrayObject([
+                writer._add_object(DictionaryObject({
+                    NameObject("/Fields"): ArrayObject([
+                        DictionaryObject({
+                            NameObject("/Key"): NumberObject(101)
+                        })
+                    ])
+                }))
+            ])
+        })
+    )
+    fields_array = ArrayObject(map(writer._add_object, fields))
+    tree = DictionaryObject({
+        NameObject("/Fields"): fields_array
+    })
+
+    with apply_configuration(form_fields_maximum_entries=100), \
+            pytest.raises(expected_exception=LimitReachedError, match=r"^Exceeded maximum number of fields allowed\.$"):
+        writer.get_fields(retval={}, tree=tree, _visited=set())
+
+
+def test_get_fields__nesting_depth() -> None:
+    writer = PdfWriter()
+
+    tree = DictionaryObject({
+        NameObject("/Fields"): ArrayObject([
+            writer._add_object(DictionaryObject({
+                NameObject("/T"): TextStringObject("Dummy"),
+                NameObject("/Kids"): ArrayObject([
+                    writer._add_object(DictionaryObject({
+                        NameObject("/T"): TextStringObject("Dummy"),
+                        NameObject("/Kids"): ArrayObject([
+                            writer._add_object(DictionaryObject({
+                                NameObject("/Key"): NumberObject(42)
+                            }))
+                        ])
+                    }))
+                ])
+            }))
+        ])
+    })
+
+    with apply_configuration(form_fields_maximum_depth=1), \
+            pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum allowed form field depth\.$"):
+        writer.get_fields(retval={}, tree=tree, _visited=set())
