@@ -97,6 +97,11 @@ class Configuration:
     page_tree_maximum_depth: int = 100
     """The maximum allowed depth of the page tree."""
 
+    form_fields_maximum_entries: int = 100_000
+    """The maximum allowed number of form fields."""
+    form_fields_maximum_depth: int = 100
+    """The maximum allowed depth for form fields."""
+
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
 
