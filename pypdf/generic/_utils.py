@@ -226,7 +226,7 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
     return retval
 
 
-@dataclass(kw_only=True)
+@dataclass
 class StreamParsingBudget:
     """
     Shared, mutable budget for limiting parsing work.

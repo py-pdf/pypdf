@@ -738,17 +738,17 @@ def test_array_object__read_from_stream__token_limit() -> None:
     ]
 
     # No budget.
-    assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf) == expected
+    assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf) == expected  # type: ignore[arg-type]
 
     # Enough budget.
     parsing_budget = StreamParsingBudget(remaining_budget=10)
-    assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget) == expected
+    assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget) == expected  # type: ignore[arg-type]
     # Internal array with 2 objects + 4 arrays + `null` + `13` = 8
     assert parsing_budget.remaining_budget == 2
 
     # Too strict budget.
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
-        ArrayObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget)
+        ArrayObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget)  # type: ignore[arg-type]
     assert parsing_budget.remaining_budget == -1
 
     # NullObject handling.
@@ -756,7 +756,7 @@ def test_array_object__read_from_stream__token_limit() -> None:
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
         ArrayObject.read_from_stream(
             BytesIO(null_data),
-            pdf=pdf,
+            pdf=pdf,  # type: ignore[arg-type]
             parsing_budget=StreamParsingBudget(remaining_budget=10)
         )
 
@@ -766,15 +766,15 @@ def test_array_object__read_from_stream__maximum_element_count() -> None:
 
     with apply_configuration(array_maximum_element_count=20):
         data = b"[ " + b"null " * 20 + b"]"
-        assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf) == [NullObject()] * 20
+        assert ArrayObject.read_from_stream(BytesIO(data), pdf=pdf) == [NullObject()] * 20  # type: ignore[arg-type]
 
         data = b"[ " + b"null " * 21 + b"]"
         with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum array element count\.$"):
-            ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)
+            ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
 
         data = b"[ null null " + b" 42 " * 19 + b"]"
         with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum array element count\.$"):
-            ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)
+            ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
 
 
 def test_dictionary_object__read_from_stream__token_limit() -> None:
@@ -794,17 +794,17 @@ def test_dictionary_object__read_from_stream__token_limit() -> None:
     }
 
     # No budget.
-    assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf) == expected
+    assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf) == expected  # type: ignore[arg-type]
 
     # Enough budget.
     parsing_budget = StreamParsingBudget(remaining_budget=14)
-    assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget) == expected
+    assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget) == expected  # type: ignore[arg-type]
     # 6 key-value pairs
     assert parsing_budget.remaining_budget == 2
 
     # Too strict budget.
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
-        DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget)
+        DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf, parsing_budget=parsing_budget)  # type: ignore[arg-type]
     assert parsing_budget.remaining_budget == -2  # Decrements of 2.
 
 
@@ -814,7 +814,7 @@ def test_dictionary_object__read_from_stream__maximum_element_count() -> None:
     with apply_configuration(dictionary_maximum_element_count=20):
         key_value_pairs = " ".join(f"/Key{index} {index}" for index in range(20))
         data = b"<< " + key_value_pairs.encode() + b" >>"
-        assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf) == {
+        assert DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf) == {  # type: ignore[arg-type]
             NameObject(f"/Key{index}"): NumberObject(index) for index in range(20)
         }
 
@@ -823,7 +823,7 @@ def test_dictionary_object__read_from_stream__maximum_element_count() -> None:
         with pytest.raises(
                 expected_exception=LimitReachedError, match=r"^Reached maximum number of dictionary entries\.$"
         ):
-            DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf)
+            DictionaryObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
 
 
 def test_content_stream__parse_content_stream__dictionary_limit() -> None:
