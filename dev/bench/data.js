@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791999349476,
+  "lastUpdate": 1792143322789,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -118079,6 +118079,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025362685606561412",
             "extra": "mean: 657.5377483999944 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "18bd2981a74479483a0b9507602c58a63d6c9b12",
+          "message": "SEC: Limit stream parsing work (#4218)\n\nThis introduces a new limit for the overall parsing work to do for each\nstream, which previously has only been restricted by the stream length\nitself. But even a stream not hitting this limit could lead to lots of\nparsing work and generate tons of PDF objects, occupying quite a lot of\nmemory. Please note that the current limit is quite conservative.\n\nFurther changes include upper limits of the maximum number of elements\ninside an array and the maximum number of key-value pairs inside a\ndictionary.\n\nIn the process of this change, the meaning of the `LimitReachedError`\nwhen reading a dictionary object from a stream has been revisited:\nPreviously, this would propagate as a `PdfReadError`, which proved to be\nunsuitable for a consistent behavior with the new stream parsing. Thus,\n`LimitReachedError` will now be propagated from\n`DictionaryObject.read_from_stream` without any changes to better\nindicate the intended nature of the exception.",
+          "timestamp": "2026-10-16T11:32:46+02:00",
+          "tree_id": "615ff7b644d40135a50ce852ad965364a624c3fe",
+          "url": "https://github.com/py-pdf/pypdf/commit/18bd2981a74479483a0b9507602c58a63d6c9b12"
+        },
+        "date": 1792143311741,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.1850163661510305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010058725564703764",
+            "extra": "mean: 238.94769159999782 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.212188604512487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007376064353929636",
+            "extra": "mean: 32.03876577419584 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.35994658040287125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03438294585219771",
+            "extra": "mean: 2.7781900272 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 24.94657088968448,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014052359511916603",
+            "extra": "mean: 40.08566966666768 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.10658858147724268,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11187877202942298",
+            "extra": "mean: 9.381867983799992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.018262842275718,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019290535160780796",
+            "extra": "mean: 495.4756035999935 msec\nrounds: 5"
           }
         ]
       }
