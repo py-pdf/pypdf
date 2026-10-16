@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792143368297,
+  "lastUpdate": 1792144352439,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -150091,6 +150091,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.043636435160121424",
             "extra": "mean: 825.8523473999901 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5ef728f0e16d225c853e89f861ba0a67402fe3f2",
+          "message": "SEC: Improve performance and limit field work (#4219)\n\nThis fixes a performance issue with the list cycle detection, which\npreviously used a list on the actual objects instead of the usual set of\nobject IDs. This has been changed now. Users which previously passed\ntheir own stack (for whatever reason) now receive a deprecation warning\nand we have a best-effort fallback to keep both variants working during\nthe deprecation period.\n\nBesides this, this change introduces a count and depth limit for the\nfields retrieved by `get_fields` to limit the overall work to do during\nretrieval.",
+          "timestamp": "2026-10-16T11:50:12+02:00",
+          "tree_id": "ea20db4f67ac460cbcf808913ff711321c225c51",
+          "url": "https://github.com/py-pdf/pypdf/commit/5ef728f0e16d225c853e89f861ba0a67402fe3f2"
+        },
+        "date": 1792144345658,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.635198733732196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016464217463642003",
+            "extra": "mean: 42.30977751724162 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 43.477275920232664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011664292355657586",
+            "extra": "mean: 23.0005210500007 msec\nrounds: 40"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.6231686844010966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026331273223108746",
+            "extra": "mean: 616.0789137999984 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.1312156357178966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03683299064055367",
+            "extra": "mean: 884.0047542000036 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5767858648012794,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014876819602554851",
+            "extra": "mean: 1.7337456776000066 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9182645528726772,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028803100811909697",
+            "extra": "mean: 521.304529400004 msec\nrounds: 5"
           }
         ]
       }
