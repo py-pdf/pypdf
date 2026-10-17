@@ -47,6 +47,7 @@ from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
     _TraversalState,
+    deprecate_no_replacement,
     deprecation_with_replacement,
     logger_warning,
     parse_iso8824_date,
@@ -119,6 +120,8 @@ class _PageTreeItem(NamedTuple):
 #: A ``/Pages`` node currently being walked: the node - carrying the attributes its
 #: kids inherit - and the part of its ``/Kids`` which has not been reached yet.
 _PageTreeFrame = tuple[_PageTreeItem, Iterator[PdfObject]]
+
+_UNSET = object()
 
 
 class DocumentInformation(DictionaryObject):
@@ -599,19 +602,26 @@ class PdfDocCommon(ABC):
         tree: Optional[DictionaryObject] = None,
         retval: Optional[dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
-        stack: Optional[list[PdfObject]] = None,
+        stack: Any = _UNSET,
+        *,
+        _visited: Optional[set[int]] = None,
+        _depth: int = 0,
+        _traversal_state: Optional[_TraversalState] = None,
     ) -> Optional[dict[str, Any]]:
         """
         Extract field data if this PDF contains interactive form fields.
 
-        The *tree*, *retval*, *stack* parameters are for recursive use.
+        The *tree*, *retval*, *visited*, *depth* parameters are for internal use.
 
         Args:
             tree: Current object to parse.
             retval: In-progress list of fields.
             fileobj: A file object (usually a text file) to write
                 a report to on all interactive form fields found.
-            stack: List of already parsed objects.
+            stack: The stack to use. Deprecated.
+            _visited: Set of already visited IDs. Callers should usually omit this.
+            _depth: The current field depth.
+            _traversal_state: The current traversal state.
 
         Returns:
             A dictionary where each key is a field name, and each
@@ -620,12 +630,30 @@ class PdfDocCommon(ABC):
             ``None`` if form data could not be located.
 
         """
+        if stack is not _UNSET:
+            deprecate_no_replacement(name="stack", removed_in="7.0.0")
+            if retval is not None:
+                if _visited is None:
+                    _visited = set()
+                _visited.update(set(map(id, stack or [])))
+
+        configuration = get_configuration()
+        if _depth >= configuration.form_fields_maximum_depth:
+            raise LimitReachedError("Reached maximum allowed form field depth.")
+        if _traversal_state is None:
+            _traversal_state = _TraversalState()
+
+        def _check_field_limit(_increment: int) -> None:
+            _traversal_state.entry_count += _increment
+            if _traversal_state.entry_count > configuration.form_fields_maximum_entries:
+                raise LimitReachedError("Exceeded maximum number of fields allowed.")
+
         field_attributes = FA.attributes_dict()
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
         if retval is None:
             retval = {}
             catalog = self.root_object
-            stack = []
+            _visited = set()
             # get the AcroForm tree
             if CA.ACRO_FORM in catalog:
                 entry = catalog[CA.ACRO_FORM]
@@ -644,7 +672,7 @@ class PdfDocCommon(ABC):
                 return None
         if tree is None:
             return retval
-        assert stack is not None
+        assert _visited is not None
         if "/Fields" in tree:
             fields = tree["/Fields"].get_object()
             if not isinstance(fields, ArrayObject):
@@ -654,12 +682,20 @@ class PdfDocCommon(ABC):
                     fields=fields,
                 )
                 return retval
+            _check_field_limit(len(fields))
             for f in fields:
                 field = f.get_object()
-                self._build_field(field, retval, fileobj, field_attributes, stack)
+                self._build_field(
+                    field=field, retval=retval, fileobj=fileobj, field_attributes=field_attributes,
+                    visited=_visited, depth=_depth, traversal_state=_traversal_state,
+                )
         elif any(attr in tree for attr in field_attributes):
             # Tree is a field
-            self._build_field(tree, retval, fileobj, field_attributes, stack)
+            _check_field_limit(1)
+            self._build_field(
+                field=tree, retval=retval, fileobj=fileobj, field_attributes=field_attributes,
+                visited=_visited, depth=_depth, traversal_state=_traversal_state,
+            )
         return retval
 
     def _get_qualified_field_name(
@@ -703,11 +739,14 @@ class PdfDocCommon(ABC):
 
     def _build_field(
         self,
+        *,
         field: Union[TreeObject, DictionaryObject],
         retval: dict[Any, Any],
         fileobj: Any,
         field_attributes: Any,
-        stack: list[PdfObject],
+        visited: set[int],
+        depth: int,
+        traversal_state: _TraversalState,
     ) -> None:
         if not isinstance(field, DictionaryObject):
             logger_warning(
@@ -750,28 +789,37 @@ class PdfDocCommon(ABC):
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
         # at last for order
-        self._check_kids(field, retval, fileobj, stack)
+        self._check_kids(
+            tree=field, retval=retval, fileobj=fileobj, visited=visited, depth=depth, traversal_state=traversal_state
+        )
 
     def _check_kids(
         self,
+        *,
         tree: Union[TreeObject, DictionaryObject],
         retval: Any,
         fileobj: Any,
-        stack: list[PdfObject],
+        visited: set[int],
+        depth: int,
+        traversal_state: _TraversalState,
     ) -> None:
-        if tree in stack:
+        tree_id = id(tree)
+        if tree_id in visited:
             logger_warning(
                 "%(field_name)s already parsed",
                 source=__name__,
                 field_name=self._get_qualified_field_name(parent=tree),
             )
             return
-        stack.append(tree)
+        visited.add(tree_id)
         if PagesAttributes.KIDS in tree:
             # recurse down the tree
             for kid in tree[PagesAttributes.KIDS]:  # type: ignore[attr-defined]
                 kid = kid.get_object()
-                self.get_fields(kid, retval, fileobj, stack)
+                self.get_fields(
+                    tree=kid, retval=retval, fileobj=fileobj,
+                    _visited=visited, _depth=depth + 1, _traversal_state=traversal_state
+                )
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
         field_attributes_tuple = FA.attributes()
