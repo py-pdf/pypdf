@@ -385,8 +385,17 @@ class PdfReader(PdfDocCommon):
             # This avoids O(N²) behavior when many objects from the same stream
             # are resolved individually (each call would re-parse the header).
             stream_data = BytesIO(obj_stm.get_data())
-            n = int(obj_stm["/N"])  # type: ignore[call-overload]
-            first_offset = int(obj_stm["/First"])  # type: ignore[call-overload]
+            n_value = obj_stm.get("/N")
+            first_value = obj_stm.get("/First")
+            if not isinstance(n_value, NumberObject) or not isinstance(
+                first_value, NumberObject
+            ):
+                raise PdfReadError(
+                    f"Invalid /ObjStm header for object {stmnum}: "
+                    "/N or /First missing or not a number"
+                )
+            n = int(n_value)
+            first_offset = int(first_value)
 
             # ObjStm header format: "objnum offset objnum offset ..."
             # smallest possible entry: "0 0" = 3 bytes (1 digit + 1 space + 1 digit)
