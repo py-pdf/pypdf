@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 6.21.1, 2026-10-17
+
+### Security (SEC)
+- Only open /DCTDecode image data with the Pillow JPEG plugin (#4222)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.0...6.21.1)
+
 ## Version 6.21.0, 2026-10-16
 
 ### Security (SEC)
