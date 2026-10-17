@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792231274875,
+  "lastUpdate": 1792231843269,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -118409,6 +118409,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00293085152261124",
             "extra": "mean: 665.5853695999895 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "1a6de8d43c3a931b1ab3643c8dee2c9b51a32d42",
+          "message": "REL: 6.21.1\n\n## What's new\n\n### Security (SEC)\n- Only open /DCTDecode image data with the Pillow JPEG plugin (#4222) by @metsw24-max\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.0...6.21.1)",
+          "timestamp": "2026-10-17T12:08:27+02:00",
+          "tree_id": "d3fddc09c005d14ae532160dbe0c4f880230d6eb",
+          "url": "https://github.com/py-pdf/pypdf/commit/1a6de8d43c3a931b1ab3643c8dee2c9b51a32d42"
+        },
+        "date": 1792231835940,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.920009733904669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015443605320001422",
+            "extra": "mean: 203.2516304000012 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 32.521444243108014,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008547827173730671",
+            "extra": "mean: 30.74894191428541 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4068873255770416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05728790704617371",
+            "extra": "mean: 2.4576828451999946 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 32.65055229608192,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005492508408035691",
+            "extra": "mean: 30.627353281249103 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1402228536646094,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07224830042301592",
+            "extra": "mean: 7.131505128199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.662009221012533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009444830159292525",
+            "extra": "mean: 375.6560992000004 msec\nrounds: 5"
           }
         ]
       }
