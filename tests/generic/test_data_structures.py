@@ -301,6 +301,7 @@ with open({pdf_path_str!r}, mode="rb") as fd:
         env=env,
         text=True,
         preexec_fn=limit_virtual_memory,
+        check=False,
     )
     assert result.returncode == 1
     assert result.stdout == ""
@@ -332,6 +333,7 @@ print(reader.pages[0].extract_text())
         env=env,
         text=True,
         preexec_fn=limit_virtual_memory,
+        check=False,
     )
     assert result.returncode == 0
     assert result.stdout.replace("\r", "") == "Hello from pypdf\n"
