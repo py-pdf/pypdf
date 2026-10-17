@@ -653,7 +653,7 @@ def _xobj_to_image(
             )
             img = _image_from_bytes(fallback_mode, size, fallback_data)
     elif last_filter == FT.DCT_DECODE:
-        img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
+        img, image_format, extension = Image.open(BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
         # invert_color kept unchanged
     elif last_filter == FT.JPX_DECODE:
         img, image_format, extension, invert_color = _handle_jpx(

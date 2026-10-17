@@ -524,3 +524,25 @@ def test_xobj_to_image__empty_filter_array() -> None:
         expected_extension, expected_img.mode, expected_img.tobytes()
     )
     assert extension == ".png"
+
+
+@pytest.mark.parametrize("image_format", ["BMP", "GIF", "PNG", "TIFF"])
+def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
+    """/DCTDecode data must not be handed to arbitrary Pillow image plugins."""
+    data = BytesIO()
+    Image.new("L", (1, 1)).save(data, format=image_format)
+    image = _minimal_image_xobject()
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.DCT_DECODE)
+    image.set_data(data.getvalue())
+
+    with pytest.raises(PIL.UnidentifiedImageError):
+        _xobj_to_image(image)
+
+    data = BytesIO()
+    Image.new("L", (1, 1)).save(data, format="JPEG")
+    image.set_data(data.getvalue())
+
+    extension, _, img = _xobj_to_image(image)
+
+    assert extension == ".jpg"
+    assert img.format == "JPEG"
