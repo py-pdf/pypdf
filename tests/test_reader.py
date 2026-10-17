@@ -433,6 +433,18 @@ def test_startxref_corrupt_trailing_pointer(caplog):
         PdfReader(io.BytesIO(pdf_data), strict=True)
 
 
+def test_startxref_same_line_garbage_raises_pdfreaderror():
+    """Corrupt bytes after startxref must raise PdfReadError, not ValueError (#4208)."""
+    data = b"startxref\xdf\nf\n6\n%"
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(data))
+
+    # Primary parser path: startxref and garbage share the line above %%EOF
+    data = b"%PDF-1.0\nstartxref\xdf\n%%EOF\n"
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(data))
+
+
 def test_find_previous_startxref_pos_recovery_variants():
     """Cover the backward-scan branches of _find_previous_startxref_pos (#3238)."""
 
@@ -446,6 +458,10 @@ def test_find_previous_startxref_pos_recovery_variants():
 
     # Keyword and offset share a line
     assert scan(b"startxref 6789\ngarbage\n") == 6789
+
+    # Garbage on the same line as the keyword must not leak ValueError (#4208)
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"startxref\xdf\nf\n6\n%")
 
     # A startxref keyword with no numeric offset above it cannot be recovered
     with pytest.raises(PdfReadError, match="startxref not found"):
