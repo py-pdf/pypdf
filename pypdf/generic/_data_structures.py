@@ -508,10 +508,12 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                 return default
 
             # Walk upward
-            current = cast(
-                "DictionaryObject",
-                current["/Parent"].get_object(),
-            )
+            parent = current["/Parent"].get_object()
+            if not isinstance(parent, DictionaryObject):
+                # A malformed /Parent that does not resolve to a dictionary
+                # terminates the inheritance walk (the key was not found).
+                return default
+            current = parent
 
     def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
