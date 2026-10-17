@@ -20,6 +20,7 @@ from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
     ArrayObject,
+    ByteStringObject,
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
@@ -28,7 +29,7 @@ from pypdf.generic import (
     NumberObject,
     TextStringObject,
 )
-from pypdf.generic._image_xobject import _handle_flate
+from pypdf.generic._image_xobject import _handle_flate, _xobj_to_image
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 from .utils import get_image_data
@@ -1047,3 +1048,71 @@ def test_images__xobject_is_not_a_dictionary(caplog, value, expected):
 
     assert list(PdfReader(stream).pages[0].images) == []
     assert expected in caplog.text
+
+
+def _create_gray_2x2_image_stream(data: bytes, filter_name: str) -> DecodedStreamObject:
+    stream = DecodedStreamObject()
+    stream.set_data(data)
+    stream.update(
+        {
+            NameObject("/Width"): NumberObject(2),
+            NameObject("/Height"): NumberObject(2),
+            NameObject("/ColorSpace"): NameObject("/DeviceGray"),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+            NameObject("/Filter"): NameObject(filter_name),
+        }
+    )
+    return stream
+
+
+@pytest.mark.parametrize(
+    ("filter_name", "container_format", "expected_extension"),
+    [
+        # Data without a TIFF/PNG container: raw samples, the format is guessed from the filter.
+        ("/LZWDecode", None, ".tiff"),
+        ("/ASCII85Decode", None, ".png"),
+        # Data with a container: the format is detected by Pillow, regardless of the filter.
+        ("/LZWDecode", "PNG", ".png"),
+        ("/ASCII85Decode", "TIFF", ".tiff"),
+        ("/LZWDecode", "TIFF", ".tiff"),
+        ("/ASCII85Decode", "PNG", ".png"),
+    ],
+)
+def test_xobj_to_image__lzw_ascii85_image_format(filter_name, container_format, expected_extension):
+    samples = bytes([0, 64, 128, 255])
+    if container_format is None:
+        data = samples
+    else:
+        buffer = BytesIO()
+        Image.frombytes("L", (2, 2), samples).save(buffer, container_format)
+        data = buffer.getvalue()
+
+    extension, image_data, img = _xobj_to_image(_create_gray_2x2_image_stream(data, filter_name))
+
+    assert extension == expected_extension
+    assert img.mode == "L"
+    assert img.size == (2, 2)
+    assert img.tobytes() == samples
+    with Image.open(BytesIO(image_data)) as saved:
+        assert saved.format == expected_extension.lstrip(".").upper()
+        assert saved.tobytes() == samples
+
+
+def test_handle_flate__indexed_cmyk_palette():
+    # CMYK: white, cyan, mid-tone, black
+    lookup = bytes([0, 0, 0, 0,  255, 0, 0, 0,  128, 64, 32, 16,  0, 0, 0, 255])
+    color_space = ArrayObject(
+        [NameObject("/Indexed"), NameObject("/DeviceCMYK"), NumberObject(3), ByteStringObject(lookup)]
+    )
+
+    img = _handle_flate((4, 1), bytes([0, 1, 2, 3]), "P", color_space, 1, "")[0]
+
+    # The palette has to be converted to RGB regardless of the installed Pillow version:
+    # Starting with Pillow 12.2.0, `putpalette(..., rawmode="CMYK")` keeps a CMYK palette.
+    assert img.mode == "RGB"
+    assert [img.getpixel((x, 0)) for x in range(4)] == [
+        (255, 255, 255),
+        (0, 255, 255),
+        (119, 179, 209),
+        (0, 0, 0),
+    ]
