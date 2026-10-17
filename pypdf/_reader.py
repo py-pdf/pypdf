@@ -74,6 +74,7 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
+    ByteStringObject,
     Destination,
     DictionaryObject,
     EncodedStreamObject,
@@ -184,9 +185,19 @@ class PdfReader(PdfDocCommon):
         # Some documents may not have a /ID, use two empty
         # byte strings instead. Solves
         # https://github.com/py-pdf/pypdf/issues/608
-        id_entry = self.trailer.get(TK.ID)
-        id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
-        encrypt_entry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
+        id_entry = self.trailer.get(TK.ID, NullObject()).get_object()
+        id1_entry = b""
+        if isinstance(id_entry, ArrayObject) and id_entry:
+            first_id_entry = id_entry[0].get_object()
+            if isinstance(first_id_entry, (ByteStringObject, TextStringObject)):
+                id1_entry = first_id_entry.original_bytes
+            else:
+                logger_warning("Ignoring non-string first /ID entry of the trailer", source=__name__)
+        elif not isinstance(id_entry, NullObject):
+            logger_warning("Ignoring malformed /ID entry of the trailer", source=__name__)
+        encrypt_entry = self.trailer[TK.ENCRYPT]
+        if not isinstance(encrypt_entry, DictionaryObject):
+            raise PdfReadError("/Encrypt entry of the trailer is not a dictionary")
         self._encryption = Encryption.read(encrypt_entry, id1_entry)
 
         # try empty password if no password provided
