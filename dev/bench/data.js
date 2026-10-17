@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792230919088,
+  "lastUpdate": 1792231230391,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -150553,6 +150553,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03897109688086619",
             "extra": "mean: 865.0950999999964 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "512d8eb94eb04be1d1c90504e6da2dcef8679e07",
+          "message": "SEC: Only open /DCTDecode image data with the Pillow JPEG plugin (#4222)\n\n_xobj_to_image passed /DCTDecode stream data to Image.open() without a\nformats restriction, so Pillow picked a plugin by sniffing the stream\nbytes. Non-JPEG data inside a DCT stream was decoded by whatever plugin\nmatched, including EpsImagePlugin, which runs Ghostscript on the\nembedded PostScript when gs is installed. The other filter branches\nalready restrict the formats.",
+          "timestamp": "2026-10-17T11:58:13+02:00",
+          "tree_id": "43c9535302518bddc1e7d10a6b8d62790c93d6cb",
+          "url": "https://github.com/py-pdf/pypdf/commit/512d8eb94eb04be1d1c90504e6da2dcef8679e07"
+        },
+        "date": 1792231223331,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.374385474361826,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01652497898843345",
+            "extra": "mean: 42.78187339285771 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 36.03773070220585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008490698932880703",
+            "extra": "mean: 27.748695062499884 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.492991025383412,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03921656047107914",
+            "extra": "mean: 669.7963905999984 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.083375776619727,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024997907323709722",
+            "extra": "mean: 923.0407598000113 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5474268926986449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04910104820207531",
+            "extra": "mean: 1.8267279400000063 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9402890225190792,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06033236291130716",
+            "extra": "mean: 515.3871347999996 msec\nrounds: 5"
           }
         ]
       }
