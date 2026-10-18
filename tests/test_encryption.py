@@ -138,6 +138,63 @@ def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def _pdf_with_encrypt_dict(encrypt_body: bytes) -> bytes:
+    """Minimal PDF with an /Encrypt dictionary in the trailer."""
+    objs = [
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        b"3 0 obj\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>\nendobj\n",
+        b"4 0 obj\n<< " + encrypt_body + b" >>\nendobj\n",
+    ]
+    pdf = b"%PDF-1.4\n"
+    offsets = []
+    for obj in objs:
+        offsets.append(len(pdf))
+        pdf += obj
+    xref_pos = len(pdf)
+    pdf += b"xref\n0 5\n0000000000 65535 f \n"
+    for offset in offsets:
+        pdf += b"%010d 00000 n \n" % offset
+    pdf += b"trailer\n<< /Size 5 /Root 1 0 R /Encrypt 4 0 R >>\nstartxref\n%d\n%%%%EOF\n" % xref_pos
+    return pdf
+
+
+@pytest.mark.parametrize(
+    ("encrypt_body", "match"),
+    [
+        # /R missing: used to leak a KeyError out of PdfReader construction.
+        (
+            b"/Filter /Standard /V 2 /P -4 /O <%(h)s> /U <%(h)s> /Length 128",
+            r"^Encryption dictionary is missing the required /R entry$",
+        ),
+        # /U missing: used to leak a KeyError.
+        (
+            b"/Filter /Standard /V 2 /R 3 /P -4 /O <%(h)s> /Length 128",
+            r"^Encryption dictionary is missing the required /U entry$",
+        ),
+        # /Length 0: used to crash the crypt providers with a builtin
+        # (ValueError "Invalid key size (0)", or ZeroDivisionError on the
+        # pure-Python fallback path).
+        (
+            b"/Filter /Standard /V 2 /R 3 /P -4 /O <%(h)s> /U <%(h)s> /Length 0",
+            r"^Invalid encryption key length: 0 bits$",
+        ),
+        # /Length not a whole number of bytes.
+        (
+            b"/Filter /Standard /V 2 /R 3 /P -4 /O <%(h)s> /U <%(h)s> /Length 36",
+            r"^Invalid encryption key length: 36 bits$",
+        ),
+    ],
+    ids=["missing_r", "missing_u", "zero_length", "unaligned_length"],
+)
+def test_encryption_dictionary__invalid_entries(encrypt_body, match):
+    """Malformed /Encrypt dictionaries raise PdfReadError, not builtins."""
+    hex32 = b"0" * 64
+    pdf = _pdf_with_encrypt_dict(encrypt_body % {b"h": hex32})
+    with pytest.raises(PdfReadError, match=match):
+        PdfReader(BytesIO(pdf))
+
+
 def test_aesv2_without_length_in_encrypt_dict():
     """
     AESV2-encrypted PDF without /Length in encrypt dict decrypts correctly.

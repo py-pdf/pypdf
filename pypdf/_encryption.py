@@ -46,6 +46,7 @@ from pypdf._crypt_providers import (
 )
 
 from ._utils import logger_warning
+from .errors import PdfReadError
 from .generic import (
     ArrayObject,
     ByteStringObject,
@@ -1224,6 +1225,11 @@ class Encryption:
         alg_ver = encryption_entry.get("/V", 0)
         if alg_ver not in (1, 2, 3, 4, 5):
             raise NotImplementedError(f"Encryption V={alg_ver} NOT supported")
+        for required_key in ("/R", "/P", "/O", "/U"):
+            if required_key not in encryption_entry:
+                raise PdfReadError(
+                    f"Encryption dictionary is missing the required {required_key} entry"
+                )
         if alg_ver >= 4:
             filters = encryption_entry["/CF"]
 
@@ -1253,6 +1259,10 @@ class Encryption:
             cf_dict = cast(DictionaryObject, filters[encryption_entry["/StmF"]])  # type: ignore[index]
             # CF /Length is in bytes (default 16 for AES-128), convert to bits
             key_bits = cast(int, cf_dict.get("/Length", 16)) * 8
+        if key_bits % 8 != 0 or not 40 <= key_bits <= 256:
+            # A key length that is not a whole number of bytes in the legal
+            # range would crash the crypt providers with a builtin error.
+            raise PdfReadError(f"Invalid encryption key length: {key_bits} bits")
         encrypt_metadata = encryption_entry.get("/EncryptMetadata")
         encrypt_metadata = (
             encrypt_metadata.value if encrypt_metadata is not None else True
