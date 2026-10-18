@@ -422,6 +422,38 @@ def test_parse_bfrange__multibyte_source_codes():
     assert int_entry == [0x20, 0x21, 0x22]
 
 
+def test_parse_bfrange__negative_source_range(caplog):
+    """int(token, 16) accepts a leading "-"; negative bounds are rejected as a
+    broken line instead of leaking an OverflowError from the byte encoding."""
+    with pytest.raises(ValueError, match=r"^Negative bfrange source range: b'-1' b'-1'$"):
+        parse_bfrange(line=b"-1 -1 <FFFF>", map_dict={}, int_entry=[], multiline_rg=None)
+
+    # End to end through text extraction: the broken line is skipped with a
+    # warning and extraction of the remaining map continues.
+    writer = PdfWriter()
+    to_unicode = StreamObject()
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"-1 -1 <FFFF>\n"
+        b"<41> <42> <61>\n"
+        b"endbfrange\n"
+    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
+    page = writer.add_blank_page(width=100, height=100)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
+    assert page.extract_text() == ""
+    assert any("Skipping broken line" in message for message in caplog.messages)
+
+
 def test_parse_bfrange__decode_out_of_range_code():
     """A source code that exceeds its declared byte width raises OverflowError."""
     # 0x100 needs two bytes but the declared width is one.

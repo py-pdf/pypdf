@@ -375,6 +375,10 @@ def parse_bfrange(
         _check_token_length(lst[1], limit=MAX_CMAP_CODE_BYTES_LIMIT)
         a = int(lst[0], 16)
         b = int(lst[1], 16)
+        if a < 0 or b < 0:
+            # int(token, 16) accepts a leading "-"; negative range bounds
+            # would leak an OverflowError from the to_bytes encoding below.
+            raise ValueError(f"Negative bfrange source range: {lst[0]!r} {lst[1]!r}")
         nbi = max(len(lst[0]), len(lst[1]))
         map_dict[-1] = (nbi + 1) // 2
         if lst[2] == b"[":
