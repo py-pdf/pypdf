@@ -190,10 +190,12 @@ def get_text_operands(
     tm_matrix: list[float],
     font: Font,
     orientations: tuple[int, ...]
-) -> tuple[str, bool, float]:
+) -> tuple[str, bool, float, int, int]:
     text: str = ""
     is_str_operands = False
     widths: float = 0.0
+    glyph_count = 0
+    space_count = 0
     width_cache: dict[str, float] = {}
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
@@ -218,7 +220,14 @@ def get_text_operands(
             else:  # Apply dict encoding
                 text = "".join(font.encoding.get(x, chr(x)) for x in tt)
                 raw_characters = "".join(chr(byte) for byte in tt)
+        # Word spacing only applies to the single-byte character code 32
+        # (Section 9.3.3 of the PDF 2.0 specification).
+        if is_str_operands:
+            space_count = text.count(" ")
+        elif raw_characters:
+            space_count = raw_characters.count(" ")
         for char in (raw_characters or text):
+            glyph_count += 1
             if char == font.space_char:
                 widths += font.space_width
             else:
@@ -227,7 +236,7 @@ def get_text_operands(
                 widths += width_cache[char]
 
     width_cache.clear()
-    return (text, is_str_operands, widths)
+    return (text, is_str_operands, widths, glyph_count, space_count)
 
 
 def get_display_str(
