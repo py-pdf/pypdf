@@ -115,14 +115,30 @@ def test_converter_date():
         pypdf.xmp._converter_date("today")
     assert exc.value.args[0].startswith("Invalid date format")
 
-    # a date that matches the format but has an out-of-range field (here
-    # February 31st) gives the same clear error, not a cryptic datetime message
-    with pytest.raises(ValueError) as exc:
-        pypdf.xmp._converter_date("2024-02-31T10:00:00Z")
-    assert exc.value.args[0].startswith("Invalid date format")
-
     date = pypdf.xmp._converter_date("2021-04-28T12:23:01-03:00")
     assert date == datetime(2021, 4, 28, 15, 23, 1)
+
+
+@pytest.mark.parametrize(
+    ("value", "date_parts"),
+    [
+        ("0000-01-01T00:00:00Z", (0, 1, 1)),
+        ("2024-13-01T00:00:00Z", (2024, 13, 1)),
+        ("2024-02-31T10:00:00Z", (2024, 2, 31, 10)),
+        ("2024-01-01T24:00:00Z", (2024, 1, 1, 24)),
+        ("2024-01-01T00:60:00Z", (2024, 1, 1, 0, 60)),
+        ("2024-01-01T00:00:60.123456Z", (2024, 1, 1, 0, 0, 60, 123456)),
+        ("2024-02-31T10:00:00+00:30", (2024, 2, 31, 10)),
+        ("2024-02-31", (2024, 2, 31)),
+    ],
+)
+def test_converter_date_out_of_range(value, date_parts):
+    """Invalid timestamps retain their value and datetime's specific reason."""
+    with pytest.raises(ValueError) as datetime_exc:
+        datetime(*date_parts)
+    with pytest.raises(ValueError) as exc:
+        pypdf.xmp._converter_date(value)
+    assert str(exc.value) == f"Invalid date {value!r}: {datetime_exc.value}"
 
 
 @pytest.mark.parametrize(
