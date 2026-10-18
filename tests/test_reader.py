@@ -2913,6 +2913,85 @@ def test_get_object_from_stream__size_limit(caplog):
     ]
 
 
+def _pdf_with_object_stream(obj_stm_dict: bytes, obj_stm_payload: bytes) -> bytes:
+    """Minimal PDF whose only page (object 4) lives in an object stream."""
+    pdf = b"%PDF-1.7\n"
+    header_length = len(pdf)
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    catalog_length = len(pdf)
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [4 0 R] /Count 1 >>\nendobj\n"
+    pages_length = len(pdf)
+    pdf += (
+        b"3 0 obj\n<< /Type /ObjStm " + obj_stm_dict
+        + b" /Length " + str(len(obj_stm_payload)).encode() + b" >>\nstream\n"
+        + obj_stm_payload + b"\nendstream\nendobj\n"
+    )
+    xref = bytearray()
+    for xref_type, value, generation in [
+            (0, 0, 0),
+            (1, header_length, 0),
+            (1, catalog_length, 0),
+            (1, pages_length, 0),
+            (2, 3, 0)
+    ]:
+        # xref type: 0 = free object, 1 = in-use object (points to byte offset), 2 = compressed (stored in stream)
+        xref += struct.pack(">B", xref_type) + struct.pack(">H", value) + struct.pack(">B", generation)
+    xref_encoded = FlateDecode.encode(bytes(xref))
+    startxref = len(pdf)
+    pdf += (
+        f"5 0 obj\n<< /Type /XRef /Size 6 /W [1 2 1] /Root 1 0 R /Filter /FlateDecode "
+        f"/Length {len(xref_encoded)} >>\nstream\n"
+    ).encode()
+    pdf += xref_encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+    return pdf
+
+
+@pytest.mark.parametrize(
+    ("obj_stm_dict", "obj_stm_payload", "match"),
+    [
+        (
+            b"/N 1 /First -1",
+            b"4 0\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>",
+            r"^Invalid /N \(1\) or /First \(-1\) in object stream 3\.$",
+        ),
+        (
+            b"/N -1 /First 4",
+            b"4 0\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>",
+            r"^Invalid /N \(-1\) or /First \(4\) in object stream 3\.$",
+        ),
+        (
+            b"/N 1 /First 5",
+            b"4 -1\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>",
+            r"^Invalid object number \(4\) or offset \(-1\) in object stream 3\.$",
+        ),
+        (
+            b"/N 1 /First 999999999999999999999999999999999999",
+            b"4 0\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>",
+            r"^Invalid /N \(1\) or /First \(999999999999999999999999999999999999\) in object stream 3\.$",
+        ),
+    ],
+    ids=["negative_first", "negative_n", "negative_entry_offset", "huge_first"],
+)
+def test_get_object_from_stream__invalid_values(obj_stm_dict, obj_stm_payload, match, caplog):
+    """Out-of-range /N, /First or header offsets are rejected, not a ValueError
+    or OverflowError from a bad seek."""
+    pdf = _pdf_with_object_stream(obj_stm_dict, obj_stm_payload)
+
+    with pytest.raises(PdfReadError, match=match):
+        reader = PdfReader(BytesIO(pdf), strict=True)
+        _ = reader.pages[0]
+    assert caplog.messages == []
+
+    # In non-strict mode the stream (or entry) is ignored with a warning; the
+    # only page cannot be resolved and is dropped from the page tree, exactly
+    # like an oversized /N.
+    reader = PdfReader(BytesIO(pdf), strict=False)
+    assert len(reader.pages) == 0
+    assert len(caplog.messages) >= 1
+    assert "Invalid" in caplog.messages[0]
+
+
 def test_named_destinations_cache():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
 
