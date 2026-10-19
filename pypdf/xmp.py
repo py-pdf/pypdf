@@ -130,7 +130,10 @@ def _converter_date(value: str) -> datetime.datetime:
     milliseconds = int(milliseconds_dec)
 
     tzd = matches.group("tzd") or "Z"
-    dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
+    try:
+        dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
+    except ValueError as exc:
+        raise ValueError(f"Invalid date {value!r}: {exc}") from exc
     if tzd != "Z":
         tzd_hours, tzd_minutes = (int(x) for x in tzd[1:].split(":"))
         offset = datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
