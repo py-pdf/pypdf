@@ -1259,11 +1259,10 @@ class Encryption:
             cf_dict = cast(DictionaryObject, filters[encryption_entry["/StmF"]])  # type: ignore[index]
             # CF /Length is in bytes (default 16 for AES-128), convert to bits
             key_bits = cast(int, cf_dict.get("/Length", 16)) * 8
-        if key_bits % 8 != 0 or not 40 <= key_bits <= 256:
-            # ISO 32000-1, 7.6.2: Standard security handler key lengths are
-            # 40 to 128 bits in multiples of 8; AES-256 (ExtensionLevel 3)
-            # adds 256 bits. Anything else would crash the crypt providers
-            # with a builtin error.
+        if key_bits % 8 != 0 or not (40 <= key_bits <= 128 or key_bits == 256):
+            # ISO 32000-1:2008, 7.6.2 limits legacy key lengths to 40 to 128 bits
+            # in 8-bit increments. ISO 32000-2:2020, 7.6.6 allows 256-bit
+            # AESV3 keys. Reject other lengths before they reach cryptography.
             raise PdfReadError(f"Invalid encryption key length: {key_bits} bits")
         encrypt_metadata = encryption_entry.get("/EncryptMetadata")
         encrypt_metadata = (

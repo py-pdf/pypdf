@@ -181,8 +181,24 @@ def _build_pdf_with_encrypt_dict(encrypt_body: bytes) -> bytes:
             b"/Filter /Standard /V 2 /R 3 /P -4 /O <%(h)s> /U <%(h)s> /Length 36",
             r"^Invalid encryption key length: 36 bits$",
         ),
+        # Legacy handler lengths cannot exceed 128 bits.
+        (
+            b"/Filter /Standard /V 2 /R 3 /P -4 /O <%(h)s> /U <%(h)s> /Length 136",
+            r"^Invalid encryption key length: 136 bits$",
+        ),
+        (
+            b"/Filter /Standard /V 2 /R 3 /P -4 /O <%(h)s> /U <%(h)s> /Length 248",
+            r"^Invalid encryption key length: 248 bits$",
+        ),
     ],
-    ids=["missing_r", "missing_u", "zero_length", "unaligned_length"],
+    ids=[
+        "missing_r",
+        "missing_u",
+        "zero_length",
+        "unaligned_length",
+        "over_128_bits",
+        "unsupported_248_bits",
+    ],
 )
 def test_encryption_dictionary__invalid_entries(encrypt_body, match):
     """Malformed /Encrypt dictionaries raise PdfReadError, not builtins."""
