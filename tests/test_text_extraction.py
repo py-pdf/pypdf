@@ -644,6 +644,30 @@ def test_tj_array_item_that_is_neither_a_string_nor_a_number_is_skipped(item: by
     assert page.extract_text(extraction_mode="layout") == "HelloWorld"
 
 
+@pytest.mark.parametrize(
+    ("operator", "expected"),
+    [
+        (b"5 '", "Hello\nWorld"),
+        (b"'", "Hello\nWorld"),
+        (b'1 2 5 "', "Hello\nWorld"),
+    ],
+)
+def test_quote_operator_without_a_string_shows_no_text(operator: bytes, expected: str) -> None:
+    """A ' or " operator without a string to show still moves to the next line, and the text around it is kept."""
+    content = b"BT /F1 12 Tf 14 TL 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == expected
+    assert page.extract_text(extraction_mode="layout") == expected
+
+
+def test_quote_operator_with_too_few_operands_is_skipped() -> None:
+    """A " operator with fewer than three operands is skipped entirely, as in plain mode, and the text is kept."""
+    content = b'BT /F1 12 Tf 14 TL 72 700 Td (Hello) Tj (x) " (World) Tj ET'
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
 def test_layout_mode_text_with_zero_font_size() -> None:
     """Text drawn with a font size of 0 is extracted in layout mode instead of dividing by a zero width."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 0 Tf (Hello) Tj ET")).pages[0]
