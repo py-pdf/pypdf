@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792415510175,
+  "lastUpdate": 1792415516933,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -118607,6 +118607,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007574347401752097",
             "extra": "mean: 668.3078034000005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "31244169+repzakske@users.noreply.github.com",
+            "name": "repzakske",
+            "username": "repzakske"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cf2dabb9bd14aebbb04e924d0c0e5737a938b97f",
+          "message": "BUG: Preserve all annotation quadrilaterals when merging pages (#4223)\n\nTransform every coordinate pair in /QuadPoints instead of retaining only the first quadrilateral. This preserves multiline highlights during ordinary page merges and transformed merges.\n\nSigned-off-by: Casper Verbuyst <casperverbuyst@gmail.com>",
+          "timestamp": "2026-10-19T15:08:49+02:00",
+          "tree_id": "8d792ddf3df5ce49758dc11c4fe9a8a5dae1bc25",
+          "url": "https://github.com/py-pdf/pypdf/commit/cf2dabb9bd14aebbb04e924d0c0e5737a938b97f"
+        },
+        "date": 1792415505368,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.751053801199903,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006289897097108053",
+            "extra": "mean: 363.4970713999991 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.0250725430727,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021398436474420234",
+            "extra": "mean: 45.40280165000041 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2436007903877677,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014686981824458569",
+            "extra": "mean: 4.105076992599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.378692274300818,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007189164980190498",
+            "extra": "mean: 54.4108353888875 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07585832274891423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07241641585306224",
+            "extra": "mean: 13.1824691578 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5016060074174937,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004495564725898746",
+            "extra": "mean: 665.9536489999994 msec\nrounds: 5"
           }
         ]
       }
