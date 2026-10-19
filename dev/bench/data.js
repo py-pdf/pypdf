@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792407225230,
+  "lastUpdate": 1792407265532,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -118541,6 +118541,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0049137399806401215",
             "extra": "mean: 669.7396196000057 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "156692956+shivampwm2020@users.noreply.github.com",
+            "name": "Shivam Maurya",
+            "username": "shivampwm2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "32fd5fbbce7616ff5a6a506c69ea986fd2861692",
+          "message": "ROB: Handle non-dictionary parents in DictionaryObject.get_inherited (#4211)\n\nget_inherited walks the /Parent chain assuming every parent is a\ndictionary. When a malformed document resolves a parent to a non\ndictionary object (e.g. a number), the membership test raised a plain\nTypeError, which escaped extract_text() after #3807 made error paths\nmore explicit. Callers that follow the docs and catch PdfError now\ncrash instead.\n\nTreat a non-dictionary parent as absent so inherited lookups return\nthe default, restoring pre-6.13 behavior for such documents.\n\nFixes #4202\n\nCo-authored-by: Shivam Maurya <shivam@programmingwithmaurya.com>",
+          "timestamp": "2026-10-19T12:51:21+02:00",
+          "tree_id": "71fdfe1e50d3a22955a116b8870a9c1baf72cd13",
+          "url": "https://github.com/py-pdf/pypdf/commit/32fd5fbbce7616ff5a6a506c69ea986fd2861692"
+        },
+        "date": 1792407254076,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7477849962260508,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007018396714866835",
+            "extra": "mean: 363.92949280000124 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.224224292004568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018821889383811533",
+            "extra": "mean: 44.99594617391267 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24543961609767853,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017132878935664116",
+            "extra": "mean: 4.0743218877999965 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.444144876236958,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011704125962224978",
+            "extra": "mean: 54.21774805555657 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07670086198943266,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07928786622579023",
+            "extra": "mean: 13.0376631248 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4963165100160782,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007574347401752097",
+            "extra": "mean: 668.3078034000005 msec\nrounds: 5"
           }
         ]
       }
