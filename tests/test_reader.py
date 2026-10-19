@@ -2863,38 +2863,7 @@ def test_read_pdf15_xref_stream__size_limit(caplog):
 @pytest.mark.timeout(10)
 def test_get_object_from_stream__size_limit(caplog):
     obj_stm_encoded = FlateDecode.encode(b"4 0\nnull")
-    pdf = b"%PDF-1.7\n"
-    header_length = len(pdf)
-    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-    catalog_length = len(pdf)
-    pdf += b"2 0 obj\n<< /Type /Pages /Kids [4 0 R] /Count 1 >>\nendobj\n"
-    pages_length = len(pdf)
-    pdf += (
-        f"3 0 obj\n<< /Type /ObjStm /N 5000000 /First 4 /Filter /FlateDecode /Length {len(obj_stm_encoded)} >>\n"
-        f"stream\n"
-    ).encode()
-    pdf += obj_stm_encoded + b"\nendstream\nendobj\n"
-    xref = bytearray()
-    for xref_type, value, generation in [
-            (0, 0, 0),
-            (1, header_length, 0),
-            (1, catalog_length, 0),
-            (1, pages_length, 0),
-            (2, 3, 0)
-    ]:
-        # xref type: 0 = free object, 1 = in-use object (points to byte offset), 2 = compressed (stored in stream)
-        # value: type 1 = byte offset in the file, type 2 = object stream number
-        # >B = 1 byte (unsigned char) for type and generation
-        # >H = 2 bytes (unsigned short) for value
-        xref += struct.pack(">B", xref_type) + struct.pack(">H", value) + struct.pack(">B", generation)
-    xref_encoded = FlateDecode.encode(bytes(xref))
-    startxref = len(pdf)
-    pdf += (
-        f"5 0 obj\n<< /Type /XRef /Size 6 /W [1 2 1] /Root 1 0 R /Filter /FlateDecode "
-        f"/Length {len(xref_encoded)} >>\nstream\n"
-    ).encode()
-    pdf += xref_encoded + b"\nendstream\nendobj\n"
-    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+    pdf = _build_pdf_with_object_stream(b"/N 5000000 /First 4 /Filter /FlateDecode", obj_stm_encoded)
 
     with pytest.raises(LimitReachedError, match=r"^Value /N 5000000 for object 3 exceeds maximum allowed value 2\.$"):
         reader = PdfReader(BytesIO(pdf), strict=True)
@@ -2913,8 +2882,8 @@ def test_get_object_from_stream__size_limit(caplog):
     ]
 
 
-def _pdf_with_object_stream(obj_stm_dict: bytes, obj_stm_payload: bytes) -> bytes:
-    """Minimal PDF whose only page (object 4) lives in an object stream."""
+def _build_pdf_with_object_stream(obj_stm_dict: bytes, obj_stm_payload: bytes) -> bytes:
+    """Build a minimal PDF whose only page (object 4) lives in object stream 3."""
     pdf = b"%PDF-1.7\n"
     header_length = len(pdf)
     pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
@@ -2975,8 +2944,9 @@ def _pdf_with_object_stream(obj_stm_dict: bytes, obj_stm_payload: bytes) -> byte
 )
 def test_get_object_from_stream__invalid_values(obj_stm_dict, obj_stm_payload, match, caplog):
     """Out-of-range /N, /First or header offsets are rejected, not a ValueError
-    or OverflowError from a bad seek."""
-    pdf = _pdf_with_object_stream(obj_stm_dict, obj_stm_payload)
+    or OverflowError from a bad seek.
+    """
+    pdf = _build_pdf_with_object_stream(obj_stm_dict, obj_stm_payload)
 
     with pytest.raises(PdfReadError, match=match):
         reader = PdfReader(BytesIO(pdf), strict=True)
