@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792406617758,
+  "lastUpdate": 1792406641275,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -118475,6 +118475,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009444830159292525",
             "extra": "mean: 375.6560992000004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e4ad9f0f773d96442994f43a53735fd40b8f1115",
+          "message": "ROB: Show no text for a ' or \" operator without a string in layout mode (#4203)\n\n* ROB: Show no text for a ' or \" operator without a string in layout mode\n\n* Use a helper with a plain condition instead of generators; test the too-few-operands case separately",
+          "timestamp": "2026-10-19T12:40:51+02:00",
+          "tree_id": "1bd11b3395368c0ea9def5caeaad34ae6789633e",
+          "url": "https://github.com/py-pdf/pypdf/commit/e4ad9f0f773d96442994f43a53735fd40b8f1115"
+        },
+        "date": 1792406630924,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.605602185192228,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013498686416912107",
+            "extra": "mean: 383.7884408000008 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.342250555046288,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024500442558641777",
+            "extra": "mean: 46.85541468182015 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22818032714647288,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08534745893445336",
+            "extra": "mean: 4.382498756600006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.030019650108347,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008267054340683413",
+            "extra": "mean: 58.719838294117174 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07552922432500987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0329804360277538",
+            "extra": "mean: 13.239908246600006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4931175799294039,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0049137399806401215",
+            "extra": "mean: 669.7396196000057 msec\nrounds: 5"
           }
         ]
       }
