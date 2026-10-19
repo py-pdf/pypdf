@@ -1260,8 +1260,10 @@ class Encryption:
             # CF /Length is in bytes (default 16 for AES-128), convert to bits
             key_bits = cast(int, cf_dict.get("/Length", 16)) * 8
         if key_bits % 8 != 0 or not 40 <= key_bits <= 256:
-            # A key length that is not a whole number of bytes in the legal
-            # range would crash the crypt providers with a builtin error.
+            # ISO 32000-1, 7.6.2: Standard security handler key lengths are
+            # 40 to 128 bits in multiples of 8; AES-256 (ExtensionLevel 3)
+            # adds 256 bits. Anything else would crash the crypt providers
+            # with a builtin error.
             raise PdfReadError(f"Invalid encryption key length: {key_bits} bits")
         encrypt_metadata = encryption_entry.get("/EncryptMetadata")
         encrypt_metadata = (
