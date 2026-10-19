@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792427538077,
+  "lastUpdate": 1792427570537,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -151543,6 +151543,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04459486951947524",
             "extra": "mean: 658.9164407999988 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "erfan.mohamadboland@gmail.com",
+            "name": "erfouni",
+            "username": "Erfouni"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "09dd269d7be176ba6cd6951eb3e45b0195cb60d9",
+          "message": "ROB: Give a clear error for an out-of-range XMP date (#4201)\n\n* ROB: give a clear error for an out-of-range XMP date\n\n_converter_date already raises ValueError(\"Invalid date format: ...\") when the\nstring doesn't match the ISO 8601 pattern, but a string that matches the\npattern with an out-of-range field (e.g. 2024-02-31) reached datetime() and\nraised a cryptic \"day is out of range for month\" instead. Wrap the datetime\nbuild and raise the same clear, value-naming error. Added a test.\n\n* Preserve datetime details for invalid XMP timestamps",
+          "timestamp": "2026-10-19T18:29:33+02:00",
+          "tree_id": "98d65c6e15b1784ee85082e2553a7d84692f55d2",
+          "url": "https://github.com/py-pdf/pypdf/commit/09dd269d7be176ba6cd6951eb3e45b0195cb60d9"
+        },
+        "date": 1792427559775,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.377793302705305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017984439699747282",
+            "extra": "mean: 69.5517023333366 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.23452566492396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009413485122885907",
+            "extra": "mean: 34.206130500000405 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9740130723373629,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029362765936278998",
+            "extra": "mean: 1.0266802658000018 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5355989634530128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.050076968527037614",
+            "extra": "mean: 1.867068587199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.36369657203005024,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01163189660107781",
+            "extra": "mean: 2.7495447493999903 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1611543476608819,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03269289615758259",
+            "extra": "mean: 861.2119499999949 msec\nrounds: 5"
           }
         ]
       }
