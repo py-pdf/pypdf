@@ -3292,10 +3292,9 @@ def _build_objstm_pdf(n_value, first_value=b"4") -> bytes:
     header = b"3 0 "
     n_entry = b"" if n_value is None else b" /N " + n_value
     first_entry = b"" if first_value is None else b" /First " + first_value
-    objects[4] = (
-        b"<< /Type /ObjStm" + n_entry + first_entry + b" /Length %d >>\nstream\n"
-        % len(header + inner) + header + inner + b"\nendstream"
-    )
+    stream_data = header + inner
+    head4 = b"<< /Type /ObjStm" + n_entry + first_entry + b" /Length %d >>\nstream\n"
+    objects[4] = head4 % len(stream_data) + stream_data + b"\nendstream"
     out = bytearray(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n")
     offsets = {}
     for num in sorted(objects):
@@ -3318,18 +3317,18 @@ def _build_objstm_pdf(n_value, first_value=b"4") -> bytes:
     return bytes(out)
 
 
-def test_issue4215_valid_objstm_still_resolves():
+def test_issue4215__valid_objstm_still_resolves():
     page = PdfReader(BytesIO(_build_objstm_pdf(b"1"))).pages[0]
     assert page is not None
 
 
 @pytest.mark.parametrize("n_value", [b"/Foo", b"<< /a 1 >>", b"[1 2]", None])
 def test_issue4215_malformed_n_raises_pdfreaderror(n_value):
-    with pytest.raises(PdfReadError):
+    with pytest.raises(PdfReadError, match="Invalid /ObjStm header"):
         PdfReader(BytesIO(_build_objstm_pdf(n_value))).pages[0]
 
 
 @pytest.mark.parametrize("first_value", [b"/Foo", None])
 def test_issue4215_malformed_first_raises_pdfreaderror(first_value):
-    with pytest.raises(PdfReadError):
+    with pytest.raises(PdfReadError, match="Invalid /ObjStm header"):
         PdfReader(BytesIO(_build_objstm_pdf(b"1", first_value))).pages[0]
