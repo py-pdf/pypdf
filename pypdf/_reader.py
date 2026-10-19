@@ -388,8 +388,8 @@ class PdfReader(PdfDocCommon):
             n = int(obj_stm["/N"])  # type: ignore[call-overload]
             first_offset = int(obj_stm["/First"])  # type: ignore[call-overload]
 
-            stream_len = stream_data.getbuffer().nbytes
-            if n < 0 or not 0 <= first_offset <= stream_len:
+            stream_length = stream_data.getbuffer().nbytes
+            if n < 0 or not 0 <= first_offset <= stream_length:
                 # A negative /N, or a /First outside the stream, cannot
                 # describe a valid object stream; treating it as empty
                 # avoids leaking a ValueError/OverflowError from a bad seek.
@@ -440,7 +440,7 @@ class PdfReader(PdfDocCommon):
                 offset = NumberObject.read_from_stream(stream_data)
                 read_non_whitespace(stream_data)
                 stream_data.seek(-1, 1)
-                if objnum < 0 or offset < 0 or first_offset + offset > stream_len:
+                if objnum < 0 or offset < 0 or first_offset + offset > stream_length:
                     # An object number or target position outside the stream
                     # cannot be valid; skipping the entry avoids leaking a
                     # ValueError/OverflowError from a bad seek while keeping
