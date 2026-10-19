@@ -1762,3 +1762,20 @@ def test_dictionaryobject__length_0_stream():
     output = BytesIO()
     writer.write(output)
     assert b"\n8 0 obj\n<<\n/Length 0\n>>\nstream\n\nendstream\nendobj\n" in output.getvalue()
+
+
+def test_get_inherited_malformed_parent():
+    """A malformed /Parent that is not a dictionary ends the walk with default.
+
+    Regression test for issue #4202: previously a NumberObject parent made
+    get_inherited raise TypeError ("argument of type 'NumberObject' is not
+    iterable"), which surfaced as a crash in extract_text().
+    """
+    parent = DictionaryObject({NameObject("/Rotate"): NumberObject(90)})
+    child = DictionaryObject({NameObject("/Parent"): parent})
+    assert child.get_inherited("/Rotate") == 90
+    assert child.get_inherited("/Missing", "dflt") == "dflt"
+
+    number_parent = DictionaryObject({NameObject("/Parent"): NumberObject(42)})
+    assert number_parent.get_inherited("/Rotate", "dflt") == "dflt"
+    assert number_parent.get_inherited("/Rotate") is None
