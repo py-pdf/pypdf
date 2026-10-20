@@ -63,9 +63,9 @@ class TextStateManager:
         if op not in [b"Tc", b"Tz", b"Tw", b"TL", b"Ts"]:
             return
         name = op.decode()
-        raw = value[0] if isinstance(value, list) else value
-        # a non-numeric operand (e.g. a name from a malformed content stream)
-        # leaves the parameter unchanged, matching the ROB handling of Td/Tm/Tf
+        raw = (value[0] if value else None) if isinstance(value, list) else value
+        # a missing or non-numeric operand (e.g. a name from a malformed content
+        # stream) leaves the parameter unchanged, matching the ROB handling of Td/Tm/Tf
         self.__setattr__(name, self._as_float(raw, getattr(self, name)))
 
     def set_font(self, font: Font, size: float) -> None:
