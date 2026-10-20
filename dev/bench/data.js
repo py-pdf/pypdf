@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792496620027,
+  "lastUpdate": 1792496913488,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -119135,6 +119135,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01431228411512578",
             "extra": "mean: 702.6857093999979 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "180254320+charan-rathore@users.noreply.github.com",
+            "name": "Charan Rathore",
+            "username": "charan-rathore"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6295e77bdfe22de1027dd88ce5b0637692a0ce8a",
+          "message": "ROB: Guard against negative /N, /First and entry offsets in object streams (#4224)\n\n* ROB: Guard against out-of-range /N, /First and entry offsets in object streams\n\nA negative /N, a /First outside the stream, or an out-of-range object\nnumber or offset in an ObjStm header made the object-stream resolver\nseek to an invalid position, leaking a ValueError (\"negative seek\nvalue\") or OverflowError out of ordinary page-tree access such as\nlen(reader.pages).\n\nStrict mode now raises PdfReadError; non-strict mode warns and ignores\nthe stream (or skips the bad entry), so the affected objects resolve to\nnull and are dropped - the same degradation an oversized /N already\ngets.\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* ROB: Address review comments on the object-stream guards\n\n- Rename stream_len to stream_length\r\n- Extract the shared minimal-PDF builder as _build_pdf_with_object_stream and use it from both object-stream tests instead of the code copy\r\n- Fix the D209 docstring style issue\r\n\r\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* ROB: Share the minimal-PDF builder between the object-stream tests\n\n---------\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>",
+          "timestamp": "2026-10-20T13:39:52+02:00",
+          "tree_id": "606baeb42c03e27c5341111ffba6ef46ed19188a",
+          "url": "https://github.com/py-pdf/pypdf/commit/6295e77bdfe22de1027dd88ce5b0637692a0ce8a"
+        },
+        "date": 1792496901803,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9035882836691367,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012752521470445278",
+            "extra": "mean: 344.401444799999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.397325268569023,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002081722633320357",
+            "extra": "mean: 44.64818847826156 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2623759622807125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04419674050187212",
+            "extra": "mean: 3.811324754399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.738973434810735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014683027563273077",
+            "extra": "mean: 59.740820062500255 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07227487778883103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12820875084423405",
+            "extra": "mean: 13.836066287399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6489839662937142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025841594489398657",
+            "extra": "mean: 606.4340347999973 msec\nrounds: 5"
           }
         ]
       }
