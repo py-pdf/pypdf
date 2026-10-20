@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792492151316,
+  "lastUpdate": 1792492869070,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -119003,6 +119003,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00427056882701537",
             "extra": "mean: 471.54581240000084 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cd3e646675ca517e59784a2d90858adfb6cb0cee",
+          "message": "ROB: Treat a non-numeric text-state operand as missing in layout mode (#4214)\n\n* ROB: Treat a non-numeric text-state operand as missing in layout mode\n\n* Reuse _as_float for the text-state parameters",
+          "timestamp": "2026-10-20T12:39:09+02:00",
+          "tree_id": "617dfcb3cec6fb0cabea5e74b5b8c321ff46fe10",
+          "url": "https://github.com/py-pdf/pypdf/commit/cd3e646675ca517e59784a2d90858adfb6cb0cee"
+        },
+        "date": 1792492861912,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.330872113746909,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009474440461073442",
+            "extra": "mean: 187.58656720000175 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 38.1486461635354,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00549057865505038",
+            "extra": "mean: 26.213250024999724 msec\nrounds: 40"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.454658273532115,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04721219318305187",
+            "extra": "mean: 2.199454091599995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 35.38229089874445,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00043560278126240296",
+            "extra": "mean: 28.262726200000948 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14753361142890523,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05965458994497533",
+            "extra": "mean: 6.7781164598000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.8836056551592586,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004583156121716651",
+            "extra": "mean: 346.78805619999764 msec\nrounds: 5"
           }
         ]
       }
