@@ -701,6 +701,27 @@ def test_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
 
 @pytest.mark.parametrize(
     "operator",
+    [
+        pytest.param(b"/X /Y TD", id="names"),
+        pytest.param(b"5 /Y TD", id="non-numeric-ty"),
+        pytest.param(b"5 TD", id="one-operand"),
+        pytest.param(b"TD", id="no-operands"),
+    ],
+)
+def test_td_operator_with_missing_or_non_numeric_operands(operator: bytes) -> None:
+    """A TD operator whose ty is missing or not a number leaves the leading unchanged,
+    in plain and layout mode, and the text around it is kept.
+    """
+    content = b"BT /F1 12 Tf 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    text = page.extract_text(extraction_mode="layout")
+    assert "Hello" in text
+    assert "World" in text
+
+
+@pytest.mark.parametrize(
+    "operator",
     [b"/X Tz", b"/X Tc", b"/X Ts", b"/X Tw", b"/X TL T*", b"/X /Y Td", b"/X 0 0 1 0 0 Tm"],
 )
 def test_layout_mode_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
