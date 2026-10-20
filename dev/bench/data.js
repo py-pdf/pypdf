@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792509942406,
+  "lastUpdate": 1792523713511,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -152665,6 +152665,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.062371195144757474",
             "extra": "mean: 712.567371199998 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "180254320+charan-rathore@users.noreply.github.com",
+            "name": "Charan Rathore",
+            "username": "charan-rathore"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "85c46ab70b65fdf9a3a56a984f654d0bd620d354",
+          "message": "ROB: Raise PdfReadError for malformed /ObjStm /N and /First headers (#4216)\n\n* ROB: Raise PdfReadError for malformed /ObjStm /N and /First headers\n\nValidate /N and /First values in ObjStm header.\n\n* Add regression tests for malformed /ObjStm headers (#4215)\n\n* TST: Improve readability of /ObjStm header regression tests\n\nBuild the object-stream entry without a line break inside the placeholder-based bytes expression, rename the valid-stream test, and match the PdfReadError message in the malformed-header tests.\r\n\r\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* TST: Align names of /ObjStm header regression tests\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n---------\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>",
+          "timestamp": "2026-10-20T21:11:54+02:00",
+          "tree_id": "d61b3e4717861ee9b484e9c2290802b1094d8f1b",
+          "url": "https://github.com/py-pdf/pypdf/commit/85c46ab70b65fdf9a3a56a984f654d0bd620d354"
+        },
+        "date": 1792523700836,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 10.795325020514593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00491562247018004",
+            "extra": "mean: 92.63269036362297 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 36.6889651232169,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004281968330740028",
+            "extra": "mean: 27.256151724137798 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9373618103138904,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017732832432213385",
+            "extra": "mean: 1.0668239190000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.32873337581832274,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036024892846021575",
+            "extra": "mean: 3.0419789213999935 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4706167975922996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034092411649892865",
+            "extra": "mean: 2.1248710312000183 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4958730957007804,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020008674389482766",
+            "extra": "mean: 668.5059066000008 msec\nrounds: 5"
           }
         ]
       }
