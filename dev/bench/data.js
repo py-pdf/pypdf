@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792497387644,
+  "lastUpdate": 1792507941556,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -152401,6 +152401,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038693809633188934",
             "extra": "mean: 860.4375136000044 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b32df1d4cad45ce58fdddcbf9ebcbe166c0a822d",
+          "message": "ROB: Validate the /Encrypt dictionary when opening an encrypted file (#4197)\n\n* ROB: Validate the /Encrypt dictionary when opening an encrypted file\n\n* Address review comments: merge entry getters, tidy tests",
+          "timestamp": "2026-10-20T16:48:54+02:00",
+          "tree_id": "de30ebc16636239b9a0713a9f694e3bae15355a4",
+          "url": "https://github.com/py-pdf/pypdf/commit/b32df1d4cad45ce58fdddcbf9ebcbe166c0a822d"
+        },
+        "date": 1792507925926,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 10.977260440338183,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01608367956105678",
+            "extra": "mean: 91.09741045455166 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.011885746540884,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00723743431415516",
+            "extra": "mean: 32.2457011538404 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9163565954047848,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01333521282223787",
+            "extra": "mean: 1.0912782261999951 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3897638469260134,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05587372560678528",
+            "extra": "mean: 2.565656122000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.39540455568088656,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027003211775305826",
+            "extra": "mean: 2.529055332400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2543362133212554,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022258687895562713",
+            "extra": "mean: 797.2344171999794 msec\nrounds: 5"
           }
         ]
       }
