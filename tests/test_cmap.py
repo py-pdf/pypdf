@@ -1,5 +1,4 @@
 """Test the pypdf_cmap module."""
-
 import sys
 from io import BytesIO
 from unittest import mock
@@ -146,7 +145,9 @@ def test_ascii_charset():
     ],
     ids=["iss1370", "iss1379"],
 )
-def test_text_extraction_of_specific_pages(url: str, name: str, page_nb: int, within_text):
+def test_text_extraction_of_specific_pages(
+    url: str, name: str, page_nb: int, within_text
+):
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert within_text in reader.pages[page_nb].extract_text()
 
@@ -247,7 +248,9 @@ def test_missing_entries_in_cmap():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     p = reader.pages[0]
-    p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(99999999, 0, reader)
+    p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(
+        99999999, 0, reader
+    )
     p.extract_text()
 
 
@@ -264,7 +267,9 @@ def test_null_missing_width():
 @pytest.mark.enable_socket
 def test_unigb_utf16():
     """Cf #2812"""
-    url = "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
+    url = (
+        "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
+    )
     name = "iss2812.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "《中国能源展望 2060（2024 年版）》编写委员会" in reader.pages[1].extract_text()
@@ -273,7 +278,9 @@ def test_unigb_utf16():
 @pytest.mark.enable_socket
 def test_too_many_differences():
     """Cf #2836"""
-    url = "https://github.com/user-attachments/files/16911741/dumb_extract_text_crash.pdf"
+    url = (
+        "https://github.com/user-attachments/files/16911741/dumb_extract_text_crash.pdf"
+    )
     name = "iss2836.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert reader.pages[0].extract_text() == ""
@@ -281,7 +288,9 @@ def test_too_many_differences():
 
 @pytest.mark.enable_socket
 def test_iss2925():
-    url = "https://github.com/user-attachments/files/17621508/2305.09315.pdf"
+    url = (
+        "https://github.com/user-attachments/files/17621508/2305.09315.pdf"
+    )
     name = "iss2925.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "slicing on the PDG to extract the relevant contextual" in reader.pages[3].extract_text()
@@ -290,7 +299,9 @@ def test_iss2925():
 @pytest.mark.enable_socket
 def test_iss2966():
     """Regression test for issue #2966: indirect objects in fonts"""
-    url = "https://github.com/user-attachments/files/17904233/repro_out.pdf"
+    url = (
+        "https://github.com/user-attachments/files/17904233/repro_out.pdf"
+    )
     name = "iss2966.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     assert "Lorem ipsum dolor sit amet" in reader.pages[0].extract_text()
@@ -338,7 +349,10 @@ def test_function_in_font_widths(caplog):
 def test_get_encoding__encoding_value_is_none():
     ft = DictionaryObject()
     ft[NameObject("/Encoding")] = NullObject()
-    assert get_encoding(ft) == (dict(zip(range(256), charset_encoding["/StandardEncoding"])), {})
+    assert get_encoding(ft) == (
+        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        {}
+    )
 
 
 def _type1_font(font_file_data: bytes) -> DictionaryObject:
@@ -355,12 +369,17 @@ def _type1_font(font_file_data: bytes) -> DictionaryObject:
 def test_get_encoding__type1_font_file_without_encoding():
     # Clear part of the embedded Type1 program has no /Encoding section.
     ft = _type1_font(b"%!PS-AdobeFont\n/FontName /Foo def\neexec\nbinary")
-    assert get_encoding(ft) == (dict(zip(range(256), charset_encoding["/StandardEncoding"])), {})
+    assert get_encoding(ft) == (
+        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        {}
+    )
 
 
 def test_get_encoding__type1_font_file_truncated_dup_line():
     # A "dup" entry missing the glyph name must be skipped, not crash.
-    ft = _type1_font(b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n")
+    ft = _type1_font(
+        b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
+    )
     _encoding, character_map = get_encoding(ft)
     assert character_map == {"a": "a"}
 
@@ -433,32 +452,28 @@ def test_parse_bfrange__iteration_limit():
     writer = PdfWriter()
 
     to_unicode = StreamObject()
-    to_unicode.set_data(b"beginbfrange\n<00000000> <001FFFFF> <00000000>\nendbfrange\n")
-    font = writer._add_object(
-        DictionaryObject(
-            {
-                NameObject("/Type"): NameObject("/Font"),
-                NameObject("/Subtype"): NameObject("/Type1"),
-                NameObject("/BaseFont"): NameObject("/Helvetica"),
-                NameObject("/ToUnicode"): to_unicode,
-            }
-        )
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<00000000> <001FFFFF> <00000000>\n"
+        b"endbfrange\n"
     )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
 
     page = writer.add_blank_page(width=100, height=100)
-    page[NameObject("/Resources")] = DictionaryObject(
-        {
-            NameObject("/Font"): DictionaryObject(
-                {
-                    NameObject("/F1"): font.indirect_reference,
-                }
-            )
-        }
-    )
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
 
     # Case without list, exceeding list directly.
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 2097152 > 100000\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 2097152 > 100000\.$"
     ):
         _ = page.extract_text()
 
@@ -467,7 +482,7 @@ def test_parse_bfrange__iteration_limit():
     int_entry = [0] * 99_999
     map_dict = {}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 165535 > 100000\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 165535 > 100000\.$"
     ):
         _ = parse_bfrange(line=b"0000 FFFF 0000", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
     assert map_dict == {-1: 2}
@@ -476,7 +491,7 @@ def test_parse_bfrange__iteration_limit():
     int_entry.append(1)
     map_dict = {}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
     ):
         _ = parse_bfrange(line=b"00000000 00000000 00000000", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
     assert map_dict == {-1: 4}
@@ -485,13 +500,11 @@ def test_parse_bfrange__iteration_limit():
     int_entry = [0] * 99_995
     map_dict = {-1: 1}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
     ):
         _ = parse_bfrange(
             line=b"0020  0021  0022  0023  0024  0025  0026  2019",
-            map_dict=map_dict,
-            int_entry=int_entry,
-            multiline_rg=(32, 251),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=(32, 251)
         )
     assert map_dict == {-1: 1, " ": " ", "!": "!", '"': '"', "#": "#", "$": "$"}
 
@@ -499,13 +512,11 @@ def test_parse_bfrange__iteration_limit():
     int_entry = [0] * 99_995
     map_dict = {}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100001 > 100000\.$"
     ):
         _ = parse_bfrange(
             line=b"01 8A [ FFFD FFFD FFFD FFFF FFAB AAAA BBBB",
-            map_dict=map_dict,
-            int_entry=int_entry,
-            multiline_rg=None,
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
         )
     assert map_dict == {-1: 1, "\x01": "�", "\x02": "�", "\x03": "�", "\x04": "\uffff", "\x05": "ﾫ"}
 
@@ -514,34 +525,30 @@ def test_parse_bfrange__entry_size_limit():
     writer = PdfWriter()
 
     to_unicode = StreamObject()
-    to_unicode.set_data(b"beginbfrange\n<00000000> <0000FFFF> <00000000>\nendbfrange\n")
-    font = writer._add_object(
-        DictionaryObject(
-            {
-                NameObject("/Type"): NameObject("/Font"),
-                NameObject("/Subtype"): NameObject("/Type1"),
-                NameObject("/BaseFont"): NameObject("/Helvetica"),
-                NameObject("/ToUnicode"): to_unicode,
-            }
-        )
+    to_unicode.set_data(
+        b"beginbfrange\n"
+        b"<00000000> <0000FFFF> <00000000>\n"
+        b"endbfrange\n"
     )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
 
     page = writer.add_blank_page(width=100, height=100)
-    page[NameObject("/Resources")] = DictionaryObject(
-        {
-            NameObject("/Font"): DictionaryObject(
-                {
-                    NameObject("/F1"): font.indirect_reference,
-                }
-            )
-        }
-    )
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
 
     # multiline_rg
     int_entry = []
     map_dict = {-1: 1}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1200 > 1024\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1200 > 1024\.$"
     ):
         line = "0020  0021  0022  0023  0024  0025  0026  " + "1234567890" * 120 + " 9876543210" * 100
         _ = parse_bfrange(line=line.encode("utf-8"), map_dict=map_dict, int_entry=int_entry, multiline_rg=(32, 251))
@@ -551,18 +558,20 @@ def test_parse_bfrange__entry_size_limit():
     int_entry = []
     map_dict = {}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 30 > 16\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 30 > 16\.$"
     ):
         _ = parse_bfrange(
-            line=("21" * 15 + " BBBB").encode("utf-8"), map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+            line=("21" * 15 + " BBBB").encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
         )
     assert map_dict == {}
 
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 32 > 16\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 32 > 16\.$"
     ):
         _ = parse_bfrange(
-            line=("BBBB " + "12" * 16).encode("utf-8"), map_dict=map_dict, int_entry=int_entry, multiline_rg=None
+            line=("BBBB " + "12" * 16).encode("utf-8"),
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
         )
     assert map_dict == {}
 
@@ -570,13 +579,11 @@ def test_parse_bfrange__entry_size_limit():
     int_entry = []
     map_dict = {}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1337 > 1024\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1337 > 1024\.$"
     ):
         _ = parse_bfrange(
             line=("01 8A [ " + "1" * 1337 + " BBBB").encode("utf-8"),
-            map_dict=map_dict,
-            int_entry=int_entry,
-            multiline_rg=None,
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
         )
     assert map_dict == {-1: 1}
 
@@ -584,20 +591,18 @@ def test_parse_bfrange__entry_size_limit():
     int_entry = []
     map_dict = {}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1337 > 1024\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1337 > 1024\.$"
     ):
         _ = parse_bfrange(
             line=("01 8A  " + "1" * 1337 + " BBBB").encode("utf-8"),
-            map_dict=map_dict,
-            int_entry=int_entry,
-            multiline_rg=None,
+            map_dict=map_dict, int_entry=int_entry, multiline_rg=None
         )
     assert map_dict == {-1: 1}
 
 
 def test_check_token_length__unknown_limit():
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode token length exceeded: 5 > 1\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode token length exceeded: 5 > 1\.$"
     ):
         _check_token_length(token=b"ABCDE", limit=1)
 
@@ -616,27 +621,19 @@ def test_parse_to_unicode_skips_truncated_lines(caplog):
         b"zz <0042>\n"  # non-hex source
         b"endbfchar\n"
     )
-    font = writer._add_object(
-        DictionaryObject(
-            {
-                NameObject("/Type"): NameObject("/Font"),
-                NameObject("/Subtype"): NameObject("/Type1"),
-                NameObject("/BaseFont"): NameObject("/Helvetica"),
-                NameObject("/ToUnicode"): to_unicode,
-            }
-        )
-    )
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/ToUnicode"): to_unicode,
+    }))
 
     page = writer.add_blank_page(width=100, height=100)
-    page[NameObject("/Resources")] = DictionaryObject(
-        {
-            NameObject("/Font"): DictionaryObject(
-                {
-                    NameObject("/F1"): font.indirect_reference,
-                }
-            )
-        }
-    )
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): font.indirect_reference,
+        })
+    })
 
     # No exception, broken lines reported.
     page.extract_text()
@@ -648,12 +645,11 @@ def test_parse_bfchar__iteration_limit():
     int_entry = [0] * 99_995
     map_dict = {}
     with pytest.raises(
-        expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100002 > 100000\.$"
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode size limit reached: 100002 > 100000\.$"
     ):
         parse_bfchar(
             line=b"0003   0020   0008   0025   0009   0026   000A   0027   000B   0028   000C   0029   000D   002A",
-            map_dict=map_dict,
-            int_entry=int_entry,
+            map_dict=map_dict, int_entry=int_entry,
         )
     assert map_dict == {}
 
@@ -663,8 +659,7 @@ def test_parse_bfchar__entry_size_limit():
     map_dict = {}
 
     with pytest.raises(
-        expected_exception=LimitReachedError,
-        match=r"^Maximum /ToUnicode code length exceeded: 18 > 16\.$",
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode code length exceeded: 18 > 16\.$",
     ):
         parse_bfchar(
             line=(b"01" * 9 + b" 0041"),
@@ -675,8 +670,7 @@ def test_parse_bfchar__entry_size_limit():
 
     map_dict = {}
     with pytest.raises(
-        expected_exception=LimitReachedError,
-        match=r"^Maximum /ToUnicode string length exceeded: 1026 > 1024\.$",
+            expected_exception=LimitReachedError, match=r"^Maximum /ToUnicode string length exceeded: 1026 > 1024\.$",
     ):
         parse_bfchar(
             line=(b"01 " + b"ab" * 513),
@@ -705,64 +699,54 @@ def _make_japanese_cmap_pdf(cmap_name: str, encoding: str) -> bytes:
     writer = PdfWriter()
     page = writer.add_blank_page(width=612, height=792)
 
-    cid_font = DictionaryObject(
-        {
-            NameObject("/Type"): NameObject("/Font"),
-            NameObject("/Subtype"): NameObject("/CIDFontType2"),
-            NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
-            NameObject("/CIDSystemInfo"): DictionaryObject(
-                {
-                    NameObject("/Registry"): TextStringObject("Adobe"),
-                    NameObject("/Ordering"): TextStringObject("Japan1"),
-                    NameObject("/Supplement"): NumberObject(2),
-                }
-            ),
-            NameObject("/DW"): NumberObject(1000),
-        }
-    )
+    cid_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/CIDFontType2"),
+        NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
+        NameObject("/CIDSystemInfo"): DictionaryObject({
+            NameObject("/Registry"): TextStringObject("Adobe"),
+            NameObject("/Ordering"): TextStringObject("Japan1"),
+            NameObject("/Supplement"): NumberObject(2),
+        }),
+        NameObject("/DW"): NumberObject(1000)
+    })
     cid_font_ref = writer._add_object(cid_font)
 
-    type0_font = DictionaryObject(
-        {
-            NameObject("/Type"): NameObject("/Font"),
-            NameObject("/Subtype"): NameObject("/Type0"),
-            NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
-            NameObject("/Encoding"): NameObject(cmap_name),
-            NameObject("/DescendantFonts"): ArrayObject([cid_font_ref]),
-        }
-    )
+    type0_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/HeiseiMin-W3"),
+        NameObject("/Encoding"): NameObject(cmap_name),
+        NameObject("/DescendantFonts"): ArrayObject([cid_font_ref])
+    })
     type0_font_ref = writer._add_object(type0_font)
 
-    type1_font = DictionaryObject(
-        {
-            NameObject("/Type"): NameObject("/Font"),
-            NameObject("/Subtype"): NameObject("/Type1"),
-            NameObject("/BaseFont"): NameObject("/Helvetica"),
-            NameObject("/Encoding"): NameObject("/WinAnsiEncoding"),
-        }
-    )
+    type1_font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+    })
     type1_font_ref = writer._add_object(type1_font)
 
     char_hex = "日本語テスト".encode(encoding).hex().upper()
-    content_data = (f"BT\n/F0 14 Tf\n72 720 Td\n(Hello ASCII) Tj\n0 -28 Td\n/F1 14 Tf\n<{char_hex}> Tj\nET\n").encode(
-        "latin-1"
-    )
+    content_data = (
+        "BT\n/F0 14 Tf\n72 720 Td\n(Hello ASCII) Tj\n"
+        f"0 -28 Td\n/F1 14 Tf\n<{char_hex}> Tj\nET\n"
+    ).encode("latin-1")
     content_stream = DecodedStreamObject()
     content_stream.set_data(content_data)
     content_ref = writer._add_object(content_stream)
 
-    page.update(
-        {
-            NameObject("/Contents"): content_ref,
-            NameObject("/Resources"): DictionaryObject(
-                {
-                    NameObject("/Font"): DictionaryObject(
-                        {NameObject("/F0"): type1_font_ref, NameObject("/F1"): type0_font_ref}
-                    )
-                }
-            ),
-        }
-    )
+    page.update({
+        NameObject("/Contents"): content_ref,
+        NameObject("/Resources"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject("/F0"): type1_font_ref,
+                NameObject("/F1"): type0_font_ref
+            })
+        })
+    })
 
     buf = BytesIO()
     writer.write(buf)
@@ -785,7 +769,7 @@ def test_japanese_cmap_encodings(cmap_name: str, python_codec: str, caplog) -> N
     reader = PdfReader(BytesIO(pdf_bytes))
     text = reader.pages[0].extract_text()
     assert "日本語テスト" in text, f"Japanese text garbled for {cmap_name}"
-    assert "Hello ASCII" in text, f"ASCII baseline broken for {cmap_name}"
+    assert "Hello ASCII"  in text, f"ASCII baseline broken for {cmap_name}"
     assert "Advanced encoding" not in caplog.text
 
 
@@ -805,7 +789,10 @@ def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
     # Ensure a warning is logged when fontTools is missing for CFF Type1 font parsing
     with mock.patch("pypdf.generic._font.HAS_FONTTOOLS", False):
         _parse_to_unicode(font_dict)
-    assert "fontTools is required to fully parse the encoding of a CFF Type1 font in font dictionary" in caplog.text
+    assert (
+        "fontTools is required to fully parse the encoding of a CFF Type1 font in font dictionary"
+        in caplog.text
+    )
 
     # Test with fontTools
     pytest.importorskip("fontTools", reason="Requires fontTools")
