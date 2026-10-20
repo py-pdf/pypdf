@@ -699,6 +699,20 @@ def test_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
     assert PdfReader(_page_with_helvetica(content)).pages[0].extract_text() == "HelloWorld"
 
 
+@pytest.mark.parametrize(
+    "operator",
+    [b"/X Tz", b"/X Tc", b"/X Ts", b"/X Tw", b"/X TL T*", b"/X /Y Td", b"/X 0 0 1 0 0 Tm"],
+)
+def test_layout_mode_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
+    """A text or positioning operator whose operand is not a number is treated as having none
+    in layout mode too, matching plain mode, and the text around it is kept.
+    """
+    content = b"BT /F1 12 Tf 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert "Hello" in page.extract_text(extraction_mode="layout")
+    assert "World" in page.extract_text(extraction_mode="layout")
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
