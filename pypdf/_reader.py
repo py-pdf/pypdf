@@ -388,6 +388,27 @@ class PdfReader(PdfDocCommon):
             n = int(obj_stm["/N"])  # type: ignore[call-overload]
             first_offset = int(obj_stm["/First"])  # type: ignore[call-overload]
 
+            stream_length = stream_data.getbuffer().nbytes
+            if n < 0 or not 0 <= first_offset <= stream_length:
+                # A negative /N, or a /First outside the stream, cannot
+                # describe a valid object stream; treating it as empty
+                # avoids leaking a ValueError/OverflowError from a bad seek.
+                if self.strict:
+                    raise PdfReadError(
+                        f"Invalid /N ({n}) or /First ({first_offset}) in object stream {stmnum}."
+                    )
+                logger_warning(
+                    (
+                        "Invalid /N (%(n)d) or /First (%(first)d) in object stream "
+                        "%(stmnum)d; ignoring the stream."
+                    ),
+                    source=__name__,
+                    n=n,
+                    first=first_offset,
+                    stmnum=stmnum,
+                )
+                return NullObject()
+
             # ObjStm header format: "objnum offset objnum offset ..."
             # smallest possible entry: "0 0" = 3 bytes (1 digit + 1 space + 1 digit)
             # using // 4 would reject a valid 3-byte single entry (3 // 4 = 0)
@@ -419,6 +440,27 @@ class PdfReader(PdfDocCommon):
                 offset = NumberObject.read_from_stream(stream_data)
                 read_non_whitespace(stream_data)
                 stream_data.seek(-1, 1)
+                if objnum < 0 or offset < 0 or first_offset + offset > stream_length:
+                    # An object number or target position outside the stream
+                    # cannot be valid; skipping the entry avoids leaking a
+                    # ValueError/OverflowError from a bad seek while keeping
+                    # the other entries.
+                    if self.strict:
+                        raise PdfReadError(
+                            f"Invalid object number ({objnum}) or offset ({offset}) "
+                            f"in object stream {stmnum}."
+                        )
+                    logger_warning(
+                        (
+                            "Invalid object number (%(objnum)d) or offset (%(offset)d) "
+                            "in object stream %(stmnum)d; skipping the entry."
+                        ),
+                        source=__name__,
+                        objnum=objnum,
+                        offset=offset,
+                        stmnum=stmnum,
+                    )
+                    continue
                 obj_index.append((int(objnum), int(offset)))
 
             # Phase 2: Parse each object and cache it.
