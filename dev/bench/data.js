@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792525551704,
+  "lastUpdate": 1792525823867,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -119597,6 +119597,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002252683470700525",
             "extra": "mean: 515.4145785999958 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "180254320+charan-rathore@users.noreply.github.com",
+            "name": "Charan Rathore",
+            "username": "charan-rathore"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "885e7430cdf96b55b4ebaf2515e6efe46c396834",
+          "message": "ROB: Reject unsupported key lengths in the /Encrypt dictionary (#4226)\n\n* ROB: Validate /Encrypt dictionary entries before use\n\nA malformed /Encrypt dictionary escaped builtins out of PdfReader\nconstruction: a missing /R, /P, /O or /U entry raised a bare KeyError,\nand a /Length of 0 (or not a whole number of bytes in range) crashed\nthe crypt providers (ValueError \"Invalid key size (0)\" with\ncryptography, ZeroDivisionError on the pure-Python fallback path).\n\nThe Standard-handler reader now reports a missing mandatory entry or an\ninvalid key length as a PdfReadError instead.\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* ROB: Explain /Encrypt key-length constants (ISO 32000-1 7.6.2, AES-256) and use bytearray\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* ROB: Move skipif to the AESV2 test, rename helper, drop stale case notes\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* BUG: Validate supported encryption key lengths\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* Test only the key-length validation after #4197\n\nMissing /R, /P, /O, /U entries are now covered by #4197, so drop those cases.\r\n\r\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n---------\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>",
+          "timestamp": "2026-10-20T21:47:13+02:00",
+          "tree_id": "0690fcf03e7bb9e51d7f9fcb5037f927759d6a11",
+          "url": "https://github.com/py-pdf/pypdf/commit/885e7430cdf96b55b4ebaf2515e6efe46c396834"
+        },
+        "date": 1792525812800,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.70710051626156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005855338790143913",
+            "extra": "mean: 369.3989173999995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.805430009605548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024207735811690237",
+            "extra": "mean: 45.86013665217738 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2404410612472361,
+            "unit": "iter/sec",
+            "range": "stddev: 0.053694615668233095",
+            "extra": "mean: 4.159023399800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.50973064126658,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010450419068457732",
+            "extra": "mean: 57.111101277778666 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07691624374669881,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06188778196915558",
+            "extra": "mean: 13.001154909399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4990548086167055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001818261904772593",
+            "extra": "mean: 667.0870165999986 msec\nrounds: 5"
           }
         ]
       }
