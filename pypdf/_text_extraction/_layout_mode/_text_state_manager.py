@@ -62,7 +62,11 @@ class TextStateManager:
         """
         if op not in [b"Tc", b"Tz", b"Tw", b"TL", b"Ts"]:
             return
-        self.__setattr__(op.decode(), value[0] if isinstance(value, list) else value)
+        name = op.decode()
+        raw = value[0] if isinstance(value, list) else value
+        # a non-numeric operand (e.g. a name from a malformed content stream)
+        # leaves the parameter unchanged, matching the ROB handling of Td/Tm/Tf
+        self.__setattr__(name, self._as_float(raw, getattr(self, name)))
 
     def set_font(self, font: Font, size: float) -> None:
         """
@@ -108,6 +112,16 @@ class TextStateManager:
         )
 
     @staticmethod
+    def _as_float(value: Any, default: float = 0.0) -> float:
+        """An operand as a float, or default if it is not a number
+        (e.g. a name from a malformed content stream).
+        """
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    @staticmethod
     def raw_transform(
         _a: float = 1.0,
         _b: float = 0.0,
@@ -117,7 +131,9 @@ class TextStateManager:
         _f: float = 0.0,
     ) -> TextStateManagerDictType:
         """Only a/b/c/d/e/f matrix params"""
-        return dict(zip(range(6), map(float, (_a, _b, _c, _d, _e, _f))))
+        defaults = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+        values = (_a, _b, _c, _d, _e, _f)
+        return dict(zip(range(6), (TextStateManager._as_float(v, d) for v, d in zip(values, defaults))))
 
     @staticmethod
     def new_transform(

@@ -33,6 +33,7 @@ from pypdf.generic import (
 from pypdf.generic._font import Font
 
 from . import RESOURCE_ROOT, get_data_from_url
+from .test_text_extraction import _page_with_helvetica
 
 
 @pytest.mark.enable_socket
@@ -420,6 +421,24 @@ def test_parse_bfrange__multibyte_source_codes():
     parse_bfrange(line=b"20 22 0061", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
     assert map_dict == {-1: 1, " ": "a", "!": "b", '"': "c"}
     assert int_entry == [0x20, 0x21, 0x22]
+
+
+def test_parse_bfrange__negative_source_range(caplog):
+    """int(token, 16) accepts a leading "-"; negative bounds are rejected as a
+    broken line instead of leaking an OverflowError from the byte encoding.
+    """
+    with pytest.raises(ValueError, match=r"^Negative bfrange source range: b'-1' b'-1'$"):
+        parse_bfrange(line=b"-1 -1 <FFFF>", map_dict={}, int_entry=[], multiline_rg=None)
+
+    # End to end through text extraction: the broken line is skipped with a
+    # warning and the remaining map keeps applying ("AB" still maps to "ab").
+    reader = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf <4142> Tj ET"))
+    font = reader.pages[0]["/Resources"]["/Font"]["/F1"]
+    to_unicode = StreamObject()
+    to_unicode.set_data(b"beginbfrange\n-1 -1 <FFFF>\n<41> <42> <61>\nendbfrange\n")
+    font[NameObject("/ToUnicode")] = to_unicode
+    assert reader.pages[0].extract_text() == "ab"
+    assert any("Skipping broken line" in message for message in caplog.messages)
 
 
 def test_parse_bfrange__decode_out_of_range_code():

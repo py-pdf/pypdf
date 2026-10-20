@@ -208,7 +208,6 @@ ignore = [
     "TRY002",  # Create your own exception
     "TRY003",  # Avoid specifying long messages outside the exception class
     "TRY004",  # Prefer `TypeError` exception for invalid type
-    "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.9+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.10+
@@ -260,4 +259,8 @@ ignore_errors = false
 
 [[tool.mypy.overrides]]
 module = "tests.scripts.*"
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "tests.test_pagerange"
 ignore_errors = false

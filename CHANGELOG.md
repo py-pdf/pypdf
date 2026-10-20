@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## Version 6.21.1, 2026-10-17
+
+### Security (SEC)
+- Only open /DCTDecode image data with the Pillow JPEG plugin (#4222)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.0...6.21.1)
+
+## Version 6.21.0, 2026-10-16
+
+### Security (SEC)
+- Improve performance and limit field work (#4219)
+- Limit stream parsing work (#4218)
+
+### New Features (ENH)
+- Allow custom fit modes for named destinations (#4181)
+
+### Bug Fixes (BUG)
+- Treat NUL as whitespace in ArrayObject (#4198)
+- Avoid overwriting unread objects in add_form_topname (#4190)
+- Read an indirect page box on a writer page (#4179)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.20.1...6.21.0)
+
 ## Version 6.20.1, 2026-10-12
 
 ### Security (SEC)

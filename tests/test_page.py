@@ -16,7 +16,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject, _get_fonts_walk
-from pypdf.annotations import Polygon
+from pypdf.annotations import Highlight, Polygon
 from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
@@ -965,6 +965,55 @@ def test_merge_page_with_annotations():
 
     page0.merge_page(page1)
     assert len(page0.annotations) == 1
+
+
+@pytest.mark.parametrize(
+    ("quad_count", "transformation", "expected"),
+    [
+        (1, None, [10, 70, 90, 70, 10, 60, 90, 60]),
+        (2, None, [10, 70, 90, 70, 10, 60, 90, 60, 10, 50, 90, 50, 10, 40, 90, 40]),
+        (
+            2,
+            Transformation().translate(200, 0),
+            [210, 70, 290, 70, 210, 60, 290, 60, 210, 50, 290, 50, 210, 40, 290, 40],
+        ),
+        (
+            2,
+            Transformation().rotate(90).translate(200, 0),
+            [130, 10, 130, 90, 140, 10, 140, 90, 150, 10, 150, 90, 160, 10, 160, 90],
+        ),
+    ],
+    ids=["single-quad", "multiple-quads", "translated", "rotated"],
+)
+def test_merge_page_preserves_annotation_quad_points(quad_count, transformation, expected):
+    quad_points = [10, 70, 90, 70, 10, 60, 90, 60, 10, 50, 90, 50, 10, 40, 90, 40][
+        : 8 * quad_count
+    ]
+    source = PdfWriter()
+    source.add_blank_page(width=200, height=200)
+    source.add_annotation(
+        0,
+        Highlight(
+            rect=(10, 40, 90, 70),
+            quad_points=ArrayObject(FloatObject(value) for value in quad_points),
+        ),
+    )
+    source_stream = BytesIO()
+    source.write(source_stream)
+    source_page = PdfReader(source_stream).pages[0]
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=400, height=200)
+    if transformation is None:
+        page.merge_page(source_page)
+    else:
+        page.merge_transformed_page(source_page, transformation)
+
+    output = BytesIO()
+    writer.write(output)
+    annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
+    assert annotation["/QuadPoints"] == pytest.approx(expected)
+    assert source_page["/Annots"][0].get_object()["/QuadPoints"] == quad_points
 
 
 def test_merge_page_reproducible_with_proc_set():
