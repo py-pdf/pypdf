@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792523737969,
+  "lastUpdate": 1792524253786,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -152797,6 +152797,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020008674389482766",
             "extra": "mean: 668.5059066000008 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "180254320+charan-rathore@users.noreply.github.com",
+            "name": "Charan Rathore",
+            "username": "charan-rathore"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3f9c7f42f988ffab3b3f7d257592390cd592b48c",
+          "message": "ROB: Reject negative bfrange source ranges in /ToUnicode CMaps (#4225)\n\n* ROB: Reject negative bfrange source ranges in /ToUnicode CMaps\n\nint(token, 16) accepts a leading \"-\", so a bfrange line like\n\"-1 -1 <FFFF>\" parsed to negative bounds and the destination encoding\nthen leaked an OverflowError (\"cannot convert negative int to\nunsigned\") out of page text extraction.\n\nNegative source bounds are now rejected as a broken CMap line, which\nthe caller already skips with a warning, so extraction continues with\nthe remaining map.\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* STY: Simplify bfrange test with _page_with_helvetica, fix D209 and formatting\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n* STY: Revert unrelated formatting changes in tests/test_cmap.py\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>\n\n---------\n\nSigned-off-by: Charan Rathore <180254320+charan-rathore@users.noreply.github.com>",
+          "timestamp": "2026-10-20T21:21:52+02:00",
+          "tree_id": "2287b8303c3122d4e505420c662a594f6deb2ce2",
+          "url": "https://github.com/py-pdf/pypdf/commit/3f9c7f42f988ffab3b3f7d257592390cd592b48c"
+        },
+        "date": 1792524246235,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 24.321790920356918,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015653373611452404",
+            "extra": "mean: 41.115393322578775 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 47.7086499951767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008794955787675135",
+            "extra": "mean: 20.96055956521719 msec\nrounds: 46"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.5816188268399285,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027606879292976148",
+            "extra": "mean: 632.2635916000053 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.1088312397493654,
+            "unit": "iter/sec",
+            "range": "stddev: 0.057087566619362914",
+            "extra": "mean: 901.8504927999999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5716421767974483,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05691315710839204",
+            "extra": "mean: 1.749346078000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.733499072902317,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05695710755511003",
+            "extra": "mean: 576.8679174000056 msec\nrounds: 5"
           }
         ]
       }
