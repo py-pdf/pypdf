@@ -275,6 +275,19 @@ def test_unigb_utf16():
 
 
 @pytest.mark.enable_socket
+def test_unigb_utf16_without_tounicode():
+    """Decode the SimSun watermark in #2812 without a ToUnicode map."""
+    url = (
+        "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
+    )
+    name = "iss2812.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    text = reader.pages[1].extract_text()
+    assert "中国石化集团经济技术研究院有限公司" in text
+    assert not any(0xD800 <= ord(char) <= 0xDFFF for char in text)
+
+
+@pytest.mark.enable_socket
 def test_too_many_differences():
     """Cf #2836"""
     url = (
