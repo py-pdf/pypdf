@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792484299037,
+  "lastUpdate": 1792491679643,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -151741,6 +151741,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04125916944523598",
             "extra": "mean: 864.0207776000011 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jipeng6036@gmail.com",
+            "name": "Jasper",
+            "username": "jipeng6036-del"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "46a72d81849f69094043c8fe832de6067ea684aa",
+          "message": "ROB: Treat garbage after startxref as PdfReadError (#4212)\n\n* ROB: treat garbage after startxref as PdfReadError\n\nCorrupt bytes on the same line as the startxref keyword made\nint() raise ValueError instead of PdfReadError.\n\nFixes #4208\n\n* ROB: validate same-line startxref values explicitly\n\nReplace exception-driven guards with shared integer syntax and digit-limit\nchecks in the direct parser and recovery scan. Preserve signed offsets,\ndigit separators and the existing PdfReadError behavior for corrupt data.\n\nExtend regressions for empty, malformed, signed and oversized offsets.\nAddresses review comment 4313415828 on #4212.\n\nAI-assisted-by: OpenAI Codex (GPT-6.1 Sol)",
+          "timestamp": "2026-10-20T12:17:51+02:00",
+          "tree_id": "3c416800b1ef4051fb5db50ad93aec8929295254",
+          "url": "https://github.com/py-pdf/pypdf/commit/46a72d81849f69094043c8fe832de6067ea684aa"
+        },
+        "date": 1792491668081,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.098026334679284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018583221457827915",
+            "extra": "mean: 70.93191459999844 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.66746022563516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009661689682819368",
+            "extra": "mean: 37.49888409090829 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.950446225673307,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03287592414109377",
+            "extra": "mean: 1.0521373782000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4873222389052748,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03904243822375579",
+            "extra": "mean: 2.0520302998000033 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.35687307229072446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02545801243558043",
+            "extra": "mean: 2.8021167122000064 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1518854684517554,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03755613747887642",
+            "extra": "mean: 868.1418660000077 msec\nrounds: 5"
           }
         ]
       }
