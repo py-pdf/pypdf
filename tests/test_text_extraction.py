@@ -674,6 +674,24 @@ def test_layout_mode_text_with_zero_font_size() -> None:
     assert page.extract_text(extraction_mode="layout") == "Hello"
 
 
+def test_layout_mode_tf_with_a_missing_size_keeps_the_previous_size() -> None:
+    """A Tf operator naming a font but missing its size operand keeps the current font size
+    in layout mode, matching plain mode, instead of raising IndexError.
+    """
+    content = b"BT /F1 24 Tf 72 700 Td (Hello) Tj /F1 Tf (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
+def test_layout_mode_tf_with_no_operands_does_not_crash() -> None:
+    """A Tf operator with no operands at all falls back to an uninterpretable font, the
+    same as an unknown font name, instead of raising IndexError.
+    """
+    content = b"BT /F1 24 Tf 72 700 Td (Hello) Tj Tf (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text(extraction_mode="layout") == "Hello"
+
+
 @pytest.mark.parametrize("operator", [b"/X 5 Td", b"/X TL", b"/X Tz", b"/X Tw"])
 def test_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
     """A text operator whose operand is not a number is treated as having none, and the text is kept."""
