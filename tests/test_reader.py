@@ -3323,12 +3323,12 @@ def test_issue4215__valid_objstm_still_resolves():
 
 
 @pytest.mark.parametrize("n_value", [b"/Foo", b"<< /a 1 >>", b"[1 2]", None])
-def test_issue4215_malformed_n_raises_pdfreaderror(n_value):
+def test_issue4215__malformed_n_raises_pdfreaderror(n_value):
     with pytest.raises(PdfReadError, match="Invalid /ObjStm header"):
         PdfReader(BytesIO(_build_objstm_pdf(n_value))).pages[0]
 
 
 @pytest.mark.parametrize("first_value", [b"/Foo", None])
-def test_issue4215_malformed_first_raises_pdfreaderror(first_value):
+def test_issue4215__malformed_first_raises_pdfreaderror(first_value):
     with pytest.raises(PdfReadError, match="Invalid /ObjStm header"):
         PdfReader(BytesIO(_build_objstm_pdf(b"1", first_value))).pages[0]
