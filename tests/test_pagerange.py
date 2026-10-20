@@ -1,5 +1,5 @@
 """Test the pypdf.pagerange module."""
-from typing import Union
+from typing import Any, Union
 
 import pytest
 
@@ -93,7 +93,7 @@ def test_str_init_zero_step(init_str: str) -> None:
         (["1:5"], False),
     ],
 )
-def test_valid(value: object, expected: bool) -> None:
+def test_valid(value: Any, expected: bool) -> None:
     assert PageRange.valid(value) is expected
 
 
@@ -108,9 +108,9 @@ def test_valid(value: object, expected: bool) -> None:
     ],
 )
 def test_parse_filename_page_ranges(
-    params: list[Union[str, PageRange, None]], expected: list[tuple[str, PageRange]]
+    params: list[str], expected: list[tuple[str, PageRange]]
 ) -> None:
-    assert parse_filename_page_ranges(params) == expected
+    assert parse_filename_page_ranges(list(params)) == expected
 
 
 def test_parse_filename_page_ranges_err() -> None:
