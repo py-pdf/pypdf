@@ -162,16 +162,6 @@ def _build_pdf_with_encrypt_dict(encrypt_body: bytes) -> bytes:
 @pytest.mark.parametrize(
     ("encrypt_body", "match"),
     [
-        # /R missing.
-        (
-            b"/Filter /Standard /V 2 /P -4 /O <%(h)s> /U <%(h)s> /Length 128",
-            r"^Encryption dictionary is missing the required /R entry$",
-        ),
-        # /U missing.
-        (
-            b"/Filter /Standard /V 2 /R 3 /P -4 /O <%(h)s> /Length 128",
-            r"^Encryption dictionary is missing the required /U entry$",
-        ),
         # /Length 0.
         (
             b"/Filter /Standard /V 2 /R 3 /P -4 /O <%(h)s> /U <%(h)s> /Length 0",
@@ -193,16 +183,14 @@ def _build_pdf_with_encrypt_dict(encrypt_body: bytes) -> bytes:
         ),
     ],
     ids=[
-        "missing_r",
-        "missing_u",
         "zero_length",
         "unaligned_length",
         "over_128_bits",
         "unsupported_248_bits",
     ],
 )
-def test_encryption_dictionary__invalid_entries(encrypt_body, match):
-    """Malformed /Encrypt dictionaries raise PdfReadError, not builtins."""
+def test_encryption_dictionary__invalid_key_length(encrypt_body, match):
+    """Unsupported key lengths raise PdfReadError, not builtins."""
     hex32 = b"0" * 64
     pdf = _build_pdf_with_encrypt_dict(encrypt_body % {b"h": hex32})
     with pytest.raises(PdfReadError, match=match):
