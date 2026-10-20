@@ -68,6 +68,8 @@ BODY
 The `PREFIX` can be:
 
 * `SEC`: Security improvements. Typically, an infinite loop that was possible.
+  Usually only used by the maintainers - others should report possible issues in
+  this category privately first and only push a public change if told so.
 * `BUG`: A bug was fixed. Likely there are one or multiple issues. Then write in
    the `BODY`: `Closes #123` where 123 is the issue number on GitHub.
    It would be absolutely amazing if you could write a regression test in those

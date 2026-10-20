@@ -15,7 +15,8 @@ from pypdf import PasswordType, PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
 from pypdf._encryption import AlgV5, CryptAES, CryptRC4, EncryptAlgorithm, Encryption, _saslprep
-from pypdf.errors import DependencyError, PdfReadError, PdfStreamError
+from pypdf.errors import DependencyError, PdfReadError, PdfStreamError, WrongPasswordError
+from pypdf.generic import ByteStringObject, DictionaryObject, NameObject, NullObject, NumberObject
 from tests import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
@@ -701,3 +702,170 @@ def test_xmp_metadata_with_cleartext_metadata():
     # Cleartext metadata is readable without knowing the password.
     reader = PdfReader(path)
     assert reader.xmp_metadata.stream.get_data().startswith(b"<?xpacket")
+
+
+def _read_mutated_pdf(name: str, replacements: list[tuple[bytes, bytes]]) -> BytesIO:
+    data = (RESOURCE_ROOT / "encryption" / name).read_bytes()
+    for old, new in replacements:
+        assert old in data
+        assert len(old) == len(new)
+        data = data.replace(old, new)
+    return BytesIO(data)
+
+
+@pytest.mark.parametrize(
+    ("name", "replacements", "message"),
+    [
+        (
+            "r2-user-password.pdf",
+            [(b"/O <", b"/Q <")],
+            "/O entry of the encryption dictionary is missing",
+        ),
+        (
+            "r2-user-password.pdf",
+            [(b"/U <", b"/Q <")],
+            "/U entry of the encryption dictionary is missing",
+        ),
+        (
+            "r2-user-password.pdf",
+            [(b"/R 2", b"/Z 2")],
+            "/R entry of the encryption dictionary is missing",
+        ),
+        (
+            "r2-user-password.pdf",
+            [(b"/P -4", b"/Q -4")],
+            "/P entry of the encryption dictionary is missing",
+        ),
+        (
+            "r2-user-password.pdf",
+            [(b"/R 2", b"/R /")],
+            "/R entry of the encryption dictionary is not a number",
+        ),
+        (
+            "r2-user-password.pdf",
+            [(
+                b"<6e49439a53d94cc0dcc7261742621c471290a24e838d3ba4d07db663d1383944>",
+                b"1111111111" + b" " * 56,
+            )],
+            "/O entry of the encryption dictionary is not a string",
+        ),
+        (
+            "r4-user-password.pdf",
+            [(b"/Length 128", b"/Length /x8")],
+            "/Length entry of the encryption dictionary is not a number",
+        ),
+        (
+            "r4-user-password.pdf",
+            [(b"/CF <<", b"/CX <<")],
+            "Crypt filter /StdCF is missing from /CF or not a dictionary",
+        ),
+        (
+            "r4-user-password.pdf",
+            [(b"<< /StdCF <<", b"<< /SxdCF <<")],
+            "Crypt filter /StdCF is missing from /CF or not a dictionary",
+        ),
+        (
+            "r4-user-password.pdf",
+            [(
+                b"/CF << /StdCF << /AuthEvent /DocOpen /CFM /V2 /Length 16 >> >>",
+                b"/CF 1" + b" " * 57,
+            )],
+            "/CF entry of the encryption dictionary is not a dictionary",
+        ),
+        (
+            "r4-user-password.pdf",
+            [(b"/StmF /StdCF", b"/StmF [0 42]")],
+            "/StmF entry of the encryption dictionary is not a name",
+        ),
+        (
+            "r2-user-password.pdf",
+            [(b"/Encrypt 15 0 R", b"/Encrypt 99 0 R")],
+            "/Encrypt entry of the trailer is not a dictionary",
+        ),
+    ],
+)
+def test_malformed_encryption_dictionary(name, replacements, message):
+    """A malformed /Encrypt dictionary raises PdfReadError naming the broken entry."""
+    stream = _read_mutated_pdf(name, replacements)
+    with pytest.raises(PdfReadError, match=f"^{re.escape(message)}$"):
+        PdfReader(stream, password="asdfzxcv")
+
+
+def test_crypt_filter_without_cfm_is_unsupported():
+    """A crypt filter without /CFM defaults to the unsupported /None method."""
+    stream = _read_mutated_pdf("r4-user-password.pdf", [(b"/CFM /V2", b"/CXM /V2")])
+    message = "StmF Method /None NOT supported!"
+    with pytest.raises(NotImplementedError, match=f"^{re.escape(message)}$"):
+        PdfReader(stream, password="asdfzxcv")
+
+
+def test_v4_encryption_without_crypt_filters():
+    """/CF is only needed when /StmF or /StrF name a crypt filter; both default to /Identity."""
+    stream = _read_mutated_pdf(
+        "r4-user-password.pdf",
+        [(b"/CF <<", b"/CX <<"), (b"/StmF /StdCF", b"/SxmF /StdCF"), (b"/StrF /StdCF", b"/SxrF /StdCF")],
+    )
+    reader = PdfReader(stream, password="asdfzxcv")
+    assert len(reader.pages) == 1
+
+
+@pytest.mark.parametrize(
+    ("replacements", "message"),
+    [
+        (
+            [(
+                b"[<fce2fe96b7e142b4a0576f61e2e9c441><2f9c80ae273b77a6104492a487b87336>]",
+                b"[]" + b" " * 68,
+            )],
+            "Ignoring malformed /ID entry of the trailer",
+        ),
+        (
+            [(
+                b"[<fce2fe96b7e142b4a0576f61e2e9c441><2f9c80ae273b77a6104492a487b87336>]",
+                b"123" + b" " * 67,
+            )],
+            "Ignoring malformed /ID entry of the trailer",
+        ),
+        (
+            [(b"<fce2fe96b7e142b4a0576f61e2e9c441>", b" " + b"1" * 32 + b" ")],
+            "Ignoring non-string first /ID entry of the trailer",
+        ),
+    ],
+)
+def test_malformed_id_entry_is_ignored(caplog, replacements, message):
+    """A malformed trailer /ID warns and falls back to the empty file ID, so the password key does not match."""
+    stream = _read_mutated_pdf("r2-user-password.pdf", replacements)
+    with pytest.raises(WrongPasswordError):
+        PdfReader(stream, password="asdfzxcv")
+    assert message in caplog.messages
+
+
+def _build_minimal_encryption_dictionary() -> DictionaryObject:
+    entry = DictionaryObject()
+    entry[NameObject("/Filter")] = NameObject("/Standard")
+    entry[NameObject("/V")] = NumberObject(1)
+    entry[NameObject("/R")] = NumberObject(2)
+    entry[NameObject("/P")] = NumberObject(-4)
+    entry[NameObject("/O")] = ByteStringObject(b"0" * 32)
+    entry[NameObject("/U")] = ByteStringObject(b"0" * 32)
+    return entry
+
+
+def test_read_non_boolean_encrypt_metadata(caplog):
+    """A non-boolean /EncryptMetadata falls back to the default, a null one is treated as absent."""
+    entry = _build_minimal_encryption_dictionary()
+    entry[NameObject("/EncryptMetadata")] = NameObject("/Yes")
+    assert Encryption.read(entry, b"").EncryptMetadata is True
+    assert "Ignoring non-boolean /EncryptMetadata entry of the encryption dictionary" in caplog.messages
+
+    caplog.clear()
+    entry[NameObject("/EncryptMetadata")] = NullObject()
+    assert Encryption.read(entry, b"").EncryptMetadata is True
+    assert caplog.messages == []
+
+
+def test_read_non_string_oe_entry():
+    entry = _build_minimal_encryption_dictionary()
+    entry[NameObject("/OE")] = NumberObject(42)
+    with pytest.raises(PdfReadError, match=r"^/OE entry of the encryption dictionary is not a string$"):
+        Encryption.read(entry, b"")

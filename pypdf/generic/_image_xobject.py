@@ -482,15 +482,18 @@ def _apply_decode(
 def _get_mode_and_invert_color(
     x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[ImageMode, bool]:
+    bits = x_object.get("/BitsPerComponent", 8)
     if (
         ImageAttributes.COLOR_SPACE in x_object
         and x_object[ImageAttributes.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+        and bits >= 8
     ):
-        # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: ImageMode = "RGB"
-    if x_object.get("/BitsPerComponent", 8) < 8:
+        # Full-width /DeviceRGB samples are RGB. Narrower samples stay on
+        # the low-bit path so they can be expanded (#3367).
+        return "RGB", False
+    if bits < 8:
         mode, invert_color = _get_image_mode(
-            f"{x_object.get('/BitsPerComponent', 8)}bit", 0, ""
+            f"{bits}bit", 0, ""
         )
     else:
         mode, invert_color = _get_image_mode(
@@ -653,7 +656,7 @@ def _xobj_to_image(
             )
             img = _image_from_bytes(fallback_mode, size, fallback_data)
     elif last_filter == FT.DCT_DECODE:
-        img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
+        img, image_format, extension = Image.open(BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
         # invert_color kept unchanged
     elif last_filter == FT.JPX_DECODE:
         img, image_format, extension, invert_color = _handle_jpx(

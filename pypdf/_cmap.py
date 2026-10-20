@@ -511,9 +511,9 @@ def _derive_character_map_from_cff_type1_font_file(
             if unipoint := _glyph_name_to_unicode(f"/{glyph_name}"):
                 map_dict[chr(i)] = unipoint
                 int_entry.append(i)
-        return map_dict, int_entry
-
     except Exception:
+        return map_dict, int_entry
+    else:
         return map_dict, int_entry
 
 

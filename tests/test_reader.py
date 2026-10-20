@@ -433,6 +433,49 @@ def test_startxref_corrupt_trailing_pointer(caplog):
         PdfReader(io.BytesIO(pdf_data), strict=True)
 
 
+@pytest.mark.parametrize("value", [b"\xdf", b"", b" ", b"+", b"-", b"++1", b"--1", b"1x", b"1__0", b"_1", b"1_"])
+def test_startxref_same_line_garbage_raises_pdfreaderror(value):
+    """Corrupt bytes after startxref must raise PdfReadError, not ValueError (#4208)."""
+    data = b"startxref" + value + b"\nf\n6\n%"
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(data))
+
+    # Primary parser path: startxref and garbage share the line above %%EOF
+    data = b"%PDF-1.0\nstartxref" + value + b"\n%%EOF\n"
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(data))
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [(b"123", 123), (b"+123", 123), (b"-123", -123), (b"0", 0), (b"1_234", 1234)],
+)
+def test_startxref_same_line_integer_values(value, expected, caplog):
+    """Signed offsets and digit separators retain their existing parsing behavior."""
+    data = b"\nstartxref " + value
+    reader = PdfReader.__new__(PdfReader)
+    stream = BytesIO(data)
+    stream.seek(0, 2)
+    assert reader._find_startxref_pos(stream) == expected
+    assert caplog.messages == ["startxref on same line as offset"]
+    stream.seek(0, 2)
+    assert reader._find_previous_startxref_pos(stream) == expected
+
+
+def test_startxref_same_line_integer_conversion_limit():
+    """Oversized same-line offsets raise PdfReadError instead of ValueError."""
+    limit = getattr(sys, "get_int_max_str_digits", lambda: 0)()
+    if not limit:
+        pytest.skip("Python integer conversion limit is disabled")
+    data = b"%PDF-1.0\nstartxref " + b"1" * (limit + 1) + b"\n%%EOF\n"
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(data))
+    stream = BytesIO(data)
+    stream.seek(0, 2)
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader._find_previous_startxref_pos(stream)
+
+
 def test_find_previous_startxref_pos_recovery_variants():
     """Cover the backward-scan branches of _find_previous_startxref_pos (#3238)."""
 
@@ -446,6 +489,10 @@ def test_find_previous_startxref_pos_recovery_variants():
 
     # Keyword and offset share a line
     assert scan(b"startxref 6789\ngarbage\n") == 6789
+
+    # Garbage on the same line as the keyword must not leak ValueError (#4208)
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"startxref\xdf\nf\n6\n%")
 
     # A startxref keyword with no numeric offset above it cannot be recovered
     with pytest.raises(PdfReadError, match="startxref not found"):
@@ -2863,38 +2910,7 @@ def test_read_pdf15_xref_stream__size_limit(caplog):
 @pytest.mark.timeout(10)
 def test_get_object_from_stream__size_limit(caplog):
     obj_stm_encoded = FlateDecode.encode(b"4 0\nnull")
-    pdf = b"%PDF-1.7\n"
-    header_length = len(pdf)
-    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-    catalog_length = len(pdf)
-    pdf += b"2 0 obj\n<< /Type /Pages /Kids [4 0 R] /Count 1 >>\nendobj\n"
-    pages_length = len(pdf)
-    pdf += (
-        f"3 0 obj\n<< /Type /ObjStm /N 5000000 /First 4 /Filter /FlateDecode /Length {len(obj_stm_encoded)} >>\n"
-        f"stream\n"
-    ).encode()
-    pdf += obj_stm_encoded + b"\nendstream\nendobj\n"
-    xref = bytearray()
-    for xref_type, value, generation in [
-            (0, 0, 0),
-            (1, header_length, 0),
-            (1, catalog_length, 0),
-            (1, pages_length, 0),
-            (2, 3, 0)
-    ]:
-        # xref type: 0 = free object, 1 = in-use object (points to byte offset), 2 = compressed (stored in stream)
-        # value: type 1 = byte offset in the file, type 2 = object stream number
-        # >B = 1 byte (unsigned char) for type and generation
-        # >H = 2 bytes (unsigned short) for value
-        xref += struct.pack(">B", xref_type) + struct.pack(">H", value) + struct.pack(">B", generation)
-    xref_encoded = FlateDecode.encode(bytes(xref))
-    startxref = len(pdf)
-    pdf += (
-        f"5 0 obj\n<< /Type /XRef /Size 6 /W [1 2 1] /Root 1 0 R /Filter /FlateDecode "
-        f"/Length {len(xref_encoded)} >>\nstream\n"
-    ).encode()
-    pdf += xref_encoded + b"\nendstream\nendobj\n"
-    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+    pdf = _build_pdf_with_object_stream(b"/N 5000000 /First 4 /Filter /FlateDecode", obj_stm_encoded)
 
     with pytest.raises(LimitReachedError, match=r"^Value /N 5000000 for object 3 exceeds maximum allowed value 2\.$"):
         reader = PdfReader(BytesIO(pdf), strict=True)
@@ -2911,6 +2927,86 @@ def test_get_object_from_stream__size_limit(caplog):
         "NumberObject(b'') invalid; use 0 instead",
         "NumberObject(b'') invalid; use 0 instead",
     ]
+
+
+def _build_pdf_with_object_stream(obj_stm_dict: bytes, obj_stm_payload: bytes) -> bytes:
+    """Build a minimal PDF whose only page (object 4) lives in object stream 3."""
+    pdf = b"%PDF-1.7\n"
+    header_length = len(pdf)
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    catalog_length = len(pdf)
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [4 0 R] /Count 1 >>\nendobj\n"
+    pages_length = len(pdf)
+    pdf += (
+        b"3 0 obj\n<< /Type /ObjStm " + obj_stm_dict
+        + b" /Length " + str(len(obj_stm_payload)).encode() + b" >>\nstream\n"
+        + obj_stm_payload + b"\nendstream\nendobj\n"
+    )
+    xref = bytearray()
+    for xref_type, value, generation in [
+            (0, 0, 0),
+            (1, header_length, 0),
+            (1, catalog_length, 0),
+            (1, pages_length, 0),
+            (2, 3, 0)
+    ]:
+        # xref type: 0 = free object, 1 = in-use object (points to byte offset), 2 = compressed (stored in stream)
+        xref += struct.pack(">B", xref_type) + struct.pack(">H", value) + struct.pack(">B", generation)
+    xref_encoded = FlateDecode.encode(bytes(xref))
+    startxref = len(pdf)
+    pdf += (
+        f"5 0 obj\n<< /Type /XRef /Size 6 /W [1 2 1] /Root 1 0 R /Filter /FlateDecode "
+        f"/Length {len(xref_encoded)} >>\nstream\n"
+    ).encode()
+    pdf += xref_encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+    return pdf
+
+
+@pytest.mark.parametrize(
+    ("obj_stm_dict", "obj_stm_payload", "match"),
+    [
+        (
+            b"/N 1 /First -1",
+            b"4 0\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>",
+            r"^Invalid /N \(1\) or /First \(-1\) in object stream 3\.$",
+        ),
+        (
+            b"/N -1 /First 4",
+            b"4 0\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>",
+            r"^Invalid /N \(-1\) or /First \(4\) in object stream 3\.$",
+        ),
+        (
+            b"/N 1 /First 5",
+            b"4 -1\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>",
+            r"^Invalid object number \(4\) or offset \(-1\) in object stream 3\.$",
+        ),
+        (
+            b"/N 1 /First 999999999999999999999999999999999999",
+            b"4 0\n<< /Type /Page /MediaBox [0 0 10 10] /Parent 2 0 R >>",
+            r"^Invalid /N \(1\) or /First \(999999999999999999999999999999999999\) in object stream 3\.$",
+        ),
+    ],
+    ids=["negative_first", "negative_n", "negative_entry_offset", "huge_first"],
+)
+def test_get_object_from_stream__invalid_values(obj_stm_dict, obj_stm_payload, match, caplog):
+    """Out-of-range /N, /First or header offsets are rejected, not a ValueError
+    or OverflowError from a bad seek.
+    """
+    pdf = _build_pdf_with_object_stream(obj_stm_dict, obj_stm_payload)
+
+    with pytest.raises(PdfReadError, match=match):
+        reader = PdfReader(BytesIO(pdf), strict=True)
+        _ = reader.pages[0]
+    assert caplog.messages == []
+
+    # In non-strict mode the stream (or entry) is ignored with a warning; the
+    # only page cannot be resolved and is dropped from the page tree, exactly
+    # like an oversized /N.
+    reader = PdfReader(BytesIO(pdf), strict=False)
+    assert len(reader.pages) == 0
+    assert len(caplog.messages) >= 1
+    assert "Invalid" in caplog.messages[0]
 
 
 def test_named_destinations_cache():
