@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792507967241,
+  "lastUpdate": 1792509883849,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -119333,6 +119333,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0011743917755069092",
             "extra": "mean: 681.3907231999906 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "1989096+DGrutt@users.noreply.github.com",
+            "name": "DGrutt",
+            "username": "DGrutt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a91817ac1f8d98c0a50540c6333ed9ca99f163ea",
+          "message": "BUG: Keep 8-bit DeviceRGB image mode (#4230)\n\n_get_mode_and_invert_color assigned RGB for a /DeviceRGB image and then\nreplaced that mode on every call. When the generic lookup could not map\nthe color space it was given, an 8-bit image came back as palette mode.\nReturn RGB before that lookup. Samples narrower than 8 bits still use\nthe low-bit path so they can be expanded.\n\nAI assistance: Grok (xAI), Grok 4.7.\n\nCloses #3367.",
+          "timestamp": "2026-10-20T17:22:10+02:00",
+          "tree_id": "604ead723dfbecf921f46c754ec60d76aef9d7ed",
+          "url": "https://github.com/py-pdf/pypdf/commit/a91817ac1f8d98c0a50540c6333ed9ca99f163ea"
+        },
+        "date": 1792509875157,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.099995180504645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007892070988367677",
+            "extra": "mean: 196.07861666666318 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.23050809211619,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005137829539551114",
+            "extra": "mean: 28.384489868421117 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.44498003459664953,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05173059616967765",
+            "extra": "mean: 2.2472918384 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 31.83166085394456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004447178916129409",
+            "extra": "mean: 31.415263079999818 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14370969181289575,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07714471837751227",
+            "extra": "mean: 6.958472928199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.434806861743184,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005443939415598542",
+            "extra": "mean: 410.7101946000171 msec\nrounds: 5"
           }
         ]
       }
