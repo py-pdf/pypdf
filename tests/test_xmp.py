@@ -120,6 +120,28 @@ def test_converter_date():
 
 
 @pytest.mark.parametrize(
+    ("value", "date_parts"),
+    [
+        ("0000-01-01T00:00:00Z", (0, 1, 1)),
+        ("2024-13-01T00:00:00Z", (2024, 13, 1)),
+        ("2024-02-31T10:00:00Z", (2024, 2, 31, 10)),
+        ("2024-01-01T24:00:00Z", (2024, 1, 1, 24)),
+        ("2024-01-01T00:60:00Z", (2024, 1, 1, 0, 60)),
+        ("2024-01-01T00:00:60.123456Z", (2024, 1, 1, 0, 0, 60, 123456)),
+        ("2024-02-31T10:00:00+00:30", (2024, 2, 31, 10)),
+        ("2024-02-31", (2024, 2, 31)),
+    ],
+)
+def test_converter_date_out_of_range(value, date_parts):
+    """Invalid timestamps retain their value and datetime's specific reason."""
+    with pytest.raises(ValueError) as datetime_exc:
+        datetime(*date_parts)
+    with pytest.raises(ValueError) as exc:
+        pypdf.xmp._converter_date(value)
+    assert str(exc.value) == f"Invalid date {value!r}: {datetime_exc.value}"
+
+
+@pytest.mark.parametrize(
     ("value", "expected"),
     [
         ("2024-01-02T03:04:05+00:15", datetime(2024, 1, 2, 2, 49, 5)),

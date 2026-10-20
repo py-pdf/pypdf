@@ -674,11 +674,43 @@ def test_layout_mode_text_with_zero_font_size() -> None:
     assert page.extract_text(extraction_mode="layout") == "Hello"
 
 
+def test_layout_mode_tf_with_a_missing_size_keeps_the_previous_size() -> None:
+    """A Tf operator naming a font but missing its size operand keeps the current font size
+    in layout mode, matching plain mode, instead of raising IndexError.
+    """
+    content = b"BT /F1 24 Tf 72 700 Td (Hello) Tj /F1 Tf (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
+def test_layout_mode_tf_with_no_operands_does_not_crash() -> None:
+    """A Tf operator with no operands at all falls back to an uninterpretable font, the
+    same as an unknown font name, instead of raising IndexError.
+    """
+    content = b"BT /F1 24 Tf 72 700 Td (Hello) Tj Tf (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text(extraction_mode="layout") == "Hello"
+
+
 @pytest.mark.parametrize("operator", [b"/X 5 Td", b"/X TL", b"/X Tz", b"/X Tw"])
 def test_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
     """A text operator whose operand is not a number is treated as having none, and the text is kept."""
     content = b"BT /F1 12 Tf (Hello) Tj " + operator + b" (World) Tj ET"
     assert PdfReader(_page_with_helvetica(content)).pages[0].extract_text() == "HelloWorld"
+
+
+@pytest.mark.parametrize(
+    "operator",
+    [b"/X Tz", b"/X Tc", b"/X Ts", b"/X Tw", b"/X TL T*", b"/X /Y Td", b"/X 0 0 1 0 0 Tm"],
+)
+def test_layout_mode_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
+    """A text or positioning operator whose operand is not a number is treated as having none
+    in layout mode too, matching plain mode, and the text around it is kept.
+    """
+    content = b"BT /F1 12 Tf 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert "Hello" in page.extract_text(extraction_mode="layout")
+    assert "World" in page.extract_text(extraction_mode="layout")
 
 
 def test_process_operation__cm_multiplication_issue():
