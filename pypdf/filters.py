@@ -746,14 +746,12 @@ class CCITTFaxDecode:
             if isinstance(value, PdfObject):
                 value = value.get_object()
             if not isinstance(value, int):
-                raise PdfReadError(f"Expected integer for {key}, got {value}!")
+                raise PdfReadError(f"Expected integer for {key}, got {type(value).__name__}: {value!r}!")
             return value
 
         def get_boolean(value: Any, key: str) -> bool:
-            if isinstance(value, PdfObject):
-                value = value.get_object()
             if not isinstance(value, BooleanObject):
-                raise PdfReadError(f"Expected boolean for {key}, got {value}!")
+                raise PdfReadError(f"Expected boolean for {key}, got {type(value).__name__}: {value!r}!")
             return value.value
 
         ccitt_parameters = CCITTParameters(
@@ -987,13 +985,12 @@ def decode_stream_data(stream: StreamObject) -> bytes:
     for filter_name, params in zip(filters, decode_parms):
         _check_decoding_work(amount=len(data))
 
-        if isinstance(params, PdfObject):
-            params = params.get_object()
+        params = params.get_object()
         if is_null_or_none(params):
             # The decoders are typed for a DictionaryObject; a plain {} is not
             # one, so a null /DecodeParms entry would hand them the wrong type.
             params = DictionaryObject()
-        elif not isinstance(params, (dict, list, tuple)):
+        elif not isinstance(params, (dict, list)):
             logger_warning(
                 "Ignoring invalid DecodeParms: %(value)s",
                 source=__name__, value=params,

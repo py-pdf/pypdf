@@ -1432,22 +1432,22 @@ def test_ccitt_get_parameters__limits(parameters, rows, expected_message):
         (
             DictionaryObject({NameObject("/K"): NameObject("/Wrong")}),
             42,
-            r"^Expected integer for /K, got /Wrong!$"
+            r"^Expected integer for /K, got NameObject: '/Wrong'!$"
         ),
         (
             DictionaryObject({NameObject("/Columns"): TextStringObject("x")}),
             42,
-            r"^Expected integer for /Columns, got x!$"
+            r"^Expected integer for /Columns, got TextStringObject: 'x'!$"
         ),
         (
             DictionaryObject({NameObject("/BlackIs1"): NumberObject(5)}),
             42,
-            r"^Expected boolean for /BlackIs1, got 5!$"
+            r"^Expected boolean for /BlackIs1, got NumberObject: 5!$"
         ),
         (
             None,
             NameObject("/Nope"),
-            r"^Expected integer for /Rows, got /Nope!$"
+            r"^Expected integer for /Rows, got NameObject: '/Nope'!$"
         ),
     ],
     ids=["k-name", "columns-string", "black-is-1-number", "rows-name"]
@@ -1457,7 +1457,7 @@ def test_ccitt_get_parameters__invalid_types(parameters, rows, expected_message)
         CCITTFaxDecode._get_parameters(parameters=parameters, rows=rows)
 
 
-def test_ccitt_get_parameters__skips_null_and_invalid_entries(caplog):
+def test_ccitt_get_parameters__skip_null_and_invalid_entries(caplog):
     parameters = CCITTFaxDecode._get_parameters(
         parameters=ArrayObject([
             NullObject(),
