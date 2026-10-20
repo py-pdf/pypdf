@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792491691932,
+  "lastUpdate": 1792492104711,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -118937,6 +118937,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013031162044386098",
             "extra": "mean: 688.511384200001 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107306613+prateek-dagar@users.noreply.github.com",
+            "name": "Prateek Dagar",
+            "username": "prateek-dagar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "173dbe57b0acaf5563426735059fc7c4a0a2ba66",
+          "message": "MAINT: Enforce TRY300 (#4207)\n\nMove statements out of try blocks following Ruff rule TRY300.\nRemove TRY300 from the ignore list in pyproject.toml.\n\nContributes to #3327.",
+          "timestamp": "2026-10-20T12:25:44+02:00",
+          "tree_id": "ed04b96101c3b04b1187d296f2f00746ca3c7601",
+          "url": "https://github.com/py-pdf/pypdf/commit/173dbe57b0acaf5563426735059fc7c4a0a2ba66"
+        },
+        "date": 1792492094342,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.734341321481033,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008209550574310377",
+            "extra": "mean: 267.78484179999964 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.703679722423782,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013979746715867691",
+            "extra": "mean: 38.90493543333425 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3336784287920184,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025118094371726952",
+            "extra": "mean: 2.9968973530000027 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.68812136420211,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010552662697258827",
+            "extra": "mean: 46.10818905000116 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0915443197752273,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10143432176969168",
+            "extra": "mean: 10.923670659800006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1206847218308544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00427056882701537",
+            "extra": "mean: 471.54581240000084 msec\nrounds: 5"
           }
         ]
       }
