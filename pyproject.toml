@@ -260,3 +260,7 @@ ignore_errors = false
 [[tool.mypy.overrides]]
 module = "tests.scripts.*"
 ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "tests.test_pagerange"
+ignore_errors = false
