@@ -890,7 +890,10 @@ class PdfReader(PdfDocCommon):
             # 'startxref' may be on the same line as the location
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found") from exception
-            startxref = int(line[9:].strip())
+            value = line[9:].strip()
+            if not self._is_valid_startxref_value(value):
+                raise PdfReadError("startxref not found") from exception
+            startxref = int(value)
             logger_warning("startxref on same line as offset", source=__name__)
         else:
             line = read_previous_line(stream)
@@ -911,6 +914,15 @@ class PdfReader(PdfDocCommon):
     # fixed and non-configurable so a crafted file cannot trigger an unbounded
     # backwards scan.
     _MAX_STARTXREF_RECOVERY_LINES = 1000
+
+    @staticmethod
+    def _is_valid_startxref_value(value: bytes) -> bool:
+        if re.fullmatch(rb"[+-]?[0-9]+(?:_[0-9]+)*", value) is None:
+            return False
+        # Respect Python's integer conversion limit without attempting int().
+        max_digits = getattr(sys, "get_int_max_str_digits", lambda: 0)()
+        digits = value.lstrip(b"+-").replace(b"_", b"")
+        return not max_digits or len(digits) <= max_digits
 
     @classmethod
     def _find_previous_startxref_pos(cls, stream: StreamType) -> int:
@@ -945,7 +957,10 @@ class PdfReader(PdfDocCommon):
                 continue
             if len(line) > 9:
                 # 'startxref' on the same line as the offset
-                return int(line[9:].strip())
+                value = line[9:].strip()
+                if not cls._is_valid_startxref_value(value):
+                    continue
+                return int(value)
             if offset is not None:
                 logger_warning(
                     "found startxref pointing to a previous revision after "

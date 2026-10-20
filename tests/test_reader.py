@@ -433,6 +433,49 @@ def test_startxref_corrupt_trailing_pointer(caplog):
         PdfReader(io.BytesIO(pdf_data), strict=True)
 
 
+@pytest.mark.parametrize("value", [b"\xdf", b"", b" ", b"+", b"-", b"++1", b"--1", b"1x", b"1__0", b"_1", b"1_"])
+def test_startxref_same_line_garbage_raises_pdfreaderror(value):
+    """Corrupt bytes after startxref must raise PdfReadError, not ValueError (#4208)."""
+    data = b"startxref" + value + b"\nf\n6\n%"
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(data))
+
+    # Primary parser path: startxref and garbage share the line above %%EOF
+    data = b"%PDF-1.0\nstartxref" + value + b"\n%%EOF\n"
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(data))
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [(b"123", 123), (b"+123", 123), (b"-123", -123), (b"0", 0), (b"1_234", 1234)],
+)
+def test_startxref_same_line_integer_values(value, expected, caplog):
+    """Signed offsets and digit separators retain their existing parsing behavior."""
+    data = b"\nstartxref " + value
+    reader = PdfReader.__new__(PdfReader)
+    stream = BytesIO(data)
+    stream.seek(0, 2)
+    assert reader._find_startxref_pos(stream) == expected
+    assert caplog.messages == ["startxref on same line as offset"]
+    stream.seek(0, 2)
+    assert reader._find_previous_startxref_pos(stream) == expected
+
+
+def test_startxref_same_line_integer_conversion_limit():
+    """Oversized same-line offsets raise PdfReadError instead of ValueError."""
+    limit = getattr(sys, "get_int_max_str_digits", lambda: 0)()
+    if not limit:
+        pytest.skip("Python integer conversion limit is disabled")
+    data = b"%PDF-1.0\nstartxref " + b"1" * (limit + 1) + b"\n%%EOF\n"
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader(BytesIO(data))
+    stream = BytesIO(data)
+    stream.seek(0, 2)
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        PdfReader._find_previous_startxref_pos(stream)
+
+
 def test_find_previous_startxref_pos_recovery_variants():
     """Cover the backward-scan branches of _find_previous_startxref_pos (#3238)."""
 
@@ -446,6 +489,10 @@ def test_find_previous_startxref_pos_recovery_variants():
 
     # Keyword and offset share a line
     assert scan(b"startxref 6789\ngarbage\n") == 6789
+
+    # Garbage on the same line as the keyword must not leak ValueError (#4208)
+    with pytest.raises(PdfReadError, match="startxref not found"):
+        scan(b"startxref\xdf\nf\n6\n%")
 
     # A startxref keyword with no numeric offset above it cannot be recovered
     with pytest.raises(PdfReadError, match="startxref not found"):
