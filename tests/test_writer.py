@@ -3704,6 +3704,43 @@ def test_get_filtered_outline__node_is_none() -> None:
     assert writer._get_filtered_outline(node=None, pages={}, reader=reader) == []
 
 
+def _outline_item(**entries: Any) -> DictionaryObject:
+    item = DictionaryObject({NameObject("/Title"): TextStringObject("Chapter")})
+    for key, value in entries.items():
+        item[NameObject(f"/{key}")] = value
+    return item
+
+
+@pytest.mark.parametrize(
+    ("outlines", "expected"),
+    [
+        pytest.param(NumberObject(1), "1", id="outlines-number"),
+        pytest.param(ArrayObject(), "[]", id="outlines-array"),
+        pytest.param(DictionaryObject({NameObject("/First"): NumberObject(1)}), "1", id="first-number"),
+        pytest.param(
+            DictionaryObject({NameObject("/First"): _outline_item(Next=TextStringObject("x"))}), "x", id="next-string"
+        ),
+        pytest.param(
+            DictionaryObject({NameObject("/First"): _outline_item(First=ArrayObject())}), "[]", id="child-array"
+        ),
+    ],
+)
+def test_append__skips_outline_nodes_that_are_not_dictionaries(caplog, outlines, expected) -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=72, height=72)
+    source.root_object[NameObject("/Outlines")] = outlines
+    stream = BytesIO()
+    source.write(stream)
+    stream.seek(0)
+    reader = PdfReader(stream)
+
+    writer = PdfWriter()
+    writer.append(reader)
+
+    assert len(writer.pages) == 1
+    assert caplog.messages == [f"Outline node is not a dictionary: {expected}"]
+
+
 @pytest.mark.timeout(5)
 def test_add_articles_thread__cyclic() -> None:
     writer = PdfWriter()
