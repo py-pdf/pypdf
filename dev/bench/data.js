@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792565758354,
+  "lastUpdate": 1792566561720,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -153391,6 +153391,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04064597472907859",
             "extra": "mean: 880.8170713999914 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "98887607+4444wjt@users.noreply.github.com",
+            "name": "Ll",
+            "username": "4444wjt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b7eb7b9d6253876b2f0078651450ca1d4e0cb06b",
+          "message": "BUG: Decode UniGB-UTF16 CMaps as UTF-16BE (#4231)\n\n* BUG: Decode UniGB-UTF16 CMaps as UTF-16BE\n\n/UniGB-UTF16-H and /UniGB-UTF16-V were mapped to gb18030 in #2819, but\ntheir character codes are UTF-16BE, like the UniCNS-UTF16 and\nUniJIS-UTF16 entries in the same table. Type0 fonts using these CMaps\nwithout a /ToUnicode entry were therefore extracted as garbage.\n\nIn the #2812 document (iss2812.pdf), the /SimSun font is the only one\nusing /UniGB-UTF16-H and has no /ToUnicode. With gb18030, 106 of its\n107 pages contain unpaired surrogates; with UTF-16BE they read\ncorrectly. The existing test assertion uses a different font that has\na /ToUnicode map, so it passes either way.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Cover UniGB UTF16 decoding without ToUnicode\n\nThe existing issue #2812 assertion checks SourceHanSansCN-Bold text\nencoded with Identity-H and mapped through ToUnicode, so it passes with\nthe old UniGB UTF16 decoder too.\n\nAdd a regression test using the same cached iss2812.pdf. Assert the\nSimSun watermark on page 2, which uses UniGB-UTF16-H without ToUnicode,\nand reject surrogate code points in the extracted text. This test fails\nwith the old gb18030 mapping and passes with UTF-16BE.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* DOC: Cite the source for the UTF-16BE Unicode CMaps\n\nPoint to ISO 32000-2:2020, 9.7.5.2 (Note 1 and Table 116), as suggested\nin review, and note that UniGB covers the GB18030-2000 character set\nwithout being GB18030-encoded, which is how the gb18030 mapping arose.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-21T09:06:17+02:00",
+          "tree_id": "a9253ee23348d3f8c92ba5310aa054c0bbe1e450",
+          "url": "https://github.com/py-pdf/pypdf/commit/b7eb7b9d6253876b2f0078651450ca1d4e0cb06b"
+        },
+        "date": 1792566551214,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.182915044522158,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017070142283302652",
+            "extra": "mean: 54.996682190475454 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 36.991800092690895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008688352891452339",
+            "extra": "mean: 27.03301806060493 msec\nrounds: 33"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1968115703698357,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03126070215496973",
+            "extra": "mean: 835.5534194 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5329769375960779,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04189660942158574",
+            "extra": "mean: 1.8762537916000042 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4564827861225547,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006211311942972032",
+            "extra": "mean: 2.1906631102000063 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.519177781899051,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04125301914879033",
+            "extra": "mean: 658.250806399991 msec\nrounds: 5"
           }
         ]
       }
