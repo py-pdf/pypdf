@@ -574,9 +574,6 @@ def _xobj_to_image(
     """
     Users need to have the pillow package installed.
 
-    It's unclear if pypdf will keep this function here, hence it's private.
-    It might get removed at any point.
-
     Args:
         x_object:
         pillow_parameters: parameters provided to Pillow Image.save() method,
