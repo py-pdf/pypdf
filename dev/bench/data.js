@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792525837477,
+  "lastUpdate": 1792565758354,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -153325,6 +153325,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02187964066143782",
             "extra": "mean: 693.9593997999964 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "155466763+sushu0@users.noreply.github.com",
+            "name": "Zhang Muyuan",
+            "username": "sushu0"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b68a335fcccac7989ac881331887cbccc85e2298",
+          "message": "TST: Enable type checking for PageRange tests (#4229)\n\n* TST: Enable type checking for PageRange tests\n\nPart of #3591. Type the PageRange test module and opt it into the existing\nmypy CI check. Replace the truthy PageRange.valid function assertion with\na call on each string initializer and import ParseError from its definition.\n\nAI-assisted implementation and validation: Codex (GPT-6).\nCo-authored-by: Codex <noreply@openai.com>\n\n* TST: Address PageRange typing review\n\nUse Any for the heterogeneous validity inputs and list[str] for the\nstring-only filename/range cases. Construct the list at the API boundary\nto respect list invariance without adding a type ignore.\n\nAI-assisted implementation and validation: Codex (GPT-6).\nCo-authored-by: Codex <noreply@openai.com>\n\n---------\n\nCo-authored-by: Codex <noreply@openai.com>",
+          "timestamp": "2026-10-20T21:30:47+02:00",
+          "tree_id": "e28a157facfb51eda01b7e00d8029dd25cc3adc6",
+          "url": "https://github.com/py-pdf/pypdf/commit/b68a335fcccac7989ac881331887cbccc85e2298"
+        },
+        "date": 1792565746959,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.591424460156125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020180549710795068",
+            "extra": "mean: 73.5758053125002 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 24.20786024326663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012026146290707997",
+            "extra": "mean: 41.30889677777895 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9532918436191619,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028827202731847107",
+            "extra": "mean: 1.0489967019999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4731823095620748,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03609164275252855",
+            "extra": "mean: 2.1133503509999967 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.35183556323091697,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033827400440742644",
+            "extra": "mean: 2.842236841600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1353095125762906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04064597472907859",
+            "extra": "mean: 880.8170713999914 msec\nrounds: 5"
           }
         ]
       }
