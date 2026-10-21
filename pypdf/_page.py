@@ -1956,7 +1956,9 @@ class PageObject(DictionaryObject):
                         ):
                             extractor.process_operation(b"Tj", [" "])
             elif operator == b"TD" and len(operands) >= 2:
-                extractor.process_operation(b"TL", [-operands[1]])
+                # a non-numeric ty leaves the leading unchanged, like a non-numeric TL
+                if isinstance(operands[1], (int, float)):
+                    extractor.process_operation(b"TL", [-operands[1]])
                 extractor.process_operation(b"Td", operands)
             elif operator == b"Do" and operands:
                 extractor.output += extractor.text
