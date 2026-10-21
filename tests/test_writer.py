@@ -878,17 +878,64 @@ def test_add_named_destination(pdf_file_path):
         pytest.param([0, 100, 200, 500], 500, id="offset-origin"),
     ],
 )
-def test_add_named_destination__fit_h_uses_the_page_top(media_box, expected_top):
+@pytest.mark.parametrize(
+    "kwargs",
+    [pytest.param({}, id="omitted-fit"), pytest.param({"fit": None}, id="none-fit")],
+)
+def test_add_named_destination__fit_h_uses_the_page_top(media_box, expected_top, kwargs):
     """The /FitH top must be the page's own top edge, whatever its size."""
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=400)
     writer.pages[0][NameObject("/MediaBox")] = RectangleObject(media_box)
 
-    writer.add_named_destination("Target", 0)
+    writer.add_named_destination("Target", 0, **kwargs)
 
     destination = writer.get_named_dest_root()[1].get_object()["/D"]
     assert destination[1] == "/FitH"
     assert destination[2] == expected_top
+
+
+@pytest.mark.parametrize(
+    ("fit", "expected"),
+    [
+        pytest.param(Fit.fit(), ["/Fit"], id="fit-page"),
+        pytest.param(Fit.xyz(left=10, top=20, zoom=1.5), ["/XYZ", 10, 20, 1.5], id="xyz-coordinates"),
+        pytest.param(Fit.xyz(), ["/XYZ", NullObject(), NullObject(), NullObject()], id="xyz-null"),
+        pytest.param(Fit.xyz(left=0, top=None, zoom=0), ["/XYZ", 0, NullObject(), 0], id="xyz-zero-and-null"),
+        pytest.param(Fit.fit_horizontally(top=25), ["/FitH", 25], id="fit-h-top"),
+        pytest.param(Fit.fit_horizontally(), ["/FitH", NullObject()], id="fit-h-null"),
+        pytest.param(Fit.fit_vertically(left=30), ["/FitV", 30], id="fit-v-left"),
+        pytest.param(Fit.fit_vertically(), ["/FitV", NullObject()], id="fit-v-null"),
+        pytest.param(
+            Fit.fit_rectangle(left=10, bottom=20, right=100, top=200),
+            ["/FitR", 10, 20, 100, 200],
+            id="fit-rectangle",
+        ),
+        pytest.param(Fit.fit_box(), ["/FitB"], id="fit-box"),
+        pytest.param(Fit.fit_box_horizontally(top=40), ["/FitBH", 40], id="fit-box-h-top"),
+        pytest.param(Fit.fit_box_horizontally(), ["/FitBH", NullObject()], id="fit-box-h-null"),
+        pytest.param(Fit.fit_box_vertically(left=50), ["/FitBV", 50], id="fit-box-v-left"),
+        pytest.param(Fit.fit_box_vertically(), ["/FitBV", NullObject()], id="fit-box-v-null"),
+    ],
+)
+def test_add_named_destination_with_fit(fit, expected):
+    """Custom fit modes and arguments survive a round trip (issue #3522)."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=400)
+    writer.add_blank_page(width=300, height=500)
+
+    destination_ref = writer.add_named_destination("Target", 1, fit=fit)
+    action = destination_ref.get_object()
+    assert action["/S"] == "/GoTo"
+    assert action["/D"][0] == writer.pages[1].indirect_reference
+    assert action["/D"][1:] == expected
+
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+    destination = reader.named_destinations["Target"]
+    assert reader.get_destination_page_number(destination) == 1
+    assert destination.dest_array[1:] == expected
 
 
 def test_append_with_direct_dests_dictionary():

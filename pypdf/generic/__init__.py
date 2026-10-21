@@ -61,6 +61,7 @@ from ._link import DirectReferenceLink, NamedReferenceLink, ReferenceLink, extra
 from ._outline import OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
+    StreamParsingBudget,
     create_string_object,
     decode_pdfdocencoding,
     hex_to_rgb,
@@ -69,7 +70,7 @@ from ._utils import (
 )
 from ._viewerpref import ViewerPreferences
 
-PAGE_FIT = Fit.fit()
+PAGE_FIT: Fit = Fit.fit()
 
 
 __all__ = [
@@ -98,6 +99,7 @@ __all__ = [
     "RectangleObject",
     "ReferenceLink",
     "StreamObject",
+    "StreamParsingBudget",
     "TextStringObject",
     "TreeObject",
     "ViewerPreferences",

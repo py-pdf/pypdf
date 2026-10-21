@@ -1,6 +1,7 @@
 """Test the pypdf.generic._image_xobject module."""
 import zlib
 from io import BytesIO
+from typing import Any
 
 import PIL
 import pytest
@@ -21,6 +22,7 @@ from pypdf.generic import (
 )
 from pypdf.generic._image_xobject import (
     _get_image_mode,
+    _get_mode_and_invert_color,
     _handle_flate,
     _image_from_bytes,
     _xobj_to_image,
@@ -206,6 +208,43 @@ def test_image_from_bytes__zero_data() -> None:
 
     with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
         _image_from_bytes(mode, size, data)
+
+
+def test_device_rgb_mode_is_not_overwritten() -> None:
+    """8-bit /DeviceRGB stays RGB; sub-byte samples stay on the low-bit path (#3367)."""
+    x_object: dict[str, Any] = {
+        "/ColorSpace": NameObject("/DeviceRGB"),
+        "/BitsPerComponent": NumberObject(8),
+    }
+    # The generic lookup cannot map this name, so a regression cannot pass by accident.
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=1, color_space=NameObject("/UnknownSpace")
+    )
+    assert mode == "RGB"
+    assert invert_color is False
+
+    x_object["/BitsPerComponent"] = NumberObject(4)
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=3, color_space=NameObject("/DeviceRGB")
+    )
+    assert mode == "4bits"
+    assert invert_color is False
+
+    stream = DecodedStreamObject()
+    stream.update(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Image"),
+            NameObject("/Width"): NumberObject(1),
+            NameObject("/Height"): NumberObject(1),
+            NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+        }
+    )
+    stream.set_data(b"\xff\x00\x00")
+    image = _xobj_to_image(stream)[2]
+    assert image.mode == "RGB"
+    assert image.getpixel((0, 0)) == (255, 0, 0)
 
 
 def test_handle_flate__autodesk_indexed() -> None:
@@ -524,3 +563,25 @@ def test_xobj_to_image__empty_filter_array() -> None:
         expected_extension, expected_img.mode, expected_img.tobytes()
     )
     assert extension == ".png"
+
+
+@pytest.mark.parametrize("image_format", ["BMP", "GIF", "PNG", "TIFF"])
+def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
+    """/DCTDecode data must not be handed to arbitrary Pillow image plugins."""
+    data = BytesIO()
+    Image.new("L", (1, 1)).save(data, format=image_format)
+    image = _minimal_image_xobject()
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.DCT_DECODE)
+    image.set_data(data.getvalue())
+
+    with pytest.raises(PIL.UnidentifiedImageError):
+        _xobj_to_image(image)
+
+    data = BytesIO()
+    Image.new("L", (1, 1)).save(data, format="JPEG")
+    image.set_data(data.getvalue())
+
+    extension, _, img = _xobj_to_image(image)
+
+    assert extension == ".jpg"
+    assert img.format == "JPEG"

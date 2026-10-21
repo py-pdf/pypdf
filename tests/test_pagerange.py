@@ -1,16 +1,19 @@
 """Test the pypdf.pagerange module."""
+from typing import Any, Union
+
 import pytest
 
-from pypdf.pagerange import PageRange, ParseError, parse_filename_page_ranges
+from pypdf.errors import ParseError
+from pypdf.pagerange import PageRange, parse_filename_page_ranges
 
 
-def test_equality():
+def test_equality() -> None:
     pr1 = PageRange(slice(0, 5))
     pr2 = PageRange(slice(0, 5))
     assert pr1 == pr2
 
 
-def test_hash():
+def test_hash() -> None:
     pr1 = PageRange(slice(0, 5))
     pr2 = PageRange(slice(0, 5))
     pr3 = PageRange(slice(10, 11))
@@ -25,7 +28,7 @@ def test_hash():
     ("page_range", "expected"),
     [(slice(0, 5), "0:5"), (slice(0, 5, 2), "0:5:2"), ("-1", "-1:"), ("0", "0")],
 )
-def test_str(page_range, expected):
+def test_str(page_range: Union[slice, str], expected: str) -> None:
     assert str(PageRange(page_range)) == expected
 
 
@@ -33,17 +36,17 @@ def test_str(page_range, expected):
     ("page_range", "expected"),
     [(slice(0, 5), "PageRange('0:5')"), (slice(0, 5, 2), "PageRange('0:5:2')")],
 )
-def test_repr(page_range, expected):
+def test_repr(page_range: slice, expected: str) -> None:
     assert repr(PageRange(page_range)) == expected
 
 
-def test_equality_other_objectc():
+def test_equality_other_objectc() -> None:
     pr1 = PageRange(slice(0, 5))
     pr2 = "PageRange(slice(0, 5))"
     assert pr1 != pr2
 
 
-def test_idempotency():
+def test_idempotency() -> None:
     pr = PageRange(slice(0, 5))
     pr2 = PageRange(pr)
     assert pr == pr2
@@ -56,13 +59,13 @@ def test_idempotency():
         ("1:2", slice(1, 2)),
     ],
 )
-def test_str_init(range_str, expected):
+def test_str_init(range_str: str, expected: slice) -> None:
     pr = PageRange(range_str)
     assert pr._slice == expected
-    assert PageRange.valid
+    assert PageRange.valid(range_str)
 
 
-def test_str_init_error():
+def test_str_init_error() -> None:
     init_str = "1-2"
     assert PageRange.valid(init_str) is False
     with pytest.raises(ParseError) as exc:
@@ -71,7 +74,7 @@ def test_str_init_error():
 
 
 @pytest.mark.parametrize("init_str", ["::0", "1:5:0", "0:0:0"])
-def test_str_init_zero_step(init_str):
+def test_str_init_zero_step(init_str: str) -> None:
     """A zero stride selects nothing and only raised once the range was applied."""
     assert PageRange.valid(init_str) is False
     with pytest.raises(ParseError) as exc:
@@ -90,7 +93,7 @@ def test_str_init_zero_step(init_str):
         (["1:5"], False),
     ],
 )
-def test_valid(value, expected):
+def test_valid(value: Any, expected: bool) -> None:
     assert PageRange.valid(value) is expected
 
 
@@ -104,11 +107,13 @@ def test_valid(value, expected):
         ),
     ],
 )
-def test_parse_filename_page_ranges(params, expected):
-    assert parse_filename_page_ranges(params) == expected
+def test_parse_filename_page_ranges(
+    params: list[str], expected: list[tuple[str, PageRange]]
+) -> None:
+    assert parse_filename_page_ranges(list(params)) == expected
 
 
-def test_parse_filename_page_ranges_err():
+def test_parse_filename_page_ranges_err() -> None:
     with pytest.raises(ValueError) as exc:
         parse_filename_page_ranges(["1:5", "foo.pdf"])
     assert (
@@ -124,7 +129,7 @@ def test_parse_filename_page_ranges_err():
         (PageRange(slice(0, 5)), PageRange(slice(5, 10)), slice(0, 10)),
     ],
 )
-def test_addition(a, b, expected):
+def test_addition(a: PageRange, b: PageRange, expected: slice) -> None:
     pr1 = PageRange(a)
     pr2 = PageRange(b)
     assert pr1 + pr2 == PageRange(expected)
@@ -138,7 +143,7 @@ def test_addition(a, b, expected):
         (PageRange(slice(7, 10)), PageRange(slice(0, 5))),
     ],
 )
-def test_addition_gap(a: PageRange, b: PageRange):
+def test_addition_gap(a: PageRange, b: PageRange) -> None:
     with pytest.raises(ValueError) as exc:
         a + b
     assert exc.value.args[0] == "Can't add PageRanges with gap"
@@ -159,12 +164,12 @@ def test_addition_gap(a: PageRange, b: PageRange):
         (PageRange(slice(0, None)), PageRange(slice(None, 5)), slice(None, None)),
     ],
 )
-def test_addition_none_bounds(a: PageRange, b: PageRange, expected: slice):
+def test_addition_none_bounds(a: PageRange, b: PageRange, expected: slice) -> None:
     assert a + b == PageRange(expected)
     assert b + a == PageRange(expected)  # addition is commutative
 
 
-def test_addition_gap_with_none_start():
+def test_addition_gap_with_none_start() -> None:
     # A None start ("beginning") must not be treated as covering the whole
     # range: the stop is still finite, so a real gap past it must still raise.
     a = PageRange(slice(None, 5))
@@ -174,13 +179,13 @@ def test_addition_gap_with_none_start():
     assert exc.value.args[0] == "Can't add PageRanges with gap"
 
 
-def test_addition_non_page_range():
+def test_addition_non_page_range() -> None:
     with pytest.raises(TypeError) as exc:
-        PageRange(slice(0, 5)) + "2:7"
+        PageRange(slice(0, 5)) + "2:7"  # type: ignore[operator]
     assert exc.value.args[0] == "Can't add PageRange and <class 'str'>"
 
 
-def test_addition_stride():
+def test_addition_stride() -> None:
     a = PageRange(slice(0, 5, 2))
     b = PageRange(slice(7, 9))
     with pytest.raises(ValueError) as exc:

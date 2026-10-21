@@ -33,10 +33,13 @@ _predefined_cmap: dict[str, str] = {
     "/ETen-B5-V": "cp950",
     "/ETenms-B5-H": "cp950",
     "/ETenms-B5-V": "cp950",
+    # Unicode-based CMaps: character codes are UTF-16BE, see
+    # ISO 32000-2:2020, 9.7.5.2, Note 1 and Table 116.
+    # (UniGB covers the GB18030-2000 character set but is not GB18030-encoded.)
     "/UniCNS-UTF16-H": "utf-16-be",
     "/UniCNS-UTF16-V": "utf-16-be",
-    "/UniGB-UTF16-H": "gb18030",
-    "/UniGB-UTF16-V": "gb18030",
+    "/UniGB-UTF16-H": "utf-16-be",
+    "/UniGB-UTF16-V": "utf-16-be",
     # Japanese CMaps (PDF Reference 1.7, Appendix H)
     "/90ms-RKSJ-H": "cp932",  # Shift-JIS (JIS X 0208-1990), horizontal
     "/90ms-RKSJ-V": "cp932",  # Shift-JIS (JIS X 0208-1990), vertical
@@ -375,6 +378,10 @@ def parse_bfrange(
         _check_token_length(lst[1], limit=MAX_CMAP_CODE_BYTES_LIMIT)
         a = int(lst[0], 16)
         b = int(lst[1], 16)
+        if a < 0 or b < 0:
+            # int(token, 16) accepts a leading "-"; negative range bounds
+            # would leak an OverflowError from the to_bytes encoding below.
+            raise ValueError(f"Negative bfrange source range: {lst[0]!r} {lst[1]!r}")
         nbi = max(len(lst[0]), len(lst[1]))
         map_dict[-1] = (nbi + 1) // 2
         if lst[2] == b"[":
@@ -511,9 +518,9 @@ def _derive_character_map_from_cff_type1_font_file(
             if unipoint := _glyph_name_to_unicode(f"/{glyph_name}"):
                 map_dict[chr(i)] = unipoint
                 int_entry.append(i)
-        return map_dict, int_entry
-
     except Exception:
+        return map_dict, int_entry
+    else:
         return map_dict, int_entry
 
 

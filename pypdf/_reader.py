@@ -56,6 +56,7 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     StrByteType,
     StreamType,
+    get_stream_size,
     logger_warning,
     read_non_whitespace,
     read_previous_line,
@@ -74,6 +75,7 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
+    ByteStringObject,
     Destination,
     DictionaryObject,
     EncodedStreamObject,
@@ -184,9 +186,19 @@ class PdfReader(PdfDocCommon):
         # Some documents may not have a /ID, use two empty
         # byte strings instead. Solves
         # https://github.com/py-pdf/pypdf/issues/608
-        id_entry = self.trailer.get(TK.ID)
-        id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
-        encrypt_entry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
+        id_entry = self.trailer.get(TK.ID, NullObject()).get_object()
+        id1_entry = b""
+        if isinstance(id_entry, ArrayObject) and id_entry:
+            first_id_entry = id_entry[0].get_object()
+            if isinstance(first_id_entry, (ByteStringObject, TextStringObject)):
+                id1_entry = first_id_entry.original_bytes
+            else:
+                logger_warning("Ignoring non-string first /ID entry of the trailer", source=__name__)
+        elif not isinstance(id_entry, NullObject):
+            logger_warning("Ignoring malformed /ID entry of the trailer", source=__name__)
+        encrypt_entry = self.trailer[TK.ENCRYPT]
+        if not isinstance(encrypt_entry, DictionaryObject):
+            raise PdfReadError("/Encrypt entry of the trailer is not a dictionary")
         self._encryption = Encryption.read(encrypt_entry, id1_entry)
 
         # try empty password if no password provided
@@ -385,8 +397,38 @@ class PdfReader(PdfDocCommon):
             # This avoids O(N²) behavior when many objects from the same stream
             # are resolved individually (each call would re-parse the header).
             stream_data = BytesIO(obj_stm.get_data())
-            n = int(obj_stm["/N"])  # type: ignore[call-overload]
-            first_offset = int(obj_stm["/First"])  # type: ignore[call-overload]
+            n_value = obj_stm.get("/N")
+            first_value = obj_stm.get("/First")
+            if not isinstance(n_value, NumberObject) or not isinstance(
+                first_value, NumberObject
+            ):
+                raise PdfReadError(
+                    f"Invalid /ObjStm header for object {stmnum}: "
+                    "/N or /First missing or not a number"
+                )
+            n = int(n_value)
+            first_offset = int(first_value)
+
+            stream_length = stream_data.getbuffer().nbytes
+            if n < 0 or not 0 <= first_offset <= stream_length:
+                # A negative /N, or a /First outside the stream, cannot
+                # describe a valid object stream; treating it as empty
+                # avoids leaking a ValueError/OverflowError from a bad seek.
+                if self.strict:
+                    raise PdfReadError(
+                        f"Invalid /N ({n}) or /First ({first_offset}) in object stream {stmnum}."
+                    )
+                logger_warning(
+                    (
+                        "Invalid /N (%(n)d) or /First (%(first)d) in object stream "
+                        "%(stmnum)d; ignoring the stream."
+                    ),
+                    source=__name__,
+                    n=n,
+                    first=first_offset,
+                    stmnum=stmnum,
+                )
+                return NullObject()
 
             # ObjStm header format: "objnum offset objnum offset ..."
             # smallest possible entry: "0 0" = 3 bytes (1 digit + 1 space + 1 digit)
@@ -419,6 +461,27 @@ class PdfReader(PdfDocCommon):
                 offset = NumberObject.read_from_stream(stream_data)
                 read_non_whitespace(stream_data)
                 stream_data.seek(-1, 1)
+                if objnum < 0 or offset < 0 or first_offset + offset > stream_length:
+                    # An object number or target position outside the stream
+                    # cannot be valid; skipping the entry avoids leaking a
+                    # ValueError/OverflowError from a bad seek while keeping
+                    # the other entries.
+                    if self.strict:
+                        raise PdfReadError(
+                            f"Invalid object number ({objnum}) or offset ({offset}) "
+                            f"in object stream {stmnum}."
+                        )
+                    logger_warning(
+                        (
+                            "Invalid object number (%(objnum)d) or offset (%(offset)d) "
+                            "in object stream %(stmnum)d; skipping the entry."
+                        ),
+                        source=__name__,
+                        objnum=objnum,
+                        offset=offset,
+                        stmnum=stmnum,
+                    )
+                    continue
                 obj_index.append((int(objnum), int(offset)))
 
             # Phase 2: Parse each object and cache it.
@@ -890,7 +953,10 @@ class PdfReader(PdfDocCommon):
             # 'startxref' may be on the same line as the location
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found") from exception
-            startxref = int(line[9:].strip())
+            value = line[9:].strip()
+            if not self._is_valid_startxref_value(value):
+                raise PdfReadError("startxref not found") from exception
+            startxref = int(value)
             logger_warning("startxref on same line as offset", source=__name__)
         else:
             line = read_previous_line(stream)
@@ -911,6 +977,15 @@ class PdfReader(PdfDocCommon):
     # fixed and non-configurable so a crafted file cannot trigger an unbounded
     # backwards scan.
     _MAX_STARTXREF_RECOVERY_LINES = 1000
+
+    @staticmethod
+    def _is_valid_startxref_value(value: bytes) -> bool:
+        if re.fullmatch(rb"[+-]?[0-9]+(?:_[0-9]+)*", value) is None:
+            return False
+        # Respect Python's integer conversion limit without attempting int().
+        max_digits = getattr(sys, "get_int_max_str_digits", lambda: 0)()
+        digits = value.lstrip(b"+-").replace(b"_", b"")
+        return not max_digits or len(digits) <= max_digits
 
     @classmethod
     def _find_previous_startxref_pos(cls, stream: StreamType) -> int:
@@ -945,7 +1020,10 @@ class PdfReader(PdfDocCommon):
                 continue
             if len(line) > 9:
                 # 'startxref' on the same line as the offset
-                return int(line[9:].strip())
+                value = line[9:].strip()
+                if not cls._is_valid_startxref_value(value):
+                    continue
+                return int(value)
             if offset is not None:
                 logger_warning(
                     "found startxref pointing to a previous revision after "
@@ -964,6 +1042,22 @@ class PdfReader(PdfDocCommon):
                 continue
             cache[object_number] = (object_start, generation_number)
         return cache
+
+    def _read_standard_xref_table__handle_size(self, stream: StreamType) -> Optional[int]:
+        size = cast(int, read_object(stream, self))
+        if not isinstance(size, int):
+            logger_warning(
+                "Invalid/Truncated xref table. Rebuilding it.",
+                source=__name__,
+            )
+            self._rebuild_xref_table(stream)
+            stream.read()
+            return None
+        # A valid entry has a size of 20 bytes.
+        size_limit = get_stream_size(stream) // 20
+        if size > size_limit:
+            raise LimitReachedError(f"Declared size {size} exceeds allowed limit of {size_limit}!")
+        return size
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
@@ -988,14 +1082,8 @@ class PdfReader(PdfDocCommon):
             first_time = False
             read_non_whitespace(stream)
             stream.seek(-1, 1)
-            size = cast(int, read_object(stream, self))
-            if not isinstance(size, int):
-                logger_warning(
-                    "Invalid/Truncated xref table. Rebuilding it.",
-                    source=__name__,
-                )
-                self._rebuild_xref_table(stream)
-                stream.read()
+            size = self._read_standard_xref_table__handle_size(stream)
+            if size is None:
                 return
             read_non_whitespace(stream)
             stream.seek(-1, 1)
@@ -1231,9 +1319,9 @@ class PdfReader(PdfDocCommon):
             logger_warning("Invalid parent xref., rebuild xref", source=__name__)
             try:
                 self._rebuild_xref_table(stream)
-                return None
             except Exception as exception:  # pragma: no cover
                 raise PdfReadError("Cannot rebuild xref") from exception  # pragma: no cover
+            return None
         raise PdfReadError("Could not find xref table at specified location")
 
     def _sanitize_pdf15_xref_stream_index_pairs(
@@ -1610,11 +1698,14 @@ class PdfReader(PdfDocCommon):
         interim = DictionaryObject()
         interim[NameObject("/T")] = TextStringObject(name)
         interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
-        self.cache_indirect_object(
-            0,
-            max(i for (g, i) in self.resolved_objects if g == 0) + 1,
-            interim,
-        )
+        # Allocate the new object_id beyond the source-file range and all cached object IDs.
+        object_id = max(
+            cast(int, self.trailer.get("/Size", 0)) - 1,
+            max((i for entries in self.xref.values() for i in entries), default=0),
+            max(self.xref_objStm, default=0),
+            max((i for _, i in self.resolved_objects), default=0),
+        ) + 1
+        self.cache_indirect_object(0, object_id, interim)
         arr = ArrayObject()
         arr.append(interim.indirect_reference)
         acroform[NameObject("/Fields")] = arr
