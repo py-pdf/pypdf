@@ -22,6 +22,7 @@ from pypdf._utils import (
     deprecate_with_replacement,
     deprecation_no_replacement,
     format_iso8824_date,
+    get_stream_data,
     get_stream_size,
     logger_error,
     logger_warning,
@@ -742,4 +743,18 @@ def test_get_stream_size(tmp_path) -> None:
     tmp_file = tmp_path / "file.txt"
     tmp_file.write_bytes(b"Hello World!")
     with tmp_file.open(mode="rb") as fd:
+        assert fd.read(10) == b"Hello Worl"
         assert get_stream_size(fd) == 12
+        assert fd.read(2) == b"d!"
+
+
+def test_get_stream_data(tmp_path) -> None:
+    assert get_stream_data(BytesIO(b"Hello World!")) == b"Hello World!"
+    assert get_stream_data(StringIO("Hello World!")) == "Hello World!"
+
+    tmp_file = tmp_path / "file.txt"
+    tmp_file.write_bytes(b"Hello World!")
+    with tmp_file.open(mode="rb") as fd:
+        assert fd.read(10) == b"Hello Worl"
+        assert get_stream_data(fd) == b"Hello World!"
+        assert fd.read(2) == b"d!"
