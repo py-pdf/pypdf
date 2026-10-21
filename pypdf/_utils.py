@@ -598,6 +598,17 @@ def get_stream_size(stream: StreamType) -> int:
     return size
 
 
+def get_stream_data(stream: StreamType) -> bytes:
+    if hasattr(stream, "getbuffer"):
+        return bytes(stream.getbuffer())
+
+    position = stream.tell()
+    stream.seek(0, os.SEEK_SET)
+    data = stream.read(-1)
+    stream.seek(position)
+    return cast(bytes, data)
+
+
 # The following class has been copied from Django:
 # https://github.com/django/django/blob/adae619426b6f50046b3daaa744db52989c9d6db/django/utils/functional.py#L51-L65
 # It received some modifications to comply with our own coding standards.
