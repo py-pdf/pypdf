@@ -56,6 +56,7 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     StrByteType,
     StreamType,
+    get_stream_size,
     logger_warning,
     read_non_whitespace,
     read_previous_line,
@@ -1042,6 +1043,22 @@ class PdfReader(PdfDocCommon):
             cache[object_number] = (object_start, generation_number)
         return cache
 
+    def _read_standard_xref_table__handle_size(self, stream: StreamType) -> Optional[int]:
+        size = cast(int, read_object(stream, self))
+        if not isinstance(size, int):
+            logger_warning(
+                "Invalid/Truncated xref table. Rebuilding it.",
+                source=__name__,
+            )
+            self._rebuild_xref_table(stream)
+            stream.read()
+            return None
+        # A valid entry has a size of 20 bytes.
+        size_limit = get_stream_size(stream) // 20
+        if size > size_limit:
+            raise LimitReachedError(f"Declared size {size} exceeds allowed limit of {size_limit}!")
+        return size
+
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
         ref = stream.read(3)
@@ -1065,14 +1082,8 @@ class PdfReader(PdfDocCommon):
             first_time = False
             read_non_whitespace(stream)
             stream.seek(-1, 1)
-            size = cast(int, read_object(stream, self))
-            if not isinstance(size, int):
-                logger_warning(
-                    "Invalid/Truncated xref table. Rebuilding it.",
-                    source=__name__,
-                )
-                self._rebuild_xref_table(stream)
-                stream.read()
+            size = self._read_standard_xref_table__handle_size(stream)
+            if size is None:
                 return
             read_non_whitespace(stream)
             stream.seek(-1, 1)
