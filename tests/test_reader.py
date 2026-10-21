@@ -3428,3 +3428,10 @@ def test_issue4215__malformed_n_raises_pdfreaderror(n_value):
 def test_issue4215__malformed_first_raises_pdfreaderror(first_value):
     with pytest.raises(PdfReadError, match="Invalid /ObjStm header"):
         PdfReader(BytesIO(_build_objstm_pdf(b"1", first_value))).pages[0]
+
+
+@pytest.mark.timeout(5)  # Previously: About 25 seconds.
+def test_get_object__speed__repeated_invalid_lookups_for_same_object() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    for _ in range(30_000):
+        assert reader.get_object(9999) is None

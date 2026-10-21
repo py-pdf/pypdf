@@ -543,9 +543,17 @@ class PdfReader(PdfDocCommon):
     ) -> Optional[PdfObject]:
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
+
         retval = self.cache_get_indirect_object(
             indirect_reference.generation, indirect_reference.idnum
         )
+        key = (
+            indirect_reference.generation,
+            indirect_reference.idnum,
+        )
+        if key in self.resolved_objects:
+            return retval
+
         if retval is not None:
             return retval
         if (
