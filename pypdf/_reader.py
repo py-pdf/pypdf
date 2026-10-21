@@ -1117,15 +1117,15 @@ class PdfReader(PdfDocCommon):
 
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
-                    if hasattr(stream, "getbuffer"):
-                        buf = bytes(stream.getbuffer())
-                    else:
-                        p = stream.tell()
-                        stream.seek(0, 0)
-                        buf = stream.read(-1)
-                        stream.seek(p)
-
                     if recovery_cache is None:
+                        if hasattr(stream, "getbuffer"):
+                            buf = bytes(stream.getbuffer())
+                        else:
+                            p = stream.tell()
+                            stream.seek(0, 0)
+                            buf = stream.read(-1)
+                            stream.seek(p)
+
                         recovery_cache = self._load_recovery_cache(buf)
 
                     if num not in recovery_cache:
