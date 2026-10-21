@@ -64,12 +64,7 @@ class TextStateParams:
                     self._raw_chars = self.value.decode(self.font.encoding, "surrogatepass")
                 except UnicodeDecodeError:
                     # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
-                    try:
-                        self._raw_chars = self.value.decode(self.font.encoding, "surrogateescape")
-                    except UnicodeDecodeError:
-                        # surrogateescape cannot escape bytes below 0x80,
-                        # e.g. the last byte of an odd-length UTF-16-BE string
-                        self._raw_chars = self.value.decode(self.font.encoding, "replace")
+                    self._raw_chars = self.value.decode(self.font.encoding, "replace")
             else:
                 self._raw_chars = "".join(chr(byte) for byte in self.value)
                 decoded_value = "".join(self.font.encoding.get(x, chr(x)) for x in self.value)
