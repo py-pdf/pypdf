@@ -68,7 +68,7 @@ class ViewerPreferences(DictionaryObject):
     def _get_name(self, key: str, default: Optional[NameObject]) -> Optional[NameObject]:
         return self.get(key, default)
 
-    def _set_name(self, key: str, lst: list[str], v: NameObject) -> None:
+    def _set_name(self, key: str, lst: list[str], v: str) -> None:
         if v[0] != "/":
             raise ValueError(f"{v} does not start with '/'")
         if lst != [] and v not in lst:
