@@ -31,6 +31,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import functools
 import logging
+import os
 import re
 import sys
 import warnings
@@ -45,6 +46,7 @@ from typing import (
     NoReturn,
     Optional,
     Union,
+    cast,
 )
 
 if sys.version_info[:2] >= (3, 10):
@@ -583,6 +585,17 @@ def _human_readable_bytes(bytes: int) -> str:
     if bytes < 10**9:
         return f"{bytes / 10**6:.1f} MB"
     return f"{bytes / 10**9:.1f} GB"
+
+
+def get_stream_size(stream: StreamType) -> int:
+    if hasattr(stream, "getbuffer"):
+        return cast(int, stream.getbuffer().nbytes)
+
+    position = stream.tell()
+    stream.seek(0, os.SEEK_END)
+    size = stream.tell()
+    stream.seek(position)
+    return size
 
 
 # The following class has been copied from Django:

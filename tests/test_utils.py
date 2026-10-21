@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
+from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any, Callable
 
@@ -21,6 +22,7 @@ from pypdf._utils import (
     deprecate_with_replacement,
     deprecation_no_replacement,
     format_iso8824_date,
+    get_stream_size,
     logger_error,
     logger_warning,
     mark_location,
@@ -731,3 +733,13 @@ def test_classproperty():
     assert Container().value1 == 42
     assert Container().value2 == 1337
     assert Container().value3 == 2
+
+
+def test_get_stream_size(tmp_path) -> None:
+    assert get_stream_size(BytesIO(b"Hello World!")) == 12
+    assert get_stream_size(StringIO("Hello World!")) == 12
+
+    tmp_file = tmp_path / "file.txt"
+    tmp_file.write_bytes(b"Hello World!")
+    with tmp_file.open(mode="rb") as fd:
+        assert get_stream_size(fd) == 12
