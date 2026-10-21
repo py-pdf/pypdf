@@ -572,8 +572,6 @@ def _xobj_to_image(
         visited: Optional[set[int]] = None,
 ) -> tuple[Optional[str], bytes, Any]:
     """
-    Users need to have the pillow package installed.
-
     Args:
         x_object:
         pillow_parameters: parameters provided to Pillow Image.save() method,
