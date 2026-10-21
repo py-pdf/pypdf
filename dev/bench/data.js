@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792599776467,
+  "lastUpdate": 1792600603895,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -153787,6 +153787,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04244200014055088",
             "extra": "mean: 907.8535590000115 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "37d05f6916262371f01460d9c1705ab48c9e3a45",
+          "message": "REL: 6.21.2\n\n## What's new\n\n### Security (SEC)\n- Avoid repeated full file loads (#4240) by @stefan6419846\n- Limit size of standard xref table (#4239) by @stefan6419846\n\n### Bug Fixes (BUG)\n- Decode UniGB-UTF16 CMaps as UTF-16BE (#4231) by @4444wjt\n- Keep 8-bit DeviceRGB image mode (#4230) by @DGrutt\n- Preserve all annotation quadrilaterals when merging pages (#4223) by @repzakske\n\n### Robustness (ROB)\n- Multiple fixes\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.1...6.21.2)",
+          "timestamp": "2026-10-21T18:33:53+02:00",
+          "tree_id": "1cd0f8973e05aea09ecd84f6ec3c58923c81a99d",
+          "url": "https://github.com/py-pdf/pypdf/commit/37d05f6916262371f01460d9c1705ab48c9e3a45"
+        },
+        "date": 1792600596127,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.78978485079572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016009700140089213",
+            "extra": "mean: 42.03484841379522 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 45.106608627866905,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0066161903231237605",
+            "extra": "mean: 22.169700414635006 msec\nrounds: 41"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.525832325710797,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025982241062020323",
+            "extra": "mean: 655.3800067999987 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.1376419073582615,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037304153000009416",
+            "extra": "mean: 879.0112192000009 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5448314413094312,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10246721714916432",
+            "extra": "mean: 1.835430050799988 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8358041346525773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03368628178055878",
+            "extra": "mean: 544.7204203999945 msec\nrounds: 5"
           }
         ]
       }
