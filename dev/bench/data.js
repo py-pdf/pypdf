@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792599732288,
+  "lastUpdate": 1792599776467,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -153721,6 +153721,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.034192554711962905",
             "extra": "mean: 914.0922356000033 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68a0e5046cc9e14a6c24a21a713f3c7fbde18b4b",
+          "message": "SEC: Avoid repeated full file loads (#4240)\n\nThis fixes two slightly related issues:\n\n* Avoid repeated full file scans for the same invalid object.\n* Only read the cross-reference table buffer once for recovery.",
+          "timestamp": "2026-10-21T18:19:25+02:00",
+          "tree_id": "054e3479a7d686bfe489631787c6905fcce072b1",
+          "url": "https://github.com/py-pdf/pypdf/commit/68a0e5046cc9e14a6c24a21a713f3c7fbde18b4b"
+        },
+        "date": 1792599764721,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.312164610763228,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017665890697664825",
+            "extra": "mean: 69.87063293332767 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.619201825922982,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006172546056831113",
+            "extra": "mean: 37.566866449998315 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9560500492093749,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03295806151931972",
+            "extra": "mean: 1.0459703451999929 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.45665794973738877,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04729751306460321",
+            "extra": "mean: 2.189822821600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3483340460059813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07656372315629105",
+            "extra": "mean: 2.8708075236000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1014992341953107,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04244200014055088",
+            "extra": "mean: 907.8535590000115 msec\nrounds: 5"
           }
         ]
       }
