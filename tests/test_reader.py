@@ -2439,7 +2439,9 @@ def test_issue2886(caplog):
     name = "issue2886.pdf"
 
     # Actual: 100_067
+    # Mock stream size, as xref table is broken: Declared size 200597 exceeds allowed limit of 25000!
     with mock.patch("pypdf.generic._base.NumberObject._LENGTH_LIMIT", 200_000), \
+            mock.patch("pypdf._reader.get_stream_size", return_value=5_000_000), \
             pytest.raises(PdfReadError, match=r"Unexpected empty line in Xref table\."):
         _ = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
@@ -2516,6 +2518,19 @@ def test_read_standard_xref_table__entry_invalid_but_object_found(caplog):
     reader = PdfReader(BytesIO(data))
     assert len(reader.pages) == 1
     assert "entry 1 in Xref table invalid but object found" in caplog.text
+
+
+def test_read_standard_xref_table__size_limit() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Declared size 13 exceeds allowed limit of 5!$"):
+        reader._read_standard_xref_table(BytesIO(b"ref\n0 13\n" + b"a" * 100))
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^Invalid Elementary Object starting with b'a' @101: b'aaaaaaaaaaaaaaaaaaaaaaaaaaa'$"
+    ):
+        reader._read_standard_xref_table(BytesIO(b"ref\n0 5\n" + b"a" * 100))
 
 
 @pytest.mark.enable_socket
