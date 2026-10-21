@@ -936,8 +936,10 @@ def test_page__extract_text__xform__self_references(caplog):
         (b"\xff", "\udcff"),
         # Isolated high surrogate (U+D800) in UTF-16-BE -> decoded directly via surrogatepass
         (b"\xd8\x00", "\ud800"),
+        # Truncated byte below 0x80 cannot be escaped -> fallback to replace
+        (b"\x4e\x2d\x41", "中\ufffd"),
     ],
-    ids=["truncated_byte_surrogateescape", "unpaired_surrogatepass"],
+    ids=["truncated_byte_surrogateescape", "unpaired_surrogatepass", "truncated_ascii_byte_replace"],
 )
 def test_text_state_params__unicode_decode_error(raw_bytes, expected_text):
     font_dictionary = DictionaryObject({
@@ -971,8 +973,15 @@ def test_text_state_params__unicode_decode_error(raw_bytes, expected_text):
         (b"\xd8\x00", "\ud800"),
         # Odd byte count triggers UnicodeDecodeError -> fallback to surrogateescape
         (b"\x4e\x2d\xc1", "中\udcc1"),
+        # Truncated byte below 0x80 cannot be escaped -> fallback to replace
+        (b"\x4e\x2d\x41", "中\ufffd"),
     ],
-    ids=["complete_code_units", "unpaired_surrogatepass", "truncated_byte_surrogateescape"],
+    ids=[
+        "complete_code_units",
+        "unpaired_surrogatepass",
+        "truncated_byte_surrogateescape",
+        "truncated_ascii_byte_replace",
+    ],
 )
 def test_get_text_operands__unicode_decode_error(raw_bytes, expected_text):
     """UniGB-UTF16-H without /ToUnicode decodes through the predefined CMap only."""
