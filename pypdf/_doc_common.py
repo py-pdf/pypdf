@@ -316,7 +316,7 @@ class PdfDocCommon(ABC):
         ...  # pragma: no cover
 
     @abstractmethod
-    def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
+    def _replace_object(self, indirect_reference: IndirectObject, obj: PdfObject) -> PdfObject:
         ...  # pragma: no cover
 
     @property

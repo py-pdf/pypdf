@@ -56,6 +56,7 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     StrByteType,
     StreamType,
+    get_stream_data,
     get_stream_size,
     logger_warning,
     read_non_whitespace,
@@ -544,11 +545,17 @@ class PdfReader(PdfDocCommon):
     ) -> Optional[PdfObject]:
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
+
         retval = self.cache_get_indirect_object(
             indirect_reference.generation, indirect_reference.idnum
         )
-        if retval is not None:
+        key = (
+            indirect_reference.generation,
+            indirect_reference.idnum,
+        )
+        if key in self.resolved_objects:
             return retval
+
         if (
             indirect_reference.generation == 0
             and indirect_reference.idnum in self.xref_objStm
@@ -572,13 +579,7 @@ class PdfReader(PdfDocCommon):
                 ):
                     raise PdfReadError("Not matching, we parse the file for it")
             except Exception:
-                if hasattr(self.stream, "getbuffer"):
-                    buf = bytes(self.stream.getbuffer())
-                else:
-                    p = self.stream.tell()
-                    self.stream.seek(0, 0)
-                    buf = self.stream.read(-1)
-                    self.stream.seek(p, 0)
+                buf = get_stream_data(self.stream)
                 m = re.search(
                     rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
                     buf,
@@ -1120,15 +1121,8 @@ class PdfReader(PdfDocCommon):
 
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
-                    if hasattr(stream, "getbuffer"):
-                        buf = bytes(stream.getbuffer())
-                    else:
-                        p = stream.tell()
-                        stream.seek(0, 0)
-                        buf = stream.read(-1)
-                        stream.seek(p)
-
                     if recovery_cache is None:
+                        buf = get_stream_data(stream)
                         recovery_cache = self._load_recovery_cache(buf)
 
                     if num not in recovery_cache:
