@@ -31,8 +31,8 @@ def test_viewer_preference_name_roundtrip(value_type: type[str], preference: str
 
     setattr(preferences, preference, value_type(value))
 
-    assert preferences[NameObject(key)] == NameObject(value)
-    assert isinstance(preferences[NameObject(key)], NameObject)
+    assert preferences[key] == NameObject(value)
+    assert isinstance(preferences[key], NameObject)
 
     output = BytesIO()
     writer.write(output)
@@ -40,7 +40,7 @@ def test_viewer_preference_name_roundtrip(value_type: type[str], preference: str
     saved_preferences = PdfReader(output).viewer_preferences
     assert saved_preferences is not None
     assert getattr(saved_preferences, preference) == value
-    assert isinstance(saved_preferences[NameObject(key)], NameObject)
+    assert isinstance(saved_preferences[key], NameObject)
 
 
 @pytest.mark.parametrize("value_type", [str, NameObject])
