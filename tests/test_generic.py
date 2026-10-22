@@ -13,6 +13,7 @@ from typing import Union
 import pytest
 
 from pypdf import PdfReader, PdfWriter
+from pypdf._utils import get_stream_data
 from pypdf.constants import CheckboxRadioButtonAttributes, OutlineFontFlag
 from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.generic import (
@@ -250,7 +251,7 @@ def test_name_object(caplog):
     # test write
     b = BytesIO()
     NameObject("/hello").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/hello"
+    assert get_stream_data(b) == b"/hello"
 
     caplog.clear()
     b = BytesIO()
@@ -263,19 +264,19 @@ def test_name_object(caplog):
     caplog.clear()
     b = BytesIO()
     NameObject("/DIJMAC+Arial Black#1").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
+    assert get_stream_data(b) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
     caplog.clear()
     b = BytesIO()
     NameObject("/你好世界 (%)").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
+    assert get_stream_data(b) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
     assert caplog.text == ""
 
     caplog.clear()
     b = BytesIO()
     NameObject("/{foo}<bar>(baz)[qux]#/%").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#7Bfoo#7D#3Cbar#3E#28baz#29#5Bqux#5D#23#2F#25"
+    assert get_stream_data(b) == b"/#7Bfoo#7D#3Cbar#3E#28baz#29#5Bqux#5D#23#2F#25"
     assert caplog.text == ""
 
 

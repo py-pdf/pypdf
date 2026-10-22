@@ -16,7 +16,7 @@ from PIL import Image, ImageChops
 from PIL import __version__ as pil_version
 
 from pypdf import PdfReader, PdfWriter, Transformation
-from pypdf._utils import Version
+from pypdf._utils import Version, get_stream_data
 from pypdf.actions import JavaScript
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
@@ -940,9 +940,8 @@ def test_extra_test_iss1541():
     stream.seek(0)
     ContentStream(read_object(stream, None, None), None, None).operations
 
-    b = BytesIO(data.getbuffer())
     reader = PdfReader(
-        BytesIO(bytes(b.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
+        BytesIO(get_stream_data(data).replace(b"EI \n", b"E! \n")), strict=False
     )
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
         reader.pages[0].extract_text()

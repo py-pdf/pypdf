@@ -6,7 +6,7 @@
 #
 build==1.2.2.post1
     # via pip-tools
-certifi==2024.8.30
+certifi==2026.10.19
     # via requests
 cfgv==3.4.0
     # via pre-commit
@@ -43,7 +43,7 @@ packaging==24.1
     #   build
     #   pytest
     #   wheel
-pillow==12.3.0
+pillow==13.0.0
     # via -r dev.in
 pip-tools==7.4.1
     # via -r dev.in
@@ -77,7 +77,7 @@ typing-extensions==4.15.0
     # via virtualenv
 urllib3==2.8.0
     # via requests
-virtualenv==21.14.2
+virtualenv==21.14.4
     # via pre-commit
 wheel==0.46.2
     # via
