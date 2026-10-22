@@ -410,7 +410,7 @@ class PdfReader(PdfDocCommon):
             n = int(n_value)
             first_offset = int(first_value)
 
-            stream_length = stream_data.getbuffer().nbytes
+            stream_length = get_stream_size(stream_data)
             if n < 0 or not 0 <= first_offset <= stream_length:
                 # A negative /N, or a /First outside the stream, cannot
                 # describe a valid object stream; treating it as empty
@@ -434,7 +434,7 @@ class PdfReader(PdfDocCommon):
             # ObjStm header format: "objnum offset objnum offset ..."
             # smallest possible entry: "0 0" = 3 bytes (1 digit + 1 space + 1 digit)
             # using // 4 would reject a valid 3-byte single entry (3 // 4 = 0)
-            max_n = stream_data.getbuffer().nbytes // 3
+            max_n = stream_length // 3
             stream_data.seek(0)
             if n > max_n:
                 if self.strict:
@@ -635,13 +635,7 @@ class PdfReader(PdfDocCommon):
                     strict=self.strict,
                 )
         else:
-            if hasattr(self.stream, "getbuffer"):
-                buf = bytes(self.stream.getbuffer())
-            else:
-                p = self.stream.tell()
-                self.stream.seek(0, 0)
-                buf = self.stream.read(-1)
-                self.stream.seek(p, 0)
+            buf = get_stream_data(self.stream)
             m = re.search(
                 rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
                 buf,

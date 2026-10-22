@@ -19,6 +19,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
+from pypdf._utils import get_stream_data
 from pypdf.annotations import Link
 from pypdf.constants import FieldDictionaryAttributes
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
@@ -1818,7 +1819,7 @@ def test_new_removes():
     writer.remove_images()
     b = BytesIO()
     writer.write(b)
-    bb = bytes(b.getbuffer())
+    bb = get_stream_data(b)
     assert b"/Im0 Do" not in bb
     assert b"/Fm0 Do" in bb
     assert b" TJ" in bb
@@ -1828,7 +1829,7 @@ def test_new_removes():
     writer.remove_text()
     b = BytesIO()
     writer.write(b)
-    bb = bytes(b.getbuffer())
+    bb = get_stream_data(b)
     assert b"/Im0" in bb
     assert b"Chap" not in bb
     assert b" TJ" not in bb
