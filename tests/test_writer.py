@@ -3704,7 +3704,7 @@ def test_get_filtered_outline__node_is_none() -> None:
     assert writer._get_filtered_outline(node=None, pages={}, reader=reader) == []
 
 
-def _outline_item(**entries: Any) -> DictionaryObject:
+def _create_outline_item(**entries: Any) -> DictionaryObject:
     item = DictionaryObject({NameObject("/Title"): TextStringObject("Chapter")})
     for key, value in entries.items():
         item[NameObject(f"/{key}")] = value
@@ -3718,10 +3718,12 @@ def _outline_item(**entries: Any) -> DictionaryObject:
         pytest.param(ArrayObject(), "[]", id="outlines-array"),
         pytest.param(DictionaryObject({NameObject("/First"): NumberObject(1)}), "1", id="first-number"),
         pytest.param(
-            DictionaryObject({NameObject("/First"): _outline_item(Next=TextStringObject("x"))}), "x", id="next-string"
+            DictionaryObject({NameObject("/First"): _create_outline_item(Next=TextStringObject("x"))}),
+            "x",
+            id="next-string",
         ),
         pytest.param(
-            DictionaryObject({NameObject("/First"): _outline_item(First=ArrayObject())}), "[]", id="child-array"
+            DictionaryObject({NameObject("/First"): _create_outline_item(First=ArrayObject())}), "[]", id="child-array"
         ),
     ],
 )
