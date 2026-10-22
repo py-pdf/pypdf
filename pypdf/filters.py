@@ -198,13 +198,10 @@ class FlateDecode:
         """
         str_data = decompress(data)
 
-        processed_parms: Optional[PdfObject] = decode_parms
-        if isinstance(decode_parms, IndirectObject) and processed_parms is not None:
-            processed_parms = processed_parms.get_object()
-        if isinstance(processed_parms, dict):
-            parameters = processed_parms
+        if isinstance(decode_parms, dict):
+            parameters = decode_parms
         else:
-            if not is_null_or_none(processed_parms):
+            if not is_null_or_none(decode_parms):
                 logger_warning(
                     "Detected invalid /DecodeParms, results might be incorrect: %(value)s (type %(type_name)s)",
                     source=__name__, value=decode_parms, type_name=decode_parms.__class__.__name__,
