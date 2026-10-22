@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792700375568,
+  "lastUpdate": 1792701215984,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -120191,6 +120191,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002108431346535063",
             "extra": "mean: 664.2871516000127 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "98887607+4444wjt@users.noreply.github.com",
+            "name": "Ll",
+            "username": "4444wjt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b890401e0025afcc9ecb6cc6acba691ea7b085c8",
+          "message": "ROB: Do not fail on odd-length UTF-16-BE strings ending below 0x80 (#4236)\n\n* TST: Cover the UnicodeDecodeError fallback in get_text_operands\n\nSince #4231, the fallback in get_text_operands is no longer reached by\ndecoding iss2812.pdf as gb18030. Add a test that calls get_text_operands\ndirectly with a UniGB-UTF16-H Type0 font without /ToUnicode, so no\nexternal file is needed.\n\nThe cases cover complete UTF-16-BE code units, an unpaired surrogate\ndecoded by surrogatepass, and an odd byte count that falls back to\nsurrogateescape. They mirror the existing TextStateParams test for the\nlayout mode.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* ROB: Do not fail on odd-length UTF-16-BE strings ending below 0x80\n\nWhen a string shown with a UTF-16-BE named encoding has an odd byte count,\nthe surrogatepass decode raises and text extraction falls back to\nsurrogateescape. surrogateescape only escapes bytes from 0x80 upwards, so\na trailing byte below 0x80, as in <4E2D41>, raised UnicodeDecodeError\nfrom extract_text() in both plain and layout mode.\n\nFall back to \"replace\" in that case, in get_text_operands and in\nTextStateParams. Inputs that already decoded keep their current output.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* MAINT: Fall back to \"replace\" directly, as suggested in review\n\nsurrogatepass already handles unpaired surrogates, so the extra\nsurrogateescape step only mattered for undecodable bytes from 0x80\nupwards. Decode with \"replace\" directly when surrogatepass fails, in\nget_text_operands and TextStateParams.\n\nUndecodable bytes now become U+FFFD instead of lone surrogates\n(\\udc80-\\udcff); update the expected values of the affected test cases.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-22T22:31:39+02:00",
+          "tree_id": "4bbc971d9d803f52168c0e435a8d43b8445712fd",
+          "url": "https://github.com/py-pdf/pypdf/commit/b890401e0025afcc9ecb6cc6acba691ea7b085c8"
+        },
+        "date": 1792701208221,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.747634935747021,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023378797825406316",
+            "extra": "mean: 210.63119079998387 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.44357901702273,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00532152051550204",
+            "extra": "mean: 28.21385502631445 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4432654034282827,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02098358576367545",
+            "extra": "mean: 2.255984771800024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 33.57820145805148,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00022864196346261359",
+            "extra": "mean: 29.78122581250453 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14043347965325553,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10053111476468464",
+            "extra": "mean: 7.120809100999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.694086198077859,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0121620285639558",
+            "extra": "mean: 371.18337219999376 msec\nrounds: 5"
           }
         ]
       }
