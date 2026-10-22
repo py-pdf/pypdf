@@ -1568,7 +1568,8 @@ def test_box_rendering(tmp_path):
                 "-o",
                 png_path,
                 pdf_path,
-            ]
+            ],
+            check=False,
         )
         assert png_path.is_file(), box
         assert image_similarity(png_path, target_png_path) >= 0.95, box
@@ -1677,6 +1678,7 @@ print(pil_not_imported)
         [sys.executable, source_file],
         capture_output=True,
         env=get_subprocess_environment(),
+        check=False,
     )
     assert result.returncode == 0
     assert result.stdout.replace(b"\r\n", b"\n") == b"True\n"

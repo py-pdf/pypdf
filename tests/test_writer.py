@@ -2316,7 +2316,8 @@ def test_watermark_rendering(tmp_path):
             "-o",
             png_path,
             pdf_path,
-        ]
+        ],
+        check=False,
     )
     assert png_path.is_file()
     assert image_similarity(png_path, target_png_path) >= 0.95
@@ -2355,7 +2356,8 @@ def test_watermarking_reportlab_rendering(tmp_path):
             "-o",
             png_path,
             pdf_path,
-        ]
+        ],
+        check=False,
     )
     assert png_path.is_file()
     assert image_similarity(png_path, target_png_path) >= 0.999
@@ -3257,7 +3259,8 @@ def test_inline_image_q_operator_handling(tmp_path):
             "-o",
             png_path,
             pdf_path,
-        ]
+        ],
+        check=False,
     )
     assert png_path.is_file()
     assert image_similarity(png_path, expected_png_path) >= 0.99999

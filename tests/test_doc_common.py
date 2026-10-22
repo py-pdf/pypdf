@@ -48,7 +48,7 @@ def test_attachments(tmpdir):
     attached_path = tmpdir / "attached.pdf"
     file_path = tmpdir / "test.txt"
     file_path.write_bytes(b"Hello World\n")
-    subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path])  # noqa: S603
+    subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path], check=False)  # noqa: S603
     with PdfReader(attached_path) as pdf:
         assert list(pdf.attachments.keys()) == ["test.txt"]
         assert pdf.attachments["test.txt"] == [b"Hello World\n"]
