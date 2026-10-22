@@ -120063,7 +120063,7 @@ window.BENCHMARK_DATA = {
         ]
       }
     ],
-    "PyPy 3.11 Benchmark": [
+    "PyPy Benchmark": [
       {
         "commit": {
           "author": {
