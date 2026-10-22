@@ -1388,9 +1388,14 @@ class PdfWriter(PdfDocCommon):
 
         if self.incremental:
             assert self._reader is not None, "mypy"
+            has_increment = len(self.list_objects_in_increment()) > 0
+            if has_increment and self._reader.is_encrypted:
+                raise NotImplementedError(
+                    "Writing incremental updates of encrypted PDF files is currently not supported."
+                )
             self._reader.stream.seek(0)
             stream.write(self._reader.stream.read(-1))
-            if len(self.list_objects_in_increment()) > 0:
+            if has_increment:
                 self._write_increment(stream)  # writes objs, xref stream and startxref
         else:
             object_positions, free_objects = self._write_pdf_structure(stream)
