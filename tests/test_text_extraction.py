@@ -12,7 +12,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration, mult
 from pypdf._page import PageObject
-from pypdf._text_extraction import set_custom_rtl
+from pypdf._text_extraction import get_text_operands, set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import (
     BTGroup,
     fixed_width_page,
@@ -953,12 +953,14 @@ def test_page__extract_text__xform__self_references(caplog):
 @pytest.mark.parametrize(
     ("raw_bytes", "expected_text"),
     [
-        # Truncated 1-byte payload triggers UnicodeDecodeError -> fallback to surrogateescape
-        (b"\xff", "\udcff"),
+        # Truncated 1-byte payload triggers UnicodeDecodeError -> fallback to replace
+        (b"\xff", "\ufffd"),
         # Isolated high surrogate (U+D800) in UTF-16-BE -> decoded directly via surrogatepass
         (b"\xd8\x00", "\ud800"),
+        # Truncated byte below 0x80 -> fallback to replace
+        (b"\x4e\x2d\x41", "中\ufffd"),
     ],
-    ids=["truncated_byte_surrogateescape", "unpaired_surrogatepass"],
+    ids=["truncated_byte_replace", "unpaired_surrogatepass", "truncated_ascii_byte_replace"],
 )
 def test_text_state_params__unicode_decode_error(raw_bytes, expected_text):
     font_dictionary = DictionaryObject({
@@ -981,6 +983,53 @@ def test_text_state_params__unicode_decode_error(raw_bytes, expected_text):
 
     assert parameters._raw_chars == expected_text
     assert parameters.text == expected_text
+
+
+@pytest.mark.parametrize(
+    ("raw_bytes", "expected_text"),
+    [
+        # Complete UTF-16-BE code units -> decoded directly
+        (b"\x4e\x2d\x65\x87", "中文"),
+        # Isolated high surrogate (U+D800) -> decoded directly via surrogatepass
+        (b"\xd8\x00", "\ud800"),
+        # Odd byte count triggers UnicodeDecodeError -> fallback to replace
+        (b"\x4e\x2d\xc1", "中\ufffd"),
+        # Truncated byte below 0x80 -> fallback to replace
+        (b"\x4e\x2d\x41", "中\ufffd"),
+    ],
+    ids=[
+        "complete_code_units",
+        "unpaired_surrogatepass",
+        "truncated_byte_replace",
+        "truncated_ascii_byte_replace",
+    ],
+)
+def test_get_text_operands__unicode_decode_error(raw_bytes, expected_text):
+    """UniGB-UTF16-H without /ToUnicode decodes through the predefined CMap only."""
+    font_dictionary = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/STSong-Light"),
+        NameObject("/Encoding"): NameObject("/UniGB-UTF16-H"),
+        NameObject("/DescendantFonts"): ArrayObject([
+            DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/CIDFontType0"),
+                NameObject("/BaseFont"): NameObject("/STSong-Light"),
+                NameObject("/DW"): NumberObject(1000),
+            })
+        ]),
+    })
+    font = Font.from_font_resource(font_dictionary)
+    assert font.encoding == "utf-16-be"
+
+    identity = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+    text, is_str_operands, _ = get_text_operands(
+        [raw_bytes], identity, identity, font, (0, 90, 180, 270)
+    )
+
+    assert text == expected_text
+    assert is_str_operands is False
 
 
 @pytest.mark.timeout(5)
