@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792653892662,
+  "lastUpdate": 1792679031698,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -120059,6 +120059,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01771048508780176",
             "extra": "mean: 367.79106700005286 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fd379e69be44dd91acb5f1d62ba1179e9cbc20ca",
+          "message": "DEV: Update to PyPy 3.12 and pinned requirements (#4244)\n\nThis updates from the PyPy 7 release series providing Python 3.11 to the PyPy 8 release series providing Python 3.12.\nFor this, some dependencies have been updated, although they might just be security-related.\n\nSome of our tests would fail after the update, which turned out to be related to us not releasing `memoryview`s properly when dealing with `BytesIO`. This only shows up as PyPy uses a different garbage collection approach. Resolve this by using a context manager for the `memoryview`s everywhere and avoiding repeated stream handling operations for getting all data or the total stream size by switching to the recently introduced utility functions.\n\nCloses #4134.",
+          "timestamp": "2026-10-22T16:21:28+02:00",
+          "tree_id": "245bee5e55d4929136d817b7d8e8f9ccd4e3d2fe",
+          "url": "https://github.com/py-pdf/pypdf/commit/fd379e69be44dd91acb5f1d62ba1179e9cbc20ca"
+        },
+        "date": 1792679024135,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.142649099485705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009783927377847374",
+            "extra": "mean: 194.45231059999912 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.241157308508956,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06924301932133302",
+            "extra": "mean: 39.61783478378361 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.42595095133784744,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07278639225711789",
+            "extra": "mean: 2.3476881478000022 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 32.131759379407484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002055254592007561",
+            "extra": "mean: 31.121856359999924 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14441271052792554,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06159324056738318",
+            "extra": "mean: 6.924598231999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.4728851787654125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008510401379302767",
+            "extra": "mean: 404.3859409999982 msec\nrounds: 5"
           }
         ]
       }
