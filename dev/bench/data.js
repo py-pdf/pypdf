@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792679147513,
+  "lastUpdate": 1792700284385,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -120125,6 +120125,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008510401379302767",
             "extra": "mean: 404.3859409999982 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "34a79b522df504b4aaf69c58bfb90cfd0afd6b62",
+          "message": "MAINT: Remove outdated comment (#4235)\n\n* MAINT: Remove outdated comment\n\nThis comment was present when _xobj_to_image was in filters.py.\nThe function was moved, and thus the comment can now be removed.\n\n* MAINT: Remove outdated comments",
+          "timestamp": "2026-10-22T22:14:58+02:00",
+          "tree_id": "73327f148d34ca5cb512d4237d6080d73e511491",
+          "url": "https://github.com/py-pdf/pypdf/commit/34a79b522df504b4aaf69c58bfb90cfd0afd6b62"
+        },
+        "date": 1792700272491,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7537697855398333,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008554424445351826",
+            "extra": "mean: 363.138562000006 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.394558432322217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001845045875317433",
+            "extra": "mean: 44.65370473912507 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24648950993182517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007229236714641069",
+            "extra": "mean: 4.056967780399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.135941248366603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009631640063861512",
+            "extra": "mean: 55.139128777783405 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07752834209486371,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06051254047403624",
+            "extra": "mean: 12.898508764399987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5053730869118631,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002108431346535063",
+            "extra": "mean: 664.2871516000127 msec\nrounds: 5"
           }
         ]
       }
