@@ -229,15 +229,25 @@ def test_get_label_from_nums__truncated_pair(caplog):
     assert "Ignoring last /Nums key without a value." in caplog.text
 
 
-def test_get_label_from_nums__non_numeric_key(caplog):
+@pytest.mark.parametrize(
+    ("key", "expected"),
+    [
+        (DictionaryObject(), "{}"),
+        (NameObject("/invalid-key"), "'/invalid-key'"),
+        (TextStringObject("invalid key"), "'invalid key'"),
+    ],
+)
+def test_get_label_from_nums__non_numeric_key(caplog, key, expected):
     """A /Nums whose next key is not a number falls back to the page position."""
     value = DictionaryObject({NameObject("/S"): NameObject("/D")})
     dictionary_object = DictionaryObject()
     dictionary_object[NameObject("/Nums")] = ArrayObject(
-        [NumberObject(0), value, DictionaryObject(), value]
+        [NumberObject(0), value, key, value]
     )
     assert get_label_from_nums(dictionary_object, 3) == "4"
-    assert "Ignoring malformed page label key in /Nums." in caplog.text
+    assert caplog.messages == [
+        f"Ignoring malformed page label key {expected} in /Nums."
+    ]
 
 
 def test_get_label_from_nums__unknown_style(caplog):

@@ -159,7 +159,9 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
         next_key = nums[i + 2]
         if not isinstance(next_key, (int, float)):
             logger_warning(
-                "Ignoring malformed page label key in /Nums.", source=__name__
+                "Ignoring malformed page label key %(key)r in /Nums.",
+                source=__name__,
+                key=next_key,
             )
             return str(index + 1)  # Fallback
         if next_key > index:
