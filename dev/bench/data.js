@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792745229352,
+  "lastUpdate": 1792745344279,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -154711,6 +154711,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0216115869121665",
             "extra": "mean: 880.8556324000165 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alexandrkholodniak@gmail.com",
+            "name": "Alex Kholodniak",
+            "username": "kholdrex"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d804f0058751343c9b42bf07e2d34133b754e4f",
+          "message": "PI: Avoid scanning all objects in get_outline_root (#4245)\n\nget_outline_root() looked up the outline's position in the writer's\nobject list on every call and then discarded the result, so each\nadd_outline_item() cost time proportional to the number of objects in\nthe document.",
+          "timestamp": "2026-10-23T10:44:50+02:00",
+          "tree_id": "d62584164159ef9f7d71225835a10a0aef94775e",
+          "url": "https://github.com/py-pdf/pypdf/commit/6d804f0058751343c9b42bf07e2d34133b754e4f"
+        },
+        "date": 1792745332540,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.112393404924612,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019907957709020322",
+            "extra": "mean: 70.85970262500219 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 32.33075625040967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004792010995644742",
+            "extra": "mean: 30.930300307693194 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9841318263492488,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031897057559947595",
+            "extra": "mean: 1.0161240325999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5332111899777534,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03720658781068181",
+            "extra": "mean: 1.8754295086000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.381419861281681,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0111896943363957",
+            "extra": "mean: 2.6217827164000083 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1573129138795821,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039110369006528166",
+            "extra": "mean: 864.0705447999949 msec\nrounds: 5"
           }
         ]
       }
