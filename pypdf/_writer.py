@@ -1747,9 +1747,6 @@ class PdfWriter(PdfDocCommon):
                 t = TreeObject(outline)
                 self._replace_object(outline.indirect_reference.idnum, t)
                 outline = t
-            idnum = self._objects.index(outline) + 1
-            outline_ref = IndirectObject(idnum, 0, self)
-            assert outline_ref.get_object() == outline
         else:
             outline = TreeObject()
             outline.update({})
