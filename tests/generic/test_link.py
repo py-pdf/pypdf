@@ -8,9 +8,11 @@ from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
     DirectReferenceLink,
+    NamedReferenceLink,
     NameObject,
     NullObject,
     NumberObject,
+    TextStringObject,
     extract_links,
 )
 from tests import get_data_from_url
@@ -143,3 +145,33 @@ def test_direct_reference_link_empty_reference() -> None:
     assert DirectReferenceLink(ArrayObject([])).find_referenced_page() is None
     # A populated array still resolves to its first element.
     assert DirectReferenceLink(ArrayObject([NumberObject(7)])).find_referenced_page() == 7
+
+
+def test_named_reference_link_patch_reference() -> None:
+    """
+    A named link adds its name as a named destination to the given page,
+    unless the name already exists. The existing names are read from the writer,
+    or taken from `known_names` if given.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.add_blank_page(100, 100)
+    page = writer.pages[1].indirect_reference
+    assert page is not None
+
+    link = NamedReferenceLink(TextStringObject("first"), source_pdf=None)  # type: ignore[arg-type]
+    link.patch_reference(writer, page)
+    link.patch_reference(writer, page)
+    assert list(writer.named_destinations) == ["first"]
+    assert writer.named_destinations["first"].page == page
+
+    # The given names are used instead of the ones of the writer, and kept up to date.
+    known_names = {"second"}
+    NamedReferenceLink(TextStringObject("second"), source_pdf=None).patch_reference(  # type: ignore[arg-type]
+        writer, page, known_names=known_names
+    )
+    NamedReferenceLink(TextStringObject("third"), source_pdf=None).patch_reference(  # type: ignore[arg-type]
+        writer, page, known_names=known_names
+    )
+    assert known_names == {"second", "third"}
+    assert list(writer.named_destinations) == ["first", "third"]
