@@ -214,7 +214,7 @@ def get_text_operands(
                     text = tt.decode(font.encoding, "surrogatepass")
                 except UnicodeDecodeError:
                     # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
-                    text = tt.decode(font.encoding, "surrogateescape")
+                    text = tt.decode(font.encoding, "replace")
             else:  # Apply dict encoding
                 text = "".join(font.encoding.get(x, chr(x)) for x in tt)
                 raw_characters = "".join(chr(byte) for byte in tt)

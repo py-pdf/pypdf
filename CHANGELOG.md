@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## Version 6.21.2, 2026-10-21
+
+### Security (SEC)
+- Avoid repeated full file loads (#4240)
+- Limit size of standard xref table (#4239)
+
+### Bug Fixes (BUG)
+- Decode UniGB-UTF16 CMaps as UTF-16BE (#4231)
+- Keep 8-bit DeviceRGB image mode (#4230)
+- Preserve all annotation quadrilaterals when merging pages (#4223)
+
+### Robustness (ROB)
+- Multiple fixes
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.1...6.21.2)
+
 ## Version 6.21.1, 2026-10-17
 
 ### Security (SEC)

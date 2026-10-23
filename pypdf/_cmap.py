@@ -33,10 +33,13 @@ _predefined_cmap: dict[str, str] = {
     "/ETen-B5-V": "cp950",
     "/ETenms-B5-H": "cp950",
     "/ETenms-B5-V": "cp950",
+    # Unicode-based CMaps: character codes are UTF-16BE, see
+    # ISO 32000-2:2020, 9.7.5.2, Note 1 and Table 116.
+    # (UniGB covers the GB18030-2000 character set but is not GB18030-encoded.)
     "/UniCNS-UTF16-H": "utf-16-be",
     "/UniCNS-UTF16-V": "utf-16-be",
-    "/UniGB-UTF16-H": "gb18030",
-    "/UniGB-UTF16-V": "gb18030",
+    "/UniGB-UTF16-H": "utf-16-be",
+    "/UniGB-UTF16-V": "utf-16-be",
     # Japanese CMaps (PDF Reference 1.7, Appendix H)
     "/90ms-RKSJ-H": "cp932",  # Shift-JIS (JIS X 0208-1990), horizontal
     "/90ms-RKSJ-V": "cp932",  # Shift-JIS (JIS X 0208-1990), vertical

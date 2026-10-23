@@ -2439,7 +2439,9 @@ def test_issue2886(caplog):
     name = "issue2886.pdf"
 
     # Actual: 100_067
+    # Mock stream size, as xref table is broken: Declared size 200597 exceeds allowed limit of 25000!
     with mock.patch("pypdf.generic._base.NumberObject._LENGTH_LIMIT", 200_000), \
+            mock.patch("pypdf._reader.get_stream_size", return_value=5_000_000), \
             pytest.raises(PdfReadError, match=r"Unexpected empty line in Xref table\."):
         _ = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
 
@@ -2516,6 +2518,19 @@ def test_read_standard_xref_table__entry_invalid_but_object_found(caplog):
     reader = PdfReader(BytesIO(data))
     assert len(reader.pages) == 1
     assert "entry 1 in Xref table invalid but object found" in caplog.text
+
+
+def test_read_standard_xref_table__size_limit() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Declared size 13 exceeds allowed limit of 5!$"):
+        reader._read_standard_xref_table(BytesIO(b"ref\n0 13\n" + b"a" * 100))
+
+    with pytest.raises(
+            expected_exception=PdfReadError,
+            match=r"^Invalid Elementary Object starting with b'a' @101: b'aaaaaaaaaaaaaaaaaaaaaaaaaaa'$"
+    ):
+        reader._read_standard_xref_table(BytesIO(b"ref\n0 5\n" + b"a" * 100))
 
 
 @pytest.mark.enable_socket
@@ -3428,3 +3443,27 @@ def test_issue4215__malformed_n_raises_pdfreaderror(n_value):
 def test_issue4215__malformed_first_raises_pdfreaderror(first_value):
     with pytest.raises(PdfReadError, match="Invalid /ObjStm header"):
         PdfReader(BytesIO(_build_objstm_pdf(b"1", first_value))).pages[0]
+
+
+@pytest.mark.timeout(5)  # Previously: About 25 seconds.
+def test_get_object__speed__repeated_invalid_lookups_for_same_object() -> None:
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    for _ in range(30_000):
+        assert reader.get_object(9999) is None
+
+
+@pytest.mark.slow
+@pytest.mark.timeout(15)  # Previously: About 25 seconds.
+def test_read_standard_xref_table__speed__caching() -> None:
+    entries = 80_000
+    body = bytearray(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n")
+    body += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    body += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+    xref_off = len(body)
+    body += b"xref\n"
+    body += b"0 %d\n" % entries
+    body += b"x" * 20 * entries
+    body += b"trailer\n<< /Root 1 0 R /Size 3 >>\nstartxref\n%d\n%%%%EOF\n" % xref_off
+
+    reader = PdfReader(BytesIO(body))
+    _ = len(reader.pages)

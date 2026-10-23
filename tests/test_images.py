@@ -451,7 +451,7 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
         print(i.name)
         b=BytesIO()
         i.image.save(b,"JPEG")
-        z.writestr(f"image_{p.page_number}_{ii}_{i.name}",b.getbuffer())
+        z.writestr(f"image_{p.page_number}_{ii}_{i.name}", b.getbuffer())
     """
     url = pdf
     name = pdf_name

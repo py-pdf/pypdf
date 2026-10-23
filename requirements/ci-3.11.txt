@@ -36,7 +36,7 @@ packaging==24.1
     # via pytest
 pathspec==1.0.4
     # via mypy
-pillow==12.3.0
+pillow==13.0.0
     # via
     #   -r requirements/ci.in
     #   fpdf2
@@ -66,7 +66,7 @@ pytest-timeout==2.3.1
     # via -r requirements/ci.in
 pytest-xdist==3.6.1
     # via -r requirements/ci.in
-python-bidi==0.6.11
+python-bidi==0.6.12
     # via -r requirements/ci.in
 pyyaml==6.0.2
     # via -r requirements/ci.in

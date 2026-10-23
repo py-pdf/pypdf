@@ -56,6 +56,8 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     StrByteType,
     StreamType,
+    get_stream_data,
+    get_stream_size,
     logger_warning,
     read_non_whitespace,
     read_previous_line,
@@ -408,7 +410,7 @@ class PdfReader(PdfDocCommon):
             n = int(n_value)
             first_offset = int(first_value)
 
-            stream_length = stream_data.getbuffer().nbytes
+            stream_length = get_stream_size(stream_data)
             if n < 0 or not 0 <= first_offset <= stream_length:
                 # A negative /N, or a /First outside the stream, cannot
                 # describe a valid object stream; treating it as empty
@@ -432,7 +434,7 @@ class PdfReader(PdfDocCommon):
             # ObjStm header format: "objnum offset objnum offset ..."
             # smallest possible entry: "0 0" = 3 bytes (1 digit + 1 space + 1 digit)
             # using // 4 would reject a valid 3-byte single entry (3 // 4 = 0)
-            max_n = stream_data.getbuffer().nbytes // 3
+            max_n = stream_length // 3
             stream_data.seek(0)
             if n > max_n:
                 if self.strict:
@@ -543,11 +545,17 @@ class PdfReader(PdfDocCommon):
     ) -> Optional[PdfObject]:
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
+
         retval = self.cache_get_indirect_object(
             indirect_reference.generation, indirect_reference.idnum
         )
-        if retval is not None:
+        key = (
+            indirect_reference.generation,
+            indirect_reference.idnum,
+        )
+        if key in self.resolved_objects:
             return retval
+
         if (
             indirect_reference.generation == 0
             and indirect_reference.idnum in self.xref_objStm
@@ -571,13 +579,7 @@ class PdfReader(PdfDocCommon):
                 ):
                     raise PdfReadError("Not matching, we parse the file for it")
             except Exception:
-                if hasattr(self.stream, "getbuffer"):
-                    buf = bytes(self.stream.getbuffer())
-                else:
-                    p = self.stream.tell()
-                    self.stream.seek(0, 0)
-                    buf = self.stream.read(-1)
-                    self.stream.seek(p, 0)
+                buf = get_stream_data(self.stream)
                 m = re.search(
                     rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
                     buf,
@@ -633,13 +635,7 @@ class PdfReader(PdfDocCommon):
                     strict=self.strict,
                 )
         else:
-            if hasattr(self.stream, "getbuffer"):
-                buf = bytes(self.stream.getbuffer())
-            else:
-                p = self.stream.tell()
-                self.stream.seek(0, 0)
-                buf = self.stream.read(-1)
-                self.stream.seek(p, 0)
+            buf = get_stream_data(self.stream)
             m = re.search(
                 rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
                 buf,
@@ -1042,6 +1038,22 @@ class PdfReader(PdfDocCommon):
             cache[object_number] = (object_start, generation_number)
         return cache
 
+    def _read_standard_xref_table__handle_size(self, stream: StreamType) -> Optional[int]:
+        size = cast(int, read_object(stream, self))
+        if not isinstance(size, int):
+            logger_warning(
+                "Invalid/Truncated xref table. Rebuilding it.",
+                source=__name__,
+            )
+            self._rebuild_xref_table(stream)
+            stream.read()
+            return None
+        # A valid entry has a size of 20 bytes.
+        size_limit = get_stream_size(stream) // 20
+        if size > size_limit:
+            raise LimitReachedError(f"Declared size {size} exceeds allowed limit of {size_limit}!")
+        return size
+
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
         ref = stream.read(3)
@@ -1065,14 +1077,8 @@ class PdfReader(PdfDocCommon):
             first_time = False
             read_non_whitespace(stream)
             stream.seek(-1, 1)
-            size = cast(int, read_object(stream, self))
-            if not isinstance(size, int):
-                logger_warning(
-                    "Invalid/Truncated xref table. Rebuilding it.",
-                    source=__name__,
-                )
-                self._rebuild_xref_table(stream)
-                stream.read()
+            size = self._read_standard_xref_table__handle_size(stream)
+            if size is None:
                 return
             read_non_whitespace(stream)
             stream.seek(-1, 1)
@@ -1109,15 +1115,8 @@ class PdfReader(PdfDocCommon):
 
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
-                    if hasattr(stream, "getbuffer"):
-                        buf = bytes(stream.getbuffer())
-                    else:
-                        p = stream.tell()
-                        stream.seek(0, 0)
-                        buf = stream.read(-1)
-                        stream.seek(p)
-
                     if recovery_cache is None:
+                        buf = get_stream_data(stream)
                         recovery_cache = self._load_recovery_cache(buf)
 
                     if num not in recovery_cache:

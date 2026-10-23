@@ -263,7 +263,9 @@ def recurse_to_target_op(
             text_state_mgr.reset_trm()
             if op == b"Tm":
                 text_state_mgr.reset_tm()
-            elif op == b"TD":
+            elif op == b"TD" and len(operands) >= 2 and isinstance(operands[1], (int, float)):
+                # a missing or non-numeric ty leaves the leading unchanged; the
+                # translation itself is handled like Td below
                 text_state_mgr.set_state_param(b"TL", -operands[1])
             elif op == b"T*":
                 operands = [0, -text_state_mgr.TL]
