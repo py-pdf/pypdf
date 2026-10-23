@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792745344279,
+  "lastUpdate": 1792745617207,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -120323,6 +120323,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008147769380473086",
             "extra": "mean: 477.58937739999396 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99978136+polootyyyyy@users.noreply.github.com",
+            "name": "polio",
+            "username": "polootyyyyy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "451e8b7d5e01f471c7f1222737f89d9d3f35de3f",
+          "message": "BUG: Accept strings in viewer preference names (#4238)\n\n* Accept strings in viewer preference name annotations\n\n* Test viewer preference name values and PDF round trips\n\n* Convert viewer preference names before assignment\n\n* Cover invalid viewer preference names\n\n* Move viewer preference tests into generic package\n\n* Use string keys in viewer preference lookups",
+          "timestamp": "2026-10-23T10:50:27+02:00",
+          "tree_id": "3d340a0886bb89e48f151cb8c5889b0c010700d9",
+          "url": "https://github.com/py-pdf/pypdf/commit/451e8b7d5e01f471c7f1222737f89d9d3f35de3f"
+        },
+        "date": 1792745604819,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7374334846024855,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015381947112295085",
+            "extra": "mean: 365.3056798000023 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.482139167171972,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001795752337714657",
+            "extra": "mean: 44.47975313043977 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24709128368576988,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008739453867928569",
+            "extra": "mean: 4.047087315599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.873357008475473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007542266569729234",
+            "extra": "mean: 52.98474455556206 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07749724157442044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06857435275168355",
+            "extra": "mean: 12.90368508200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.51916215618434,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015921628280561124",
+            "extra": "mean: 658.2575770000005 msec\nrounds: 5"
           }
         ]
       }
