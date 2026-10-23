@@ -173,5 +173,5 @@ def test_named_reference_link_patch_reference() -> None:
     NamedReferenceLink(TextStringObject("third"), source_pdf=None).patch_reference(  # type: ignore[arg-type]
         writer, page, known_names=known_names
     )
-    assert known_names =={"second", "third"}
+    assert known_names == {"second", "third"}
     assert list(writer.named_destinations) == ["first", "third"]

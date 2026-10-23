@@ -64,7 +64,7 @@ class NamedReferenceLink:
         Args:
             target_pdf: PdfWriter which the new link went into.
             new_page: IndirectObject representing the new page in the target PDF.
-            known_names: names of the named destinations of target_pdf, kept up to
+            known_names: Names of the named destinations of target_pdf, kept up to
                 date by this method. Collecting them from target_pdf is expensive,
                 thus callers patching many links should pass them.
         """
