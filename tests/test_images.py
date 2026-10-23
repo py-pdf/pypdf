@@ -79,7 +79,7 @@ def image_similarity(
     diff = ImageChops.difference(image1, image2)
     squared_sums = ImageStat.Stat(diff).sum2
     value_count = diff.width * diff.height * len(squared_sums)
-    mse = sum(squared_sums) / (255.0**2 * value_count)
+    mse = sum(squared_sums) / ((255.0 ** 2) * value_count)
 
     return 1 - mse
 
