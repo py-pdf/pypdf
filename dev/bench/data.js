@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792752386994,
+  "lastUpdate": 1792752447207,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -154975,6 +154975,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006805014135357358",
             "extra": "mean: 623.8865707999992 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82c3c3f3a81a712de06b69252163abdf7d09d4c5",
+          "message": "DOC: Block incremental writes of encrypted documents (#4246)\n\nIncremental updates are written without encryption, which is why\nencrypt() already refuses to run in incremental mode. A source document\nthat is already encrypted was not covered: any modification wrote the\nnew and modified objects, including the decrypted strings and streams\nthey carry over from the original, in cleartext after the encrypted\noriginal data, while the document still declares /Encrypt.\n\nRaise the same NotImplementedError when writing a non-empty increment\nfor an encrypted source document. Writing an unmodified document still\ncopies the original file.\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-23T12:44:34+02:00",
+          "tree_id": "ed0dc087e127310a8a06e2fe064f10438d56f7ba",
+          "url": "https://github.com/py-pdf/pypdf/commit/82c3c3f3a81a712de06b69252163abdf7d09d4c5"
+        },
+        "date": 1792752439389,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.47632667577591,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016803961662241535",
+            "extra": "mean: 42.596101758621884 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 54.405283260788146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006720186566288793",
+            "extra": "mean: 18.380567843136955 msec\nrounds: 51"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.5266606344864782,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024143177499196058",
+            "extra": "mean: 655.024422200006 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.111273175733764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01573868191901418",
+            "extra": "mean: 899.8687468000014 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.6049358509593595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007125496837701377",
+            "extra": "mean: 1.6530678391999971 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8763436945173257,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024973050903469435",
+            "extra": "mean: 532.9514006000068 msec\nrounds: 5"
           }
         ]
       }
