@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792789885643,
+  "lastUpdate": 1792790010767,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -155107,6 +155107,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024973050903469435",
             "extra": "mean: 532.9514006000068 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4e70f624adfe5127cd1dcad51f2bb463cc03ee90",
+          "message": "TST: Speed up image_similarity using ImageStat instead of per-pixel loop (#4248)\n\n* TST: Speed up image_similarity using ImageStat instead of per-pixel loop\n\nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>\n\n* Update tests/test_images.py\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\n\n---------\n\nCo-authored-by: Claude Sonnet 5 <noreply@anthropic.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-23T23:09:22+02:00",
+          "tree_id": "009e6768807a359a8a63a3f3652c6004aa303fbb",
+          "url": "https://github.com/py-pdf/pypdf/commit/4e70f624adfe5127cd1dcad51f2bb463cc03ee90"
+        },
+        "date": 1792789999569,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.593643472615991,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018944907133866096",
+            "extra": "mean: 68.52298412500168 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.72991227577282,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010683368187546255",
+            "extra": "mean: 34.806928416668846 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9715814948581747,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028789865487265948",
+            "extra": "mean: 1.0292497389999937 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.49509181995815466,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09975324231730057",
+            "extra": "mean: 2.0198273526000095 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.38381338210751015,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03791909726956915",
+            "extra": "mean: 2.6054328656000054 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.131921566586563,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02387152360548094",
+            "extra": "mean: 883.453438399988 msec\nrounds: 5"
           }
         ]
       }
