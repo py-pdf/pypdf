@@ -939,6 +939,41 @@ def test_add_named_destination_with_fit(fit, expected):
     assert destination.dest_array[1:] == expected
 
 
+@pytest.mark.parametrize("catalog_dests", [False, True])
+def test_resolve_links__named_destinations(catalog_dests):
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_blank_page(width=100, height=100)
+    source.add_named_destination("Target", 1)
+    link = DictionaryObject({
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Link"),
+        NameObject("/Rect"): RectangleObject([0, 0, 10, 10]),
+        NameObject("/Dest"): TextStringObject("Target"),
+    })
+    source.pages[0][NameObject("/Annots")] = ArrayObject([source._add_object(link) for _ in range(3)])
+    stream = BytesIO()
+    source.write(stream)
+    reader = PdfReader(stream)
+
+    writer = PdfWriter()
+    if catalog_dests:
+        # Takes precedence when reading the named destinations, but new ones are added to /Names.
+        writer.root_object[NameObject("/Dests")] = DictionaryObject()
+    for page in reader.pages:
+        writer.add_page(page)
+    with mock.patch.object(
+        PdfWriter, "_get_named_destinations", autospec=True, side_effect=PdfWriter._get_named_destinations
+    ) as get_named_destinations:
+        writer.write(BytesIO())
+
+    # Collecting the named destinations is expensive, thus it is done once for all links.
+    assert get_named_destinations.call_count == 1
+    # Each name is added once, even if it cannot be read back.
+    assert writer.get_named_dest_root()[::2] == ["Target"]
+    assert writer.get_named_dest_root()[1]["/D"][0] == writer.pages[1].indirect_reference
+
+
 def test_append_with_direct_dests_dictionary():
     """
     Tests for #4027.
