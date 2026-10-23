@@ -64,6 +64,7 @@ class TextExtraction:
                 float,
                 float,
                 float,
+                float,
             ]
         ] = []
 
@@ -76,7 +77,8 @@ class TextExtraction:
         self.memo_tm: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
 
         self.char_scale = 1.0
-        self.space_scale = 1.0
+        self.char_spacing = 0.0
+        self.word_spacing = 0.0
         self._space_width: float = 500.0  # will be set correctly at first Tf
         self._actual_str_size: dict[str, float] = {
             "str_widths": 0.0,
@@ -110,6 +112,7 @@ class TextExtraction:
             b"Q": self._handle_restore_graphics_state,
             b"cm": self._handle_cm,
             b"Tz": self._handle_tz,
+            b"Tc": self._handle_tc,
             b"Tw": self._handle_tw,
             b"TL": self._handle_tl,
             b"Tf": self._handle_tf,
@@ -189,7 +192,7 @@ class TextExtraction:
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
-        text_operands, is_str_operands, font_widths = get_text_operands(
+        text_operands, is_str_operands, font_widths, glyph_count, space_count = get_text_operands(
             operands, cm_matrix, tm_matrix, font, orientations
         )
         if is_str_operands:
@@ -207,7 +210,10 @@ class TextExtraction:
                 visitor_text,
             )
             self.output += completed
-        actual_str_size["str_widths"] += font_widths * font_size
+        # Character and word spacing are given in unscaled text space units,
+        # while the widths are kept in thousandths of them.
+        spacing = self.char_spacing * glyph_count + self.word_spacing * space_count
+        actual_str_size["str_widths"] += font_widths * font_size + spacing * 1000
         actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size
 
@@ -240,7 +246,8 @@ class TextExtraction:
                 self.font,
                 self.font_size,
                 self.char_scale,
-                self.space_scale,
+                self.char_spacing,
+                self.word_spacing,
                 self.TL,
             )
         )
@@ -254,7 +261,8 @@ class TextExtraction:
                 self.font,
                 self.font_size,
                 self.char_scale,
-                self.space_scale,
+                self.char_spacing,
+                self.word_spacing,
                 self.TL,
             ) = self.cm_stack.pop()
         except Exception:
@@ -277,9 +285,13 @@ class TextExtraction:
         """Handle Tz (Set horizontal text scaling) operation - Table 5.2 page 398."""
         self.char_scale = _get_number_operand(operands, 0, 100.0) / 100
 
+    def _handle_tc(self, operands: list[Any]) -> None:
+        """Handle Tc (Set character spacing) operation - Table 5.2 page 398."""
+        self.char_spacing = _get_number_operand(operands, 0, 0.0)
+
     def _handle_tw(self, operands: list[Any]) -> None:
         """Handle Tw (Set word spacing) operation - Table 5.2 page 398."""
-        self.space_scale = 1.0 + _get_number_operand(operands, 0, 0.0)
+        self.word_spacing = _get_number_operand(operands, 0, 0.0)
 
     def _handle_tl(self, operands: list[Any]) -> None:
         """Handle TL (Set Text Leading) operation - Table 5.2 page 398."""
