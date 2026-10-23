@@ -165,9 +165,13 @@ def test_named_reference_link_patch_reference() -> None:
     assert list(writer.named_destinations) == ["first"]
     assert writer.named_destinations["first"].page == page
 
-    # The gien names are used instead of the ones of the writer, and kept up to date.
+    # The given names are used instead of the ones of the writer, and kept up to date.
     known_names = {"second"}
-    NamedReferenceLink(TextStringObject("second"), source_pdf=None).patch_reference(writer, page)  # type: ignore[arg-type]
-    NamedReferenceLink(TextStringObject("third"), source_pdf=None).patch_reference(writer, page)  # type: ignore[arg-type]
+    NamedReferenceLink(TextStringObject("second"), source_pdf=None).patch_reference(  # type: ignore[arg-type]
+        writer, page, known_names=known_names
+    )
+    NamedReferenceLink(TextStringObject("third"), source_pdf=None).patch_reference(  # type: ignore[arg-type]
+        writer, page, known_names=known_names
+    )
     assert known_names =={"second", "third"}
     assert list(writer.named_destinations) == ["first", "third"]

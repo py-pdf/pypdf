@@ -52,18 +52,21 @@ class NamedReferenceLink:
         return destination.page if destination else None
 
     def patch_reference(
-            self,
-            target_pdf: "PdfWriter",
-            new_page: IndirectObject,
-            *,
-            known_names: Optional[set[str]] = None,
-        ) -> None:
+        self,
+        target_pdf: "PdfWriter",
+        new_page: IndirectObject,
+        *,
+        known_names: Optional[set[str]] = None,
+    ) -> None:
         """
-        target_pdf: PdfWriter which the new link went into
-        new_page: IndirectObject representing the new page in the target PDF
-        known_names: names of the named destinations of target_pdf, kept up to date
-            by this method. Collecting them from target_pdf is expensive, thus
-            callers patching many links should pass them.
+        Add the named destination of the link to the new page, unless it exists.
+
+        Args:
+            target_pdf: PdfWriter which the new link went into.
+            new_page: IndirectObject representing the new page in the target PDF.
+            known_names: names of the named destinations of target_pdf, kept up to
+                date by this method. Collecting them from target_pdf is expensive,
+                thus callers patching many links should pass them.
         """
         name = str(self._reference)
         if known_names is None:
