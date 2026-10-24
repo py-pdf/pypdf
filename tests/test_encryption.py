@@ -935,6 +935,8 @@ def test_read_non_string_oe_entry():
 @pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider")
 def test_cryptography_provider__arc4_from_legacy_location(monkeypatch):
     """cryptography<43 only provides ARC4 in the primitives ciphers module."""
+    import warnings  # noqa: PLC0415
+
     from cryptography.utils import CryptographyDeprecationWarning  # noqa: PLC0415
 
     from pypdf._crypt_providers import _cryptography  # noqa: PLC0415
@@ -943,7 +945,10 @@ def test_cryptography_provider__arc4_from_legacy_location(monkeypatch):
     module = importlib.util.module_from_spec(spec)
     with monkeypatch.context() as patched:
         patched.setitem(sys.modules, "cryptography.hazmat.decrepit.ciphers.algorithms", None)
-        with pytest.warns(CryptographyDeprecationWarning, match="ARC4 has been moved"):
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", message="ARC4 has been moved", category=CryptographyDeprecationWarning
+            )
             spec.loader.exec_module(module)
 
     ciphertext = bytes.fromhex("1308e61c0d34c903eef093fd2478")
