@@ -65,6 +65,8 @@ from ._utils import logger_warning
 from .generic import (
     ArrayObject,
     DictionaryObject,
+    IndirectObject,
+    NameObject,
     NullObject,
     NumberObject,
     is_null_or_none,
@@ -270,6 +272,59 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
 
     logger_warning("Could not reliably determine page label for %(index)d.", source=__name__, index=index)
     return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
+
+
+def _flat_nums_end(nums: ArrayObject, count: int) -> Optional[int]:
+    """
+    End of the part of a flat ``/Nums`` array that labels pages 0 to ``count - 1``.
+
+    That part ends with the first key at or above ``count`` after the first
+    pair, which is always read. Returns ``None`` unless it consists of pairs of
+    increasing integer keys and direct values.
+    """
+    previous = None
+    for i in range(0, len(nums), 2):
+        key = nums[i]
+        if (
+            i + 1 >= len(nums)
+            or not isinstance(key, NumberObject)
+            or isinstance(nums[i + 1], IndirectObject)
+            or (previous is not None and key <= previous)
+        ):
+            return None
+        if key >= count and i > 0:
+            return i + 2
+        previous = key
+    return len(nums) or None
+
+
+def index2labels(reader: PdfCommonDocProtocol, count: int) -> list[str]:
+    """
+    Labels of the first ``count`` pages, as ``index2label`` would return them.
+
+    A flat ``/Nums`` array with integer keys in increasing order and direct
+    values is walked once for all pages instead of from the start for every
+    page. Any other number tree is resolved page by page.
+    """
+    if count <= 0:
+        return []
+    root = cast(DictionaryObject, reader.root_object)
+    if "/PageLabels" in root:
+        number_tree = root["/PageLabels"].get_object()
+        if isinstance(number_tree, DictionaryObject) and "/Nums" in number_tree:
+            nums = number_tree["/Nums"]
+            if isinstance(nums, ArrayObject) and (end := _flat_nums_end(nums, count)) is not None:
+                labels = []
+                position = 0
+                for index in range(count):
+                    while position + 2 < end and nums[position + 2] <= index:
+                        position += 2
+                    entry = DictionaryObject(
+                        {NameObject("/Nums"): ArrayObject(nums[position : position + 2])}
+                    )
+                    labels.append(get_label_from_nums(entry, index))
+                return labels
+    return [index2label(reader, index) for index in range(count)]
 
 
 def nums_insert(
