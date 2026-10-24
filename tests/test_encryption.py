@@ -946,14 +946,16 @@ def test_cryptography_provider__arc4_falls_back_to_legacy_import(monkeypatch):
 
     spec = importlib.util.spec_from_file_location("_pypdf_legacy_cryptography_provider", _cryptography.__file__)
     module = importlib.util.module_from_spec(spec)
-    with monkeypatch.context() as patched:
+    with warnings.catch_warnings(), monkeypatch.context() as patched:
+        warnings.filterwarnings("ignore", message="ARC4 has been moved", category=CryptographyDeprecationWarning)
+        try:
+            from cryptography.hazmat.primitives.ciphers.algorithms import ARC4  # noqa: F401, PLC0415
+        except ImportError:
+            pytest.skip("cryptography no longer provides ARC4 in the primitives ciphers module")
+
         # cryptography<43 only provides ARC4 in the primitives ciphers module.
         patched.setitem(sys.modules, "cryptography.hazmat.decrepit.ciphers.algorithms", None)
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", message="ARC4 has been moved", category=CryptographyDeprecationWarning
-            )
-            spec.loader.exec_module(module)
+        spec.loader.exec_module(module)
 
     ciphertext = bytes.fromhex("1308e61c0d34c903eef093fd2478")
     assert module.rc4_encrypt(b"mykey", b"Encrypted text") == ciphertext
