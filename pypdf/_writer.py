@@ -3278,11 +3278,8 @@ class PdfWriter(PdfDocCommon):
         for dest in outlines:
             # TODO: can be improved to keep A and SE entries (ignored for the moment)
             # with np=self.add_outline_item_destination(dest,parent,before)
-            if dest.get("/Type", "") == "/Outlines" or "/Title" not in dest:
-                np = parent
-            else:
-                np = self._clone_outline(dest)
-                cast(TreeObject, parent.get_object()).insert_child(np, before, self)
+            np = self._clone_outline(dest)
+            cast(TreeObject, parent.get_object()).insert_child(np, before, self)
             self._insert_filtered_outline(dest._filtered_children, np, None)
 
     def close(self) -> None:
