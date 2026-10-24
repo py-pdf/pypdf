@@ -7,6 +7,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._page_labels import (
     get_label_from_nums,
     index2label,
+    index2labels,
     number2lowercase_letter,
     number2lowercase_roman_numeral,
     number2uppercase_letter,
@@ -452,3 +453,53 @@ def test_get_label_from_nums__regular__limits(caplog):
     assert caplog.messages == [
         "Ignoring malformed page label entry in /Nums (/St=15000, /P=''): Number is too large."
     ]
+
+
+def _label(style=None, prefix=None, start=None) -> DictionaryObject:
+    entry = DictionaryObject()
+    if style is not None:
+        entry[NameObject("/S")] = NameObject(style)
+    if prefix is not None:
+        entry[NameObject("/P")] = TextStringObject(prefix)
+    if start is not None:
+        entry[NameObject("/St")] = NumberObject(start)
+    return entry
+
+
+@pytest.mark.parametrize(
+    "nums",
+    [
+        [0, _label("/r"), 4, _label("/D"), 10, _label("/A", "App-")],
+        [3, _label("/D", start=7)],
+        [0, _label("/D"), 1, _label("/R"), 2, _label(prefix="Cover")],
+        [0, _label("/X"), 5, _label("/D")],
+        [0, NullObject(), 6, _label("/a")],
+        [8, _label("/D"), 2, _label("/r")],
+        [0, _label("/D"), 5],
+        [0, _label("/D"), 0, _label("/r")],
+        [40, _label("/D")],
+        [40, _label("/D"), 0, _label("/r")],
+        [40, _label("/D"), 50, _label("/r")],
+        [k for i in range(100) for k in (i * 3, _label("/D", f"P{i}-"))],
+        [0, _label("/D"), 10, _label("/r"), 50],
+    ],
+)
+def test_index2labels_matches_index2label(nums, caplog):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {NameObject("/Nums"): ArrayObject(NumberObject(n) if isinstance(n, int) else n for n in nums)}
+    )
+
+    expected = [index2label(reader, index) for index in range(30)]
+    expected_messages = caplog.messages[:]
+    caplog.clear()
+
+    assert index2labels(reader, 30) == expected
+    assert caplog.messages == expected_messages
+
+
+def test_index2labels__no_pages():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.root_object[NameObject("/PageLabels")] = NullObject()
+
+    assert index2labels(reader, 0) == []
