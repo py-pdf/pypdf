@@ -1,5 +1,6 @@
 """Test the pypdf._encryption module."""
 import hashlib
+import importlib.util
 import os
 import re
 import secrets
@@ -11,6 +12,7 @@ from typing import NoReturn
 import pytest
 
 import pypdf
+import pypdf._crypt_providers._fallback
 from pypdf import PasswordType, PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
@@ -928,3 +930,50 @@ def test_read_non_string_oe_entry():
     entry[NameObject("/OE")] = NumberObject(42)
     with pytest.raises(PdfReadError, match=r"^/OE entry of the encryption dictionary is not a string$"):
         Encryption.read(entry, b"")
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider")
+def test_cryptography_provider__arc4_from_legacy_location(monkeypatch):
+    """cryptography<43 only provides ARC4 in the primitives ciphers module."""
+    from cryptography.utils import CryptographyDeprecationWarning  # noqa: PLC0415
+
+    from pypdf._crypt_providers import _cryptography  # noqa: PLC0415
+
+    spec = importlib.util.spec_from_file_location("_pypdf_legacy_cryptography_provider", _cryptography.__file__)
+    module = importlib.util.module_from_spec(spec)
+    with monkeypatch.context() as patched:
+        patched.setitem(sys.modules, "cryptography.hazmat.decrepit.ciphers.algorithms", None)
+        with pytest.warns(CryptographyDeprecationWarning, match="ARC4 has been moved"):
+            spec.loader.exec_module(module)
+
+    ciphertext = bytes.fromhex("1308e61c0d34c903eef093fd2478")
+    assert module.rc4_encrypt(b"mykey", b"Encrypted text") == ciphertext
+
+
+@pytest.mark.parametrize(
+    ("function_name", "args"),
+    [
+        ("aes_ecb_encrypt", (b"k" * 16, b"d" * 16)),
+        ("aes_ecb_decrypt", (b"k" * 16, b"d" * 16)),
+        ("aes_cbc_encrypt", (b"k" * 16, b"i" * 16, b"d" * 16)),
+        ("aes_cbc_decrypt", (b"k" * 16, b"i" * 16, b"d" * 16)),
+    ],
+)
+def test_fallback_provider__aes_requires_dependency(function_name, args):
+    """Without a crypto library, every AES helper of the fallback provider refuses to work."""
+    function = getattr(pypdf._crypt_providers._fallback, function_name)
+    with pytest.raises(DependencyError, match=rf"^{re.escape(_DEPENDENCY_ERROR_STR)}$"):
+        function(*args)
+
+
+def test_encrypt__empty_owner_password_uses_user_password():
+    """An empty owner password is replaced by the user password (Algorithm 3, step a)."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer.encrypt(user_password="userpwd", owner_password="", algorithm="RC4-128")
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output)
+    assert reader.decrypt("userpwd") == PasswordType.OWNER_PASSWORD
+    assert len(reader.pages) == 1
