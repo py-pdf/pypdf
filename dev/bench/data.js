@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792874195720,
+  "lastUpdate": 1792874326348,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -155371,6 +155371,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026012519740368244",
             "extra": "mean: 631.0491393999996 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0f196923094c27d53697399f22798a73fd70c601",
+          "message": "MAINT: Remove unreachable code (#4252)\n\n* MAINT: Remove unreachable code\n\nThese statements can never run, so no test can cover them and readers\nhave to work out why they exist. Removing them does not change the\nbehavior:\n\n* NameObject.surfix: deprecation_with_replacement() always raises (it is\n  typed NoReturn), so the `return b\"/\"` after it is dead. The property is\n  now typed NoReturn, like PdfDocCommon.decode_permissions.\n* Version._parse_version: the pattern `^(\\d+)(.*)$` only matches with a\n  non-empty first group, so `integer_prefix` is never None.\n* DictionaryObject.read_from_stream: read_non_whitespace() already skips\n  NUL bytes (they are PDF whitespace), so it never returns b\"\\x00\".\n* PdfWriter._insert_filtered_outline: the destinations come from\n  _get_filtered_outline(), which only creates them via\n  _build_outline_item(). Those always have a /Title (an empty one if the\n  outline item has none) and use the fit type as /Type, so the branch\n  for \"/Type /Outlines or no /Title\" is never taken.\n\nThis removes 7 statements; the test suite and mypy pass unchanged.\n\nThis is the same kind of cleanup as #3833 (an unreachable return in\nread_until_regex, reported in #3828) and #3819 (typing the\nalways-raising deprecation helpers as NoReturn).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Undo writer change\n\n---------\n\nCo-authored-by: Martin Thoma <thoma1990@gmx.net>\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-24T22:34:25+02:00",
+          "tree_id": "504ffe2d716a922c3fbc49b01cffc7e327fb6258",
+          "url": "https://github.com/py-pdf/pypdf/commit/0f196923094c27d53697399f22798a73fd70c601"
+        },
+        "date": 1792874313930,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.672561155359059,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0179179501315717",
+            "extra": "mean: 68.1544271249983 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.838464079909585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010552759525130148",
+            "extra": "mean: 33.513789359999464 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9793987759210481,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02832274912959037",
+            "extra": "mean: 1.0210345617999963 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5256204441409764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05881620100400727",
+            "extra": "mean: 1.9025135174000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.38695631278675974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013619581244924567",
+            "extra": "mean: 2.5842710583999975 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.170520405293276,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028386498529787207",
+            "extra": "mean: 854.3208605999894 msec\nrounds: 5"
           }
         ]
       }
