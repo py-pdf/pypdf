@@ -66,9 +66,9 @@ from .constants import LzwFilterParameters as LZW
 from .errors import DependencyError, LimitReachedError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
+    BooleanObject,
     DictionaryObject,
     IndirectObject,
-    NullObject,
     NumberObject,
     PdfObject,
     StreamObject,
@@ -198,13 +198,10 @@ class FlateDecode:
         """
         str_data = decompress(data)
 
-        processed_parms: Optional[PdfObject] = decode_parms
-        if isinstance(decode_parms, IndirectObject) and processed_parms is not None:
-            processed_parms = processed_parms.get_object()
-        if isinstance(processed_parms, dict):
-            parameters = processed_parms
+        if isinstance(decode_parms, dict):
+            parameters = decode_parms
         else:
-            if not is_null_or_none(processed_parms):
+            if not is_null_or_none(decode_parms):
                 logger_warning(
                     "Detected invalid /DecodeParms, results might be incorrect: %(value)s (type %(type_name)s)",
                     source=__name__, value=decode_parms, type_name=decode_parms.__class__.__name__,
@@ -742,26 +739,44 @@ class CCITTFaxDecode:
         parameters: Union[ArrayObject, DictionaryObject, IndirectObject, None],
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
-        ccitt_parameters = CCITTParameters(rows=int(rows))
+        def get_integer(value: Any, key: str) -> int:
+            if isinstance(value, PdfObject):
+                value = value.get_object()
+            if not isinstance(value, int):
+                raise PdfReadError(f"Expected integer for {key}, got {type(value).__name__}: {value!r}!")
+            return value
+
+        def get_boolean(value: Any, key: str) -> bool:
+            if not isinstance(value, BooleanObject):
+                raise PdfReadError(f"Expected boolean for {key}, got {type(value).__name__}: {value!r}!")
+            return value.value
+
+        ccitt_parameters = CCITTParameters(
+            rows=0 if is_null_or_none(rows) else get_integer(rows, CCITT.ROWS)
+        )
         if parameters:
-            parameters_unwrapped = cast(
-                Union[ArrayObject, DictionaryObject], parameters.get_object()
-            )
+            parameters_unwrapped = parameters.get_object()
             if isinstance(parameters_unwrapped, ArrayObject):
-                for decode_parm in parameters_unwrapped:
-                    if CCITT.K in decode_parm:
-                        ccitt_parameters.K = decode_parm[CCITT.K].get_object()
-                    if CCITT.COLUMNS in decode_parm:
-                        ccitt_parameters.columns = decode_parm[CCITT.COLUMNS].get_object()
-                    if CCITT.BLACK_IS_1 in decode_parm:
-                        ccitt_parameters.BlackIs1 = decode_parm[CCITT.BLACK_IS_1].get_object().value
+                decode_parm_list = list(parameters_unwrapped)
             else:
-                if CCITT.K in parameters_unwrapped:
-                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore[assignment]
-                if CCITT.COLUMNS in parameters_unwrapped:
-                    ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore[assignment]
-                if CCITT.BLACK_IS_1 in parameters_unwrapped:
-                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore[union-attr]
+                decode_parm_list = [parameters_unwrapped]
+            for decode_parm in decode_parm_list:
+                if isinstance(decode_parm, PdfObject):
+                    decode_parm = decode_parm.get_object()
+                if is_null_or_none(decode_parm):
+                    continue
+                if not isinstance(decode_parm, dict):
+                    logger_warning(
+                        "Ignoring invalid DecodeParms entry: %(value)s",
+                        source=__name__, value=decode_parm,
+                    )
+                    continue
+                if CCITT.K in decode_parm:
+                    ccitt_parameters.K = get_integer(decode_parm[CCITT.K], CCITT.K)
+                if CCITT.COLUMNS in decode_parm:
+                    ccitt_parameters.columns = get_integer(decode_parm[CCITT.COLUMNS], CCITT.COLUMNS)
+                if CCITT.BLACK_IS_1 in decode_parm:
+                    ccitt_parameters.BlackIs1 = get_boolean(decode_parm[CCITT.BLACK_IS_1], CCITT.BLACK_IS_1)
 
         if ccitt_parameters.columns < 0 or ccitt_parameters.columns > CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG:
             raise PdfReadError(
@@ -967,9 +982,16 @@ def decode_stream_data(stream: StreamObject) -> bytes:
     for filter_name, params in zip(filters, decode_parms):
         _check_decoding_work(amount=len(data))
 
-        if isinstance(params, NullObject):
+        params = params.get_object()
+        if is_null_or_none(params):
             # The decoders are typed for a DictionaryObject; a plain {} is not
             # one, so a null /DecodeParms entry would hand them the wrong type.
+            params = DictionaryObject()
+        elif not isinstance(params, (dict, list)):
+            logger_warning(
+                "Ignoring invalid DecodeParms: %(value)s",
+                source=__name__, value=params,
+            )
             params = DictionaryObject()
         if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.AHx, new_name=FT.ASCII_HEX_DECODE)
@@ -988,7 +1010,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
             data = RunLengthDecode.decode(data)
         elif filter_name in (FT.CCITT_FAX_DECODE, FTA.CCF):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.CCF, new_name=FT.CCITT_FAX_DECODE)
-            height = stream.get(ImageAttributes.HEIGHT, ())
+            height = stream.get(ImageAttributes.HEIGHT, 0)
             data = CCITTFaxDecode.decode(data, params, height)
         elif filter_name in (FT.DCT_DECODE, FTA.DCT):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.DCT, new_name=FT.DCT_DECODE)
