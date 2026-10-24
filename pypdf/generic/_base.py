@@ -32,7 +32,7 @@ import sys
 from collections.abc import Sequence
 from math import log10
 from struct import iter_unpack
-from typing import Any, Callable, ClassVar, Optional, Union, cast
+from typing import Any, Callable, ClassVar, NoReturn, Optional, Union, cast
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeGuard
@@ -891,9 +891,8 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         return NameObject("/" + name)
 
     @classproperty
-    def surfix(cls) -> bytes:  # noqa: N805
+    def surfix(cls) -> NoReturn:  # noqa: N805
         deprecation_with_replacement("surfix", "prefix", "5.0.0")
-        return b"/"
 
     @staticmethod
     def unnumber(sin: bytes) -> bytes:
