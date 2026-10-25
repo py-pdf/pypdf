@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792939174353,
+  "lastUpdate": 1792939249572,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -155503,6 +155503,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028386498529787207",
             "extra": "mean: 854.3208605999894 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "53cf2b692435b609fca8f1c5cb579388cf5734ed",
+          "message": "ROB: Treat a BT inside a text object as a text matrix reset in layout mode (#4242)",
+          "timestamp": "2026-10-25T15:36:28+01:00",
+          "tree_id": "28a26531687ad52ef0fcbfa9825d3959fe733775",
+          "url": "https://github.com/py-pdf/pypdf/commit/53cf2b692435b609fca8f1c5cb579388cf5734ed"
+        },
+        "date": 1792939237560,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.531791002542262,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019700893910189667",
+            "extra": "mean: 68.81464231250334 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.78439788035475,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009213531810410918",
+            "extra": "mean: 35.99142239130762 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9283271844690941,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025504464977214404",
+            "extra": "mean: 1.0772064168000157 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.40331627120196345,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15451337144081193",
+            "extra": "mean: 2.4794437303999644 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3779142709729888,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024831985958084064",
+            "extra": "mean: 2.6461027720000403 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1324759134717213,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03539679222237129",
+            "extra": "mean: 883.0209879999984 msec\nrounds: 5"
           }
         ]
       }
