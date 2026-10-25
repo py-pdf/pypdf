@@ -455,7 +455,7 @@ def test_get_label_from_nums__regular__limits(caplog):
     ]
 
 
-def _label(style=None, prefix=None, start=None) -> DictionaryObject:
+def _build_label(*, style=None, prefix=None, start=None) -> DictionaryObject:
     entry = DictionaryObject()
     if style is not None:
         entry[NameObject("/S")] = NameObject(style)
@@ -469,19 +469,37 @@ def _label(style=None, prefix=None, start=None) -> DictionaryObject:
 @pytest.mark.parametrize(
     "nums",
     [
-        [0, _label("/r"), 4, _label("/D"), 10, _label("/A", "App-")],
-        [3, _label("/D", start=7)],
-        [0, _label("/D"), 1, _label("/R"), 2, _label(prefix="Cover")],
-        [0, _label("/X"), 5, _label("/D")],
-        [0, NullObject(), 6, _label("/a")],
-        [8, _label("/D"), 2, _label("/r")],
-        [0, _label("/D"), 5],
-        [0, _label("/D"), 0, _label("/r")],
-        [40, _label("/D")],
-        [40, _label("/D"), 0, _label("/r")],
-        [40, _label("/D"), 50, _label("/r")],
-        [k for i in range(100) for k in (i * 3, _label("/D", f"P{i}-"))],
-        [0, _label("/D"), 10, _label("/r"), 50],
+        pytest.param(
+            [0, _build_label(style="/r"), 4, _build_label(style="/D"), 10, _build_label(style="/A", prefix="App-")],
+            id="roman-decimal-letters-with-prefix",
+        ),
+        pytest.param([3, _build_label(style="/D", start=7)], id="first-key-after-first-page-with-start"),
+        pytest.param(
+            [0, _build_label(style="/D"), 1, _build_label(style="/R"), 2, _build_label(prefix="Cover")],
+            id="prefix-without-style",
+        ),
+        pytest.param([0, _build_label(style="/X"), 5, _build_label(style="/D")], id="unknown-style"),
+        pytest.param([0, NullObject(), 6, _build_label(style="/a")], id="value-not-a-dictionary"),
+        pytest.param([8, _build_label(style="/D"), 2, _build_label(style="/r")], id="keys-not-sorted"),
+        pytest.param([0, _build_label(style="/D"), 5], id="last-key-without-value"),
+        pytest.param([0, _build_label(style="/D"), 0, _build_label(style="/r")], id="duplicate-keys"),
+        pytest.param([40, _build_label(style="/D")], id="only-key-after-last-page"),
+        pytest.param(
+            [40, _build_label(style="/D"), 0, _build_label(style="/r")],
+            id="first-key-after-last-page-then-smaller-key",
+        ),
+        pytest.param(
+            [40, _build_label(style="/D"), 50, _build_label(style="/r")],
+            id="first-key-after-last-page-then-larger-key",
+        ),
+        pytest.param(
+            [key for i in range(100) for key in (i * 3, _build_label(style="/D", prefix=f"P{i}-"))],
+            id="more-ranges-than-pages",
+        ),
+        pytest.param(
+            [0, _build_label(style="/D"), 10, _build_label(style="/r"), 50],
+            id="key-without-value-after-last-page",
+        ),
     ],
 )
 def test_index2labels_matches_index2label(nums, caplog):

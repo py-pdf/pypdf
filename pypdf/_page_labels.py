@@ -274,57 +274,68 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
 
 
-def _flat_nums_end(nums: ArrayObject, count: int) -> Optional[int]:
+def _get_single_pass_nums_length(nums: ArrayObject, page_count: int) -> Optional[int]:
     """
-    End of the part of a flat ``/Nums`` array that labels pages 0 to ``count - 1``.
+    Get how much of a flat ``/Nums`` array labels the first ``page_count`` pages.
 
-    That part ends with the first key at or above ``count`` after the first
-    pair, which is always read. Returns ``None`` unless it consists of pairs of
-    increasing integer keys and direct values.
+    ``get_label_from_nums`` always reads the first pair, then stops at the first
+    key above the page index, so only the array up to the first key at or above
+    ``page_count`` after the first pair matters. Returns ``None`` unless that
+    part consists of pairs of increasing integer keys and direct values, which
+    is what lets ``index2labels`` read it once for all pages.
     """
+    nums_length = len(nums)
     previous = None
-    for i in range(0, len(nums), 2):
+    for i in range(0, nums_length, 2):
         key = nums[i]
         if (
-            i + 1 >= len(nums)
+            i + 1 >= nums_length
             or not isinstance(key, NumberObject)
             or isinstance(nums[i + 1], IndirectObject)
             or (previous is not None and key <= previous)
         ):
             return None
-        if key >= count and i > 0:
+        if key >= page_count and i > 0:
             return i + 2
         previous = key
-    return len(nums) or None
+    return nums_length or None
 
 
-def index2labels(reader: PdfCommonDocProtocol, count: int) -> list[str]:
+def _index2labels_page_by_page(pdf: PdfCommonDocProtocol, page_count: int) -> list[str]:
+    return [index2label(pdf, index) for index in range(page_count)]
+
+
+def index2labels(pdf: PdfCommonDocProtocol, page_count: int) -> list[str]:
     """
-    Labels of the first ``count`` pages, as ``index2label`` would return them.
+    Labels of the first ``page_count`` pages, as ``index2label`` would return them.
 
     A flat ``/Nums`` array with integer keys in increasing order and direct
     values is walked once for all pages instead of from the start for every
     page. Any other number tree is resolved page by page.
     """
-    if count <= 0:
+    if page_count <= 0:
         return []
-    root = cast(DictionaryObject, reader.root_object)
-    if "/PageLabels" in root:
-        number_tree = root["/PageLabels"].get_object()
-        if isinstance(number_tree, DictionaryObject) and "/Nums" in number_tree:
-            nums = number_tree["/Nums"]
-            if isinstance(nums, ArrayObject) and (end := _flat_nums_end(nums, count)) is not None:
-                labels = []
-                position = 0
-                for index in range(count):
-                    while position + 2 < end and nums[position + 2] <= index:
-                        position += 2
-                    entry = DictionaryObject(
-                        {NameObject("/Nums"): ArrayObject(nums[position : position + 2])}
-                    )
-                    labels.append(get_label_from_nums(entry, index))
-                return labels
-    return [index2label(reader, index) for index in range(count)]
+    root = cast(DictionaryObject, pdf.root_object)
+    if "/PageLabels" not in root:
+        return _index2labels_page_by_page(pdf, page_count)
+    number_tree = root["/PageLabels"].get_object()
+    if not isinstance(number_tree, DictionaryObject) or "/Nums" not in number_tree:
+        return _index2labels_page_by_page(pdf, page_count)
+    nums = number_tree["/Nums"]
+    if not isinstance(nums, ArrayObject):
+        return _index2labels_page_by_page(pdf, page_count)
+    nums_length = _get_single_pass_nums_length(nums, page_count)
+    if nums_length is None:
+        return _index2labels_page_by_page(pdf, page_count)
+
+    labels = []
+    position = 0
+    for index in range(page_count):
+        while position + 2 < nums_length and nums[position + 2] <= index:
+            position += 2
+        entry = DictionaryObject({NameObject("/Nums"): ArrayObject(nums[position : position + 2])})
+        labels.append(get_label_from_nums(entry, index))
+    return labels
 
 
 def nums_insert(
