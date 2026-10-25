@@ -1419,7 +1419,25 @@ def test_wrapped_table_cell_line_is_not_split():
             b"1 0 0 1 100 706 Tm (BBB) Tj ET"
         )
     ).pages[0].extract_text()
-    assert [line for line in text.splitlines() if "LBL" in line] == ["LBL AAABBB"]
+    assert [line for line in text.splitlines() if "LBL" in line] == ["LBL AAA BBB"]
+
+
+def test_wrapped_table_cell_lines_are_separated():
+    """Wrapped cell lines must not be glued together. Regression #4254."""
+    # The second line of each cell moved to another baseline but is kept on the
+    # label's line by the line span, so it needs the space the horizontal gap
+    # test alone cannot provide.
+    text = PdfReader(
+        _page_with_helvetica(
+            b"BT /F1 10 Tf "
+            b"1 0 0 1 72 700 Tm (Row) Tj "
+            b"1 0 0 1 160 706 Tm (Alpha) Tj "
+            b"1 0 0 1 160 694 Tm (Beta) Tj "
+            b"1 0 0 1 240 706 Tm (Gamma) Tj "
+            b"1 0 0 1 240 694 Tm (Delta) Tj ET"
+        )
+    ).pages[0].extract_text()
+    assert text == "Row Alpha Beta Gamma Delta"
 
 
 def test_visitor_text_uses_current_text_matrix():
