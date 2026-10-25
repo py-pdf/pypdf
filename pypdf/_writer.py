@@ -3207,6 +3207,9 @@ class PdfWriter(PdfDocCommon):
         node = node.get_object()
         if is_null_or_none(node):
             node = DictionaryObject()
+        if not isinstance(node, DictionaryObject):
+            logger_warning("Outline node is not a dictionary: %(node)s", source=__name__, node=node)
+            return new_outline
 
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node_id = id(node)
@@ -3223,6 +3226,9 @@ class PdfWriter(PdfDocCommon):
             cloned_page: Union[IndirectObject, NullObject, None]
             while True:
                 node = node.get_object()
+                if not isinstance(node, DictionaryObject):
+                    logger_warning("Outline node is not a dictionary: %(node)s", source=__name__, node=node)
+                    break
                 node_id = id(node)
                 if node_id in visited:
                     logger_warning("Detected cycle in outlines.", source=__name__)
