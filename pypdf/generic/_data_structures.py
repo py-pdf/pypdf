@@ -633,8 +633,6 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         remaining_count = get_configuration().dictionary_maximum_element_count
         while True:
             tok = read_non_whitespace(stream)
-            if tok == b"\x00":
-                continue
             if tok == b"%":
                 stream.seek(-1, 1)
                 skip_over_comment(stream)

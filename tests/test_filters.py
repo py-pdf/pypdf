@@ -1426,6 +1426,80 @@ def test_ccitt_get_parameters__limits(parameters, rows, expected_message):
         CCITTFaxDecode._get_parameters(parameters=parameters, rows=rows)
 
 
+@pytest.mark.parametrize(
+    ("parameters", "rows", "expected_message"),
+    [
+        (
+            DictionaryObject({NameObject("/K"): NameObject("/Wrong")}),
+            42,
+            r"^Expected integer for /K, got NameObject: '/Wrong'!$"
+        ),
+        (
+            DictionaryObject({NameObject("/Columns"): TextStringObject("x")}),
+            42,
+            r"^Expected integer for /Columns, got TextStringObject: 'x'!$"
+        ),
+        (
+            DictionaryObject({NameObject("/BlackIs1"): NumberObject(5)}),
+            42,
+            r"^Expected boolean for /BlackIs1, got NumberObject: 5!$"
+        ),
+        (
+            None,
+            NameObject("/Nope"),
+            r"^Expected integer for /Rows, got NameObject: '/Nope'!$"
+        ),
+    ],
+    ids=["k-name", "columns-string", "black-is-1-number", "rows-name"]
+)
+def test_ccitt_get_parameters__invalid_types(parameters, rows, expected_message):
+    with pytest.raises(expected_exception=PdfReadError, match=expected_message):
+        CCITTFaxDecode._get_parameters(parameters=parameters, rows=rows)
+
+
+def test_ccitt_get_parameters__skip_null_and_invalid_entries(caplog):
+    parameters = CCITTFaxDecode._get_parameters(
+        parameters=ArrayObject([
+            NullObject(),
+            NumberObject(7),
+            DictionaryObject({NameObject("/K"): NumberObject(-1)}),
+        ]),
+        rows=NullObject(),
+    )
+    assert parameters.K == -1
+    assert parameters.rows == 0
+    assert "Ignoring invalid DecodeParms entry: 7" in caplog.text
+
+
+def test_decode_stream_data__ccitt_fax_decode_without_height() -> None:
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(b"\x00")
+    content_stream[NameObject("/Filter")] = NameObject("/CCITTFaxDecode")
+
+    result = decode_stream_data(content_stream)
+    assert result.endswith(b"\x00")
+
+
+def test_decode_stream_data__non_dictionary_decode_parms(caplog) -> None:
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(b"hello")
+    content_stream[NameObject("/Filter")] = NameObject("/Crypt")
+    content_stream[NameObject("/DecodeParms")] = NumberObject(5)
+
+    assert decode_stream_data(content_stream) == b"hello"
+    assert "Ignoring invalid DecodeParms: 5" in caplog.text
+
+
+def test_decode_stream_data__null_decode_parms(caplog) -> None:
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(b"hello")
+    content_stream[NameObject("/Filter")] = NameObject("/Crypt")
+    content_stream[NameObject("/DecodeParms")] = NullObject()
+
+    assert decode_stream_data(content_stream) == b"hello"
+    assert caplog.text == ""
+
+
 def test_decode_stream_data__filter_limit() -> None:
     content_stream = ContentStream(stream=None, pdf=None)
     content_stream.set_data(b"INVALID")

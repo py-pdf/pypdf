@@ -721,6 +721,28 @@ def test_td_operator_with_missing_or_non_numeric_operands(operator: bytes) -> No
 
 
 @pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        pytest.param(b"BT /F1 12 Tf 72 700 Td BT (Hello) Tj ET ET", ["Hello"], id="nested-text-object"),
+        pytest.param(b"BT /F1 12 Tf 72 700 Td (Hello) Tj BT ET", ["Hello"], id="nested-bt-takes-the-et"),
+        pytest.param(
+            b"BT /F1 12 Tf 72 700 Td (Hello) Tj BT 72 650 Td (World) Tj ET ET",
+            ["Hello", "World"],
+            id="text-before-and-after",
+        ),
+    ],
+)
+def test_layout_mode_bt_inside_a_text_object(content: bytes, expected: list[str]) -> None:
+    """A BT inside a text object resets the text matrix and the text object ends at
+    the first ET, so layout mode shows each string once, as plain mode does.
+    """
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    lines = [line.strip() for line in page.extract_text(extraction_mode="layout").splitlines() if line.strip()]
+    assert lines == expected
+    assert page.extract_text().split() == expected
+
+
+@pytest.mark.parametrize(
     "operator",
     [b"/X Tz", b"/X Tc", b"/X Ts", b"/X Tw", b"/X TL T*", b"/X /Y Td", b"/X 0 0 1 0 0 Tm"],
 )
