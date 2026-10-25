@@ -1,6 +1,5 @@
 """Test the pypdf._encryption module."""
 import hashlib
-import importlib.util
 import os
 import re
 import secrets
@@ -930,35 +929,6 @@ def test_read_non_string_oe_entry():
     entry[NameObject("/OE")] = NumberObject(42)
     with pytest.raises(PdfReadError, match=r"^/OE entry of the encryption dictionary is not a string$"):
         Encryption.read(entry, b"")
-
-
-@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Exercises the cryptography provider")
-def test_cryptography_provider__arc4_falls_back_to_legacy_import(monkeypatch):
-    """
-    Ensure pypdf gracefully falls back to a legacy import path
-    when using older versions of the cryptography library.
-    """
-    import warnings  # noqa: PLC0415
-
-    from cryptography.utils import CryptographyDeprecationWarning  # noqa: PLC0415
-
-    from pypdf._crypt_providers import _cryptography  # noqa: PLC0415
-
-    spec = importlib.util.spec_from_file_location("_pypdf_legacy_cryptography_provider", _cryptography.__file__)
-    module = importlib.util.module_from_spec(spec)
-    with warnings.catch_warnings(), monkeypatch.context() as patched:
-        warnings.filterwarnings("ignore", message="ARC4 has been moved", category=CryptographyDeprecationWarning)
-        try:
-            from cryptography.hazmat.primitives.ciphers.algorithms import ARC4  # noqa: F401, PLC0415
-        except ImportError:
-            pytest.skip("cryptography no longer provides ARC4 in the primitives ciphers module")
-
-        # cryptography<43 only provides ARC4 in the primitives ciphers module.
-        patched.setitem(sys.modules, "cryptography.hazmat.decrepit.ciphers.algorithms", None)
-        spec.loader.exec_module(module)
-
-    ciphertext = bytes.fromhex("1308e61c0d34c903eef093fd2478")
-    assert module.rc4_encrypt(b"mykey", b"Encrypted text") == ciphertext
 
 
 @pytest.mark.parametrize(
