@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792942956777,
+  "lastUpdate": 1792944396113,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -120851,6 +120851,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0007551846074346703",
             "extra": "mean: 628.6565761999952 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7dc7db98093cb0f3e89a3ef35b33807731d543f7",
+          "message": "TST: Cover the fallback paths of the crypto providers (#4253)\n\n* TST: Cover the fallback paths of the crypto providers\n\nSome fallbacks of the crypto providers were not exercised by any entry of\nthe CI matrix:\n\n* the import of ARC4 from its location before cryptography 43.0. The test\n  loads the provider module under another name while\n  cryptography.hazmat.decrepit is unavailable, which works with every\n  cryptography release that still provides the old location.\n* aes_ecb_encrypt()/aes_ecb_decrypt() of the pure-Python fallback, which\n  have to raise DependencyError. The new test checks all four AES\n  helpers directly, independent of the installed crypto library.\n* Encryption.write_entry() with an empty owner password, which uses the\n  user password instead (algorithm 3, step a). It is reachable through\n  PdfWriter.encrypt(owner_password=\"\").\n\nWith this, pypdf/_crypt_providers/ and pypdf/_encryption.py are fully\ncovered when the coverage data of the CI matrix is combined.\n\nThe covered code was added in #2765 (ARC4 moved in cryptography 43),\n#2000 (the fallback provider) and #1917 (owner password handling).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Update test to ignore ARC4 deprecation warning\n\nSuppress deprecation warning for ARC4 in tests as it was only added with cryptography>=43. pypdf allows older versions, so the test should not fail with older versions.\n\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>\n\n* Better test name\n\n* Skip ARC4 legacy import test when cryptography dropped the export\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Remove test_cryptography_provider__arc4_falls_back_to_legacy_import\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",
+          "timestamp": "2026-10-25T17:03:36+01:00",
+          "tree_id": "e8130cb78ba185866cc414379d1f74ab8c1d1194",
+          "url": "https://github.com/py-pdf/pypdf/commit/7dc7db98093cb0f3e89a3ef35b33807731d543f7"
+        },
+        "date": 1792944384819,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.795417061325945,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007656508514156133",
+            "extra": "mean: 357.7283740000041 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.49726300010196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019201275293813218",
+            "extra": "mean: 44.44985152173701 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24929673229775937,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015676902402897257",
+            "extra": "mean: 4.0112840259999984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.4123585137405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000724495999296956",
+            "extra": "mean: 57.43047383333374 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07719886837794845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0623686620355915",
+            "extra": "mean: 12.95355775299999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5106515852936497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002965033192087532",
+            "extra": "mean: 661.9660084000202 msec\nrounds: 5"
           }
         ]
       }
