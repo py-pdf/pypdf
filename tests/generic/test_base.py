@@ -174,3 +174,10 @@ def test_pdf_reader__read_object_header__limits(caplog: pytest.LogCaptureFixture
         return IndirectObject(idnum, generation, pdf=None)
 
     _check_indirect_object_reading_limits(test_function, should_raise=False)
+
+
+def test_indirect_object__int() -> None:
+    writer = PdfWriter()
+    reference = writer._add_object(NumberObject(42))
+    assert isinstance(reference, IndirectObject)
+    assert int(reference) == 42
