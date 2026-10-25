@@ -521,3 +521,16 @@ def test_index2labels__no_pages():
     reader.root_object[NameObject("/PageLabels")] = NullObject()
 
     assert index2labels(reader, 0) == []
+
+
+def test_index2labels__nums_not_an_array(caplog):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {NameObject("/Nums"): DictionaryObject({NameObject("/A"): NumberObject(1)})}
+    )
+    expected = [index2label(reader, index) for index in range(3)]
+    expected_messages = caplog.messages[:]
+    caplog.clear()
+
+    assert index2labels(reader, 3) == expected
+    assert caplog.messages == expected_messages
