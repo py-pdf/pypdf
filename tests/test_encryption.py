@@ -11,6 +11,7 @@ from typing import NoReturn
 import pytest
 
 import pypdf
+import pypdf._crypt_providers._fallback
 from pypdf import PasswordType, PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
@@ -928,3 +929,32 @@ def test_read_non_string_oe_entry():
     entry[NameObject("/OE")] = NumberObject(42)
     with pytest.raises(PdfReadError, match=r"^/OE entry of the encryption dictionary is not a string$"):
         Encryption.read(entry, b"")
+
+
+@pytest.mark.parametrize(
+    ("function_name", "args"),
+    [
+        ("aes_ecb_encrypt", (b"k" * 16, b"d" * 16)),
+        ("aes_ecb_decrypt", (b"k" * 16, b"d" * 16)),
+        ("aes_cbc_encrypt", (b"k" * 16, b"i" * 16, b"d" * 16)),
+        ("aes_cbc_decrypt", (b"k" * 16, b"i" * 16, b"d" * 16)),
+    ],
+)
+def test_fallback_provider__aes_requires_dependency(function_name, args):
+    """Without a crypto library, every AES helper of the fallback provider refuses to work."""
+    function = getattr(pypdf._crypt_providers._fallback, function_name)
+    with pytest.raises(DependencyError, match=rf"^{re.escape(_DEPENDENCY_ERROR_STR)}$"):
+        function(*args)
+
+
+def test_encrypt__empty_owner_password_uses_user_password():
+    """An empty owner password is replaced by the user password (Algorithm 3, step a)."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer.encrypt(user_password="userpwd", owner_password="", algorithm="RC4-128")
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output)
+    assert reader.decrypt("userpwd") == PasswordType.OWNER_PASSWORD
+    assert len(reader.pages) == 1
