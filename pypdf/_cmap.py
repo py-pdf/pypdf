@@ -139,7 +139,7 @@ def _parse_encoding(
             else:  # isinstance(o, str):
                 try:
                     if x < len(encoding):
-                        encoding[x] = adobe_glyphs[o]  # type: ignore[index]
+                        encoding[x] = _glyph_name_to_unicode(o) or o  # type: ignore[index]
                 except Exception:
                     encoding[x] = o  # type: ignore[index]
                 x += 1
@@ -463,10 +463,14 @@ def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
     try:
         return adobe_glyphs[glyph_name]
     except KeyError:
-        if not glyph_name.startswith("/uni"):
+        if glyph_name.startswith("/uni"):
+            code_point = glyph_name[4:]
+        elif glyph_name.startswith("/u"):
+            code_point = glyph_name[2:]
+        else:
             return None
         try:
-            return chr(int(glyph_name[4:], 16))
+            return chr(int(code_point, 16))
         except ValueError:  # pragma: no cover
             return None
 
