@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792942517372,
+  "lastUpdate": 1792942956777,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -120785,6 +120785,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0029876066263966362",
             "extra": "mean: 657.5423290000003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0791807e542e040879136e7f6c41c5e950482065",
+          "message": "ROB: Tolerate malformed /DecodeParms and CCITT decode parameters (#4213)\n\n* ROB: Tolerate malformed /DecodeParms and CCITT decode parameters\n\n* Address review: report value types, drop unreachable branches\n\n* Drop unreachable IndirectObject unwrap in FlateDecode, test IndirectObject.__int__\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-25T16:32:13+01:00",
+          "tree_id": "ad01ae8978f06511e25d6547880efc9ff3527093",
+          "url": "https://github.com/py-pdf/pypdf/commit/0791807e542e040879136e7f6c41c5e950482065"
+        },
+        "date": 1792942942029,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.216863405314478,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010746904472633895",
+            "extra": "mean: 310.8618159999992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.56583885549751,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008107922653411934",
+            "extra": "mean: 36.27678465516997 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2807154989574887,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017960630637536078",
+            "extra": "mean: 3.562325570600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.83589485443361,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00047894420619015244",
+            "extra": "mean: 56.06671311764444 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08548283865039995,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010590559756642708",
+            "extra": "mean: 11.698254477600006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5906936121541007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007551846074346703",
+            "extra": "mean: 628.6565761999952 msec\nrounds: 5"
           }
         ]
       }
