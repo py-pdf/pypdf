@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792939249572,
+  "lastUpdate": 1792940908967,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -120653,6 +120653,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0051709151157182985",
             "extra": "mean: 663.3704292000061 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eafe1057e1d0b1cc82e37bca3917c2fc70e27877",
+          "message": "ROB: Skip non-dictionary outline nodes when appending a document (#4234)\n\n* ROB: Skip non-dictionary outline nodes when appending a document\n\n* TST: Rename outline item test helper to start with an action",
+          "timestamp": "2026-10-25T16:06:39+01:00",
+          "tree_id": "da7a9e956217e8304ac6d160f44214528da48bea",
+          "url": "https://github.com/py-pdf/pypdf/commit/eafe1057e1d0b1cc82e37bca3917c2fc70e27877"
+        },
+        "date": 1792940901642,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.5337988351631555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00810321792904478",
+            "extra": "mean: 180.70768920000262 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 37.971254679924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0048365350227798365",
+            "extra": "mean: 26.33571127500076 msec\nrounds: 40"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4626977801973776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024553840339766316",
+            "extra": "mean: 2.161237945799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 36.40233293232768,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00042334430311912277",
+            "extra": "mean: 27.470766828571413 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1494642548649327,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13824975614600507",
+            "extra": "mean: 6.6905629102000095 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.872381952963432,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004885800468173529",
+            "extra": "mean: 348.1431148000013 msec\nrounds: 5"
           }
         ]
       }
