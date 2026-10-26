@@ -7,6 +7,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._page_labels import (
     get_label_from_nums,
     index2label,
+    index2labels,
     number2lowercase_letter,
     number2lowercase_roman_numeral,
     number2uppercase_letter,
@@ -473,3 +474,84 @@ def test_get_label_from_nums__regular__limits(caplog):
     assert caplog.messages == [
         "Ignoring malformed page label entry in /Nums (/St=15000, /P=''): Number is too large."
     ]
+
+
+def _build_label(*, style=None, prefix=None, start=None) -> DictionaryObject:
+    entry = DictionaryObject()
+    if style is not None:
+        entry[NameObject("/S")] = NameObject(style)
+    if prefix is not None:
+        entry[NameObject("/P")] = TextStringObject(prefix)
+    if start is not None:
+        entry[NameObject("/St")] = NumberObject(start)
+    return entry
+
+
+@pytest.mark.parametrize(
+    "nums",
+    [
+        pytest.param(
+            [0, _build_label(style="/r"), 4, _build_label(style="/D"), 10, _build_label(style="/A", prefix="App-")],
+            id="roman-decimal-letters-with-prefix",
+        ),
+        pytest.param([3, _build_label(style="/D", start=7)], id="first-key-after-first-page-with-start"),
+        pytest.param(
+            [0, _build_label(style="/D"), 1, _build_label(style="/R"), 2, _build_label(prefix="Cover")],
+            id="prefix-without-style",
+        ),
+        pytest.param([0, _build_label(style="/X"), 5, _build_label(style="/D")], id="unknown-style"),
+        pytest.param([0, NullObject(), 6, _build_label(style="/a")], id="value-not-a-dictionary"),
+        pytest.param([8, _build_label(style="/D"), 2, _build_label(style="/r")], id="keys-not-sorted"),
+        pytest.param([0, _build_label(style="/D"), 5], id="last-key-without-value"),
+        pytest.param([0, _build_label(style="/D"), 0, _build_label(style="/r")], id="duplicate-keys"),
+        pytest.param([40, _build_label(style="/D")], id="only-key-after-last-page"),
+        pytest.param(
+            [40, _build_label(style="/D"), 0, _build_label(style="/r")],
+            id="first-key-after-last-page-then-smaller-key",
+        ),
+        pytest.param(
+            [40, _build_label(style="/D"), 50, _build_label(style="/r")],
+            id="first-key-after-last-page-then-larger-key",
+        ),
+        pytest.param(
+            [key for i in range(100) for key in (i * 3, _build_label(style="/D", prefix=f"P{i}-"))],
+            id="more-ranges-than-pages",
+        ),
+        pytest.param(
+            [0, _build_label(style="/D"), 10, _build_label(style="/r"), 50],
+            id="key-without-value-after-last-page",
+        ),
+    ],
+)
+def test_index2labels_matches_index2label(nums, caplog):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {NameObject("/Nums"): ArrayObject(NumberObject(n) if isinstance(n, int) else n for n in nums)}
+    )
+
+    expected = [index2label(reader, index) for index in range(30)]
+    expected_messages = caplog.messages[:]
+    caplog.clear()
+
+    assert index2labels(reader, 30) == expected
+    assert caplog.messages == expected_messages
+
+
+def test_index2labels__no_pages():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.root_object[NameObject("/PageLabels")] = NullObject()
+
+    assert index2labels(reader, 0) == []
+
+
+def test_index2labels__nums_not_an_array(caplog):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {NameObject("/Nums"): DictionaryObject({NameObject("/A"): NumberObject(1)})}
+    )
+    expected = [index2label(reader, index) for index in range(3)]
+    expected_messages = caplog.messages[:]
+    caplog.clear()
+
+    assert index2labels(reader, 3) == expected
+    assert caplog.messages == expected_messages
