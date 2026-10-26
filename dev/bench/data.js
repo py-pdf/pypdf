@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793030231793,
+  "lastUpdate": 1793046852630,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -121247,6 +121247,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013567553974761752",
             "extra": "mean: 384.41165439999736 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "db3cafb9bd378bab517cc33d0fc83f51c40e5b9f",
+          "message": "MAINT: Revert: Reject unsupported key lengths in the /Encrypt dictionary\n\nReverts #4226 as the current logic is too specific and blocks valid use cases. I consider this an unintended breaking change which has a broader impact that other smaller possible regressions.\n\nRelates to #4260.",
+          "timestamp": "2026-10-26T21:31:33+01:00",
+          "tree_id": "c944804a840cbf1c0eb6d2881e5d5b0f90cebd63",
+          "url": "https://github.com/py-pdf/pypdf/commit/db3cafb9bd378bab517cc33d0fc83f51c40e5b9f"
+        },
+        "date": 1793046842249,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.8225790893715446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005869306494214147",
+            "extra": "mean: 261.60348200000385 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.396476742360576,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006400275353131666",
+            "extra": "mean: 35.21563639999906 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3427139003536549,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018462334109331895",
+            "extra": "mean: 2.917885732000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.494208865927025,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015082265905082101",
+            "extra": "mean: 44.45588666666754 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09420918918186966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03562853382335272",
+            "extra": "mean: 10.614675794199997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1259720131661317,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006434185273768939",
+            "extra": "mean: 470.37307819999796 msec\nrounds: 5"
           }
         ]
       }
