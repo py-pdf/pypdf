@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793026774328,
+  "lastUpdate": 1793027970653,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -156229,6 +156229,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010360677707205578",
             "extra": "mean: 632.7599611999915 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2311602284028d47fa28dc66ef1392c8fc9efae2",
+          "message": "PI: Collect the named destinations once when resolving links (#4249)\n\n* PI: Collect the named destinations once when resolving links\n\nWriting a document whose pages contain many links to named destinations\ntook time quadratic in the number of links. The names are now collected\nonce per write(), which makes the watermarking benchmark of\npy-pdf/benchmarks up to 4x faster.\n\nWhere the speed comes from\n--------------------------\n\nOn write(), PdfWriter._resolve_links() points every link of the added\npages to the corresponding page of the writer. For each link to a named\ndestination, NamedReferenceLink.patch_reference() checked whether the\nwriter already had that name by reading PdfWriter.named_destinations.\nUnlike PdfReader, the writer does not cache this property: each access\nwalks the name tree and builds a Destination object, including its Fit,\nfor every named destination added so far.\n\nThe names are now collected once per write() and kept up to date while\nthe missing ones are added. patch_reference() takes them as the new\noptional keyword-only argument `known_names`.\n\nFor the 900 links of PDF 4 below, main builds 224,332 Destination\nobjects (89,942 for the 480 links of PDF 2). This change builds none,\nas the name tree of the writer is still empty when write() starts.\n_resolve_links() takes 0.10 s instead of 2.68 s for PDF 4 and 0.08 s\ninstead of 1.10 s for PDF 2.\n\nBenchmark\n---------\n\nWatermarking benchmark of py-pdf/benchmarks (merge_page() and\nadd_page() for every page, compress_content_streams(), write()),\nbest of 5 runs, CPython 3.15.0, AMD Ryzen 7 PRO 4750U:\n\n| PDF            | Pages | Named links | Names |   main | this change | Speedup |\n|----------------|------:|------------:|------:|-------:|------------:|--------:|\n| 1 (2201.00214) |    22 |         210 |    82 | 0.62 s |      0.49 s |    1.3x |\n| 2 (GeoTopo)    |   117 |         480 |   401 | 2.23 s |      1.10 s |    2.0x |\n| 3 (2201.00151) |    12 |         173 |    66 | 0.42 s |      0.35 s |    1.2x |\n| 4 (1707.09725) |   134 |         900 |   422 | 3.58 s |      0.90 s |    4.0x |\n\nBehavior\n--------\n\nWritten files do not change, with one exception: if the catalog of the\nwriter has a /Dests dictionary (PDF 1.1 style), named_destinations\nreads only that dictionary, while add_named_destination() adds to the\n/Names tree. As an added name could not be read back, main added it\nagain for every further link to it, writing duplicate keys into the\nname tree. Each name is now added once.\n\nCalling patch_reference() without `known_names` behaves as before.\n\nVerification\n------------\n\n* The full test suite passes; ruff and mypy report no issues.\n* The watermarked files of the four benchmark documents are\n  byte-identical to the ones written by main.\n* test_resolve_links__named_destinations checks that write() collects\n  the named destinations once and adds each name once, with and without\n  a catalog /Dests. It fails on main, which collects them once per link.\n* test_named_reference_link_patch_reference covers patch_reference()\n  with and without `known_names`.\n* The duplicate keys with a catalog /Dests were reproduced on main with\n  a separate script appending two links to the same name.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Forgot passing arg; fixed formatting\n\n* STY: Fix case / space\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-26T16:14:29+01:00",
+          "tree_id": "37b1d2e2f2a46a86da0ef500db8975b414063018",
+          "url": "https://github.com/py-pdf/pypdf/commit/2311602284028d47fa28dc66ef1392c8fc9efae2"
+        },
+        "date": 1793027958015,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.176204674114862,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018400406356346658",
+            "extra": "mean: 70.54074225000129 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.588085920907435,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009409166311440478",
+            "extra": "mean: 34.979606636366874 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9890039960354299,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021866798378154844",
+            "extra": "mean: 1.0111182604000077 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.48274867482179695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06286424116364409",
+            "extra": "mean: 2.0714712481999924 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.38367602994198,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020298876893577598",
+            "extra": "mean: 2.606365584399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1627949778416236,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024722759685946196",
+            "extra": "mean: 859.9968343999876 msec\nrounds: 5"
           }
         ]
       }
