@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793028973727,
+  "lastUpdate": 1793030144635,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -121181,6 +121181,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0028530951251992506",
             "extra": "mean: 662.772668000008 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "65135356+Don-Yin@users.noreply.github.com",
+            "name": "Don Yin",
+            "username": "Don-Yin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a4caa10613282666301ddfe71128eff9ddb29cd",
+          "message": "BUG: Decode Unicode glyph names in font encodings (#4257)\n\n* BUG: Decode Unicode glyph names in font encodings\n\nFixes #2273.\n\nSigned-off-by: Don Yin <Don_Yin@outlook.com>\n\n* TST: Cover the fallback for out-of-range glyph names\n\nA /u name past the Unicode range makes chr() raise OverflowError, so _parse_encoding keeps the raw name.\n\nSigned-off-by: Don Yin <Don_Yin@outlook.com>\n\n---------\n\nSigned-off-by: Don Yin <Don_Yin@outlook.com>",
+          "timestamp": "2026-10-26T16:53:42+01:00",
+          "tree_id": "f66037b95c27ff2120cccc671d0bcde5ac7b5921",
+          "url": "https://github.com/py-pdf/pypdf/commit/6a4caa10613282666301ddfe71128eff9ddb29cd"
+        },
+        "date": 1793030135484,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.0383464771617,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010154089040192164",
+            "extra": "mean: 198.47781499999968 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.46486229626608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005673172057290426",
+            "extra": "mean: 28.196923243243077 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.42370872416422356,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05263268776419688",
+            "extra": "mean: 2.3601118952000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 33.42662931902568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000965803732008953",
+            "extra": "mean: 29.916267968748578 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.13849608434014965,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10224621843688839",
+            "extra": "mean: 7.2204207416000035 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.6013779461521103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013567553974761752",
+            "extra": "mean: 384.41165439999736 msec\nrounds: 5"
           }
         ]
       }
