@@ -1419,7 +1419,11 @@ def test_wrapped_table_cell_line_is_not_split():
             b"1 0 0 1 100 706 Tm (BBB) Tj ET"
         )
     ).pages[0].extract_text()
-    assert [line for line in text.splitlines() if "LBL" in line] == ["LBL AAA BBB"]
+    # The invariant from #4130 is that both cell lines stay on the label's line;
+    # the space between the words is the separate #4254 fix.
+    lines = [line for line in text.splitlines() if "LBL" in line]
+    assert len(lines) == 1
+    assert lines[0].split() == ["LBL", "AAA", "BBB"]
 
 
 def test_wrapped_table_cell_lines_are_separated():
