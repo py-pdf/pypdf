@@ -6,7 +6,7 @@
 #
 arabic-reshaper==3.0.0
     # via -r requirements/ci.in
-brotli==1.2.0
+brotli==1.2.1
     # via -r requirements/ci.in
 cffi==2.0.0
     # via cryptography

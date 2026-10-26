@@ -22,7 +22,7 @@ docutils==0.20.1
     # via flit
 exceptiongroup==1.2.2
     # via pytest
-filelock==4.0.8
+filelock==4.2.4
     # via virtualenv
 flit==4.0.2
     # via -r dev.in
@@ -77,7 +77,7 @@ typing-extensions==4.15.0
     # via virtualenv
 urllib3==2.8.0
     # via requests
-virtualenv==21.14.4
+virtualenv==21.14.13
     # via pre-commit
 wheel==0.46.2
     # via
