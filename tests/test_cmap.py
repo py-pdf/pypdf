@@ -877,6 +877,23 @@ def test_get_encoding__differences_is_an_array(caplog):
     assert caplog.text == ""
 
 
+@pytest.mark.parametrize(
+    ("glyph_name", "expected"),
+    [
+        ("/u1D6FD", "𝛽"),
+        ("/unknown", "/unknown"),
+        ("/uFFFFFFFFFFFFFFFFFFFF", "/uFFFFFFFFFFFFFFFFFFFF"),
+    ],
+)
+def test_get_encoding__unicode_glyph_names(glyph_name, expected):
+    """Regression test for #2273: decode Unicode glyph names in /Differences."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), NameObject(glyph_name)]))
+    )
+
+    assert encoding[65] == expected
+
+
 def _build_cff_font_program(encoding: dict[int, str]) -> bytes:
     """A minimal CFF font program whose built-in encoding maps the given character codes to glyph names."""
     from fontTools.fontBuilder import FontBuilder  # noqa: PLC0415
