@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793027988088,
+  "lastUpdate": 1793028933635,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -121115,6 +121115,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009983166186007058",
             "extra": "mean: 662.0815846000028 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alexandrkholodniak@gmail.com",
+            "name": "Alex Kholodniak",
+            "username": "kholdrex"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b891fef37000cd86baa6e9848a3387d080b3b03e",
+          "message": "PI: Read flat page label number trees once for all pages (#4251)\n\n* PI: Read flat page label number trees once for all pages\n\npage_labels called index2label for every page, and each call scanned\n/Nums from the start, so building the list took time proportional to\npages times label ranges. A flat /Nums array with increasing integer\nkeys and direct values is now walked once; other number trees still go\nthrough index2label page by page.\n\n* Address review comments\n\nReturn early for the page-by-page fallback, give the helpers action-first\nnames, rename reader to pdf, and give the test cases readable IDs.\n\n* Cover /Nums that is not an array",
+          "timestamp": "2026-10-26T16:32:26+01:00",
+          "tree_id": "32d1053bae93bc9463e6b9e265fab95446cbb741",
+          "url": "https://github.com/py-pdf/pypdf/commit/b891fef37000cd86baa6e9848a3387d080b3b03e"
+        },
+        "date": 1793028921622,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.756921531608329,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008444353725760885",
+            "extra": "mean: 362.7234176000002 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.295571334504142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00189363999780316",
+            "extra": "mean: 44.85195669565201 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24426618923546342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005752413794203183",
+            "extra": "mean: 4.093894464600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.145274149537315,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000636830189363464",
+            "extra": "mean: 55.110768333334825 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07700304143277274,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02374041602978173",
+            "extra": "mean: 12.986500031600007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5088129735609253,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0028530951251992506",
+            "extra": "mean: 662.772668000008 msec\nrounds: 5"
           }
         ]
       }
