@@ -7,6 +7,7 @@ import sys
 from io import BytesIO
 from operator import itemgetter
 from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -1933,3 +1934,20 @@ def test_get_fields__nesting_depth() -> None:
     with apply_configuration(form_fields_maximum_depth=1), \
             pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum allowed form field depth\.$"):
         writer.get_fields(retval={}, tree=tree, _visited=set())
+
+
+def test_get_num_pages__forged_count_after_decrypt():
+    """The unvalidated /Pages /Count must not be used once the document is decrypted."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    pages = cast(DictionaryObject, writer.root_object["/Pages"])
+    pages[NameObject("/Count")] = NumberObject(42)
+    writer.encrypt("")
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    reader = PdfReader(stream)
+    reader.decrypt("")
+    assert len(reader.pages) == 1
+    assert reader.page_labels == ["1"]
