@@ -882,6 +882,7 @@ def test_get_encoding__differences_is_an_array(caplog):
     [
         ("/u1D6FD", "𝛽"),
         ("/unknown", "/unknown"),
+        ("/uFFFFFFFFFFFFFFFFFFFF", "/uFFFFFFFFFFFFFFFFFFFF"),
     ],
 )
 def test_get_encoding__unicode_glyph_names(glyph_name, expected):
