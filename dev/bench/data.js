@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793024121078,
+  "lastUpdate": 1793024244036,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -156031,6 +156031,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02127014096794412",
             "extra": "mean: 851.2020610000036 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "erfan.mohamadboland@gmail.com",
+            "name": "erfouni",
+            "username": "Erfouni"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "63b9b30098e3dfa9e4ecc08b917b818140733ea0",
+          "message": "ROB: Don't raise TypeError on a /Nums with a non-numeric key (#4199)\n\n* ROB: don't raise TypeError on a /Nums with a non-numeric key\n\nget_label_from_nums compares the next /Nums key with the page index\n(nums[i + 2] > index) without checking the key is a number, so a malformed\n/PageLabels /Nums that holds a non-integer (e.g. a dictionary) at a key position\nraises a raw TypeError instead of the documented page-position fallback. Every\nother malformation in this function already warns and returns str(index + 1);\ndo the same when the key comparison fails. Added a test.\n\n* _page_labels: check the /Nums key type explicitly\n\nA /Nums entry with a non-numeric key made the key comparison raise a raw\nTypeError. Check the key is a number before comparing and otherwise fall\nback to the page position, matching the other malformed-/Nums cases.\n\n* Include malformed page label keys in warnings",
+          "timestamp": "2026-10-26T15:12:53+01:00",
+          "tree_id": "749964bae12414b13baa599cd5d79ea6b6a9a5b4",
+          "url": "https://github.com/py-pdf/pypdf/commit/63b9b30098e3dfa9e4ecc08b917b818140733ea0"
+        },
+        "date": 1793024229123,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.123204702131833,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014951900352098969",
+            "extra": "mean: 89.90214841666482 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 33.77231277000315,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005035130631261972",
+            "extra": "mean: 29.610053857140883 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9071564400415917,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02186850641722506",
+            "extra": "mean: 1.102345699 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.37887487173053,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035294791987711266",
+            "extra": "mean: 2.639393833199995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4122743962901722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0327380849416866",
+            "extra": "mean: 2.4255690118000133 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2736072908584801,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004752530705220166",
+            "extra": "mean: 785.1713845999939 msec\nrounds: 5"
           }
         ]
       }
