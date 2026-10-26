@@ -3543,6 +3543,52 @@ def test_merge_with_null_acroform_does_not_raise_typeerror():
     assert "/AcroForm" not in target.root_object
 
 
+@pytest.mark.parametrize(
+    ("fields", "expected_messages"),
+    [
+        pytest.param(NumberObject(1), ["AcroForm /Fields is not an array: 1"], id="number"),
+        pytest.param(NullObject(), ["AcroForm /Fields is not an array: NullObject"], id="null"),
+        pytest.param(ArrayObject([NullObject(), TextStringObject("x"), DictionaryObject()]), [], id="direct-entries"),
+    ],
+)
+def test_append__skips_acroform_fields_that_are_not_an_array_of_references(caplog, fields, expected_messages):
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    reader.root_object["/AcroForm"][NameObject("/Fields")] = fields
+
+    writer = PdfWriter()
+    writer.append(reader)
+
+    assert writer.root_object["/AcroForm"]["/Fields"] == []
+    assert caplog.messages == expected_messages
+
+
+def test_append__skips_acroform_that_is_not_a_dictionary(caplog):
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    reader.root_object[NameObject("/AcroForm")] = NumberObject(1)
+
+    writer = PdfWriter()
+    writer.append(reader)
+
+    assert len(writer.pages) == 1
+    assert "/AcroForm" not in writer.root_object
+    assert caplog.messages == ["AcroForm is not a dictionary: 1"]
+
+
+def test_append__keeps_existing_acroform_fields():
+    writer = PdfWriter()
+    writer.append(RESOURCE_ROOT / "form.pdf")
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    del reader.root_object["/AcroForm"]["/Fields"]
+    writer.append(reader)
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+    del writer.root_object["/AcroForm"]["/Fields"]
+    writer.append(RESOURCE_ROOT / "form.pdf")
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+
 def test_compress_identical_objects__info_is_none():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer.compress_identical_objects()
