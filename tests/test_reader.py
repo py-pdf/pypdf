@@ -753,10 +753,9 @@ def test_read_malformed_header(caplog):
         PdfReader(io.BytesIO(b"foo"), strict=True)
     assert exc.value.args[0] == "PDF starts with 'foo', but '%PDF-' expected"
     caplog.clear()
-    try:
+
+    with pytest.raises(PdfStreamError):
         PdfReader(io.BytesIO(b"foo"), strict=False)
-    except Exception:
-        pass
     assert caplog.messages[0].startswith("invalid pdf header")
 
 

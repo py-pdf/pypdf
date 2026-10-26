@@ -261,6 +261,8 @@ class PdfReader(PdfDocCommon):
                     raise LimitReachedError("Maximum Root object recovery limit reached.")
                 try:
                     obj = self.get_object(i + 1)
+                except MemoryError:  # pragma: no cover  # TODO: BLE001
+                    raise
                 except Exception:  # to be sure to capture all errors
                     obj = None
                 if isinstance(obj, DictionaryObject) and obj.get("/Type") == "/Catalog":
@@ -578,6 +580,8 @@ class PdfReader(PdfDocCommon):
                     or generation != indirect_reference.generation
                 ):
                     raise PdfReadError("Not matching, we parse the file for it")
+            except MemoryError:  # pragma: no cover  # TODO: BLE001
+                raise
             except Exception:
                 buf = get_stream_data(self.stream)
                 m = re.search(
@@ -1114,6 +1118,8 @@ class PdfReader(PdfDocCommon):
                     entry_type_b = line[17:18]
 
                     offset, generation = int(offset_b), int(generation_b)
+                except MemoryError:  # pragma: no cover  # TODO: BLE001
+                    raise
                 except Exception:
                     if recovery_cache is None:
                         buf = get_stream_data(stream)
@@ -1151,10 +1157,14 @@ class PdfReader(PdfDocCommon):
                         self.xref[generation][num] = offset
                     try:
                         self.xref_free_entry[generation][num] = entry_type_b == b"f"
+                    except MemoryError:  # pragma: no cover  # TODO: BLE001
+                        raise
                     except Exception:
                         pass
                     try:
                         self.xref_free_entry[65535][num] = entry_type_b == b"f"
+                    except MemoryError:  # pragma: no cover  # TODO: BLE001
+                        raise
                     except Exception:
                         pass
                 cnt += 1
@@ -1207,6 +1217,8 @@ class PdfReader(PdfDocCommon):
                 try:
                     self._rebuild_xref_table(stream)
                     break
+                except MemoryError:  # pragma: no cover  # TODO: BLE001
+                    raise
                 except Exception:
                     xref_issue_nr = 0
             elif x.isdigit():
@@ -1260,6 +1272,8 @@ class PdfReader(PdfDocCommon):
             stream.seek(cast(int, new_trailer["/XRefStm"]) + 1, 0)
             try:
                 self._read_pdf15_xref_stream(stream)
+            except MemoryError:  # pragma: no cover  # TODO: BLE001
+                raise
             except Exception:
                 logger_warning(
                     "XRef object at %(xref_stm)d can not be read, some object may be missing",
@@ -1570,6 +1584,8 @@ class PdfReader(PdfDocCommon):
                 except LimitReachedError:
                     # Do not let the broad recovery below bypass the token-length limit
                     # when strict parsing is enabled.
+                    raise
+                except MemoryError:  # pragma: no cover  # TODO: BLE001
                     raise
                 except Exception:  # could be multiple causes
                     pass
