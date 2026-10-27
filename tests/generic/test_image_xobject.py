@@ -663,22 +663,29 @@ def test_handle_flate__icc_based_with_different_component_count() -> None:
     assert image.tobytes() == bytes(range(12))
 
 
-def test_handle_jpx__rgba_image_with_cmyk_color_space() -> None:
+def test_xobj_to_image__jpx_rgba_data_with_cmyk_color_space() -> None:
     """
     Four-channel JPEG 2000 data is reinterpreted as CMYK without conversion.
 
     ISO 32000-2:2020, 7.4.9: a present /ColorSpace determines how the samples
     are interpreted, and the colour space in the JPEG 2000 data is ignored.
-    Pillow decodes this data as RGBA; its bytes are reused as C, M, Y, K.
+    Pillow decodes this data as RGBA; its bytes are reused as C, M, Y, K. The
+    fourth channel is black, not opacity, even though /SMaskInData defaults to 0.
     """
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_CMYK)
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
     data = BytesIO()
     _create_image("RGBA", (4, 4), color=(1, 2, 3, 4)).save(data, format="JPEG2000")
-    image, image_format, extension, invert_color = _handle_jpx(
-        size=(4, 4), data=data.getvalue(), mode="", color_space="/DeviceCMYK", colors=4
-    )
-    assert (image_format, extension, invert_color) == ("JPEG2000", ".jp2", True)
-    assert image.mode == "CMYK"
-    assert image.getpixel((0, 0)) == (1, 2, 3, 4)
+    image.set_data(data.getvalue())
+
+    extension, _, img = _xobj_to_image(image)
+
+    assert extension == ".jp2"
+    assert img.mode == "CMYK"
+    assert img.getpixel((0, 0)) == (1, 2, 3, 4)
 
 
 @requires_cmyk_jpeg2000_saving
