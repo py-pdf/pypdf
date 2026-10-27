@@ -64,7 +64,7 @@ def test_read(meta):
     reader = PdfReader(pdf_path)
     try:
         reader.pages[0]
-    except Exception:
+    except PdfReadError:
         return
     assert len(reader.pages) == meta["pages"]
 

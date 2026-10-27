@@ -1095,7 +1095,7 @@ class Encryption:
             else:
                 try:
                     pwd = password.encode("latin-1")
-                except Exception:
+                except UnicodeEncodeError:
                     pwd = password.encode("utf-8")
         else:
             pwd = password
@@ -1310,11 +1310,6 @@ class Encryption:
             key_bits = int(
                 _get_entry(stm_crypt_filter, "/Length", expected_types=(int, float), type_name="number", default=16)
             ) * 8
-        if key_bits % 8 != 0 or not (40 <= key_bits <= 128 or key_bits == 256):
-            # ISO 32000-1:2008, 7.6.2 limits legacy key lengths to 40 to 128 bits
-            # in 8-bit increments. ISO 32000-2:2020, 7.6.6 allows 256-bit
-            # AESV3 keys. Reject other lengths before they reach cryptography.
-            raise PdfReadError(f"Invalid encryption key length: {key_bits} bits")
         encrypt_metadata = encryption_entry.get("/EncryptMetadata", NullObject()).get_object()
         if isinstance(encrypt_metadata, BooleanObject):
             encrypt_metadata = encrypt_metadata.value
