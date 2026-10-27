@@ -363,6 +363,12 @@ def test_handle_flate__icc_based__image_mode_1() -> None:
     reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+",
 )
 def test_handle_jpx__explicit_decode() -> None:
+    """
+    An explicit /Decode array is applied to JPEG 2000 samples.
+
+    ISO 32000-2:2020, 8.9.5.2: [1 0] for a component inverts it. 7.4.9 only
+    ignores /Decode when /ColorSpace is absent.
+    """
     stream = StreamObject()
     stream[NameObject("/BitsPerComponent")] = NumberObject(8)
     stream[NameObject("/ColorSpace")] = NameObject("/DeviceCMYK")
@@ -590,6 +596,13 @@ def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
 
 
 def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A single-colorant /DeviceN with a /DeviceCMYK alternate is read as inverted gray.
+
+    ISO 32000-2:2020, 8.6.6.5 maps the colorant to the alternate space with a
+    tint transform. pypdf skips that and treats the colorant as gray, warning
+    when it is not /Black.
+    """
     color_space = ArrayObject([
         NameObject("/DeviceN"),
         ArrayObject([NameObject("/Cyan")]),
@@ -601,6 +614,12 @@ def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.
 
 
 def test_handle_flate__indexed_lookup_stream_with_str_data() -> None:
+    """
+    An /Indexed colour table is applied when the lookup stream holds str data.
+
+    ISO 32000-2:2020, 8.6.6.3 allows the lookup to be a stream or a byte
+    string. pypdf encodes str stream data to bytes before using it.
+    """
     lookup = DecodedStreamObject()
     lookup.set_data("abcdef")  # type: ignore[arg-type]
     color_space = ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup])
@@ -612,6 +631,12 @@ def test_handle_flate__indexed_lookup_stream_with_str_data() -> None:
 
 
 def test_handle_flate__icc_based_with_different_component_count() -> None:
+    """
+    An /ICCBased /N that disagrees with the image does not change how its samples are read.
+
+    ISO 32000-2:2020, 8.6.5.5 (Table 65) requires /N to match the profile.
+    pypdf keeps the mode it derived from the image dictionary.
+    """
     icc_profile = DecodedStreamObject()
     icc_profile[NameObject("/N")] = NumberObject(1)
     color_space = ArrayObject([NameObject("/ICCBased"), icc_profile])
@@ -629,7 +654,12 @@ def _jpeg2000_data(mode: str, color: Any) -> bytes:
 
 
 def test_handle_jpx__rgba_image_with_rgb_color_space() -> None:
-    """An alpha channel stored in the JPEG2000 data is kept."""
+    """
+    An opacity channel in the JPEG 2000 data is kept as alpha.
+
+    ISO 32000-2:2020, 7.4.9 uses it only if /SMaskInData is non-zero. pypdf
+    does not read /SMaskInData and always keeps it.
+    """
     image = _handle_jpx(
         size=(4, 4), data=_jpeg2000_data("RGBA", (1, 2, 3, 4)), mode="RGB", color_space="/DeviceRGB", colors=3
     )[0]
@@ -638,7 +668,13 @@ def test_handle_jpx__rgba_image_with_rgb_color_space() -> None:
 
 
 def test_handle_jpx__rgba_image_with_cmyk_color_space() -> None:
-    """Four-channel JPEG2000 data is reinterpreted as CMYK without conversion."""
+    """
+    Four-channel JPEG 2000 data is reinterpreted as CMYK without conversion.
+
+    ISO 32000-2:2020, 7.4.9: a present /ColorSpace determines how the samples
+    are interpreted, and the colour space in the JPEG 2000 data is ignored.
+    Pillow decodes this data as RGBA; its bytes are reused as C, M, Y, K.
+    """
     image, image_format, extension, invert_color = _handle_jpx(
         size=(4, 4), data=_jpeg2000_data("RGBA", (1, 2, 3, 4)), mode="", color_space="/DeviceCMYK", colors=4
     )
@@ -652,6 +688,13 @@ def test_handle_jpx__rgba_image_with_cmyk_color_space() -> None:
     reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+",
 )
 def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
+    """
+    CMYK JPEG 2000 data with a bare /ICCBased colour space name is converted to RGB.
+
+    pypdf-specific, not from ISO 32000-2:2020: Pillow's naive CMYK to RGB
+    formula is used; no ICC profile is applied. The bare name is what
+    _xobj_to_image passes on for a malformed one-element [/ICCBased] array.
+    """
     image = _handle_jpx(
         size=(4, 4), data=_jpeg2000_data("CMYK", (0, 0, 0, 0)), mode="", color_space="/ICCBased", colors=4
     )[0]
