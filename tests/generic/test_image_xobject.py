@@ -359,8 +359,8 @@ def test_handle_flate__icc_based__image_mode_1() -> None:
 
 
 @pytest.mark.skipif(
-    condition=Version(PIL.__version__) < Version("12.1.0"),
-    reason="Unsuitable Pillow version."
+    condition=Version(PIL.__version__) < Version("11.1.0"),
+    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+",
 )
 def test_handle_jpx__explicit_decode() -> None:
     stream = StreamObject()
@@ -648,8 +648,8 @@ def test_handle_jpx__rgba_image_with_cmyk_color_space() -> None:
 
 
 @pytest.mark.skipif(
-    condition=Version(PIL.__version__) < Version("12.1.0"),
-    reason="Unsuitable Pillow version."
+    condition=Version(PIL.__version__) < Version("11.1.0"),
+    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+",
 )
 def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
     image = _handle_jpx(
