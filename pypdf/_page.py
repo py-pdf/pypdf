@@ -682,11 +682,16 @@ class PageObject(DictionaryObject):
         if ancest is None:
             ancest = []
         lst: list[Union[str, list[str]]] = []
-        if (
-                PG.RESOURCES not in obj or
-                is_null_or_none(resources := cast(DictionaryObject, obj[PG.RESOURCES])) or
-                RES.XOBJECT not in resources
-        ):
+        resources = obj.get(PG.RESOURCES, NullObject()).get_object()
+        if not isinstance(resources, DictionaryObject):
+            if not is_null_or_none(resources):
+                logger_warning(
+                    "Resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources,
+                )
+            resources = DictionaryObject()
+        if RES.XOBJECT not in resources:
             # Forms without XObject resources have no images inside them
             if len(ancest) > 0:
                 return []
@@ -743,7 +748,7 @@ class PageObject(DictionaryObject):
             xobjs = cast(
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
-        except KeyError as exc:
+        except (KeyError, TypeError) as exc:
             if not (image_id[0] == "~" and image_id[-1] == "~"):
                 raise KeyError(
                     f"Cannot access image object {image_id} without XObject resources"
