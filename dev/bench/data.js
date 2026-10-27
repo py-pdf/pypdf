@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793089358954,
+  "lastUpdate": 1793089393311,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -121313,6 +121313,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006434185273768939",
             "extra": "mean: 470.37307819999796 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4c3e39aa429266c69612c5f9c90e9949a4a7d9a9",
+          "message": "DEV: Bump pypa/gh-action-pypi-publish from 1.14.2 to 1.14.3 (#4263)\n\nBumps [pypa/gh-action-pypi-publish](https://github.com/pypa/gh-action-pypi-publish) from 1.14.2 to 1.14.3.\n- [Release notes](https://github.com/pypa/gh-action-pypi-publish/releases)\n- [Commits](https://github.com/pypa/gh-action-pypi-publish/compare/dc37677b2e1c63e2034f94d8a5b11f265b73ba33...7245906fb61fa33a13554f9d5fb856fe61758086)\n\n---\nupdated-dependencies:\n- dependency-name: pypa/gh-action-pypi-publish\n  dependency-version: 1.14.3\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-10-27T09:19:57+01:00",
+          "tree_id": "c31d2c85f75c4a1d2882222b8e084cf57ba59735",
+          "url": "https://github.com/py-pdf/pypdf/commit/4c3e39aa429266c69612c5f9c90e9949a4a7d9a9"
+        },
+        "date": 1793089380801,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.6677938131097823,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009219951495437136",
+            "extra": "mean: 374.84156199999745 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.38291519732691,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022652951908558286",
+            "extra": "mean: 46.766308090910385 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23250161999154037,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0068883360334213795",
+            "extra": "mean: 4.301045300399994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.975567554652635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008896408470996741",
+            "extra": "mean: 55.63106683333451 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07684010900570508,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010022067881496108",
+            "extra": "mean: 13.014036717799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4999167799673072,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00159201441054077",
+            "extra": "mean: 666.7036553999992 msec\nrounds: 5"
           }
         ]
       }
