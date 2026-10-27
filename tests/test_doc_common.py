@@ -2029,3 +2029,45 @@ def test_xfa__work_limit() -> None:
                 match=r"^XFA decoding exceeded the maximum accumulated decoding work of 5000 bytes\.$"
             ):
         _ = writer.xfa
+
+
+def test_get_named_dest_root__dests_without_names_array():
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    dests = DictionaryObject()
+    writer.root_object[NameObject("/Names")] = DictionaryObject({NameObject("/Dests"): dests})
+
+    assert writer.get_named_dest_root() == []
+    assert dests["/Names"] == []
+
+    writer.add_named_destination("first", 0)
+    output = BytesIO()
+    writer.write(output)
+    assert list(PdfReader(output).named_destinations) == ["first"]
+
+
+def test_named_destinations__entries_without_destination_are_skipped():
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    page = writer.pages[0].indirect_reference
+    no_destination = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
+    with_destination = DictionaryObject({NameObject("/D"): ArrayObject([page, NameObject("/Fit")])})
+
+    # Name tree in the /Names dictionary (PDF 1.2+).
+    writer.root_object[NameObject("/Names")] = DictionaryObject({
+        NameObject("/Dests"): DictionaryObject({
+            NameObject("/Names"): ArrayObject([
+                TextStringObject("missing"), no_destination,
+                TextStringObject("present"), with_destination,
+            ]),
+        }),
+    })
+    assert list(writer.named_destinations) == ["present"]
+
+    # /Dests dictionary in the document catalog (PDF 1.1).
+    del writer.root_object["/Names"]
+    writer.root_object[NameObject("/Dests")] = DictionaryObject({
+        NameObject("/missing"): no_destination,
+        NameObject("/present"): with_destination,
+    })
+    assert list(writer.named_destinations) == ["/present"]

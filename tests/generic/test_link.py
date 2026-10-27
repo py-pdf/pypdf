@@ -175,3 +175,23 @@ def test_named_reference_link_patch_reference() -> None:
     )
     assert known_names == {"second", "third"}
     assert list(writer.named_destinations) == ["first", "third"]
+
+
+def test_extract_links__non_array_annotations(caplog: pytest.LogCaptureFixture) -> None:
+    old_page = PageObject()
+    new_page = PageObject()
+    new_page[NameObject("/Annots")] = DictionaryObject()
+
+    assert extract_links(new_page, old_page) == []
+    assert caplog.messages == ["Expected annotation arrays: [] {}. Ignoring annotations."]
+
+
+def test_extract_links__link_without_action_or_destination(caplog: pytest.LogCaptureFixture) -> None:
+    old_page = PageObject()
+    new_page = PageObject()
+    link = DictionaryObject({NameObject("/Subtype"): NameObject("/Link")})
+    old_page[NameObject("/Annots")] = ArrayObject([link])
+    new_page[NameObject("/Annots")] = ArrayObject([link])
+
+    assert extract_links(new_page, old_page) == []
+    assert caplog.messages == []
