@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793100044974,
+  "lastUpdate": 1793100152390,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -157153,6 +157153,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03420941717524957",
             "extra": "mean: 863.8072663999992 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a93fe3a901fd00af38f0a105c3ba7175fa72dcb4",
+          "message": "SEC: Limit total number of cross-reference stream entries (#4269)\n\nHighly compressible xref streams can declare millions of entries within\nthe existing stream size bounds, and chaining several streams via /Prev\nmultiplies this. Add a document-wide budget for xref stream entries.\n\nAdditionally, reject negative /Index counts, which allowed bypassing the\nexisting per-stream clamp.\n\nCo-authored-by: pabloalaniz <pablo@culturainteractiva.com>\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-27T12:18:47+01:00",
+          "tree_id": "2720146ae651e2bd4ca45c2662f6afe8ed9a332c",
+          "url": "https://github.com/py-pdf/pypdf/commit/a93fe3a901fd00af38f0a105c3ba7175fa72dcb4"
+        },
+        "date": 1793100140206,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.82043527923577,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017564864706236024",
+            "extra": "mean: 67.47440147058663 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 30.7560373755356,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009534102763102714",
+            "extra": "mean: 32.51394150000072 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9621105544916881,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04227733061614591",
+            "extra": "mean: 1.0393815922000045 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.519578397416105,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028364125317623536",
+            "extra": "mean: 1.9246373693999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3818457409638497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03696039205885551",
+            "extra": "mean: 2.6188585932000024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1343161266648425,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05881567357249524",
+            "extra": "mean: 881.5884535999999 msec\nrounds: 5"
           }
         ]
       }
