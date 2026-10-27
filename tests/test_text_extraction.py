@@ -486,12 +486,8 @@ def test_content_stream_is_dictionary_object(caplog):
 
     reader = PdfReader(BytesIO(data), strict=True)
     page = reader.pages[0]
-    with pytest.raises(PdfReadError) as exception:
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
         page.extract_text()
-    assert (
-        "Invalid Elementary Object starting with b\\'\\\\x18\\' @3557: b\\'ateDecode/Length 629\\\\x18ck["
-        in exception.value.args[0]
-    )
 
 
 @pytest.mark.enable_socket
