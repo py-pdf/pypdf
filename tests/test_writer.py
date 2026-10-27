@@ -177,49 +177,49 @@ def writer_operate(writer: PdfWriter) -> None:
     writer.remove_links()
     writer.add_outline_item_destination(page)
     oi = writer.add_outline_item(
-        "An outline item", 0, None, (255, 0, 15), True, True, Fit.fit_box_vertically(10)
+        "An outline item", 0, None, color=(255, 0, 15), bold=True, italic=True, fit=Fit.fit_box_vertically(10)
     )
     writer.add_outline_item(
-        "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
+        "The XYZ fit", 0, oi, color=(255, 0, 15), bold=True, italic=True, fit=Fit.xyz(left=10, top=20, zoom=3)
     )
     writer.add_outline_item(
-        "The XYZ fit no args", 0, oi, (255, 0, 15), True, True, Fit.xyz()
+        "The XYZ fit no args", 0, oi, color=(255, 0, 15), bold=True, italic=True, fit=Fit.xyz()
     )
     writer.add_outline_item(
-        "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
+        "The FitH fit", 0, oi, color=(255, 0, 15), bold=True, italic=True, fit=Fit.fit_horizontally(top=10)
     )
     writer.add_outline_item(
-        "The FitV fit", 0, oi, (255, 0, 15), True, True, Fit.fit_vertically(left=10)
+        "The FitV fit", 0, oi, color=(255, 0, 15), bold=True, italic=True, fit=Fit.fit_vertically(left=10)
     )
     writer.add_outline_item(
         "The FitR fit",
         0,
         oi,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
     )
     writer.add_outline_item(
-        "The FitB fit", 0, oi, (255, 0, 15), True, True, Fit.fit_box()
+        "The FitB fit", 0, oi, color=(255, 0, 15), bold=True, italic=True, fit=Fit.fit_box()
     )
     writer.add_outline_item(
         "The FitBH fit",
         0,
         oi,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_box_horizontally(top=10),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box_horizontally(top=10),
     )
     writer.add_outline_item(
         "The FitBV fit",
         0,
         oi,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_box_vertically(left=10),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box_vertically(left=10),
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
@@ -781,33 +781,33 @@ def test_add_outline_item(pdf_file_path):
         "An outline item",
         1,
         None,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit(),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit(),
         is_open=False,
     )
     _o2a = writer.add_outline_item(
-        "Another", 2, outline_item, None, False, False, Fit.fit()
+        "Another", 2, outline_item, color=None, bold=False, italic=False, fit=Fit.fit()
     )
     _o2b = writer.add_outline_item(
-        "Another bis", 2, outline_item, None, False, False, Fit.fit()
+        "Another bis", 2, outline_item, color=None, bold=False, italic=False, fit=Fit.fit()
     )
     outline_item2 = writer.add_outline_item(
         "An outline item 2",
         1,
         None,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit(),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit(),
         is_open=True,
     )
     _o3a = writer.add_outline_item(
-        "Another 2", 2, outline_item2, None, False, False, Fit.fit()
+        "Another 2", 2, outline_item2, color=None, bold=False, italic=False, fit=Fit.fit()
     )
     _o3b = writer.add_outline_item(
-        "Another 2bis", 2, outline_item2, None, False, False, Fit.fit()
+        "Another 2bis", 2, outline_item2, color=None, bold=False, italic=False, fit=Fit.fit()
     )
 
     # write "output" to pypdf-output.pdf
@@ -4234,3 +4234,269 @@ def test_generate_file_identifiers__update() -> None:
     writer.generate_file_identifiers()
     assert writer._ID[0] == id_permanent
     assert writer._ID[1] != id_changing
+
+
+def _outline_titles(writer: PdfWriter) -> list[str]:
+    return [item["/Title"] for item in PdfReader(_write_to_bytes(writer)).outline]
+
+
+def _write_to_bytes(writer: PdfWriter) -> BytesIO:
+    output = BytesIO()
+    writer.write(output)
+    return output
+
+
+_BEFORE_IGNORED = pytest.mark.xfail(
+    reason="#4340: add_outline_item(before=...) ignores `before` unless it is the last item",
+    strict=True,
+)
+
+
+@pytest.mark.parametrize(
+    ("titles", "before", "expected"),
+    [
+        pytest.param(["first", "middle", "last"], None, ["first", "middle", "last", "new"], id="none"),
+        pytest.param(["first", "middle", "last"], "last", ["first", "middle", "new", "last"], id="last"),
+        pytest.param(
+            ["first", "middle", "last"], "middle", ["first", "new", "middle", "last"],
+            id="middle", marks=_BEFORE_IGNORED,
+        ),
+        pytest.param(
+            ["first", "middle", "last"], "first", ["new", "first", "middle", "last"],
+            id="first", marks=_BEFORE_IGNORED,
+        ),
+        pytest.param(["only"], "only", ["new", "only"], id="only", marks=_BEFORE_IGNORED),
+    ],
+)
+def test_add_outline_item__before(titles: list[str], before: str | None, expected: list[str]) -> None:
+    """
+    add_outline_item(before=...) inserts the new item in front of `before`, or at the end without it.
+
+    The items of one outline level are displayed in the order of their linked
+    list /First, /Next, ... (ISO 32000-2:2020, 12.3.3), which is the order in
+    which PdfReader.outline returns them.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    items = {title: writer.add_outline_item(title, 0) for title in titles}
+
+    writer.add_outline_item("new", 0, before=None if before is None else items[before])
+
+    assert _outline_titles(writer) == expected
+
+
+def test_add_outline_item__without_page() -> None:
+    """
+    add_outline_item() with page_number=None creates an item without an action.
+
+    An outline item needs neither a destination nor an action, /Dest and /A are
+    both optional (ISO 32000-2:2020, 12.3.3, Table 151).
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+
+    item = writer.add_outline_item("no destination", None).get_object()
+
+    assert "/A" not in item
+    assert "/Dest" not in item
+
+
+def test_add_outline_item__page_object() -> None:
+    """add_outline_item() accepts a PageObject of the writer as page."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(72, 72)
+
+    item = writer.add_outline_item("page object", page).get_object()
+
+    # A go-to action (ISO 32000-2:2020, 12.6.4.2, Table 202) to the destination
+    # [page /Fit], where page is an indirect reference to the page (12.3.2.2, Table 149).
+    assert item["/A"]["/S"] == "/GoTo"
+    assert item["/A"]["/D"] == [page.indirect_reference, "/Fit"]
+
+
+def test_add_outline_item__legacy_positional_parameters() -> None:
+    """
+    add_outline_item() warns about, but still accepts, the positional parameters without `before`.
+
+    That is the order (title, page_number, parent, color, bold, italic, fit, pagenum).
+    """
+    writer = PdfWriter()
+    # Two pages, so that the page number 1 differs from the default 0.
+    writer.add_blank_page(72, 72)
+    writer.add_blank_page(72, 72)
+
+    # This order was only on main between #1437 and #1371, which inserted
+    # `before`. Both were first released in PyPDF2 3.0.0.
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^Passing \(title, page_number, parent, color, bold, italic, fit, pagenum\) to add_outline_item "
+            r"is deprecated and will be removed in pypdf 8\.0\.0\. Use keyword arguments instead\.$"
+        ),
+    ):
+        item = writer.add_outline_item("legacy", None, None, (1, 0, 0), True, False, Fit.fit_horizontally(10), 1)
+
+    item = item.get_object()
+    # ISO 32000-2:2020, Table 151: /C is the DeviceRGB color of the text, /F holds the flags.
+    assert item["/C"] == [1, 0, 0]
+    # Table 152: bit 1 is italic, bit 2 is bold.
+    assert item["/F"] == 2
+    # Table 149: [page /FitH top].
+    assert item["/A"]["/D"] == [writer.pages[1].indirect_reference, "/FitH", 10]
+
+
+def test_remove_images__legacy_boolean_parameter() -> None:
+    """remove_images() warns about a boolean, but still removes all images."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "side-by-side-subfig.pdf")
+    assert writer.pages[0].images
+
+    # pypdf 3.5.0 deprecated the boolean parameter ignore_byte_string_object (#1666),
+    # and pypdf 3.17.0 made to_delete the first parameter (#2214). pypdf 4.0.0
+    # removed ignore_byte_string_object (#2367), but kept accepting a boolean in its place.
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^Passing a boolean to remove_images is deprecated and will be removed in pypdf 8\.0\.0\. "
+            r"Use ImageType\.ALL instead\.$"
+        ),
+    ):
+        writer.remove_images(True)
+
+    assert not writer.pages[0].images
+
+
+def test_page_mode__getter() -> None:
+    """page_mode is None without a /PageMode entry and returns the mode that was set."""
+    writer = PdfWriter()
+    # /PageMode is optional (ISO 32000-2:2020, 7.7.2, Table 29). pypdf returns None
+    # instead of the default /UseNone.
+    assert writer.page_mode is None
+
+    writer.page_mode = "/UseOutlines"
+
+    assert writer.page_mode == "/UseOutlines"
+
+
+def test_add_annotation__invalid_page_type() -> None:
+    """add_annotation() raises a TypeError if the page is neither an index nor a PageObject."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    annotation = Link(rect=(0, 0, 10, 10), target_page_index=0)
+
+    with pytest.raises(TypeError, match=r"^page: invalid type$"):
+        writer.add_annotation("0", annotation)
+
+
+def test_clean_page__named_destination_in_action() -> None:
+    """
+    clean_page() converts the name of a named destination in a go-to action to a string.
+
+    A named destination can be referred to by a name object or by a byte string
+    (ISO 32000-2:2020, 12.3.2.4). merge() writes all named destinations into the
+    /Dests name tree, whose keys are strings, so the name has to become a string.
+    The key keeps the leading slash, as merge() uses "/chapter1" as key for the
+    name /chapter1 of a /Dests dictionary in the catalog.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(72, 72)
+    # A link to the named destination /chapter1 (12.6.4.2, Table 202).
+    action = DictionaryObject({NameObject("/S"): NameObject("/GoTo"), NameObject("/D"): NameObject("/chapter1")})
+    page[NameObject("/Annots")] = ArrayObject([DictionaryObject({NameObject("/A"): action})])
+
+    writer.clean_page(page)
+
+    assert isinstance(action["/D"], TextStringObject)
+    assert action["/D"] == "/chapter1"
+
+
+def _reader_with_article_thread() -> PdfReader:
+    """A one-page document with an article thread of one bead (ISO 32000-2:2020, 12.4.3)."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(72, 72)
+    thread = DictionaryObject({NameObject("/I"): DictionaryObject({NameObject("/Title"): TextStringObject("story")})})
+    thread_reference = writer._add_object(thread)
+    bead = DictionaryObject()
+    bead_reference = writer._add_object(bead)
+    # Table 163: the only bead is its own next and previous bead.
+    bead.update({
+        NameObject("/T"): thread_reference,
+        NameObject("/N"): bead_reference,
+        NameObject("/V"): bead_reference,
+        NameObject("/P"): page.indirect_reference,
+        NameObject("/R"): RectangleObject((0, 0, 72, 72)),
+    })
+    thread[NameObject("/F")] = bead_reference
+    page[NameObject("/B")] = ArrayObject([bead_reference])
+    writer.root_object[NameObject("/Threads")] = writer._add_object(ArrayObject([thread_reference]))
+    return PdfReader(_write_to_bytes(writer))
+
+
+def test_merge__excluded_fields_none() -> None:
+    """merge() with excluded_fields=None excludes nothing, so it copies the article threads."""
+    reader = _reader_with_article_thread()
+    writer = PdfWriter()
+
+    writer.merge(None, reader, excluded_fields=None)
+
+    assert len(writer.threads) == 1
+
+
+def test_merge__form_field_without_merged_widget() -> None:
+    """
+    merge() does not add a form field to /AcroForm that is on none of the merged pages.
+
+    merge() only takes over the fields whose widget annotations it copied with the pages.
+    """
+    source = PdfWriter()
+    source.add_blank_page(72, 72)
+    # A text field without widget annotation, so it is on no page. /Fields lists
+    # the root fields of the form (ISO 32000-2:2020, 12.7.3, Table 224).
+    field = source._add_object(
+        DictionaryObject({NameObject("/FT"): NameObject("/Tx"), NameObject("/T"): TextStringObject("orphan")})
+    )
+    source.root_object[NameObject("/AcroForm")] = DictionaryObject({NameObject("/Fields"): ArrayObject([field])})
+
+    writer = PdfWriter()
+    writer.merge(None, PdfReader(_write_to_bytes(source)))
+
+    assert writer.root_object["/AcroForm"]["/Fields"] == []
+
+
+def test_add_filtered_articles__filter_of_unexpected_type() -> None:
+    """add_filtered_articles() adds all article threads if the filter is neither a string nor a pattern."""
+    reader = _reader_with_article_thread()
+    writer = PdfWriter()
+    # Copy the page without its beads, as merge() does. Otherwise, the thread is
+    # cloned together with the page, and add_filtered_articles() skips it.
+    page = writer.add_page(reader.pages[0], excluded_keys=("/B",))
+    page.original_page = reader.pages[0]
+    pages = {reader.pages[0].indirect_reference.idnum: page}
+
+    writer.add_filtered_articles(None, pages, reader)  # type: ignore[arg-type]
+
+    assert len(writer.threads) == 1
+
+
+def test_reset_translation__reader_not_copied_from() -> None:
+    """reset_translation() ignores a reader, or an object of a reader, that the writer has not copied from."""
+    writer = PdfWriter()
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    writer.append(reader)
+    other = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    writer.reset_translation(other)
+    writer.reset_translation(IndirectObject(1, 0, other))
+
+    assert id(reader) in writer._id_translated
+
+
+def test_reset_translation__indirect_object() -> None:
+    """reset_translation() with an IndirectObject resets the translation of the reader it belongs to."""
+    writer = PdfWriter()
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    writer.append(reader)
+    assert id(reader) in writer._id_translated
+
+    writer.reset_translation(IndirectObject(1, 0, reader))
+
+    assert id(reader) not in writer._id_translated

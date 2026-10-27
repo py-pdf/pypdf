@@ -61,6 +61,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
+    deprecate_with_replacement,
     deprecation_with_replacement,
     logger_warning,
 )
@@ -1860,9 +1861,20 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added outline item as an indirect object.
 
+        .. deprecated:: 7.0.0
+            Passing the positional parameters in the order without ``before``
+            (title, page_number, parent, color, bold, italic, fit, pagenum)
+            is deprecated and will be removed in pypdf 8.0.0.
+            Use keyword arguments instead.
+
         """
         page_ref: NullObject | IndirectObject | NumberObject | None
         if isinstance(italic, Fit):  # it means that we are on the old params
+            deprecate_with_replacement(
+                "Passing (title, page_number, parent, color, bold, italic, fit, pagenum) to add_outline_item",
+                "keyword arguments",
+                "8.0.0",
+            )
             if fit is not None and page_number is None:
                 page_number = fit
             return self.add_outline_item(
@@ -2241,8 +2253,13 @@ class PdfWriter(PdfDocCommon):
             to_delete: The type of images to be deleted
                 (default = all images types)
 
+        .. deprecated:: 7.0.0
+            Passing a boolean as ``to_delete`` is deprecated and will be
+            removed in pypdf 8.0.0. Use ``ImageType.ALL`` instead.
+
         """
         if isinstance(to_delete, bool):
+            deprecate_with_replacement("Passing a boolean to remove_images", "ImageType.ALL", "8.0.0")
             to_delete = ImageType.ALL
 
         i = ObjectDeletionFlag.NONE
@@ -2638,29 +2655,14 @@ class PdfWriter(PdfDocCommon):
                     act[NameObject("/D")] = TextStringObject(d)
         return page
 
-    def _create_stream(
-        self, fileobj: Path | StrByteType | PdfReader
-    ) -> tuple[IOBase, Encryption | None]:
+    def _create_stream(self, fileobj: Path | StrByteType) -> IOBase:
         # If the fileobj parameter is a string, assume it is a path
         # and create a file object at that location. If it is a file,
-        # copy the file's contents into a BytesIO stream object; if
-        # it is a PdfReader, copy that reader's stream into a
-        # BytesIO stream.
-        # If fileobj is none of the above types, it is not modified
-        encryption_obj = None
+        # copy the file's contents into a BytesIO stream object.
         stream: IOBase
         if isinstance(fileobj, (str, Path)):
             with FileIO(fileobj, "rb") as f:
                 stream = BytesIO(f.read())
-        elif isinstance(fileobj, PdfReader):
-            if fileobj._encryption:
-                encryption_obj = fileobj._encryption
-            orig_tell = fileobj.stream.tell()
-            fileobj.stream.seek(0)
-            stream = BytesIO(fileobj.stream.read())
-
-            # reset the stream to its original location
-            fileobj.stream.seek(orig_tell)
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
             fileobj.seek(0)
             filecontent = fileobj.read()
@@ -2672,7 +2674,7 @@ class PdfWriter(PdfDocCommon):
                 "a file object, or an object implementing .seek and .read. "
                 "Passing a PdfReader directly works as well."
             )
-        return stream, encryption_obj
+        return stream
 
     def append(
         self,
@@ -2774,7 +2776,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(fileobj, PdfDocCommon):
             reader = fileobj
         else:
-            stream, _encryption_obj = self._create_stream(fileobj)
+            stream = self._create_stream(fileobj)
             # Create a new PdfReader instance using the stream
             # (either file or BytesIO or StringIO) created above
             reader = PdfReader(stream, strict=False)  # type: ignore[arg-type]

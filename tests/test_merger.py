@@ -53,64 +53,64 @@ def merger_operate(merger):
         "deeper", 0, parent=outline_item, italic=True, bold=True
     )
     merger.add_outline_item(
-        "Let's see", 2, oi2, (255, 255, 0), True, True, Fit.fit_box_vertically(left=12)
+        "Let's see", 2, oi2, color=(255, 255, 0), bold=True, italic=True, fit=Fit.fit_box_vertically(left=12)
     )
     merger.add_outline_item(
         "The XYZ fit",
         0,
         outline_item,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.xyz(left=10, top=20, zoom=3),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.xyz(left=10, top=20, zoom=3),
     )
     merger.add_outline_item(
         "The FitH fit",
         0,
         outline_item,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_horizontally(top=10),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_horizontally(top=10),
     )
     merger.add_outline_item(
         "The FitV fit",
         0,
         outline_item,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_vertically(left=10),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_vertically(left=10),
     )
     merger.add_outline_item(
         "The FitR fit",
         0,
         outline_item,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
     )
     merger.add_outline_item(
-        "The FitB fit", 0, outline_item, (255, 0, 15), True, True, Fit.fit_box()
+        "The FitB fit", 0, outline_item, color=(255, 0, 15), bold=True, italic=True, fit=Fit.fit_box()
     )
     merger.add_outline_item(
         "The FitBH fit",
         0,
         outline_item,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_box_horizontally(top=10),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box_horizontally(top=10),
     )
     merger.add_outline_item(
         "The FitBV fit",
         0,
         outline_item,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_box_vertically(left=10),
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box_vertically(left=10),
     )
 
     found_oi = merger.find_outline_item("nothing here")
