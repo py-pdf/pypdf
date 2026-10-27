@@ -700,3 +700,30 @@ def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
     )[0]
     assert image.mode == "RGB"
     assert image.getpixel((0, 0)) == (255, 255, 255)
+
+
+@pytest.mark.skipif(
+    condition=Version(PIL.__version__) < Version("11.1.0"),
+    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+",
+)
+@pytest.mark.xfail(reason="Only a bare /ICCBased name triggers the CMYK to RGB conversion", strict=True)
+def test_xobj_to_image__jpx_cmyk_image_with_icc_based_color_space_array() -> None:
+    """
+    CMYK JPEG 2000 data with an [/ICCBased profile] colour space is converted to RGB.
+
+    This is how the colour space appears in a well-formed PDF (ISO 32000-2:2020,
+    8.6.5.5), so it should be handled like the bare name.
+    """
+    icc_profile = DecodedStreamObject()
+    icc_profile[NameObject("/N")] = NumberObject(4)
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject([NameObject("/ICCBased"), icc_profile])
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
+    image.set_data(_jpeg2000_data("CMYK", (0, 0, 0, 0)))
+
+    _, _, img = _xobj_to_image(image)
+
+    assert img.mode == "RGB"
+    assert img.getpixel((0, 0)) == (255, 255, 255)
