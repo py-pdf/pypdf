@@ -5,7 +5,7 @@ from typing import Any
 
 import PIL
 import pytest
-from PIL import Image
+from PIL import Image, features
 
 from pypdf import PdfReader
 from pypdf._utils import Version
@@ -33,6 +33,16 @@ from pypdf.generic._image_xobject import (
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
+
+_OPENJPEG_VERSION = features.version_codec("jpg_2000")
+requires_cmyk_jpeg2000_saving = pytest.mark.skipif(
+    condition=(
+        Version(PIL.__version__) < Version("11.1.0")
+        or _OPENJPEG_VERSION is None
+        or Version(_OPENJPEG_VERSION) < Version("2.5.3")
+    ),
+    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+ with OpenJPEG 2.5.3+",
+)
 
 
 def _create_image(mode: str, size: tuple[int, int], *, color: Any = 0, diagonal: Any = None) -> Image.Image:
@@ -372,10 +382,7 @@ def test_handle_flate__icc_based__image_mode_1() -> None:
             assert image.getpixel((x, y)) == 255 * int(not is_black_square)
 
 
-@pytest.mark.skipif(
-    condition=Version(PIL.__version__) < Version("11.1.0"),
-    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+",
-)
+@requires_cmyk_jpeg2000_saving
 def test_handle_jpx__explicit_decode() -> None:
     """
     An explicit /Decode array is applied to JPEG 2000 samples.
@@ -688,10 +695,7 @@ def test_handle_jpx__rgba_image_with_cmyk_color_space() -> None:
     assert image.getpixel((0, 0)) == (1, 2, 3, 4)
 
 
-@pytest.mark.skipif(
-    condition=Version(PIL.__version__) < Version("11.1.0"),
-    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+",
-)
+@requires_cmyk_jpeg2000_saving
 def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
     """
     CMYK JPEG 2000 data with a bare /ICCBased colour space name is converted to RGB.
@@ -707,11 +711,10 @@ def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
     assert image.getpixel((0, 0)) == (255, 255, 255)
 
 
-@pytest.mark.skipif(
-    condition=Version(PIL.__version__) < Version("11.1.0"),
-    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+",
+@requires_cmyk_jpeg2000_saving
+@pytest.mark.xfail(
+    reason="Only a bare /ICCBased name triggers the CMYK to RGB conversion", raises=AssertionError, strict=True
 )
-@pytest.mark.xfail(reason="Only a bare /ICCBased name triggers the CMYK to RGB conversion", strict=True)
 def test_xobj_to_image__jpx_cmyk_image_with_icc_based_color_space_array() -> None:
     """
     CMYK JPEG 2000 data with an [/ICCBased profile] colour space is converted to RGB.
