@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793102995557,
+  "lastUpdate": 1793102999013,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -157549,6 +157549,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027397610885565825",
             "extra": "mean: 732.2151868000105 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "a9f9c4f16f1fb6b48be089ef6eae250dbaef5d23",
+          "message": "REL: 6.21.3\n\n## What's new\n\n### Security (SEC)\n- Use the validated page count after decrypting a document (#4270) by @stefan6419846\n- Limit total number of cross-reference stream entries (#4269) by @stefan6419846\n- Avoid excessive error messages (#4265) by @stefan6419846\n\n### Performance Improvements (PI)\n- Read flat page label number trees once for all pages (#4251) by @kholdrex\n- Collect the named destinations once when resolving links (#4249) by @MartinThoma\n- Avoid scanning all objects in get_outline_root (#4245) by @kholdrex\n\n### Bug Fixes (BUG)\n- Resolve indirect widths in CID font /W arrays (#4267) by @tim-hilde\n\n### Documentation (DOC)\n- Block incremental writes of encrypted documents (#4246) by @metsw24-max\n\n### Developer Experience (DEV)\n- Update to PyPy 3.12 and pinned requirements (#4244) by @stefan6419846\n\n### Maintenance (MAINT)\n- Revert: Reject unsupported key lengths in the /Encrypt dictionary by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.2...6.21.3)",
+          "timestamp": "2026-10-27T13:06:33+01:00",
+          "tree_id": "d79b0110b37948db43a36b9cc04892b63f1314ab",
+          "url": "https://github.com/py-pdf/pypdf/commit/a9f9c4f16f1fb6b48be089ef6eae250dbaef5d23"
+        },
+        "date": 1793102990769,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 22.418593084358665,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017804606018324665",
+            "extra": "mean: 44.605832142860685 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 40.896886966374566,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009512141015869545",
+            "extra": "mean: 24.451738852940085 msec\nrounds: 34"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.5192823522499554,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02591501951201289",
+            "extra": "mean: 658.205499799999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.1327235604663524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.054262358575731716",
+            "extra": "mean: 882.8279334000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5777821490001811,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0884183156661608",
+            "extra": "mean: 1.7307561366000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8871309129639842,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02495753532874972",
+            "extra": "mean: 529.9049436000018 msec\nrounds: 5"
           }
         ]
       }
