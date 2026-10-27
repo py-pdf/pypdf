@@ -57,10 +57,7 @@ def set_font_operation(state_mgr: TextStateManager, fonts: dict[str, Font], oper
 
     """
     name = operands[0] if operands else ""
-    try:
-        size = float(operands[1])
-    except (IndexError, TypeError, ValueError):
-        size = state_mgr.font_size
+    size = state_mgr._as_float(operands[1] if len(operands) > 1 else None, state_mgr.font_size)
     state_mgr.set_font(resolve_font(fonts, name), size)
 
 

@@ -752,6 +752,28 @@ def test_layout_mode_text_operator_with_a_non_numeric_operand(operator: bytes) -
     assert "World" in page.extract_text(extraction_mode="layout")
 
 
+@pytest.mark.parametrize(
+    "operator",
+    [
+        pytest.param(b"Tc", id="Tc"),
+        pytest.param(b"Tw", id="Tw"),
+        pytest.param(b"Tz", id="Tz"),
+        pytest.param(b"Ts", id="Ts"),
+        pytest.param(b"TL T*", id="TL"),
+    ],
+)
+def test_layout_mode_text_state_operator_without_operands(operator: bytes) -> None:
+    """A text state operator without an operand leaves the parameter unchanged in layout mode,
+    matching plain mode, and the text around it is kept.
+    """
+    content = b"BT /F1 12 Tf 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    text = page.extract_text(extraction_mode="layout")
+    assert "Hello" in text
+    assert "World" in text
+
+
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
