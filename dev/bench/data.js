@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793101217441,
+  "lastUpdate": 1793101242710,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -157285,6 +157285,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05881567357249524",
             "extra": "mean: 881.5884535999999 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82b91951dc74496bb3efe6465434f041bb6a5e6b",
+          "message": "SEC: Use the validated page count after decrypting a document (#4270)\n\nget_num_pages() returned the raw /Count for any document with an\n/Encrypt entry, even after a successful decrypt(). A forged count\ncould cause huge allocations in e.g. page_labels. Walk the page tree\nonce the document is decrypted.\n\nCo-authored-by: Dharmendra-afk <soni.dharmendra@tinycrows.com>",
+          "timestamp": "2026-10-27T12:37:12+01:00",
+          "tree_id": "813abd58fe91494a4334467c6a5c8030dd5f2276",
+          "url": "https://github.com/py-pdf/pypdf/commit/82b91951dc74496bb3efe6465434f041bb6a5e6b"
+        },
+        "date": 1793101233344,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 10.882966009205568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023546213546795764",
+            "extra": "mean: 91.88671536363623 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 51.568970515858496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002444918354805352",
+            "extra": "mean: 19.39150597727135 msec\nrounds: 44"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9122757777826878,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004890173162876975",
+            "extra": "mean: 1.0961597625999986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.2906550850331687,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0052876089853756605",
+            "extra": "mean: 3.4405040595999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.6220055323359034,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03461744064058254",
+            "extra": "mean: 1.6077027421999959 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8719704570654692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022823659588958645",
+            "extra": "mean: 534.1964645999894 msec\nrounds: 5"
           }
         ]
       }
