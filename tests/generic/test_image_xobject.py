@@ -35,6 +35,9 @@ from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
 
 _OPENJPEG_VERSION = features.version_codec("jpg_2000")
+requires_jpeg2000 = pytest.mark.skipif(
+    condition=_OPENJPEG_VERSION is None, reason="Saving JPEG 2000 images requires Pillow with OpenJPEG"
+)
 requires_cmyk_jpeg2000_saving = pytest.mark.skipif(
     condition=(
         Version(PIL.__version__) < Version("11.1.0")
@@ -738,6 +741,7 @@ _SMASK_IN_DATA_NOT_READ = pytest.mark.xfail(
 )
 
 
+@requires_jpeg2000
 @pytest.mark.parametrize(
     ("smask_in_data", "expected_mode", "expected_pixel"),
     [
