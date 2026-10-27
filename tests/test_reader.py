@@ -5,7 +5,7 @@ import sys
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 from unittest import mock
 
 import pytest
@@ -753,10 +753,9 @@ def test_read_malformed_header(caplog):
         PdfReader(io.BytesIO(b"foo"), strict=True)
     assert exc.value.args[0] == "PDF starts with 'foo', but '%PDF-' expected"
     caplog.clear()
-    try:
+
+    with pytest.raises(PdfStreamError):
         PdfReader(io.BytesIO(b"foo"), strict=False)
-    except Exception:
-        pass
     assert caplog.messages[0].startswith("invalid pdf header")
 
 
@@ -3467,3 +3466,69 @@ def test_read_standard_xref_table__speed__caching() -> None:
 
     reader = PdfReader(BytesIO(body))
     _ = len(reader.pages)
+
+
+def _generate_pdf15_xref_stream_pdf_file(
+        size: int, encoded: bytes, index: Optional[str] = None, prev: bool = False
+) -> bytes:
+    pdf = bytearray(b"%PDF-1.7\n")
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+
+    prev_offset = len(pdf) if prev else None
+    if prev:
+        pdf += (
+            f"3 0 obj\n<< /Type /XRef /Size 12 /Index [10 2] /W [1 0 0] /Root 1 0 R /Filter /FlateDecode "
+            f"/Length {len(encoded)} >>\nstream\n"
+        ).encode()
+        pdf += encoded + b"\nendstream\nendobj\n"
+
+    startxref = len(pdf)
+    index_entry = f"/Index {index} " if index is not None else ""
+    prev_entry = f"/Prev {prev_offset} " if prev_offset is not None else ""
+
+    pdf += (
+        f"3 0 obj\n<< /Type /XRef /Size {size} {index_entry}/W [1 0 0] /Root 1 0 R "
+        f"{prev_entry}/Filter /FlateDecode /Length {len(encoded)} >>\nstream\n"
+    ).encode()
+    pdf += encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+    return pdf
+
+
+@pytest.mark.timeout(10)
+@pytest.mark.parametrize("strict", ["True", "False"])
+def test_read_pdf15_xref_stream__entry_limit(strict: bool, caplog):
+    encoded = FlateDecode.encode(b"\x02" * 10)
+    pdf = _generate_pdf15_xref_stream_pdf_file(size=10, encoded=encoded)
+
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Maximum XRef stream entry limit reached: 10 > 3\.$"
+    ):
+        _ = PdfReader(BytesIO(pdf), strict=strict, xref_stream_maximum_entries=3)
+    assert caplog.messages == []
+
+
+@pytest.mark.timeout(10)
+def test_read_pdf15_xref_stream__entry_limit__prev(caplog):
+    encoded = FlateDecode.encode(b"\x02\x02")
+    pdf = _generate_pdf15_xref_stream_pdf_file(size=22, encoded=encoded, index="[20 2]", prev=True)
+    reader = PdfReader(BytesIO(pdf), xref_stream_maximum_entries=3)
+
+    assert list(reader.xref_objStm) == [20, 21]
+    assert "Previous trailer cannot be read: ('Maximum XRef stream entry limit reached: 4 > 3.',)" in caplog.messages
+
+
+@pytest.mark.timeout(10)
+def test_read_pdf15_xref_stream__negative_count(caplog):
+    encoded = FlateDecode.encode(b"\x02" * 2)
+    pdf = _generate_pdf15_xref_stream_pdf_file(size=12, encoded=encoded, index="[0 -5 10 2]")
+
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Negative XRef count -5\.$"):
+        _ = PdfReader(BytesIO(pdf), strict=True)
+    assert caplog.messages == []
+
+    reader = PdfReader(BytesIO(pdf), strict=False)
+    assert list(reader.xref_objStm) == [10, 11]
+    assert caplog.messages == ["Negative XRef count -5, using 0."]

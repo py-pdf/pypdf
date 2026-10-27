@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## Version 6.21.3, 2026-10-27
+
+### Security (SEC)
+- Use the validated page count after decrypting a document (#4270)
+- Limit total number of cross-reference stream entries (#4269)
+- Avoid excessive error messages (#4265)
+
+### Performance Improvements (PI)
+- Read flat page label number trees once for all pages (#4251)
+- Collect the named destinations once when resolving links (#4249)
+- Avoid scanning all objects in get_outline_root (#4245)
+
+### Bug Fixes (BUG)
+- Resolve indirect widths in CID font /W arrays (#4267)
+
+### Documentation (DOC)
+- Block incremental writes of encrypted documents (#4246)
+
+### Developer Experience (DEV)
+- Update to PyPy 3.12 and pinned requirements (#4244)
+
+### Maintenance (MAINT)
+- Revert: Reject unsupported key lengths in the /Encrypt dictionary
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.2...6.21.3)
+
 ## Version 6.21.2, 2026-10-21
 
 ### Security (SEC)

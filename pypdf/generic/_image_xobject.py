@@ -722,6 +722,8 @@ def _xobj_to_image(
 
     try:  # temporary try/except until other fixes of images
         img = Image.open(BytesIO(data))
+    except MemoryError:  # pragma: no cover  # TODO: BLE001
+        raise
     except Exception as exception:
         logger_warning("Failed loading image: %(exception)s", source=__name__, exception=exception)
         img = None  # type: ignore[assignment,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10

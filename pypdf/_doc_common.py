@@ -377,10 +377,12 @@ class PdfDocCommon(ABC):
             PdfReadError: If restrictions prevent this action.
 
         """
-        # Flattened pages will not work on an encrypted PDF;
-        # the PDF file's page count is used in this case. Otherwise,
-        # the original method (flattened page count) is used.
-        if self.is_encrypted:
+        # The page tree cannot be walked while the document is still encrypted;
+        # the PDF file's page count is used in this case. Once the document has
+        # been decrypted (or if it is not encrypted at all), the flattened page
+        # tree is used instead, as the /Count value might be wrong.
+        encryption = self._encryption
+        if self.is_encrypted and (encryption is None or not encryption.is_decrypted()):
             return self.root_object["/Pages"]["/Count"]  # type: ignore[no-any-return, index]
         if self.flattened_pages is None:
             self._flatten(self._readonly)

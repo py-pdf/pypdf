@@ -238,7 +238,7 @@ class Font:
                 Font.__check_entry_count(entry_count)
                 current_widths.update(
                     {
-                        chr(_cidx): _width
+                        chr(_cidx): _width.get_object()
                         for _cidx, _width in zip(
                             range(start_idx, stop_idx, 1),
                             width_list,
@@ -748,6 +748,8 @@ class Font:
         ):
             try:
                 tt_font_object = TTFont(BytesIO(font_file_data))
+            except MemoryError:  # pragma: no cover  # TODO: BLE001
+                raise
             except Exception as exception:  # Font file data is corrupt.
                 logger_warning("Could not open font file: %(exception)s", source=__name__, exception=exception)
             else:

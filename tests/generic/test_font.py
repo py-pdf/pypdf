@@ -408,6 +408,37 @@ def test_font__collect_cid_character_widths__limits() -> None:
     assert current_widths == {}
 
 
+def test_font__collect_cid_character_widths__indirect_widths() -> None:
+    """Indirect widths in the /W array are resolved for both formats."""
+    writer = PdfWriter()
+    width_a = writer._add_object(NumberObject(600))
+    width_b = writer._add_object(NumberObject(700))
+    width_c = writer._add_object(NumberObject(800))
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(65), ArrayObject([width_a, width_b]),
+            NumberObject(70), NumberObject(71), width_c,
+        ])
+    })
+    current_widths: dict[str, float] = {}
+
+    Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
+
+    assert current_widths == {"A": 600, "B": 700, "F": 800, "G": 800}
+    assert all(isinstance(width, (int, float)) for width in current_widths.values())
+
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/DescendantFonts"): ArrayObject([DictionaryObject({
+            NameObject("/Subtype"): NameObject("/CIDFontType2"),
+            NameObject("/W"): ArrayObject([NumberObject(65), ArrayObject([width_a, width_b])]),
+        })]),
+    })
+    font = Font.from_font_resource(font_res)
+    assert font.get_text_width("AB") == 1300
+
+
 def test_simple_font_reverse_cmap_from_character_map() -> None:
     pdf_path = RESOURCE_ROOT / "side-by-side-subfig.pdf"
     reader = PdfReader(pdf_path)
