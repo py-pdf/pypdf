@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793099045940,
+  "lastUpdate": 1793099100519,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -156955,6 +156955,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011549942671419544",
             "extra": "mean: 511.965920800003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "64270258c0eced720f7960aecf8cef31afd39f8d",
+          "message": "SEC: Avoid excessive error messages (#4265)\n\nPreviously, dictionaries which are left open might accumulate enormous\nerror messages, possibly exhausting memory. Since we have recently\nchanged to exception chaining, repeating the error message when raising\nanother error is not required anymore.\n\nAdditionally, the first part of resolving `BLE001` violations has been\nstarted, and trivial-looking broad exceptions have been tightened. All\ngeneric `Exception` handlers now re-raise `MemoryError`s, avoiding\nthe most critical parts of the broad exceptions being caught previously.\nThis is a side-effect of the reported behavior and not a direct security\nissue. This fixes the most relevant concerns from #4180 as well.\n(Fixes #4180.)",
+          "timestamp": "2026-10-27T12:00:56+01:00",
+          "tree_id": "3af1827875fb0ea4d3ee4697a440eed026ac328f",
+          "url": "https://github.com/py-pdf/pypdf/commit/64270258c0eced720f7960aecf8cef31afd39f8d"
+        },
+        "date": 1793099088446,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.239351078261075,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0204807653655675",
+            "extra": "mean: 70.22791941176867 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.070844664428854,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0045895491097521285",
+            "extra": "mean: 36.94011074999821 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9162958751707815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.045936075143316324",
+            "extra": "mean: 1.0913505420000036 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.45537133446086664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04715584598393297",
+            "extra": "mean: 2.196009990800019 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.37227269063070156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022515849675806377",
+            "extra": "mean: 2.6862029506000225 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.119182336523026,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04515348483877605",
+            "extra": "mean: 893.5094554000102 msec\nrounds: 5"
           }
         ]
       }
