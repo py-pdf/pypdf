@@ -967,6 +967,32 @@ def test_merge_page_with_annotations():
     assert len(page0.annotations) == 1
 
 
+def test_merge_page_with_annotations_of_merged_page():
+    """Annotations of the page passed to merge_page are cloned as well."""
+    writer = PdfWriter()
+    merged_writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    merged_writer.add_blank_page(100, 100)
+
+    writer.add_annotation(
+        page_number=0,
+        annotation=Polygon(vertices=[(50, 550), (200, 650), (70, 750), (50, 700)]),
+    )
+
+    page = merged_writer.pages[0]
+    page.merge_page(writer.pages[0])
+
+    assert len(page.annotations) == 1
+    assert page.annotations[0]["/Subtype"] == "/Polygon"
+
+    buffer = BytesIO()
+    merged_writer.write(buffer)
+
+    reread_page = PdfReader(buffer).pages[0]
+    assert len(reread_page.annotations) == 1
+    assert reread_page.annotations[0]["/Subtype"] == "/Polygon"
+
+
 @pytest.mark.parametrize(
     ("quad_count", "transformation", "expected"),
     [
