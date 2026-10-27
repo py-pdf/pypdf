@@ -13,6 +13,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
+from pypdf._utils import StreamType
 from pypdf.constants import ImageAttributes, PageAttributes, UserAccessPermissions
 from pypdf.errors import (
     EmptyFileError,
@@ -3859,3 +3860,275 @@ def test_get_object_from_stream__invalid_object_stream(objstm_num, strict_messag
     reader = PdfReader(BytesIO(data), strict=True)
     with pytest.raises(PdfReadError, match=strict_message):
         reader.get_object(4)
+
+
+def _build_pdf_with_xref_stream(rows: list[tuple[int, ...]], widths: tuple[int, ...] = (1, 2, 1)) -> bytes:
+    """
+    Build a document with a catalog (1), an empty page tree (2) and a cross-reference stream (3).
+
+    ``rows`` are appended to the entries for the objects 0 to 2.
+    """
+    pdf = bytearray(b"%PDF-1.7\n")
+    offsets = []
+    for number, body in enumerate((b"<< /Type /Catalog /Pages 2 0 R >>", b"<< /Type /Pages /Kids [] /Count 0 >>"), 1):
+        offsets.append(len(pdf))
+        pdf += b"%d 0 obj\n%s\nendobj\n" % (number, body)
+    all_rows = [(0, 0, 0), (1, offsets[0], 0), (1, offsets[1], 0), *rows]
+    data = b"".join(
+        b"".join(value.to_bytes(width, "big") for value, width in zip(row, widths) if width)
+        for row in (row + (0,) * (len(widths) - len(row)) for row in all_rows)
+    )
+    startxref = len(pdf)
+    pdf += b"3 0 obj\n<< /Type /XRef /Size %d /W [%s] /Root 1 0 R /Length %d >>\nstream\n" % (
+        len(all_rows) + 1, " ".join(map(str, widths)).encode(), len(data)
+    )
+    pdf += data + b"\nendstream\nendobj\nstartxref\n%d\n%%%%EOF\n" % startxref
+    return bytes(pdf)
+
+
+def test_xref_stream__too_many_entry_sizes() -> None:
+    """
+    A cross-reference stream with more than three /W entries is read, but rejected in strict mode.
+
+    ISO 32000-2:2020, 7.5.8.2, Table 20: /W is an array of three integers.
+    """
+    data = _build_pdf_with_xref_stream([], widths=(1, 2, 1, 1))
+    assert len(PdfReader(BytesIO(data)).pages) == 0
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Too many entry sizes: \[1, 2, 1, 1\]$"):
+        PdfReader(BytesIO(data), strict=True)
+
+
+def test_xref_stream__zero_width_type_defaults_to_in_use() -> None:
+    """
+    A cross-reference stream whose type field has a width of 0 treats all entries as in use.
+
+    ISO 32000-2:2020, 7.5.8.3: if the first element of /W is zero, the type field is
+    absent and defaults to 1.
+    """
+    data = _build_pdf_with_xref_stream([], widths=(0, 2, 1))
+    reader = PdfReader(BytesIO(data))
+    assert reader.xref[0][1] == data.index(b"1 0 obj")
+    assert reader.xref[0][2] == data.index(b"2 0 obj")
+    assert reader.root_object["/Type"] == "/Catalog"
+
+
+def test_xref_stream__unknown_entry_type() -> None:
+    """
+    A cross-reference stream entry of an unknown type is ignored, but rejected in strict mode.
+
+    ISO 32000-2:2020, 7.5.8.3: an entry of any other type than 0, 1 or 2 is a
+    reference to the null object.
+    """
+    data = _build_pdf_with_xref_stream([(3, 0, 0)])
+    assert len(PdfReader(BytesIO(data)).pages) == 0
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unknown xref type: 3$"):
+        PdfReader(BytesIO(data), strict=True)
+
+
+def test_read_xref__unreadable_xref_stm(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A trailer whose /XRefStm points to no cross-reference stream is read with a warning.
+
+    ISO 32000-2:2020, 7.5.8.4, Table 15: /XRefStm is the offset of a cross-reference
+    stream in a hybrid-reference file.
+    """
+    data = _generate_pdf_with_root(b"<< /Type /Catalog /Pages 2 0 R >>")
+    data = data.replace(b"trailer\n<< /Size 4", b"trailer\n<< /XRefStm 9 /Size 4")
+    reader = PdfReader(BytesIO(data))
+    assert len(reader.pages) == 1
+    assert caplog.messages == ["XRef object at 9 can not be read, some object may be missing"]
+
+
+def _append_incremental_update(data: bytes, prev: int, prefix: bytes = b"") -> bytes:
+    """Append an update without objects, whose trailer refers to the previous table at ``prev``."""
+    data += prefix
+    return data + (
+        b"xref\n0 1\n0000000000 65535 f \n"
+        b"trailer\n<< /Size 4 /Root 1 0 R /Prev %d >>\nstartxref\n%d\n%%%%EOF\n" % (prev, len(data))
+    )
+
+
+def _get_startxref(data: bytes) -> int:
+    return int(data.rsplit(b"startxref\n", 1)[1].split(b"\n", 1)[0])
+
+
+def test_read_xref__prev_pointing_slightly_before_xref_table(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A /Prev offset a few bytes before the previous cross-reference table is repaired without a warning.
+
+    ISO 32000-2:2020, 7.5.5, Table 15: /Prev is the offset of the previous cross-reference section.
+    """
+    base = _generate_pdf_with_root(b"<< /Type /Catalog /Pages 2 0 R >>")
+    data = _append_incremental_update(base, prev=_get_startxref(base) - 3)
+    reader = PdfReader(BytesIO(data))
+    assert len(reader.pages) == 1
+    assert caplog.messages == []
+
+
+def test_read_xref__prev_pointing_to_nowhere() -> None:
+    """
+    A /Prev offset that points to no cross-reference table raises a PdfReadError in strict mode.
+
+    ISO 32000-2:2020, 7.5.5, Table 15: /Prev is the offset of the previous cross-reference section.
+    """
+    base = _generate_pdf_with_root(b"<< /Type /Catalog /Pages 2 0 R >>")
+    comment = b"%" + b"a" * 60 + b"\n"
+    data = _append_incremental_update(base, prev=len(base) + 20, prefix=comment)
+    with pytest.raises(PdfReadError, match=r"^Could not find xref table at specified location$"):
+        PdfReader(BytesIO(data), strict=True)
+
+
+@pytest.mark.xfail(
+    reason="The xref table is read from the startxref offset when the first rebuild of the table fails.",
+    raises=PdfReadError,
+    strict=True,
+)
+def test_read_xref__retry_after_failed_rebuild() -> None:
+    """
+    A startxref offset a few bytes off is repaired by reading the table again after a failed rebuild.
+
+    ISO 32000-2:2020, 7.5.5: the offset after startxref is the position of the last cross-reference section.
+    """
+    data = _generate_pdf_with_root(b"<< /Type /Catalog /Pages 2 0 R >>")
+    startxref = _get_startxref(data)
+    data = data.replace(b"startxref\n%d\n" % startxref, b"startxref\n%d\n" % (startxref - 3))
+    rebuild_xref_table = PdfReader._rebuild_xref_table
+    calls = []
+
+    def fail_once(reader: PdfReader, stream: StreamType) -> None:
+        calls.append(stream)
+        if len(calls) == 1:
+            raise ValueError("rebuild failed")
+        rebuild_xref_table(reader, stream)
+
+    with mock.patch.object(PdfReader, "_rebuild_xref_table", fail_once):
+        reader = PdfReader(BytesIO(data))
+        assert len(reader.pages) == 1
+
+
+def test_get_object__expected_object_not_found_with_non_zero_indexed_xref(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    An object whose cross-reference entry points to another object raises a PdfReadError in strict mode.
+
+    The cross-reference table starts at object 1 instead of 0.
+    ISO 32000-2:2020, 7.5.4: the first subsection starts with object number 0.
+    """
+    objects = [
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n",
+    ]
+    data = bytearray(b"%PDF-1.7\n")
+    offsets = []
+    for obj in objects:
+        offsets.append(len(data))
+        data += obj
+    xref_offset = len(data)
+    # The xref table starts at object 1 and claims that object 3 is located where object 1 is.
+    data += b"xref\n1 3\n%010d 00000 n \n%010d 00000 n \n%010d 00000 n \n" % (offsets[0], offsets[1], offsets[0])
+    data += b"trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % xref_offset
+
+    reader = PdfReader(BytesIO(bytes(data)), strict=True)
+    assert caplog.messages == ["Xref table not zero-indexed. ID numbers for objects will be corrected."]
+    with pytest.raises(
+        PdfReadError,
+        match=(
+            r"^Expected object ID \(3 0\) does not match actual \(-1 -1\); "
+            r"xref table not zero-indexed\.$"
+        ),
+    ):
+        reader.get_object(3)
+
+
+@pytest.mark.xfail(
+    reason="An object that the table marks as free, but /XRefStm lists as in use, is read as the null object.",
+    strict=True,
+)
+def test_get_object__hybrid_file_with_free_table_entry() -> None:
+    """
+    An object that is free in the table but in use in /XRefStm is read in a hybrid-reference file.
+
+    ISO 32000-2:2020, 7.5.8.4: objects of the cross-reference stream are marked as free in the
+    table, so that readers without support for the stream skip them.
+    """
+    data = _generate_pdf_with_root(b"<< /Type /Catalog /Pages 2 0 R >>", with_catalog=True)
+    catalog_offset = data.index(b"4 0 obj")
+    data = data.replace(b"%010d 00000 n \n" % catalog_offset, b"0000000000 00000 f \n")
+    xref_offset = _get_startxref(data)
+    stream_data = b"\x01" + catalog_offset.to_bytes(2, "big") + b"\x00"
+    hidden_stream = (
+        b"5 0 obj\n<< /Type /XRef /Size 6 /Index [4 1] /W [1 2 1] /Length 4 >>\nstream\n"
+        + stream_data + b"\nendstream\nendobj\n"
+    )
+    hidden_stream_offset = xref_offset
+    data = data[:xref_offset] + hidden_stream + data[xref_offset:]
+    data = data.replace(b"trailer\n<< /Size 5", b"trailer\n<< /XRefStm %d /Size 6" % hidden_stream_offset)
+    data = data.replace(b"startxref\n%d\n" % xref_offset, b"startxref\n%d\n" % (xref_offset + len(hidden_stream)))
+
+    reader = PdfReader(BytesIO(data))
+    assert reader.xref[0][4] == catalog_offset
+    assert reader.get_object(4) == {"/Type": "/Catalog", "/Pages": reader.get_object(2).indirect_reference}
+
+
+def _create_encrypted_document() -> bytes:
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer.add_metadata({"/Title": "secret"})
+    writer.encrypt(user_password="userpwd", algorithm="RC4-128")
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+def test_get_object__encrypted_object_missing_from_xref(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    An encrypted object missing from the cross-reference table is found by scanning and decrypted.
+
+    Without the password, reading it raises a FileNotDecryptedError.
+    ISO 32000-2:2020, 7.6.2: strings and streams are encrypted using the document's encryption dictionary.
+    """
+    data = _create_encrypted_document()
+    reader = PdfReader(BytesIO(data))
+    info_reference = reader.trailer.raw_get("/Info")
+    del reader.xref[0][info_reference.idnum]
+
+    with pytest.raises(FileNotDecryptedError, match=r"^File has not been decrypted$"):
+        reader.get_object(info_reference.idnum)
+
+    reader = PdfReader(BytesIO(data), password="userpwd")
+    del reader.xref[0][info_reference.idnum]
+    reader.resolved_objects.pop((0, info_reference.idnum), None)
+    caplog.clear()
+    assert reader.get_object(info_reference.idnum)["/Title"] == "secret"
+    assert caplog.messages == [f"Object {info_reference.idnum} 0 found"]
+
+
+def test_decrypt__not_encrypted() -> None:
+    """
+    Decrypting a document that is not encrypted raises a PdfReadError.
+
+    ISO 32000-2:2020, 7.6.1: a document is encrypted if its trailer has an /Encrypt entry.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    with pytest.raises(PdfReadError, match=r"^Not encrypted file$"):
+        reader.decrypt("password")
+
+
+@pytest.mark.xfail(
+    reason="An object that a newer cross-reference section marks as free is read from an older section.",
+    strict=True,
+)
+def test_get_object__object_deleted_in_incremental_update() -> None:
+    """
+    An object deleted by an incremental update is read as the null object.
+
+    The update lists the object as free, which wins over the in-use entry of the original table.
+    ISO 32000-2:2020, 7.5.6: an incremental update deletes an object by marking it free.
+    """
+    data = _generate_pdf_with_root(b"<< /Type /Catalog /Pages 2 0 R >>", with_catalog=True)
+    # The update marks object 4 as free (next generation 1), deleting it.
+    update = b"xref\n0 1\n0000000000 65535 f \n4 1\n0000000000 00001 f \n"
+    data = data + update + b"trailer\n<< /Size 5 /Root 1 0 R /Prev %d >>\nstartxref\n%d\n%%%%EOF\n" % (
+        _get_startxref(data), len(data)
+    )
+    reader = PdfReader(BytesIO(data))
+    assert reader.get_object(4) == NullObject()
