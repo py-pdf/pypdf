@@ -35,6 +35,19 @@ from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
 
 
+def _encode_image(
+    mode: str, size: tuple[int, int], image_format: str, *, color: Any = 0, diagonal: Any = None
+) -> bytes:
+    """Encode a solid image, optionally with a ``diagonal`` line from the top left, as ``image_format``."""
+    image = Image.new(mode=mode, size=size, color=color)
+    if diagonal is not None:
+        for i in range(min(size)):
+            image.putpixel((i, i), diagonal)
+    data = BytesIO()
+    image.save(data, format=image_format)
+    return data.getvalue()
+
+
 def _handle_flate_indexed_image_mode_1(base: str, lookup_data: bytes) -> Image.Image:
     lookup = DecodedStreamObject()
     lookup.set_data(lookup_data)
@@ -296,32 +309,20 @@ def test_get_imagemode__empty_array() -> None:
 
 
 def test_p_image_with_alpha_mask() -> None:
-    # Generate the base image. Use TIFF as this is easy to do on the fly.
-    image = Image.new(mode="P", size=(10, 10), color=0)
-    image_data = BytesIO()
-    image.save(image_data, format="tiff")
-
     # Set the common values.
     x_object = StreamObject()
     mask_object = StreamObject()
     for obj in [x_object, mask_object]:
-        obj[NameObject(ImageAttributes.WIDTH)] = NumberObject(image.width)
-        obj[NameObject(ImageAttributes.HEIGHT)] = NumberObject(image.height)
+        obj[NameObject(ImageAttributes.WIDTH)] = NumberObject(10)
+        obj[NameObject(ImageAttributes.HEIGHT)] = NumberObject(10)
         obj[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.CCITT_FAX_DECODE)
 
-    # Set the basic image data.
-    x_object.set_data(image_data.getvalue())
+    # Set the basic image data. Use TIFF as this is easy to do on the fly.
+    x_object.set_data(_encode_image("P", (10, 10), "TIFF"))
     x_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("palette")
 
-    # Generate the mask image. Will be a diagonal white stripe.
-    image = Image.new(mode="1", size=(image.width, image.height))
-    for i in range(10):
-        image.putpixel((i, i), 1)
-    image_data = BytesIO()
-    image.save(image_data, format="tiff")
-
-    # Set the mask data.
-    mask_object.set_data(image_data.getvalue())
+    # Set the mask data. Will be a diagonal white stripe.
+    mask_object.set_data(_encode_image("1", (10, 10), "TIFF", diagonal=1))
     mask_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("1bit")
 
     # Add the mask to the image.
@@ -376,20 +377,13 @@ def test_handle_jpx__explicit_decode() -> None:
     stream[NameObject("/Filter")] = NameObject("/JPXDecode")
     stream[NameObject("/Height")] = NumberObject(16)
     stream[NameObject("/Width")] = NumberObject(16)
-
-    image = Image.new(mode="CMYK", size=(16, 16))
-    for i in range(16):
-        image.putpixel((i, i), 255)
-    image_data = BytesIO()
-    image.save(image_data, format="JPEG2000")
-    stream.set_data(image_data.getvalue())
-    image.save(image_data, format="JPEG2000")
+    # Cyan on the diagonal, no ink elsewhere.
+    stream.set_data(_encode_image("CMYK", (16, 16), "JPEG2000", diagonal=255))
 
     result = _xobj_to_image(x_object=stream)[2]
     for y in range(16):
         for x in range(16):
             assert result.getpixel((x, y)) == (255 * (x != y), 255, 255, 255), (x, y)
-            assert image.getpixel((x, y)) == (255 * (x == y), 0, 0, 0), (x, y)
 
 
 def test_bits2byte__limit() -> None:
@@ -503,7 +497,7 @@ def test_image_from_bytes__limit(mode: str, expected: str) -> None:
         _ = _image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
 
 
-def _minimal_image_xobject() -> StreamObject:
+def _create_minimal_image_xobject() -> StreamObject:
     """Build the smallest image XObject _xobj_to_image will decode."""
     stream = StreamObject()
     stream[NameObject("/Subtype")] = NameObject("/Image")
@@ -519,7 +513,7 @@ def test_xobj_to_image__self_referential_smask(
     caplog: pytest.LogCaptureFixture
 ) -> None:
     """A soft mask pointing at its own image must not recurse."""
-    image = _minimal_image_xobject()
+    image = _create_minimal_image_xobject()
     image[NameObject("/SMask")] = image
 
     extension, _, img = _xobj_to_image(image)
@@ -533,8 +527,8 @@ def test_xobj_to_image__two_node_smask_cycle(
     caplog: pytest.LogCaptureFixture
 ) -> None:
     """A -> B -> A soft mask chains must not recurse either."""
-    first = _minimal_image_xobject()
-    second = _minimal_image_xobject()
+    first = _create_minimal_image_xobject()
+    second = _create_minimal_image_xobject()
     first[NameObject("/SMask")] = second
     second[NameObject("/SMask")] = first
 
@@ -549,8 +543,8 @@ def test_xobj_to_image__two_node_smask_cycle(
 
 def test_xobj_to_image__acyclic_smask_still_applied() -> None:
     """The guard must not stop a legitimate soft mask being applied."""
-    image = _minimal_image_xobject()
-    image[NameObject("/SMask")] = _minimal_image_xobject()
+    image = _create_minimal_image_xobject()
+    image[NameObject("/SMask")] = _create_minimal_image_xobject()
 
     extension, _, img = _xobj_to_image(image)
 
@@ -560,13 +554,13 @@ def test_xobj_to_image__acyclic_smask_still_applied() -> None:
 
 def test_xobj_to_image__empty_filter_array() -> None:
     """An empty /Filter array means no filter and must not raise IndexError."""
-    image = _minimal_image_xobject()
+    image = _create_minimal_image_xobject()
     image[NameObject(StreamAttributes.FILTER)] = ArrayObject([])
 
     extension, _, img = _xobj_to_image(image)
 
     # Identical to the same image without any /Filter entry at all.
-    expected_extension, _, expected_img = _xobj_to_image(_minimal_image_xobject())
+    expected_extension, _, expected_img = _xobj_to_image(_create_minimal_image_xobject())
     assert (extension, img.mode, img.tobytes()) == (
         expected_extension, expected_img.mode, expected_img.tobytes()
     )
@@ -576,18 +570,14 @@ def test_xobj_to_image__empty_filter_array() -> None:
 @pytest.mark.parametrize("image_format", ["BMP", "GIF", "PNG", "TIFF"])
 def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
     """/DCTDecode data must not be handed to arbitrary Pillow image plugins."""
-    data = BytesIO()
-    Image.new("L", (1, 1)).save(data, format=image_format)
-    image = _minimal_image_xobject()
+    image = _create_minimal_image_xobject()
     image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.DCT_DECODE)
-    image.set_data(data.getvalue())
+    image.set_data(_encode_image("L", (1, 1), image_format))
 
     with pytest.raises(PIL.UnidentifiedImageError):
         _xobj_to_image(image)
 
-    data = BytesIO()
-    Image.new("L", (1, 1)).save(data, format="JPEG")
-    image.set_data(data.getvalue())
+    image.set_data(_encode_image("L", (1, 1), "JPEG"))
 
     extension, _, img = _xobj_to_image(image)
 
@@ -647,12 +637,6 @@ def test_handle_flate__icc_based_with_different_component_count() -> None:
     assert image.tobytes() == bytes(range(12))
 
 
-def _jpeg2000_data(mode: str, color: Any) -> bytes:
-    data = BytesIO()
-    Image.new(mode=mode, size=(4, 4), color=color).save(data, format="JPEG2000")
-    return data.getvalue()
-
-
 def test_handle_jpx__rgba_image_with_rgb_color_space() -> None:
     """
     An opacity channel in the JPEG 2000 data is kept as alpha.
@@ -660,9 +644,8 @@ def test_handle_jpx__rgba_image_with_rgb_color_space() -> None:
     ISO 32000-2:2020, 7.4.9 uses it only if /SMaskInData is non-zero. pypdf
     does not read /SMaskInData and always keeps it.
     """
-    image = _handle_jpx(
-        size=(4, 4), data=_jpeg2000_data("RGBA", (1, 2, 3, 4)), mode="RGB", color_space="/DeviceRGB", colors=3
-    )[0]
+    data = _encode_image("RGBA", (4, 4), "JPEG2000", color=(1, 2, 3, 4))
+    image = _handle_jpx(size=(4, 4), data=data, mode="RGB", color_space="/DeviceRGB", colors=3)[0]
     assert image.mode == "RGBA"
     assert image.getpixel((0, 0)) == (1, 2, 3, 4)
 
@@ -675,8 +658,9 @@ def test_handle_jpx__rgba_image_with_cmyk_color_space() -> None:
     are interpreted, and the colour space in the JPEG 2000 data is ignored.
     Pillow decodes this data as RGBA; its bytes are reused as C, M, Y, K.
     """
+    data = _encode_image("RGBA", (4, 4), "JPEG2000", color=(1, 2, 3, 4))
     image, image_format, extension, invert_color = _handle_jpx(
-        size=(4, 4), data=_jpeg2000_data("RGBA", (1, 2, 3, 4)), mode="", color_space="/DeviceCMYK", colors=4
+        size=(4, 4), data=data, mode="", color_space="/DeviceCMYK", colors=4
     )
     assert (image_format, extension, invert_color) == ("JPEG2000", ".jp2", True)
     assert image.mode == "CMYK"
@@ -695,9 +679,8 @@ def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
     formula is used; no ICC profile is applied. The bare name is what
     _xobj_to_image passes on for a malformed one-element [/ICCBased] array.
     """
-    image = _handle_jpx(
-        size=(4, 4), data=_jpeg2000_data("CMYK", (0, 0, 0, 0)), mode="", color_space="/ICCBased", colors=4
-    )[0]
+    data = _encode_image("CMYK", (4, 4), "JPEG2000")
+    image = _handle_jpx(size=(4, 4), data=data, mode="", color_space="/ICCBased", colors=4)[0]
     assert image.mode == "RGB"
     assert image.getpixel((0, 0)) == (255, 255, 255)
 
@@ -716,12 +699,12 @@ def test_xobj_to_image__jpx_cmyk_image_with_icc_based_color_space_array() -> Non
     """
     icc_profile = DecodedStreamObject()
     icc_profile[NameObject("/N")] = NumberObject(4)
-    image = _minimal_image_xobject()
+    image = _create_minimal_image_xobject()
     image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
     image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
     image[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject([NameObject("/ICCBased"), icc_profile])
     image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
-    image.set_data(_jpeg2000_data("CMYK", (0, 0, 0, 0)))
+    image.set_data(_encode_image("CMYK", (4, 4), "JPEG2000"))
 
     _, _, img = _xobj_to_image(image)
 
