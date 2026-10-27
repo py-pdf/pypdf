@@ -238,7 +238,7 @@ class Font:
                 Font.__check_entry_count(entry_count)
                 current_widths.update(
                     {
-                        chr(_cidx): _width
+                        chr(_cidx): _width.get_object()
                         for _cidx, _width in zip(
                             range(start_idx, stop_idx, 1),
                             width_list,
