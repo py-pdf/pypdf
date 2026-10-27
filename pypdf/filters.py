@@ -278,8 +278,11 @@ class FlateDecode:
             data += b"\x00" * (row_length - remainder)
             assert len(data) % row_length == 0
         output = bytearray()
-        previous_row_data = bytes(row_length)
+        previous_row_data = bytearray(row_length)
         bpp = (row_length - 1) // columns  # recomputed locally to not change params
+        # Masks to add all bytes of two rows at once, without carrying over into the next byte.
+        low_bits = int.from_bytes(b"\x7f" * row_length, "big")
+        high_bits = int.from_bytes(b"\x80" * row_length, "big")
         for row in range(0, len(data), row_length):
             row_data = bytearray(data[row : row + row_length])
             filter_byte = row_data[0]
@@ -293,8 +296,10 @@ class FlateDecode:
                     row_data[i] = (row_data[i] + row_data[i - bpp]) % 256
             elif filter_byte == 2:
                 # PNG Up Predictor
-                for i in range(1, row_length):
-                    row_data[i] = (row_data[i] + previous_row_data[i]) % 256
+                current = int.from_bytes(row_data, "big")
+                previous = int.from_bytes(previous_row_data, "big")
+                total = ((current & low_bits) + (previous & low_bits)) ^ ((current ^ previous) & high_bits)
+                row_data = bytearray(total.to_bytes(row_length, "big"))
             elif filter_byte == 3:
                 # PNG Average Predictor
                 for i in range(1, bpp + 1):
@@ -313,10 +318,17 @@ class FlateDecode:
                     up = previous_row_data[i]
                     up_left = previous_row_data[i - bpp]
 
-                    p = left + up - up_left
-                    dist_left = abs(p - left)
-                    dist_up = abs(p - up)
-                    dist_up_left = abs(p - up_left)
+                    # The distances of p = left + up - up_left to left, up and up_left.
+                    # Avoid calling abs() in this innermost loop.
+                    dist_left = up - up_left
+                    dist_up = left - up_left
+                    dist_up_left = dist_left + dist_up
+                    if dist_left < 0:
+                        dist_left = -dist_left
+                    if dist_up < 0:
+                        dist_up = -dist_up
+                    if dist_up_left < 0:
+                        dist_up_left = -dist_up_left
 
                     if dist_left <= dist_up and dist_left <= dist_up_left:
                         paeth = left
@@ -330,7 +342,7 @@ class FlateDecode:
                 raise PdfReadError(
                     f"Unsupported PNG filter {filter_byte!r}"
                 )  # pragma: no cover
-            previous_row_data = bytes(row_data)
+            previous_row_data = row_data
             output += row_data[1:]
         return bytes(output)
 

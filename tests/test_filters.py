@@ -1,6 +1,8 @@
 """Test the pypdf.filters module."""
 import os
+import random
 import string
+import struct
 import subprocess
 import sys
 import zlib
@@ -1333,6 +1335,39 @@ def test_flatedecode__decode_png_prediction__matches_image_without_predictor(pdf
     # The first band uses the PNG filter None.
     assert decoded[: bytes_per_row * 50] == expected[: bytes_per_row * 50]
     assert decoded == expected
+
+
+@pytest.mark.parametrize(
+    ("color_type", "bytes_per_pixel"),
+    [(0, 1), (4, 2), (2, 3), (6, 4)],  # Grayscale, grayscale with alpha, RGB, RGBA with 8 bits per sample
+)
+def test_flatedecode__decode_png_prediction__matches_png_decoder(color_type, bytes_per_pixel):
+    """Rows using all PNG filter types are decoded like the PNG decoder of Pillow does."""
+    columns = 9
+    rows = 40
+    row_length = columns * bytes_per_pixel + 1
+    generator = random.Random(color_type)  # noqa: S311
+    data = bytearray()
+    for row in range(rows):
+        data.append(row % 5)  # None, Sub, Up, Average and Paeth filter
+        # Small values lead to ties in the Paeth predictor, large ones to sums exceeding a byte.
+        limit = 4 if row % 10 < 5 else 256
+        data.extend(generator.randrange(limit) for _ in range(row_length - 1))
+
+    def chunk(chunk_type: bytes, chunk_data: bytes) -> bytes:
+        checksum = zlib.crc32(chunk_type + chunk_data)
+        return struct.pack(">I", len(chunk_data)) + chunk_type + chunk_data + struct.pack(">I", checksum)
+
+    png = (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", columns, rows, 8, color_type, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(data))
+        + chunk(b"IEND", b"")
+    )
+    with Image.open(BytesIO(png)) as image:
+        expected = image.tobytes()
+
+    assert FlateDecode._decode_png_prediction(data=bytes(data), columns=columns, row_length=row_length) == expected
 
 
 _FLATE_IMAGE_DATA = (
