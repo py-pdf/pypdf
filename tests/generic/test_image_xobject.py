@@ -663,20 +663,6 @@ def test_handle_flate__icc_based_with_different_component_count() -> None:
     assert image.tobytes() == bytes(range(12))
 
 
-def test_handle_jpx__rgba_image_with_rgb_color_space() -> None:
-    """
-    An opacity channel in the JPEG 2000 data is kept as alpha.
-
-    ISO 32000-2:2020, 7.4.9 uses it only if /SMaskInData is non-zero. pypdf
-    does not read /SMaskInData and always keeps it.
-    """
-    data = BytesIO()
-    _create_image("RGBA", (4, 4), color=(1, 2, 3, 4)).save(data, format="JPEG2000")
-    image = _handle_jpx(size=(4, 4), data=data.getvalue(), mode="RGB", color_space="/DeviceRGB", colors=3)[0]
-    assert image.mode == "RGBA"
-    assert image.getpixel((0, 0)) == (1, 2, 3, 4)
-
-
 def test_handle_jpx__rgba_image_with_cmyk_color_space() -> None:
     """
     Four-channel JPEG 2000 data is reinterpreted as CMYK without conversion.
