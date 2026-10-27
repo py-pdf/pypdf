@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793102999013,
+  "lastUpdate": 1793107086929,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -157615,6 +157615,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02495753532874972",
             "extra": "mean: 529.9049436000018 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "945216fb51835a534ee6712bab34fe24fa91e11e",
+          "message": "ROB: Keep the text state when a text state operator has no operand in layout mode (#4232)",
+          "timestamp": "2026-10-27T14:14:24+01:00",
+          "tree_id": "6cba29735db059f4d804f5c978e8edc75eea8e12",
+          "url": "https://github.com/py-pdf/pypdf/commit/945216fb51835a534ee6712bab34fe24fa91e11e"
+        },
+        "date": 1793107074617,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.822692917863383,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019643707640199213",
+            "extra": "mean: 67.4641244705854 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.65764694453873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011598073254967608",
+            "extra": "mean: 34.894700249999744 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9690079497466516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029431996901590332",
+            "extra": "mean: 1.0319832775999942 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4817932543502832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031092797953208597",
+            "extra": "mean: 2.075579080799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.396622427910584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019512159113861876",
+            "extra": "mean: 2.5212895934000072 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.242915018665872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040551377415830994",
+            "extra": "mean: 804.5602353999925 msec\nrounds: 5"
           }
         ]
       }
