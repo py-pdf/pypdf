@@ -431,9 +431,9 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
     _check_mapping_size(len(int_entry) + new_count)  # This can be checked beforehand.
     map_dict[-1] = len(lst[0]) // 2
 
-    while len(lst) > 1:
-        source = lst[0]
-        destination = lst[1]
+    for index in range(0, lst_length - 1, 2):
+        source = lst[index]
+        destination = lst[index + 1]
 
         _check_token_length(source, limit=MAX_CMAP_CODE_BYTES_LIMIT)
 
@@ -458,7 +458,6 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
             )
         ] = map_to
         int_entry.append(int(source, 16))
-        lst = lst[2:]
 
 
 def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
