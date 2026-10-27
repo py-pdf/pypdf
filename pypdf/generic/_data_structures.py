@@ -92,6 +92,22 @@ logger = logging.getLogger(__name__)
 
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
+# The tokens making up most of a content stream, preceded by whitespace. Each
+# alternative only matches what the generic parsing in
+# ContentStream._parse_content_stream would read the same way; everything else,
+# like strings, arrays, inline images or overlong tokens, is left to it.
+_CONTENT_STREAM_SIMPLE_TOKEN = re.compile(
+    rb"[\x00\t\n\f\r ]*"
+    rb"(?:"
+    # The lookahead ensures the whole number has been matched.
+    rb"(?P<float>[+-]?(?:\d{1,18}\.\d{0,18}|\.\d{1,18}))(?![+,\-.0-9])"
+    # Leave anything looking like an indirect reference to read_object.
+    rb"|(?P<int>[+-]?\d{1,18})(?![+,\-.0-9])(?!\s+\d+\s+R(?![a-zA-Z]))"
+    rb"|(?P<name>/[^\x00-\x20\x7f-\xff()<>\[\]{}/%#]{0,100})(?=[\s()<>\[\]{}/%]|\Z)"
+    rb"|(?P<operator>(?!BI(?:[\s()<>\[\]{}/%]|\Z))[A-Za-z'\"][^\s()<>\[\]{}/%]{0,99})(?=[\s()<>\[\]{}/%]|\Z)"
+    rb")"
+)
+
 # Direct objects of these types are neither streams nor indirect objects.
 # Large arrays consist mostly of them, for example in the /ParentTree of the
 # structure tree, so the clone loops check the exact type first and skip the
@@ -1564,9 +1580,30 @@ class ContentStream(DecodedStreamObject):
     def _parse_content_stream(self, stream: StreamType) -> None:
         # 7.8.2 Content Streams
         stream.seek(0, 0)
+        data = stream.read()
+        position = 0
         operands: list[int | str | PdfObject] = []
         parsing_budget = StreamParsingBudget(remaining_budget=get_configuration().stream_parsing_work_maximum_count)
         while True:
+            match = _CONTENT_STREAM_SIMPLE_TOKEN.match(data, position)
+            if match is not None:
+                self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
+                position = match.end()
+                float_value, int_value, name, operator = match.groups()
+                if operator is not None:
+                    self._operations.append((operands, operator))
+                    operands = []
+                # Only valid numbers are matched, thus skip the error handling
+                # of the constructors, which is costly for millions of numbers.
+                elif float_value is not None:
+                    operands.append(float.__new__(FloatObject, float_value))
+                elif int_value is not None:
+                    operands.append(int.__new__(NumberObject, int_value))
+                else:
+                    operands.append(NameObject(name.decode()))
+                continue
+
+            stream.seek(position, 0)
             peek = read_non_whitespace(stream)
             if peek in (b"", 0):
                 break
@@ -1599,6 +1636,7 @@ class ContentStream(DecodedStreamObject):
             else:
                 self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
                 operands.append(read_object(stream, None, self.forced_encoding, parsing_budget=parsing_budget))
+            position = stream.tell()
 
     # This overrides the parent method
     def get_data(self) -> bytes:

@@ -532,6 +532,80 @@ def test_content_stream__parse_content_stream__limits() -> None:
         content_stream._parse_content_stream(stream)
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        b"1 0 0 1 72 720 cm\nq 0.5 .5 -.5 +1. -0 +7 w Q",
+        b"/F1 12 Tf /Name[1 2]0 d q[/A]TJ/B<</C 1>>BDC",
+        b"1\x002\t3\f4\r5\n6 re f*",
+        b"0 0 1 RG 1 0 0 rg 12 0 Rx 3 4 l",
+        # Numbers that are not plain integers or decimals.
+        b"1,5 1-2 1.2.3 - . +- 0 Td",
+        # Overlong numbers and operators.
+        b"1234567890123456789012 12345.678901234567890123 w " + b"A" * 100 + b" " + b"B" * 101 + b" S",
+        # Names requiring decoding.
+        b"/A#42 gs /\xc3\xa4 gs /\xff gs /" + b"N" * 101 + b" gs",
+        b"BT (Hello) Tj [(W) -120 (orld)] TJ ET % comment\n/Im1 Do",
+        b"q BI /W 1 /H 1 /CS /G /BPC 8 ID \x00 EI Q",
+        b"1 2 m 3 4 l S",
+        # Errors
+        b"1 2 m 1 0 R 3 4 l",
+        b"1 2 m 3\x0b4 l",
+        b"1 2 m " + b"C" * 120 + b" S",
+        b"1 2 m " + b"9" * 70 + b" w",
+        b"1 2 m 0." + b"9" * 70 + b" w",
+        b"/" + b"N" * 5000 + b" gs",
+    ],
+)
+def test_content_stream__parse_content_stream__simple_tokens(data: bytes, caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Content stream tokens are parsed the same with and without the regular expression for simple tokens.
+
+    The operations, the operand types, the warnings and the exceptions are compared for
+    snippets with tokens at the edge of what the regular expression accepts.
+    ISO 32000-2:2020, 7.8.2 (content streams), 7.2.3 (white-space and delimiter
+    characters), 7.3.3 (numbers) and 7.3.5 (names).
+    """
+    def parse() -> tuple[list[tuple[object, bytes]], str]:
+        content_stream = ContentStream(stream=None, pdf=None)
+        try:
+            content_stream._parse_content_stream(BytesIO(data))
+            error = ""
+        except Exception as exception:
+            error = repr(exception)
+        operations = [
+            (
+                [(type(operand), operand) for operand in operands] if isinstance(operands, list) else operands,
+                operator,
+            )
+            for operands, operator in content_stream._operations
+        ]
+        return operations, error
+
+    operations = parse()
+    warnings = caplog.text
+    caplog.clear()
+    never_matching = mock.Mock(match=mock.Mock(return_value=None))
+    with mock.patch("pypdf.generic._data_structures._CONTENT_STREAM_SIMPLE_TOKEN", never_matching):
+        assert parse() == operations
+    never_matching.match.assert_called()
+    assert caplog.text == warnings
+
+
+def test_content_stream__parse_content_stream__simple_tokens_without_read_object() -> None:
+    """
+    Numbers, names and operators of a content stream are parsed without the generic object parser.
+
+    ISO 32000-2:2020, 7.8.2: a content stream is a sequence of operands and operators.
+    """
+    content_stream = ContentStream(stream=None, pdf=None)
+    with mock.patch("pypdf.generic._data_structures.read_object", side_effect=AssertionError):
+        content_stream._parse_content_stream(BytesIO(b"q 1 0 0 1 72 720 cm /F1 12.5 Tf T*\nQ"))
+    assert content_stream._operations == [
+        ([], b"q"), ([1, 0, 0, 1, 72, 720], b"cm"), (["/F1", 12.5], b"Tf"), ([], b"T*"), ([], b"Q")
+    ]
+
+
 def test_tree_object__insert_child__cycle() -> None:
     writer = PdfWriter()
 
