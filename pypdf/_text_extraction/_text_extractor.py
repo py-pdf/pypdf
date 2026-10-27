@@ -178,7 +178,7 @@ class TextExtraction:
     def _handle_tj(
         self,
         text: str,
-        operands: list[Union[str, TextStringObject]],
+        operands: list[Union[str, bytes, TextStringObject]],
         cm_matrix: list[float],
         tm_matrix: list[float],
         font_resource: Optional[DictionaryObject],

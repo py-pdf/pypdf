@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from typing import Any, Callable, Literal, Optional, Union
 
 from .._utils import is_char_neutral, is_char_rtl
-from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
+from ..generic import DictionaryObject, TextStringObject
 from ..generic._font import Font
 
 CUSTOM_RTL_MIN: str = ""
@@ -185,7 +185,7 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
 
 
 def get_text_operands(
-    operands: list[Union[str, TextStringObject]],
+    operands: list[Union[str, bytes, TextStringObject]],
     cm_matrix: list[float],
     tm_matrix: list[float],
     font: Font,
@@ -204,11 +204,7 @@ def get_text_operands(
             is_str_operands = True
         else:
             text = ""
-            tt: bytes = (
-                encode_pdfdocencoding(operands[0])
-                if isinstance(operands[0], str)
-                else operands[0]
-            )
+            tt: bytes = operands[0]
             if isinstance(font.encoding, str):  # Apply named encoding
                 try:
                     text = tt.decode(font.encoding, "surrogatepass")
