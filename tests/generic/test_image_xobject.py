@@ -14,6 +14,7 @@ from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
+    DictionaryObject,
     NameObject,
     NumberObject,
     PdfObject,
@@ -24,6 +25,7 @@ from pypdf.generic._image_xobject import (
     _get_image_mode,
     _get_mode_and_invert_color,
     _handle_flate,
+    _handle_jpx,
     _image_from_bytes,
     _xobj_to_image,
     bits2byte,
@@ -585,3 +587,73 @@ def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
 
     assert extension == ".jpg"
     assert img.format == "JPEG"
+
+
+def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.LogCaptureFixture) -> None:
+    color_space = ArrayObject([
+        NameObject("/DeviceN"),
+        ArrayObject([NameObject("/Cyan")]),
+        NameObject("/DeviceCMYK"),
+        DictionaryObject(),
+    ])
+    assert _get_image_mode(color_space, 1, "") == ("L", True)
+    assert caplog.messages == ["Color /Cyan converted to Gray. Please share PDF with pypdf dev team"]
+
+
+def test_handle_flate__indexed_lookup_stream_with_str_data() -> None:
+    lookup = DecodedStreamObject()
+    lookup.set_data("abcdef")
+    color_space = ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup])
+    image = _handle_flate(
+        size=(2, 1), data=b"\x00\x01", mode="P", color_space=color_space, colors=1, obj_as_text="dummy"
+    )[0]
+    assert image.mode == "RGB"
+    assert [image.getpixel((x, 0)) for x in range(2)] == [(97, 98, 99), (100, 101, 102)]
+
+
+def test_handle_flate__icc_based_with_different_component_count() -> None:
+    icc_profile = DecodedStreamObject()
+    icc_profile[NameObject("/N")] = NumberObject(1)
+    color_space = ArrayObject([NameObject("/ICCBased"), icc_profile])
+    image = _handle_flate(
+        size=(2, 2), data=bytes(range(12)), mode="RGB", color_space=color_space, colors=3, obj_as_text="dummy"
+    )[0]
+    assert image.size == (2, 2)
+    assert image.tobytes() == bytes(range(12))
+
+
+def _jpeg2000_data(mode: str, color: Any) -> bytes:
+    data = BytesIO()
+    Image.new(mode=mode, size=(4, 4), color=color).save(data, format="JPEG2000")
+    return data.getvalue()
+
+
+def test_handle_jpx__rgba_image_with_rgb_color_space() -> None:
+    """An alpha channel stored in the JPEG2000 data is kept."""
+    image = _handle_jpx(
+        size=(4, 4), data=_jpeg2000_data("RGBA", (1, 2, 3, 4)), mode="RGB", color_space="/DeviceRGB", colors=3
+    )[0]
+    assert image.mode == "RGBA"
+    assert image.getpixel((0, 0)) == (1, 2, 3, 4)
+
+
+def test_handle_jpx__rgba_image_with_cmyk_color_space() -> None:
+    """Four-channel JPEG2000 data is reinterpreted as CMYK without conversion."""
+    image, image_format, extension, invert_color = _handle_jpx(
+        size=(4, 4), data=_jpeg2000_data("RGBA", (1, 2, 3, 4)), mode="", color_space="/DeviceCMYK", colors=4
+    )
+    assert (image_format, extension, invert_color) == ("JPEG2000", ".jp2", True)
+    assert image.mode == "CMYK"
+    assert image.getpixel((0, 0)) == (1, 2, 3, 4)
+
+
+@pytest.mark.skipif(
+    condition=Version(PIL.__version__) < Version("12.1.0"),
+    reason="Unsuitable Pillow version."
+)
+def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
+    image = _handle_jpx(
+        size=(4, 4), data=_jpeg2000_data("CMYK", (0, 0, 0, 0)), mode="", color_space="/ICCBased", colors=4
+    )[0]
+    assert image.mode == "RGB"
+    assert image.getpixel((0, 0)) == (255, 255, 255)
