@@ -1,7 +1,7 @@
 """Test the pypdf.generic._image_xobject module."""
 import zlib
 from io import BytesIO
-from typing import Any
+from typing import Any, Optional
 
 import PIL
 import pytest
@@ -737,3 +737,45 @@ def test_xobj_to_image__jpx_cmyk_image_with_icc_based_color_space_array() -> Non
 
     assert img.mode == "RGB"
     assert img.getpixel((0, 0)) == (255, 255, 255)
+
+
+_SMASK_IN_DATA_NOT_READ = pytest.mark.xfail(
+    reason="/SMaskInData is not read: the opacity channel is always kept as is", raises=AssertionError, strict=True
+)
+
+
+@pytest.mark.parametrize(
+    ("smask_in_data", "expected_mode", "expected_pixel"),
+    [
+        pytest.param(None, "RGB", (10, 20, 30), marks=_SMASK_IN_DATA_NOT_READ, id="absent-defaults-to-0"),
+        pytest.param(0, "RGB", (10, 20, 30), marks=_SMASK_IN_DATA_NOT_READ, id="0-ignore-opacity"),
+        pytest.param(1, "RGBA", (10, 20, 30, 51), id="1-opacity"),
+        pytest.param(2, "RGBA", (50, 100, 150, 51), marks=_SMASK_IN_DATA_NOT_READ, id="2-premultiplied-opacity"),
+    ],
+)
+def test_xobj_to_image__jpx_smask_in_data(
+    smask_in_data: Optional[int], expected_mode: str, expected_pixel: tuple[int, ...]
+) -> None:
+    """
+    /SMaskInData decides how an opacity channel in the JPEG 2000 data is used.
+
+    ISO 32000-2:2020, 7.4.9 and 8.9.5.1 (Table 87): 0, the default, ignores it;
+    1 uses it as the soft mask; 2 also uses it, but the colour channels have been
+    premultiplied with it. The alpha of 51 = 255 / 5 un-premultiplies (10, 20, 30)
+    exactly to (50, 100, 150).
+    """
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_RGB)
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
+    if smask_in_data is not None:
+        image[NameObject("/SMaskInData")] = NumberObject(smask_in_data)
+    data = BytesIO()
+    _create_image("RGBA", (4, 4), color=(10, 20, 30, 51)).save(data, format="JPEG2000")
+    image.set_data(data.getvalue())
+
+    _, _, img = _xobj_to_image(image)
+
+    assert img.mode == expected_mode
+    assert img.getpixel((0, 0)) == expected_pixel
