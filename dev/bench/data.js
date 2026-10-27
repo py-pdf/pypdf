@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793102122964,
+  "lastUpdate": 1793102171753,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -157417,6 +157417,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022823659588958645",
             "extra": "mean: 534.1964645999894 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44113468+tim-hilde@users.noreply.github.com",
+            "name": "Tim Hildebrandt",
+            "username": "tim-hilde"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d1894af08967f41e539e88bedc6d2b94dc485dfe",
+          "message": "BUG: Resolve indirect widths in CID font /W arrays (#4267)\n\nCloses #4266.\n\nCo-authored-by: Claude Sonnet 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-27T12:52:20+01:00",
+          "tree_id": "7b4f88b3629fbbaa4ece5633a41ed3927b891984",
+          "url": "https://github.com/py-pdf/pypdf/commit/d1894af08967f41e539e88bedc6d2b94dc485dfe"
+        },
+        "date": 1793102159697,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 17.0154009822887,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019613854878168926",
+            "extra": "mean: 58.77028705000242 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 32.48854188223416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0106560734942274",
+            "extra": "mean: 30.780082517240764 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0697260088843998,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05335222243430169",
+            "extra": "mean: 934.8188150000055 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.44136437803213535,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06432092867911275",
+            "extra": "mean: 2.2657016510000063 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4413155788140608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.061055469152359515",
+            "extra": "mean: 2.2659521848000055 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3657187368241916,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027397610885565825",
+            "extra": "mean: 732.2151868000105 msec\nrounds: 5"
           }
         ]
       }
