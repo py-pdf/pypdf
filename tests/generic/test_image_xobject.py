@@ -497,7 +497,7 @@ def test_image_from_bytes__limit(mode: str, expected: str) -> None:
         _ = _image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
 
 
-def _create_minimal_image_xobject() -> StreamObject:
+def _minimal_image_xobject() -> StreamObject:
     """Build the smallest image XObject _xobj_to_image will decode."""
     stream = StreamObject()
     stream[NameObject("/Subtype")] = NameObject("/Image")
@@ -513,7 +513,7 @@ def test_xobj_to_image__self_referential_smask(
     caplog: pytest.LogCaptureFixture
 ) -> None:
     """A soft mask pointing at its own image must not recurse."""
-    image = _create_minimal_image_xobject()
+    image = _minimal_image_xobject()
     image[NameObject("/SMask")] = image
 
     extension, _, img = _xobj_to_image(image)
@@ -527,8 +527,8 @@ def test_xobj_to_image__two_node_smask_cycle(
     caplog: pytest.LogCaptureFixture
 ) -> None:
     """A -> B -> A soft mask chains must not recurse either."""
-    first = _create_minimal_image_xobject()
-    second = _create_minimal_image_xobject()
+    first = _minimal_image_xobject()
+    second = _minimal_image_xobject()
     first[NameObject("/SMask")] = second
     second[NameObject("/SMask")] = first
 
@@ -543,8 +543,8 @@ def test_xobj_to_image__two_node_smask_cycle(
 
 def test_xobj_to_image__acyclic_smask_still_applied() -> None:
     """The guard must not stop a legitimate soft mask being applied."""
-    image = _create_minimal_image_xobject()
-    image[NameObject("/SMask")] = _create_minimal_image_xobject()
+    image = _minimal_image_xobject()
+    image[NameObject("/SMask")] = _minimal_image_xobject()
 
     extension, _, img = _xobj_to_image(image)
 
@@ -554,13 +554,13 @@ def test_xobj_to_image__acyclic_smask_still_applied() -> None:
 
 def test_xobj_to_image__empty_filter_array() -> None:
     """An empty /Filter array means no filter and must not raise IndexError."""
-    image = _create_minimal_image_xobject()
+    image = _minimal_image_xobject()
     image[NameObject(StreamAttributes.FILTER)] = ArrayObject([])
 
     extension, _, img = _xobj_to_image(image)
 
     # Identical to the same image without any /Filter entry at all.
-    expected_extension, _, expected_img = _xobj_to_image(_create_minimal_image_xobject())
+    expected_extension, _, expected_img = _xobj_to_image(_minimal_image_xobject())
     assert (extension, img.mode, img.tobytes()) == (
         expected_extension, expected_img.mode, expected_img.tobytes()
     )
@@ -570,7 +570,7 @@ def test_xobj_to_image__empty_filter_array() -> None:
 @pytest.mark.parametrize("image_format", ["BMP", "GIF", "PNG", "TIFF"])
 def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
     """/DCTDecode data must not be handed to arbitrary Pillow image plugins."""
-    image = _create_minimal_image_xobject()
+    image = _minimal_image_xobject()
     image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.DCT_DECODE)
     image.set_data(_create_image("L", (1, 1), image_format))
 
@@ -699,7 +699,7 @@ def test_xobj_to_image__jpx_cmyk_image_with_icc_based_color_space_array() -> Non
     """
     icc_profile = DecodedStreamObject()
     icc_profile[NameObject("/N")] = NumberObject(4)
-    image = _create_minimal_image_xobject()
+    image = _minimal_image_xobject()
     image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
     image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
     image[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject([NameObject("/ICCBased"), icc_profile])
