@@ -257,6 +257,8 @@ class TextExtraction:
                 self.space_scale,
                 self.TL,
             ) = self.cm_stack.pop()
+        except MemoryError:  # pragma: no cover  # TODO: BLE001
+            raise
         except Exception:
             self.cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
 
@@ -268,6 +270,8 @@ class TextExtraction:
         self.text = ""
         try:
             self.cm_matrix = mult([float(operand) for operand in operands[:6]], self.cm_matrix)
+        except MemoryError:  # pragma: no cover  # TODO: BLE001
+            raise
         except Exception:
             self.cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         self.memo_cm = self.cm_matrix.copy()
@@ -313,6 +317,8 @@ class TextExtraction:
         self._space_width = self.font.space_width / 2  # Actually the width of _half_ a space...
         try:
             self.font_size = float(operands[1])
+        except MemoryError:  # pragma: no cover  # TODO: BLE001
+            raise
         except Exception:
             pass  # keep previous size
 

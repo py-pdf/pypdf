@@ -47,6 +47,8 @@ def check_url(url: str) -> bool:
 
     try:
         data = _get_data_from_url(url)
+    except MemoryError:  # pragma: no cover  # TODO: BLE001
+        raise
     except Exception as exception:
         sys.stderr.write(f"Error getting data from {url}: {exception}\n")
         return False

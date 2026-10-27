@@ -862,3 +862,26 @@ def test_content_stream__check_limits__read_inline_image_dictionary_limit() -> N
         ContentStream._check_limits(
             remaining_elements=0, parsing_budget=StreamParsingBudget(remaining_budget=10), token_decrement=1
         )
+
+
+def test_dictionary_object__read_from_stream__error_handling() -> None:
+    header = b"%PDF-1.4\n"
+    obj1_offset = len(header)
+    nested = b"<< /A " * 18  # never closed
+    obj1 = b"1 0 obj\n" + nested + b"\nendobj\n"
+    body = header + obj1
+    xref_offset = len(body)
+    xref = (
+        b"xref\n0 2\n"
+        b"0000000000 65535 f \n"
+        + (b"%010d 00000 n \n" % obj1_offset)
+    )
+    trailer = (
+        b"trailer\n<< /Size 2 /Root 1 0 R >>\nstartxref\n"
+        + str(xref_offset).encode() + b"\n%%EOF"
+    )
+    data = body + xref + trailer
+
+    reader = PdfReader(BytesIO(data), strict=True)
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Error reading PDF file\.$"):
+        _ = reader.trailer["/Root"]  # forces resolution of the broken dictionary

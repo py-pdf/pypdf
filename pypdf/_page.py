@@ -1846,6 +1846,8 @@ class PageObject(DictionaryObject):
                         "/Encoding"
                     ].__repr__()
                     out += enc_repr + "\n"
+                except MemoryError:  # pragma: no cover  # TODO: BLE001
+                    raise
                 except Exception:
                     pass
                 try:
@@ -1857,6 +1859,8 @@ class PageObject(DictionaryObject):
                         .decode()
                         + "\n"
                     )
+                except MemoryError:  # pragma: no cover  # TODO: BLE001
+                    raise
                 except Exception:
                     pass
 
@@ -2001,6 +2005,8 @@ class PageObject(DictionaryObject):
                         # Nothing else to do: each text piece inside the form has
                         # already been reported via visitor_text while the form was
                         # being extracted recursively (issue #4079).
+                except MemoryError:  # pragma: no cover  # TODO: BLE001
+                    raise
                 except Exception as exception:
                     logger_warning(
                         "Impossible to decode XFormObject %(operand)s: %(exception)s",
@@ -2560,6 +2566,8 @@ class _VirtualList(Sequence[PageObject]):
                 try:
                     assert ind is not None
                     del ind.pdf.flattened_pages[index]  # case of page in a Reader
+                except MemoryError:  # pragma: no cover  # TODO: BLE001
+                    raise
                 except Exception:  # pragma: no cover
                     pass
                 if "/Count" in parent:
