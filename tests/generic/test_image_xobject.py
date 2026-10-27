@@ -602,7 +602,7 @@ def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.
 
 def test_handle_flate__indexed_lookup_stream_with_str_data() -> None:
     lookup = DecodedStreamObject()
-    lookup.set_data("abcdef")
+    lookup.set_data("abcdef")  # type: ignore[arg-type]
     color_space = ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup])
     image = _handle_flate(
         size=(2, 1), data=b"\x00\x01", mode="P", color_space=color_space, colors=1, obj_as_text="dummy"
