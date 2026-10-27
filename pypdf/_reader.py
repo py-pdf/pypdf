@@ -116,6 +116,8 @@ class PdfReader(PdfDocCommon):
         root_object_recovery_limit: The maximum number of objects to query
             for recovering the Root object in non-strict mode. To disable
             this security measure, pass ``None``.
+        xref_stream_maximum_entries: The maximum number of entries which are
+            allowed inside a stream-based cross-reference stream.
 
     """
 
@@ -129,6 +131,7 @@ class PdfReader(PdfDocCommon):
         password: Union[str, bytes, None] = None,
         *,
         root_object_recovery_limit: Optional[int] = 10_000,
+        xref_stream_maximum_entries: int = 2_000_000,
     ) -> None:
         self.strict = strict
         self.flattened_pages: Optional[list[PageObject]] = None
@@ -147,6 +150,8 @@ class PdfReader(PdfDocCommon):
         self._root_object_recovery_limit = (
             root_object_recovery_limit if isinstance(root_object_recovery_limit, int) else sys.maxsize
         )
+        self._xref_stream_maximum_entries = xref_stream_maximum_entries
+        self._xref_stream_entry_count = 0
         apply_legacy_configuration()
 
         # Map page indirect_reference number to page number
@@ -1194,6 +1199,7 @@ class PdfReader(PdfDocCommon):
         self.xref = {}
         self.xref_free_entry = {}
         self.xref_objStm = {}
+        self._xref_stream_entry_count = 0
         self.trailer = DictionaryObject()
         visited_xref_offsets: set[int] = set()
         while startxref is not None:
@@ -1351,6 +1357,16 @@ class PdfReader(PdfDocCommon):
             # `index_pairs` has the format `[start0, count0, start1, count1, ...]`
             # Only modify the counts here, but keep the start values.
             if index % 2 == 1:
+                if pair_value_int < 0:
+                    if self.strict:
+                        raise PdfStreamError(f"Negative XRef count {pair_value_int}.")
+                    logger_warning(
+                        "Negative XRef count %(count)d, using 0.",
+                        source=__name__,
+                        count=pair_value_int,
+                    )
+                    pair_value_int = 0
+
                 if total + pair_value_int > max_entries:
                     if self.strict:
                         raise LimitReachedError(
@@ -1394,6 +1410,13 @@ class PdfReader(PdfDocCommon):
         index_pairs = self._sanitize_pdf15_xref_stream_index_pairs(
             index_pairs=index_pairs, entry_sizes=entry_sizes, xref_stream=xref_stream
         )
+
+        self._xref_stream_entry_count += sum(index_pairs[1::2])
+        if self._xref_stream_entry_count > self._xref_stream_maximum_entries:
+            raise LimitReachedError(
+                f"Maximum XRef stream entry limit reached: "
+                f"{self._xref_stream_entry_count} > {self._xref_stream_maximum_entries}."
+            )
 
         stream_data = BytesIO(xref_stream.get_data())
 
