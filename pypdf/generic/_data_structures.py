@@ -28,11 +28,13 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import inspect
 import logging
 import os
 import re
 import sys
 from collections.abc import Callable, Iterable, Sequence
+from functools import cache
 from io import BytesIO
 from math import ceil
 from typing import (
@@ -309,14 +311,43 @@ class ArrayObject(list[Any], PdfObject):
         return arr
 
 
+@cache
+def _requires_constructor_arguments(cls: type["DictionaryObject"]) -> bool:
+    """Report whether ``cls`` can only be instantiated with arguments."""
+    parameters = inspect.signature(cls.__init__).parameters
+    return any(
+        parameter.default is inspect.Parameter.empty
+        and parameter.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
+        )
+        for parameter in list(parameters.values())[1:]
+    )
+
+
 class DictionaryObject(dict[Any, Any], PdfObject):
+    def _new_for_clone(self) -> "DictionaryObject":
+        """Create a blank instance of this class to receive cloned entries.
+
+        Most dictionary classes can be instantiated without arguments, but some
+        subclasses - the annotation dictionaries for instance - can only be
+        instantiated with arguments. Those arguments are not needed to receive a
+        clone, because every entry is copied from the source object afterwards,
+        so such classes are instantiated without calling ``__init__``.
+        """
+        if _requires_constructor_arguments(self.__class__):
+            return self.__class__.__new__(self.__class__)
+        return self.__class__()
+
     def replicate(
         self,
         pdf_dest: PdfWriterProtocol,
     ) -> "DictionaryObject":
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, False),
+            self._reference_clone(self._new_for_clone(), pdf_dest, False),
         )
         for k, v in self.items():
             d__[k.replicate(pdf_dest)] = (
@@ -342,7 +373,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
+            self._reference_clone(self._new_for_clone(), pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []
