@@ -663,6 +663,7 @@ def test_handle_flate__icc_based_with_different_component_count() -> None:
     assert image.tobytes() == bytes(range(12))
 
 
+@requires_cmyk_jpeg2000_saving
 def test_xobj_to_image__jpx_rgba_data_with_cmyk_color_space() -> None:
     """
     Four-channel JPEG 2000 data is reinterpreted as CMYK without conversion.
