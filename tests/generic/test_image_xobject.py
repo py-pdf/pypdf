@@ -1,7 +1,7 @@
 """Test the pypdf.generic._image_xobject module."""
 import zlib
 from io import BytesIO
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import PIL
 import pytest
@@ -53,7 +53,7 @@ PixelColor = Union[int, tuple[int, int, int], tuple[int, int, int, int]]
 
 
 def _create_image(
-    mode: str, size: tuple[int, int], *, color: PixelColor = 0, diagonal_color: Optional[PixelColor] = None
+    mode: str, size: tuple[int, int], *, color: PixelColor = 0, diagonal_color: PixelColor | None = None
 ) -> Image.Image:
     """Create a solid image, optionally with a diagonal line in ``diagonal_color`` from the top left."""
     image = Image.new(mode=mode, size=size, color=color)
@@ -765,7 +765,7 @@ _SMASK_IN_DATA_NOT_READ = pytest.mark.xfail(
     ],
 )
 def test_xobj_to_image__jpx_smask_in_data(
-    smask_in_data: Optional[int], expected_mode: str, expected_pixel: tuple[int, ...]
+    smask_in_data: int | None, expected_mode: str, expected_pixel: tuple[int, ...]
 ) -> None:
     """
     /SMaskInData decides how an opacity channel in the JPEG 2000 data is used.
