@@ -885,3 +885,32 @@ def test_dictionary_object__read_from_stream__error_handling() -> None:
     reader = PdfReader(BytesIO(data), strict=True)
     with pytest.raises(expected_exception=PdfReadError, match=r"^Error reading PDF file\.$"):
         _ = reader.trailer["/Root"]  # forces resolution of the broken dictionary
+
+
+@pytest.mark.timeout(5)
+def test_dictionary_object__clone__cycle_detection() -> None:
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents [4 0 R] >>",
+        b"<< /Length 0 /N 5 0 R >>\nstream\n\nendstream",
+        b"<< /N 6 0 R /T (alpha) >>",
+        b"<< /N 5 0 R /T (beta) >>",
+    ]
+    object_count = len(objects)
+    out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = []
+    for num, obj in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % num + obj + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n" % (object_count + 1)
+    out += b"0000000000 65535 f \n"
+    for offset in offsets:
+        out += b"%010d 00000 n \n" % offset
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (object_count + 1, xref)
+    data = bytes(out)
+
+    writer = PdfWriter()
+    writer.append(BytesIO(data))
+    assert len(writer.pages) == 1
