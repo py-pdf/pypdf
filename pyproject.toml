@@ -40,7 +40,7 @@ Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
 
 [project.optional-dependencies]
-brotli = ["brotli>=1.2.0"]
+brotli = ["brotli>=1.2.1"]
 # This is due to the backend parameter being required back then:
 # https://cryptography.io/en/latest/changelog/#v3-1
 crypto = ["cryptography>3.0"]
