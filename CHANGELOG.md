@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Version 6.21.4, 2026-10-28
+
+### Security (SEC)
+- Limit the number of copied page attributes during flattening (#4290)
+- Detect EOF when reading standard xref table trailer (#4289)
+- Fix loop detection when cloning DictionaryObject (#4288)
+
+### Documentation (DOC)
+- Exclude performance issues from security reports (#4280)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.3...6.21.4)
+
 ## Version 6.21.3, 2026-10-27
 
 ### Security (SEC)
