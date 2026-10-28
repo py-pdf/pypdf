@@ -45,11 +45,11 @@ class TextStateManager:
         self.Tz: float = 100.0
         self.TL: float = 0.0
         self.Ts: float = 0.0
-        self.font_stack: list[tuple[Union[Font, None], Union[int, float]]] = []
-        self.font: Union[Font, None] = None
-        self.font_size: Union[int, float] = 0
+        self.font_stack: list[tuple[Font | None, int | float]] = []
+        self.font: Font | None = None
+        self.font_size: int | float = 0
 
-    def set_state_param(self, op: bytes, value: Union[float, list[Any]]) -> None:
+    def set_state_param(self, op: bytes, value: float | list[Any]) -> None:
         """
         Set a text state parameter. Supports Tc, Tz, Tw, TL, and Ts operators.
 
@@ -80,7 +80,7 @@ class TextStateManager:
         self.font = font
         self.font_size = size
 
-    def text_state_params(self, value: Union[bytes, str] = "") -> TextStateParams:
+    def text_state_params(self, value: bytes | str = "") -> TextStateParams:
         """
         Create a TextStateParams instance to display a text string. Type[bytes] values
         will be decoded implicitly.

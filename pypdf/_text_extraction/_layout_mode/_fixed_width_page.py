@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from itertools import groupby
 from math import ceil
 from pathlib import Path
-from typing import Any, Literal, Optional, TypedDict
+from typing import Any, Literal, TypedDict
 
 from ..._utils import logger_warning
 from ...generic import ArrayObject
@@ -279,7 +279,7 @@ def recurse_to_target_op(
 
 
 def y_coordinate_groups(
-    bt_groups: list[BTGroup], debug_path: Optional[Path] = None
+    bt_groups: list[BTGroup], debug_path: Path | None = None
 ) -> dict[int, list[BTGroup]]:
     """
     Group text operations by rendered y coordinate, i.e. the line number.
@@ -330,7 +330,7 @@ def text_show_operations(
     ops: Iterator[tuple[list[Any], bytes]],
     fonts: dict[str, Font],
     strip_rotated: bool = True,
-    debug_path: Optional[Path] = None,
+    debug_path: Path | None = None,
 ) -> list[BTGroup]:
     """
     Extract text from BT/ET operator pairs.

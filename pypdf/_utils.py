@@ -44,16 +44,10 @@ from typing import (
     IO,
     Any,
     NoReturn,
-    Optional,
+    TypeAlias,
     Union,
     cast,
 )
-
-if sys.version_info[:2] >= (3, 10):
-    # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -79,7 +73,7 @@ BinaryStreamType = IO[bytes]
 StrByteType = Union[str, StreamType]
 
 
-def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
+def parse_iso8824_date(text: str | None) -> datetime | None:
     orgtext = text
     if not text:
         return None
@@ -160,7 +154,7 @@ WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
 WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
 
-def read_until_whitespace(stream: StreamType, max_bytes: Optional[int] = None, strict: bool = False) -> bytes:
+def read_until_whitespace(stream: StreamType, max_bytes: int | None = None, strict: bool = False) -> bytes:
     """
     Read non-whitespace characters and return them.
 
@@ -287,7 +281,7 @@ def skip_over_comment(stream: StreamType) -> None:
                 raise PdfStreamError("File ended unexpectedly.")
 
 
-def skip_over_comments(stream: StreamType, *, limit: Optional[int] = None) -> None:
+def skip_over_comments(stream: StreamType, *, limit: int | None = None) -> None:
     """
     Skip consecutive leading comments and the whitespace following each one.
 
@@ -675,7 +669,7 @@ class File:
     """
     Data as bytes.
     """
-    indirect_reference: Optional[IndirectObject] = None
+    indirect_reference: IndirectObject | None = None
     """
     Reference to the object storing the stream.
     """
