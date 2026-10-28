@@ -367,6 +367,9 @@ class XmpInformation(PdfObject):
             return cast(dict[Any, Any], cached)
         retval: dict[Any, Any] = {}
         for element in self.get_element("", namespace, name):
+            if element.nodeType == element.ATTRIBUTE_NODE:
+                retval["x-default"] = element.nodeValue
+                continue
             alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
             if len(alts):
                 for alt in alts:
