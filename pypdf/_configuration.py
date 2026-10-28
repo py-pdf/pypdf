@@ -105,6 +105,11 @@ class Configuration:
     """The maximum allowed number of entries in the page tree."""
     page_tree_maximum_depth: int = 100
     """The maximum allowed depth of the page tree."""
+    page_tree_maximum_page_entries: int = 2_000_000
+    """
+    The maximum allowed total number of page dictionary entries copied while flattening the page tree.
+    A page referenced multiple times is copied once per reference.
+    """
 
     form_fields_maximum_entries: int = 100_000
     """The maximum allowed number of form fields."""
