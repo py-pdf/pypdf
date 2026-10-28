@@ -20,7 +20,9 @@ testtype:
 	pytest tests --cov --cov-report term-missing -vv --cov-report html --durations=3 --timeout=30 --typeguard-packages=pypdf
 
 benchmark:
-	pytest tests/bench.py
+	mkdir -p .benchmarks
+	pytest tests/bench.py --benchmark-json=.benchmarks/output.json --benchmark-timer=time.process_time
+	python .github/scripts/calibrate_benchmarks.py .benchmarks/output.json
 
 mypy:
 	mypy pypdf

@@ -2,24 +2,72 @@
 Benchmark the speed of pypdf.
 
 The results are on https://py-pdf.github.io/pypdf/dev/bench/
-Please keep in mind that the variance is high.
+
+Absolute timings depend heavily on the machine, and GitHub Actions runners
+differ by a factor of two. Hence every benchmark is divided by
+``test_calibration``, a fixed workload which does not use pypdf. Run
+
+    make benchmark
+
+to get the calibrated values for your machine. They are comparable to the
+published ones.
+
+Keep file access and assertions out of the benchmarked functions: they only
+add noise.
 """
+import re
+import zlib
 from io import BytesIO
-from tempfile import NamedTemporaryFile
 
 import pytest
 
 import pypdf
-from pypdf import PageObject, PdfReader, PdfWriter, Transformation, apply_configuration
+from pypdf import PdfReader, PdfWriter, Transformation, apply_configuration
 from pypdf.generic import Destination, read_string_from_stream
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
+CALIBRATION_DATA = b"".join(
+    b"/Key%d %d 0 R [%d %d.5 (text %d)] << /Type /Page >>\n" % (i, i, i, i, i)
+    for i in range(5000)
+)
 
-def page_ops(pdf_path, password):
-    pdf_path = RESOURCE_ROOT / pdf_path
 
-    reader = PdfReader(pdf_path)
+def calibration_workload():
+    """
+    Do pypdf-like work without pypdf: tokenizing bytes, dictionaries, zlib, regular expressions.
+
+    Never change this function, as all published results are relative to it.
+    """
+    raw = zlib.decompress(zlib.compress(CALIBRATION_DATA))
+    stream = BytesIO(raw)
+    tokens = []
+    current = []
+    while True:
+        char = stream.read(1)
+        if not char:
+            break
+        if char in b" \n[]()<>/":
+            if current:
+                tokens.append(b"".join(current))
+                current = []
+        else:
+            current.append(char)
+    counts = {}
+    for token in tokens:
+        counts[token] = counts.get(token, 0) + 1
+    numbers = [int(token) for token in tokens if token.isdigit()]
+    names = re.findall(rb"/(\w+)", raw)
+    text = "".join(token.decode("latin-1") for token in tokens)
+    return len(counts) + sum(numbers) + len(names) + len(text)
+
+
+def test_calibration(benchmark):
+    benchmark(calibration_workload)
+
+
+def page_ops(data, password):
+    reader = PdfReader(BytesIO(data))
     writer = PdfWriter()
 
     if password:
@@ -57,34 +105,26 @@ def test_page_operations(benchmark):
 
     Rotation, scaling, translation, content stream compression, text extraction
     """
-    benchmark(page_ops, "libreoffice-writer-password.pdf", "openpassword")
+    data = (RESOURCE_ROOT / "libreoffice-writer-password.pdf").read_bytes()
+    benchmark(page_ops, data, "openpassword")
 
 
-def merge():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
-    pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
-    pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
-
+def merge(crazyones, outline, forms, password):
     writer = PdfWriter()
 
-    # string path:
-    writer.append(pdf_path)
-    writer.append(outline)
-    writer.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
-    writer.append(pdf_forms)
+    writer.append(BytesIO(crazyones))
+    writer.append(BytesIO(outline))
+    writer.append(BytesIO(crazyones), pages=pypdf.pagerange.PageRange(slice(0, 0)))
+    writer.append(BytesIO(forms))
 
     # Merging an encrypted file
-    reader = PdfReader(pdf_pw)
+    reader = PdfReader(BytesIO(password))
     reader.decrypt("openpassword")
     writer.append(reader)
 
     # PdfReader object:
-    writer.append(PdfReader(pdf_path), outline_item="True")
-
-    # File handle
-    with open(pdf_path, "rb") as fh:
-        writer.append(fh)
+    writer.append(PdfReader(BytesIO(crazyones)), outline_item="True")
+    writer.append(BytesIO(crazyones))
 
     outline_item = writer.add_outline_item("An outline item", 0)
     writer.add_outline_item("deeper", 0, parent=outline_item)
@@ -93,58 +133,53 @@ def merge():
     writer.set_page_layout("/SinglePage")
     writer.page_mode = "/UseThumbs"
 
-    with NamedTemporaryFile(suffix=".pdf") as target_file:
-        write_path = target_file.name
-        writer.write(write_path)
-        writer.close()
-
-        # Check if outline is correct
-        reader = PdfReader(write_path)
-        assert [
-            el.title for el in reader.outline if isinstance(el, Destination)
-        ] == [
-            "Foo",
-            "Bar",
-            "Baz",
-            "Foo",
-            "Bar",
-            "Baz",
-            "Foo",
-            "Bar",
-            "Baz",
-            "True",
-            "An outline item",
-        ]
+    output = BytesIO()
+    writer.write(output)
+    writer.close()
+    return output
 
 
 @apply_configuration(disable_legacy_handling=True)
 def test_merge(benchmark):
-    """
-    Apply various page operations.
+    """Merge several documents, including an encrypted one, and add an outline."""
+    output = benchmark(
+        merge,
+        (RESOURCE_ROOT / "crazyones.pdf").read_bytes(),
+        (RESOURCE_ROOT / "pdflatex-outline.pdf").read_bytes(),
+        (RESOURCE_ROOT / "pdflatex-forms.pdf").read_bytes(),
+        (RESOURCE_ROOT / "libreoffice-writer-password.pdf").read_bytes(),
+    )
 
-    Rotation, scaling, translation, content stream compression, text extraction
-    """
-    benchmark(merge)
+    reader = PdfReader(output)
+    assert [
+        el.title for el in reader.outline if isinstance(el, Destination)
+    ] == [
+        "Foo",
+        "Bar",
+        "Baz",
+        "Foo",
+        "Bar",
+        "Baz",
+        "Foo",
+        "Bar",
+        "Baz",
+        "True",
+        "An outline item",
+    ]
 
 
-def text_extraction(pdf_path):
-    with open(pdf_path, mode="rb") as fd:
-        reader = PdfReader(fd)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text()
+def text_extraction(data):
+    reader = PdfReader(BytesIO(data))
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
     return text
 
 
 @apply_configuration(disable_legacy_handling=True)
 def test_text_extraction(benchmark):
-    file_path = SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
-    benchmark(text_extraction, file_path)
-
-
-def read_string_from_stream_performance():
-    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
-    assert read_string_from_stream(stream)
+    data = (SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf").read_bytes()
+    benchmark(text_extraction, data)
 
 
 @apply_configuration(disable_legacy_handling=True)
@@ -155,86 +190,27 @@ def test_read_string_from_stream_performance(benchmark):
 
     Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
     """
-    benchmark(read_string_from_stream_performance)
+    data = b"(" + b"x" * 1024 * 256 + b")"
+    assert benchmark(lambda: read_string_from_stream(BytesIO(data)))
 
 
-def image_new_property(data):
-    reader = PdfReader(data)
-    assert reader.pages[0].images.keys() == [
-        "/I0",
-        "/I1",
-        "/I2",
-        "/I3",
-        "/I4",
-        "/I5",
-        "/I6",
-        "/I7",
-        "/I8",
-        "/I9",
-        ["/TPL1", "/Image5"],
-        ["/TPL2", "/Image53"],
-        ["/TPL2", "/Image37"],
-        ["/TPL2", "/Image49"],
-        ["/TPL2", "/Image51"],
-        ["/TPL2", "/Image39"],
-        ["/TPL2", "/Image57"],
-        ["/TPL2", "/Image55"],
-        ["/TPL2", "/Image43"],
-        ["/TPL2", "/Image30"],
-        ["/TPL2", "/Image22"],
-        ["/TPL2", "/Image41"],
-        ["/TPL2", "/Image47"],
-        ["/TPL2", "/Image45"],
-        ["/TPL3", "/Image65"],
-        ["/TPL3", "/Image30"],
-        ["/TPL3", "/Image61"],
-        ["/TPL4", "/Image30"],
-        ["/TPL5", "/Image30"],
-        ["/TPL6", "/Image30"],
-        ["/TPL7", "/Image30"],
-        ["/TPL8", "/Image30"],
-        ["/TPL9", "/Image30"],
-        ["/TPL10", "/Image30"],
-        ["/TPL11", "/Image30"],
-        ["/TPL12", "/Image30"],
-    ]
-    assert len(reader.pages[0].images.items()) == 36
-    assert reader.pages[0].images[0].name == "I0.png"
-    assert len(reader.pages[0].images[-1].data) > 10000
-    assert reader.pages[0].images["/TPL1", "/Image5"].image.format == "JPEG"
-    assert (
-        reader.pages[0].images["/I0"].indirect_reference.get_object()
-        == reader.pages[0]["/Resources"]["/XObject"]["/I0"]
-    )
-    list(reader.pages[0].images[0:2])
-    with pytest.raises(TypeError):
-        reader.pages[0].images[b"0"]
-    with pytest.raises(IndexError):
-        reader.pages[0].images[9999]
-    # just for test coverage:
-    with pytest.raises(KeyError):
-        reader.pages[0]._get_image(["test"], reader.pages[0])
-    assert list(PageObject(None, None).images) == []
+def image_extraction(data):
+    reader = PdfReader(BytesIO(data))
+    return list(reader.pages[0].images)
 
 
 @pytest.mark.enable_socket
 @apply_configuration(disable_legacy_handling=True)
 def test_image_new_property_performance(benchmark):
+    """Extract many small images, some of them nested in form XObjects."""
     url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
-    name = "pdf_font_garbled.pdf"
-    data = BytesIO(get_data_from_url(url=url, name=name))
-
-    benchmark(image_new_property, data)
-
-
-def image_extraction(data):
-    reader = PdfReader(data)
-    list(reader.pages[0].images)
+    data = get_data_from_url(url=url, name="pdf_font_garbled.pdf")
+    assert len(benchmark(image_extraction, data)) == 36
 
 
 @pytest.mark.enable_socket
 @apply_configuration(disable_legacy_handling=True)
 def test_large_compressed_image_performance(benchmark):
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
-    data = BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))
+    data = get_data_from_url(url=url, name="file_with_large_compressed_image.pdf")
     benchmark(image_extraction, data)

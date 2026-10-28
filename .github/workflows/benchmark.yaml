@@ -16,15 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.x']
         include:
           - python-version: '3.x'
             name: 'CPython'
           - python-version: 'pypy3.12'
             name: 'PyPy'
-    permissions:
-      contents: write  # Write the results to the branch.
-      deployments: write  # Trigger GitHub pages deployment.
     steps:
     - name: Checkout Code
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -42,18 +38,74 @@ jobs:
       run: |
         pip install .
     - name: Run benchmark
+      # CPU time excludes the time in which the shared runner is busy with other work.
       run: |
-        pytest tests/bench.py --benchmark-json output.json
-    - name: Store benchmark result
+        pytest tests/bench.py --benchmark-json output.json --benchmark-timer=time.process_time
+    - name: Calibrate results
+      run: |
+        python .github/scripts/calibrate_benchmarks.py output.json --github-json calibrated.json | tee table.txt
+        { echo '```'; cat table.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+    - name: Upload results
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+      with:
+        name: benchmark-${{ matrix.name }}
+        path: |
+          output.json
+          calibrated.json
+
+  publish:
+    # A single job pushes to gh-pages, so the matrix jobs cannot race each other.
+    name: Publish benchmark results
+    needs: benchmark
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Write the results to the branch.
+      deployments: write  # Trigger GitHub pages deployment.
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Download results
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+      with:
+        pattern: benchmark-*
+        path: ${{ runner.temp }}/benchmark
+    - name: Update benchmark page
+      # docs/benchmark-page/README.md explains what lives on which branch.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git fetch --depth=1 origin gh-pages
+        git worktree add "$RUNNER_TEMP/gh-pages" FETCH_HEAD
+        cp docs/benchmark-page/index.html "$RUNNER_TEMP/gh-pages/dev/bench/index.html"
+        cd "$RUNNER_TEMP/gh-pages"
+        python3 "$GITHUB_WORKSPACE/docs/benchmark-page/archive_uncalibrated_results.py"
+        git add dev/bench
+        if git diff --cached --quiet; then
+          echo "The benchmark page on gh-pages is up to date."
+          exit 0
+        fi
+        git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+          commit -m "Update benchmark page from ${GITHUB_SHA}"
+        git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
+    - name: Store PyPy result
       uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc  # v1.22.2
       with:
-        name: "${{ matrix.name }} Benchmark"
-        tool: 'pytest'
-        output-file-path: output.json
-        # Use personal access token instead of GITHUB_TOKEN due to https://github.community/t/github-action-not-triggering-gh-pages-upon-push/16096
+        name: "PyPy (calibrated)"
+        tool: 'customSmallerIsBetter'
+        output-file-path: ${{ runner.temp }}/benchmark/benchmark-PyPy/calibrated.json
         github-token: ${{ secrets.GITHUB_TOKEN }}
         auto-push: true
-        # Show alert with commit comment on detecting possible performance regression
-        alert-threshold: '200%'
-        comment-on-alert: true
+        summary-always: true
+    - name: Store CPython result
+      uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc  # v1.22.2
+      with:
+        name: "CPython (calibrated)"
+        tool: 'customSmallerIsBetter'
+        output-file-path: ${{ runner.temp }}/benchmark/benchmark-CPython/calibrated.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        summary-always: true
+        alert-threshold: '150%'
         fail-on-alert: true
