@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793212212946,
+  "lastUpdate": 1793212305868,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -159265,6 +159265,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02736765310964484",
             "extra": "mean: 854.833346800001 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9c4a69381fd966dedef103d29650b6f45504e7e0",
+          "message": "DEV: pytest >= 9.2 is incompatible to pytest-benchmark (#4293)\n\nDowngrade pytest from version 9.2.0 to 9.1.1.\r\n\r\nUpstream issue: https://redirect.github.com/ionelmc/pytest-benchmark/issues/321",
+          "timestamp": "2026-10-28T19:26:32+01:00",
+          "tree_id": "6b266065c88d7b5a63871e02bdf1ac19cfde55ba",
+          "url": "https://github.com/py-pdf/pypdf/commit/9c4a69381fd966dedef103d29650b6f45504e7e0"
+        },
+        "date": 1793212292967,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.192498321686244,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019278045487309763",
+            "extra": "mean: 70.45975820000574 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.261050542330256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0049857803754262435",
+            "extra": "mean: 34.17512295238198 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9458374623513137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032092225460561716",
+            "extra": "mean: 1.0572641069999917 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.45137787644416705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03713166463640035",
+            "extra": "mean: 2.2154386649999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3676947930426713,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03559481707233973",
+            "extra": "mean: 2.7196468890000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 0.9687858221454605,
+            "unit": "iter/sec",
+            "range": "stddev: 0.18417638959698257",
+            "extra": "mean: 1.0322198954000101 sec\nrounds: 5"
           }
         ]
       }
