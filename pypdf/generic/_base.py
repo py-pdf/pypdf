@@ -29,15 +29,10 @@ import codecs
 import hashlib
 import re
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from math import log10
 from struct import iter_unpack
-from typing import Any, Callable, ClassVar, NoReturn, Optional, Union, cast
-
-if sys.version_info[:2] >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard  # PEP 647
+from typing import Any, ClassVar, NoReturn, Optional, TypeGuard, Union, cast
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -109,7 +104,7 @@ class PdfObject:
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "PdfObject":
         """
         Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter).
@@ -215,7 +210,7 @@ class NullObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "NullObject":
         """Clone object into pdf_dest."""
         if not hasattr(self, "indirect_reference"):
@@ -271,7 +266,7 @@ class BooleanObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "BooleanObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -356,7 +351,7 @@ class IndirectObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "IndirectObject":
         """Clone object into pdf_dest."""
         if self.pdf == pdf_dest and not force_duplicate:
@@ -393,7 +388,7 @@ class IndirectObject(PdfObject):
         return self
 
     def get_object(self) -> Optional["PdfObject"]:
-        obj: Optional[PdfObject] = self.pdf.get_object(self)
+        obj: PdfObject | None = self.pdf.get_object(self)
         return obj
 
     def __deepcopy__(self, memo: Any) -> "IndirectObject":
@@ -501,7 +496,7 @@ FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
 
 class FloatObject(float, PdfObject):
     def __new__(
-        cls, value: Any = "0.0", context: Optional[Any] = None
+        cls, value: Any = "0.0", context: Any | None = None
     ) -> Self:
         try:
             value = float(value)
@@ -523,7 +518,7 @@ class FloatObject(float, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "FloatObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -578,7 +573,7 @@ class NumberObject(int, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "NumberObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -629,7 +624,7 @@ class ByteStringObject(bytes, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "ByteStringObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -687,7 +682,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     autodetect_pdfdocencoding: bool
     autodetect_utf16: bool
     utf16_bom: bytes
-    _original_bytes: Optional[bytes] = None
+    _original_bytes: bytes | None = None
 
     def __new__(cls, value: Any) -> Self:
         original_bytes = None
@@ -730,7 +725,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "TextStringObject":
         """Clone object into pdf_dest."""
         obj = TextStringObject(self)
@@ -834,7 +829,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
+        ignore_fields: Sequence[Union[str, int]] | None = (),
     ) -> "NameObject":
         """Clone object into pdf_dest."""
         return cast(

@@ -1,13 +1,6 @@
 """Helpers for working with PDF types."""
 
-import sys
-from typing import Literal, Union
-
-if sys.version_info[:2] >= (3, 10):
-    # Python 3.10+: https://www.python.org/dev/peps/pep-0484
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
+from typing import Literal, TypeAlias, Union
 
 from .generic._base import NameObject, NullObject, NumberObject
 from .generic._data_structures import ArrayObject, Destination

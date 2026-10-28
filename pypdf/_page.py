@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from decimal import Decimal
@@ -36,9 +36,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import (
     Any,
-    Callable,
     Literal,
-    Optional,
     Union,
     cast,
     overload,
@@ -131,7 +129,7 @@ def _get_font_resources(resources: Any) -> DictionaryObject:
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: Optional[PdfObject] = self.get(name)
+    retval: PdfObject | None = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
@@ -299,7 +297,7 @@ class Transformation:
         return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
 
     def scale(
-        self, sx: Optional[float] = None, sy: Optional[float] = None
+        self, sx: float | None = None, sy: float | None = None
     ) -> "Transformation":
         """
         Scale the contents of a page towards the origin of the coordinate system.
@@ -407,12 +405,12 @@ class ImageFile:
     Data as bytes.
     """
 
-    image: Optional[Image] = None
+    image: Image | None = None
     """
     Data as PIL image.
     """
 
-    indirect_reference: Optional[IndirectObject] = None
+    indirect_reference: IndirectObject | None = None
     """
     Reference to the object storing the stream.
     """
@@ -575,12 +573,12 @@ class PageObject(DictionaryObject):
 
     def __init__(
         self,
-        pdf: Optional[PdfCommonDocProtocol] = None,
-        indirect_reference: Optional[IndirectObject] = None,
+        pdf: PdfCommonDocProtocol | None = None,
+        indirect_reference: IndirectObject | None = None,
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf = pdf
-        self._content_stream_images: Optional[dict[str, Optional[ImageFile]]] = None
+        self._content_stream_images: dict[str, ImageFile | None] | None = None
         self.indirect_reference = indirect_reference
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
@@ -619,7 +617,7 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def create_blank_page(
-        pdf: Optional[PdfCommonDocProtocol] = None,
+        pdf: PdfCommonDocProtocol | None = None,
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":
@@ -665,9 +663,9 @@ class PageObject(DictionaryObject):
 
     def _get_ids_image(
         self,
-        obj: Optional[DictionaryObject] = None,
-        ancest: Optional[list[str]] = None,
-        call_stack: Optional[list[Any]] = None,
+        obj: DictionaryObject | None = None,
+        ancest: list[str] | None = None,
+        call_stack: list[Any] | None = None,
     ) -> list[Union[str, list[str]]]:
         if call_stack is None:
             call_stack = []
@@ -730,7 +728,7 @@ class PageObject(DictionaryObject):
     def _get_image(
         self,
         image_id: Union[str, list[str], tuple[str]],
-        obj: Optional[DictionaryObject] = None,
+        obj: DictionaryObject | None = None,
     ) -> ImageFile:
         if obj is None:
             obj = cast(DictionaryObject, self)
@@ -738,7 +736,7 @@ class PageObject(DictionaryObject):
             image_id = list(image_id)
         if isinstance(image_id, list) and len(image_id) == 1:
             image_id = image_id[0]
-        xobjs: Optional[DictionaryObject] = None
+        xobjs: DictionaryObject | None = None
         try:
             xobjs = cast(
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
@@ -811,7 +809,7 @@ class PageObject(DictionaryObject):
         return VirtualListImages(self._get_ids_image, self._get_image)
 
     @property
-    def inline_images(self) -> Optional[dict[str, ImageFile]]:
+    def inline_images(self) -> dict[str, ImageFile] | None:
         """
         Return only inline images from the page.
 
@@ -841,7 +839,7 @@ class PageObject(DictionaryObject):
         }
 
     @inline_images.setter
-    def inline_images(self, value: Optional[dict[str, ImageFile]]) -> None:
+    def inline_images(self, value: dict[str, ImageFile] | None) -> None:
         deprecate_no_replacement(
             "PageObject.inline_images",
             "7.0.0",
@@ -868,7 +866,7 @@ class PageObject(DictionaryObject):
                 raise PdfReadError(f"Cannot find resource entry {v} for {k}") from exception
         return v
 
-    def _parse_images_from_content_stream(self) -> dict[str, Optional[ImageFile]]:
+    def _parse_images_from_content_stream(self) -> dict[str, ImageFile | None]:
         """Load images from content stream. Includes both inline images and Do-referenced images.
 
         This method scans the page content stream and extracts:
@@ -904,7 +902,7 @@ class PageObject(DictionaryObject):
                     "please share use case with pypdf dev team"
                 )
 
-        files: dict[str, Optional[ImageFile]] = {}
+        files: dict[str, ImageFile | None] = {}
         # Process Do-referenced objects first (images + forms, no subtype check)
         files = dict.fromkeys(list(map(str, do_image_names)), None)
 
@@ -1099,7 +1097,7 @@ class PageObject(DictionaryObject):
     def _content_stream_rename(
         stream: ContentStream,
         rename: dict[Any, Any],
-        pdf: Optional[PdfCommonDocProtocol],
+        pdf: PdfCommonDocProtocol | None,
     ) -> ContentStream:
         if not rename:
             return stream
@@ -1120,7 +1118,7 @@ class PageObject(DictionaryObject):
     @staticmethod
     def _add_transformation_matrix(
         contents: Any,
-        pdf: Optional[PdfCommonDocProtocol],
+        pdf: PdfCommonDocProtocol | None,
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
         """Add transformation matrix at the beginning of the given contents stream."""
@@ -1134,7 +1132,7 @@ class PageObject(DictionaryObject):
         )
         return content_stream
 
-    def _get_contents_as_bytes(self) -> Optional[bytes]:
+    def _get_contents_as_bytes(self) -> bytes | None:
         """
         Return the page contents as bytes.
 
@@ -1149,7 +1147,7 @@ class PageObject(DictionaryObject):
             return cast(EncodedStreamObject, obj).get_data()
         return None
 
-    def get_contents(self) -> Optional[ContentStream]:
+    def get_contents(self) -> ContentStream | None:
         """
         Access the page contents.
 
@@ -1266,8 +1264,8 @@ class PageObject(DictionaryObject):
     def _merge_page(
         self,
         page2: "PageObject",
-        page2_transformation: Optional[Callable[[Any], ContentStream]] = None,
-        ctm: Optional[CompressedTransformationMatrix] = None,
+        page2_transformation: Callable[[Any], ContentStream] | None = None,
+        ctm: CompressedTransformationMatrix | None = None,
         over: bool = True,
         expand: bool = False,
     ) -> None:
@@ -1373,8 +1371,8 @@ class PageObject(DictionaryObject):
     def _merge_page_writer(
         self,
         page2: "PageObject",
-        page2transformation: Optional[Callable[[Any], ContentStream]] = None,
-        ctm: Optional[CompressedTransformationMatrix] = None,
+        page2transformation: Callable[[Any], ContentStream] | None = None,
+        ctm: CompressedTransformationMatrix | None = None,
         over: bool = True,
         expand: bool = False,
     ) -> None:
@@ -1517,7 +1515,7 @@ class PageObject(DictionaryObject):
         self.replace_contents(new_content_array)
 
     def _expand_mediabox(
-        self, page2: "PageObject", ctm: Optional[CompressedTransformationMatrix]
+        self, page2: "PageObject", ctm: CompressedTransformationMatrix | None
     ) -> None:
         corners1 = (
             self.mediabox.left.as_numeric(),
@@ -1808,7 +1806,7 @@ class PageObject(DictionaryObject):
                     raise ValueError("Page must be part of a PdfWriter") from exception
 
     @property
-    def page_number(self) -> Optional[int]:
+    def page_number(self) -> int | None:
         """
         Read-only property which returns the page number within the PDF file.
 
@@ -1874,13 +1872,13 @@ class PageObject(DictionaryObject):
         pdf: Any,
         orientations: tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
-        content_key: Optional[str] = PG.CONTENTS,
-        visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        content_key: str | None = PG.CONTENTS,
+        visitor_operand_before: Callable[[Any, Any, Any, Any], None] | None = None,
+        visitor_operand_after: Callable[[Any, Any, Any, Any], None] | None = None,
+        visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None = None,
         *,
-        known_ids: Optional[set[int]] = None,
-        traversal_state: Optional[_TraversalState] = None
+        known_ids: set[int] | None = None,
+        traversal_state: _TraversalState | None = None
     ) -> str:
         """
         See extract_text for most arguments.
@@ -2040,12 +2038,12 @@ class PageObject(DictionaryObject):
         operands: Any,
         orientations: tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
-        visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        visitor_operand_before: Callable[[Any, Any, Any, Any], None] | None = None,
+        visitor_operand_after: Callable[[Any, Any, Any, Any], None] | None = None,
+        visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None = None,
         known_ids: set[int],
         traversal_state: _TraversalState
-    ) -> Optional[str]:
+    ) -> str | None:
         xobj = cast(DictionaryObject, resources_dict["/XObject"])
         xform = cast(EncodedStreamObject, xobj[operands[0]])
         if xform["/Subtype"] == NameObject("/Image"):
@@ -2136,7 +2134,7 @@ class PageObject(DictionaryObject):
         space_vertically: bool = True,
         scale_weight: float = 1.25,
         strip_rotated: bool = True,
-        debug_path: Optional[Path] = None,
+        debug_path: Path | None = None,
         font_height_weight: float = 1,
     ) -> str:
         """
@@ -2200,9 +2198,9 @@ class PageObject(DictionaryObject):
         *args: Any,
         orientations: Union[int, tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
-        visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        visitor_operand_before: Callable[[Any, Any, Any, Any], None] | None = None,
+        visitor_operand_after: Callable[[Any, Any, Any, Any], None] | None = None,
+        visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None = None,
         extraction_mode: Literal["plain", "layout"] = "plain",
         **kwargs: Any,
     ) -> str:
@@ -2337,12 +2335,12 @@ class PageObject(DictionaryObject):
         xform: EncodedStreamObject,
         orientations: tuple[int, ...] = (0, 90, 270, 360),
         space_width: float = 200.0,
-        visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        visitor_operand_before: Callable[[Any, Any, Any, Any], None] | None = None,
+        visitor_operand_after: Callable[[Any, Any, Any, Any], None] | None = None,
+        visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None = None,
         *,
-        known_ids: Optional[set[int]] = None,
-        traversal_state: Optional[Any] = None
+        known_ids: set[int] | None = None,
+        traversal_state: Any | None = None
     ) -> str:
         """
         Extract text from an XObject.
@@ -2425,7 +2423,7 @@ class PageObject(DictionaryObject):
     content as intended by the page's creator."""
 
     @property
-    def annotations(self) -> Optional[ArrayObject]:
+    def annotations(self) -> ArrayObject | None:
         if "/Annots" not in self:
             return None
         annotations = self["/Annots"].get_object()
@@ -2439,7 +2437,7 @@ class PageObject(DictionaryObject):
         return annotations
 
     @annotations.setter
-    def annotations(self, value: Optional[ArrayObject]) -> None:
+    def annotations(self, value: ArrayObject | None) -> None:
         """
         Set the annotations array of the page.
 
@@ -2553,7 +2551,7 @@ class _VirtualList(Sequence[PageObject]):
             raise IndexError("Index out of range")
         ind = self[index].indirect_reference
         assert ind is not None
-        parent: Optional[PdfObject] = cast(DictionaryObject, ind.get_object()).get(
+        parent: PdfObject | None = cast(DictionaryObject, ind.get_object()).get(
             "/Parent", None
         )
         first = True

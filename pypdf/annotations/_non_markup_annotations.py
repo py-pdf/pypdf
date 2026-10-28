@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from ..generic._base import (
     BooleanObject,
@@ -18,9 +18,9 @@ class Link(AnnotationDictionary):
         self,
         *,
         rect: Union[RectangleObject, tuple[float, float, float, float]],
-        border: Optional[Sequence[Any]] = None,
-        url: Optional[str] = None,
-        target_page_index: Optional[int] = None,
+        border: Sequence[Any] | None = None,
+        url: str | None = None,
+        target_page_index: int | None = None,
         fit: Fit = DEFAULT_FIT,
         **kwargs: Any,
     ) -> None:
@@ -82,7 +82,7 @@ class Popup(AnnotationDictionary):
         self,
         *,
         rect: Union[RectangleObject, tuple[float, float, float, float]],
-        parent: Optional[DictionaryObject] = None,
+        parent: DictionaryObject | None = None,
         open: bool = False,
         **kwargs: Any,
     ) -> None:

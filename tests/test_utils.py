@@ -4,10 +4,11 @@ import io
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from io import BytesIO, StringIO
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pytest
 

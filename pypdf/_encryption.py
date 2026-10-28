@@ -30,7 +30,7 @@ import stringprep
 import struct
 import unicodedata
 from enum import Enum, IntEnum
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from pypdf._crypt_providers import (
     CryptAES,
@@ -877,7 +877,7 @@ def _get_entry(
     *,
     expected_types: tuple[type, ...],
     type_name: str,
-    default: Optional[Any] = None,
+    default: Any | None = None,
     required: bool = False,
 ) -> Any:
     """Fetch an entry of the encryption dictionary, treating null as absent."""
@@ -935,7 +935,7 @@ class Encryption:
         StmF: str,
         StrF: str,
         EFF: str,
-        values: Optional[EncryptionValues],
+        values: EncryptionValues | None,
     ) -> None:
         # §7.6.2, entries common to all encryption dictionaries
         # use same name as keys of encryption dictionaries entries
@@ -951,7 +951,7 @@ class Encryption:
         self.values: EncryptionValues = values or EncryptionValues()
 
         self._password_type = PasswordType.NOT_DECRYPTED
-        self._key: Optional[bytes] = None
+        self._key: bytes | None = None
         self._are_permissions_valid: bool = True
 
     def is_decrypted(self) -> bool:
@@ -1162,7 +1162,7 @@ class Encryption:
     def write_entry(
         self,
         user_password: str,
-        owner_password: Optional[str],
+        owner_password: str | None,
         *,
         strict: bool = False,
     ) -> DictionaryObject:
@@ -1254,7 +1254,7 @@ class Encryption:
         alg_ver = encryption_entry.get("/V", 0)
         if alg_ver not in (1, 2, 3, 4, 5):
             raise NotImplementedError(f"Encryption V={alg_ver} NOT supported")
-        stm_crypt_filter: Optional[DictionaryObject] = None
+        stm_crypt_filter: DictionaryObject | None = None
         if alg_ver >= 4:
             # /CF is only needed to look up named crypt filters;
             # /StmF, /StrF and /EFF default to /Identity.

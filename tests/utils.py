@@ -1,8 +1,9 @@
 """Utility functions and classes for testing."""
 import logging
 import sys
+from collections.abc import Callable
 from types import FrameType
-from typing import Any, Callable, Optional, TypeVar, Union, cast
+from typing import Any, TypeVar, Union, cast
 
 from PIL import Image
 
@@ -24,7 +25,7 @@ class PositionedText:
     The font-dictionary may be None in case of an unknown font.
     """
 
-    def __init__(self, text: str, x: float, y: float, font_dict: Optional[DictionaryObject], font_size: float) -> None:
+    def __init__(self, text: str, x: float, y: float, font_dict: DictionaryObject | None, font_size: float) -> None:
         # TODO: \0-replace: Encoding issue in some files?
         self.text = text.replace("\0", "")
         self.x = x
@@ -60,7 +61,7 @@ class Rectangle:
 
 
 def extract_text_and_rectangles(
-        page: PageObject, rect_filter: Optional[Callable[[Rectangle], bool]] = None
+        page: PageObject, rect_filter: Callable[[Rectangle], bool] | None = None
 ) -> tuple[list[PositionedText], list[Rectangle]]:
     """
     Extracts texts and rectangles of a page of type pypdf._page.PageObject.
@@ -92,7 +93,7 @@ def extract_text_and_rectangles(
 
     def print_visi(
         text: str, cm_matrix: list[float],
-        tm_matrix: list[float], font_dict: Optional[DictionaryObject],
+        tm_matrix: list[float], font_dict: DictionaryObject | None,
         font_size: float
     ) -> None:
         if text.strip() != "":
@@ -227,7 +228,7 @@ class ReaderDummy:
 def count_function_calls(
         func: Callable[..., T],
         *args: Any,
-        names_to_ignore: Optional[set[str]] = None,
+        names_to_ignore: set[str] | None = None,
         **kwargs: Any
 ) -> tuple[T, int]:
     """

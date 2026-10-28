@@ -51,7 +51,7 @@ class PdfCommonDocProtocol(Protocol):
     def root_object(self) -> PdfObjectProtocol:
         ...  # pragma: no cover
 
-    def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
+    def get_object(self, indirect_reference: Any) -> PdfObjectProtocol | None:
         ...  # pragma: no cover
 
     @property
@@ -79,7 +79,7 @@ class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
 
     incremental: bool
     # Only populated in incremental mode, None otherwise.
-    _reader: Optional[Any]  # PdfReader
+    _reader: Any | None  # PdfReader
 
     @abstractmethod
     def write(self, stream: Union[Path, StrByteType]) -> tuple[bool, IO[Any]]:

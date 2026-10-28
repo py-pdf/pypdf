@@ -5,11 +5,11 @@ import shutil
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Union
 
 
 @functools.cache
-def _determine_jbig2dec_binary() -> Optional[str]:
+def _determine_jbig2dec_binary() -> str | None:
     """
     Small utility function to determine the `jbig2dec` binary path only once.
 
@@ -119,7 +119,7 @@ class Configuration:
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
 
-    jbig2dec_binary: Optional[str] = dataclasses.field(default_factory=_determine_jbig2dec_binary)
+    jbig2dec_binary: str | None = dataclasses.field(default_factory=_determine_jbig2dec_binary)
     """
     The location of the ``jbig2dec`` binary.
 
@@ -178,7 +178,7 @@ def get_configuration() -> Configuration:
 
 
 def _build_configuration(
-    configuration: Optional[Configuration],
+    configuration: Configuration | None,
     overwrites: dict[str, Any],
 ) -> Configuration:
     """
@@ -196,7 +196,7 @@ def _build_configuration(
 
 
 def overwrite_configuration(
-    configuration: Optional[Configuration] = None,
+    configuration: Configuration | None = None,
     **overwrites: Any,
 ) -> Configuration:
     """
@@ -216,7 +216,7 @@ def overwrite_configuration(
 
 @contextmanager
 def apply_configuration(
-    configuration: Optional[Configuration] = None,
+    configuration: Configuration | None = None,
     **overwrites: Any,
 ) -> Iterator[Configuration]:
     """

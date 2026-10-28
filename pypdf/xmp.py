@@ -7,12 +7,10 @@ https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
 import datetime
 import decimal
 import re
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from string import hexdigits
 from typing import (
     Any,
-    Callable,
-    Optional,
     TypeVar,
     Union,
     cast,
@@ -156,7 +154,7 @@ def _format_datetime_utc(value: datetime.datetime) -> str:
 
 def _generic_get(
         element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
-) -> Optional[list[str]]:
+) -> list[str] | None:
     containers = element.getElementsByTagNameNS(RDF_NAMESPACE, list_type)
     retval: list[Any] = []
     if len(containers):
@@ -179,7 +177,7 @@ class _XmpBuilder(ExpatBuilderNS):
     but not cases like quadratic entity expansion which can still cause quite some memory usage.
     """
 
-    def __init__(self, options: Optional[Options] = None) -> None:
+    def __init__(self, options: Options | None = None) -> None:
         super().__init__(options=options)
         self._element_count = 0
         self._configuration = get_configuration()
@@ -190,11 +188,11 @@ class _XmpBuilder(ExpatBuilderNS):
             # expat passes an int here rather than a bool, but typeshed declares
             # the handler with a bool, so the annotation follows typeshed.
             is_parameter_entity: bool,
-            value: Optional[str],
-            base: Optional[str],
+            value: str | None,
+            base: str | None,
             system_id: str,
-            public_id: Optional[str],
-            notation_name: Optional[str],
+            public_id: str | None,
+            notation_name: str | None,
     ) -> None:
         raise ExpatError(f"Forbidden entities: {entity_name!r}")
 
@@ -300,7 +298,7 @@ class XmpInformation(PdfObject):
         namespace: str,
         name: str,
         converter: Callable[[str], Any] = _identity,
-    ) -> Optional[Any]:
+    ) -> Any | None:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -317,7 +315,7 @@ class XmpInformation(PdfObject):
         ns_cache[name] = value
         return value
 
-    def _getter_bag(self, namespace: str, name: str) -> Optional[list[str]]:
+    def _getter_bag(self, namespace: str, name: str) -> list[str] | None:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cast(list[str], cached)
@@ -337,7 +335,7 @@ class XmpInformation(PdfObject):
         namespace: str,
         name: str,
         converter: Callable[[Any], Any] = _identity,
-    ) -> Optional[list[Any]]:
+    ) -> list[Any] | None:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cast(list[Any], cached)
@@ -361,7 +359,7 @@ class XmpInformation(PdfObject):
         ns_cache[name] = retval
         return retval
 
-    def _get_langalt_values(self, namespace: str, name: str) -> Optional[dict[Any, Any]]:
+    def _get_langalt_values(self, namespace: str, name: str) -> dict[Any, Any] | None:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cast(dict[Any, Any], cached)
@@ -380,39 +378,39 @@ class XmpInformation(PdfObject):
         return retval
 
     @property
-    def dc_contributor(self) -> Optional[list[str]]:
+    def dc_contributor(self) -> list[str] | None:
         """Contributors to the resource (other than the authors)."""
         return self._getter_bag(DC_NAMESPACE, "contributor")
 
     @dc_contributor.setter
-    def dc_contributor(self, values: Optional[list[str]]) -> None:
+    def dc_contributor(self, values: list[str] | None) -> None:
         self._set_bag_values(DC_NAMESPACE, "contributor", values)
 
     @property
-    def dc_coverage(self) -> Optional[str]:
+    def dc_coverage(self) -> str | None:
         """Text describing the extent or scope of the resource."""
         return self._get_single_value(DC_NAMESPACE, "coverage")
 
     @dc_coverage.setter
-    def dc_coverage(self, value: Optional[str]) -> None:
+    def dc_coverage(self, value: str | None) -> None:
         self._set_single_value(DC_NAMESPACE, "coverage", value)
 
     @property
-    def dc_creator(self) -> Optional[list[str]]:
+    def dc_creator(self) -> list[str] | None:
         """A sorted array of names of the authors of the resource, listed in order of precedence."""
         return self._get_seq_values(DC_NAMESPACE, "creator")
 
     @dc_creator.setter
-    def dc_creator(self, values: Optional[list[str]]) -> None:
+    def dc_creator(self, values: list[str] | None) -> None:
         self._set_seq_values(DC_NAMESPACE, "creator", values)
 
     @property
-    def dc_date(self) -> Optional[list[datetime.datetime]]:
+    def dc_date(self) -> list[datetime.datetime] | None:
         """A sorted array of dates of significance to the resource. The dates and times are in UTC."""
         return self._get_seq_values(DC_NAMESPACE, "date", _converter_date)
 
     @dc_date.setter
-    def dc_date(self, values: Optional[list[Union[str, datetime.datetime]]]) -> None:
+    def dc_date(self, values: list[Union[str, datetime.datetime]] | None) -> None:
         if values is None:
             self._set_seq_values(DC_NAMESPACE, "date", None)
         else:
@@ -425,138 +423,138 @@ class XmpInformation(PdfObject):
             self._set_seq_values(DC_NAMESPACE, "date", date_strings)
 
     @property
-    def dc_description(self) -> Optional[dict[str, str]]:
+    def dc_description(self) -> dict[str, str] | None:
         """A language-keyed dictionary of textual descriptions of the content of the resource."""
         return self._get_langalt_values(DC_NAMESPACE, "description")
 
     @dc_description.setter
-    def dc_description(self, values: Optional[dict[str, str]]) -> None:
+    def dc_description(self, values: dict[str, str] | None) -> None:
         self._set_langalt_values(DC_NAMESPACE, "description", values)
 
     @property
-    def dc_format(self) -> Optional[str]:
+    def dc_format(self) -> str | None:
         """The mime-type of the resource."""
         return self._get_single_value(DC_NAMESPACE, "format")
 
     @dc_format.setter
-    def dc_format(self, value: Optional[str]) -> None:
+    def dc_format(self, value: str | None) -> None:
         self._set_single_value(DC_NAMESPACE, "format", value)
 
     @property
-    def dc_identifier(self) -> Optional[str]:
+    def dc_identifier(self) -> str | None:
         """Unique identifier of the resource."""
         return self._get_single_value(DC_NAMESPACE, "identifier")
 
     @dc_identifier.setter
-    def dc_identifier(self, value: Optional[str]) -> None:
+    def dc_identifier(self, value: str | None) -> None:
         self._set_single_value(DC_NAMESPACE, "identifier", value)
 
     @property
-    def dc_language(self) -> Optional[list[str]]:
+    def dc_language(self) -> list[str] | None:
         """An unordered array specifying the languages used in the resource."""
         return self._getter_bag(DC_NAMESPACE, "language")
 
     @dc_language.setter
-    def dc_language(self, values: Optional[list[str]]) -> None:
+    def dc_language(self, values: list[str] | None) -> None:
         self._set_bag_values(DC_NAMESPACE, "language", values)
 
     @property
-    def dc_publisher(self) -> Optional[list[str]]:
+    def dc_publisher(self) -> list[str] | None:
         """An unordered array of publisher names."""
         return self._getter_bag(DC_NAMESPACE, "publisher")
 
     @dc_publisher.setter
-    def dc_publisher(self, values: Optional[list[str]]) -> None:
+    def dc_publisher(self, values: list[str] | None) -> None:
         self._set_bag_values(DC_NAMESPACE, "publisher", values)
 
     @property
-    def dc_relation(self) -> Optional[list[str]]:
+    def dc_relation(self) -> list[str] | None:
         """An unordered array of text descriptions of relationships to other documents."""
         return self._getter_bag(DC_NAMESPACE, "relation")
 
     @dc_relation.setter
-    def dc_relation(self, values: Optional[list[str]]) -> None:
+    def dc_relation(self, values: list[str] | None) -> None:
         self._set_bag_values(DC_NAMESPACE, "relation", values)
 
     @property
-    def dc_rights(self) -> Optional[dict[str, str]]:
+    def dc_rights(self) -> dict[str, str] | None:
         """A language-keyed dictionary of textual descriptions of the rights the user has to this resource."""
         return self._get_langalt_values(DC_NAMESPACE, "rights")
 
     @dc_rights.setter
-    def dc_rights(self, values: Optional[dict[str, str]]) -> None:
+    def dc_rights(self, values: dict[str, str] | None) -> None:
         self._set_langalt_values(DC_NAMESPACE, "rights", values)
 
     @property
-    def dc_source(self) -> Optional[str]:
+    def dc_source(self) -> str | None:
         """Unique identifier of the work from which this resource was derived."""
         return self._get_single_value(DC_NAMESPACE, "source")
 
     @dc_source.setter
-    def dc_source(self, value: Optional[str]) -> None:
+    def dc_source(self, value: str | None) -> None:
         self._set_single_value(DC_NAMESPACE, "source", value)
 
     @property
-    def dc_subject(self) -> Optional[list[str]]:
+    def dc_subject(self) -> list[str] | None:
         """An unordered array of descriptive phrases or keywords that specify the topic of the content."""
         return self._getter_bag(DC_NAMESPACE, "subject")
 
     @dc_subject.setter
-    def dc_subject(self, values: Optional[list[str]]) -> None:
+    def dc_subject(self, values: list[str] | None) -> None:
         self._set_bag_values(DC_NAMESPACE, "subject", values)
 
     @property
-    def dc_title(self) -> Optional[dict[str, str]]:
+    def dc_title(self) -> dict[str, str] | None:
         """A language-keyed dictionary of the title of the resource."""
         return self._get_langalt_values(DC_NAMESPACE, "title")
 
     @dc_title.setter
-    def dc_title(self, values: Optional[dict[str, str]]) -> None:
+    def dc_title(self, values: dict[str, str] | None) -> None:
         self._set_langalt_values(DC_NAMESPACE, "title", values)
 
     @property
-    def dc_type(self) -> Optional[list[str]]:
+    def dc_type(self) -> list[str] | None:
         """An unordered array of textual descriptions of the document type."""
         return self._getter_bag(DC_NAMESPACE, "type")
 
     @dc_type.setter
-    def dc_type(self, values: Optional[list[str]]) -> None:
+    def dc_type(self, values: list[str] | None) -> None:
         self._set_bag_values(DC_NAMESPACE, "type", values)
 
     @property
-    def pdf_keywords(self) -> Optional[str]:
+    def pdf_keywords(self) -> str | None:
         """An unformatted text string representing document keywords."""
         return self._get_single_value(PDF_NAMESPACE, "Keywords")
 
     @pdf_keywords.setter
-    def pdf_keywords(self, value: Optional[str]) -> None:
+    def pdf_keywords(self, value: str | None) -> None:
         self._set_single_value(PDF_NAMESPACE, "Keywords", value)
 
     @property
-    def pdf_pdfversion(self) -> Optional[str]:
+    def pdf_pdfversion(self) -> str | None:
         """The PDF file version, for example 1.0 or 1.3."""
         return self._get_single_value(PDF_NAMESPACE, "PDFVersion")
 
     @pdf_pdfversion.setter
-    def pdf_pdfversion(self, value: Optional[str]) -> None:
+    def pdf_pdfversion(self, value: str | None) -> None:
         self._set_single_value(PDF_NAMESPACE, "PDFVersion", value)
 
     @property
-    def pdf_producer(self) -> Optional[str]:
+    def pdf_producer(self) -> str | None:
         """The name of the tool that saved the document as a PDF."""
         return self._get_single_value(PDF_NAMESPACE, "Producer")
 
     @pdf_producer.setter
-    def pdf_producer(self, value: Optional[str]) -> None:
+    def pdf_producer(self, value: str | None) -> None:
         self._set_single_value(PDF_NAMESPACE, "Producer", value)
 
     @property
-    def xmp_create_date(self) -> Optional[datetime.datetime]:
+    def xmp_create_date(self) -> datetime.datetime | None:
         """The date and time the resource was originally created. Returned as a UTC datetime object."""
         return self._get_single_value(XMP_NAMESPACE, "CreateDate", _converter_date)
 
     @xmp_create_date.setter
-    def xmp_create_date(self, value: Optional[datetime.datetime]) -> None:
+    def xmp_create_date(self, value: datetime.datetime | None) -> None:
         if value:
             date_str = _format_datetime_utc(value)
             self._set_single_value(XMP_NAMESPACE, "CreateDate", date_str)
@@ -564,12 +562,12 @@ class XmpInformation(PdfObject):
             self._set_single_value(XMP_NAMESPACE, "CreateDate", None)
 
     @property
-    def xmp_modify_date(self) -> Optional[datetime.datetime]:
+    def xmp_modify_date(self) -> datetime.datetime | None:
         """The date and time the resource was last modified. Returned as a UTC datetime object."""
         return self._get_single_value(XMP_NAMESPACE, "ModifyDate", _converter_date)
 
     @xmp_modify_date.setter
-    def xmp_modify_date(self, value: Optional[datetime.datetime]) -> None:
+    def xmp_modify_date(self, value: datetime.datetime | None) -> None:
         if value:
             date_str = _format_datetime_utc(value)
             self._set_single_value(XMP_NAMESPACE, "ModifyDate", date_str)
@@ -577,12 +575,12 @@ class XmpInformation(PdfObject):
             self._set_single_value(XMP_NAMESPACE, "ModifyDate", None)
 
     @property
-    def xmp_metadata_date(self) -> Optional[datetime.datetime]:
+    def xmp_metadata_date(self) -> datetime.datetime | None:
         """The date and time that any metadata for this resource was last changed. Returned as a UTC datetime object."""
         return self._get_single_value(XMP_NAMESPACE, "MetadataDate", _converter_date)
 
     @xmp_metadata_date.setter
-    def xmp_metadata_date(self, value: Optional[datetime.datetime]) -> None:
+    def xmp_metadata_date(self, value: datetime.datetime | None) -> None:
         if value:
             date_str = _format_datetime_utc(value)
             self._set_single_value(XMP_NAMESPACE, "MetadataDate", date_str)
@@ -590,48 +588,48 @@ class XmpInformation(PdfObject):
             self._set_single_value(XMP_NAMESPACE, "MetadataDate", None)
 
     @property
-    def xmp_creator_tool(self) -> Optional[str]:
+    def xmp_creator_tool(self) -> str | None:
         """The name of the first known tool used to create the resource."""
         return self._get_single_value(XMP_NAMESPACE, "CreatorTool")
 
     @xmp_creator_tool.setter
-    def xmp_creator_tool(self, value: Optional[str]) -> None:
+    def xmp_creator_tool(self, value: str | None) -> None:
         self._set_single_value(XMP_NAMESPACE, "CreatorTool", value)
 
     @property
-    def xmpmm_document_id(self) -> Optional[str]:
+    def xmpmm_document_id(self) -> str | None:
         """The common identifier for all versions and renditions of this resource."""
         return self._get_single_value(XMPMM_NAMESPACE, "DocumentID")
 
     @xmpmm_document_id.setter
-    def xmpmm_document_id(self, value: Optional[str]) -> None:
+    def xmpmm_document_id(self, value: str | None) -> None:
         self._set_single_value(XMPMM_NAMESPACE, "DocumentID", value)
 
     @property
-    def xmpmm_instance_id(self) -> Optional[str]:
+    def xmpmm_instance_id(self) -> str | None:
         """An identifier for a specific incarnation of a document, updated each time a file is saved."""
         return self._get_single_value(XMPMM_NAMESPACE, "InstanceID")
 
     @xmpmm_instance_id.setter
-    def xmpmm_instance_id(self, value: Optional[str]) -> None:
+    def xmpmm_instance_id(self, value: str | None) -> None:
         self._set_single_value(XMPMM_NAMESPACE, "InstanceID", value)
 
     @property
-    def pdfaid_part(self) -> Optional[str]:
+    def pdfaid_part(self) -> str | None:
         """The part of the PDF/A standard that the document conforms to (e.g., 1, 2, 3)."""
         return self._get_single_value(PDFAID_NAMESPACE, "part")
 
     @pdfaid_part.setter
-    def pdfaid_part(self, value: Optional[str]) -> None:
+    def pdfaid_part(self, value: str | None) -> None:
         self._set_single_value(PDFAID_NAMESPACE, "part", value)
 
     @property
-    def pdfaid_conformance(self) -> Optional[str]:
+    def pdfaid_conformance(self) -> str | None:
         """The conformance level within the PDF/A standard (e.g., 'A', 'B', 'U')."""
         return self._get_single_value(PDFAID_NAMESPACE, "conformance")
 
     @pdfaid_conformance.setter
-    def pdfaid_conformance(self, value: Optional[str]) -> None:
+    def pdfaid_conformance(self, value: str | None) -> None:
         self._set_single_value(PDFAID_NAMESPACE, "conformance", value)
 
     @property
@@ -689,7 +687,7 @@ class XmpInformation(PdfObject):
         if ns_cache and name in ns_cache:
             del ns_cache[name]
 
-    def _set_single_value(self, namespace: str, name: str, value: Optional[str]) -> None:
+    def _set_single_value(self, namespace: str, name: str, value: str | None) -> None:
         """Set or remove a single metadata value."""
         self._clear_cache_entry(namespace, name)
         desc = self._get_or_create_description()
@@ -713,7 +711,7 @@ class XmpInformation(PdfObject):
 
         self._update_stream()
 
-    def _set_bag_values(self, namespace: str, name: str, values: Optional[list[str]]) -> None:
+    def _set_bag_values(self, namespace: str, name: str, values: list[str] | None) -> None:
         """Set or remove bag values (unordered array)."""
         self._clear_cache_entry(namespace, name)
         desc = self._get_or_create_description()
@@ -741,7 +739,7 @@ class XmpInformation(PdfObject):
 
         self._update_stream()
 
-    def _set_seq_values(self, namespace: str, name: str, values: Optional[list[str]]) -> None:
+    def _set_seq_values(self, namespace: str, name: str, values: list[str] | None) -> None:
         """Set or remove sequence values (ordered array)."""
         self._clear_cache_entry(namespace, name)
         desc = self._get_or_create_description()
@@ -769,7 +767,7 @@ class XmpInformation(PdfObject):
 
         self._update_stream()
 
-    def _set_langalt_values(self, namespace: str, name: str, values: Optional[dict[str, str]]) -> None:
+    def _set_langalt_values(self, namespace: str, name: str, values: dict[str, str] | None) -> None:
         """Set or remove language alternative values."""
         self._clear_cache_entry(namespace, name)
         desc = self._get_or_create_description()

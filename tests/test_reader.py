@@ -5,7 +5,7 @@ import sys
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 from unittest import mock
 
 import pytest
@@ -3469,7 +3469,7 @@ def test_read_standard_xref_table__speed__caching() -> None:
 
 
 def _generate_pdf15_xref_stream_pdf_file(
-        size: int, encoded: bytes, index: Optional[str] = None, prev: bool = False
+        size: int, encoded: bytes, index: str | None = None, prev: bool = False
 ) -> bytes:
     pdf = bytearray(b"%PDF-1.7\n")
     pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"

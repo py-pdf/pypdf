@@ -1,7 +1,6 @@
-import sys
 import uuid
 from abc import ABC
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, TypeAlias, Union
 
 from ..constants import AnnotationFlag
 from ..generic import ArrayObject, DictionaryObject
@@ -16,14 +15,6 @@ from ..generic._base import (
 from ..generic._rectangle import RectangleObject
 from ..generic._utils import hex_to_rgb
 from ._base import NO_FLAGS, AnnotationDictionary
-
-if sys.version_info[:2] >= (3, 10):
-    from typing import TypeAlias
-else:
-    # PEP 613 introduced typing.TypeAlias with Python 3.10
-    # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import TypeAlias
-
 
 Vertex: TypeAlias = tuple[float, float]
 
@@ -65,10 +56,10 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
     def __init__(
         self,
         *,
-        title_bar: Optional[str] = None,
-        in_reply_to: Optional[Union[DictionaryObject, IndirectObject]] = None,
+        title_bar: str | None = None,
+        in_reply_to: Union[DictionaryObject, IndirectObject] | None = None,
         reply_type: Literal["R", "Group"] = "R",
-        annotation_name: Optional[str] = None,
+        annotation_name: str | None = None,
     ) -> None:
         if title_bar is not None:
             self[NameObject("/T")] = TextStringObject(title_bar)
@@ -141,8 +132,8 @@ class FreeText(MarkupAnnotation):
         italic: bool = False,
         font_size: str = "14pt",
         font_color: str = "000000",
-        border_color: Optional[str] = "000000",
-        background_color: Optional[str] = "ffffff",
+        border_color: str | None = "000000",
+        background_color: str | None = "ffffff",
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -259,7 +250,7 @@ class Rectangle(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, tuple[float, float, float, float]],
         *,
-        interior_color: Optional[str] = None,
+        interior_color: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -307,7 +298,7 @@ class Ellipse(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, tuple[float, float, float, float]],
         *,
-        interior_color: Optional[str] = None,
+        interior_color: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)

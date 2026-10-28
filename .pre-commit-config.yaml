@@ -19,19 +19,19 @@ repos:
         args: ['--maxkb=1000']
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.0
+    rev: v0.17.3
     hooks:
     -   id: ruff-check
         args: ['--fix']
 
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.21.2
+    rev: v3.22.0
     hooks:
     -   id: pyupgrade
-        args: [--py39-plus]
+        args: [--py310-plus]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v2.4.0
     hooks:
       - id: mypy
         files: ^pypdf/.*

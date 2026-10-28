@@ -1,8 +1,7 @@
 """Functions to convert an image XObject to an image"""
 
-import sys
 from io import BytesIO
-from typing import Any, Literal, Optional, Union, cast
+from typing import Any, Literal, TypeAlias, Union, cast
 
 from .._configuration import get_configuration
 from .._utils import check_if_whitespace_only, logger_warning
@@ -17,12 +16,6 @@ from ..generic import (
     TextStringObject,
     is_null_or_none,
 )
-
-if sys.version_info[:2] >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
-
 
 try:
     from PIL import Image, UnidentifiedImageError
@@ -569,8 +562,8 @@ def _apply_alpha(
 def _xobj_to_image(
         x_object: dict[str, Any],
         pillow_parameters: Union[dict[str, Any], None] = None,
-        visited: Optional[set[int]] = None,
-) -> tuple[Optional[str], bytes, Any]:
+        visited: set[int] | None = None,
+) -> tuple[str | None, bytes, Any]:
     """
     Args:
         x_object:

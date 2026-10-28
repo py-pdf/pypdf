@@ -136,15 +136,15 @@ jobs:
 
   tests:
     name: "pytest on ${{ matrix.python-version }} (crypto-lib: ${{ matrix.use-crypto-lib }})"
-    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-24.04' || 'ubuntu-26.04' }}
+    runs-on: 'ubuntu-26.04'
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15', 'pypy3.12']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14', '3.15', 'pypy3.12']
         use-crypto-lib: ['cryptography']
         include:
-          - python-version: '3.9'
+          - python-version: '3.10'
             use-crypto-lib: 'pycryptodome'
-          - python-version: '3.9'
+          - python-version: '3.10'
             use-crypto-lib: 'none'
     steps:
     - name: Update APT packages
@@ -179,14 +179,14 @@ jobs:
           cache-downloaded-files
     - name: Setup Python
       uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-      if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
     - name: Setup Python (3.11+)
       uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-      if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
+      if: matrix.python-version != '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -198,11 +198,11 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
-      if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.10'
     - name: Install requirements (Python 3.11+)
       run: |
         pip install -r requirements/ci-3.11.txt
-      if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
+      if: matrix.python-version != '3.10'
     - name: Remove pycryptodome and cryptography
       run: |
         pip uninstall pycryptodome cryptography -y
