@@ -11,13 +11,12 @@ readme = "README.md"
 dynamic = ["version"]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -44,9 +43,9 @@ brotli = ["brotli>=1.2.0"]
 # This is due to the backend parameter being required back then:
 # https://cryptography.io/en/latest/changelog/#v3-1
 crypto = ["cryptography>3.0"]
-cryptodome = ["PyCryptodome"]
+cryptodome = ["pycryptodome"]
 fonts = ["fonttools"]
-image = ["Pillow>=8.0.0"]
+image = ["pillow>=8.0.0"]
 rtl_text = [
     "arabic-reshaper",
     "python-bidi",
@@ -56,7 +55,7 @@ full = [
     "brotli>=1.2.0",
     "cryptography>3.0",
     "fonttools",
-    "Pillow>=8.0.0",
+    "pillow>=8.0.0",
     "python-bidi"
 ]
 dev = [
@@ -70,9 +69,9 @@ dev = [
     "wheel"
 ]
 docs = [
-    "myst_parser",
+    "myst-parser",
     "sphinx",
-    "sphinx_rtd_theme"
+    "sphinx-rtd-theme"
 ]
 
 [tool.check-wheel-contents]

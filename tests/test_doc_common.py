@@ -1951,3 +1951,41 @@ def test_get_num_pages__forged_count_after_decrypt():
     reader.decrypt("")
     assert len(reader.pages) == 1
     assert reader.page_labels == ["1"]
+
+
+@pytest.mark.timeout(5)
+def test_flatten__page_tree_maximum_page_entries() -> None:
+    page_key_count = pages_per_intermediate_node = top_level_child_count = 200
+
+    keys = b"".join(b" /K%d 0" % i for i in range(page_key_count))
+    leaf = b"<< /Type /Page /MediaBox [0 0 9 9]" + keys + b" >>"
+    a_kids = b" ".join(b"4 0 R" for _ in range(pages_per_intermediate_node))
+    a_node = b"<< /Type /Pages /Kids [" + a_kids + b"] /Count %d >>" % pages_per_intermediate_node
+    top_kids = b" ".join(b"3 0 R" for _ in range(top_level_child_count))
+    top_node = b"<< /Type /Pages /Kids [" + top_kids + b"] /Count %d >>" % (
+        top_level_child_count * pages_per_intermediate_node
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        top_node,
+        a_node,
+        leaf,
+    ]
+    buf = bytearray(b"%PDF-1.7\n")
+    offsets = []
+    for index, obj in enumerate(objects, start=1):
+        offsets.append(len(buf))
+        buf += b"%d 0 obj\n" % index + obj + b"\nendobj\n"
+    xref_offset = len(buf)
+    buf += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    for offset in offsets:
+        buf += b"%010d 00000 n \n" % offset
+    buf += (
+        b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n"
+        % (len(objects) + 1, xref_offset)
+    )
+    data = bytes(buf)
+
+    reader = PdfReader(BytesIO(data))
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum page tree page entry limit exceeded!"):
+        _ = len(reader.pages)  # Trigger flattening

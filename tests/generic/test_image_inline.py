@@ -1,7 +1,7 @@
 """Test the pypdf.generic._image_inline module."""
 from base64 import a85encode
+from collections.abc import Callable
 from io import BytesIO
-from typing import Callable
 
 import pytest
 
