@@ -1072,6 +1072,7 @@ class PdfReader(PdfDocCommon):
         stream.seek(-1, 1)
         first_time = True  # check if the first time looking at the xref table
         recovery_cache: Optional[dict[int, tuple[int, int]]] = None
+        previous_position: Optional[int] = None
         while True:
             num = cast(int, read_object(stream, self))
             if first_time and num != 0:
@@ -1186,11 +1187,19 @@ class PdfReader(PdfDocCommon):
                 stream.seek(-1, 1)
             stream.seek(-1, 1)
             trailer_tag = stream.read(7)
-            if trailer_tag != b"trailer":
-                # more xrefs!
-                stream.seek(-7, 1)
-            else:
+            if trailer_tag == b"trailer":
                 break
+
+            # More xrefs should move the parser to another section.
+            stream.seek(-7, 1)
+
+            # Detect a repeated read at the same position.
+            rewound_position = stream.tell()
+            if rewound_position == previous_position:
+                raise PdfReadError(
+                    f"Xref parsing stuck at position {rewound_position}: {trailer_tag!r}"
+                )
+            previous_position = rewound_position
 
     def _read_xref_tables_and_trailers(
         self, stream: StreamType, startxref: Optional[int], xref_issue_nr: int
