@@ -1026,6 +1026,21 @@ def test_get_destination_page_number():
             reader.get_destination_page_number(outline_item)
 
 
+def test_get_page_number__after_removing_a_page():
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(width=200, height=200)
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    first, _, last = reader.pages
+    assert reader.get_page_number(last) == 2
+
+    del reader.pages[0]
+    assert reader.get_page_number(first) is None
+    assert reader.get_page_number(last) == 1
+
+
 def test_do_not_get_stuck_on_large_files_without_start_xref():
     """
     Tests for the absence of a DoS bug, where a large file without an

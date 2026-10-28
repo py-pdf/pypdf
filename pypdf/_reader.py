@@ -156,6 +156,7 @@ class PdfReader(PdfDocCommon):
 
         # Map page indirect_reference number to page number
         self._page_id2num: Optional[dict[Any, Any]] = None
+        self._page_id2num_page_count = 0
 
         self._validated_root: Optional[DictionaryObject] = None
 
@@ -367,10 +368,12 @@ class PdfReader(PdfDocCommon):
             Page number or None.
 
         """
-        if self._page_id2num is None:
+        page_count = self.get_num_pages()
+        if self._page_id2num is None or self._page_id2num_page_count != page_count:
             self._page_id2num = {
                 x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore[union-attr]
             }
+            self._page_id2num_page_count = page_count
 
         if is_null_or_none(indirect_reference):
             return None
