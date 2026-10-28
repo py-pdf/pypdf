@@ -3478,7 +3478,7 @@ class PdfWriter(PdfDocCommon):
             new_page_label[NameObject("/S")] = NameObject(style)
         if prefix is not None:
             new_page_label[NameObject("/P")] = TextStringObject(prefix)
-        if start != 0:
+        if start is not None and start != 0:
             new_page_label[NameObject("/St")] = NumberObject(start)
 
         if NameObject(CatalogAttributes.PAGE_LABELS) not in self._root_object:
