@@ -36,7 +36,6 @@ from typing import (
     Any,
     NamedTuple,
     NoReturn,
-    Union,
     cast,
 )
 
@@ -89,7 +88,7 @@ from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
 
 
-def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
+def convert_to_int(d: bytes, size: int) -> int | tuple[Any, ...]:
     if size > 8:
         raise PdfReadError("Invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
@@ -310,7 +309,7 @@ class PdfDocCommon(ABC):
 
     @abstractmethod
     def get_object(
-        self, indirect_reference: Union[int, IndirectObject]
+        self, indirect_reference: int | IndirectObject
     ) -> PdfObject | None:
         ...  # pragma: no cover
 
@@ -741,7 +740,7 @@ class PdfDocCommon(ABC):
     def _build_field(
         self,
         *,
-        field: Union[TreeObject, DictionaryObject],
+        field: TreeObject | DictionaryObject,
         retval: dict[Any, Any],
         fileobj: Any,
         field_attributes: Any,
@@ -797,7 +796,7 @@ class PdfDocCommon(ABC):
     def _check_kids(
         self,
         *,
-        tree: Union[TreeObject, DictionaryObject],
+        tree: TreeObject | DictionaryObject,
         retval: Any,
         fileobj: Any,
         visited: set[int],
@@ -898,7 +897,7 @@ class PdfDocCommon(ABC):
         return ff
 
     def get_pages_showing_field(
-        self, field: Union[Field, PdfObject, IndirectObject]
+        self, field: Field | PdfObject | IndirectObject
     ) -> list[PageObject]:
         """
         Provides list of pages where the field is called.
@@ -960,7 +959,7 @@ class PdfDocCommon(ABC):
     @property
     def open_destination(
         self,
-    ) -> Union[Destination, TextStringObject, ByteStringObject, None]:
+    ) -> Destination | TextStringObject | ByteStringObject | None:
         """
         Property to access the opening destination (``/OpenAction`` entry in
         the PDF catalog). It returns ``None`` if the entry does not exist
@@ -988,7 +987,7 @@ class PdfDocCommon(ABC):
             return None
 
     @open_destination.setter
-    def open_destination(self, dest: Union[str, Destination, PageObject, None]) -> None:
+    def open_destination(self, dest: str | Destination | PageObject | None) -> None:
         raise NotImplementedError("No setter for open_destination")
 
     @property
@@ -1117,7 +1116,7 @@ class PdfDocCommon(ABC):
 
     @abstractmethod
     def _get_page_number_by_indirect(
-        self, indirect_reference: Union[int, NullObject, IndirectObject, None]
+        self, indirect_reference: int | NullObject | IndirectObject | None
     ) -> int | None:
         ...  # pragma: no cover
 
@@ -1150,7 +1149,7 @@ class PdfDocCommon(ABC):
 
     def _build_destination(
         self,
-        title: Union[str, bytes],
+        title: str | bytes,
         array: ArrayObject | None,
     ) -> Destination:
         page, typ = None, None
@@ -1545,7 +1544,7 @@ class PdfDocCommon(ABC):
 
     def remove_page(
         self,
-        page: Union[int, PageObject, IndirectObject],
+        page: int | PageObject | IndirectObject,
         clean: bool = False,
     ) -> None:
         """
@@ -1721,8 +1720,8 @@ class PdfDocCommon(ABC):
     @abstractmethod
     def _repr_mimebundle_(
         self,
-        include: Union[Iterable[str], None] = None,
-        exclude: Union[Iterable[str], None] = None,
+        include: Iterable[str] | None = None,
+        exclude: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         """
         Integration into Jupyter Notebooks.

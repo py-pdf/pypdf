@@ -30,7 +30,7 @@ import stringprep
 import struct
 import unicodedata
 from enum import Enum, IntEnum
-from typing import Any, Union
+from typing import Any
 
 from pypdf._crypt_providers import (
     CryptAES,
@@ -1073,7 +1073,7 @@ class Encryption:
         return CryptRC4(rc4_key)
 
     def _encode_password(
-        self, password: Union[bytes, str], *, strict: bool = False
+        self, password: bytes | str, *, strict: bool = False
     ) -> bytes:
         if isinstance(password, str):
             if self.V >= 5:
@@ -1102,7 +1102,7 @@ class Encryption:
         return pwd
 
     def verify(
-        self, password: Union[bytes, str], *, strict: bool = False
+        self, password: bytes | str, *, strict: bool = False
     ) -> PasswordType:
         pwd = self._encode_password(password, strict=strict)
         key, rc = self.verify_v4(pwd) if self.V <= 4 else self.verify_v5(pwd)

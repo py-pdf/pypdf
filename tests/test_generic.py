@@ -8,7 +8,6 @@ import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
-from typing import Union
 
 import pytest
 
@@ -1259,7 +1258,7 @@ def test_cloning_null_obj_keeps_hard_reference():
     assert obj_weakref() is not None
 
 
-def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayObject, DictionaryObject]:
+def _create_direct_objects_container(as_array: bool, size: int) -> ArrayObject | DictionaryObject:
     elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
     elements = elements * (size // len(elements))
     if as_array:
@@ -1267,7 +1266,7 @@ def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayOb
     return DictionaryObject({NameObject(f"/K{i}"): element for i, element in enumerate(elements)})
 
 
-def _clone_and_count(container: Union[ArrayObject, DictionaryObject], writer: PdfWriter) -> tuple[int, int]:
+def _clone_and_count(container: ArrayObject | DictionaryObject, writer: PdfWriter) -> tuple[int, int]:
     """Clone the container and return the number of Python function calls and raised exceptions."""
     calls = 0
     exceptions = 0

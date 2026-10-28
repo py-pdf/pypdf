@@ -1,7 +1,7 @@
 """Functions to convert an image XObject to an image"""
 
 from io import BytesIO
-from typing import Any, Literal, TypeAlias, Union, cast
+from typing import Any, Literal, TypeAlias, cast
 
 from .._configuration import get_configuration
 from .._utils import check_if_whitespace_only, logger_warning
@@ -33,7 +33,7 @@ MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
 
 def _get_image_mode(
-    color_space: Union[str, list[Any], Any],
+    color_space: str | list[Any] | Any,
     color_components: int,
     prev_mode: ImageMode,
     depth: int = 0,
@@ -170,7 +170,7 @@ def _expand_low_bit_samples(
     mode: ImageMode,
     size: tuple[int, int],
     data: bytes,
-    color_space: Union[str, ArrayObject],
+    color_space: str | ArrayObject,
 ) -> tuple[ImageMode, bytes]:
     """
     Expand 2- or 4-bit-per-component samples to one byte per component.
@@ -245,7 +245,7 @@ def _handle_flate(
     size: tuple[int, int],
     data: bytes,
     mode: ImageMode,
-    color_space: Union[str, ArrayObject],
+    color_space: str | ArrayObject,
     colors: int,
     obj_as_text: str,
 ) -> tuple[Image.Image, str, str, bool]:
@@ -405,7 +405,7 @@ def _apply_decode(
     img: Image.Image,
     x_object: dict[str, Any],
     lfilters: FT,
-    color_space: Union[str, list[Any], Any],
+    color_space: str | list[Any] | Any,
     invert_color: bool,
 ) -> Image.Image:
     # CMYK image and other color spaces without decode
@@ -473,7 +473,7 @@ def _apply_decode(
 
 
 def _get_mode_and_invert_color(
-    x_object: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
+    x_object: dict[str, Any], colors: int, color_space: str | list[Any] | Any
 ) -> tuple[ImageMode, bool]:
     bits = x_object.get("/BitsPerComponent", 8)
     if (
@@ -561,7 +561,7 @@ def _apply_alpha(
 
 def _xobj_to_image(
         x_object: dict[str, Any],
-        pillow_parameters: Union[dict[str, Any], None] = None,
+        pillow_parameters: dict[str, Any] | None = None,
         visited: set[int] | None = None,
 ) -> tuple[str | None, bytes, Any]:
     """

@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from collections.abc import Callable
-from typing import Any, Union
+from typing import Any
 
 from .._codecs import encoding_dict_from_named_encoding
 from ..generic import DictionaryObject, TextStringObject
@@ -179,7 +179,7 @@ class TextExtraction:
     def _handle_tj(
         self,
         text: str,
-        operands: list[Union[str, TextStringObject]],
+        operands: list[str | TextStringObject],
         cm_matrix: list[float],
         tm_matrix: list[float],
         font_resource: DictionaryObject | None,

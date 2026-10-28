@@ -127,7 +127,7 @@ class ArrayObject(list[Any], PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "ArrayObject":
         """Clone object into pdf_dest."""
         try:
@@ -242,7 +242,7 @@ class ArrayObject(list[Any], PdfObject):
         return self
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -269,7 +269,7 @@ class ArrayObject(list[Any], PdfObject):
     def read_from_stream(
         stream: StreamType,
         pdf: PdfReaderProtocol | None,
-        forced_encoding: Union[str, list[str], dict[int, str], None] = None,
+        forced_encoding: str | list[str] | dict[int, str] | None = None,
         *,
         parsing_budget: StreamParsingBudget | None = None,
     ) -> "ArrayObject":
@@ -328,7 +328,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "DictionaryObject":
         """Clone object into pdf_dest."""
         try:
@@ -355,7 +355,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         src: "DictionaryObject",
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Sequence[Union[str, int]] | None,
+        ignore_fields: Sequence[str | int] | None,
         visited: set[tuple[int, int]],  # (idnum, generation)
     ) -> None:
         """
@@ -562,7 +562,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         return XmpInformation(metadata)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -625,7 +625,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
     def read_from_stream(
         stream: StreamType,
         pdf: PdfReaderProtocol | None,
-        forced_encoding: Union[str, list[str], dict[int, str], None] = None,
+        forced_encoding: str | list[str] | dict[int, str] | None = None,
         *,
         parsing_budget: StreamParsingBudget | None = None,
     ) -> "DictionaryObject":
@@ -1083,7 +1083,7 @@ class StreamObject(DictionaryObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Sequence[Union[str, int]] | None,
+        ignore_fields: Sequence[str | int] | None,
         visited: set[tuple[int, int]],
     ) -> None:
         """
@@ -1135,7 +1135,7 @@ class StreamObject(DictionaryObject):
         return data
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -1152,7 +1152,7 @@ class StreamObject(DictionaryObject):
     def initialize_from_dictionary(
         data: dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
-        retval: Union[EncodedStreamObject, DecodedStreamObject]
+        retval: EncodedStreamObject | DecodedStreamObject
         if StreamAttributes.FILTER in data:
             retval = EncodedStreamObject()
         else:
@@ -1196,7 +1196,7 @@ class StreamObject(DictionaryObject):
         retval._data = FlateDecode.encode(self._data, level)
         return retval
 
-    def decode_as_image(self, pillow_parameters: Union[dict[str, Any], None] = None) -> Any:
+    def decode_as_image(self, pillow_parameters: dict[str, Any] | None = None) -> Any:
         """
         Try to decode the stream object as an image
 
@@ -1305,7 +1305,7 @@ class ContentStream(DecodedStreamObject):
         self,
         stream: Any,
         pdf: Any,
-        forced_encoding: Union[str, list[str], dict[int, str], None] = None,
+        forced_encoding: str | list[str] | dict[int, str] | None = None,
     ) -> None:
         self.pdf = pdf
         self._operations: list[tuple[Any, bytes]] = []
@@ -1394,7 +1394,7 @@ class ContentStream(DecodedStreamObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "ContentStream":
         """
         Clone object into pdf_dest.
@@ -1433,7 +1433,7 @@ class ContentStream(DecodedStreamObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Sequence[Union[str, int]] | None,
+        ignore_fields: Sequence[str | int] | None,
         visited: set[tuple[int, int]],
     ) -> None:
         """
@@ -1473,7 +1473,7 @@ class ContentStream(DecodedStreamObject):
     def _parse_content_stream(self, stream: StreamType) -> None:
         # 7.8.2 Content Streams
         stream.seek(0, 0)
-        operands: list[Union[int, str, PdfObject]] = []
+        operands: list[int | str | PdfObject] = []
         parsing_budget = StreamParsingBudget(remaining_budget=get_configuration().stream_parsing_work_maximum_count)
         while True:
             peek = read_non_whitespace(stream)
@@ -1655,7 +1655,7 @@ class ContentStream(DecodedStreamObject):
 
     # This overrides the parent method
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if not self._data and self._operations:
             self.get_data()  # this ensures ._data is rebuilt
@@ -1669,7 +1669,7 @@ _MAX_LEADING_COMMENTS = 1000
 def read_object(  # noqa: PLR0911
     stream: StreamType,
     pdf: PdfReaderProtocol | None,
-    forced_encoding: Union[str, list[str], dict[int, str], None] = None,
+    forced_encoding: str | list[str] | dict[int, str] | None = None,
     *,
     parsing_budget: StreamParsingBudget | None = None,
 ) -> PdfObject:
@@ -1879,8 +1879,8 @@ class Destination(TreeObject):
 
     def __init__(
         self,
-        title: Union[str, bytes],
-        page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
+        title: str | bytes,
+        page: NumberObject | IndirectObject | NullObject | DictionaryObject,
         fit: Fit,
     ) -> None:
         self._filtered_children: list[Any] = []  # used in PdfWriter
@@ -1955,7 +1955,7 @@ class Destination(TreeObject):
         )
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(

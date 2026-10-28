@@ -37,7 +37,6 @@ from pathlib import Path
 from typing import (
     Any,
     Literal,
-    Union,
     cast,
     overload,
 )
@@ -163,7 +162,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     return retval
 
 
-def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
+def _set_rectangle(self: Any, name: str, value: RectangleObject | float) -> None:
     if isinstance(value, (list, tuple)) and len(value) < 4:
         # The getter tolerates more than four values for backwards compatibility
         # but cannot do anything with fewer, so writing them would produce a page
@@ -360,9 +359,9 @@ class Transformation:
 
     def apply_on(
         self,
-        pt: Union[tuple[float, float], list[float]],
+        pt: tuple[float, float] | list[float],
         as_object: bool = False,
-    ) -> Union[tuple[float, float], list[float]]:
+    ) -> tuple[float, float] | list[float]:
         """
         Apply the transformation matrix on the given point.
 
@@ -498,8 +497,8 @@ class VirtualListImages(Sequence[ImageFile]):
 
     def __init__(
         self,
-        ids_function: Callable[[], list[Union[str, list[str]]]],
-        get_function: Callable[[Union[str, list[str], tuple[str]]], ImageFile],
+        ids_function: Callable[[], list[str | list[str]]],
+        get_function: Callable[[str | list[str] | tuple[str]], ImageFile],
     ) -> None:
         self.ids_function = ids_function
         self.get_function = get_function
@@ -508,14 +507,14 @@ class VirtualListImages(Sequence[ImageFile]):
     def __len__(self) -> int:
         return len(self.ids_function())
 
-    def keys(self) -> list[Union[str, list[str]]]:
+    def keys(self) -> list[str | list[str]]:
         return self.ids_function()
 
-    def items(self) -> list[tuple[Union[str, list[str]], ImageFile]]:
+    def items(self) -> list[tuple[str | list[str], ImageFile]]:
         return [(x, self[x]) for x in self.ids_function()]
 
     @overload
-    def __getitem__(self, index: Union[int, str, list[str]]) -> ImageFile:
+    def __getitem__(self, index: int | str | list[str]) -> ImageFile:
         ...
 
     @overload
@@ -523,8 +522,8 @@ class VirtualListImages(Sequence[ImageFile]):
         ...
 
     def __getitem__(
-        self, index: Union[int, slice, str, list[str], tuple[str]]
-    ) -> Union[ImageFile, Sequence[ImageFile]]:
+        self, index: int | slice | str | list[str] | tuple[str]
+    ) -> ImageFile | Sequence[ImageFile]:
         lst = self.ids_function()
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
@@ -618,8 +617,8 @@ class PageObject(DictionaryObject):
     @staticmethod
     def create_blank_page(
         pdf: PdfCommonDocProtocol | None = None,
-        width: Union[float, Decimal, None] = None,
-        height: Union[float, Decimal, None] = None,
+        width: float | Decimal | None = None,
+        height: float | Decimal | None = None,
     ) -> "PageObject":
         """
         Return a new blank page.
@@ -666,7 +665,7 @@ class PageObject(DictionaryObject):
         obj: DictionaryObject | None = None,
         ancest: list[str] | None = None,
         call_stack: list[Any] | None = None,
-    ) -> list[Union[str, list[str]]]:
+    ) -> list[str | list[str]]:
         if call_stack is None:
             call_stack = []
         _i = getattr(obj, "indirect_reference", None)
@@ -679,7 +678,7 @@ class PageObject(DictionaryObject):
             obj = self
         if ancest is None:
             ancest = []
-        lst: list[Union[str, list[str]]] = []
+        lst: list[str | list[str]] = []
         if (
                 PG.RESOURCES not in obj or
                 is_null_or_none(resources := cast(DictionaryObject, obj[PG.RESOURCES])) or
@@ -727,7 +726,7 @@ class PageObject(DictionaryObject):
 
     def _get_image(
         self,
-        image_id: Union[str, list[str], tuple[str]],
+        image_id: str | list[str] | tuple[str],
         obj: DictionaryObject | None = None,
     ) -> ImageFile:
         if obj is None:
@@ -1169,7 +1168,7 @@ class PageObject(DictionaryObject):
         return None
 
     def replace_contents(
-        self, content: Union[ContentStream, EncodedStreamObject, ArrayObject, None]
+        self, content: ContentStream | EncodedStreamObject | ArrayObject | None
     ) -> None:
         """
         Replace the page contents with the new content and nullify old objects
@@ -1560,7 +1559,7 @@ class PageObject(DictionaryObject):
     def merge_transformed_page(
         self,
         page2: "PageObject",
-        ctm: Union[CompressedTransformationMatrix, Transformation],
+        ctm: CompressedTransformationMatrix | Transformation,
         over: bool = True,
         expand: bool = False,
     ) -> None:
@@ -1655,7 +1654,7 @@ class PageObject(DictionaryObject):
 
     def add_transformation(
         self,
-        ctm: Union[Transformation, CompressedTransformationMatrix],
+        ctm: Transformation | CompressedTransformationMatrix,
         expand: bool = False,
     ) -> None:
         """
@@ -2196,7 +2195,7 @@ class PageObject(DictionaryObject):
     def extract_text(
         self,
         *args: Any,
-        orientations: Union[int, tuple[int, ...]] = (0, 90, 180, 270),
+        orientations: int | tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
         visitor_operand_before: Callable[[Any, Any, Any, Any], None] | None = None,
         visitor_operand_after: Callable[[Any, Any, Any, Any], None] | None = None,
@@ -2516,8 +2515,8 @@ class _VirtualList(Sequence[PageObject]):
         ...
 
     def __getitem__(
-        self, index: Union[int, slice]
-    ) -> Union[PageObject, Sequence[PageObject]]:
+        self, index: int | slice
+    ) -> PageObject | Sequence[PageObject]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             cls = type(self)
@@ -2532,7 +2531,7 @@ class _VirtualList(Sequence[PageObject]):
             raise IndexError("Sequence index out of range")
         return self.get_function(index)
 
-    def __delitem__(self, index: Union[int, slice]) -> None:
+    def __delitem__(self, index: int | slice) -> None:
         if isinstance(index, slice):
             r = list(range(*index.indices(len(self))))
             # pages have to be deleted from last to first

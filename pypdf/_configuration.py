@@ -5,7 +5,7 @@ import shutil
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 
 @functools.cache
@@ -302,7 +302,7 @@ def apply_legacy_configuration() -> Configuration:
         "JBIG2DEC_BINARY": JBIG2DEC_BINARY,
         "MERGE_CROP_BOX": MERGE_CROP_BOX,
     }
-    overwrites: dict[str, Union[int, str, None]] = {}
+    overwrites: dict[str, int | str | None] = {}
 
     for field_name, legacy_name in LEGACY_NAME_MAPPING.items():
         legacy_value = legacy_values[legacy_name]

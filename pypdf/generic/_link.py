@@ -47,7 +47,7 @@ class NamedReferenceLink:
         self._reference = reference
         self._source_pdf = source_pdf
 
-    def find_referenced_page(self) -> Union[IndirectObject, None]:
+    def find_referenced_page(self) -> IndirectObject | None:
         destination = self._source_pdf.named_destinations.get(str(self._reference))
         return destination.page if destination else None
 
@@ -84,7 +84,7 @@ class DirectReferenceLink:
         """reference: an ArrayObject whose first element is the Page indirect object"""
         self._reference = reference
 
-    def find_referenced_page(self) -> Union[IndirectObject, None]:
+    def find_referenced_page(self) -> IndirectObject | None:
         if not self._reference:
             return None
         return cast(IndirectObject, self._reference[0])

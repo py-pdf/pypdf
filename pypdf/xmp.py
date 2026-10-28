@@ -12,7 +12,6 @@ from string import hexdigits
 from typing import (
     Any,
     TypeVar,
-    Union,
     cast,
 )
 from xml.dom.expatbuilder import ExpatBuilderNS
@@ -254,7 +253,7 @@ class XmpInformation(PdfObject):
         return cls(stream)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         deprecate_with_replacement(
             "XmpInformation.write_to_stream",
@@ -410,7 +409,7 @@ class XmpInformation(PdfObject):
         return self._get_seq_values(DC_NAMESPACE, "date", _converter_date)
 
     @dc_date.setter
-    def dc_date(self, values: list[Union[str, datetime.datetime]] | None) -> None:
+    def dc_date(self, values: list[str | datetime.datetime] | None) -> None:
         if values is None:
             self._set_seq_values(DC_NAMESPACE, "date", None)
         else:

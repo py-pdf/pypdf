@@ -43,7 +43,6 @@ from typing import (
     IO,
     Any,
     Literal,
-    Union,
     cast,
 )
 
@@ -184,7 +183,7 @@ class PdfWriter(PdfDocCommon):
     in clone_reader_document_root.
     """
 
-    _id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]]
+    _id_translated: dict[int, dict[int | Literal["PreventGC"], Any]]
     """
     List of already translated IDs.
     dict[id(pdf)][(idnum, generation)]
@@ -197,8 +196,8 @@ class PdfWriter(PdfDocCommon):
 
     def __init__(
         self,
-        fileobj: Union[PdfReader, StrByteType, Path, None] = "",
-        clone_from: Union[PdfReader, StrByteType, Path, None] = None,
+        fileobj: PdfReader | StrByteType | Path | None = "",
+        clone_from: PdfReader | StrByteType | Path | None = None,
         incremental: bool = False,
         full: bool = False,
         strict: bool = False,
@@ -237,7 +236,7 @@ class PdfWriter(PdfDocCommon):
 
         self._reader = None
 
-        self._ID: Union[ArrayObject, None] = None
+        self._ID: ArrayObject | None = None
         """The PDF file identifier,
         defined by the ID in the PDF file's trailer dictionary."""
 
@@ -276,9 +275,9 @@ class PdfWriter(PdfDocCommon):
             )
 
         def _get_clone_from(
-            fileobj: Union[PdfReader, str, Path, IO[Any], BytesIO, None],
-            clone_from: Union[PdfReader, str, Path, IO[Any], BytesIO, None],
-        ) -> Union[PdfReader, str, Path, IO[Any], BytesIO, None]:
+            fileobj: PdfReader | str | Path | IO[Any] | BytesIO | None,
+            clone_from: PdfReader | str | Path | IO[Any] | BytesIO | None,
+        ) -> PdfReader | str | Path | IO[Any] | BytesIO | None:
             if isinstance(fileobj, (str, Path, IO, BytesIO)) and (
                 fileobj == "" or clone_from is not None
             ):
@@ -377,7 +376,7 @@ class PdfWriter(PdfDocCommon):
         )
 
     @_info.setter
-    def _info(self, value: Union[IndirectObject, DictionaryObject] | None) -> None:
+    def _info(self, value: IndirectObject | DictionaryObject | None) -> None:
         if value is None:
             try:
                 self._objects[self._info_obj.indirect_reference.idnum - 1] = None  # type: ignore[union-attr]
@@ -397,7 +396,7 @@ class PdfWriter(PdfDocCommon):
         return cast(XmpInformation, self.root_object.xmp_metadata)
 
     @xmp_metadata.setter
-    def xmp_metadata(self, value: Union[XmpInformation, bytes, None]) -> None:
+    def xmp_metadata(self, value: XmpInformation | bytes | None) -> None:
         """XMP (Extensible Metadata Platform) data."""
         if value is None:
             if "/Metadata" in self.root_object:
@@ -462,7 +461,7 @@ class PdfWriter(PdfDocCommon):
         return self._header.decode()
 
     @pdf_header.setter
-    def pdf_header(self, new_header: Union[str, bytes]) -> None:
+    def pdf_header(self, new_header: str | bytes) -> None:
         if isinstance(new_header, str):
             new_header = new_header.encode()
         self._header = new_header
@@ -484,7 +483,7 @@ class PdfWriter(PdfDocCommon):
 
     def get_object(
         self,
-        indirect_reference: Union[int, IndirectObject],
+        indirect_reference: int | IndirectObject,
     ) -> PdfObject:
         if isinstance(indirect_reference, int):
             obj = self._objects[indirect_reference - 1]
@@ -498,7 +497,7 @@ class PdfWriter(PdfDocCommon):
 
     def _replace_object(
         self,
-        indirect_reference: Union[int, IndirectObject],
+        indirect_reference: int | IndirectObject,
         obj: PdfObject,
     ) -> PdfObject:
         if isinstance(indirect_reference, IndirectObject):
@@ -679,7 +678,7 @@ class PdfWriter(PdfDocCommon):
         return self._add_page(page, index, excluded_keys)
 
     def _get_page_number_by_indirect(
-        self, indirect_reference: Union[int, NullObject, IndirectObject, None]
+        self, indirect_reference: int | NullObject | IndirectObject | None
     ) -> int | None:
         """
         Generate _page_id2num.
@@ -729,8 +728,8 @@ class PdfWriter(PdfDocCommon):
 
     def insert_blank_page(
         self,
-        width: Union[float, decimal.Decimal] | None = None,
-        height: Union[float, decimal.Decimal] | None = None,
+        width: float | decimal.Decimal | None = None,
+        height: float | decimal.Decimal | None = None,
         index: int = 0,
     ) -> PageObject:
         """
@@ -771,11 +770,11 @@ class PdfWriter(PdfDocCommon):
     @property
     def open_destination(
         self,
-    ) -> Union[Destination, TextStringObject, ByteStringObject, None]:
+    ) -> Destination | TextStringObject | ByteStringObject | None:
         return super().open_destination
 
     @open_destination.setter
-    def open_destination(self, dest: Union[str, Destination, PageObject, None]) -> None:
+    def open_destination(self, dest: str | Destination | PageObject | None) -> None:
         if dest is None:
             try:
                 del self._root_object["/OpenAction"]
@@ -829,7 +828,7 @@ class PdfWriter(PdfDocCommon):
         """
         return Action._create_open_action(self, action)
 
-    def add_attachment(self, filename: str, data: Union[str, bytes]) -> "EmbeddedFile":
+    def add_attachment(self, filename: str, data: str | bytes) -> "EmbeddedFile":
         """
         Embed a file inside the PDF.
 
@@ -961,8 +960,8 @@ class PdfWriter(PdfDocCommon):
 
     def update_page_form_field_values(
         self,
-        page: Union[PageObject, list[PageObject], None],
-        fields: Mapping[str, Union[str, list[str], tuple[str, str, float]]],
+        page: PageObject | list[PageObject] | None,
+        fields: Mapping[str, str | list[str] | tuple[str, str, float]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: bool | None = True,
         flatten: bool = False,
@@ -1413,7 +1412,7 @@ class PdfWriter(PdfDocCommon):
             )
             self._write_trailer(stream, xref_location)
 
-    def write(self, stream: Union[Path, StrByteType]) -> tuple[bool, IO[Any]]:
+    def write(self, stream: Path | StrByteType) -> tuple[bool, IO[Any]]:
         """
         Write the collection of pages added to this object out as a PDF file.
 
@@ -1620,7 +1619,7 @@ class PdfWriter(PdfDocCommon):
     @metadata.setter
     def metadata(
         self,
-        value: Union[DocumentInformation, DictionaryObject, dict[Any, Any]] | None,
+        value: DocumentInformation | DictionaryObject | dict[Any, Any] | None,
     ) -> None:
         if value is None:
             self._info = None
@@ -1797,9 +1796,9 @@ class PdfWriter(PdfDocCommon):
 
     def add_outline_item_destination(
         self,
-        page_destination: Union[IndirectObject, PageObject, TreeObject],
-        parent: Union[TreeObject, IndirectObject, None] = None,
-        before: Union[TreeObject, IndirectObject, None] = None,
+        page_destination: IndirectObject | PageObject | TreeObject,
+        parent: TreeObject | IndirectObject | None = None,
+        before: TreeObject | IndirectObject | None = None,
         is_open: bool = True,
     ) -> IndirectObject:
         page_destination = cast(PageObject, page_destination.get_object())
@@ -1834,8 +1833,8 @@ class PdfWriter(PdfDocCommon):
     def add_outline_item_dict(
         self,
         outline_item: OutlineItemType,
-        parent: Union[TreeObject, IndirectObject, None] = None,
-        before: Union[TreeObject, IndirectObject, None] = None,
+        parent: TreeObject | IndirectObject | None = None,
+        before: TreeObject | IndirectObject | None = None,
         is_open: bool = True,
     ) -> IndirectObject:
         outline_item_object = TreeObject()
@@ -1857,10 +1856,10 @@ class PdfWriter(PdfDocCommon):
     def add_outline_item(
         self,
         title: str,
-        page_number: Union[PageObject, IndirectObject, int, None],
-        parent: Union[TreeObject, IndirectObject, None] = None,
-        before: Union[TreeObject, IndirectObject, None] = None,
-        color: Union[tuple[float, float, float], str] | None = None,
+        page_number: PageObject | IndirectObject | int | None,
+        parent: TreeObject | IndirectObject | None = None,
+        before: TreeObject | IndirectObject | None = None,
+        color: tuple[float, float, float] | str | None = None,
         bold: bool = False,
         italic: bool = False,
         fit: Fit = PAGE_FIT,
@@ -1885,7 +1884,7 @@ class PdfWriter(PdfDocCommon):
             The added outline item as an indirect object.
 
         """
-        page_ref: Union[NullObject, IndirectObject, NumberObject, None]
+        page_ref: NullObject | IndirectObject | NumberObject | None
         if isinstance(italic, Fit):  # it means that we are on the old params
             if fit is not None and page_number is None:
                 page_number = fit
@@ -1941,7 +1940,7 @@ class PdfWriter(PdfDocCommon):
         )
 
     def add_named_destination_array(
-        self, title: TextStringObject, destination: Union[IndirectObject, ArrayObject]
+        self, title: TextStringObject, destination: IndirectObject | ArrayObject
     ) -> None:
         named_dest = self.get_named_dest_root()
         i = 0
@@ -2019,7 +2018,7 @@ class PdfWriter(PdfDocCommon):
             self.remove_objects_from_page(page, ObjectDeletionFlag.ALL_ANNOTATIONS)
 
     def remove_annotations(
-        self, subtypes: Union[AnnotationSubtype, Iterable[AnnotationSubtype]] | None
+        self, subtypes: AnnotationSubtype | Iterable[AnnotationSubtype] | None
     ) -> None:
         """
         Remove annotations by annotation subtype.
@@ -2036,7 +2035,7 @@ class PdfWriter(PdfDocCommon):
 
     def _remove_annots_from_page(
         self,
-        page: Union[IndirectObject, PageObject, DictionaryObject],
+        page: IndirectObject | PageObject | DictionaryObject,
         subtypes: Iterable[str] | None,
     ) -> None:
         page = cast(DictionaryObject, page.get_object())
@@ -2054,8 +2053,8 @@ class PdfWriter(PdfDocCommon):
 
     def remove_objects_from_page(
         self,
-        page: Union[PageObject, DictionaryObject],
-        to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
+        page: PageObject | DictionaryObject,
+        to_delete: ObjectDeletionFlag | Iterable[ObjectDeletionFlag],
         text_filters: dict[str, Any] | None = None
     ) -> None:
         """
@@ -2408,7 +2407,7 @@ class PdfWriter(PdfDocCommon):
         except KeyError:
             return None
 
-    def _set_page_layout(self, layout: Union[NameObject, LayoutType]) -> None:
+    def _set_page_layout(self, layout: NameObject | LayoutType) -> None:
         """
         Set the page layout.
 
@@ -2555,7 +2554,7 @@ class PdfWriter(PdfDocCommon):
 
     def add_annotation(
         self,
-        page_number: Union[int, PageObject],
+        page_number: int | PageObject,
         annotation: dict[str, Any],
     ) -> DictionaryObject:
         """
@@ -2592,7 +2591,7 @@ class PdfWriter(PdfDocCommon):
             and isinstance(destination, DictionaryObject)
             and "target_page_index" in destination
         ):
-            target_page_reference: Union[IndirectObject, NumberObject]
+            target_page_reference: IndirectObject | NumberObject
             target_page_index = cast(int, destination["target_page_index"])
             fit_type = cast(str, destination["fit"])
             # Work around the intermediate destination containing native Python
@@ -2624,7 +2623,7 @@ class PdfWriter(PdfDocCommon):
 
         return to_add
 
-    def clean_page(self, page: Union[PageObject, IndirectObject]) -> PageObject:
+    def clean_page(self, page: PageObject | IndirectObject) -> PageObject:
         """
         Perform some clean up in the page.
         Currently: convert NameObject named destination to TextStringObject
@@ -2652,7 +2651,7 @@ class PdfWriter(PdfDocCommon):
         return page
 
     def _create_stream(
-        self, fileobj: Union[Path, StrByteType, PdfReader]
+        self, fileobj: Path | StrByteType | PdfReader
     ) -> tuple[IOBase, Encryption | None]:
         # If the fileobj parameter is a string, assume it is a path
         # and create a file object at that location. If it is a file,
@@ -2689,11 +2688,11 @@ class PdfWriter(PdfDocCommon):
 
     def append(
         self,
-        fileobj: Union[StrByteType, PdfReader, Path],
-        outline_item: Union[str, PageRange, tuple[int, int], tuple[int, int, int], list[int], None] = None,
-        pages: Union[PageRange, tuple[int, int], tuple[int, int, int], list[int], list[PageObject], None] = None,
+        fileobj: StrByteType | PdfReader | Path,
+        outline_item: str | PageRange | tuple[int, int] | tuple[int, int, int] | list[int] | None = None,
+        pages: PageRange | tuple[int, int] | tuple[int, int, int] | list[int] | list[PageObject] | None = None,
         import_outline: bool = True,
-        excluded_fields: Union[list[str], tuple[str, ...]] | None = None,
+        excluded_fields: list[str] | tuple[str, ...] | None = None,
     ) -> None:
         """
         Identical to the :meth:`merge()<merge>` method, but assumes you want to
@@ -2749,11 +2748,11 @@ class PdfWriter(PdfDocCommon):
     def merge(
         self,
         position: int | None,
-        fileobj: Union[Path, StrByteType, PdfReader],
+        fileobj: Path | StrByteType | PdfReader,
         outline_item: str | None = None,
-        pages: Union[PageRangeSpec, list[PageObject]] | None = None,
+        pages: PageRangeSpec | list[PageObject] | None = None,
         import_outline: bool = True,
-        excluded_fields: Union[list[str], tuple[str, ...]] | None = (),
+        excluded_fields: list[str] | tuple[str, ...] | None = (),
     ) -> None:
         """
         Merge the pages from the given file into the output file at the
@@ -3018,9 +3017,9 @@ class PdfWriter(PdfDocCommon):
 
     def add_filtered_articles(
         self,
-        fltr: Union[
-            Pattern[Any], str
-        ],  # thread entry from the reader's array of threads
+        fltr: (
+            Pattern[Any] | str
+        ),  # thread entry from the reader's array of threads
         pages: dict[int, PageObject],
         reader: PdfReader,
     ) -> None:
@@ -3054,7 +3053,7 @@ class PdfWriter(PdfDocCommon):
 
     def _get_cloned_page(
         self,
-        page: Union[IndirectObject, PageObject, NullObject, int, None],
+        page: IndirectObject | PageObject | NullObject | int | None,
         pages: dict[int, PageObject],
         reader: PdfReader,
     ) -> IndirectObject | None:
@@ -3085,7 +3084,7 @@ class PdfWriter(PdfDocCommon):
     def _insert_filtered_annotations(
         self,
         *,
-        annots: Union[IndirectObject, list[PdfObject], None],
+        annots: IndirectObject | list[PdfObject] | None,
         page: PageObject,
         pages: dict[int, PageObject],
         reader: PdfReader,
@@ -3234,7 +3233,7 @@ class PdfWriter(PdfDocCommon):
                 node = node.get_object()
                 new_outline += self._get_filtered_outline(node=node, pages=pages, reader=reader, visited=visited)
         else:
-            cloned_page: Union[IndirectObject, NullObject, None]
+            cloned_page: IndirectObject | NullObject | None
             while True:
                 node = node.get_object()
                 if not isinstance(node, DictionaryObject):
@@ -3289,8 +3288,8 @@ class PdfWriter(PdfDocCommon):
     def _insert_filtered_outline(
         self,
         outlines: list[Destination],
-        parent: Union[TreeObject, IndirectObject],
-        before: Union[TreeObject, IndirectObject, None] = None,
+        parent: TreeObject | IndirectObject,
+        before: TreeObject | IndirectObject | None = None,
     ) -> None:
         for dest in outlines:
             # TODO: can be improved to keep A and SE entries (ignored for the moment)
@@ -3308,7 +3307,7 @@ class PdfWriter(PdfDocCommon):
 
     def find_outline_item(
         self,
-        outline_item: Union[IndirectObject, str],
+        outline_item: IndirectObject | str,
         root: OutlineType | None = None,
         *,
         visited: set[int] | None = None,
@@ -3349,7 +3348,7 @@ class PdfWriter(PdfDocCommon):
         raise PyPdfError("This line is theoretically unreachable.")  # pragma: no cover
 
     def reset_translation(
-        self, reader: Union[PdfReader, IndirectObject, None] = None
+        self, reader: PdfReader | IndirectObject | None = None
     ) -> None:
         """
         Reset the translation table between reader and the writer object.
@@ -3502,8 +3501,8 @@ class PdfWriter(PdfDocCommon):
 
     def _repr_mimebundle_(
         self,
-        include: Union[Iterable[str], None] = None,
-        exclude: Union[Iterable[str], None] = None,
+        include: Iterable[str] | None = None,
+        exclude: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         """
         Integration into Jupyter Notebooks.
@@ -3532,7 +3531,7 @@ class PdfWriter(PdfDocCommon):
         return data
 
 
-def _pdf_objectify(obj: Union[dict[str, Any], str, float, list[Any]]) -> PdfObject:
+def _pdf_objectify(obj: dict[str, Any] | str | float | list[Any]) -> PdfObject:
     if isinstance(obj, PdfObject):
         return obj
     if isinstance(obj, dict):
@@ -3554,9 +3553,9 @@ def _pdf_objectify(obj: Union[dict[str, Any], str, float, list[Any]]) -> PdfObje
 
 
 def _create_outline_item(
-    action_ref: Union[IndirectObject, None],
+    action_ref: IndirectObject | None,
     title: str,
-    color: Union[tuple[float, float, float], str, None],
+    color: tuple[float, float, float] | str | None,
     italic: bool,
     bold: bool,
 ) -> TreeObject:

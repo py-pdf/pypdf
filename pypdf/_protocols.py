@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from collections.abc import Sequence
 from pathlib import Path
-from typing import IO, Any, Literal, Optional, Protocol, Union
+from typing import IO, Any, Literal, Optional, Protocol
 
 from ._utils import StrByteType, StreamType
 
@@ -15,7 +15,7 @@ class PdfObjectProtocol(Protocol):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[tuple[str, ...], list[str], None] = (),
+        ignore_fields: tuple[str, ...] | list[str] | None = (),
     ) -> Any:
         ...  # pragma: no cover
 
@@ -29,7 +29,7 @@ class PdfObjectProtocol(Protocol):
         ...  # pragma: no cover
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         ...  # pragma: no cover
 
@@ -75,14 +75,14 @@ class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _objects: list[Any]
     # The "PreventGC" entry holds the source document, keeping it alive while
     # the translation table is in use.
-    _id_translated: dict[int, dict[Union[int, Literal["PreventGC"]], Any]]
+    _id_translated: dict[int, dict[int | Literal["PreventGC"], Any]]
 
     incremental: bool
     # Only populated in incremental mode, None otherwise.
     _reader: Any | None  # PdfReader
 
     @abstractmethod
-    def write(self, stream: Union[Path, StrByteType]) -> tuple[bool, IO[Any]]:
+    def write(self, stream: Path | StrByteType) -> tuple[bool, IO[Any]]:
         ...  # pragma: no cover
 
     @abstractmethod

@@ -104,7 +104,7 @@ class PdfObject:
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "PdfObject":
         """
         Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter).
@@ -200,7 +200,7 @@ class PdfObject:
         return self
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         raise NotImplementedError
 
@@ -210,7 +210,7 @@ class NullObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "NullObject":
         """Clone object into pdf_dest."""
         if not hasattr(self, "indirect_reference"):
@@ -231,7 +231,7 @@ class NullObject(PdfObject):
         return hash((self.__class__,))
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -266,7 +266,7 @@ class BooleanObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "BooleanObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -298,7 +298,7 @@ class BooleanObject(PdfObject):
         return "True" if self.value else "False"
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -351,7 +351,7 @@ class IndirectObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "IndirectObject":
         """Clone object into pdf_dest."""
         if self.pdf == pdf_dest and not force_duplicate:
@@ -450,7 +450,7 @@ class IndirectObject(PdfObject):
         return not self.__eq__(other)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -518,7 +518,7 @@ class FloatObject(float, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "FloatObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -549,7 +549,7 @@ class FloatObject(float, PdfObject):
         return float(self)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -573,7 +573,7 @@ class NumberObject(int, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "NumberObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -595,7 +595,7 @@ class NumberObject(int, PdfObject):
         return int(repr(self).encode("utf8"))
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -624,7 +624,7 @@ class ByteStringObject(bytes, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "ByteStringObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -650,7 +650,7 @@ class ByteStringObject(bytes, PdfObject):
         return self
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -725,7 +725,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "TextStringObject":
         """Clone object into pdf_dest."""
         obj = TextStringObject(self)
@@ -795,7 +795,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         return bytearr
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -829,7 +829,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Sequence[Union[str, int]] | None = (),
+        ignore_fields: Sequence[str | int] | None = (),
     ) -> "NameObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -848,7 +848,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         return hash((self.__class__, self))
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[str, bytes, None] = None
+        self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
         if encryption_key is not None:  # deprecated
             deprecation_no_replacement(
@@ -961,7 +961,7 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
         ) from exception
 
 
-def is_null_or_none(x: Any) -> TypeGuard[Union[NullObject, IndirectObject, None]]:
+def is_null_or_none(x: Any) -> TypeGuard[NullObject | IndirectObject | None]:
     """
     Returns:
         True if x is None or NullObject.

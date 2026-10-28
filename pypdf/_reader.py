@@ -38,7 +38,6 @@ from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
-    Union,
     cast,
 )
 
@@ -124,9 +123,9 @@ class PdfReader(PdfDocCommon):
 
     def __init__(
         self,
-        stream: Union[StrByteType, Path],
+        stream: StrByteType | Path,
         strict: bool = False,
-        password: Union[str, bytes, None] = None,
+        password: str | bytes | None = None,
         *,
         root_object_recovery_limit: int | None = 10_000,
         xref_stream_maximum_entries: int = 2_000_000,
@@ -170,7 +169,7 @@ class PdfReader(PdfDocCommon):
         self._named_destinations_cache: dict[str, Destination] | None = None
         self._object_stream_resolution_stack: list[int] = []
 
-    def _initialize_stream(self, stream: Union[StrByteType, Path]) -> None:
+    def _initialize_stream(self, stream: StrByteType | Path) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
@@ -185,7 +184,7 @@ class PdfReader(PdfDocCommon):
         self.read(stream)
         self.stream = stream
 
-    def _handle_encryption(self, password: Union[str, bytes] | None) -> None:
+    def _handle_encryption(self, password: str | bytes | None) -> None:
         self._override_encryption = True
         # Some documents may not have a /ID, use two empty
         # byte strings instead. Solves
@@ -353,7 +352,7 @@ class PdfReader(PdfDocCommon):
             self._override_encryption = False
 
     def _get_page_number_by_indirect(
-        self, indirect_reference: Union[int, NullObject, IndirectObject, None]
+        self, indirect_reference: int | NullObject | IndirectObject | None
     ) -> int | None:
         """
         Retrieve the page number from an indirect reference.
@@ -546,7 +545,7 @@ class PdfReader(PdfDocCommon):
             self._object_stream_resolution_stack.pop()
 
     def get_object(
-        self, indirect_reference: Union[int, IndirectObject]
+        self, indirect_reference: int | IndirectObject
     ) -> PdfObject | None:
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
@@ -1427,7 +1426,7 @@ class PdfReader(PdfDocCommon):
 
         stream_data = BytesIO(xref_stream.get_data())
 
-        def get_entry(i: int) -> Union[int, tuple[int, ...]]:
+        def get_entry(i: int) -> int | tuple[int, ...]:
             # Reads the correct number of bytes for each entry. See the
             # discussion of the W parameter in PDF spec table 17.
             if entry_sizes[i] > 0:
@@ -1440,7 +1439,7 @@ class PdfReader(PdfDocCommon):
                 return 1  # First value defaults to 1
             return 0
 
-        def used_before(num: int, generation: Union[int, tuple[int, ...]]) -> bool:
+        def used_before(num: int, generation: int | tuple[int, ...]) -> bool:
             # We move backwards through the xrefs, don't replace any.
             return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore[arg-type]
 
@@ -1633,8 +1632,8 @@ class PdfReader(PdfDocCommon):
     def _read_xref_subsections(
         self,
         idx_pairs: list[int],
-        get_entry: Callable[[int], Union[int, tuple[int, ...]]],
-        used_before: Callable[[int, Union[int, tuple[int, ...]]], bool],
+        get_entry: Callable[[int], int | tuple[int, ...]],
+        used_before: Callable[[int, int | tuple[int, ...]], bool],
     ) -> None:
         """Read and process the subsections of the xref."""
         for start, size in self._pairs(idx_pairs):
@@ -1672,7 +1671,7 @@ class PdfReader(PdfDocCommon):
             yield array[i], array[i + 1]
             i += 2
 
-    def decrypt(self, password: Union[str, bytes]) -> PasswordType:
+    def decrypt(self, password: str | bytes) -> PasswordType:
         """
         When using an encrypted / secured PDF file with the PDF Standard
         encryption handler, this function will allow the file to be decrypted.
@@ -1784,8 +1783,8 @@ class PdfReader(PdfDocCommon):
 
     def _repr_mimebundle_(
         self,
-        include: Union[Iterable[str], None] = None,
-        exclude: Union[Iterable[str], None] = None,
+        include: Iterable[str] | None = None,
+        exclude: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         """
         Integration into Jupyter Notebooks.

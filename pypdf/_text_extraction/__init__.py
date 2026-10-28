@@ -6,7 +6,7 @@ Some parts are still in _page.py. In doubt, they will stay there.
 
 import math
 from collections.abc import Callable, Mapping
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from .._utils import is_char_neutral, is_char_rtl
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
@@ -25,9 +25,9 @@ class OrientationNotFoundError(Exception):
 
 
 def set_custom_rtl(
-    _min: Union[str, int, None] = "",
-    _max: Union[str, int, None] = "",
-    specials: Union[str, list[int], None] = None,
+    _min: str | int | None = "",
+    _max: str | int | None = "",
+    specials: str | list[int] | None = None,
 ) -> tuple[str, str, str]:
     """
     Change the Right-To-Left and special characters custom parameters.
@@ -74,10 +74,10 @@ def set_custom_rtl(
 
 def mult(
     m: list[float],
-    n: Union[
-        list[float],
-        Mapping[Union[int, Literal["is_text", "is_render"]], Union[float, bool]],
-    ],
+    n: (
+        list[float] |
+        Mapping[int | Literal["is_text", "is_render"], float | bool]
+    ),
 ) -> list[float]:
     return [
         m[0] * n[0] + m[1] * n[2],
@@ -185,7 +185,7 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
 
 
 def get_text_operands(
-    operands: list[Union[str, TextStringObject]],
+    operands: list[str | TextStringObject],
     cm_matrix: list[float],
     tm_matrix: list[float],
     font: Font,

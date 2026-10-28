@@ -1,17 +1,17 @@
 from collections.abc import Sequence
-from typing import Any, Union
+from typing import Any
 
 from ._base import is_null_or_none
 
 
 class Fit:
     def __init__(
-        self, fit_type: str, fit_args: Sequence[Union[float, Any, None]] = ()
+        self, fit_type: str, fit_args: Sequence[float | Any | None] = ()
     ) -> None:
         from ._base import FloatObject, NameObject, NullObject, NumberObject  # noqa: PLC0415
 
         self.fit_type = NameObject(fit_type)
-        self.fit_args: list[Union[NullObject, FloatObject, NumberObject]] = [
+        self.fit_args: list[NullObject | FloatObject | NumberObject] = [
             NullObject() if is_null_or_none(a) else FloatObject(a) for a in fit_args
         ]
 

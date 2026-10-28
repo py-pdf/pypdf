@@ -1,6 +1,6 @@
 import uuid
 from abc import ABC
-from typing import Any, Literal, TypeAlias, Union
+from typing import Any, Literal, TypeAlias
 
 from ..constants import AnnotationFlag
 from ..generic import ArrayObject, DictionaryObject
@@ -57,7 +57,7 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
         self,
         *,
         title_bar: str | None = None,
-        in_reply_to: Union[DictionaryObject, IndirectObject] | None = None,
+        in_reply_to: DictionaryObject | IndirectObject | None = None,
         reply_type: Literal["R", "Group"] = "R",
         annotation_name: str | None = None,
     ) -> None:
@@ -105,7 +105,7 @@ class Text(MarkupAnnotation):
     def __init__(
         self,
         *,
-        rect: Union[RectangleObject, tuple[float, float, float, float]],
+        rect: RectangleObject | tuple[float, float, float, float],
         text: str,
         open: bool = False,
         flags: int = NO_FLAGS,
@@ -126,7 +126,7 @@ class FreeText(MarkupAnnotation):
         self,
         *,
         text: str,
-        rect: Union[RectangleObject, tuple[float, float, float, float]],
+        rect: RectangleObject | tuple[float, float, float, float],
         font: str = "Helvetica",
         bold: bool = False,
         italic: bool = False,
@@ -188,7 +188,7 @@ class Line(MarkupAnnotation):
         self,
         p1: Vertex,
         p2: Vertex,
-        rect: Union[RectangleObject, tuple[float, float, float, float]],
+        rect: RectangleObject | tuple[float, float, float, float],
         text: str = "",
         **kwargs: Any,
     ) -> None:
@@ -248,7 +248,7 @@ class PolyLine(MarkupAnnotation):
 class Rectangle(MarkupAnnotation):
     def __init__(
         self,
-        rect: Union[RectangleObject, tuple[float, float, float, float]],
+        rect: RectangleObject | tuple[float, float, float, float],
         *,
         interior_color: str | None = None,
         **kwargs: Any,
@@ -272,7 +272,7 @@ class Highlight(MarkupAnnotation):
     def __init__(
         self,
         *,
-        rect: Union[RectangleObject, tuple[float, float, float, float]],
+        rect: RectangleObject | tuple[float, float, float, float],
         quad_points: ArrayObject,
         highlight_color: str = "ff0000",
         printing: bool = False,
@@ -296,7 +296,7 @@ class Highlight(MarkupAnnotation):
 class Ellipse(MarkupAnnotation):
     def __init__(
         self,
-        rect: Union[RectangleObject, tuple[float, float, float, float]],
+        rect: RectangleObject | tuple[float, float, float, float],
         *,
         interior_color: str | None = None,
         **kwargs: Any,
