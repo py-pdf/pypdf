@@ -7,7 +7,6 @@ and/or the actual image data with the expected value.
 
 from io import BytesIO
 from pathlib import Path
-from typing import Union
 from unittest import mock
 from zipfile import ZipFile
 
@@ -33,7 +32,7 @@ from pypdf.generic._image_xobject import _handle_flate
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 
-def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
+def open_image(path: Path | Image.Image | BytesIO) -> Image.Image:
     if isinstance(path, Image.Image):
         img = path
     else:
@@ -53,7 +52,7 @@ def image_size(image: Image.Image):
 
 
 def image_similarity(
-    path1: Union[Path, Image.Image, BytesIO], path2: Union[Path, Image.Image, BytesIO]
+    path1: Path | Image.Image | BytesIO, path2: Path | Image.Image | BytesIO
 ) -> float:
     """
     Check image similarity.

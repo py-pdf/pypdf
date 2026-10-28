@@ -48,7 +48,7 @@ from functools import lru_cache
 from importlib.util import find_spec
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, NoReturn, Optional, Union, cast
+from typing import Any, NoReturn, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._configuration import get_configuration
@@ -179,7 +179,7 @@ class FlateDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[Union[DictionaryObject, IndirectObject]] = None,
+        decode_parms: DictionaryObject | IndirectObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -359,8 +359,8 @@ class ASCIIHexDecode:
 
     @staticmethod
     def decode(
-        data: Union[str, bytes],
-        decode_parms: Optional[DictionaryObject] = None,
+        data: str | bytes,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -426,7 +426,7 @@ class RunLengthDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -507,7 +507,7 @@ class LZWDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -530,8 +530,8 @@ class ASCII85Decode:
 
     @staticmethod
     def decode(
-        data: Union[str, bytes],
-        decode_parms: Optional[DictionaryObject] = None,
+        data: str | bytes,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -563,7 +563,7 @@ class DCTDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -586,7 +586,7 @@ class JPXDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -615,7 +615,7 @@ class BrotliDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -689,11 +689,11 @@ class CCITTParameters:
     K: int = 0
     columns: int = 1728
     rows: int = 0
-    EndOfLine: Union[bool, None] = False
-    EncodedByteAlign: Union[bool, None] = False
-    EndOfBlock: Union[bool, None] = True
+    EndOfLine: bool | None = False
+    EncodedByteAlign: bool | None = False
+    EndOfBlock: bool | None = True
     BlackIs1: bool = False
-    DamagedRowsBeforeError: Union[int, None] = 0
+    DamagedRowsBeforeError: int | None = 0
 
     @property
     def group(self) -> int:
@@ -736,8 +736,8 @@ class CCITTFaxDecode:
 
     @staticmethod
     def _get_parameters(
-        parameters: Union[ArrayObject, DictionaryObject, IndirectObject, None],
-        rows: Union[int, IndirectObject],
+        parameters: ArrayObject | DictionaryObject | IndirectObject | None,
+        rows: int | IndirectObject,
     ) -> CCITTParameters:
         def get_integer(value: Any, key: str) -> int:
             if isinstance(value, PdfObject):
@@ -791,7 +791,7 @@ class CCITTFaxDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
@@ -854,7 +854,7 @@ class JBIG2Decode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         configuration = get_configuration()

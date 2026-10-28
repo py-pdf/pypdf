@@ -1,9 +1,9 @@
 """Test the pypdf.generic._data_structures module."""
 import subprocess
 import sys
+from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
-from typing import Callable
 from unittest import mock
 
 import pytest

@@ -5,7 +5,7 @@ import sys
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 from unittest import mock
 
 import pytest
@@ -2746,7 +2746,7 @@ def test_objstm_skips_cache_for_overridden_objects():
 def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
     """Decompressing a non-authoritative stream must not cache stale object copies."""
 
-    def _write_obj(buf: io.BytesIO, objnum: int, data: Union[str, bytes]) -> int:
+    def _write_obj(buf: io.BytesIO, objnum: int, data: str | bytes) -> int:
         offset = buf.tell()
         buf.write(f"{objnum} 0 obj\n".encode())
         buf.write(data if isinstance(data, bytes) else data.encode())
@@ -3469,7 +3469,7 @@ def test_read_standard_xref_table__speed__caching() -> None:
 
 
 def _generate_pdf15_xref_stream_pdf_file(
-        size: int, encoded: bytes, index: Optional[str] = None, prev: bool = False
+        size: int, encoded: bytes, index: str | None = None, prev: bool = False
 ) -> bytes:
     pdf = bytearray(b"%PDF-1.7\n")
     pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
