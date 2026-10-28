@@ -1,4 +1,3 @@
-
 from .._utils import StreamType, deprecation_no_replacement
 from ._base import NameObject
 from ._data_structures import Destination
