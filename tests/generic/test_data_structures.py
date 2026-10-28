@@ -913,3 +913,4 @@ def test_dictionary_object__clone__cycle_detection() -> None:
 
     writer = PdfWriter()
     writer.append(BytesIO(data))
+    assert len(writer.pages) == 1
