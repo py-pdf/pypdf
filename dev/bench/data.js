@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793206163744,
+  "lastUpdate": 1793206490375,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -122369,6 +122369,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008542535394172988",
             "extra": "mean: 685.4620626000042 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "b2c3fa2ee689f582a0de256a45e30bd96c68f807",
+          "message": "REL: 6.21.4\n\n## What's new\n\n### Security (SEC)\n- Limit the number of copied page attributes during flattening (#4290) by @stefan6419846\n- Detect EOF when reading standard xref table trailer (#4289) by @stefan6419846\n- Fix loop detection when cloning DictionaryObject (#4288) by @stefan6419846\n\n### Documentation (DOC)\n- Exclude performance issues from security reports (#4280) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.3...6.21.4)",
+          "timestamp": "2026-10-28T17:50:17+01:00",
+          "tree_id": "fb664c19fee80fceceeb0ae7a54d43daea972755",
+          "url": "https://github.com/py-pdf/pypdf/commit/b2c3fa2ee689f582a0de256a45e30bd96c68f807"
+        },
+        "date": 1793206477093,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6128772593349185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00850826348937769",
+            "extra": "mean: 276.78770360000726 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.82077282563819,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007601330150217047",
+            "extra": "mean: 34.69719587499842 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.31315566670217926,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02544482481704874",
+            "extra": "mean: 3.193300030399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 19.49540233619394,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017088461026334167",
+            "extra": "mean: 51.294145294117 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09750870378120705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013817524593226545",
+            "extra": "mean: 10.255494752999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7103556715336898,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033240433994166977",
+            "extra": "mean: 584.6737124000015 msec\nrounds: 5"
           }
         ]
       }
