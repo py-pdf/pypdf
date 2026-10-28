@@ -108,10 +108,12 @@ def test_langalt_metadata_attribute(name, prefix, serialized, expected):
     """
     stream = ContentStream(None, None)
     stream.set_data(
-        f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
-        f'<rdf:Description rdf:about="" xmlns:{prefix}="{pypdf.xmp.DC_NAMESPACE}" '
-        f'{prefix}:{name}="{serialized}" />'
-        '</rdf:RDF>'.encode()
+        (
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:{prefix}="{pypdf.xmp.DC_NAMESPACE}" '
+            f'{prefix}:{name}="{serialized}" />'
+            '</rdf:RDF>'
+        ).encode()
     )
     xmp = XmpInformation(stream)
     assert getattr(xmp, f"dc_{name}") == {"x-default": expected}
@@ -121,13 +123,15 @@ def test_langalt_attribute_preserves_language_alternatives():
     """Element alternatives retain their language keys alongside an attribute fallback."""
     stream = ContentStream(None, None)
     stream.set_data(
-        f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
-        f'<rdf:Description rdf:about="" xmlns:dc="{pypdf.xmp.DC_NAMESPACE}" dc:title="Legacy title">'
-        '<dc:title><rdf:Alt>'
-        '<rdf:li xml:lang="fr">Titre français</rdf:li>'
-        '<rdf:li xml:lang="x-default">Preferred title</rdf:li>'
-        '</rdf:Alt></dc:title>'
-        '</rdf:Description></rdf:RDF>'.encode()
+        (
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:dc="{pypdf.xmp.DC_NAMESPACE}" dc:title="Legacy title">'
+            '<dc:title><rdf:Alt>'
+            '<rdf:li xml:lang="fr">Titre français</rdf:li>'
+            '<rdf:li xml:lang="x-default">Preferred title</rdf:li>'
+            '</rdf:Alt></dc:title>'
+            '</rdf:Description></rdf:RDF>'
+        ).encode()
     )
     xmp = XmpInformation(stream)
     assert xmp.dc_title == {"fr": "Titre français", "x-default": "Preferred title"}
@@ -137,10 +141,12 @@ def test_langalt_attribute_survives_pdf_roundtrip():
     """A legacy title attribute remains readable after a PDF write/read round trip."""
     stream = ContentStream(None, None)
     stream.set_data(
-        f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
-        f'<rdf:Description rdf:about="" xmlns:dc="{pypdf.xmp.DC_NAMESPACE}" '
-        'dc:title="Legacy title" />'
-        '</rdf:RDF>'.encode()
+        (
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:dc="{pypdf.xmp.DC_NAMESPACE}" '
+            'dc:title="Legacy title" />'
+            '</rdf:RDF>'
+        ).encode()
     )
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
