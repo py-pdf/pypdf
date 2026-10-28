@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793183831880,
+  "lastUpdate": 1793184154794,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -158605,6 +158605,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024375545815828386",
             "extra": "mean: 794.409920999999 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c7d391c2d70d76f899f12dd1b8b320d62773d5fc",
+          "message": "PI: Speed up transformation matrix handling for layout mode text extraction (#4282)",
+          "timestamp": "2026-10-28T11:27:45+01:00",
+          "tree_id": "ced63f09b9a9fb98f52441d51d1351952a769b6b",
+          "url": "https://github.com/py-pdf/pypdf/commit/c7d391c2d70d76f899f12dd1b8b320d62773d5fc"
+        },
+        "date": 1793184142092,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.307345958074785,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02051873267422591",
+            "extra": "mean: 69.89416506250201 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 30.03070059412879,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004898281236927855",
+            "extra": "mean: 33.299256434780176 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9406866912832655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03175868897123973",
+            "extra": "mean: 1.063053202799989 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.42698247071749595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03854217641694535",
+            "extra": "mean: 2.3420165196000027 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4021451317629309,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025571049085472915",
+            "extra": "mean: 2.4866644427999973 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2366272400891216,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031637969915503925",
+            "extra": "mean: 808.6511178000023 msec\nrounds: 5"
           }
         ]
       }
