@@ -419,6 +419,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                         )
                         prev_obj: Optional[DictionaryObject] = self
                         while cur_obj is not None:
+                            source_reference = cur_obj.indirect_reference
                             clon = cast(
                                 "DictionaryObject",
                                 cur_obj._reference_clone(
@@ -426,13 +427,13 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                                 ),
                             )
                             # Check to see if we've previously processed our item
-                            if clon.indirect_reference is not None:
-                                idnum = clon.indirect_reference.idnum
-                                generation = clon.indirect_reference.generation
-                                if (idnum, generation) in visited:
+                            if source_reference is not None:
+                                source_idnum = source_reference.idnum
+                                source_generation = source_reference.generation
+                                if (source_idnum, source_generation) in visited:
                                     cur_obj = None
                                     break
-                                visited.add((idnum, generation))
+                                visited.add((source_idnum, source_generation))
                             objs.append((cur_obj, clon))
                             assert prev_obj is not None
                             prev_obj[NameObject(k)] = clon.indirect_reference
