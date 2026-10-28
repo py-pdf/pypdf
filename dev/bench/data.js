@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793184154794,
+  "lastUpdate": 1793204624499,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -122171,6 +122171,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003739211175100477",
             "extra": "mean: 420.32508519999965 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f176db1a1f7f9af3e472e69a843ef1175653b044",
+          "message": "SEC: Fix loop detection when cloning DictionaryObject (#4288)\n\nThe previous check has been running against the generated objects, not\nagainst the original objects. This caused some cycles to not be detected\nduring cloning.\n\nWith the original file from the previous PR, everything is still working\ncorrectly after this change.",
+          "timestamp": "2026-10-28T17:20:32+01:00",
+          "tree_id": "8521753372a0b05a63405e3fadd53a1f38716e9c",
+          "url": "https://github.com/py-pdf/pypdf/commit/f176db1a1f7f9af3e472e69a843ef1175653b044"
+        },
+        "date": 1793204607582,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.714241578934008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010987528469326317",
+            "extra": "mean: 368.4270433999984 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.318823286348913,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018762223062654577",
+            "extra": "mean: 44.80522952173917 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24481412860676044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02327675670627069",
+            "extra": "mean: 4.0847315704 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.002238622418112,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020857602308848493",
+            "extra": "mean: 58.8157843333325 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0768318318001497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03211294645869337",
+            "extra": "mean: 13.015438738999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4646078451566749,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007561044121292251",
+            "extra": "mean: 682.7766240000074 msec\nrounds: 5"
           }
         ]
       }
