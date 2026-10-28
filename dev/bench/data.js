@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793176773956,
+  "lastUpdate": 1793176827574,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -158077,6 +158077,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027525320762710984",
             "extra": "mean: 861.4220573999944 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8901534705d9bc7aa87762c61ca2565a2e9725c0",
+          "message": "DOC: Exclude performance issues from security reports (#4280)\n\nStarting immediately, we will no longer accept or publish private security reports for issues that involve only performance improvements. Please open regular issues and pull requests instead.\n\nUntil now, we have not had a clear policy for performance-related issues. We had both a PR prefix for it, as well as private security reports. Since I handle most of the triage and make most of the decisions myself, I have often been unsure how to handle this gray area. To avoid confusion and ensure that reporters are treated consistently, I have decided to handle these issues through regular issues and pull requests instead.\n\nOne reason we would previously accept performance-related reports as security issues was that corresponding CWE IDs exist for some of these issues. However, I settled that for us the existence of a CWE ID alone does not mean that an issue should be handled as a security vulnerability.\n\nIn case of doubt, please continue opening a private report first.",
+          "timestamp": "2026-10-28T09:37:40+01:00",
+          "tree_id": "2886678041966ba3359369af1ab3e04af9bc44b4",
+          "url": "https://github.com/py-pdf/pypdf/commit/8901534705d9bc7aa87762c61ca2565a2e9725c0"
+        },
+        "date": 1793176819415,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.029434812427755,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016332599033606874",
+            "extra": "mean: 43.422689620691585 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 43.01469376865477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00980303313936444",
+            "extra": "mean: 23.24786979487251 msec\nrounds: 39"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.5249674361732353,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037283248926648166",
+            "extra": "mean: 655.7517074000003 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.0666238742856966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03343328719967811",
+            "extra": "mean: 937.5376119999999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5902547714462437,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04956705835958562",
+            "extra": "mean: 1.694183678600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8951151449106631,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004647622576596763",
+            "extra": "mean: 527.6724228000091 msec\nrounds: 5"
           }
         ]
       }
