@@ -3532,3 +3532,10 @@ def test_read_pdf15_xref_stream__negative_count(caplog):
     reader = PdfReader(BytesIO(pdf), strict=False)
     assert list(reader.xref_objStm) == [10, 11]
     assert caplog.messages == ["Negative XRef count -5, using 0."]
+
+
+def test_read_standard_xref_table__end_of_file__trailer() -> None:
+    data = b"%PDF-1.4\nstartxref\n28\n%%EOF\nxref\n1 0\naaa"
+
+    with pytest.raises(PdfReadError, match=r"^Xref parsing stuck at position 33: b'aaa'$"):
+        PdfReader(BytesIO(data))
