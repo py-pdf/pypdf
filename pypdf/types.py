@@ -1,6 +1,6 @@
 """Helpers for working with PDF types."""
 
-from typing import Literal, TypeAlias, Union
+from typing import Literal, TypeAlias
 
 from .generic._base import NameObject, NullObject, NumberObject
 from .generic._data_structures import ArrayObject, Destination
