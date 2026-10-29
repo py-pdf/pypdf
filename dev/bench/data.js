@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793280046500,
+  "lastUpdate": 1793280769475,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -122765,6 +122765,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006073008327543319",
             "extra": "mean: 383.1522049999933 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "77e367d1c27ce89f8f8db9ba184df95ec49a160d",
+          "message": "MAINT: Remove Ruff rule FA100 (#4301)\n\nChecks for missing `from __future__ import annotations` imports upon\ndetecting type annotations that can be written more succinctly.\nThese rules apply to PEP 585 and PEP 604, which are from\nPython 3.9 and 3.10.",
+          "timestamp": "2026-10-29T14:30:14+01:00",
+          "tree_id": "58b0f42e174748f93e377ebce20794e3933a6e13",
+          "url": "https://github.com/py-pdf/pypdf/commit/77e367d1c27ce89f8f8db9ba184df95ec49a160d"
+        },
+        "date": 1793280758296,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5623396739640456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01089186448468691",
+            "extra": "mean: 280.7143875999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.982449735065302,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009679790086344427",
+            "extra": "mean: 37.06112713333217 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3159206518268884,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01326295414943986",
+            "extra": "mean: 3.165351787600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 19.788351313918728,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014581015806621814",
+            "extra": "mean: 50.53478100000277 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09758368967109411,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05264255588923293",
+            "extra": "mean: 10.247614159400005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.068973419007588,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011634823659706075",
+            "extra": "mean: 483.33148739999956 msec\nrounds: 5"
           }
         ]
       }
