@@ -176,7 +176,6 @@ ignore = [
     "EM101",   # Exception must not use a string literal, assign to variable first
     "EM102",   # Exception must not use an f-string literal, assign to variable first
     "ERA001",  # Found commented-out code
-    "FA100",   # Missing `from __future__ import annotations`, but uses `typing.Dict`
     "FBT001",  # Boolean positional arg in function definition
     "FBT002",  # Boolean default value in function definition
     "FBT003",  # Boolean positional value in function call
