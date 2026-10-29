@@ -461,19 +461,48 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
 
 
 def _glyph_name_to_unicode(glyph_name: str) -> str | None:
-    try:
+    """
+    Map a glyph name to Unicode text.
+
+    Follows the Adobe Glyph List specification: a suffix starting at the first
+    period is dropped (``a.sc``), components joined by underscores are mapped
+    one by one (``f_i``), and ``uniXXXX[XXXX...]`` and ``uXXXX[XX]`` name the
+    code points directly.
+
+    Returns None if the name cannot be mapped.
+    """
+    if glyph_name in adobe_glyphs:
         return adobe_glyphs[glyph_name]
-    except KeyError:
-        if glyph_name.startswith("/uni"):
-            code_point = glyph_name[4:]
-        elif glyph_name.startswith("/u"):
-            code_point = glyph_name[2:]
-        else:
+    base_name = glyph_name.lstrip("/").split(".", 1)[0]
+    if not base_name:
+        return None
+    if f"/{base_name}" in adobe_glyphs:
+        return adobe_glyphs[f"/{base_name}"]
+    result = ""
+    for component in base_name.split("_"):
+        text = adobe_glyphs.get(f"/{component}") or _glyph_component_code_points(component)
+        if text is None:
             return None
-        try:
-            return chr(int(code_point, 16))
-        except ValueError:  # pragma: no cover
+        result += text
+    return result
+
+
+def _glyph_component_code_points(component: str) -> str | None:
+    if component.startswith("uni") and len(component) > 3 and len(component) % 4 == 3:
+        code_points = [component[i:i + 4] for i in range(3, len(component), 4)]
+    elif component.startswith("u") and 5 <= len(component) <= 7:
+        code_points = [component[1:]]
+    else:
+        return None
+    result = ""
+    for code_point in code_points:
+        if not all(c in "0123456789ABCDEFabcdef" for c in code_point):
             return None
+        value = int(code_point, 16)
+        if 0xD800 <= value <= 0xDFFF or value > 0x10FFFF:
+            return None
+        result += chr(value)
+    return result
 
 
 def _derive_character_map_from_font_file(
