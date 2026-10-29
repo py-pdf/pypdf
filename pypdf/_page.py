@@ -1189,11 +1189,7 @@ class PageObject(DictionaryObject):
                 if not isinstance(reference, IndirectObject):
                     # Direct objects are not part of the writer's object list.
                     continue
-                try:
-                    writer._replace_object(indirect_reference=reference, obj=NullObject())
-                except ValueError:
-                    # Occurs when called on PdfReader.
-                    pass
+                writer._replace_object(indirect_reference=reference, obj=NullObject())
 
         if isinstance(content, ArrayObject):
             content = ArrayObject(writer._add_object(obj) for obj in content)
@@ -1207,26 +1203,14 @@ class PageObject(DictionaryObject):
             del self[PG.CONTENTS]
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
             assert content is not None, "mypy"
-            try:
-                self[NameObject(PG.CONTENTS)] = writer._add_object(content)
-            except AttributeError:
-                # applies at least for page not in writer
-                # as a backup solution, we put content as an object although not in accordance with pdf ref
-                # this will be fixed with the _add_object
-                self[NameObject(PG.CONTENTS)] = content
+            self[NameObject(PG.CONTENTS)] = writer._add_object(content)
         else:
             assert content is not None, "mypy"
             content.indirect_reference = self[
                 PG.CONTENTS
             ].indirect_reference  # TODO: in the future may require generation management
             assert content.indirect_reference is not None, "mypy"
-            try:
-                writer._replace_object(indirect_reference=content.indirect_reference, obj=content)
-            except AttributeError:
-                # applies at least for page not in writer
-                # as a backup solution, we put content as an object although not in accordance with pdf ref
-                # this will be fixed with the _add_object
-                self[NameObject(PG.CONTENTS)] = content
+            writer._replace_object(indirect_reference=content.indirect_reference, obj=content)
         # forces recalculation of images
         self._content_stream_images = None
 
