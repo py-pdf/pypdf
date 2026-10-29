@@ -2,7 +2,6 @@
 
 from io import BytesIO
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -35,7 +34,7 @@ def is_pdfa1b_compliant(src: BytesIO):
         (SAMPLE_ROOT / "021-pdfa/crazyones-pdfa.pdf", None),
     ],
 )
-def test_pdfa(src: Path, diagnostic_write_name: Optional[str]):
+def test_pdfa(src: Path, diagnostic_write_name: str | None):
     with open(src, "rb") as fp:
         data = BytesIO(fp.read())
     reader = PdfReader(src)

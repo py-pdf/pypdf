@@ -4,11 +4,12 @@ import string
 import subprocess
 import sys
 import zlib
+from collections.abc import Callable
 from copy import deepcopy
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
-from typing import Callable, cast
+from typing import cast
 from unittest import mock
 
 import pytest

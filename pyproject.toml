@@ -11,13 +11,12 @@ readme = "README.md"
 dynamic = ["version"]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -44,9 +43,9 @@ brotli = ["brotli>=1.2.0"]
 # This is due to the backend parameter being required back then:
 # https://cryptography.io/en/latest/changelog/#v3-1
 crypto = ["cryptography>3.0"]
-cryptodome = ["PyCryptodome"]
+cryptodome = ["pycryptodome"]
 fonts = ["fonttools"]
-image = ["Pillow>=8.0.0"]
+image = ["pillow>=8.0.0"]
 rtl_text = [
     "arabic-reshaper",
     "python-bidi",
@@ -56,7 +55,7 @@ full = [
     "brotli>=1.2.0",
     "cryptography>3.0",
     "fonttools",
-    "Pillow>=8.0.0",
+    "pillow>=8.0.0",
     "python-bidi"
 ]
 dev = [
@@ -70,9 +69,9 @@ dev = [
     "wheel"
 ]
 docs = [
-    "myst_parser",
+    "myst-parser",
     "sphinx",
-    "sphinx_rtd_theme"
+    "sphinx-rtd-theme"
 ]
 
 [tool.check-wheel-contents]
@@ -178,7 +177,6 @@ ignore = [
     "EM102",   # Exception must not use an f-string literal, assign to variable first
     "ERA001",  # Found commented-out code
     "FA100",   # Missing `from __future__ import annotations`, but uses `typing.Dict`
-    "FA102",   # Missing `from __future__ import annotations`, but uses PEP 604 union
     "FBT001",  # Boolean positional arg in function definition
     "FBT002",  # Boolean default value in function definition
     "FBT003",  # Boolean positional value in function call
@@ -219,7 +217,6 @@ max-complexity = 31  # Recommended: 10
 [tool.ruff.lint.per-file-ignores]
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
 "_encryption.py" = ["S324"]
-"pypdf/_codecs/symbol.py" = ["A005"]  # Module shadows a Python standard-library module
 "types.py" = ["A005"]  # Module shadows a Python standard-library module
 "pypdf/_text_extraction/__init__.py" = ["PLW0603"]  # Using the global statement to update is discouraged
 "docs/conf.py" = ["INP001", "PTH100"]

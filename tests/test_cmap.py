@@ -1008,3 +1008,15 @@ def test_cff_type1_font_file_is_parsed_again_when_its_data_changes():
         font_file.set_data(_build_cff_font_program({65: "Q"}))
         assert [page.extract_text() for page in writer.pages] == ["QB"] * 2
         assert parse.call_count == 2
+
+
+@pytest.mark.timeout(5)  # Previously: 22 seconds
+def test_parse_bfchar__speed() -> None:
+    count = 50_000
+    pairs = b" ".join(f"{i:04x} 0041".encode() for i in range(count))
+
+    map_dict = {}
+    int_entry = []
+    parse_bfchar(pairs, map_dict, int_entry)
+    assert int_entry == list(range(count))
+    assert len(map_dict) == count + 1
