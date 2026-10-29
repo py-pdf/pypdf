@@ -251,6 +251,7 @@ class Rectangle(MarkupAnnotation):
         rect: RectangleObject | tuple[float, float, float, float],
         *,
         interior_color: str | None = None,
+        border_color: str | None = "000000",
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -261,6 +262,11 @@ class Rectangle(MarkupAnnotation):
                 NameObject("/Rect"): RectangleObject(rect),
             }
         )
+
+        if border_color is not None:
+            self[NameObject("/C")] = ArrayObject(
+                [FloatObject(n) for n in hex_to_rgb(border_color)]
+            )
 
         if interior_color:
             self[NameObject("/IC")] = ArrayObject(
