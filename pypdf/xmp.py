@@ -15,7 +15,7 @@ from typing import (
     cast,
 )
 from xml.dom.expatbuilder import ExpatBuilderNS
-from xml.dom.minidom import Document
+from xml.dom.minidom import Document, ProcessingInstruction
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.xmlbuilder import Options
 from xml.parsers.expat import ExpatError, XMLParserType
@@ -805,5 +805,16 @@ class XmpInformation(PdfObject):
         if doc is None:
             raise XmpDocumentError("XMP Document is None")
 
-        xml_data = doc.toxml(encoding="utf-8")
+        for node in doc.childNodes:
+            if (
+                isinstance(node, ProcessingInstruction)
+                and node.target == "xpacket"
+                and re.fullmatch(r"""end\s*=\s*(['"])[rw]\1\s*""", node.data)
+            ):
+                # No padding is reserved for in-place updates of the packet.
+                node.data = 'end="r"'
+
+        # Serializing the children omits the XML declaration while preserving
+        # the packet wrapper and other processing instructions.
+        xml_data = b"".join(node.toxml(encoding="utf-8") for node in doc.childNodes)
         self.stream.set_data(xml_data)
