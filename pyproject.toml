@@ -176,8 +176,6 @@ ignore = [
     "EM101",   # Exception must not use a string literal, assign to variable first
     "EM102",   # Exception must not use an f-string literal, assign to variable first
     "ERA001",  # Found commented-out code
-    "FA100",   # Missing `from __future__ import annotations`, but uses `typing.Dict`
-    "FA102",   # Missing `from __future__ import annotations`, but uses PEP 604 union
     "FBT001",  # Boolean positional arg in function definition
     "FBT002",  # Boolean default value in function definition
     "FBT003",  # Boolean positional value in function call
@@ -208,7 +206,6 @@ ignore = [
     "TRY003",  # Avoid specifying long messages outside the exception class
     "TRY004",  # Prefer `TypeError` exception for invalid type
     "TRY301",  # Abstract `raise` to an inner function
-    "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.9+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.10+
 ]
 
@@ -218,7 +215,6 @@ max-complexity = 31  # Recommended: 10
 [tool.ruff.lint.per-file-ignores]
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
 "_encryption.py" = ["S324"]
-"pypdf/_codecs/symbol.py" = ["A005"]  # Module shadows a Python standard-library module
 "types.py" = ["A005"]  # Module shadows a Python standard-library module
 "pypdf/_text_extraction/__init__.py" = ["PLW0603"]  # Using the global statement to update is discouraged
 "docs/conf.py" = ["INP001", "PTH100"]

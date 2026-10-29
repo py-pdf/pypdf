@@ -210,3 +210,15 @@ def test_extract_inline__ascii85_decode__early_end_of_file() -> None:
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
         extract_inline__ascii85_decode(stream)
+
+
+def test_extract_inline_default__ei_followed_by_binary_data() -> None:
+    """
+    An ``EI`` followed by binary data is part of the image, not its end.
+
+    ISO 32000-2:2020, 8.9.7 has no way to escape ``EI`` inside the image data.
+    Without /L, pypdf's heuristic keeps it as image data when binary data follows.
+    """
+    stream = BytesIO(b"abc EI \x00\x01\x02 EI Q")
+    assert extract_inline_default(stream) == b"abc EI \x00\x01\x02 "
+    assert stream.read() == b"EI Q"
