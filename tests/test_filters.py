@@ -21,7 +21,6 @@ from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
     BrotliDecode,
-    CCITParameters,
     CCITTFaxDecode,
     CCITTParameters,
     FlateDecode,
@@ -199,14 +198,6 @@ def test_ascii85decode_five_zero_bytes():
 
     for expected, i in zip(exp_outputs, inputs):
         assert ASCII85Decode.decode(i + "~>") == expected
-
-
-def test_ccitparameters():
-    with pytest.raises(
-        DeprecationError,
-        match=r"CCITParameters is deprecated and was removed in pypdf 6\.0\.0\. Use CCITTParameters instead",
-    ):
-        CCITParameters()
 
 
 def test_ccittparameters():
@@ -1156,14 +1147,11 @@ def test_deprecate_inline_image_filters():
         ]
     )
 
-    with pytest.warns(
-            expected_warning=DeprecationWarning,
-            match=r"^The filter name /CCF is deprecated and will be removed in pypdf 7\.0\.0\. Use /CCITTFaxDecode instead\.$"  # noqa: E501
+    with pytest.raises(
+            expected_exception=DeprecationError,
+            match=r"^The filter name /CCF is deprecated and has been removed in pypdf 7\.0\.0\. Use /CCITTFaxDecode instead\.$"  # noqa: E501
     ):
         decode_stream_data(stream)
-
-    stream[NameObject("/Filter")] = NameObject("/CCITTFaxDecode")
-    assert decode_stream_data(stream).startswith(b"II*")
 
 
 def test_decode_stream_data__default_parms_are_dictionary_objects():

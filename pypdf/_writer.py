@@ -43,6 +43,7 @@ from typing import (
     IO,
     Any,
     Literal,
+    NoReturn,
     cast,
 )
 
@@ -60,11 +61,10 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
-    deprecate_with_replacement,
-    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
-from .actions import Action, JavaScript
+from .actions import Action
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import (
     CatalogAttributes,
@@ -418,14 +418,6 @@ class PdfWriter(PdfDocCommon):
         else:
             bytes_data = value
         metadata_stream.set_data(bytes_data)
-
-    @property
-    def with_as_usage(self) -> bool:
-        deprecation_no_replacement("with_as_usage", "5.0")
-
-    @with_as_usage.setter
-    def with_as_usage(self, value: bool) -> None:
-        deprecation_no_replacement("with_as_usage", "5.0")
 
     def __enter__(self) -> Self:
         """Store how writer is initialized by 'with'."""
@@ -793,7 +785,7 @@ class PdfWriter(PdfDocCommon):
                 PAGE_FIT,
             ).dest_array
 
-    def add_js(self, javascript: str) -> None:
+    def add_js(self, javascript: str) -> NoReturn:
         """
         Add JavaScript which will launch upon opening this PDF.
 
@@ -808,8 +800,7 @@ class PdfWriter(PdfDocCommon):
             >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         """
-        deprecate_with_replacement("add_js", "add_open_action", "7.0.0")
-        self.add_open_action(JavaScript(javascript))
+        deprecation_with_replacement("add_js", "add_open_action", "7.0.0")
 
     def add_open_action(self, action: Action) -> None:
         """
@@ -1672,13 +1663,9 @@ class PdfWriter(PdfDocCommon):
 
         """
         if remove_identicals != self._UNSET:
-            deprecate_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
-            assert isinstance(remove_identicals, bool)
-            remove_duplicates = remove_identicals
+            deprecation_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
         if remove_orphans != self._UNSET:
-            deprecate_with_replacement("remove_orphans", "remove_unreferenced", "7.0.0")
-            assert isinstance(remove_orphans, bool)
-            remove_unreferenced = remove_orphans
+            deprecation_with_replacement("remove_orphans", "remove_unreferenced", "7.0.0")
 
         def replace_in_obj(
             obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
