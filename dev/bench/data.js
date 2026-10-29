@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793265199316,
+  "lastUpdate": 1793279946259,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -122699,6 +122699,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012085207211318198",
             "extra": "mean: 481.10412419999875 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0d8e95cd8047deced85726103da68a4dc515faf1",
+          "message": "MAINT: Remove Ruff ignore of UP006 (#4300)\n\nPEP 585: Type Hinting Generics In Standard Collections.\nValid from Python 3.9.",
+          "timestamp": "2026-10-29T14:17:14+01:00",
+          "tree_id": "917ce86923e578008658b54dba0a4abd6b9df8ee",
+          "url": "https://github.com/py-pdf/pypdf/commit/0d8e95cd8047deced85726103da68a4dc515faf1"
+        },
+        "date": 1793279938535,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.054922286686358,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010604591525864472",
+            "extra": "mean: 197.82697799999767 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 32.924252103529945,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008510195798940167",
+            "extra": "mean: 30.372747628572128 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4509093593480585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03044181130747573",
+            "extra": "mean: 2.2177406151999977 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 31.196309485945505,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001673938177992224",
+            "extra": "mean: 32.05507370833457 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14973029374461308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07248026212567672",
+            "extra": "mean: 6.678675203200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.6099288662582993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006073008327543319",
+            "extra": "mean: 383.1522049999933 msec\nrounds: 5"
           }
         ]
       }
