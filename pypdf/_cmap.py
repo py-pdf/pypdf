@@ -87,7 +87,7 @@ def _parse_encoding(
         )
 
     enc: str | DictionaryObject | NullObject = cast(
-        Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
+        str | DictionaryObject | NullObject, ft["/Encoding"].get_object()
     )
     if isinstance(enc, str):
         try:

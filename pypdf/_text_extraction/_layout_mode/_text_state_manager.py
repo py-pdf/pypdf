@@ -12,8 +12,8 @@ from .. import mult
 from ._text_state_params import TextStateParams
 
 TextStateManagerKeyType = Union[int, Literal["is_text", "is_render"]]
-TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, Union[float, bool]]
-TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, Union[float, bool]]
+TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, float | bool]
+TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, float | bool]
 
 
 class TextStateManager:
