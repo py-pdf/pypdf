@@ -34,7 +34,7 @@ def test_embedded_file__basic(tmp_path: Path) -> None:
     attached_path = tmp_path / "attached.pdf"
     file_path = tmp_path / "test.txt"
     file_path.write_bytes(b"Hello World\n")
-    subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path])  # noqa: S603
+    subprocess.run([PDFATTACH_BINARY, clean_path, file_path, attached_path], check=False)  # noqa: S603
     with PdfReader(str(attached_path)) as reader:
         attachment = next(iter(EmbeddedFile._load(reader.root_object)))
 

@@ -619,7 +619,7 @@ def _assert_rc4_fallback(operations: str) -> None:
         + operations
     )
     env = {**os.environ, "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": "1"}
-    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)  # noqa: S603
+    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=False)  # noqa: S603
     assert result.returncode == 0, result.stderr
 
 

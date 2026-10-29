@@ -520,6 +520,7 @@ foo(old_param=12)
         capture_output=True,
         text=True,
         env=get_subprocess_environment(),
+        check=False,
     )
     assert result.returncode == 0
     assert result.stderr == (

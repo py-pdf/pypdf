@@ -891,6 +891,7 @@ class JBIG2Decode:
                 ],
                 capture_output=True,
                 env=environment,
+                check=False,
             )
             if b"unrecognized option '--embedded'" in result.stderr or b"unrecognized option '-M'" in result.stderr:
                 raise DependencyError("jbig2dec>=0.19 is required.")
@@ -914,6 +915,7 @@ class JBIG2Decode:
             [configuration.jbig2dec_binary, "--version"],
             capture_output=True,
             text=True,
+            check=False,
         )
         version = result.stdout.split(" ", maxsplit=1)[1]
 
