@@ -197,7 +197,19 @@ class FlateDecode:
 
         """
         str_data = decompress(data)
+        return FlateDecode._decode_prediction(str_data, decode_parms)
 
+    @staticmethod
+    def _decode_prediction(
+        str_data: bytes,
+        decode_parms: DictionaryObject | IndirectObject | None,
+    ) -> bytes:
+        """
+        Reverse the predictor function declared in the decoding parameters.
+
+        This is shared by /FlateDecode and /LZWDecode, see §7.4.4.4 LZW and Flate
+        predictor functions of the PDF 2.0 specification.
+        """
         if isinstance(decode_parms, dict):
             parameters = decode_parms
         else:
@@ -520,9 +532,11 @@ class LZWDecode:
         Returns:
           decoded data.
 
+        Raises:
+          PdfReadError: Unsupported parameters have been found.
+
         """
-        # decode_parms is unused here
-        return LZWDecode.Decoder(data).decode()
+        return FlateDecode._decode_prediction(LZWDecode.Decoder(data).decode(), decode_parms)
 
 
 class ASCII85Decode:
