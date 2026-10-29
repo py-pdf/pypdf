@@ -4,7 +4,7 @@ import subprocess
 import sys
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -547,7 +547,7 @@ def test_generate_appearance_stream_data__selection__speed() -> None:
     ],
 )
 def test_parse_default_appearance(
-    default_appearance: bytes, expected: tuple[Optional[str], float, Optional[Color]]
+    default_appearance: bytes, expected: tuple[str | None, float, Color | None]
 ) -> None:
     """
     The font name, font size and font color are read from the last complete Tf and non-stroking color

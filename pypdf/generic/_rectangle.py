@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Union
+from typing import Any
 
 from ._base import FloatObject, NumberObject
 from ._data_structures import ArrayObject
@@ -24,7 +24,7 @@ class RectangleObject(ArrayObject):
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
         ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])
 
-    def _ensure_is_number(self, value: Any) -> Union[FloatObject, NumberObject]:
+    def _ensure_is_number(self, value: Any) -> FloatObject | NumberObject:
         if not isinstance(value, (FloatObject, NumberObject)):
             return FloatObject(value)
         return value

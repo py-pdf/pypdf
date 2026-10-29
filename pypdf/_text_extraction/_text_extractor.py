@@ -27,7 +27,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 from .._codecs import encoding_dict_from_named_encoding
 from ..generic import DictionaryObject, TextStringObject
@@ -58,7 +59,7 @@ class TextExtraction:
         self.cm_stack: list[
             tuple[
                 list[float],
-                Optional[DictionaryObject],
+                DictionaryObject | None,
                 Font,
                 float,
                 float,
@@ -85,13 +86,13 @@ class TextExtraction:
         self.TL = 0.0
         self.font_size = 12.0  # init just in case of
         # (axis index, min, max) of baselines kept on the current extracted line.
-        self._line_span: Optional[tuple[int, float, float]] = None
+        self._line_span: tuple[int, float, float] | None = None
 
         # Text extraction variables
         self.text: str = ""
         self.output: str = ""
         self.rtl_dir: bool = False  # right-to-left
-        self.font_resource: Optional[DictionaryObject] = None
+        self.font_resource: DictionaryObject | None = None
         self.font = Font(
             name = "NotInitialized",
             sub_type="Unknown",
@@ -99,7 +100,7 @@ class TextExtraction:
             font_descriptor=FontDescriptor(),
             )
         self.orientations: tuple[int, ...] = (0, 90, 180, 270)
-        self.visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None
+        self.visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None = None
         self.font_resources: dict[str, DictionaryObject] = {}
         self.fonts: dict[str, Font] = {}
 
@@ -122,9 +123,9 @@ class TextExtraction:
     def initialize_extraction(
         self,
         orientations: tuple[int, ...] = (0, 90, 180, 270),
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
-        font_resources: Optional[dict[str, DictionaryObject]] = None,
-        fonts: Optional[dict[str, Font]] = None
+        visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None = None,
+        font_resources: dict[str, DictionaryObject] | None = None,
+        fonts: dict[str, Font] | None = None
     ) -> None:
         """Initialize the extractor with extraction parameters."""
         self.orientations = orientations
@@ -178,15 +179,15 @@ class TextExtraction:
     def _handle_tj(
         self,
         text: str,
-        operands: list[Union[str, TextStringObject]],
+        operands: list[str | TextStringObject],
         cm_matrix: list[float],
         tm_matrix: list[float],
-        font_resource: Optional[DictionaryObject],
+        font_resource: DictionaryObject | None,
         font: Font,
         orientations: tuple[int, ...],
         font_size: float,
         rtl_dir: bool,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
+        visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None,
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
         text_operands, is_str_operands, font_widths = get_text_operands(

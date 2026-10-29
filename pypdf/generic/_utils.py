@@ -14,7 +14,7 @@ def hex_to_rgb(value: str) -> tuple[float, float, float]:
 
 def read_hex_string_from_stream(
     stream: StreamType,
-    forced_encoding: Union[str, list[str], dict[int, str], None] = None,
+    forced_encoding: str | list[str] | dict[int, str] | None = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
     arr = bytearray()
@@ -66,7 +66,7 @@ __BACKSLASH_CODE__ = 92
 
 def read_string_from_stream(
     stream: StreamType,
-    forced_encoding: Union[str, list[str], dict[int, str], None] = None,
+    forced_encoding: str | list[str] | dict[int, str] | None = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
@@ -129,9 +129,9 @@ def read_string_from_stream(
 
 
 def create_string_object(
-    string: Union[str, bytes],
-    forced_encoding: Union[str, list[str], dict[int, str], None] = None,
-) -> Union[TextStringObject, ByteStringObject]:
+    string: str | bytes,
+    forced_encoding: str | list[str] | dict[int, str] | None = None,
+) -> TextStringObject | ByteStringObject:
     """
     Create a ByteStringObject or a TextStringObject from a string to represent the string.
 
