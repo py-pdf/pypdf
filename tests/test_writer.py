@@ -3798,6 +3798,35 @@ def test_append__skips_outline_nodes_that_are_not_dictionaries(caplog, outlines,
     assert caplog.messages == [f"Outline node is not a dictionary: {expected}"]
 
 
+@pytest.mark.parametrize(
+    ("outlines", "expected"),
+    [
+        pytest.param(NumberObject(1), ["Outlines are not a dictionary: 1"], id="number"),
+        pytest.param(ArrayObject(), ["Outlines are not a dictionary: []"], id="array"),
+        pytest.param(TextStringObject("x"), ["Outlines are not a dictionary: x"], id="string"),
+        pytest.param(NullObject(), [], id="null"),
+        pytest.param(DictionaryObject(), [], id="direct-dictionary"),
+    ],
+)
+def test_add_outline_item__outlines_not_an_indirect_dictionary(caplog, outlines, expected) -> None:
+    """An outline item can be added when the existing /Outlines entry is not an indirect dictionary."""
+    source = PdfWriter()
+    source.add_blank_page(width=72, height=72)
+    source.root_object[NameObject("/Outlines")] = outlines
+    stream = BytesIO()
+    source.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter(clone_from=PdfReader(stream))
+    writer.add_outline_item("Title", 0)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert [item.title for item in PdfReader(stream).outline] == ["Title"]
+    assert caplog.messages == expected
+
+
 @pytest.mark.timeout(5)
 def test_add_articles_thread__cyclic() -> None:
     writer = PdfWriter()
