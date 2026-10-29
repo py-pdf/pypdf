@@ -411,13 +411,13 @@ def test_index2label__page_labels_not_a_dictionary(caplog, value, expected):
     ],
 )
 def test_index2label__nums_not_an_array(caplog, nums, expected):
-    """A /Nums entry which is not an array raised a TypeError from len()."""
+    """A /Nums entry which is not an array falls back to the page position."""
     writer = PdfWriter()
     for _ in range(2):
         writer.add_blank_page(width=72, height=72)
-    number_tree = DictionaryObject()
-    number_tree[NameObject("/Nums")] = nums
-    writer.root_object[NameObject("/PageLabels")] = number_tree
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {NameObject("/Nums"): nums}
+    )
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
