@@ -58,7 +58,7 @@ a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
 import string
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
@@ -169,7 +169,7 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
         if next_key > index:
             break
         i += 2
-    m: dict[Optional[str], Callable[[int], str]] = {
+    m: dict[str | None, Callable[[int], str]] = {
         None: lambda _: "",
         "/D": str,
         "/R": number2uppercase_roman_numeral,
@@ -282,7 +282,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
 
 
-def _get_single_pass_nums_length(nums: ArrayObject, page_count: int) -> Optional[int]:
+def _get_single_pass_nums_length(nums: ArrayObject, page_count: int) -> int | None:
     """
     Get how much of a flat ``/Nums`` array labels the first ``page_count`` pages.
 
@@ -406,7 +406,7 @@ def nums_clear_range(
 def nums_next(
     key: NumberObject,
     nums: ArrayObject,
-) -> tuple[Optional[NumberObject], Optional[DictionaryObject]]:
+) -> tuple[NumberObject | None, DictionaryObject | None]:
     """
     Return the (key, value) pair of the entry after the given one.
 

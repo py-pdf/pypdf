@@ -5,8 +5,8 @@ Some parts are still in _page.py. In doubt, they will stay there.
 """
 
 import math
-from collections.abc import Mapping
-from typing import Any, Callable, Literal, Optional, Union
+from collections.abc import Callable, Mapping
+from typing import Any, Literal
 
 from .._utils import is_char_neutral, is_char_rtl
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
@@ -25,9 +25,9 @@ class OrientationNotFoundError(Exception):
 
 
 def set_custom_rtl(
-    _min: Union[str, int, None] = "",
-    _max: Union[str, int, None] = "",
-    specials: Union[str, list[int], None] = None,
+    _min: str | int | None = "",
+    _max: str | int | None = "",
+    specials: str | list[int] | None = None,
 ) -> tuple[str, str, str]:
     """
     Change the Right-To-Left and special characters custom parameters.
@@ -74,10 +74,10 @@ def set_custom_rtl(
 
 def mult(
     m: list[float],
-    n: Union[
-        list[float],
-        Mapping[Union[int, Literal["is_text", "is_render"]], Union[float, bool]],
-    ],
+    n: (
+        list[float] |
+        Mapping[int | Literal["is_text", "is_render"], float | bool]
+    ),
 ) -> list[float]:
     return [
         m[0] * n[0] + m[1] * n[2],
@@ -104,16 +104,16 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     cmtm_prev: tuple[list[float], list[float]],
     cmtm_matrix: tuple[list[float], list[float]],
     memo_cmtm: tuple[list[float], list[float]],
-    font_resource: Optional[DictionaryObject],
+    font_resource: DictionaryObject | None,
     orientations: tuple[int, ...],
     output: str,
     font_size: float,
-    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
+    visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None,
     str_widths: float,
     spacewidth: float,
     str_height: float,
-    line_span: Optional[tuple[int, float, float]],
-) -> tuple[str, str, list[float], list[float], Optional[tuple[int, float, float]]]:
+    line_span: tuple[int, float, float] | None,
+) -> tuple[str, str, list[float], list[float], tuple[int, float, float] | None]:
     cm_prev = cmtm_prev[0]
     tm_prev = cmtm_prev[1]
     cm_matrix = cmtm_matrix[0]
@@ -185,7 +185,7 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
 
 
 def get_text_operands(
-    operands: list[Union[str, TextStringObject]],
+    operands: list[str | TextStringObject],
     cm_matrix: list[float],
     tm_matrix: list[float],
     font: Font,
@@ -234,12 +234,12 @@ def get_display_str(
     text: str,
     cm_matrix: list[float],
     tm_matrix: list[float],
-    font_resource: Optional[DictionaryObject],
+    font_resource: DictionaryObject | None,
     font: Font,
     text_operands: str,
     font_size: float,
     rtl_dir: bool,
-    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
+    visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None
 ) -> tuple[str, bool, str]:
     """
     Add the characters of ``text_operands`` to ``text`` in display order.

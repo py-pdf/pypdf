@@ -5,11 +5,11 @@ import shutil
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 
 @functools.cache
-def _determine_jbig2dec_binary() -> Optional[str]:
+def _determine_jbig2dec_binary() -> str | None:
     """
     Small utility function to determine the `jbig2dec` binary path only once.
 
@@ -105,6 +105,11 @@ class Configuration:
     """The maximum allowed number of entries in the page tree."""
     page_tree_maximum_depth: int = 100
     """The maximum allowed depth of the page tree."""
+    page_tree_maximum_page_entries: int = 2_000_000
+    """
+    The maximum allowed total number of page dictionary entries copied while flattening the page tree.
+    A page referenced multiple times is copied once per reference.
+    """
 
     form_fields_maximum_entries: int = 100_000
     """The maximum allowed number of form fields."""
@@ -114,7 +119,7 @@ class Configuration:
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
 
-    jbig2dec_binary: Optional[str] = dataclasses.field(default_factory=_determine_jbig2dec_binary)
+    jbig2dec_binary: str | None = dataclasses.field(default_factory=_determine_jbig2dec_binary)
     """
     The location of the ``jbig2dec`` binary.
 
@@ -173,7 +178,7 @@ def get_configuration() -> Configuration:
 
 
 def _build_configuration(
-    configuration: Optional[Configuration],
+    configuration: Configuration | None,
     overwrites: dict[str, Any],
 ) -> Configuration:
     """
@@ -191,7 +196,7 @@ def _build_configuration(
 
 
 def overwrite_configuration(
-    configuration: Optional[Configuration] = None,
+    configuration: Configuration | None = None,
     **overwrites: Any,
 ) -> Configuration:
     """
@@ -211,7 +216,7 @@ def overwrite_configuration(
 
 @contextmanager
 def apply_configuration(
-    configuration: Optional[Configuration] = None,
+    configuration: Configuration | None = None,
     **overwrites: Any,
 ) -> Iterator[Configuration]:
     """
@@ -297,7 +302,7 @@ def apply_legacy_configuration() -> Configuration:
         "JBIG2DEC_BINARY": JBIG2DEC_BINARY,
         "MERGE_CROP_BOX": MERGE_CROP_BOX,
     }
-    overwrites: dict[str, Union[int, str, None]] = {}
+    overwrites: dict[str, int | str | None] = {}
 
     for field_name, legacy_name in LEGACY_NAME_MAPPING.items():
         legacy_value = legacy_values[legacy_name]
