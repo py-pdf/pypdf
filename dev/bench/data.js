@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793263662332,
+  "lastUpdate": 1793263809450,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -159397,6 +159397,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.18417638959698257",
             "extra": "mean: 1.0322198954000101 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1657d34cb69c0b34fbfd7310c7176bbb0f073f88",
+          "message": "TST: Cover color space and JPEG 2000 branches of the image handling (#4264)\n\n* TST: Cover color space and JPEG 2000 branches of the image handling\n\nAdd unit tests, without external files, for branches of the image\nconversion without coverage so far:\n\n* _get_image_mode() for a /DeviceN color space with a single component\n  other than /Black (converted to gray with a warning),\n* _handle_flate() with an /Indexed lookup stream holding str data and\n  with an /ICCBased profile implying another number of components,\n* _handle_jpx() with RGBA data for an RGB or CMYK color space and with\n  CMYK data for an ICC-based color space (Pillow >= 12.1 can write CMYK\n  JPEG 2000),\n* extract_inline_default() with an `EI` that is followed by binary data\n  and therefore belongs to the image.\n\nThe ICC-based tests describe the current behavior: the reload in\n_handle_flate() uses the unchanged mode, and _handle_jpx() compares the\ncolor space with the string \"/ICCBased\", which an ICC-based color space\n(an array) never equals.\n\npypdf/generic/_image_xobject.py and pypdf/generic/_image_inline.py are\nfully covered afterwards.\n\nThe covered code comes from #1913 (JPEG 2000 handling), #2322 (a\nsingle-component DeviceN color space) and #3152 (an EI followed by\nbinary data).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Skip CMYK JPEG 2000 tests only below Pillow 11.1.0\n\nSaving CMYK images as JPEG 2000 was added in Pillow 11.1.0; older\nversions raise \"OSError: broken data stream when writing image file\".\nThe previous 12.1.0 threshold was stricter than needed.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Fix mypy errors in image tests\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Reference the PDF specification in image tests\n\nState which clause of ISO 32000-2:2020 each test covers, and where pypdf\ndeviates from it on purpose.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Add xfail test for JPEG 2000 CMYK with an /ICCBased array\n\n_handle_jpx only converts CMYK to RGB when the colour space is the bare\n/ICCBased name. A well-formed [/ICCBased profile] array, which is what\n_xobj_to_image passes on for real PDFs, keeps the image in CMYK.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Add an image encoding helper for the image XObject tests\n\nBuilding the test images through _encode_image makes it obvious which\nlines only arrange test data. Rename _minimal_image_xobject to\n_create_minimal_image_xobject so that the helper name starts with a verb,\nand drop the duplicate save and the source image assertions from\ntest_handle_jpx__explicit_decode.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Rename\n\n* Smaller diff\n\n* TST: Let _create_image return the image instead of its encoded bytes\n\nThe tests encode the image themselves, so test_p_image_with_alpha_mask can\nagain take the XObject dimensions from the created image. Also document\nwhat that test covers.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Also require OpenJPEG 2.5.3+ for the CMYK JPEG 2000 tests\n\nPillow can only save CMYK JPEG 2000 images with OpenJPEG 2.5.3 or later,\nso a Pillow-only version check lets the fixture creation fail on builds\nwith an older or missing OpenJPEG. Share one skip marker between the\nthree tests, and only accept an AssertionError for the xfail test so an\nencoder failure is not reported as the known /ICCBased issue.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Add xfail tests for /SMaskInData of JPEG 2000 images\n\npypdf does not read /SMaskInData and always keeps the opacity channel of\nJPEG 2000 data as is. ISO 32000-2:2020, Table 87 requires ignoring it for\n0, the default, and un-premultiplying the colour channels for 2.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Remove test superseded by the /SMaskInData test\n\ntest_xobj_to_image__jpx_smask_in_data[1-opacity] covers the same branch\nof _handle_jpx with an /SMaskInData under which keeping the opacity\nchannel is actually correct.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Test RGBA JPEG 2000 data with /DeviceCMYK through _xobj_to_image\n\nWithout /SMaskInData, the fourth channel must stay the black component\ninstead of being treated as opacity. Testing the full image XObject\nprotects that once /SMaskInData is read.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Skip the CMYK JPEG 2000 XObject test without CMYK saving support\n\n_xobj_to_image saves the CMYK result as JPEG 2000 again, which needs\nPillow 11.1.0+ with OpenJPEG 2.5.3+. Older versions fall back to an RGBA\nPNG, so the test failed on Pillow 10.4.0.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Skip the /SMaskInData JPEG 2000 test without a JPEG 2000 codec\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Address review feedback on the image xobject tests\n\n* Type the colors of _create_image instead of using Any, and rename\n  its diagonal parameter to diagonal_color.\n* Use American English: color instead of colour.\n* Say what the \"bare name\" /ICCBased is: the name on its own, without\n  the ICC profile stream of an [/ICCBased profile] array.\n* Explain why the indexed lookup test passes a str to set_data().\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Fix style issues after merging main\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-29T09:45:45+01:00",
+          "tree_id": "d6f8fed07e615d37470b635ab1f1fdc0c4a0affa",
+          "url": "https://github.com/py-pdf/pypdf/commit/1657d34cb69c0b34fbfd7310c7176bbb0f073f88"
+        },
+        "date": 1793263798725,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.052856872661085,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025097624183287983",
+            "extra": "mean: 90.47434627272435 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 43.95750271325221,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004888472758740343",
+            "extra": "mean: 22.74924502702748 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.92803999071322,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0032940896730711267",
+            "extra": "mean: 1.0775397719999944 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.28755603469440527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02389881608133404",
+            "extra": "mean: 3.4775830772000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5433024222217041,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09683650427193766",
+            "extra": "mean: 1.8405955120000044 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6868660708597347,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026257698983910418",
+            "extra": "mean: 592.8152906000037 msec\nrounds: 5"
           }
         ]
       }
