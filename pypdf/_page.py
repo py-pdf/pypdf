@@ -1835,11 +1835,11 @@ class PageObject(DictionaryObject):
             out += op.decode("utf-8") + " " + "".join(s) + ope.__repr__() + "\n"
         out += "\n=============================\n"
         try:
-            for fo in self[PG.RESOURCES]["/Font"]:  # type:ignore
+            for fo in self[PG.RESOURCES]["/Font"]:  # type: ignore[index]
                 out += fo + "\n"
-                out += self[PG.RESOURCES]["/Font"][fo].__repr__() + "\n"  # type:ignore
+                out += self[PG.RESOURCES]["/Font"][fo].__repr__() + "\n"  # type: ignore[index]
                 try:
-                    enc_repr = self[PG.RESOURCES]["/Font"][fo][  # type:ignore
+                    enc_repr = self[PG.RESOURCES]["/Font"][fo][  # type: ignore[index]
                         "/Encoding"
                     ].__repr__()
                     out += enc_repr + "\n"
@@ -1849,7 +1849,7 @@ class PageObject(DictionaryObject):
                     pass
                 try:
                     out += (
-                        self[PG.RESOURCES]["/Font"][fo][  # type:ignore
+                        self[PG.RESOURCES]["/Font"][fo][  # type: ignore[index]
                             "/ToUnicode"
                         ]
                         .get_data()
