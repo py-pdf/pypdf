@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793289303772,
+  "lastUpdate": 1793289312223,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -160321,6 +160321,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026499530083766615",
             "extra": "mean: 907.3583899999903 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "819f5ed10846ff493d486fcc7ef712e9b1a91abc",
+          "message": "DEP: Remove support for cryptography<43 (#4304)\n\nRemove the backwards compatibility for old cryptography versions.\n\nReasons:\n\n  * 42.0.8 was released in June 2024, so it's more than 2 years old\n  * 3 security issues rated \"HIGH\"\n\nRelates to #3496.",
+          "timestamp": "2026-10-29T16:51:39+01:00",
+          "tree_id": "cc2f7bc6af0ee7050cc10894d6a4607f71a5c7eb",
+          "url": "https://github.com/py-pdf/pypdf/commit/819f5ed10846ff493d486fcc7ef712e9b1a91abc"
+        },
+        "date": 1793289303893,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 20.21424566345334,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019624077098601877",
+            "extra": "mean: 49.47006268000223 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.42167687241907,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009937769919605861",
+            "extra": "mean: 28.23130038709843 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.286929300449416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03178798643215367",
+            "extra": "mean: 777.0434628000032 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.9228400613813329,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05088215852831595",
+            "extra": "mean: 1.0836113882000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.582434248387019,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052084064524422845",
+            "extra": "mean: 1.7169320017999952 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9191620178334698,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030168657776175316",
+            "extra": "mean: 521.0607498000059 msec\nrounds: 5"
           }
         ]
       }
