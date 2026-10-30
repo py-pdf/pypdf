@@ -6,6 +6,7 @@ You can extract text from a PDF:
 pypdf_test_setup("user/extract-text", {
     "test Orient.pdf": "../resources/test Orient.pdf",
     "GeoBase_NHNC1_Data_Model_UML_EN.pdf": "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf",
+    "superscript-pdftex.pdf": "../resources/superscript-pdftex.pdf",
 })
 ```
 
@@ -239,6 +240,58 @@ dwg.save()
 The SVG generated here is bottom-up because the coordinate systems of PDF and SVG differ.
 
 Unfortunately, in complicated PDF documents the coordinates given to the visitor functions may be wrong.
+
+### Example 3: Extract superscripts as Unicode characters
+
+Untagged PDF files have no notion of superscripts. Some producers, for example LibreOffice, write a single Unicode
+character such as `²`, which is extracted as it is. TeX, however, writes an ordinary `2` as a separate text
+operation with a smaller font size and a raised baseline, so `x²` is extracted as `x2`.
+
+The visitor function receives the font size and the position of every text operation. The following example treats
+a text as superscript if its font size is at most 80 % of the previous text and its baseline is clearly above
+the previous one. It then maps the characters to their Unicode superscript forms. Characters without such a form
+need to be handled differently, depending on your use case.
+
+```{testcode}
+from pypdf import PdfReader
+
+SUPERSCRIPTS = str.maketrans("0123456789+-=()n", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿ")
+
+reader = PdfReader("superscript-pdftex.pdf")
+page = reader.pages[0]
+
+parts = []
+previous_font_size = None
+previous_y = None
+
+
+def visitor_superscript(text, cm, tm, font_dict, font_size):
+    global previous_font_size, previous_y
+    y = tm[5]
+    if not text.strip():
+        parts.append(text)
+    elif (
+        previous_font_size is not None
+        and font_size <= 0.8 * previous_font_size
+        and y > previous_y + 0.2 * previous_font_size
+    ):
+        parts.append(text.translate(SUPERSCRIPTS))
+    else:
+        parts.append(text)
+        previous_font_size, previous_y = font_size, y
+
+
+page.extract_text(visitor_text=visitor_superscript)
+print("".join(parts))
+```
+
+```{testoutput}
+:options: +NORMALIZE_WHITESPACE
+
+x² = 9 means x∈{ 3,−3}.
+```
+
+Subscripts work the same way with the opposite vertical direction and the Unicode subscript characters.
 
 ## Why Text Extraction is hard
 
