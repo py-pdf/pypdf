@@ -2480,6 +2480,31 @@ def test_missing_info():
     assert b"/Info" not in b.getvalue()
 
 
+def test_clone_from__clone_indirect_info_values():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer._info[NameObject("/Title")] = writer._add_object(TextStringObject("Indirect title"))
+    source = BytesIO()
+    writer.write(source)
+    assert PdfReader(source).metadata.title == "Indirect title"
+
+    writer = PdfWriter(clone_from=PdfReader(source))
+    assert writer._info.raw_get("/Title").pdf is writer
+    output = BytesIO()
+    writer.write(output)
+    assert PdfReader(output).metadata.title == "Indirect title"
+
+
+def test_clone_from__tolerate_dangling_info_reference():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer._info[NameObject("/Title")] = IndirectObject(999, 0, writer)
+    source = BytesIO()
+    writer.write(source)
+
+    writer = PdfWriter(clone_from=PdfReader(source))
+    writer.compress_identical_objects()
+    assert writer._info["/Title"] == NullObject()
+
+
 @pytest.mark.enable_socket
 def test_germanfields():
     """Cf #2035"""

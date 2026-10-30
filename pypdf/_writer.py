@@ -1244,9 +1244,7 @@ class PdfWriter(PdfDocCommon):
                     self._info_obj.indirect_reference.idnum - 1
                 ] = self._info.hash_bin()
         elif inf is not None:
-            self._info_obj = self._add_object(
-                DictionaryObject(cast(DictionaryObject, inf.get_object()))
-            )
+            self._info_obj = self._add_object(inf.clone(self))
         # else: _info_obj = None done in clone_reader_document_root()
 
         try:
