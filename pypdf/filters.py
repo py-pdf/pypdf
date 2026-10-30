@@ -493,6 +493,7 @@ class RunLengthDecode:
 
 class LZWDecode:
     class Decoder:
+        """Decoder component of LZWDecode."""
         STOP = 257
         CLEARDICT = 256
 

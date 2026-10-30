@@ -164,7 +164,6 @@ ignore = [
     "D101",    # Missing docstring in public class
     "D102",    # Missing docstring in public method
     "D105",    # Missing docstring in magic method
-    "D106",    # Missing docstring in public nested class
     "D107",    # Missing docstring in `__init__`
     "D205",    # One blank line required between summary line and description
     "D212",    # I want multiline-docstrings to start at the second line
