@@ -125,7 +125,6 @@ def test_visitor_text_matrices(file_name, constraints):
         assert constraint(x, y), f'Line "{text}" is wrong at x:{x}, y:{y}'
 
 
-@pytest.mark.xfail(reason="known whitespace issue #2336")
 @pytest.mark.enable_socket
 def test_issue_2336():
     name = "Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf"
