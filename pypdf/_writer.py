@@ -2024,7 +2024,7 @@ class PdfWriter(PdfDocCommon):
                 if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
-                    del page[PG.ANNOTS][i]  # type:ignore
+                    del page[PG.ANNOTS][i]  # type: ignore[attr-defined]
                 else:
                     i += 1
 
