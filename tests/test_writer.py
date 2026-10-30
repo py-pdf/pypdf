@@ -1769,6 +1769,38 @@ def test_set_page_label(pdf_file_path):
     writer.write(pdf_file_path)
 
 
+def test_set_page_label_start_none():
+    """`start=None` is a legitimate "not set" value and must not crash at write time (#4285).
+
+    It behaves exactly like the default `0`: no `/St` entry is written, so numbering
+    restarts at 1 per the PDF spec.
+    """
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(width=100, height=100)
+    writer.set_page_label(0, 3, "/D", None, None)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    assert PdfReader(buffer).page_labels == ["1", "2", "3", "4"]
+
+
+def test_set_page_label_prefix_only_without_start():
+    """A prefix-only label with `style=None` and `start=None` works (#4285)."""
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(width=100, height=100)
+    writer.set_page_label(0, 3, None, "P", None)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    assert PdfReader(buffer).page_labels == ["P", "P", "P", "P"]
+
+
 @pytest.mark.enable_socket
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
