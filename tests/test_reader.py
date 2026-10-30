@@ -221,16 +221,8 @@ def test_get_outline(src, outline_elements):
         ("pdflatex-outline.pdf", []),
         ("crazyones.pdf", []),
         ("git.pdf", ["Image9.png"]),
-        pytest.param(
-            "imagemagick-lzw.pdf",
-            ["Im0.png"],
-            marks=pytest.mark.xfail(reason="broken image extraction"),
-        ),
-        pytest.param(
-            "imagemagick-ASCII85Decode.pdf",
-            ["Im0.png"],
-            # marks=pytest.mark.xfail(reason="broken image extraction"),
-        ),
+        ("imagemagick-lzw.pdf", ["Im0.tiff"]),
+        ("imagemagick-ASCII85Decode.pdf", ["Im0.png"]),
         ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
         (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),
     ],

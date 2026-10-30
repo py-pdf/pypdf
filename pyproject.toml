@@ -103,6 +103,7 @@ markers = [
 ]
 testpaths = ["tests"]
 norecursedirs = ["tests/pdf_cache"]
+xfail_strict = true
 
 [tool.isort]
 line_length = 79
