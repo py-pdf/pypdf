@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793349168239,
+  "lastUpdate": 1793349338634,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -123029,6 +123029,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0102458823585696",
             "extra": "mean: 676.4764956000022 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "723c04380952b1a5256df56fd22b854cd0159ae6",
+          "message": "TST: Cover encoding fallbacks and the layout mode debug output (#4311)\n\nAdd tests for:\n\n* get_encoding() with an unknown /BaseEncoding, which falls back to the\n  standard encoding, and with a /ToUnicode stream holding str data,\n* extract_text(extraction_mode=\"layout\", layout_mode_debug_path=...),\n  which writes fonts.json, bts.json, bt_groups.json and tjs.json, the\n  latter through TextStateParams.to_dict(). Nothing called to_dict() in\n  the test suite before.\n\nThe debug test uses a page with a non-embedded font: for embedded fonts,\njson.dumps(fonts, default=asdict) fails because dataclasses.asdict()\ncannot copy the stream objects inside Font.\n\nThe layout mode and its debug output were added in #2388.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-30T09:33:09+01:00",
+          "tree_id": "735ada7a3ccc993d60e02c43788e576f4092ea9d",
+          "url": "https://github.com/py-pdf/pypdf/commit/723c04380952b1a5256df56fd22b854cd0159ae6"
+        },
+        "date": 1793349327990,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.753974280014653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006187174599943087",
+            "extra": "mean: 266.38435039999706 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.088269015728557,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006685142348935786",
+            "extra": "mean: 34.37811990322565 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.34229242399655624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014061158283462886",
+            "extra": "mean: 2.921478624399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.40412111828206,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023027203776409527",
+            "extra": "mean: 49.00970711764702 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09765781864969325,
+            "unit": "iter/sec",
+            "range": "stddev: 0.045245211706605316",
+            "extra": "mean: 10.239835517799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.0344975922127833,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019521673435925386",
+            "extra": "mean: 491.5218400000015 msec\nrounds: 5"
           }
         ]
       }
