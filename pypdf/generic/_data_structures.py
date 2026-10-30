@@ -372,7 +372,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     del ignore_fields[x]
                     del ignore_fields[x]
                     continue
-                ignore_fields[x] -= 1  # type:ignore
+                ignore_fields[x] -= 1  # type: ignore[operator]
             x += 1
         #  Check if this is a chain list, we need to loop to prevent recur
         if any(

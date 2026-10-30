@@ -1244,9 +1244,7 @@ class PdfWriter(PdfDocCommon):
                     self._info_obj.indirect_reference.idnum - 1
                 ] = self._info.hash_bin()
         elif inf is not None:
-            self._info_obj = self._add_object(
-                DictionaryObject(cast(DictionaryObject, inf.get_object()))
-            )
+            self._info_obj = self._add_object(inf.clone(self))
         # else: _info_obj = None done in clone_reader_document_root()
 
         try:
@@ -2026,7 +2024,7 @@ class PdfWriter(PdfDocCommon):
                 if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
-                    del page[PG.ANNOTS][i]  # type:ignore
+                    del page[PG.ANNOTS][i]  # type: ignore[attr-defined]
                 else:
                     i += 1
 
@@ -2852,33 +2850,41 @@ class PdfWriter(PdfDocCommon):
                 self.clean_page(pag)
             self._set_cloned_kids(parent_fields, reader)
 
-        if "/AcroForm" in _ro and not is_null_or_none(_ro["/AcroForm"]):
-            if "/AcroForm" not in self._root_object:
+        acro_form = _ro.get("/AcroForm")
+        if acro_form is not None:
+            acro_form = acro_form.get_object()
+            if not is_null_or_none(acro_form) and not isinstance(acro_form, DictionaryObject):
+                logger_warning(
+                    "AcroForm is not a dictionary: %(acro_form)s",
+                    source=__name__,
+                    acro_form=acro_form,
+                )
+        if isinstance(acro_form, DictionaryObject):
+            writer_acro_form = self._root_object.get("/AcroForm")
+            if writer_acro_form is None or not isinstance(writer_acro_form.get_object(), DictionaryObject):
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
-                    cast(
-                        DictionaryObject,
-                        reader.root_object["/AcroForm"],
-                    ).clone(self, False, ("/Fields",))
+                    acro_form.clone(self, False, ("/Fields",))
                 )
                 arr = ArrayObject()
             else:
-                arr = cast(
-                    ArrayObject,
-                    cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
+                arr = cast(DictionaryObject, writer_acro_form.get_object()).get("/Fields", ArrayObject()).get_object()
+                if not isinstance(arr, ArrayObject):
+                    arr = ArrayObject()
+            fields = acro_form.get("/Fields", ArrayObject()).get_object()
+            if not isinstance(fields, ArrayObject):
+                logger_warning(
+                    "AcroForm /Fields is not an array: %(fields)s",
+                    source=__name__,
+                    fields=fields,
                 )
+                fields = ArrayObject()
             trslat = self._id_translated[id(reader)]
-            try:
-                for f in reader.root_object["/AcroForm"]["/Fields"]:  # type: ignore[index]
-                    try:
-                        ind = IndirectObject(trslat[f.idnum], 0, self)
-                        if ind not in arr:
-                            arr.append(ind)
-                    except KeyError:
-                        # for trslat[] which mean the field has not be copied
-                        # through the page
-                        pass
-            except KeyError:  # for /Acroform or /Fields are not existing
-                arr = self._add_object(ArrayObject())
+            for f in fields:
+                # trslat only knows the fields which have been copied through the pages
+                if isinstance(f, IndirectObject) and f.idnum in trslat:
+                    ind = IndirectObject(trslat[f.idnum], 0, self)
+                    if ind not in arr:
+                        arr.append(ind)
             cast(DictionaryObject, self._root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr
