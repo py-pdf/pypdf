@@ -46,7 +46,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import RESOURCE_ROOT, PILContext, get_data_from_url, get_subprocess_environment
+from . import RESOURCE_ROOT, SAMPLE_ROOT, PILContext, get_data_from_url, get_subprocess_environment
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
 from .utils import get_image_data
@@ -1283,6 +1283,62 @@ def test_flatedecode__decode_png_prediction__speed():
     data = bytes(raw)
 
     FlateDecode._decode_png_prediction(data=data, columns=columns, row_length=row_length)
+
+
+_LOW_BIT_DEPTH_PNG_PREDICTION = pytest.mark.xfail(
+    reason="For fewer than 8 bits per pixel, the bytes per pixel are rounded down to 0 instead of up to 1",
+    strict=True,
+)
+
+
+@pytest.mark.samples
+@pytest.mark.parametrize(
+    ("pdf_path", "page_index", "bytes_per_row"),
+    [
+        ("031-png-predictors/png-predictors.pdf", 0, 256 * 3),  # RGB, 8 bits per component
+        pytest.param(
+            "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
+            0,
+            256 // 8,
+            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
+            id="1-bit",
+        ),
+        pytest.param(
+            "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
+            1,
+            256 // 4,
+            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
+            id="2-bit",
+        ),
+        pytest.param(
+            "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
+            2,
+            256 // 2,
+            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
+            id="4-bit",
+        ),
+    ],
+)
+def test_flatedecode__decode_png_prediction__matches_image_without_predictor(pdf_path, page_index, bytes_per_row):
+    """
+    An image using all PNG filter types is decoded like the same image without a predictor.
+
+    The image /Predicted consists of five bands of 50 rows, using the PNG filters None, Sub, Up, Average
+    and Paeth in turn. The image /Reference has the same pixels and no predictor.
+    """
+    reader = PdfReader(SAMPLE_ROOT / pdf_path)
+    x_objects = reader.pages[page_index]["/Resources"]["/XObject"]
+    reference = x_objects["/Reference"].get_object()
+    predicted = x_objects["/Predicted"].get_object()
+    assert predicted["/DecodeParms"]["/Predictor"] == 15
+    assert "/DecodeParms" not in reference
+
+    expected = reference.get_data()
+    assert len(expected) == bytes_per_row * 250
+    decoded = predicted.get_data()
+    # The first band uses the PNG filter None.
+    assert decoded[: bytes_per_row * 50] == expected[: bytes_per_row * 50]
+    assert decoded == expected
 
 
 _FLATE_IMAGE_DATA = (
