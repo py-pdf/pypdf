@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793353180522,
+  "lastUpdate": 1793353249860,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -161047,6 +161047,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02873363277377941",
             "extra": "mean: 644.2134947999989 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "300551e9cd12b2938468adc21d5e3a9ce0032d7e",
+          "message": "BUG: Clone indirect /Info values when cloning a document (#4274)\n\n* BUG: Clone indirect /Info values when cloning a document\n\n* TST: Drop unneeded blank page from indirect /Info clone test\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-30T10:37:07+01:00",
+          "tree_id": "025d4e35d682cd346b80ceedcbd3be0d21884ee7",
+          "url": "https://github.com/py-pdf/pypdf/commit/300551e9cd12b2938468adc21d5e3a9ce0032d7e"
+        },
+        "date": 1793353241559,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 20.40301185713967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02001282013880253",
+            "extra": "mean: 49.01237165384815 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.637634331067275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010003451332353641",
+            "extra": "mean: 28.060223939394465 msec\nrounds: 33"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3038648772575319,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03107659134340111",
+            "extra": "mean: 766.9506383999988 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.0415640812843627,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03551744742485542",
+            "extra": "mean: 960.0945519999982 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5811484777747543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02836853760074007",
+            "extra": "mean: 1.7207306536000033 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.86642094503287,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023179839127601052",
+            "extra": "mean: 535.7848146000038 msec\nrounds: 5"
           }
         ]
       }
