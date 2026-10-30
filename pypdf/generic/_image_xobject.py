@@ -331,9 +331,16 @@ def _handle_flate(
                     # gray lookup does not work: it is converted to a similar RGB lookup
                     lookup = b"".join([bytes([b, b, b]) for b in lookup])
                     mode = "RGB"
-                # TODO: https://github.com/py-pdf/pypdf/pull/2039
-                # this is a work around until PIL is able to process CMYK images
                 elif mode == "CMYK":
+                    # NOTE: Convert the CMYK palette to RGB manually. Pillow can unpack
+                    #       CMYK palettes natively since 10.1.0 (see
+                    #       https://github.com/python-pillow/Pillow/pull/7310),
+                    #       but this is not reliable across versions: Starting with
+                    #       Pillow 12.2.0, the palette stays CMYK and `convert("RGB")`
+                    #       does not convert its colors anymore. Checked with Pillow 10.4.0,
+                    #       11.0.0 - 11.3.0 and 12.0.0 - 12.3.0.
+                    #       Pillow rounds the values while this code truncates them, so
+                    #       results can differ by one for some channels.
                     _rgb = []
                     for _c, _m, _y, _k in (
                         lookup[n : n + 4] for n in range(0, 4 * (len(lookup) // 4), 4)
@@ -349,9 +356,12 @@ def _handle_flate(
             img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
     elif not is_null_or_none(color_space) and color_space[0] == "/ICCBased":
         # Exclude pure black-and-white images.
-        # TODO: The remaining code still does not look correct. Shouldn't the proper way be
-        #       to use the original image and apply the ICC transformation on it?
-        #       For now, this just loads the original image with a different color space.
+        # TODO: The ICC profile itself is never applied; only the number of components
+        #       (/N) and the alternate color space are used to pick the image mode.
+        #       Applying the profile would require an actual color transformation,
+        #       for example using PIL.ImageCms.
+        #       The reload below uses the same mode, size and data as the image which
+        #       has already been created above, so it currently does not change the result.
         if mode != "1":
             # Table 65 - Additional Entries Specific to an ICC Profile Stream Dictionary
             mode2 = _get_image_mode(color_space, colors, mode)[0]
@@ -627,22 +637,22 @@ def _xobj_to_image(
             obj_as_text,
         )
     elif last_filter in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
-        # I'm not sure if the following logic is correct.
-        # There might not be any relationship between the filter and the
-        # extension
-        if last_filter == FT.LZW_DECODE:
-            image_format = "TIFF"
-            extension = ".tiff"  # mime_type = "image/tiff"
-        else:
-            image_format = "PNG"
-            extension = ".png"  # mime_type = "image/png"
+        # The filter does not tell which image format the decoded data has, so
+        # let Pillow detect it.
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
+            # Not a TIFF or PNG container: interpret the data as raw pixel samples.
             fallback_mode, fallback_data = _expand_low_bit_samples(
                 mode, size, data, color_space
             )
             img = _image_from_bytes(fallback_mode, size, fallback_data)
+            # There is no format information, thus fall back to the usual one
+            # for the filter.
+            image_format = "TIFF" if last_filter == FT.LZW_DECODE else "PNG"
+        else:
+            image_format = cast(str, img.format)
+        extension = ".tiff" if image_format == "TIFF" else ".png"
     elif last_filter == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
         # invert_color kept unchanged
