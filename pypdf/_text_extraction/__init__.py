@@ -156,7 +156,8 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
         lower, upper = line_span[1], line_span[2]
         distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
     last = (output + text)[-1:]
-    if distance > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
+    threshold = 0.8 * min(str_height * scale_prev_y, font_size * scale_y)
+    if distance > threshold:
         if last not in ("", "\n"):
             output += text + "\n"
             if visitor_text is not None:
@@ -170,8 +171,12 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
             text = ""
         line_span = (axis_index, axis, axis)
     else:
+        # A fragment kept on this line only by the line span moved to another
+        # baseline, so comparing its horizontal gap with the previous fragment
+        # would miss the word separation (#4254).
+        moved_to_other_baseline = abs(moved_height) > threshold
         if (
-            (moved_width >= (spacewidth + str_widths) * scale_prev_x)
+            (moved_to_other_baseline or moved_width >= (spacewidth + str_widths) * scale_prev_x)
             and last not in ("", " ")
         ):
             text += " "
