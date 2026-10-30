@@ -3029,40 +3029,25 @@ def test_compress_identical_objects__remove_unreferenced():
         writer.get_object(reference)
 
 
-@pytest.mark.enable_socket
 def test_compress_identical_objects__deprecation():
-    url = "https://github.com/user-attachments/files/16575458/tt2.pdf"
-    name = "iss2794.pdf"
-    in_bytes = BytesIO(get_data_from_url(url=url, name=name))
-    writer = PdfWriter(in_bytes)
-    with pytest.warns(
-        DeprecationWarning,
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    with pytest.raises(
+        DeprecationError,
         match=(
-            r"^remove_orphans is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"^remove_orphans is deprecated and was removed in pypdf 7\.0\.0\. "
             r"Use remove_unreferenced instead\.$"
         ),
     ):
         writer.compress_identical_objects(remove_orphans=True)
-    out1 = BytesIO()
-    writer.write(out1)
-    assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
-    writer.remove_page(
-        1
-    )  # page0 contains fields which keep reference to the deleted page
-    out2 = BytesIO()
-    writer.write(out2)
-    assert len(out1.getvalue()) - 100 < len(out2.getvalue())
-    with pytest.warns(
-        DeprecationWarning,
+
+    with pytest.raises(
+        DeprecationError,
         match=(
-            r"^remove_identicals is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"^remove_identicals is deprecated and was removed in pypdf 7\.0\.0\. "
             r"Use remove_duplicates instead\.$"
         ),
     ):
         writer.compress_identical_objects(remove_identicals=True)
-    out3 = BytesIO()
-    writer.write(out3)
-    assert len(out2.getvalue()) > len(out3.getvalue())
 
 
 def test_set_need_appearances_writer():
@@ -3244,22 +3229,6 @@ def test_auto_write(tmp_path):
     with PdfWriter(target) as writer:
         writer.add_blank_page(100, 100)
     assert target.stat().st_size > 0
-
-
-def test_deprecate_with_as():
-    """Yet another test for #2905"""
-    with PdfWriter() as writer:
-        with pytest.raises(
-                expected_exception=DeprecationError,
-                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
-        ):
-            _ = writer.with_as_usage
-
-        with pytest.raises(
-                expected_exception=DeprecationError,
-                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
-        ):
-            writer.with_as_usage = False  # old code allowed setting this, so...
 
 
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
