@@ -281,8 +281,8 @@ class FlateDecode:
         previous_row_data = bytearray(row_length)
         bpp = (row_length - 1) // columns  # recomputed locally to not change params
         # Masks to add all bytes of two rows at once, without carrying over into the next byte.
-        low_bits = int.from_bytes(b"\x7f" * row_length, "big")
-        high_bits = int.from_bytes(b"\x80" * row_length, "big")
+        low_mask = int.from_bytes(b"\x7f" * row_length, "big")
+        high_mask = int.from_bytes(b"\x80" * row_length, "big")
         for row in range(0, len(data), row_length):
             row_data = bytearray(data[row : row + row_length])
             filter_byte = row_data[0]
@@ -298,8 +298,11 @@ class FlateDecode:
                 # PNG Up Predictor
                 current = int.from_bytes(row_data, "big")
                 previous = int.from_bytes(previous_row_data, "big")
-                total = ((current & low_bits) + (previous & low_bits)) ^ ((current ^ previous) & high_bits)
-                row_data = bytearray(total.to_bytes(row_length, "big"))
+                # The low 7 bits of each byte are added without carrying into the next byte,
+                # the high bit of each byte is added with XOR, dropping its carry.
+                low_sum = (current & low_mask) + (previous & low_mask)
+                high_bits = (current ^ previous) & high_mask
+                row_data = bytearray((low_sum ^ high_bits).to_bytes(row_length, "big"))
             elif filter_byte == 3:
                 # PNG Average Predictor
                 for i in range(1, bpp + 1):
