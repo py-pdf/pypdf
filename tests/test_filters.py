@@ -512,7 +512,9 @@ def test_2bits_image():
 
 
 @pytest.mark.enable_socket
-@pytest.mark.xfail(reason="4-bit /DeviceGray images are extracted as black palette images", raises=AssertionError)
+@pytest.mark.xfail(
+    reason="#4316: 4-bit /DeviceGray images are extracted as black palette images", raises=AssertionError
+)
 def test_4bits_image():
     """
     From #1954, test with 4bits image.
