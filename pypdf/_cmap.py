@@ -464,21 +464,36 @@ def _glyph_name_to_unicode(glyph_name: str) -> str | None:
     """
     Map a glyph name to Unicode text.
 
-    Follows the Adobe Glyph List specification: a suffix starting at the first
-    period is dropped (``a.sc``), components joined by underscores are mapped
-    one by one (``f_i``), and ``uniXXXX[XXXX...]`` and ``uXXXX[XX]`` name the
-    code points directly.
+    ISO 32000-2:2020, 9.10.2 "Mapping character codes to Unicode values" (and
+    ISO 32000-1:2008, 9.10.2) says to look up the character name of a simple
+    font in the Adobe Glyph List. The Adobe Glyph List Specification, version
+    2.9, section 2 "The mapping" defines how a glyph name is mapped:
+
+    1. Drop all characters starting with the first period (``a.sc`` -> ``a``).
+    2. Split the rest into components at underscores (``f_i`` -> ``f``, ``i``).
+    3. Map each component and concatenate the results: a name from the glyph
+       list, ``uni`` followed by groups of four hexadecimal digits (each in
+       0000-D7FF or E000-FFFF), or ``u`` followed by four to six hexadecimal
+       digits (in 0000-D7FF or E000-10FFFF).
+
+    Deviations kept from the previous behavior: an exact match in our glyph
+    table wins first (it also lists some names with suffixes), lowercase
+    hexadecimal digits are accepted, and a component that cannot be mapped
+    makes the whole name unmappable instead of being mapped to an empty
+    string, so callers keep the raw glyph name.
 
     Returns None if the name cannot be mapped.
     """
     if glyph_name in adobe_glyphs:
         return adobe_glyphs[glyph_name]
+    # Adobe Glyph List Specification, section 2, step 1.
     base_name = glyph_name.lstrip("/").split(".", 1)[0]
     if not base_name:
         return None
     if f"/{base_name}" in adobe_glyphs:
         return adobe_glyphs[f"/{base_name}"]
     result = ""
+    # Adobe Glyph List Specification, section 2, steps 2 and 3.
     for component in base_name.split("_"):
         text = adobe_glyphs.get(f"/{component}") or _glyph_component_code_points(component)
         if text is None:
@@ -488,6 +503,12 @@ def _glyph_name_to_unicode(glyph_name: str) -> str | None:
 
 
 def _glyph_component_code_points(component: str) -> str | None:
+    """
+    Map a ``uniXXXX[XXXX...]`` or ``uXXXX[XX]`` glyph name component.
+
+    See the Adobe Glyph List Specification, version 2.9, section 2, step 3.
+    Surrogates (D800-DFFF) and values above 10FFFF are rejected.
+    """
     if component.startswith("uni") and len(component) > 3 and len(component) % 4 == 3:
         code_points = [component[i:i + 4] for i in range(3, len(component), 4)]
     elif component.startswith("u") and 5 <= len(component) <= 7:
