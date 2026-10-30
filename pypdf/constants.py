@@ -232,22 +232,44 @@ class PageAttributes:
     D_PART = "/DPart"  # dictionary, required, if this page is within the range of a DPart, not permitted otherwise
 
 
-class FileSpecificationDictionaryEntries:
-    """Table 3.41 Entries in a file specification dictionary."""
+class _FileSpecificationDictionaryEntriesMeta(type):
+    def __getattribute__(cls, name: str) -> Any:
+        value = super().__getattribute__(name)
+        replacements = {
+            "Type": "TYPE",
+            "Mac": "MAC",
+            "Unix": "UNIX",
+            "Cl": "CL",
+        }
+        if name in replacements:
+            deprecate_with_replacement(
+                f"FileSpecificationDictionaryEntries.{name}",
+                f"FileSpecificationDictionaryEntries.{replacements[name]}",
+                "7.0.0",
+            )
+        return value
 
-    Type = "/Type"
+
+class FileSpecificationDictionaryEntries(metaclass=_FileSpecificationDictionaryEntriesMeta):
+    """Table 3.41 entries; mixed-case aliases are deprecated for pypdf 7.0.0."""
+
+    TYPE = "/Type"
+    Type = TYPE
     FS = "/FS"  # The name of the file system to be used to interpret this file specification
     F = "/F"  # A file specification string of the form described in §3.10.1
     UF = "/UF"  # A Unicode string of the file as described in §3.10.1
     DOS = "/DOS"
-    Mac = "/Mac"
-    Unix = "/Unix"
+    MAC = "/Mac"
+    Mac = MAC
+    UNIX = "/Unix"
+    Unix = UNIX
     ID = "/ID"
     V = "/V"
-    EF = "/EF"  # dictionary, containing a subset of the keys F, UF, DOS, Mac, and Unix
+    EF = "/EF"  # dictionary, containing a subset of the keys F, UF, DOS, MAC, and UNIX
     RF = "/RF"  # dictionary, containing arrays of /EmbeddedFile
     DESC = "/Desc"  # description of the file
-    Cl = "/Cl"
+    CL = "/Cl"
+    Cl = CL
 
 
 class StreamAttributes:

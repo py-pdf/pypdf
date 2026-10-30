@@ -7,6 +7,7 @@ import pytest
 from pypdf.constants import (
     PDF_KEYS,
     CatalogDictionary,
+    FileSpecificationDictionaryEntries,
     GraphicsStateParameters,
     UserAccessPermissions,
 )
@@ -27,6 +28,13 @@ def test_slash_prefix():
         if cls == CatalogDictionary:  # Deprecated
             continue
         for attr in dir(cls):
+            if cls == FileSpecificationDictionaryEntries and attr in {
+                "Type",
+                "Mac",
+                "Unix",
+                "Cl",
+            }:
+                continue
             # Skip magic methods
             if attr.startswith("__") and attr.endswith("__"):
                 continue
@@ -150,3 +158,18 @@ def test_catalog_dictionary():
         match="type object 'CatalogDictionary' has no attribute 'INVALID'"
     ):
         assert CatalogDictionary.INVALID != "/INVALID"
+
+
+@pytest.mark.parametrize(
+    ("old_name", "new_name"),
+    [("Type", "TYPE"), ("Mac", "MAC"), ("Unix", "UNIX"), ("Cl", "CL")],
+)
+def test_file_specification_deprecated_attributes(old_name, new_name):
+    expected_message = (
+        f"FileSpecificationDictionaryEntries.{old_name} is deprecated and will be removed "
+        f"in pypdf 7.0.0. Use FileSpecificationDictionaryEntries.{new_name} instead."
+    )
+    with pytest.warns(DeprecationWarning, match=f"^{re.escape(expected_message)}$"):
+        assert getattr(FileSpecificationDictionaryEntries, old_name) == getattr(
+            FileSpecificationDictionaryEntries, new_name
+        )
