@@ -3588,6 +3588,21 @@ def test_append__keeps_existing_acroform_fields():
     writer.append(RESOURCE_ROOT / "form.pdf")
     assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
 
+    writer.root_object["/AcroForm"][NameObject("/Fields")] = NullObject()
+    writer.append(RESOURCE_ROOT / "form.pdf")
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+
+def test_append__skips_duplicate_acroform_fields():
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    fields = reader.root_object["/AcroForm"]["/Fields"]
+    fields.append(fields[0])
+
+    writer = PdfWriter()
+    writer.append(reader)
+
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
 
 def test_compress_identical_objects__info_is_none():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
