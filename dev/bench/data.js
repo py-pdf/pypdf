@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793350803765,
+  "lastUpdate": 1793351340002,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -123161,6 +123161,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0035015613935205276",
             "extra": "mean: 651.2332664000041 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a7fc4dee81788be34e8510ef42555b1e8cf76826",
+          "message": "DEP: Cleanup deprecations for the next major release (#4306)\n\n* DEP: Cleanup deprecations for the next major release\n\nAll soft deprecations are hard deprecations now, while all previous hard\ndeprecations have mostly been removed.\n\nThere are two special cases:\n\n  * The configuration value to skip evaluating old configuration will be\n    deprecated with the next major release only, when the remaining old\n    values will be removed as well.\n  * Attempting to call `NameObject.renumber` for a value not starting\n    with a slash, a `PdfStreamError` will be raised instead of a\n    deprecation error, as users are (not yet) blocked to generate such\n    `NameObject`s as far as I am aware.\n\n* remove outdated/obsolete example\n\n* remove outdated exception handling mostly used for reader",
+          "timestamp": "2026-10-30T10:05:53+01:00",
+          "tree_id": "39309589a034d0f608a370e06d57c00556ab5baf",
+          "url": "https://github.com/py-pdf/pypdf/commit/a7fc4dee81788be34e8510ef42555b1e8cf76826"
+        },
+        "date": 1793351327010,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.753887305116372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008073543377686841",
+            "extra": "mean: 363.12306539999923 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.973106238261447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002421479177010572",
+            "extra": "mean: 45.51017908695652 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2411709873848167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03417102337195842",
+            "extra": "mean: 4.146435733600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.011138999285773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020483320235709142",
+            "extra": "mean: 58.785011400000066 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07703907832444407,
+            "unit": "iter/sec",
+            "range": "stddev: 0.045743052441373146",
+            "extra": "mean: 12.980425282200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4804474685399016,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017143577729689764",
+            "extra": "mean: 675.4714511999907 msec\nrounds: 5"
           }
         ]
       }
