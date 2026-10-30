@@ -512,14 +512,18 @@ def test_2bits_image():
 
 
 @pytest.mark.enable_socket
+@pytest.mark.xfail(reason="4-bit /DeviceGray images are extracted as black palette images", raises=AssertionError)
 def test_4bits_image():
-    """From #1954, test with 4bits image."""
+    """
+    From #1954, test with 4bits image.
+
+    The 16 x 16 /DeviceGray image has the gray level y in each pixel of row y, from black to white.
+    """
     reader = PdfReader(BytesIO(get_data_from_url(name="4bits_image.pdf")))
-    url_png = "https://github.com/user-attachments/files/27492549/4bits_image.png.txt"
-    name_png = "4bits_image.png"
-    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
-    data = reader.pages[0].images[0]
-    assert image_similarity(data.image, refimg) > 0.99
+    image = reader.pages[0].images[0].image
+    expected = bytes(y * 255 // 15 for y in range(16) for _ in range(16))
+    assert image.size == (16, 16)
+    assert image.convert("L").tobytes() == expected
 
 
 @pytest.mark.enable_socket
@@ -1286,7 +1290,7 @@ def test_flatedecode__decode_png_prediction__speed():
 
 
 _LOW_BIT_DEPTH_PNG_PREDICTION = pytest.mark.xfail(
-    reason="For fewer than 8 bits per pixel, the bytes per pixel are rounded down to 0 instead of up to 1",
+    reason="#4308: For fewer than 8 bits per pixel, the bytes per pixel are rounded down to 0 instead of up to 1",
     strict=True,
 )
 
