@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793349469653,
+  "lastUpdate": 1793350702704,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -123095,6 +123095,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.019521673435925386",
             "extra": "mean: 491.5218400000015 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "48d47b8483e62d8dd75f38a1a8090899e2f37033",
+          "message": "TST: Compare PNG predicted images with images without a predictor (#4315)\n\n* TST: Compare PNG predicted images with images without a predictor\n\nUpdate the sample files to py-pdf/sample-files#45, which adds\n031-png-predictors and 032-png-predictors-low-bit-depth. Each page of\nthese files shows the same image twice: once without a predictor, and\nonce with /Predictor 15, using the PNG filters None, Sub, Up, Average\nand Paeth in bands of 50 rows. Both images must decode to the same data.\n\nThe 8-bit RGB image of 031-png-predictors does. The grayscale images\nof 032-png-predictors-low-bit-depth, with 1, 2 and 4 bits per\ncomponent, do not: for fewer than 8 bits per pixel, the bytes per pixel\nused by the Sub, Average and Paeth filters are rounded down to 0 instead\nof up to 1. These cases are marked as strict xfail.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Make xfail strict by default\n\nWith xfail_strict, a test marked as xfail that passes makes the test\nrun fail, so that marks of fixed issues do not stay behind.\n\ntest_issue_2336 is the only test that passed unexpectedly. The\nwhitespace issue #2336 was fixed by d5233a0f3 \"BUG: Improve handling of\nspaces in text extraction (#2882)\" in October 2024, so its xfail mark is\nremoved.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Correct outdated and wrong expectations of image tests\n\n* test_get_images: imagemagick-lzw.pdf was marked as xfail for \"broken\n  image extraction\" since #1330. The image is extracted correctly, but\n  as Im0.tiff: images using the LZW filter are saved as TIFF since that\n  PR. Expect Im0.tiff and remove the mark, and the commented-out mark of\n  imagemagick-ASCII85Decode.pdf.\n* test_4bits_image: the reference PNG was extracted with pypdf (#3761)\n  and is black, like the image pypdf extracts. The 16 x 16 /DeviceGray\n  image is a gradient, with the gray level y in each pixel of row y, as\n  poppler renders it. Compare with this gradient instead, and mark the\n  test as xfail, as 4-bit /DeviceGray images are extracted as black\n  palette images.\n* Refer to #4308 in the xfail reason of the PNG predictor tests with\n  fewer than 8 bits per pixel.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Refer to #4316 in the xfail reason of test_4bits_image\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-30T09:48:40+01:00",
+          "tree_id": "1447d1ab48d20627a112a696866cecab80085358",
+          "url": "https://github.com/py-pdf/pypdf/commit/48d47b8483e62d8dd75f38a1a8090899e2f37033"
+        },
+        "date": 1793350690426,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7859989604412556,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007365278053022006",
+            "extra": "mean: 358.937678800001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.496558933681538,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017787219520477393",
+            "extra": "mean: 44.451242652173526 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24506471437881283,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02253027543773245",
+            "extra": "mean: 4.080554814000001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.40864073008193,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00193764190478528",
+            "extra": "mean: 57.4427386666675 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07860733874267144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.058411149532950346",
+            "extra": "mean: 12.7214585304 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5355480925106402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035015613935205276",
+            "extra": "mean: 651.2332664000041 msec\nrounds: 5"
           }
         ]
       }
