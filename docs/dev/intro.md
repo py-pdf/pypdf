@@ -109,3 +109,13 @@ finished within the PR and have a test for that feature.
 We need to keep an eye on performance, and thus we have a few benchmarks.
 
 See [py-pdf.github.io/pypdf/dev/bench](https://py-pdf.github.io/pypdf/dev/bench/)
+
+The GitHub Actions runners differ in speed by up to a factor of two. Hence every
+benchmark is divided by `test_calibration`, a fixed workload which does not use
+pypdf. The charts show these calibrated values, and the tooltips show the
+machine they were measured on.
+
+To compare your changes with the published values, run `make benchmark`.
+
+How the page is built and published is described in
+[docs/benchmark-page/README.md](https://github.com/py-pdf/pypdf/blob/main/docs/benchmark-page/README.md).

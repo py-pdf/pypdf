@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pypdf Benchmarks</title>
+<style>
+  /* Layout: header with the latest run, one row of filters, a summary table, then a grid of
+     small-multiple charts (two columns on wide screens, one on phones). System fonts only. */
+  :root {
+    --page: #f5f5f2;
+    --surface: #fdfdfb;
+    --ink: #141413;
+    --ink-2: #52514e;
+    --muted: #6f6d67;
+    --grid: #e6e5de;
+    --axis: #c3c2b7;
+    --border: rgba(20, 20, 19, 0.10);
+    --accent: #2a78d6;
+    --accent-wash: rgba(42, 120, 214, 0.10);
+    --point: rgba(82, 81, 78, 0.42);
+    --good: #006300;
+    --bad: #c03434;
+    --bad-wash: rgba(208, 59, 59, 0.10);
+    --good-wash: rgba(12, 163, 12, 0.10);
+    --archive: #857f74;
+    --archive-point: rgba(133, 127, 116, 0.38);
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0f0f0e;
+      --surface: #1a1a19;
+      --ink: #f0efec;
+      --ink-2: #c3c2b7;
+      --muted: #9b998f;
+      --grid: #2c2c2a;
+      --axis: #44443f;
+      --border: rgba(255, 255, 255, 0.10);
+      --accent: #3987e5;
+      --accent-wash: rgba(57, 135, 229, 0.16);
+      --point: rgba(195, 194, 183, 0.38);
+      --good: #2fbf2f;
+      --bad: #ef7777;
+      --bad-wash: rgba(230, 103, 103, 0.14);
+      --good-wash: rgba(12, 163, 12, 0.16);
+      --archive: #a39e92;
+      --archive-point: rgba(163, 158, 146, 0.34);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0f0f0e;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #9b998f;
+    --grid: #2c2c2a;
+    --axis: #44443f;
+    --border: rgba(255, 255, 255, 0.10);
+    --accent: #3987e5;
+    --accent-wash: rgba(57, 135, 229, 0.16);
+    --point: rgba(195, 194, 183, 0.38);
+    --good: #2fbf2f;
+    --bad: #ef7777;
+    --bad-wash: rgba(230, 103, 103, 0.14);
+    --good-wash: rgba(12, 163, 12, 0.16);
+    --archive: #a39e92;
+    --archive-point: rgba(163, 158, 146, 0.34);
+    color-scheme: dark;
+  }
+
+  .wrap { --series: var(--accent); --series-point: var(--point); }
+  .wrap.is-archive { --series: var(--archive); --series-point: var(--archive-point); }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 15px/1.5 var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-block: 32px 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  ::selection { background: var(--accent-wash); color: var(--ink); }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  code, .mono { font-family: var(--mono); font-size: 0.92em; }
+
+  .archive-note {
+    border: 1px dashed var(--archive);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: grid;
+    gap: 6px;
+    max-width: 82ch;
+  }
+  .archive-note strong { font-size: 15px; }
+  .archive-note p { margin: 0; color: var(--ink-2); }
+  .tag {
+    display: inline-block; font-family: var(--font); font-size: 11.5px; font-weight: 600;
+    color: var(--ink-2); border: 1px dashed var(--archive); border-radius: 999px;
+    padding: 0 8px; margin-left: 8px; vertical-align: 2px; white-space: nowrap;
+  }
+  .is-archive .card { border-style: dashed; border-color: var(--archive); }
+  .is-archive .judge { display: none; }
+  .loading { opacity: 0.5; transition: opacity 0.2s; }
+  .empty-state {
+    border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+    padding: 20px; display: grid; gap: 6px; max-width: 82ch;
+  }
+  .empty-state strong { font-size: 16px; }
+  .empty-state p { margin: 0; color: var(--ink-2); }
+
+  header { display: grid; gap: 10px; }
+  .meta-line { display: flex; flex-wrap: wrap; gap: 0 8px; align-items: center; color: var(--muted); font-size: 13px; }
+  .meta-line a { color: inherit; }
+  h1 { margin: 0; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; letter-spacing: -0.015em; text-wrap: balance; }
+  .lede { margin: 0; max-width: 68ch; color: var(--ink-2); }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  .latest {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .latest > div { background: var(--surface); padding: 12px 16px; min-width: 0; }
+  .latest dt { color: var(--muted); font-size: 12.5px; }
+  .latest dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+  .control { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; min-width: 0; }
+  .control-label { color: var(--muted); font-size: 13px; }
+  .segmented { display: inline-flex; flex-wrap: wrap; max-width: 100%; padding: 3px; gap: 2px; background: var(--grid); border-radius: 8px; }
+  .segmented button {
+    font: inherit; font-size: 14px; color: var(--ink-2);
+    background: transparent; border: 0; border-radius: 6px;
+    padding: 5px 12px; cursor: pointer; white-space: nowrap;
+  }
+  .segmented button:hover { color: var(--ink); }
+  .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+
+  h2 { margin: 0 0 12px; font-size: 17px; letter-spacing: -0.005em; }
+  .section-note { margin: -6px 0 14px; color: var(--muted); font-size: 13.5px; max-width: 75ch; }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 9px 14px; text-align: left; white-space: nowrap; }
+  thead th { color: var(--muted); font-weight: 500; font-size: 12.5px; border-bottom: 1px solid var(--border); }
+  tbody tr + tr td { border-top: 1px solid var(--border); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bench-link { color: var(--ink); text-decoration: none; font-family: var(--mono); font-size: 13.5px; }
+  .bench-link:hover { color: var(--accent); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 1px 9px 1px 7px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  }
+  .pill svg { width: 10px; height: 10px; }
+  .pill.bad { color: var(--bad); background: var(--bad-wash); }
+  .pill.good { color: var(--good); background: var(--good-wash); }
+  .pill.same { color: var(--muted); background: transparent; font-weight: 500; }
+  .delta.bad { color: var(--bad); }
+  .delta.good { color: var(--good); }
+  .delta.same { color: var(--muted); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--ink-2); font-size: 13px; margin-bottom: 14px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+
+  .charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 16px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px 12px; min-width: 0; display: grid; gap: 6px; scroll-margin-top: 16px;
+  }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .card h3 { margin: 0; font-family: var(--mono); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+  .card-value { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .card-value strong { color: var(--ink); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .plot { position: relative; }
+  .plot svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+  .plot svg:focus-visible { outline-offset: 4px; }
+  .tick { fill: var(--muted); font-size: 11px; font-family: var(--font); font-variant-numeric: tabular-nums; }
+
+  .tooltip {
+    position: absolute; top: 0; pointer-events: none; z-index: 2;
+    width: max-content; max-width: min(300px, 80%);
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+    padding: 8px 10px; font-size: 12.5px; line-height: 1.4;
+  }
+  .tooltip .tt-value { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .tooltip .tt-msg { color: var(--ink-2); margin: 3px 0; overflow-wrap: anywhere; }
+  .tooltip .tt-meta { color: var(--muted); }
+
+  .pinned {
+    border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px;
+    display: grid; gap: 4px; font-size: 13.5px;
+  }
+  .pinned-top { display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: baseline; }
+  .pinned .msg { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+  .pinned .meta { color: var(--muted); overflow-wrap: anywhere; }
+  .pinned button { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .hint { color: var(--muted); font-size: 12.5px; }
+
+  details { font-size: 13.5px; }
+  summary { cursor: pointer; color: var(--muted); width: max-content; }
+  summary:hover { color: var(--ink); }
+  details .table-scroll { margin-top: 8px; max-height: 320px; overflow: auto; }
+  details table { font-size: 13px; }
+  details th { position: sticky; top: 0; background: var(--surface); }
+
+  footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
+  footer p { margin: 0; max-width: 80ch; }
+
+  .legend .hint-touch { display: none; }
+  @media (hover: none) {
+    .legend .hint-pointer { display: none; }
+    .legend .hint-touch { display: inline; }
+  }
+  @media (pointer: coarse) {
+    .segmented button { min-height: 40px; padding-inline: 14px; }
+    summary { padding-block: 8px; }
+    .pinned button { padding-block: 8px; }
+  }
+
+  @media (max-width: 560px) {
+    .wrap { padding-block: 20px 32px; gap: 22px; }
+    th, td { padding: 8px 10px; }
+    .controls { gap: 12px; }
+    .latest { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .latest > div:first-child, .latest > div:last-child:nth-child(even) { grid-column: 1 / -1; }
+    .card { padding: 12px 12px 10px; }
+
+    /* Summary rows become two-line entries: the name, then trend and numbers. */
+    #summary-rows, #summary-rows tr { display: block; }
+    .summary-table thead { display: none; }
+    #summary-rows tr {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      grid-template-areas: "name name name name" "trend latest change status";
+      align-items: center;
+      gap: 6px 12px;
+      padding: 10px 12px;
+    }
+    #summary-rows tr + tr { border-top: 1px solid var(--border); }
+    #summary-rows tr + tr td { border-top: 0; }
+    #summary-rows td { padding: 0; white-space: normal; }
+    #summary-rows td:nth-child(1) { grid-area: name; overflow-wrap: anywhere; }
+    #summary-rows td:nth-child(2) { grid-area: trend; }
+    #summary-rows td:nth-child(3) { grid-area: latest; }
+    #summary-rows td:nth-child(4) { grid-area: change; }
+    #summary-rows td:nth-child(5) { grid-area: status; }
+    #summary-rows td[data-label]::before {
+      content: attr(data-label); display: block;
+      color: var(--muted); font-size: 11px; font-weight: 400; text-align: right;
+    }
+    #summary-rows svg { width: 88px; height: auto; }
+    .is-archive #summary-rows tr { grid-template-columns: auto 1fr; grid-template-areas: "name name" "trend latest"; }
+
+    details th { white-space: normal; }
+    .values-table .raw { display: none; }
+  }
+  @media (max-width: 360px) {
+    #summary-rows tr { column-gap: 8px; }
+    #summary-rows svg { width: 64px; }
+    .bench-link { font-size: 12px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>pypdf benchmarks</h1>
+    <div class="meta-line"><a id="repo-link" href="https://github.com/py-pdf/pypdf">py-pdf/pypdf</a><span aria-hidden="true">·</span><span id="updated"></span></div>
+    <p class="lede" id="lede">Each value is a benchmark's median time divided by the time of a fixed calibration workload that ran on the same machine. <strong>Lower is faster.</strong> Because the slow and fast GitHub runners cancel out, values from different machines are comparable, including yours: run <code>make benchmark</code>.</p>
+  </header>
+
+  <dl class="latest" id="latest"></dl>
+
+  <div class="controls" role="group" aria-label="Filters">
+    <div class="control"><span class="control-label" id="era-label">Data</span><div class="segmented" id="era-buttons" role="group" aria-labelledby="era-label"></div></div>
+    <div class="control" id="suite-control"><span class="control-label" id="suite-label">Interpreter</span><div class="segmented" id="suite-buttons" role="group" aria-labelledby="suite-label"></div></div>
+    <div class="control"><span class="control-label" id="range-label">Show</span><div class="segmented" id="range-buttons" role="group" aria-labelledby="range-label"></div></div>
+  </div>
+
+  <div class="archive-note" id="archive-note" hidden>
+    <strong id="archive-title">Archive: results from before calibration</strong>
+    <p>These values are iterations per second, so <strong>higher is faster</strong>. Each run used whichever GitHub runner was free, and the runners differ in speed by up to a factor of two, so most jumps come from the machine, not from pypdf. Some benchmarks also included disk access and assertions. Do not compare these numbers with the calibrated results.</p>
+  </div>
+
+  <div class="empty-state" id="empty-state" hidden>
+    <strong>No calibrated results yet</strong>
+    <p>They appear after the next benchmark run on <code>main</code>. The results from before the calibration are under <em>Before calibration</em>.</p>
+  </div>
+
+  <section id="summary-section" aria-labelledby="summary-heading">
+    <h2 id="summary-heading">Summary</h2>
+    <p class="section-note" id="summary-note">Change compares the median of the last 3 commits with the median of the 10 commits before them. Moves of less than 10% are within the noise.</p>
+    <div class="table-scroll">
+      <table class="summary-table">
+        <thead><tr><th scope="col">Benchmark</th><th scope="col">Trend</th><th scope="col" class="num">Latest</th><th scope="col" class="num judge">Change</th><th scope="col" class="judge">Status</th></tr></thead>
+        <tbody id="summary-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="charts-section" aria-labelledby="charts-heading">
+    <h2 id="charts-heading">History</h2>
+    <div class="legend" aria-label="Legend">
+      <span><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3" fill="var(--series-point)"></circle></svg>One commit</span>
+      <span><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="var(--series)" stroke-width="2" stroke-linecap="round"></line></svg>Median of the last 7 commits</span>
+      <span class="hint hint-pointer">Hover or use the arrow keys to read values. Click to pin a commit.</span>
+      <span class="hint hint-touch">Tap or drag across a chart to see a commit.</span>
+    </div>
+    <div class="charts" id="charts"></div>
+  </section>
+
+  <footer>
+    <p>The calibrated data comes from <code>data.js</code>, which the <a href="https://github.com/py-pdf/pypdf/blob/main/.github/workflows/benchmark.yaml">benchmark workflow</a> updates after every commit to <code>main</code>. The benchmarks are in <a href="https://github.com/py-pdf/pypdf/blob/main/tests/bench.py">tests/bench.py</a>. Results from before the calibration are kept unchanged in <code>archive/before-calibration.js</code>.</p>
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+(() => {
+  "use strict";
+  const ARCHIVE_URL = "archive/before-calibration.js";
+  const sources = { current: window.BENCHMARK_DATA, archive: window.BENCHMARK_ARCHIVE || null };
+  let data = sources.current;
+  const RANGES = [[50, "50 commits"], [100, "100"], [250, "250"], [Infinity, "All"]];
+  const WINDOW = 7;
+  const NOISE = 0.10;
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const state = { era: "current", suite: null, range: 100, pinned: new Map() };
+
+  // ---------- data ----------
+  let suiteNames = Object.keys(data.entries);
+  const interpreter = (name) => name.replace(/ \(calibrated\)$| Benchmark$/, "");
+  const slug = (era, name) => `${era === "archive" ? "before-calibration-" : ""}${interpreter(name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+  function loadArchive() {
+    if (sources.archive) return Promise.resolve(sources.archive);
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = ARCHIVE_URL;
+      script.onload = () => { sources.archive = window.BENCHMARK_ARCHIVE; resolve(sources.archive); };
+      script.onerror = () => reject(new Error(`Could not load ${ARCHIVE_URL}`));
+      document.head.append(script);
+    });
+  }
+
+  async function select(era, suite) {
+    if (era === "archive" && !sources.archive) {
+      const wrap = document.querySelector(".wrap");
+      wrap.classList.add("loading");
+      try { await loadArchive(); } catch (err) { showLoadFailure(err); return; } finally { wrap.classList.remove("loading"); }
+    }
+    state.era = era;
+    data = sources[era];
+    suiteNames = Object.keys(data.entries);
+    const wanted = suite && interpreter(suite);
+    state.suite = suiteNames.find((name) => interpreter(name) === wanted) || suiteNames[0];
+    state.pinned.clear();
+    const hash = state.suite ? `#${slug(state.era, state.suite)}` : "";
+    if (hash && location.hash !== hash) location.hash = hash;
+    render();
+  }
+
+  function showLoadFailure(err) {
+    const note = document.getElementById("archive-note");
+    note.hidden = false;
+    document.getElementById("archive-title").textContent = `${err.message}. Reload the page to try again.`;
+  }
+
+  function parseExtra(extra) {
+    const out = {};
+    for (const line of (extra || "").split("\n")) {
+      const i = line.indexOf(":");
+      if (i > 0) out[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+    }
+    return out;
+  }
+
+  function median(values) {
+    const s = values.filter(Number.isFinite).sort((a, b) => a - b);
+    if (!s.length) return NaN;
+    const m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  }
+
+  const cache = new Map();
+  function seriesFor(suite) {
+    const key = `${state.era}/${suite}`;
+    if (cache.has(key)) return cache.get(key);
+    const entries = data.entries[suite];
+    const byName = new Map();
+    for (const entry of entries) {
+      for (const bench of entry.benches) {
+        if (!byName.has(bench.name)) byName.set(bench.name, []);
+        byName.get(bench.name).push({ entry, bench, value: bench.value, extra: parseExtra(bench.extra) });
+      }
+    }
+    for (const points of byName.values()) {
+      points.forEach((p, i) => { p.median = median(points.slice(Math.max(0, i - WINDOW + 1), i + 1).map((q) => q.value)); });
+    }
+    const last = entries[entries.length - 1];
+    const order = last ? last.benches.map((b) => b.name) : [];
+    const result = {
+      smallerIsBetter: !last || last.tool !== "pytest",
+      unit: last && last.benches[0] ? last.benches[0].unit : "",
+      benches: [...byName.entries()].sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0])),
+    };
+    cache.set(key, result);
+    return result;
+  }
+
+  function change(points) {
+    if (points.length < 13) return NaN;
+    const recent = median(points.slice(-3).map((p) => p.value));
+    const before = median(points.slice(-13, -3).map((p) => p.value));
+    return recent / before - 1;
+  }
+
+  function verdict(delta, smallerIsBetter) {
+    if (!Number.isFinite(delta) || Math.abs(delta) < NOISE) return "same";
+    return (delta > 0) === smallerIsBetter ? "bad" : "good";
+  }
+
+  // ---------- formatting ----------
+  const fmt = (v) => !Number.isFinite(v) ? "–" : v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : v.toFixed(3);
+  const unitLabel = (unit) => unit === "x calibration" ? "× calibration" : unit === "iter/sec" ? "iterations/s" : unit;
+  const pct = (d) => !Number.isFinite(d) ? "–" : `${d > 0 ? "+" : d < 0 ? "−" : "±"}${Math.abs(d * 100).toFixed(1)}%`;
+  const dateFmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" });
+  const shortDate = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
+  const monthYear = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" });
+  const commitDate = (entry) => new Date(entry.commit.timestamp || entry.date);
+  const firstLine = (msg) => (msg || "").split("\n")[0];
+  const sha = (entry) => entry.commit.id.slice(0, 8);
+  const displayName = (name) => name.replace(/^tests\/bench\.py::test_/, "");
+
+  function el(tag, attrs = {}, ...children) {
+    const node = tag.startsWith("svg:") ? document.createElementNS(SVG_NS, tag.slice(4)) : document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v === undefined || v === null || v === false) continue;
+      if (k === "text") node.textContent = v;
+      else if (k === "class") node.setAttribute("class", v);
+      else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+      else node.setAttribute(k, v === true ? "" : v);
+    }
+    for (const child of children) if (child != null) node.append(child);
+    return node;
+  }
+
+  const ARROW = { bad: "M5 1 L9 8 H1 Z", good: "M5 9 L1 2 H9 Z" };
+  function pill(kind, smallerIsBetter) {
+    const text = kind === "same" ? "Stable" : (kind === "bad") ? (smallerIsBetter ? "Slower" : "Worse") : (smallerIsBetter ? "Faster" : "Better");
+    const icon = kind === "same" ? null : el("svg:svg", { viewBox: "0 0 10 10", "aria-hidden": "true" }, el("svg:path", { d: ARROW[kind], fill: "currentColor" }));
+    return el("span", { class: `pill ${kind}` }, icon, text);
+  }
+
+  // ---------- header ----------
+  function renderHeader() {
+    document.getElementById("updated").textContent = `Updated ${dateFmt.format(new Date(data.lastUpdate))}`;
+    if (data.repoUrl) document.getElementById("repo-link").href = data.repoUrl;
+    const entries = data.entries[state.suite] || [];
+    const last = entries[entries.length - 1];
+    const latest = document.getElementById("latest");
+    latest.replaceChildren();
+    if (!last) return;
+    const extra = parseExtra(last.benches[0] && last.benches[0].extra);
+    const item = (label, ...content) => el("div", {}, el("dt", { text: label }), el("dd", {}, ...content));
+    if (state.era === "archive") {
+      latest.append(
+        item("Period", `${dateFmt.format(commitDate(entries[0]))} to ${dateFmt.format(commitDate(last))}`),
+        item("Commits", `${entries.length.toLocaleString("en")} runs`),
+        item("Unit", "iterations per second, higher is faster"),
+        item("Machine", "whichever GitHub runner was free, not recorded"));
+      return;
+    }
+    latest.append(
+      item("Latest commit", el("a", { href: last.commit.url, class: "mono", text: sha(last) }), ` ${firstLine(last.commit.message)}`),
+      item("Measured", dateFmt.format(new Date(last.date))),
+      item("Machine", extra.machine || "not recorded"),
+      item("Calibration workload", extra.calibration || "–"),
+    );
+  }
+
+  // ---------- controls ----------
+  function renderControls() {
+    document.getElementById("era-buttons").replaceChildren(...[["current", "Calibrated"], ["archive", "Before calibration"]].map(([era, label]) => el("button", {
+      type: "button", "aria-pressed": String(era === state.era), text: label,
+      onclick: () => select(era, state.suite),
+    })));
+    const suiteButtons = document.getElementById("suite-buttons");
+    suiteButtons.replaceChildren(...suiteNames.map((name) => el("button", {
+      type: "button", "aria-pressed": String(name === state.suite),
+      text: interpreter(name),
+      onclick: () => select(state.era, name),
+    })));
+    const rangeButtons = document.getElementById("range-buttons");
+    rangeButtons.replaceChildren(...RANGES.map(([n, label]) => el("button", {
+      type: "button", "aria-pressed": String(n === state.range), text: label,
+      onclick: () => { state.range = n; render(); },
+    })));
+  }
+
+  // ---------- summary ----------
+  function sparkline(points) {
+    const w = 112, h = 28, pad = 3;
+    const values = points.map((p) => p.median);
+    // At least 30% of the median as vertical span, so noise does not look like a trend.
+    const mid = median(values);
+    const max = Math.max(...values, mid * 1.15), min = Math.min(...values, mid * 0.85);
+    const span = max - min || 1;
+    const x = (i) => pad + (i / Math.max(1, points.length - 1)) * (w - 2 * pad);
+    const y = (v) => h - pad - ((v - min) / span) * (h - 2 * pad);
+    const d = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+    const lastX = x(values.length - 1), lastY = y(values[values.length - 1]);
+    return el("svg:svg", { width: w, height: h, viewBox: `0 0 ${w} ${h}`, "aria-hidden": "true" },
+      el("svg:path", { d, fill: "none", stroke: "var(--series)", "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round" }),
+      el("svg:circle", { cx: lastX, cy: lastY, r: 2.5, fill: "var(--series)" }));
+  }
+
+  function renderSummary(series) {
+    const rows = series.benches.map(([name, points]) => {
+      const visible = points.slice(-state.range);
+      const delta = change(points);
+      const kind = verdict(delta, series.smallerIsBetter);
+      return el("tr", {},
+        el("td", {}, el("a", { class: "bench-link", href: `#${slug(state.era, state.suite)}`, text: displayName(name), onclick: (e) => { e.preventDefault(); document.getElementById(`card-${name}`).scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); } })),
+        el("td", {}, sparkline(visible)),
+        el("td", { class: "num", "data-label": "Latest", text: fmt(points[points.length - 1].value) }),
+        el("td", { class: `num delta judge ${kind}`, "data-label": "Change", text: pct(delta) }),
+        el("td", { class: "judge" }, pill(kind, series.smallerIsBetter)));
+    });
+    document.getElementById("summary-rows").replaceChildren(...rows);
+  }
+
+  // ---------- charts ----------
+  function niceTicks(max) {
+    if (!(max > 0)) return { top: 1, step: 0.25 };
+    const raw = max / 4;
+    const mag = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+    return { top: Math.ceil(max / step) * step, step };
+  }
+
+  function chart(card, name, points, series) {
+    const plot = card.querySelector(".plot");
+    const width = Math.max(260, plot.clientWidth || 500);
+    const height = width < 420 ? 190 : 210;
+    const m = { l: 44, r: 10, t: 10, b: 24 };
+    const pw = width - m.l - m.r, ph = height - m.t - m.b;
+    const n = points.length;
+    const { top, step } = niceTicks(Math.max(...points.map((p) => p.value)));
+    const x = (i) => m.l + (n === 1 ? pw / 2 : (i / (n - 1)) * pw);
+    const y = (v) => m.t + ph - (v / top) * ph;
+
+    const svg = el("svg:svg", {
+      viewBox: `0 0 ${width} ${height}`, tabindex: 0, role: "img",
+      "aria-label": `${displayName(name)}: ${n} commits, latest ${fmt(points[n - 1].value)} ${unitLabel(series.unit)}. Use the arrow keys to read values.`,
+    });
+    const precision = step < 0.1 ? 2 : step < 1 ? 1 : 0;
+    for (let v = 0; v <= top + step / 2; v += step) {
+      svg.append(
+        el("svg:line", { x1: m.l, x2: width - m.r, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1, "shape-rendering": "crispEdges" }),
+        el("svg:text", { x: m.l - 8, y: y(v) + 3.5, "text-anchor": "end", class: "tick", text: v.toFixed(precision) }));
+    }
+    const tickCount = Math.min(n, width < 420 ? 3 : 5);
+    const longSpan = commitDate(points[n - 1].entry) - commitDate(points[0].entry) > 300 * 864e5;
+    for (let k = 0; k < tickCount; k++) {
+      const i = tickCount === 1 ? n - 1 : Math.round((k / (tickCount - 1)) * (n - 1));
+      const anchor = k === 0 ? "start" : k === tickCount - 1 ? "end" : "middle";
+      svg.append(el("svg:text", { x: x(i), y: height - 6, "text-anchor": anchor, class: "tick", text: (longSpan ? monthYear : shortDate).format(commitDate(points[i].entry)) }));
+    }
+    const dots = el("svg:g", { fill: "var(--series-point)" });
+    points.forEach((p, i) => dots.append(el("svg:circle", { cx: x(i), cy: y(p.value), r: n > 150 ? 1.8 : 2.4 })));
+    svg.append(dots);
+    const d = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(p.median).toFixed(1)}`).join(" ");
+    svg.append(el("svg:path", { d, fill: "none", stroke: "var(--series)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    svg.append(el("svg:circle", { cx: x(n - 1), cy: y(points[n - 1].median), r: 4, fill: "var(--series)", stroke: "var(--surface)", "stroke-width": 2 }));
+
+    const pinnedIndex = state.pinned.has(name) ? points.findIndex((p) => p.entry.commit.id === state.pinned.get(name)) : -1;
+    const cross = el("svg:line", { y1: m.t, y2: m.t + ph, stroke: "var(--ink-2)", "stroke-width": 1, "stroke-opacity": 0.5, visibility: "hidden", "shape-rendering": "crispEdges" });
+    const hoverDot = el("svg:circle", { r: 4.5, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2, visibility: "hidden" });
+    const pinLine = el("svg:line", { y1: m.t, y2: m.t + ph, stroke: "var(--series)", "stroke-width": 1, "stroke-dasharray": "0", visibility: pinnedIndex >= 0 ? "visible" : "hidden", x1: x(Math.max(0, pinnedIndex)), x2: x(Math.max(0, pinnedIndex)) });
+    svg.append(pinLine, cross, hoverDot);
+    const overlay = el("svg:rect", { x: m.l - 6, y: 0, width: pw + 12, height, fill: "transparent", style: "cursor: crosshair" });
+    svg.append(overlay);
+
+    const tooltip = el("div", { class: "tooltip", hidden: true });
+    plot.replaceChildren(svg, tooltip);
+    let active = -1;
+
+    function show(i) {
+      active = i;
+      const p = points[i];
+      cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
+      hoverDot.setAttribute("cx", x(i)); hoverDot.setAttribute("cy", y(p.value)); hoverDot.setAttribute("visibility", "visible");
+      tooltip.replaceChildren(
+        el("div", { class: "tt-value", text: `${fmt(p.value)} ${unitLabel(series.unit)}` }),
+        el("div", { class: "tt-meta", text: `7-commit median ${fmt(p.median)}${p.extra.median ? ` · raw ${p.extra.median}` : ""}` }),
+        el("div", { class: "tt-msg", text: firstLine(p.entry.commit.message) }),
+        el("div", { class: "tt-meta mono", text: `${sha(p.entry)} · ${dateFmt.format(commitDate(p.entry))}` }));
+      tooltip.hidden = false;
+      const scale = plot.clientWidth / width;
+      const px = x(i) * scale;
+      const tw = tooltip.offsetWidth;
+      const left = px + 14 + tw > plot.clientWidth ? px - 14 - tw : px + 14;
+      tooltip.style.left = `${Math.max(0, left)}px`;
+    }
+    function hide() {
+      active = -1;
+      cross.setAttribute("visibility", "hidden");
+      hoverDot.setAttribute("visibility", "hidden");
+      tooltip.hidden = true;
+    }
+    function indexAt(evt) {
+      const rect = svg.getBoundingClientRect();
+      const px = ((evt.clientX - rect.left) / rect.width) * width;
+      return Math.max(0, Math.min(n - 1, Math.round(((px - m.l) / pw) * (n - 1))));
+    }
+    function pin(i) {
+      state.pinned.set(name, points[i].entry.commit.id);
+      renderPinned(card, name, points, i, series);
+      pinLine.setAttribute("x1", x(i)); pinLine.setAttribute("x2", x(i)); pinLine.setAttribute("visibility", "visible");
+    }
+    overlay.addEventListener("pointerdown", (evt) => show(indexAt(evt)));
+    overlay.addEventListener("pointermove", (evt) => show(indexAt(evt)));
+    overlay.addEventListener("pointerleave", hide);
+    overlay.addEventListener("click", (evt) => pin(indexAt(evt)));
+    svg.addEventListener("blur", hide);
+    svg.addEventListener("keydown", (evt) => {
+      const keys = { ArrowLeft: -1, ArrowRight: 1, Home: -Infinity, End: Infinity };
+      if (evt.key in keys) {
+        evt.preventDefault();
+        const start = active < 0 ? n - 1 : active;
+        show(Math.max(0, Math.min(n - 1, start + keys[evt.key])));
+      } else if (evt.key === "Enter" && active >= 0) {
+        pin(active);
+      } else if (evt.key === "Escape") {
+        hide();
+      }
+    });
+    renderPinned(card, name, points, pinnedIndex, series);
+  }
+
+  function renderPinned(card, name, points, i, series) {
+    const box = card.querySelector(".pinned");
+    if (i < 0) { box.hidden = true; box.replaceChildren(); return; }
+    const p = points[i];
+    const all = seriesFor(state.suite).benches.find(([n]) => n === name)[1];
+    const fullIndex = all.indexOf(p);
+    const prev = fullIndex > 0 ? all[fullIndex - 1].entry.commit.id : null;
+    const base = (data.repoUrl || "https://github.com/py-pdf/pypdf").replace(/\/$/, "");
+    const facts = [`${fmt(p.value)} ${unitLabel(series.unit)}`, `7-commit median ${fmt(p.median)}`];
+    if (p.extra.median) facts.push(`raw median ${p.extra.median}`);
+    if (p.extra.calibration) facts.push(`calibration ${p.extra.calibration}`);
+    box.hidden = false;
+    box.replaceChildren(
+      el("div", { class: "pinned-top" },
+        el("a", { class: "mono", href: p.entry.commit.url, text: sha(p.entry) }),
+        prev ? el("a", { href: `${base}/compare/${prev}...${p.entry.commit.id}`, text: "Compare with previous commit" }) : null,
+        el("button", { type: "button", text: "Unpin", onclick: () => { state.pinned.delete(name); renderCard(card, name, series); } })),
+      el("div", { class: "msg", text: firstLine(p.entry.commit.message) }),
+      el("div", { class: "meta", text: `${dateFmt.format(commitDate(p.entry))}${p.entry.commit.author ? ` · ${p.entry.commit.author.name}` : ""}` }),
+      el("div", { class: "meta", text: facts.join(" · ") }),
+      p.extra.machine ? el("div", { class: "meta", text: p.extra.machine }) : null);
+  }
+
+  function renderTable(details, points, series) {
+    if (!details.open) return;
+    const rows = points.slice().reverse().map((p) => el("tr", {},
+      el("td", {}, el("a", { class: "mono", href: p.entry.commit.url, text: sha(p.entry) })),
+      el("td", { text: dateFmt.format(commitDate(p.entry)) }),
+      el("td", { class: "num", text: fmt(p.value) }),
+      el("td", { class: "num", text: fmt(p.median) }),
+      el("td", { class: "num raw", text: p.extra.median || "–" })));
+    details.querySelector("tbody").replaceChildren(...rows);
+  }
+
+  function renderCard(card, name, series) {
+    const points = series.benches.find(([n]) => n === name)[1].slice(-state.range);
+    card.querySelector(".card-value").replaceChildren(
+      el("strong", { text: fmt(points[points.length - 1].median) }), ` ${unitLabel(series.unit)}, median of last ${Math.min(WINDOW, points.length)}`);
+    chart(card, name, points, series);
+    renderTable(card.querySelector("details"), points, series);
+  }
+
+  function renderCharts(series) {
+    const cards = series.benches.map(([name]) => {
+      const details = el("details", {},
+        el("summary", { text: "Show values" }),
+        el("div", { class: "table-scroll" }, el("table", { class: "values-table" },
+          el("thead", {}, el("tr", {},
+            el("th", { scope: "col", text: "Commit" }), el("th", { scope: "col", text: "Date" }),
+            el("th", { scope: "col", class: "num", text: "Value" }), el("th", { scope: "col", class: "num", text: "7-commit median" }),
+            el("th", { scope: "col", class: "num raw", text: "Raw median" }))),
+          el("tbody"))));
+      const card = el("article", { class: "card", id: `card-${name}` },
+        el("div", { class: "card-head" }, el("h3", {}, displayName(name), state.era === "archive" ? el("span", { class: "tag", text: "Before calibration" }) : null), el("div", { class: "card-value" })),
+        el("div", { class: "plot" }),
+        el("div", { class: "pinned", hidden: true }),
+        details);
+      details.addEventListener("toggle", () => renderTable(details, series.benches.find(([n]) => n === name)[1].slice(-state.range), series));
+      return card;
+    });
+    const container = document.getElementById("charts");
+    container.replaceChildren(...cards);
+    cards.forEach((card, k) => renderCard(card, series.benches[k][0], series));
+  }
+
+  const hasResults = () => Boolean(state.suite && data.entries[state.suite] && data.entries[state.suite].length);
+
+  function render() {
+    const archive = state.era === "archive";
+    document.querySelector(".wrap").classList.toggle("is-archive", archive);
+    document.getElementById("archive-note").hidden = !archive;
+    document.getElementById("lede").hidden = archive;
+    document.getElementById("summary-note").textContent = archive
+      ? "The archive is not judged as slower or faster, because the runner speed changed from run to run."
+      : "Change compares the median of the last 3 commits with the median of the 10 commits before them. Moves of less than 10% are within the noise.";
+    const empty = !hasResults();
+    document.getElementById("empty-state").hidden = !empty;
+    document.getElementById("suite-control").hidden = empty;
+    for (const id of ["latest", "summary-section", "charts-section"]) document.getElementById(id).hidden = empty;
+    renderControls();
+    renderHeader();
+    if (empty) return;
+    const series = seriesFor(state.suite);
+    renderSummary(series);
+    renderCharts(series);
+  }
+
+  function selectFromHash() {
+    const wanted = location.hash.slice(1);
+    const era = wanted.startsWith("before-calibration-") ? "archive" : "current";
+    const name = wanted.replace(/^before-calibration-/, "");
+    const suite = Object.keys((sources[era] || sources.current).entries).find((s) => interpreter(s).toLowerCase() === name);
+    if (era === state.era && suite === state.suite) return;
+    select(era, suite || null);
+  }
+
+  state.suite = suiteNames[0];
+  if (location.hash.length > 1) selectFromHash(); else render();
+  window.addEventListener("hashchange", selectFromHash);
+  let lastWidth = document.getElementById("charts").clientWidth;
+  new ResizeObserver(() => {
+    const w = document.getElementById("charts").clientWidth;
+    if (w === lastWidth || !hasResults()) return;
+    lastWidth = w;
+    const series = seriesFor(state.suite);
+    document.querySelectorAll(".card").forEach((card, k) => chart(card, series.benches[k][0], series.benches[k][1].slice(-state.range), series));
+  }).observe(document.getElementById("charts"));
+})();
+</script>
+</html>
