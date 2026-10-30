@@ -585,3 +585,96 @@ def test_index2labels__nums_not_an_array(caplog):
 
     assert index2labels(reader, 3) == expected
     assert caplog.messages == expected_messages
+
+
+def _build_kid(*, first, last, nums=None, kids=None) -> DictionaryObject:
+    kid = DictionaryObject({NameObject("/Limits"): ArrayObject([NumberObject(first), NumberObject(last)])})
+    if nums is not None:
+        kid[NameObject("/Nums")] = ArrayObject(NumberObject(n) if isinstance(n, int) else n for n in nums)
+    if kids is not None:
+        kid[NameObject("/Kids")] = ArrayObject(kids)
+    return kid
+
+
+@pytest.mark.parametrize(
+    "kids",
+    [
+        pytest.param(
+            [_build_kid(first=0, last=30, nums=[0, _build_label(style="/r"), 4, _build_label(style="/D")])],
+            id="one-kid",
+        ),
+        pytest.param(
+            [
+                _build_kid(first=0, last=3, nums=[0, _build_label(style="/r")]),
+                _build_kid(first=4, last=30, nums=[4, _build_label(style="/D")]),
+            ],
+            id="two-kids",
+        ),
+        pytest.param(
+            [
+                _build_kid(first=0, last=10, nums=[0, _build_label(style="/D")]),
+                _build_kid(first=5, last=30, nums=[0, _build_label(style="/r")]),
+            ],
+            id="overlapping-limits",
+        ),
+        pytest.param(
+            [
+                _build_kid(first=10, last=30, nums=[10, _build_label(style="/D")]),
+                _build_kid(first=0, last=12, nums=[0, _build_label(style="/r")]),
+            ],
+            id="limits-not-sorted",
+        ),
+        pytest.param(
+            [
+                _build_kid(
+                    first=0,
+                    last=30,
+                    kids=[
+                        _build_kid(first=0, last=5, nums=[0, _build_label(style="/r")]),
+                        _build_kid(first=6, last=30, nums=[6, _build_label(style="/D", prefix="A-")]),
+                    ],
+                )
+            ],
+            id="nested-kids",
+        ),
+        pytest.param(
+            [
+                _build_kid(first=0, last=5, nums=[0, _build_label(style="/D")]),
+                _build_kid(first=10, last=12, nums=[10, _build_label(style="/r")]),
+            ],
+            id="pages-without-kid",
+        ),
+        pytest.param(
+            [TextStringObject("not a kid"), _build_kid(first=0, last=30, nums=[0, _build_label(style="/D")])],
+            id="kid-not-a-dictionary",
+        ),
+    ],
+)
+def test_index2labels_matches_index2label__kids(kids):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.root_object[NameObject("/PageLabels")] = DictionaryObject({NameObject("/Kids"): ArrayObject(kids)})
+
+    assert index2labels(reader, 30) == [index2label(reader, index) for index in range(30)]
+
+
+def test_index2labels_matches_index2label__indirect_and_shared_nums():
+    writer = PdfWriter()
+    nums = writer._add_object(
+        ArrayObject(
+            [
+                NumberObject(0),
+                writer._add_object(_build_label(style="/r")),
+                NumberObject(4),
+                writer._add_object(_build_label(style="/D")),
+            ]
+        )
+    )
+    kids = [_build_kid(first=0, last=3), _build_kid(first=4, last=30)]
+    for kid in kids:
+        kid[NameObject("/Nums")] = nums
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject({NameObject("/Kids"): ArrayObject(kids)})
+
+    assert index2labels(writer, 30) == [index2label(writer, index) for index in range(30)]
+
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject({NameObject("/Nums"): nums})
+    assert index2labels(writer, 30) == [index2label(writer, index) for index in range(30)]
