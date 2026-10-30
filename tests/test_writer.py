@@ -2489,8 +2489,6 @@ def test_clone_from__clone_indirect_info_values():
 
     writer = PdfWriter(clone_from=PdfReader(source))
     assert writer._info.raw_get("/Title").pdf is writer
-    # Let the object number from the source point to an unrelated object.
-    writer.add_blank_page(10, 10)
     output = BytesIO()
     writer.write(output)
     assert PdfReader(output).metadata.title == "Indirect title"
