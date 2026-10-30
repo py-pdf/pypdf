@@ -13,8 +13,7 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration
-from pypdf._utils import _TraversalState
-from pypdf.errors import LimitReachedError, PdfReadError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
@@ -1803,7 +1802,7 @@ def test_get_fields__speed() -> None:
 
 def test_get_fields__stack_deprecation() -> None:
     writer = PdfWriter()
-    message = r"^stack is deprecated and will be removed in pypdf 7\.0\.0\.$"
+    message = r"^stack is deprecated and was removed in pypdf 7\.0\.0\.$"
 
     fields = [DictionaryObject({NameObject("/Key"): NumberObject(i)}) for i in range(2)]
     tree = DictionaryObject({
@@ -1816,50 +1815,8 @@ def test_get_fields__stack_deprecation() -> None:
     build_mock.assert_not_called()
 
     # Parameter set to `None` and not `retval`.
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
+    with pytest.raises(expected_exception=DeprecationError, match=message):
         writer.get_fields(tree=tree, stack=None)
-    build_mock.assert_not_called()
-
-    # Parameter set to `None` and `retval`.
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
-        writer.get_fields(tree=tree, retval={}, stack=None)
-    build_mock.assert_has_calls(
-        [
-            mock.call(
-                field=fields[0], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=set(), depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-            mock.call(
-                field=fields[1], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=set(), depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-        ],
-        any_order=False
-    )
-    assert build_mock.call_count == 2
-
-    # Parameter set to something meaningful and `retval`.
-    stack = [object(), object()]
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
-        writer.get_fields(tree=tree, retval={}, stack=stack)
-    expected_visited = {id(entry) for entry in stack}
-    build_mock.assert_has_calls(
-        [
-            mock.call(
-                field=fields[0], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=expected_visited, depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-            mock.call(
-                field=fields[1], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=expected_visited, depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-        ],
-        any_order=False
-    )
-    assert build_mock.call_count == 2
 
 
 def test_get_fields__field_count() -> None:

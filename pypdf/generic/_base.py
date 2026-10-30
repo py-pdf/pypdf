@@ -32,7 +32,7 @@ import sys
 from collections.abc import Callable, Sequence
 from math import log10
 from struct import iter_unpack
-from typing import Any, ClassVar, NoReturn, Optional, TypeGuard, Union, cast
+from typing import Any, ClassVar, Optional, TypeGuard, Union, cast
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -44,9 +44,6 @@ from .._protocols import PdfWriterProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,
-    classproperty,
-    deprecation_no_replacement,
-    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -199,9 +196,7 @@ class PdfObject:
         """Resolve indirect references."""
         return self
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
+    def write_to_stream(self, stream: StreamType) -> None:
         raise NotImplementedError
 
 
@@ -230,13 +225,7 @@ class NullObject(PdfObject):
         """
         return hash((self.__class__,))
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"null")
 
     @staticmethod
@@ -297,13 +286,7 @@ class BooleanObject(PdfObject):
     def __repr__(self) -> str:
         return "True" if self.value else "False"
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         if self.value:
             stream.write(b"true")
         else:
@@ -449,13 +432,7 @@ class IndirectObject(PdfObject):
     def __ne__(self, other: object) -> bool:
         return not self.__eq__(other)
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(f"{self.idnum} {self.generation} R".encode())
 
     @staticmethod
@@ -548,13 +525,7 @@ class FloatObject(float, PdfObject):
     def as_numeric(self) -> float:
         return float(self)
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(self.myrepr().encode("utf8"))
 
 
@@ -594,13 +565,7 @@ class NumberObject(int, PdfObject):
     def as_numeric(self) -> int:
         return int(repr(self).encode("utf8"))
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(repr(self).encode("utf8"))
 
     @staticmethod
@@ -649,13 +614,7 @@ class ByteStringObject(bytes, PdfObject):
         """For compatibility with TextStringObject.original_bytes."""
         return self
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"<")
         stream.write(binascii.hexlify(self))
         stream.write(b">")
@@ -794,13 +753,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
                 bytearr = self.encode("utf-16be")
         return bytearr
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         bytearr = self.get_encoded_bytes()
         stream.write(b"(")
         for c_ in iter_unpack("c", bytearr):
@@ -847,21 +800,14 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         """
         return hash((self.__class__, self))
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(self.renumber())
 
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
         if out != b"/":
-            deprecation_no_replacement(
+            raise PdfStreamError(
                 f"Incorrect first char in NameObject, should start with '/': ({self})",
-                "5.0.0",
             )
         parts = [out]
         for c in self[1:]:
@@ -888,10 +834,6 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         name = re.sub(r" ", "_", name)
         name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
         return NameObject("/" + name)
-
-    @classproperty
-    def surfix(cls) -> NoReturn:  # noqa: N805
-        deprecation_with_replacement("surfix", "prefix", "5.0.0")
 
     @staticmethod
     def unnumber(sin: bytes) -> bytes:

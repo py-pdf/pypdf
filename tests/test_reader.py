@@ -16,7 +16,6 @@ from pypdf.constants import ImageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
-    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     LimitReachedError,
@@ -221,16 +220,8 @@ def test_get_outline(src, outline_elements):
         ("pdflatex-outline.pdf", []),
         ("crazyones.pdf", []),
         ("git.pdf", ["Image9.png"]),
-        pytest.param(
-            "imagemagick-lzw.pdf",
-            ["Im0.png"],
-            marks=pytest.mark.xfail(reason="broken image extraction"),
-        ),
-        pytest.param(
-            "imagemagick-ASCII85Decode.pdf",
-            ["Im0.png"],
-            # marks=pytest.mark.xfail(reason="broken image extraction"),
-        ),
+        ("imagemagick-lzw.pdf", ["Im0.tiff"]),
+        ("imagemagick-ASCII85Decode.pdf", ["Im0.png"]),
         ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
         (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),
     ],
@@ -1098,42 +1089,6 @@ def test_issue604(caplog, strict):
         # oi can be destination or a list:preferred to just print them
         for oi in outline:
             out.append(get_dest_pages(oi))  # noqa: PERF401
-
-
-def test_decode_permissions():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    base = {
-        "accessability": False,  # Do not fix typo, as part of official, but deprecated API.
-        "annotations": False,
-        "assemble": False,
-        "copy": False,
-        "forms": False,
-        "modify": False,
-        "print_high_quality": False,
-        "print": False,
-    }
-
-    print_ = base.copy()
-    print_["print"] = True
-    with pytest.raises(
-        DeprecationError,
-            match=(
-                r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
-                r"Use user_access_permissions instead"
-            ),
-    ):
-        assert reader.decode_permissions(4) == print_
-
-    modify = base.copy()
-    modify["modify"] = True
-    with pytest.raises(
-        DeprecationError,
-        match=(
-            r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
-            r"Use user_access_permissions instead"
-        ),
-    ):
-        assert reader.decode_permissions(8) == modify
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
