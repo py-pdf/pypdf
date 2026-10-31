@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793451616692,
+  "lastUpdate": 1793454059030,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -161971,6 +161971,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026920221608008336",
             "extra": "mean: 550.4389135999986 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rahulsingh.ranjan06@gmail.com",
+            "name": "Rahul",
+            "username": "rahul05ranjan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0571b61debc55551bde01e6e83182ca2ccd005b3",
+          "message": "BUG: Fix set_page_label TypeError when start=None (#4286)\n\n* ROB: Tolerate extra operands before Tm/cm in layout mode\n\nA matrix operator consumes the 6 operands nearest to it; values\nleft on the operand stack before those (malformed content streams)\noverflowed TextStateManager.new_transform() and raised TypeError\nin layout mode text extraction.\n\nComplete the matrix with only the last 6 operands in\n_complete_matrix and add_cm, mirroring the tolerance already in\nplace for missing/non-numeric TD and Tz operands (#4232, #4233).\n\nFixes #4283\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n* Fix set_page_label TypeError when start=None\n\nThe start parameter is annotated Optional[int] and its validation\naccepts None as \"not set\", but _set_page_label used ,\nwhich treats None as a value to write and crashes in NumberObject.\n\nOnly write /St when a concrete non-zero start was provided.\n\nFixes #4285\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n* Add tests for set_page_label with start=None\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n* Update tests/test_writer.py\n\n* Update tests/test_writer.py\n\n---------\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-31T14:38:00+01:00",
+          "tree_id": "dbd3b7ea71e021fd98332cdccaa23debc14333ca",
+          "url": "https://github.com/py-pdf/pypdf/commit/0571b61debc55551bde01e6e83182ca2ccd005b3"
+        },
+        "date": 1793454050842,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 25.188631342653046,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015534240497806714",
+            "extra": "mean: 39.70045003225939 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 54.88470923347441,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007437024998592951",
+            "extra": "mean: 18.220010891304785 msec\nrounds: 46"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.7339390712613154,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026253876974988773",
+            "extra": "mean: 576.7215334000014 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.2207318750834337,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04108505207700169",
+            "extra": "mean: 819.1807066000081 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.6274749047159562,
+            "unit": "iter/sec",
+            "range": "stddev: 0.059024688008619985",
+            "extra": "mean: 1.5936892335999915 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9818979474378229,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030136692369863795",
+            "extra": "mean: 504.5668478000038 msec\nrounds: 5"
           }
         ]
       }
