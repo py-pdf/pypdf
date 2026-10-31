@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793446942822,
+  "lastUpdate": 1793447017390,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -161575,6 +161575,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03369369093931078",
             "extra": "mean: 938.9581875999966 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d6584dbe48fd68b4e4884975e6b79273d47a99ce",
+          "message": "MAINT: Remove ignore Ruff rule UP007 (#4302)\n\n* MAINT: Remove ignore Ruff rule UP007\n\nThis rule checks for type annotations that can be rewritten based on\nPEP 604 syntax.\nPEP 604: Allow writing union types as X | Y; from Python 3.10.\n\n* MAINT: Remove ignore Ruff rule UP007\n\nThis rule checks for type annotations that can be rewritten based on\nPEP 604 syntax.\nPEP 604: Allow writing union types as X | Y; from Python 3.10.",
+          "timestamp": "2026-10-31T12:40:29+01:00",
+          "tree_id": "b9e83cd09e171f982dba25b775ce354dd087c314",
+          "url": "https://github.com/py-pdf/pypdf/commit/d6584dbe48fd68b4e4884975e6b79273d47a99ce"
+        },
+        "date": 1793447008998,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.67242120579575,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01653731846756666",
+            "extra": "mean: 42.243249699999794 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 52.51096301381684,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005766379324094471",
+            "extra": "mean: 19.043642367344834 msec\nrounds: 49"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.636991771476517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03420285716639877",
+            "extra": "mean: 610.8766198000069 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.1871408397096077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038051318408845375",
+            "extra": "mean: 842.3600356000009 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.6034098566940719,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07653112490636774",
+            "extra": "mean: 1.657248367599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8735839321489927,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03933070518962165",
+            "extra": "mean: 533.7364304000005 msec\nrounds: 5"
           }
         ]
       }
