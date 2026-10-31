@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793454066302,
+  "lastUpdate": 1793455359225,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -123689,6 +123689,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018274007127794326",
             "extra": "mean: 687.2019022000018 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9808f6bf20673cdd243047017e03facfb1ae25cd",
+          "message": "MAINT: Move Ruff rule PT014 to per file ignores (#4318)\n\nPT014: Checks for duplicate test cases in pytest.mark.parametrize.\nAlso removed two duplicates in test_generic.py.",
+          "timestamp": "2026-10-31T14:59:14+01:00",
+          "tree_id": "86e80f9d1920527c82fc0efb61d91787eb2aba52",
+          "url": "https://github.com/py-pdf/pypdf/commit/9808f6bf20673cdd243047017e03facfb1ae25cd"
+        },
+        "date": 1793455346892,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7339320867692205,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008732023003714326",
+            "extra": "mean: 365.7735336000002 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.277143322798732,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00206347121201362",
+            "extra": "mean: 44.889058956521886 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24141357935704538,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03827857894581922",
+            "extra": "mean: 4.142269058200003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.031658282911526,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020911195984119387",
+            "extra": "mean: 58.71418880000287 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.07838390123827678,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01613292984417191",
+            "extra": "mean: 12.757721728599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5190578345162506,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002933830998189205",
+            "extra": "mean: 658.3027829999992 msec\nrounds: 5"
           }
         ]
       }
