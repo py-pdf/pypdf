@@ -894,6 +894,45 @@ def test_get_encoding__unicode_glyph_names(glyph_name, expected):
     assert encoding[65] == expected
 
 
+@pytest.mark.parametrize(
+    ("glyph_name", "expected"),
+    [
+        ("/f_i", "fi"),
+        ("/f_b", "fb"),
+        ("/f_f_i.alt", "\ufb03"),
+        ("/T_h", "Th"),
+        ("/a.sc", "a"),
+        ("/one.oldstyle", "1"),
+        ("/f_i.alt", "fi"),
+        ("/uni0041.alt", "A"),
+        ("/uni00660069", "fi"),
+        ("/u1F600.sc", "\U0001F600"),
+        ("/uni0041_u0042", "AB"),
+        ("/u1", "/u1"),
+        ("/uniD800", "/uniD800"),
+        ("/f_unknownglyph", "/f_unknownglyph"),
+        # Examples from the Adobe Glyph List Specification, version 2.9, section 3.
+        ("/Lcommaaccent_uni20AC0308_u1040C.alternate", "\u013b\u20ac\u0308\U0001040c"),
+        ("/uniD801DC0C", "/uniD801DC0C"),
+        # Nothing is left after dropping the suffix.
+        ("/.sc", "/.sc"),
+        ("/uniZZZZ", "/uniZZZZ"),
+        ("/u110000", "/u110000"),
+    ],
+)
+def test_get_encoding__glyph_names_with_suffixes_and_ligatures(glyph_name, expected):
+    """
+    Glyph names are mapped per the Adobe Glyph List Specification, version 2.9, section 2.
+
+    See ISO 32000-2:2020, 9.10.2.
+    """
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), NameObject(glyph_name)]))
+    )
+
+    assert encoding[65] == expected
+
+
 def _build_cff_font_program(encoding: dict[int, str]) -> bytes:
     """A minimal CFF font program whose built-in encoding maps the given character codes to glyph names."""
     from fontTools.fontBuilder import FontBuilder  # noqa: PLC0415
