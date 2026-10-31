@@ -35,7 +35,6 @@ import struct
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
-from itertools import compress
 from pathlib import Path
 from re import Pattern
 from types import TracebackType
@@ -1658,7 +1657,6 @@ class PdfWriter(PdfDocCommon):
             assert isinstance(obj, (DictionaryObject, ArrayObject))
             for k, v in key_val:
                 if isinstance(v, IndirectObject):
-                    unreferenced[v.idnum - 1] = False
                     if v in crossref:
                         obj[k] = crossref[v]
                 else:
@@ -1668,7 +1666,6 @@ class PdfWriter(PdfDocCommon):
 
         # _idnum_hash: dict[hash] = (1st_ind_obj, [2nd_ind_obj,...])
         self._idnum_hash = {}
-        unreferenced = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
             if is_null_or_none(obj):
@@ -1694,18 +1691,28 @@ class PdfWriter(PdfDocCommon):
                 replace_in_obj(obj, cnv_rev)
 
         if remove_unreferenced:
-            unreferenced[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
+            reachable = self._find_reachable_objects()
+            for idnum in range(1, len(self._objects) + 1):
+                if idnum not in reachable:
+                    self._objects[idnum - 1] = None
 
-            if not is_null_or_none(self._info):
-                unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
-
-            try:
-                unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
-            except AttributeError:
-                pass
-
-            for i in compress(range(len(self._objects)), unreferenced):
-                self._objects[i] = None
+    def _find_reachable_objects(self) -> set[int]:
+        """Get the numbers of all objects which the trailer leads to."""
+        reachable: set[int] = set()
+        objects_to_visit: list[Any] = []
+        for obj in (self._root_object, self._info, self._ID, self._encrypt_entry):
+            objects_to_visit.extend((obj, getattr(obj, "indirect_reference", None)))
+        while objects_to_visit:
+            obj = objects_to_visit.pop()
+            if isinstance(obj, IndirectObject):
+                if obj.pdf is self and obj.idnum not in reachable and 0 < obj.idnum <= len(self._objects):
+                    reachable.add(obj.idnum)
+                    objects_to_visit.append(self._objects[obj.idnum - 1])
+            elif isinstance(obj, DictionaryObject):
+                objects_to_visit.extend(obj.values())
+            elif isinstance(obj, ArrayObject):
+                objects_to_visit.extend(obj)
+        return reachable
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1

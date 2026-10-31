@@ -3322,6 +3322,62 @@ def test_compress_identical_objects__same_data_with_different_encoded_bytes() ->
     assert kept[1].get_object().get_data() == data
 
 
+def test_compress_identical_objects__removes_what_only_unreferenced_objects_use():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    last = writer._add_object(DictionaryObject({NameObject("/Name"): NameObject("/Last")}))
+    first = writer._add_object(DictionaryObject({NameObject("/Next"): last}))
+    circle = writer._add_object(DictionaryObject())
+    circle.get_object()[NameObject("/Next")] = writer._add_object(DictionaryObject({NameObject("/Next"): circle}))
+    objects_before = sum(obj is not None for obj in writer._objects)
+
+    writer.compress_identical_objects(remove_duplicates=False)
+
+    assert writer._objects[first.idnum - 1] is None
+    assert writer._objects[last.idnum - 1] is None
+    assert writer._objects[circle.idnum - 1] is None
+    assert sum(obj is not None for obj in writer._objects) == objects_before - 4
+    assert writer.pages[0].extract_text().startswith("The Crazy Ones")
+
+
+def test_compress_identical_objects__keeps_encryption():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.encrypt("password", algorithm="RC4-40")
+    writer.compress_identical_objects()
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, password="password")
+    assert reader.pages[0].extract_text().startswith("The Crazy Ones")
+
+
+@pytest.mark.parametrize(
+    "pdf_path",
+    [
+        SAMPLE_ROOT / "001-trivial" / "minimal-document.pdf",
+        SAMPLE_ROOT / "011-google-doc-document" / "google-doc-document.pdf",
+    ],
+)
+def test_compress_identical_objects__after_removing_an_appended_copy(pdf_path: Path) -> None:
+    """
+    Appending a document twice, removing the second copy and compressing keeps no more objects than one copy.
+
+    Everything a PDF reader uses is reachable from the trailer (ISO 32000-2:2020,
+    7.5.5), so the objects of the removed copy are not needed. This is the
+    scenario of #3418.
+    """
+    single = PdfWriter()
+    single.append(PdfReader(pdf_path))
+
+    writer = PdfWriter()
+    writer.append(PdfReader(pdf_path))
+    writer.append(PdfReader(pdf_path))
+    writer.remove_page(len(writer.pages) - 1, clean=True)
+    writer.compress_identical_objects()
+
+    assert len(writer.pages) == 1
+    assert sum(obj is not None for obj in writer._objects) <= sum(obj is not None for obj in single._objects)
+
+
 def test_compress_identical_objects__deprecation():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     with pytest.raises(

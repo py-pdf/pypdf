@@ -259,7 +259,7 @@ def is_char_neutral(char: str, custom_special_characters: str = "") -> bool:
     return bool(custom_special_characters and char in custom_special_characters)
 
 
-RTL_CHARACTER_RANGES = (
+RTL_CHARACTER_RANGES: tuple[tuple[str, str], ...] = (
     ("\u0590", "\u08FF"),  # Hebrew, Arabic, Syriac, Thaana, N'Ko, etc.
     ("\uFB1D", "\uFDFF"),  # Hebrew & Arabic Presentation Forms-A
     ("\uFE70", "\uFEFF"),  # Arabic Presentation Forms-B
