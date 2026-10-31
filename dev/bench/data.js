@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793451610208,
+  "lastUpdate": 1793451616692,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -161905,6 +161905,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02204962756093638",
             "extra": "mean: 864.0340891999926 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rahulsingh.ranjan06@gmail.com",
+            "name": "Rahul",
+            "username": "rahul05ranjan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "694aa59cdaa413453361f1483a0f4fb50b70601b",
+          "message": "ROB: Tolerate extra operands before Tm/cm in layout mode (#4284)\n\n* ROB: Tolerate extra operands before Tm/cm in layout mode\n\nA matrix operator consumes the 6 operands nearest to it; values\nleft on the operand stack before those (malformed content streams)\noverflowed TextStateManager.new_transform() and raised TypeError\nin layout mode text extraction.\n\nComplete the matrix with only the last 6 operands in\n_complete_matrix and add_cm, mirroring the tolerance already in\nplace for missing/non-numeric TD and Tz operands (#4232, #4233).\n\nFixes #4283\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n* Add layout-mode tests for extra operands before Tm/cm\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n---------\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>",
+          "timestamp": "2026-10-31T13:57:04+01:00",
+          "tree_id": "bcdb845b1f6ad05b2aa52ca013d3247fa8773e38",
+          "url": "https://github.com/py-pdf/pypdf/commit/694aa59cdaa413453361f1483a0f4fb50b70601b"
+        },
+        "date": 1793451608319,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.454195460682882,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01693514530163839",
+            "extra": "mean: 42.636295142859886 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 50.904416934448584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00730534455934653",
+            "extra": "mean: 19.644660723405106 msec\nrounds: 47"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.5037820538208961,
+            "unit": "iter/sec",
+            "range": "stddev: 0.054262661509655516",
+            "extra": "mean: 664.9899813999923 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 1.1437105179506268,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03457748469507365",
+            "extra": "mean: 874.3471221999982 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.6067300825503439,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01982751587453413",
+            "extra": "mean: 1.6481793614000082 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.816732021106152,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026920221608008336",
+            "extra": "mean: 550.4389135999986 msec\nrounds: 5"
           }
         ]
       }
