@@ -46,6 +46,9 @@ indicate to the maintainers that they can have another look. For specific review
 comments, please answer them in the specific thread instead of the main PR thread
 to keep references clear.
 
+Please avoid having open more than 2-3 PRs in parallel, as this has proven to delay
+reviews for everyone.
+
 ## AI Policy
 
 You may ask AI (i.e., LLMs) for (coding) assistance. However, you should ensure

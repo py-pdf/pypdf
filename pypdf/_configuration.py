@@ -192,6 +192,9 @@ def _build_configuration(
         The generated configuration.
     """
     base = configuration if configuration is not None else get_configuration()
+    # TODO: Remove when releasing 8.0.0
+    # if "disable_legacy_handling" in overwrites:
+    #     deprecate_no_replacement("disable_legacy_handling", "9.0.0")
     return base.with_overwrites(**overwrites)
 
 
@@ -255,9 +258,6 @@ LEGACY_NAME_MAPPING = {
     "page_merge_box": "MERGE_CROP_BOX",
 }
 
-# Record which legacy overwrites have already emitted a warning in the current process/session.
-WARNED_LEGACY_OVERWRITES: set[str] = set()
-
 
 def apply_legacy_configuration() -> Configuration:
     """
@@ -302,24 +302,17 @@ def apply_legacy_configuration() -> Configuration:
         "JBIG2DEC_BINARY": JBIG2DEC_BINARY,
         "MERGE_CROP_BOX": MERGE_CROP_BOX,
     }
-    overwrites: dict[str, int | str | None] = {}
 
     for field_name, legacy_name in LEGACY_NAME_MAPPING.items():
         legacy_value = legacy_values[legacy_name]
 
         if legacy_value != getattr(DEFAULT_CONFIGURATION, field_name):
-            if legacy_name not in WARNED_LEGACY_OVERWRITES:
-                from pypdf._utils import deprecate_with_replacement  # noqa: PLC0415
+            from pypdf._utils import deprecation_with_replacement  # noqa: PLC0415
 
-                deprecate_with_replacement(
-                    old_name=legacy_name,
-                    new_name=f"Configuration.{field_name}",
-                    removed_in="7.0.0",
-                )
-                WARNED_LEGACY_OVERWRITES.add(legacy_name)
+            deprecation_with_replacement(
+                old_name=legacy_name,
+                new_name=f"Configuration.{field_name}",
+                removed_in="7.0.0",
+            )
 
-            overwrites[field_name] = legacy_value
-
-    if not overwrites:
-        return configuration
-    return overwrite_configuration(**overwrites)  # type: ignore[arg-type]
+    return configuration

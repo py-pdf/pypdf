@@ -396,6 +396,36 @@ def test_index2label__page_labels_not_a_dictionary(caplog, value, expected):
     assert expected in caplog.text
 
 
+@pytest.mark.parametrize(
+    ("nums", "expected"),
+    [
+        pytest.param(
+            NumberObject(1), "Page label numbers are not an array: 1", id="number"
+        ),
+        pytest.param(
+            DictionaryObject(), "Page label numbers are not an array: {}", id="dictionary"
+        ),
+        pytest.param(
+            TextStringObject("x"), "Page label numbers are not an array: x", id="string"
+        ),
+    ],
+)
+def test_index2label__nums_not_an_array(caplog, nums, expected):
+    """A /Nums entry which is not an array falls back to the page position."""
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {NameObject("/Nums"): nums}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == ["1", "2"]
+    assert expected in caplog.text
+
+
 def test_get_label_from_nums__roman__limits(caplog):
     with pytest.raises(expected_exception=ValueError, match=r"^Number is out of range\.$"):
         number2uppercase_roman_numeral(4321)

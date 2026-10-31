@@ -49,7 +49,6 @@ from .._utils import (
     WHITESPACES,
     BinaryStreamType,
     StreamType,
-    deprecation_no_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -241,13 +240,7 @@ class ArrayObject(list[Any], PdfObject):
                 pass
         return self
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"[")
         for data in self:
             stream.write(b" ")
@@ -379,7 +372,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     del ignore_fields[x]
                     del ignore_fields[x]
                     continue
-                ignore_fields[x] -= 1  # type:ignore
+                ignore_fields[x] -= 1  # type: ignore[operator]
             x += 1
         #  Check if this is a chain list, we need to loop to prevent recur
         if any(
@@ -561,18 +554,12 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         metadata = metadata.get_object()
         return XmpInformation(metadata)
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"<<\n")
         for key, value in self.items():
             if len(key) > 2 and key[1] == "%" and key[-1] == "%":
                 continue
-            key.write_to_stream(stream, encryption_key)
+            key.write_to_stream(stream)
             stream.write(b" ")
             value.write_to_stream(stream)
             stream.write(b"\n")
@@ -1134,13 +1121,7 @@ class StreamObject(DictionaryObject):
         data += self.get_data()
         return data
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         self[NameObject(StreamAttributes.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.write_to_stream(self, stream)
         del self[StreamAttributes.LENGTH]
@@ -1659,7 +1640,7 @@ class ContentStream(DecodedStreamObject):
     ) -> None:
         if not self._data and self._operations:
             self.get_data()  # this ensures ._data is rebuilt
-        super().write_to_stream(stream, encryption_key)
+        super().write_to_stream(stream)
 
 
 # Bound comment scanning without consuming Python recursion depth.
@@ -1954,13 +1935,7 @@ class Destination(TreeObject):
             ]
         )
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"<<\n")
         key = NameObject("/D")
         key.write_to_stream(stream)
