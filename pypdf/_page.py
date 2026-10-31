@@ -951,8 +951,8 @@ class PageObject(DictionaryObject):
 
     def transfer_rotation_to_content(self) -> None:
         """
-        Apply the rotation of the page to the content and the media/crop/...
-        boxes.
+        Apply the rotation of the page to the content, the media/crop/...
+        boxes and the annotation geometry.
 
         It is recommended to apply this function before page merging.
         """
@@ -983,6 +983,71 @@ class PageObject(DictionaryObject):
                         max(pt1[1], pt2[1]),
                     )
                 )
+        self._transform_annotation_geometry(trsf)
+
+    def _transform_annotation_geometry(self, transformation: Transformation) -> None:
+        """Apply a page transformation to annotation rectangles and paths."""
+        if PG.ANNOTS not in self:
+            return
+        annotations = self[PG.ANNOTS]
+        if not isinstance(annotations, ArrayObject):
+            return
+
+        def transform_points(values: Any) -> ArrayObject | None:
+            values = values.get_object()
+            if not isinstance(values, ArrayObject):
+                return None
+            transformed: list[Any] = []
+            for index in range(0, len(values) - 1, 2):
+                transformed.extend(
+                    transformation.apply_on(
+                        (values[index], values[index + 1]), as_object=True
+                    )
+                )
+            return ArrayObject(transformed)
+
+        for annotation_reference in annotations:
+            annotation = annotation_reference.get_object()
+            if not isinstance(annotation, DictionaryObject):
+                continue
+
+            if "/Rect" in annotation and not is_null_or_none(
+                annotation["/Rect"]
+            ):
+                rectangle = RectangleObject(
+                    cast(Sequence[Any], annotation["/Rect"])
+                )
+                lower_left = transformation.apply_on(rectangle.lower_left)
+                upper_right = transformation.apply_on(rectangle.upper_right)
+                annotation[NameObject("/Rect")] = RectangleObject(
+                    (
+                        min(lower_left[0], upper_right[0]),
+                        min(lower_left[1], upper_right[1]),
+                        max(lower_left[0], upper_right[0]),
+                        max(lower_left[1], upper_right[1]),
+                    )
+                )
+
+            for key in ("/QuadPoints", "/Vertices", "/L", "/CL"):
+                name = NameObject(key)
+                if name in annotation:
+                    transformed = transform_points(annotation[name])
+                    if transformed is not None:
+                        annotation[name] = transformed
+
+            for key in ("/InkList", "/Path"):
+                name = NameObject(key)
+                if name not in annotation:
+                    continue
+                paths = annotation[name].get_object()
+                if not isinstance(paths, ArrayObject):
+                    continue
+                transformed_paths = []
+                for path in paths:
+                    transformed = transform_points(path)
+                    if transformed is not None:
+                        transformed_paths.append(transformed)
+                annotation[name] = ArrayObject(transformed_paths)
 
     def rotate(self, angle: int) -> "PageObject":
         """

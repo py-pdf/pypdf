@@ -16,7 +16,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject, _get_fonts_walk
-from pypdf.annotations import Highlight, Polygon
+from pypdf.annotations import Highlight, Line, Polygon
 from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfError
@@ -448,6 +448,22 @@ def test_page_rotation():
     assert math.isclose(page.mediabox.bottom, 0, abs_tol=0.1)
     assert math.isclose(page.mediabox.right, 792, abs_tol=0.1)
     assert math.isclose(page.mediabox.top, 612, abs_tol=0.1)
+
+
+def test_transfer_rotation_to_content_transforms_annotations():
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 200)
+    writer.add_annotation(0, Polygon(vertices=[(10, 20), (30, 40), (20, 60)]))
+    writer.add_annotation(0, Line(rect=(0, 0, 100, 100), p1=(10, 20), p2=(30, 40)))
+
+    page.rotation = 90
+    page.transfer_rotation_to_content()
+
+    polygon, line = page.annotations
+    assert list(polygon["/Vertices"]) == pytest.approx([20, 90, 40, 70, 60, 80])
+    assert list(polygon["/Rect"]) == pytest.approx([20, 70, 60, 90])
+    assert list(line["/L"]) == pytest.approx([20, 90, 40, 70])
+    assert list(line["/Rect"]) == pytest.approx([0, 0, 100, 100], abs=1e-6)
 
 
 def test_page_indirect_rotation():
