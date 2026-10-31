@@ -1769,7 +1769,7 @@ def test_set_page_label(pdf_file_path):
     writer.write(pdf_file_path)
 
 
-def test_set_page_label_start_none():
+def test_set_page_label__start_none():
     """`start=None` is a legitimate "not set" value and must not crash at write time (#4285).
 
     It behaves exactly like the default `0`: no `/St` entry is written, so numbering
