@@ -664,3 +664,22 @@ def test_outline_action_without_d_strict(pdf_file_path):
     with pytest.raises(PdfReadError) as e:
         assert len(reader.outline) == 2
     assert "Outline Action Missing /D" in str(e)
+
+
+@pytest.mark.parametrize(("border_color", "expected"), [("000000", [0, 0, 0]), ("ff0000", [1, 0, 0]), (None, None)])
+def test_rectangle__border_color(border_color, expected):
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    annotation = Rectangle(rect=(10, 10, 90, 90), border_color=border_color, interior_color="00ff00")
+    writer.add_annotation(0, annotation)
+    output = BytesIO()
+    writer.write(output)
+    result = PdfReader(output).pages[0].annotations[0].get_object()
+    assert result.get("/C") == expected
+    assert result["/IC"] == [0, 1, 0]
+
+
+def test_rectangle__default_border_color():
+    annotation = Rectangle(rect=(10, 10, 90, 90))
+    assert "/C" not in annotation
+    assert "/IC" not in annotation
