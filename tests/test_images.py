@@ -27,7 +27,7 @@ from pypdf.generic import (
     NumberObject,
     TextStringObject,
 )
-from pypdf.generic._image_xobject import _handle_flate
+from pypdf.generic._image_xobject import _handle_flate, _xobj_to_image
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
@@ -659,6 +659,28 @@ def test_low_bit_devicergb_image_without_filter():
     assert img.tobytes() == bytes(
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
+
+
+def test_image_with_null_smask():
+    """A null /SMask is ignored instead of being parsed as an image (#3369)."""
+    image = DecodedStreamObject()
+    image.set_data(bytes([255, 0, 0]))
+    image.update(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Image"),
+            NameObject("/Width"): NumberObject(1),
+            NameObject("/Height"): NumberObject(1),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+            NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+            NameObject("/SMask"): NullObject(),
+        }
+    )
+
+    extension, _data, img = _xobj_to_image(image)
+    assert extension == ".png"
+    assert img.mode == "RGB"
+    assert img.getpixel((0, 0)) == (255, 0, 0)
 
 
 @pytest.mark.enable_socket

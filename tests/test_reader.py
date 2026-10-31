@@ -2037,6 +2037,18 @@ def test_damaged_pdf():
     )
 
 
+def test_get_object_from_stream_null_object_stream():
+    reader = PdfReader.__new__(PdfReader)
+    reader.xref_objStm = {1: (2, 0)}
+    reader._object_stream_resolution_stack = []
+    reader.strict = False
+    with (
+        mock.patch.object(PdfReader, "get_object", return_value=NullObject()),
+        pytest.raises(PdfReadError, match="Object stream 2 is missing"),
+    ):
+        reader._get_object_from_stream(IndirectObject(1, 0, reader))
+
+
 @pytest.mark.enable_socket
 @pytest.mark.timeout(10)
 def test_looping_form(caplog):
