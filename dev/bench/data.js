@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793456849980,
+  "lastUpdate": 1793456945608,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -162367,6 +162367,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029120548878246947",
             "extra": "mean: 691.6787960000192 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "63337279+Ak4shh@users.noreply.github.com",
+            "name": "Akash",
+            "username": "Ak4shh"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "140204ceebb31d4b2d6016bf7f9c30c71a495167",
+          "message": "ENH: Allow setting border color for rectangle annotations (#4297)\n\n* BUG: Add a default border color to rectangle annotations\n\n* Keep omitting the rectangle border color by default\n\n`border_color` now defaults to None, preserving the previous output.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\n\n* Apply batched suggestions from code review\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\n\n---------\n\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-31T15:24:25+01:00",
+          "tree_id": "c681ad805e2a9196f2ad8052ad77c2be4e269c90",
+          "url": "https://github.com/py-pdf/pypdf/commit/140204ceebb31d4b2d6016bf7f9c30c71a495167"
+        },
+        "date": 1793456935203,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 10.752265123488158,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020735550191852583",
+            "extra": "mean: 93.00365909091242 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 44.35561674084777,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003404397963964608",
+            "extra": "mean: 22.545059081076523 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.897960846843562,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019830629188112445",
+            "extra": "mean: 1.1136343010000018 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.2799282783956153,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05153646658958596",
+            "extra": "mean: 3.572343622199992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5766385842046169,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1134480844127987",
+            "extra": "mean: 1.7341884976000075 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.823037476511738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016049141164290206",
+            "extra": "mean: 548.5350756000003 msec\nrounds: 5"
           }
         ]
       }
