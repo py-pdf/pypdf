@@ -251,7 +251,7 @@ class Rectangle(MarkupAnnotation):
         rect: RectangleObject | tuple[float, float, float, float],
         *,
         interior_color: str | None = None,
-        border_color: str | None = "000000",
+        border_color: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)

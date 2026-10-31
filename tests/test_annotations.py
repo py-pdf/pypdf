@@ -681,5 +681,5 @@ def test_rectangle_border_color(border_color, expected):
 
 def test_rectangle_default_border_color():
     annotation = Rectangle(rect=(10, 10, 90, 90))
-    assert annotation["/C"] == [0, 0, 0]
+    assert "/C" not in annotation
     assert "/IC" not in annotation

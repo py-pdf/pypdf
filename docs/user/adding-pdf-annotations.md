@@ -168,9 +168,8 @@ writer.add_annotation(page_number=0, annotation=annotation)
 writer.write("out-rectangle.pdf")
 ```
 
-Rectangles have a black border by default. Use `border_color="ff0000"` for a red
-border, or `border_color=None` to omit the border color. To fill the rectangle,
-use `interior_color="ff0000"`.
+To give the rectangle a visible border, use the `border_color="ff0000"` parameter.
+To fill the rectangle, use `interior_color="ff0000"`.
 
 This method uses the "square" annotation type of the PDF format.
 
