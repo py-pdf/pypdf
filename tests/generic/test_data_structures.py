@@ -56,9 +56,12 @@ def test_dictionary_object__clone_linked_objects_with_constructor_arguments(link
     assert cloned_second is not second
     assert cloned.title == first.title
     assert cloned_second.items() == second.items()
+    assert cloned.indirect_reference is not None
     assert cloned.indirect_reference.pdf is destination
+    assert cloned_second.indirect_reference is not None
     assert cloned_second.indirect_reference.pdf is destination
     assert first[link] is second
+    assert second.indirect_reference is not None
     assert second.indirect_reference.pdf is source
 
 
