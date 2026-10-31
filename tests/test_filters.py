@@ -1045,6 +1045,21 @@ def test_decompress():
         decompress(b"A" * 1337)
 
 
+def test_decompress__recovery_input_limit_counts_decodable_bytes() -> None:
+    """Recovery limits count input bytes even when those bytes decode successfully."""
+    data = b"FlateDecode recovery input accounting" * 4
+    # A gzip header selects bytewise recovery instead of the normal zlib path.
+    compressor = zlib.compressobj(wbits=zlib.MAX_WBITS | 16)
+    compressed = compressor.compress(data) + compressor.flush()
+
+    with apply_configuration(zlib_maximum_recovery_input_length=len(compressed)):
+        assert decompress(compressed) == data
+
+    with apply_configuration(zlib_maximum_recovery_input_length=len(compressed) - 1), \
+            pytest.raises(LimitReachedError, match=r"^Recovery limit reached while decompressing\."):
+        decompress(compressed)
+
+
 def test_decompress__logging_on_invalid_data(caplog):
     """We do not like suddenly getting empty outputs for non-empty inputs without a warning."""
     codec = FlateDecode()
