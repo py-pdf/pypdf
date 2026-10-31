@@ -805,16 +805,17 @@ class XmpInformation(PdfObject):
         if doc is None:
             raise XmpDocumentError("XMP Document is None")
 
+        # Serialize the top-level nodes one by one instead of the whole document:
+        # this omits the XML declaration (PDF 2.0, Annex H.2) while preserving
+        # the <?xpacket?> wrapper and other processing instructions.
+        parts = []
         for node in doc.childNodes:
             if (
                 isinstance(node, ProcessingInstruction)
                 and node.target == "xpacket"
                 and re.fullmatch(r"""end\s*=\s*(['"])[rw]\1\s*""", node.data)
             ):
-                # No padding is reserved for in-place updates of the packet.
+                # No padding is written, so the packet cannot be updated in place.
                 node.data = 'end="r"'
-
-        # Serializing the children omits the XML declaration while preserving
-        # the packet wrapper and other processing instructions.
-        xml_data = b"".join(node.toxml(encoding="utf-8") for node in doc.childNodes)
-        self.stream.set_data(xml_data)
+            parts.append(node.toxml(encoding="utf-8"))
+        self.stream.set_data(b"".join(parts))

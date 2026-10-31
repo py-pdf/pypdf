@@ -293,14 +293,9 @@ As an example, we want to add the following PDF/UA identifier section to the XMP
 </rdf:Description>
 ```
 
-Property setters handle packet serialization automatically. When modifying the XML
-tree directly, omit the XML declaration and mark the packet read-only if no
-padding is reserved for in-place updates:
+This could be written like this:
 
 ```{testcode}
-import re
-from xml.dom.minidom import ProcessingInstruction
-
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="commented-xmp.pdf")
@@ -322,16 +317,7 @@ pdfuaid_part.appendChild(pdfuaid_part_text)
 pdfuaid_description.appendChild(pdfuaid_part)
 rdf_root.appendChild(pdfuaid_description)
 
-for node in xmp_document.childNodes:
-    if (
-        isinstance(node, ProcessingInstruction)
-        and node.target == "xpacket"
-        and re.fullmatch(r"""end\s*=\s*(['"])[rw]\1\s*""", node.data)
-    ):
-        node.data = 'end="r"'
-metadata.stream.set_data(
-    b"".join(node.toxml(encoding="utf-8") for node in xmp_document.childNodes)
-)
+metadata.stream.set_data(xmp_document.toxml().encode("utf-8"))
 
 writer.write("out-xmp-update.pdf")
 ```
