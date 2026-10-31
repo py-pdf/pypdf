@@ -1,7 +1,7 @@
 """Test the pypdf.generic._image_xobject module."""
 import zlib
 from io import BytesIO
-from typing import Any, Union
+from typing import Any
 
 import PIL
 import pytest
@@ -49,7 +49,7 @@ requires_cmyk_jpeg2000_saving = pytest.mark.skipif(
 
 
 # A single band value, or one value per band of an RGB, RGBA or CMYK image.
-PixelColor = Union[int, tuple[int, int, int], tuple[int, int, int, int]]
+PixelColor = int | tuple[int, int, int] | tuple[int, int, int, int]
 
 
 def _create_image(

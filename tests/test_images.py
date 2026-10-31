@@ -983,3 +983,44 @@ def test_images__xobject_is_not_a_dictionary(caplog, value, expected):
 
     assert list(PdfReader(stream).pages[0].images) == []
     assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Resources are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Resources are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Resources are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_images__resources_are_not_a_dictionary(caplog, value, expected):
+    """Resources which are not a dictionary give no images and a warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert list(PdfReader(stream).pages[0].images) == []
+    assert expected in caplog.text
+
+
+def test_images__inline_image_with_resources_not_a_dictionary(caplog):
+    """An inline image does not need the resources, so it is still returned."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Resources")] = NumberObject(1)
+    content = DecodedStreamObject()
+    content.set_data(b"q 10 0 0 10 0 0 cm BI /W 1 /H 1 /BPC 8 /CS /G ID \x80 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    images = PdfReader(stream).pages[0].images
+    assert len(images) == 1
+    assert images[0].image.size == (1, 1)
+    assert "Resources are not a dictionary: 1" in caplog.text

@@ -45,7 +45,6 @@ from typing import (
     Any,
     NoReturn,
     TypeAlias,
-    Union,
     cast,
 )
 
@@ -70,7 +69,7 @@ CompressedTransformationMatrix: TypeAlias = tuple[
 
 StreamType = IO[Any]
 BinaryStreamType = IO[bytes]
-StrByteType = Union[str, StreamType]
+StrByteType = str | StreamType
 
 
 def parse_iso8824_date(text: str | None) -> datetime | None:
