@@ -453,7 +453,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                             clon = cast(
                                 "DictionaryObject",
                                 cur_obj._reference_clone(
-                                    cur_obj.__class__(), pdf_dest, force_duplicate
+                                    cur_obj._new_for_clone(), pdf_dest, force_duplicate
                                 ),
                             )
                             # Check to see if we've previously processed our item
