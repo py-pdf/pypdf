@@ -48,14 +48,13 @@ from functools import lru_cache
 from importlib.util import find_spec
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, NoReturn, cast
+from typing import Any, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._configuration import get_configuration
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    deprecate,
-    deprecation_with_replacement,
+    deprecation,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -707,18 +706,6 @@ class CCITTParameters:
         return ccitt_group
 
 
-def __create_old_class_instance(
-    K: int = 0,
-    columns: int = 0,
-    rows: int = 0
-) -> NoReturn:
-    deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
-
-
-# Create an alias for the old class name
-CCITParameters = __create_old_class_instance
-
-
 class CCITTFaxDecode:
     """
     §7.4.6, CCITTFaxDecode filter (ISO 32000).
@@ -924,9 +911,8 @@ class JBIG2Decode:
 def _deprecate_inline_image_filters(filter_name: str, old_name: str, new_name: str) -> None:
     if filter_name != old_name:
         return
-    deprecate(
-        f"The filter name {old_name} is deprecated and will be removed in pypdf 7.0.0. Use {new_name} instead.",
-        4,
+    deprecation(
+        f"The filter name {old_name} is deprecated and has been removed in pypdf 7.0.0. Use {new_name} instead."
     )
 
 

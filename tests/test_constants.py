@@ -18,6 +18,7 @@ from pypdf.constants import (
     OutlineFontFlag,
     UserAccessPermissions,
 )
+from pypdf.errors import DeprecationError
 
 
 def test_slash_prefix():
@@ -149,19 +150,19 @@ def test_user_access_permissions__all():
 
 
 def test_catalog_dictionary():
-    with pytest.warns(
-        DeprecationWarning,
+    with pytest.raises(
+        DeprecationError,
         match=(
-            r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"^CatalogDictionary is deprecated and was removed in pypdf 7\.0\.0\. "
             r"Use CatalogAttributes instead\.$"
         )
     ):
         assert isinstance(CatalogDictionary(), CatalogDictionary)
 
-    with pytest.warns(
-        DeprecationWarning,
+    with pytest.raises(
+        DeprecationError,
         match=(
-            r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"^CatalogDictionary is deprecated and was removed in pypdf 7\.0\.0\. "
             r"Use CatalogAttributes instead\.$"
         )
     ):

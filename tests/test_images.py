@@ -15,7 +15,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageStat
 
 from pypdf import PageObject, PdfReader, PdfWriter, apply_configuration
 from pypdf._page import ImageFile
-from pypdf.errors import LimitReachedError
+from pypdf.errors import DeprecationError, LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
     ArrayObject,
@@ -895,36 +895,18 @@ def test_is_inline_image_displayed():
 
 
 @pytest.mark.samples
-def test_inline_images_property_deprecation_warning():
-    """Test that inline_images property emits a deprecation warning."""
+def test_inline_images_property_deprecation_error():
+    """Test that inline_images property emits a deprecation error."""
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
+    with pytest.raises(DeprecationError, match=r"PageObject\.inline_images is deprecated.*"):
         _ = page.inline_images
 
 
 @pytest.mark.samples
-def test_inline_images_property_returns_only_inline():
-    """Test that inline_images returns only images with is_inline=True."""
-    reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
-    page = reader.pages[0]
-
-    # Force-populate inline images
-    _ = list(page.images)
-
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
-        inline = page.inline_images
-
-    assert inline is not None, "Document contains exactly 1 inline image"
-    assert len(inline) == 1, "Document contains exactly 1 inline image"
-    for image_name, image_value in inline.items():
-        assert image_value.is_inline is True, f"Image {image_name} should have is_inline=True"
-
-
-@pytest.mark.samples
-def test_inline_images_setter_clears_cache():
-    """Test that setting inline_images to None clears the cache."""
+def test_inline_images_setter_deprecation_error():
+    """Test that setting inline_images raises a deprecation error."""
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
@@ -933,28 +915,8 @@ def test_inline_images_setter_clears_cache():
     assert page._content_stream_images is not None
 
     # Clear cache via setter
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
+    with pytest.raises(DeprecationError, match=r"PageObject\.inline_images is deprecated.*"):
         page.inline_images = None
-    assert page._content_stream_images is None
-
-
-@pytest.mark.samples
-def test_inline_images_setter_merges():
-    """Test that setting inline_images to a dict merges into the cache."""
-    reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
-    page = reader.pages[0]
-
-    # Force cache population by accessing images
-    _ = list(page.images)
-    original_keys = set(page._content_stream_images.keys())
-
-    # Merge new values
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
-        page.inline_images = {"new_key": page.images[0]}
-    assert page._content_stream_images is not None
-    merged_keys = set(page._content_stream_images.keys())
-    assert original_keys.issubset(merged_keys), "Original keys should be preserved"
-    assert "new_key" in merged_keys, "New key should be added"
 
 
 def test_do_images_stored_as_none_in_cache():
@@ -974,25 +936,6 @@ def test_do_images_stored_as_none_in_cache():
     assert len(do_images) == 1, "Document should contain only 1 Do-referenced image."
     do_image_key = next(iter(do_images.keys()))
     assert do_images[do_image_key] is None, f"Image {do_image_key} should be None (lazy placeholder)"
-
-
-def test_inline_images_skips_none_entries():
-    """Test that inline_images property skips None (Do) entries."""
-    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
-    page = reader.pages[0]
-
-    # Force-populate inline images
-    _ = list(page.images)
-
-    # Access inline_images (suppress deprecation warning)
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
-        inline = page.inline_images
-
-    assert inline is not None, "inline_images must not be None after accessing images"
-    assert len(list(inline)) == 0, (
-        "inline_images must not contain non-inline images. "
-        "This document only contains one Do-referenced image."
-    )
 
 
 @pytest.mark.enable_socket

@@ -35,7 +35,6 @@ from datetime import datetime
 from typing import (
     Any,
     NamedTuple,
-    NoReturn,
     cast,
 )
 
@@ -45,8 +44,7 @@ from ._page import PageObject, _VirtualList
 from ._page_labels import index2labels
 from ._utils import (
     _TraversalState,
-    deprecate_no_replacement,
-    deprecation_with_replacement,
+    deprecation_no_replacement,
     logger_warning,
     parse_iso8824_date,
 )
@@ -631,11 +629,7 @@ class PdfDocCommon(ABC):
 
         """
         if stack is not _UNSET:
-            deprecate_no_replacement(name="stack", removed_in="7.0.0")
-            if retval is not None:
-                if _visited is None:
-                    _visited = set()
-                _visited.update(set(map(id, stack or [])))
+            deprecation_no_replacement(name="stack", removed_in="7.0.0")
 
         configuration = get_configuration()
         if _depth >= configuration.form_fields_maximum_depth:
@@ -1603,16 +1597,6 @@ class PdfDocCommon(ABC):
 
         """
         return IndirectObject(num, gen, self).get_object()
-
-    def decode_permissions(
-        self, permissions_code: int
-    ) -> NoReturn:  # pragma: no cover
-        """Take the permissions as an integer, return the allowed access."""
-        deprecation_with_replacement(
-            old_name="decode_permissions",
-            new_name="user_access_permissions",
-            removed_in="5.0.0",
-        )
 
     @property
     def user_access_permissions(self) -> UserAccessPermissions | None:

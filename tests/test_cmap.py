@@ -1020,3 +1020,34 @@ def test_parse_bfchar__speed() -> None:
     parse_bfchar(pairs, map_dict, int_entry)
     assert int_entry == list(range(count))
     assert len(map_dict) == count + 1
+
+
+def test_get_encoding__unknown_base_encoding_falls_back_to_standard_encoding(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    An unsupported /BaseEncoding name is not an error: pypdf logs it and uses StandardEncoding.
+
+    ISO 32000-2:2020, 9.6.5.2 "Encodings for simple fonts", Table 112 lists the valid
+    /BaseEncoding names; if the entry is absent, StandardEncoding is the default.
+    """
+    font = DictionaryObject({
+        NameObject("/Encoding"): DictionaryObject({
+            NameObject("/BaseEncoding"): NameObject("/UnknownEncoding"),
+        }),
+    })
+    encoding, _ = get_encoding(font)
+    assert encoding == dict(zip(range(256), charset_encoding["/StandardEncoding"]))
+    assert "not implemented yet" in caplog.text
+
+
+def test_get_encoding__to_unicode_stream_with_str_data() -> None:
+    """
+    A /ToUnicode CMap whose stream data is a str instead of bytes is still parsed.
+
+    ISO 32000-2:2020, 9.10.3 "ToUnicode CMaps": the CMap maps character codes to Unicode;
+    here code <01> maps to U+0041.
+    """
+    to_unicode = DecodedStreamObject()
+    to_unicode.set_data("beginbfchar\n<01> <0041>\nendbfchar")
+    font = DictionaryObject({NameObject("/ToUnicode"): to_unicode})
+    _, map_dict = get_encoding(font)
+    assert map_dict["\x01"] == "A"

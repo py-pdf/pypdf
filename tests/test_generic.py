@@ -14,7 +14,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf._utils import get_stream_data
 from pypdf.constants import CheckboxRadioButtonAttributes, OutlineFontFlag
-from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
+from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -202,15 +202,8 @@ def test_read_string_from_stream_escape_digit2():
 
 def test_name_object(caplog):
     stream = BytesIO(b"x")
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(PdfReadError, match=r"^Name read error$"):
         NameObject.read_from_stream(stream, None)
-    assert exc.value.args[0] == "Name read error"
-
-    with pytest.raises(
-        DeprecationError,
-        match=r"surfix is deprecated and was removed in pypdf 5\.0\.0\. Use prefix instead\.",
-    ):
-        _ = NameObject.surfix
 
     assert (
         NameObject.read_from_stream(
@@ -255,8 +248,8 @@ def test_name_object(caplog):
     caplog.clear()
     b = BytesIO()
     with pytest.raises(
-            expected_exception=DeprecationError,
-            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and was"
+            expected_exception=PdfStreamError,
+            match=r"^Incorrect first char in NameObject, should start with '/': \(hello\)$"
     ):
         NameObject("hello").write_to_stream(b)
 
