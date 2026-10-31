@@ -19,6 +19,7 @@ from pypdf.errors import DeprecationError, LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
     ArrayObject,
+    ByteStringObject,
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
@@ -659,6 +660,39 @@ def test_low_bit_devicergb_image_without_filter():
     assert img.tobytes() == bytes(
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
+
+
+def test_indexed_image_without_filter():
+    """An /Indexed image without a filter still applies its lookup table (#4317)."""
+    writer = PdfWriter()
+    image = DecodedStreamObject()
+    image.set_data(bytes([0, 1, 2]))
+    image[NameObject("/Type")] = NameObject("/XObject")
+    image[NameObject("/Subtype")] = NameObject("/Image")
+    image[NameObject("/Width")] = NumberObject(3)
+    image[NameObject("/Height")] = NumberObject(1)
+    image[NameObject("/BitsPerComponent")] = NumberObject(8)
+    image[NameObject("/ColorSpace")] = ArrayObject(
+        [
+            NameObject("/Indexed"),
+            NameObject("/DeviceRGB"),
+            NumberObject(2),
+            ByteStringObject(b"\xff\x00\x00\x00\xff\x00\x00\x00\xff"),
+        ]
+    )
+
+    page = writer.add_blank_page(20, 20)
+    page[NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/XObject"): DictionaryObject({NameObject("/Im0"): writer._add_object(image)})}
+    )
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    extracted = PdfReader(output).pages[0].images[0].image
+    assert extracted.mode == "RGB"
+    assert extracted.tobytes() == bytes([255, 0, 0, 0, 255, 0, 0, 0, 255])
 
 
 @pytest.mark.enable_socket

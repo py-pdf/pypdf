@@ -664,6 +664,21 @@ def _xobj_to_image(
             ".png",
             False,
         )
+    elif (
+        isinstance(color_space, ArrayObject)
+        and color_space
+        and color_space[0] == "/Indexed"
+    ):
+        # An unfiltered indexed image still needs its lookup table applied;
+        # _handle_flate does that (it only decodes data that is flate-encoded).
+        img, image_format, extension, _ = _handle_flate(
+            size,
+            data,
+            mode,
+            color_space,
+            colors,
+            obj_as_text,
+        )
     elif mode == "CMYK":
         img, image_format, extension, invert_color = (
             _image_from_bytes(mode, size, data),
