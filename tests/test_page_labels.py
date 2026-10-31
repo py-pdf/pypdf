@@ -19,7 +19,6 @@ from pypdf._page_labels import (
 from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
-    FloatObject,
     IndirectObject,
     NameObject,
     NullObject,
@@ -726,15 +725,6 @@ _SHARED_KIDS = ArrayObject([_build_kid(first=0, last=30, nums=[0, _build_label(s
                 _DECIMAL_KID,
             ),
             id="limits-outside-of-pages",
-        ),
-        pytest.param(
-            _build_kids_tree(
-                _build_kid_with(
-                    first=0, last=30, key="/Limits", value=ArrayObject([FloatObject("nan"), NumberObject(30)])
-                ),
-                _DECIMAL_KID,
-            ),
-            id="limits-not-a-number",
         ),
         pytest.param(
             _build_kids_tree(

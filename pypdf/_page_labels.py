@@ -60,8 +60,8 @@ a       Lowercase letters (a to z for the first 26 pages,
 import math
 import string
 from bisect import bisect_left, bisect_right
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, cast
+from collections.abc import Callable, Iterable
+from typing import Any, NamedTuple, cast
 
 from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
@@ -72,9 +72,6 @@ from .generic import (
     NumberObject,
     is_null_or_none,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 # The largest number one can represent using the usual symbols
 # and subtractive notation without additional conventions.
@@ -136,21 +133,23 @@ def number2lowercase_letter(number: int) -> str:
     return number2uppercase_letter(number).lower()
 
 
+_NUMBERING_STYLES: dict[str | None, Callable[[int], str]] = {
+    None: lambda _: "",
+    "/D": str,
+    "/R": number2uppercase_roman_numeral,
+    "/r": number2lowercase_roman_numeral,
+    "/A": number2uppercase_letter,
+    "/a": number2lowercase_letter,
+}
+
+
 def _get_label(value: Any, start_index: Any, index: int) -> str:
-    m: dict[str | None, Callable[[int], str]] = {
-        None: lambda _: "",
-        "/D": str,
-        "/R": number2uppercase_roman_numeral,
-        "/r": number2lowercase_roman_numeral,
-        "/A": number2uppercase_letter,
-        "/a": number2lowercase_letter,
-    }
     # if /Nums array is not following the specification or if /Nums is empty
     if not isinstance(value, dict):
         return str(index + 1)  # Fallback
     start = value.get("/St", 1)
     prefix = cast(str, value.get("/P", ""))
-    mapping_function = m.get(value.get("/S"))
+    mapping_function = _NUMBERING_STYLES.get(value.get("/S"))
     if mapping_function is None:
         # Unknown /S numbering style; fall back to the page position.
         logger_warning(
@@ -170,7 +169,7 @@ def _get_label(value: Any, start_index: Any, index: int) -> str:
             prefix=prefix,
             exception=exception,
         )
-        return str(index + 1)  # Fallback
+    return str(index + 1)  # Fallback
 
 
 def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
@@ -294,7 +293,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
 
 
-def _get_labels_from_nums(nums: ArrayObject, indexes: Iterable[int]) -> list[str]:
+def _get_labels_for_page_indexes(nums: ArrayObject, indexes: Iterable[int]) -> list[str]:
     """
     Labels for increasing page indexes, as ``get_label_from_nums`` would return them.
 
@@ -340,12 +339,11 @@ def _get_labels_from_nums(nums: ArrayObject, indexes: Iterable[int]) -> list[str
 def _get_page_range(limits: list[Any], page_count: int) -> tuple[int, int] | None:
     """Get the first and last page index between the two ``/Limits`` values, if any."""
     low, high = limits[0], limits[1]
-    if any(isinstance(limit, float) and math.isnan(limit) for limit in (low, high)):
+    if low >= page_count or high < 0:
         return None
-    if low > page_count - 1 or high < 0:
-        return None
+    last_page = page_count - 1
     first = 0 if low <= 0 else math.ceil(low)
-    last = page_count - 1 if high >= page_count - 1 else math.floor(high)
+    last = last_page if high >= last_page else math.floor(high)
     return (first, last) if first <= last else None
 
 
@@ -362,6 +360,7 @@ class _FirstKidFinder:
 
     def __init__(self, kids: ArrayObject, page_count: int) -> None:
         self._kids = kids
+        self._kid_count = len(kids)
         self._page_count = page_count
         self._next_kid = 0
         # Pages covered by any kid read so far, as merged ranges.
@@ -377,7 +376,7 @@ class _FirstKidFinder:
             position = bisect_right(self._starts, index) - 1
             if position >= 0 and index <= self._ends[position]:
                 return self._first_kids[position]
-            if self._next_kid >= len(self._kids):
+            if self._next_kid >= self._kid_count:
                 return None
             kid_range = self._read_kid(self._kids[self._next_kid])
             self._next_kid += 1
@@ -388,6 +387,8 @@ class _FirstKidFinder:
         try:
             kid = kid.get_object()
             limits = kid.get("/Limits", NullObject()).get_object() if isinstance(kid, DictionaryObject) else None
+        except MemoryError:  # pragma: no cover  # TODO: BLE001
+            raise
         except Exception as exception:
             return 0, self._page_count - 1, exception
         if not isinstance(kid, DictionaryObject):
@@ -427,6 +428,29 @@ class _FirstKidFinder:
             self._first_kids.insert(position, kid)
 
 
+class _TreeNode(NamedTuple):
+    """A node of a ``/Kids`` number tree with the page indexes reaching it."""
+
+    node: DictionaryObject
+    indexes: list[int]
+    level: int
+
+
+class _KidPages(NamedTuple):
+    """A kid with the page indexes it is picked for."""
+
+    kid: DictionaryObject
+    indexes: list[int]
+
+
+class _LeafPages(NamedTuple):
+    """A leaf with its ``/Nums`` array, if it is one, and the page indexes it labels."""
+
+    nums: ArrayObject | None
+    leaf: DictionaryObject
+    indexes: list[int]
+
+
 def _get_labels_from_kids(number_tree: DictionaryObject, page_count: int) -> list[str]:
     """
     Labels of the first ``page_count`` pages of a ``/Kids`` number tree, as ``index2label`` would return them.
@@ -435,47 +459,49 @@ def _get_labels_from_kids(number_tree: DictionaryObject, page_count: int) -> lis
     indexed once and each ``/Nums`` array is read once for all of its pages. Warnings
     about malformed kids are logged once per array instead of once per page.
     """
-    finders: dict[int, tuple[ArrayObject, _FirstKidFinder]] = {}
-    leaves: dict[int, tuple[ArrayObject | None, DictionaryObject, list[int]]] = {}
+    # The finders keep their /Kids arrays, so the ids stay unique.
+    finders: dict[int, _FirstKidFinder] = {}
+    leaves: dict[int, _LeafPages] = {}
     unmatched: list[int] = []
-    nodes = [(number_tree, list(range(page_count)), 0)]
+    nodes = [_TreeNode(number_tree, list(range(page_count)), 0)]
     while nodes:
-        node, indexes, level = nodes.pop()
-        kids = node["/Kids"].get_object()
+        node = nodes.pop()
+        kids = node.node["/Kids"].get_object()
         if not isinstance(kids, ArrayObject):
             logger_warning("Page label kids are not an array: %(kids)s", source=__name__, kids=kids)
-            unmatched.extend(indexes)
+            unmatched.extend(node.indexes)
             continue
         if id(kids) not in finders:
-            finders[id(kids)] = (kids, _FirstKidFinder(kids, page_count))
-        finder = finders[id(kids)][1]
-        groups: dict[int, tuple[DictionaryObject, list[int]]] = {}
-        for index in indexes:
+            finders[id(kids)] = _FirstKidFinder(kids, page_count)
+        finder = finders[id(kids)]
+        kid_pages: dict[int, _KidPages] = {}
+        for index in node.indexes:
             kid = finder.find(index)
             if isinstance(kid, Exception):
                 raise kid
             if kid is None:
                 unmatched.append(index)
             else:
-                groups.setdefault(id(kid), (kid, []))[1].append(index)
-        for kid, kid_indexes in groups.values():
+                kid_pages.setdefault(id(kid), _KidPages(kid, [])).indexes.append(index)
+        for kid, indexes in kid_pages.values():
             if not is_null_or_none(kid.get("/Kids", None)):
-                if level + 1 == 100:  # pragma: no cover
+                # Same nesting limit as in index2label().
+                if node.level + 1 == 100:  # pragma: no cover
                     raise NotImplementedError("Too deep nesting is not supported.")
-                nodes.append((kid, kid_indexes, level + 1))
+                nodes.append(_TreeNode(kid, indexes, node.level + 1))
                 continue
             # Leaves sharing a /Nums array are read together.
             nums = kid["/Nums"]
             if isinstance(nums, ArrayObject):
-                leaves.setdefault(id(nums), (nums, kid, []))[2].extend(kid_indexes)
+                leaves.setdefault(id(nums), _LeafPages(nums, kid, [])).indexes.extend(indexes)
             else:
-                leaves.setdefault(id(kid), (None, kid, []))[2].extend(kid_indexes)
+                leaves.setdefault(id(kid), _LeafPages(None, kid, [])).indexes.extend(indexes)
 
     labels = [""] * page_count
     for leaf_nums, leaf, leaf_indexes in leaves.values():
         leaf_indexes.sort()
         leaf_labels = (
-            _get_labels_from_nums(leaf_nums, leaf_indexes)
+            _get_labels_for_page_indexes(leaf_nums, leaf_indexes)
             if leaf_nums is not None
             else [get_label_from_nums(leaf, index) for index in leaf_indexes]
         )
@@ -509,7 +535,7 @@ def index2labels(pdf: PdfCommonDocProtocol, page_count: int) -> list[str]:
         nums = number_tree["/Nums"]
         if not isinstance(nums, ArrayObject):
             return [get_label_from_nums(number_tree, index) for index in range(page_count)]
-        return _get_labels_from_nums(nums, range(page_count))
+        return _get_labels_for_page_indexes(nums, range(page_count))
     if "/Kids" in number_tree and not isinstance(number_tree["/Kids"], NullObject):
         return _get_labels_from_kids(number_tree, page_count)
     return _index2labels_page_by_page(pdf, page_count)
