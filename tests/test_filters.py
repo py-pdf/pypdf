@@ -16,6 +16,7 @@ import pytest
 from PIL import Image, ImageOps
 
 from pypdf import PdfReader, PdfWriter, apply_configuration
+from pypdf._codecs._codecs import LzwCodec
 from pypdf.errors import DependencyError, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
@@ -1262,6 +1263,27 @@ def test_lzwdecode__invalid_first_code():
             match=r"^LZW code 258 out of range with empty base at table index 258\.$"
     ):
         LZWDecode.decode(data=lzw_data)
+
+
+@pytest.mark.parametrize(
+    ("predictor", "predicted"),
+    [
+        # PNG predictors: Sub for the first row, Up for the second row.
+        (12, b"\x01\x0a\x14\x1e\x1e\x1e\x1e\x02\x01\x01\x01\x01\x01\x01"),
+        # TIFF predictor: horizontal differencing, no filter byte.
+        (2, b"\x0a\x14\x1e\x1e\x1e\x1e\x0b\x15\x1f\x1e\x1e\x1e"),
+    ],
+    ids=["png", "tiff"],
+)
+def test_lzwdecode__predictor(predictor, predicted):
+    parameters = DictionaryObject({
+        NameObject("/Predictor"): NumberObject(predictor),
+        NameObject("/Colors"): NumberObject(3),
+        NameObject("/Columns"): NumberObject(2),
+    })
+    encoded = LzwCodec().encode(predicted)
+
+    assert LZWDecode.decode(encoded, parameters) == b"\x0a\x14\x1e\x28\x32\x3c\x0b\x15\x1f\x29\x33\x3d"
 
 
 @pytest.mark.timeout(10)  # Has been 20 seconds before.
