@@ -631,12 +631,12 @@ def test_fill_form(pdf_file_path):
     writer.append(RESOURCE_ROOT / "crazyones.pdf", [0])
 
     writer.update_page_form_field_values(
-        writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly, flatten=True
+        writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.READ_ONLY, flatten=True
     )
 
     # check if no fields to fill in the page
     writer.update_page_form_field_values(
-        writer.pages[1], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly, flatten=True
+        writer.pages[1], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.READ_ONLY, flatten=True
     )
 
     writer.update_page_form_field_values(
@@ -656,7 +656,7 @@ def test_fill_form_with_qualified():
     writer.clone_document_from_reader(reader)
     writer.add_page(reader.pages[0])
     writer.update_page_form_field_values(
-        writer.pages[0], {"top.foo": "filling"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly
+        writer.pages[0], {"top.foo": "filling"}, flags=FieldDictionaryAttributes.FfBits.READ_ONLY
     )
     b = BytesIO()
     writer.write(b)
@@ -2432,7 +2432,7 @@ def test_missing_fields(pdf_file_path):
 
     with pytest.raises(PyPdfError) as exc:
         writer.update_page_form_field_values(
-            writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly
+            writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.READ_ONLY
         )
     assert exc.value.args[0] == "No /AcroForm dictionary in PDF of PdfWriter Object"
 
@@ -2441,7 +2441,7 @@ def test_missing_fields(pdf_file_path):
     del writer.root_object["/AcroForm"]["/Fields"]
     with pytest.raises(PyPdfError) as exc:
         writer.update_page_form_field_values(
-            writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.ReadOnly
+            writer.pages[0], {"foo": "some filled in text"}, flags=FieldDictionaryAttributes.FfBits.READ_ONLY
         )
     assert exc.value.args[0] == "No /Fields dictionary in PDF of PdfWriter Object"
 

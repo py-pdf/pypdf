@@ -763,18 +763,18 @@ class PdfDocCommon(ABC):
             fileobj.write("\n")
         retval[key] = Field(field)
         obj = retval[key].indirect_reference.get_object()  # to get the full object
-        if obj.get(FA.FT, "") == "/Ch" and obj.get(NameObject(FA.Opt)):
-            retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
+        if obj.get(FA.FT, "") == "/Ch" and obj.get(NameObject(FA.OPT)):
+            retval[key][NameObject("/_States_")] = obj[NameObject(FA.OPT)]
         if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
             #  Checkbox
             normal = self._normal_appearance(obj["/AP"])
             retval[key][NameObject("/_States_")] = ArrayObject(list(normal.keys()))
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
-        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
+        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.FF, 0) & FA.FfBits.RADIO != 0:
             states: list[str] = []
             retval[key][NameObject("/_States_")] = ArrayObject(states)
-            for k in obj.get(FA.Kids, {}):
+            for k in obj.get(FA.KIDS, {}):
                 k = k.get_object()
                 if "/AP" not in k:
                     raise PdfReadError(f"Button field kid missing /AP: {k!r}")
@@ -784,7 +784,7 @@ class PdfDocCommon(ABC):
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
             if (
-                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
+                obj.get(FA.FF, 0) & FA.FfBits.NO_TOGGLE_TO_OFF != 0
                 and "/Off" in retval[key]["/_States_"]
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
@@ -829,7 +829,7 @@ class PdfDocCommon(ABC):
 
         for attr in field_attributes_tuple:
             if attr in (
-                FA.Kids,
+                FA.KIDS,
                 FA.AA,
             ):
                 continue
@@ -845,7 +845,7 @@ class PdfDocCommon(ABC):
                     }
                     if field[attr] in types:
                         fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
-                elif attr == FA.Parent:
+                elif attr == FA.PARENT:
                     # Let's just write the name of the parent
                     try:
                         name = field[attr][FA.TM]

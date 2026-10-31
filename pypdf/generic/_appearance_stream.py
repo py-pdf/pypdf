@@ -753,7 +753,7 @@ class TextStreamAppearance(BaseStreamAppearance):
 
         """
         # Calculate rectangle dimensions
-        _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
+        _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.RECT])
         # Normalize the rectangle, apply page rotation if applicable
         if page.get_inherited("/Rotate") in {90, 270}:
             rectangle = RectangleObject((0, 0, abs(_rectangle[3] - _rectangle[1]), abs(_rectangle[2] - _rectangle[0])))
@@ -772,12 +772,12 @@ class TextStreamAppearance(BaseStreamAppearance):
             default_appearance = default_appearance.get_object()
 
         # Retrieve field text and selected values
-        field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
+        field_flags = field.get(FieldDictionaryAttributes.FF, 0)
         if (
                 field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
-                field_flags & FieldDictionaryAttributes.FfBits.Combo == 0
+                field_flags & FieldDictionaryAttributes.FfBits.COMBO == 0
         ):
-            text = "\n".join(annotation.get_inherited(FieldDictionaryAttributes.Opt, []))
+            text = "\n".join(annotation.get_inherited(FieldDictionaryAttributes.OPT, []))
             selection = field.get("/V", [])
             if not isinstance(selection, list):
                 selection = [selection]
@@ -831,11 +831,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         # Retrieve formatting information
         is_comb = False
         max_length = None
-        if field_flags & FieldDictionaryAttributes.FfBits.Comb:
+        if field_flags & FieldDictionaryAttributes.FfBits.COMB:
             is_comb = True
             max_length = annotation.get("/MaxLen")
         is_multiline = False
-        if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
+        if field_flags & FieldDictionaryAttributes.FfBits.MULTILINE:
             is_multiline = True
         alignment = field.get("/Q", TextAlignment.LEFT)
         border_width = 1

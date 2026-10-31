@@ -64,8 +64,8 @@ from ..constants import (
     StreamAttributes,
 )
 from ..constants import FilterTypes as FT
-from ..constants import TypArguments as TA
-from ..constants import TypFitArguments as TF
+from ..constants import TypeArguments as TA
+from ..constants import FitTypes as TF
 from ..errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
 from ._base import (
     BooleanObject,
@@ -1781,12 +1781,12 @@ class Field(TreeObject):
     @property
     def parent(self) -> DictionaryObject | None:
         """Read-only property accessing the parent of this field."""
-        return self.get(FieldDictionaryAttributes.Parent)
+        return self.get(FieldDictionaryAttributes.PARENT)
 
     @property
     def kids(self) -> Optional["ArrayObject"]:
         """Read-only property accessing the kids of this field."""
-        return self.get(FieldDictionaryAttributes.Kids)
+        return self.get(FieldDictionaryAttributes.KIDS)
 
     @property
     def name(self) -> str | None:
@@ -1814,7 +1814,7 @@ class Field(TreeObject):
         Read-only property accessing the field flags, specifying various
         characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
         """
-        return self.get(FieldDictionaryAttributes.Ff)
+        return self.get(FieldDictionaryAttributes.FF)
 
     @property
     def value(self) -> Any | None:

@@ -1,7 +1,7 @@
 """Various constants, enums, and flags to aid readability."""
 
 import sys
-from enum import Enum, IntFlag, auto, unique
+from enum import Enum, EnumMeta, IntFlag, auto, unique
 from typing import Any
 
 from ._utils import deprecate_with_replacement
@@ -232,25 +232,92 @@ class PageAttributes:
     D_PART = "/DPart"  # dictionary, required, if this page is within the range of a DPart, not permitted otherwise
 
 
-class _FileSpecificationDictionaryEntriesMeta(type):
+_DEPRECATED_CONSTANT_ATTRIBUTES = {
+    "FileSpecificationDictionaryEntries": {
+        "Type": "TYPE",
+        "Mac": "MAC",
+        "Unix": "UNIX",
+        "Cl": "CL",
+    },
+    "FilterTypeAbbreviations": {"AHx": "AHX"},
+    "GraphicsStateParameters": {
+        "OP": "OP_STROKING",
+        "op": "OP_NON_STROKING",
+        "CA": "CA_STROKING",
+        "ca": "CA_NON_STROKING",
+    },
+    "AnnotationDictionaryAttributes": {
+        "Type": "TYPE",
+        "Subtype": "SUBTYPE",
+        "Rect": "RECT",
+        "Contents": "CONTENTS",
+        "Border": "BORDER",
+        "StructParent": "STRUCT_PARENT",
+    },
+    "InteractiveFormDictEntries": {
+        "Fields": "FIELDS",
+        "NeedAppearances": "NEED_APPEARANCES",
+        "SigFlags": "SIG_FLAGS",
+    },
+    "FieldDictionaryAttributes": {
+        "Parent": "PARENT",
+        "Kids": "KIDS",
+        "Ff": "FF",
+        "Opt": "OPT",
+    },
+    "FieldDictionaryAttributes.FfBits": {
+        "ReadOnly": "READ_ONLY",
+        "Required": "REQUIRED",
+        "NoExport": "NO_EXPORT",
+        "Multiline": "MULTILINE",
+        "Password": "PASSWORD",
+        "NoToggleToOff": "NO_TOGGLE_TO_OFF",
+        "Radio": "RADIO",
+        "Pushbutton": "PUSHBUTTON",
+        "Combo": "COMBO",
+        "Edit": "EDIT",
+        "Sort": "SORT",
+        "FileSelect": "FILE_SELECT",
+        "MultiSelect": "MULTI_SELECT",
+        "DoNotSpellCheck": "DO_NOT_SPELL_CHECK",
+        "DoNotScroll": "DO_NOT_SCROLL",
+        "Comb": "COMB",
+        "RadiosInUnison": "RADIOS_IN_UNISON",
+        "RichText": "RICH_TEXT",
+        "CommitOnSelChange": "COMMIT_ON_SEL_CHANGE",
+    },
+    "CheckboxRadioButtonAttributes": {"Opt": "OPT"},
+    "OutlineFontFlag": {"italic": "ITALIC", "bold": "BOLD"},
+}
+
+
+def _warn_deprecated_constant_attribute(cls: type, name: str) -> None:
+    class_name = type.__getattribute__(cls, "__qualname__")
+    replacement = _DEPRECATED_CONSTANT_ATTRIBUTES.get(class_name, {}).get(name)
+    if replacement is not None:
+        deprecate_with_replacement(
+            f"{class_name}.{name}",
+            f"{class_name}.{replacement}",
+            "7.0.0",
+            stacklevel=5,
+        )
+
+
+class _DeprecatedAttributesMeta(type):
     def __getattribute__(cls, name: str) -> Any:
         value = super().__getattribute__(name)
-        replacements = {
-            "Type": "TYPE",
-            "Mac": "MAC",
-            "Unix": "UNIX",
-            "Cl": "CL",
-        }
-        if name in replacements:
-            deprecate_with_replacement(
-                f"FileSpecificationDictionaryEntries.{name}",
-                f"FileSpecificationDictionaryEntries.{replacements[name]}",
-                "7.0.0",
-            )
+        _warn_deprecated_constant_attribute(cls, name)
         return value
 
 
-class FileSpecificationDictionaryEntries(metaclass=_FileSpecificationDictionaryEntriesMeta):
+class _DeprecatedIntFlagMeta(EnumMeta):
+    def __getattribute__(cls, name: str) -> Any:
+        value = super().__getattribute__(name)
+        _warn_deprecated_constant_attribute(cls, name)
+        return value
+
+
+class FileSpecificationDictionaryEntries(metaclass=_DeprecatedAttributesMeta):
     """Table 3.41 entries; mixed-case aliases are deprecated for pypdf 7.0.0."""
 
     TYPE = "/Type"
@@ -299,10 +366,11 @@ class FilterTypes(StrEnum):
     JBIG2_DECODE = "/JBIG2Decode"
 
 
-class FilterTypeAbbreviations:
+class FilterTypeAbbreviations(metaclass=_DeprecatedAttributesMeta):
     """§8.9.7 of the 1.7 and 2.0 references."""
 
-    AHx = "/AHx"
+    AHX = "/AHx"
+    AHx = AHX
     A85 = "/A85"
     LZW = "/LZW"
     FL = "/Fl"
@@ -364,7 +432,7 @@ class ColorSpaces:
     DEVICE_GRAY = "/DeviceGray"
 
 
-class TypArguments:
+class TypeArguments:
     """Table 8.2 of the PDF 1.7 reference."""
 
     LEFT = "/Left"
@@ -373,7 +441,7 @@ class TypArguments:
     TOP = "/Top"
 
 
-class TypFitArguments:
+class FitTypes:
     """Table 8.2 of the PDF 1.7 reference."""
 
     XYZ = "/XYZ"
@@ -392,13 +460,17 @@ class GoToActionArguments:
     SD = "/SD"  # array, optional: structure destination to jump to
 
 
-class AnnotationDictionaryAttributes:
+class AnnotationDictionaryAttributes(metaclass=_DeprecatedAttributesMeta):
     """Table 8.15 Entries common to all annotation dictionaries."""
 
-    Type = "/Type"
-    Subtype = "/Subtype"
-    Rect = "/Rect"
-    Contents = "/Contents"
+    TYPE = "/Type"
+    Type = TYPE
+    SUBTYPE = "/Subtype"
+    Subtype = SUBTYPE
+    RECT = "/Rect"
+    Rect = RECT
+    CONTENTS = "/Contents"
+    Contents = CONTENTS
     P = "/P"
     NM = "/NM"
     M = "/M"
@@ -406,16 +478,21 @@ class AnnotationDictionaryAttributes:
     AP = "/AP"
     AS = "/AS"
     DA = "/DA"
-    Border = "/Border"
+    BORDER = "/Border"
+    Border = BORDER
     C = "/C"
-    StructParent = "/StructParent"
+    STRUCT_PARENT = "/StructParent"
+    StructParent = STRUCT_PARENT
     OC = "/OC"
 
 
-class InteractiveFormDictEntries:
-    Fields = "/Fields"
-    NeedAppearances = "/NeedAppearances"
-    SigFlags = "/SigFlags"
+class InteractiveFormDictEntries(metaclass=_DeprecatedAttributesMeta):
+    FIELDS = "/Fields"
+    Fields = FIELDS
+    NEED_APPEARANCES = "/NeedAppearances"
+    NeedAppearances = NEED_APPEARANCES
+    SIG_FLAGS = "/SigFlags"
+    SigFlags = SIG_FLAGS
     CO = "/CO"
     DR = "/DR"
     DA = "/DA"
@@ -423,7 +500,7 @@ class InteractiveFormDictEntries:
     XFA = "/XFA"
 
 
-class FieldDictionaryAttributes:
+class FieldDictionaryAttributes(metaclass=_DeprecatedAttributesMeta):
     """
     Entries common to all field dictionaries (Table 8.69 PDF 1.7 reference)
     (*very partially documented here*).
@@ -432,18 +509,22 @@ class FieldDictionaryAttributes:
     """
 
     FT = "/FT"  # name, required for terminal fields
-    Parent = "/Parent"  # dictionary, required for children
-    Kids = "/Kids"  # array, sometimes required
+    PARENT = "/Parent"  # dictionary, required for children
+    Parent = PARENT
+    KIDS = "/Kids"  # array, sometimes required
+    Kids = KIDS
     T = "/T"  # text string, optional
     TU = "/TU"  # text string, optional
     TM = "/TM"  # text string, optional
-    Ff = "/Ff"  # integer, optional
+    FF = "/Ff"  # integer, optional
+    Ff = FF
     V = "/V"  # text string or array, optional
     DV = "/DV"  # text string, optional
     AA = "/AA"  # dictionary, optional
-    Opt = "/Opt"  # array, optional
+    OPT = "/Opt"  # array, optional
+    Opt = OPT
 
-    class FfBits(IntFlag):
+    class FfBits(IntFlag, metaclass=_DeprecatedIntFlagMeta):
         """
         Ease building /Ff flags
         Some entries may be specific to:
@@ -453,52 +534,71 @@ class FieldDictionaryAttributes:
         * Choice (Ch) (Table 8.79 PDF 1.7 reference)
         """
 
-        ReadOnly = 1 << 0
+        READ_ONLY = 1 << 0
+        ReadOnly = READ_ONLY
         """common to Tx/Btn/Ch in Table 8.70"""
-        Required = 1 << 1
+        REQUIRED = 1 << 1
+        Required = REQUIRED
         """common to Tx/Btn/Ch in Table 8.70"""
-        NoExport = 1 << 2
+        NO_EXPORT = 1 << 2
+        NoExport = NO_EXPORT
         """common to Tx/Btn/Ch in Table 8.70"""
 
-        Multiline = 1 << 12
+        MULTILINE = 1 << 12
+        Multiline = MULTILINE
         """Tx"""
-        Password = 1 << 13
+        PASSWORD = 1 << 13
+        Password = PASSWORD
         """Tx"""
 
-        NoToggleToOff = 1 << 14
+        NO_TOGGLE_TO_OFF = 1 << 14
+        NoToggleToOff = NO_TOGGLE_TO_OFF
         """Btn"""
-        Radio = 1 << 15
+        RADIO = 1 << 15
+        Radio = RADIO
         """Btn"""
-        Pushbutton = 1 << 16
+        PUSHBUTTON = 1 << 16
+        Pushbutton = PUSHBUTTON
         """Btn"""
 
-        Combo = 1 << 17
+        COMBO = 1 << 17
+        Combo = COMBO
         """Ch"""
-        Edit = 1 << 18
+        EDIT = 1 << 18
+        Edit = EDIT
         """Ch"""
-        Sort = 1 << 19
+        SORT = 1 << 19
+        Sort = SORT
         """Ch"""
 
-        FileSelect = 1 << 20
+        FILE_SELECT = 1 << 20
+        FileSelect = FILE_SELECT
         """Tx"""
 
-        MultiSelect = 1 << 21
+        MULTI_SELECT = 1 << 21
+        MultiSelect = MULTI_SELECT
         """Tx"""
 
-        DoNotSpellCheck = 1 << 22
+        DO_NOT_SPELL_CHECK = 1 << 22
+        DoNotSpellCheck = DO_NOT_SPELL_CHECK
         """Tx/Ch"""
-        DoNotScroll = 1 << 23
+        DO_NOT_SCROLL = 1 << 23
+        DoNotScroll = DO_NOT_SCROLL
         """Tx"""
-        Comb = 1 << 24
+        COMB = 1 << 24
+        Comb = COMB
         """Tx"""
 
-        RadiosInUnison = 1 << 25
+        RADIOS_IN_UNISON = 1 << 25
+        RadiosInUnison = RADIOS_IN_UNISON
         """Btn"""
 
-        RichText = 1 << 25
+        RICH_TEXT = 1 << 25
+        RichText = RICH_TEXT
         """Tx"""
 
-        CommitOnSelChange = 1 << 26
+        COMMIT_ON_SEL_CHANGE = 1 << 26
+        CommitOnSelChange = COMMIT_ON_SEL_CHANGE
         """Ch"""
 
     @classmethod
@@ -519,12 +619,12 @@ class FieldDictionaryAttributes:
             cls.TM,
             cls.T,
             cls.FT,
-            cls.Parent,
+            cls.PARENT,
             cls.TU,
-            cls.Ff,
+            cls.FF,
             cls.V,
             cls.DV,
-            cls.Kids,
+            cls.KIDS,
             cls.AA,
         )
 
@@ -545,20 +645,21 @@ class FieldDictionaryAttributes:
         """
         return {
             cls.FT: "Field Type",
-            cls.Parent: "Parent",
+            cls.PARENT: "Parent",
             cls.T: "Field Name",
             cls.TU: "Alternate Field Name",
             cls.TM: "Mapping Name",
-            cls.Ff: "Field Flags",
+            cls.FF: "Field Flags",
             cls.V: "Value",
             cls.DV: "Default Value",
         }
 
 
-class CheckboxRadioButtonAttributes:
+class CheckboxRadioButtonAttributes(metaclass=_DeprecatedAttributesMeta):
     """Table 8.76 Field flags common to all field types."""
 
-    Opt = "/Opt"  # Options, Optional
+    OPT = "/Opt"  # Options, Optional
+    Opt = OPT
 
     @classmethod
     def attributes(cls) -> tuple[str, ...]:
@@ -574,7 +675,7 @@ class CheckboxRadioButtonAttributes:
             A tuple containing all the attribute constants.
 
         """
-        return (cls.Opt,)
+        return (cls.OPT,)
 
     @classmethod
     def attributes_dict(cls) -> dict[str, str]:
@@ -592,7 +693,7 @@ class CheckboxRadioButtonAttributes:
 
         """
         return {
-            cls.Opt: "Options",
+            cls.OPT: "Options",
         }
 
 
@@ -632,7 +733,7 @@ class PageLayouts:
     TWO_PAGE_RIGHT = "/TwoPageRight"  # (PDF 1.5)
 
 
-class GraphicsStateParameters:
+class GraphicsStateParameters(metaclass=_DeprecatedAttributesMeta):
     """Table 58 – Entries in a Graphics State Parameter Dictionary"""
 
     TYPE = "/Type"  # name, optional
@@ -642,8 +743,10 @@ class GraphicsStateParameters:
     ML = "/ML"  # number, optional
     D = "/D"  # array, optional
     RI = "/RI"  # name, optional
-    OP = "/OP"
-    op = "/op"
+    OP_STROKING = "/OP"
+    OP = OP_STROKING
+    OP_NON_STROKING = "/op"
+    op = OP_NON_STROKING
     OPM = "/OPM"
     FONT = "/Font"  # array, optional
     BG = "/BG"
@@ -658,8 +761,10 @@ class GraphicsStateParameters:
     SA = "/SA"
     BM = "/BM"
     S_MASK = "/SMask"  # dictionary or name, optional
-    CA = "/CA"
-    ca = "/ca"
+    CA_STROKING = "/CA"
+    CA = CA_STROKING
+    CA_NON_STROKING = "/ca"
+    ca = CA_NON_STROKING
     AIS = "/AIS"
     TK = "/TK"
 
@@ -678,11 +783,13 @@ class CatalogDictionary(CatalogAttributes, metaclass=_CatalogDictionaryMeta):
         deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
 
-class OutlineFontFlag(IntFlag):
+class OutlineFontFlag(IntFlag, metaclass=_DeprecatedIntFlagMeta):
     """A class used as an enumerable flag for formatting an outline font."""
 
-    italic = 1
-    bold = 2
+    ITALIC = 1
+    italic = ITALIC
+    BOLD = 2
+    bold = BOLD
 
 
 class PageLabelStyle(StrEnum):
@@ -738,8 +845,8 @@ PDF_KEYS = (
     Resources,
     StreamAttributes,
     TrailerKeys,
-    TypArguments,
-    TypFitArguments,
+    TypeArguments,
+    FitTypes,
 )
 
 
@@ -849,3 +956,15 @@ class FontFlags(IntFlag):
     ALL_CAP = 1 << 16
     SMALL_CAP = 1 << 17
     FORCE_BOLD = 1 << 18
+
+
+def __getattr__(name: str) -> Any:
+    replacements = {
+        "TypArguments": "TypeArguments",
+        "TypFitArguments": "FitTypes",
+    }
+    replacement = replacements.get(name)
+    if replacement is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    deprecate_with_replacement(name, replacement, "7.0.0")
+    return globals()[replacement]
