@@ -4,16 +4,16 @@ from collections import ChainMap, Counter
 from collections import ChainMap as ChainMapType
 from collections import Counter as CounterType
 from collections.abc import MutableMapping
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from ...errors import PdfReadError
 from ...generic._font import Font
 from .. import mult
 from ._text_state_params import TextStateParams
 
-TextStateManagerKeyType = Union[int, Literal["is_text", "is_render"]]
-TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, Union[float, bool]]
-TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, Union[float, bool]]
+TextStateManagerKeyType = int | Literal["is_text", "is_render"]
+TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, float | bool]
+TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, float | bool]
 
 
 class TextStateManager:

@@ -6,7 +6,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript, PageTrigger
-from pypdf.errors import ParseError
+from pypdf.errors import DeprecationError, ParseError
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject, is_null_or_none
 
 from . import RESOURCE_ROOT
@@ -21,57 +21,14 @@ def pdf_file_writer():
 
 
 def test_add_js(pdf_file_writer):
-    with pytest.warns(
-        DeprecationWarning,
+    with pytest.raises(
+        DeprecationError,
         match=(
-            r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"^add_js is deprecated and was removed in pypdf 7\.0\.0\. "
             r"Use add_open_action instead\.$"
         )
     ):
         pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-
-    assert (
-        "/Names" in pdf_file_writer.root_object
-    ), "add_js should add a name catalog in the root object."
-    assert (
-        "/JavaScript" in pdf_file_writer.root_object["/Names"]
-    ), "add_js should add a JavaScript name tree under the name catalog."
-
-
-def test_added_js(pdf_file_writer):
-    def get_javascript_name() -> Any:
-        assert "/Names" in pdf_file_writer.root_object
-        assert "/JavaScript" in pdf_file_writer.root_object["/Names"]
-        assert "/Names" in pdf_file_writer.root_object["/Names"]["/JavaScript"]
-        return pdf_file_writer.root_object["/Names"]["/JavaScript"]["/Names"][
-            -2
-        ]  # return -2 in order to get the latest javascript
-
-    with pytest.warns(
-        DeprecationWarning,
-        match=(
-            r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
-            r"Use add_open_action instead\.$"
-        )
-    ):
-        pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-
-    first_js = get_javascript_name()
-
-    with pytest.warns(
-        DeprecationWarning,
-        match=(
-            r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
-            r"Use add_open_action instead\.$"
-        )
-    ):
-        pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-
-    second_js = get_javascript_name()
-
-    assert (
-        first_js != second_js
-    ), "add_js should add to the previous script in the catalog."
 
 
 def test_add_open_action(pdf_file_writer):
