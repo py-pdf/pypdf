@@ -1279,12 +1279,6 @@ def test_flatedecode__decode_png_prediction__speed():
     FlateDecode._decode_png_prediction(data=data, columns=columns, row_length=row_length)
 
 
-_LOW_BIT_DEPTH_PNG_PREDICTION = pytest.mark.xfail(
-    reason="#4308: For fewer than 8 bits per pixel, the bytes per pixel are rounded down to 0 instead of up to 1",
-    strict=True,
-)
-
-
 @pytest.mark.samples
 @pytest.mark.parametrize(
     ("pdf_path", "page_index", "bytes_per_row"),
@@ -1294,21 +1288,18 @@ _LOW_BIT_DEPTH_PNG_PREDICTION = pytest.mark.xfail(
             "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
             0,
             256 // 8,
-            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
             id="1-bit",
         ),
         pytest.param(
             "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
             1,
             256 // 4,
-            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
             id="2-bit",
         ),
         pytest.param(
             "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
             2,
             256 // 2,
-            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
             id="4-bit",
         ),
     ],

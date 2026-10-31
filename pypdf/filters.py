@@ -234,8 +234,11 @@ class FlateDecode:
                 str_data = bytes(str_data_mut)
             # PNG prediction:
             elif 10 <= predictor <= 15:
+                # PNG filters work on complete pixels: fewer than 8 bits per
+                # pixel still occupy one byte (#4308).
+                bpp = max(1, (colors * bits_per_component + 7) // 8)
                 str_data = FlateDecode._decode_png_prediction(
-                    str_data, columns, row_length
+                    str_data, columns, row_length, bpp
                 )
             else:
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
@@ -271,7 +274,9 @@ class FlateDecode:
         return columns, colors, bits_per_component
 
     @staticmethod
-    def _decode_png_prediction(data: bytes, columns: int, row_length: int) -> bytes:
+    def _decode_png_prediction(
+        data: bytes, columns: int, row_length: int, bpp: int | None = None
+    ) -> bytes:
         # PNG prediction can vary from row to row
         if (remainder := len(data) % row_length) != 0:
             logger_warning("Image data is not rectangular. Adding padding.", source=__name__)
@@ -279,7 +284,8 @@ class FlateDecode:
             assert len(data) % row_length == 0
         output = bytearray()
         previous_row_data = bytes(row_length)
-        bpp = (row_length - 1) // columns  # recomputed locally to not change params
+        if bpp is None:
+            bpp = max(1, (row_length - 1) // columns)
         for row in range(0, len(data), row_length):
             row_data = bytearray(data[row : row + row_length])
             filter_byte = row_data[0]
