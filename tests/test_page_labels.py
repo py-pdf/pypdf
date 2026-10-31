@@ -19,9 +19,12 @@ from pypdf._page_labels import (
 from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
+    FloatObject,
+    IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     TextStringObject,
 )
 
@@ -551,6 +554,8 @@ def _build_label(*, style=None, prefix=None, start=None) -> DictionaryObject:
             [0, _build_label(style="/D"), 10, _build_label(style="/r"), 50],
             id="key-without-value-after-last-page",
         ),
+        pytest.param([0, _build_label(style="/D"), NameObject("/x"), _build_label(style="/r")], id="malformed-key"),
+        pytest.param([], id="empty-array"),
     ],
 )
 def test_index2labels_matches_index2label(nums, caplog):
@@ -678,3 +683,84 @@ def test_index2labels_matches_index2label__indirect_and_shared_nums():
 
     writer.root_object[NameObject("/PageLabels")] = DictionaryObject({NameObject("/Nums"): nums})
     assert index2labels(writer, 30) == [index2label(writer, index) for index in range(30)]
+
+
+def _build_kid_with(*, first, last, key, value) -> DictionaryObject:
+    kid = _build_kid(first=first, last=last)
+    kid[NameObject(key)] = value
+    return kid
+
+
+def _build_kids_tree(*kids: PdfObject) -> DictionaryObject:
+    return DictionaryObject({NameObject("/Kids"): ArrayObject(kids)})
+
+
+_DECIMAL_KID = _build_kid(first=0, last=30, nums=[0, _build_label(style="/D")])
+_SHARED_KIDS = ArrayObject([_build_kid(first=0, last=30, nums=[0, _build_label(style="/r")])])
+
+
+@pytest.mark.parametrize(
+    "number_tree",
+    [
+        pytest.param(DictionaryObject(), id="neither-nums-nor-kids"),
+        pytest.param(DictionaryObject({NameObject("/Kids"): NumberObject(5)}), id="kids-not-an-array"),
+        pytest.param(
+            _build_kids_tree(_build_kid_with(first=0, last=30, key="/Kids", value=NumberObject(5))),
+            id="nested-kids-not-an-array",
+        ),
+        pytest.param(
+            _build_kids_tree(_build_kid_with(first=0, last=30, key="/Nums", value=NumberObject(3))),
+            id="nums-of-kid-not-an-array",
+        ),
+        pytest.param(
+            _build_kids_tree(
+                DictionaryObject({NameObject("/Nums"): ArrayObject([NumberObject(0), _build_label(style="/r")])}),
+                _DECIMAL_KID,
+            ),
+            id="kid-without-limits",
+        ),
+        pytest.param(
+            _build_kids_tree(
+                _build_kid(first=100, last=200, nums=[0, _build_label(style="/r")]),
+                _build_kid(first=-5, last=-1, nums=[0, _build_label(style="/r")]),
+                _DECIMAL_KID,
+            ),
+            id="limits-outside-of-pages",
+        ),
+        pytest.param(
+            _build_kids_tree(
+                _build_kid_with(
+                    first=0, last=30, key="/Limits", value=ArrayObject([FloatObject("nan"), NumberObject(30)])
+                ),
+                _DECIMAL_KID,
+            ),
+            id="limits-not-a-number",
+        ),
+        pytest.param(
+            _build_kids_tree(
+                _build_kid_with(first=0, last=9, key="/Kids", value=_SHARED_KIDS),
+                _build_kid_with(first=10, last=30, key="/Kids", value=_SHARED_KIDS),
+            ),
+            id="kids-sharing-a-kids-array",
+        ),
+    ],
+)
+def test_index2labels_matches_index2label__trees(number_tree):
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader.root_object[NameObject("/PageLabels")] = number_tree
+
+    assert index2labels(reader, 30) == [index2label(reader, index) for index in range(30)]
+
+
+def test_index2labels__kid_which_cannot_be_read():
+    writer = PdfWriter()
+    broken_kid = IndirectObject(999, 0, writer)
+
+    writer.root_object[NameObject("/PageLabels")] = _build_kids_tree(_DECIMAL_KID, broken_kid)
+    assert index2labels(writer, 30) == [index2label(writer, index) for index in range(30)]
+
+    writer.root_object[NameObject("/PageLabels")] = _build_kids_tree(broken_kid, _DECIMAL_KID)
+    with pytest.raises(IndexError):
+        index2label(writer, 0)
+    with pytest.raises(IndexError):
+        index2labels(writer, 30)
