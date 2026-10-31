@@ -625,9 +625,22 @@ def test_low_bit_devicergb_image_mode():
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
 
-    # A single-component space must still map to a palette image ("P").
+    # /DeviceGray samples are gray levels, not palette indices.
     gray = _handle_flate((2, 2), bytes([0xF0, 0x0F]), "4bits", "/DeviceGray", 1, "")[0]
-    assert gray.mode == "P"
+    assert gray.mode == "L"
+    assert gray.tobytes() == bytes([255, 0, 0, 255])
+
+    # /CalGray is an array color space; the samples are gray levels as well.
+    cal_gray = _handle_flate(
+        (2, 2),
+        bytes([0xF0, 0x0F]),
+        "4bits",
+        ArrayObject([NameObject("/CalGray"), DictionaryObject()]),
+        1,
+        "",
+    )[0]
+    assert cal_gray.mode == "L"
+    assert cal_gray.tobytes() == bytes([255, 0, 0, 255])
 
 
 def test_low_bit_devicergb_image_without_filter():
@@ -659,6 +672,39 @@ def test_low_bit_devicergb_image_without_filter():
     assert img.tobytes() == bytes(
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
+
+
+@pytest.mark.parametrize(
+    ("bits", "data", "expected"),
+    [
+        (2, bytes([0b00_01_10_11]), [0, 85, 170, 255]),
+        (4, bytes([0x05, 0xAF]), [0, 85, 170, 255]),
+    ],
+)
+def test_low_bit_devicegray_image(bits, data, expected):
+    """2- and 4-bit /DeviceGray samples are scaled to the full gray range (#4316)."""
+    writer = PdfWriter()
+    image = DecodedStreamObject()
+    image.set_data(data)
+    image[NameObject("/Type")] = NameObject("/XObject")
+    image[NameObject("/Subtype")] = NameObject("/Image")
+    image[NameObject("/Width")] = NumberObject(4)
+    image[NameObject("/Height")] = NumberObject(1)
+    image[NameObject("/BitsPerComponent")] = NumberObject(bits)
+    image[NameObject("/ColorSpace")] = NameObject("/DeviceGray")
+
+    page = writer.add_blank_page(20, 20)
+    page[NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/XObject"): DictionaryObject({NameObject("/Im0"): writer._add_object(image)})}
+    )
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    img = PdfReader(output).pages[0].images[0].image
+    assert img.mode == "L"
+    assert list(img.tobytes()) == expected
 
 
 @pytest.mark.enable_socket

@@ -176,11 +176,11 @@ def _expand_low_bit_samples(
     Expand 2- or 4-bit-per-component samples to one byte per component.
 
     Pillow has no mode for sub-byte samples, so the packed data has to be
-    unpacked before an image can be built from it. For a single-component
-    color space the samples are palette/grayscale indices ("P"). For a
+    unpacked before an image can be built from it. Grayscale samples are
+    scaled to the full 0-255 range and become an "L" image. For an /Indexed
+    color space the samples are palette indices ("P"), and for a
     multi-component space such as /DeviceRGB they are interleaved color
-    components, so they are also scaled to the full 0-255 range and become
-    an "RGB" image.
+    components, so they are also scaled and become an "RGB" image.
 
     Returns the resulting mode and data, unchanged when the mode is not a
     low-bit one.
@@ -190,6 +190,12 @@ def _expand_low_bit_samples(
     bits = int(mode[0])
     if color_space == "/DeviceRGB":
         return "RGB", bits2byte(data, size, bits, colors=3, scale=True)
+    if color_space == "/DeviceGray" or (
+        isinstance(color_space, ArrayObject)
+        and color_space
+        and color_space[0] == "/CalGray"
+    ):
+        return "L", bits2byte(data, size, bits, scale=True)
     return "P", bits2byte(data, size, bits)
 
 
