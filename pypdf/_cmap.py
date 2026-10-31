@@ -4,7 +4,7 @@ from collections.abc import Callable
 from functools import partial
 from hashlib import sha256
 from io import BytesIO
-from typing import Any, Union, cast
+from typing import Any, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
@@ -87,7 +87,7 @@ def _parse_encoding(
         )
 
     enc: str | DictionaryObject | NullObject = cast(
-        Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
+        str | DictionaryObject | NullObject, ft["/Encoding"].get_object()
     )
     if isinstance(enc, str):
         try:
