@@ -2153,12 +2153,23 @@ class PdfWriter(PdfDocCommon):
         ):
             # to prevent infinite looping
             return [], []  # pragma: no cover
-        try:
-            d = cast(
-                dict[Any, Any],
-                cast(DictionaryObject, elt["/Resources"])["/XObject"],
-            )
-        except KeyError:
+        resources = elt.get("/Resources", NullObject()).get_object()
+        if not isinstance(resources, DictionaryObject):
+            if not is_null_or_none(resources):
+                logger_warning(
+                    "Resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources,
+                )
+            resources = DictionaryObject()
+        d: dict[Any, Any] = resources.get("/XObject", DictionaryObject()).get_object()
+        if not isinstance(d, DictionaryObject):
+            if not is_null_or_none(d):
+                logger_warning(
+                    "XObject resources are not a dictionary: %(x_object)s",
+                    source=__name__,
+                    x_object=d,
+                )
             d = {}
         images = []
         forms = []
