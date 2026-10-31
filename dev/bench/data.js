@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793448558999,
+  "lastUpdate": 1793448660111,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -161707,6 +161707,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03933070518962165",
             "extra": "mean: 533.7364304000005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c55cde4c58d2118c624038e7cf2cdf14d4216a11",
+          "message": "ROB: Do not crash on images when the resources are not a dictionary (#4272)\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-10-31T13:06:16+01:00",
+          "tree_id": "4fed161cfdba79f0359b8ac213364d8027bdb6a5",
+          "url": "https://github.com/py-pdf/pypdf/commit/c55cde4c58d2118c624038e7cf2cdf14d4216a11"
+        },
+        "date": 1793448647816,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.703426907674235,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017761710668484632",
+            "extra": "mean: 68.01135587500795 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.335723577290263,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009652589509511766",
+            "extra": "mean: 36.58216681817676 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0033436644339473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024234553107605257",
+            "extra": "mean: 996.667478400002 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5055981312051108,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044750438413058",
+            "extra": "mean: 1.9778554118000102 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3816777221388584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021472217173275302",
+            "extra": "mean: 2.6200114442000086 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1094900224185735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.061845183513086426",
+            "extra": "mean: 901.3150004000067 msec\nrounds: 5"
           }
         ]
       }
