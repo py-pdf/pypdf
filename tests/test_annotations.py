@@ -11,6 +11,7 @@ from pypdf.annotations import (
     Ellipse,
     FreeText,
     Highlight,
+    Ink,
     Line,
     Link,
     Polygon,
@@ -209,6 +210,36 @@ def test_polygon(pdf_file_path):
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
+
+
+def test_ink():
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+    annotation = Ink(
+        ink_list=[[(10, 10), (20, 20), (30, 15)], [(50, 50), (60, 60)]],
+        rect=(0, 0, 100, 100),
+        highlight_color="ff0000",
+    )
+    writer.add_annotation(0, annotation)
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    result = PdfReader(output).pages[0].annotations[0].get_object()
+    assert result["/Type"] == "/Annot"
+    assert result["/Subtype"] == "/Ink"
+    assert result["/Rect"] == [0, 0, 100, 100]
+    assert result["/InkList"] == [
+        [10, 10, 20, 20, 30, 15],
+        [50, 50, 60, 60],
+    ]
+    assert result["/C"] == [1, 0, 0]
+
+    with pytest.raises(ValueError, match="at least one path"):
+        Ink(ink_list=[], rect=(0, 0, 100, 100))
+    with pytest.raises(ValueError, match="at least one point"):
+        Ink(ink_list=[[]], rect=(0, 0, 100, 100))
 
 
 def test_polyline(pdf_file_path):

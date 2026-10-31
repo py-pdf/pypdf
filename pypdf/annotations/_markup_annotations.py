@@ -340,3 +340,49 @@ class Polygon(MarkupAnnotation):
                 NameObject("/Rect"): RectangleObject(_get_bounding_rectangle(vertices)),
             }
         )
+
+
+class Ink(MarkupAnnotation):
+    """
+    An ink annotation, also known as a freehand drawing.
+
+    Args:
+        ink_list: One or more paths. Each path is a list of ``(x, y)`` points.
+        rect: The rectangle surrounding the ink paths.
+        highlight_color: The stroke color as a hexadecimal string.
+        kwargs: Additional markup annotation arguments.
+
+    """
+
+    def __init__(
+        self,
+        ink_list: list[list[tuple[float, float]]],
+        rect: RectangleObject | tuple[float, float, float, float],
+        *,
+        highlight_color: str = "000000",
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(**kwargs)
+        if not ink_list:
+            raise ValueError("An ink annotation needs at least one path")
+
+        paths = []
+        for path in ink_list:
+            if not path:
+                raise ValueError("An ink path needs at least one point")
+            coordinates: list[NumberObject] = []
+            for x, y in path:
+                coordinates.extend((NumberObject(x), NumberObject(y)))
+            paths.append(ArrayObject(coordinates))
+
+        self.update(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Ink"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/InkList"): ArrayObject(paths),
+                NameObject("/C"): ArrayObject(
+                    [FloatObject(n) for n in hex_to_rgb(highlight_color)]
+                ),
+            }
+        )

@@ -227,6 +227,30 @@ writer.add_annotation(page_number=0, annotation=annotation)
 writer.write("out-polygon.pdf")
 ```
 
+## Ink
+
+If you want to add a freehand drawing, use {class}`~pypdf.annotations.Ink`.
+Each entry in `ink_list` is one path; a path is a list of `(x, y)` points.
+
+```{testcode}
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Ink
+
+reader = PdfReader("crazyones.pdf")
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+annotation = Ink(
+    ink_list=[[(50, 550), (60, 560), (70, 555)]],
+    rect=(45, 540, 80, 570),
+    highlight_color="ff0000",
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+writer.write("out-ink.pdf")
+```
+
 ## Popup
 
 Manage the Popup windows for markups, looks like this:
