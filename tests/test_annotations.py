@@ -667,7 +667,7 @@ def test_outline_action_without_d_strict(pdf_file_path):
 
 
 @pytest.mark.parametrize(("border_color", "expected"), [("000000", [0, 0, 0]), ("ff0000", [1, 0, 0]), (None, None)])
-def test_rectangle_border_color(border_color, expected):
+def test_rectangle__border_color(border_color, expected):
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     annotation = Rectangle(rect=(10, 10, 90, 90), border_color=border_color, interior_color="00ff00")
@@ -679,7 +679,7 @@ def test_rectangle_border_color(border_color, expected):
     assert result["/IC"] == [0, 1, 0]
 
 
-def test_rectangle_default_border_color():
+def test_rectangle__default_border_color():
     annotation = Rectangle(rect=(10, 10, 90, 90))
     assert "/C" not in annotation
     assert "/IC" not in annotation
