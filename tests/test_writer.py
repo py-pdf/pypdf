@@ -1787,7 +1787,7 @@ def test_set_page_label_start_none():
     assert PdfReader(buffer).page_labels == ["1", "2", "3", "4"]
 
 
-def test_set_page_label_prefix_only_without_start():
+def test_set_page_label__prefix_only_without_start():
     """A prefix-only label with `style=None` and `start=None` works (#4285)."""
     writer = PdfWriter()
     for _ in range(4):
