@@ -1,5 +1,5 @@
 """Test the pypdf.pagerange module."""
-from typing import Any, Union
+from typing import Any
 
 import pytest
 
@@ -28,7 +28,7 @@ def test_hash() -> None:
     ("page_range", "expected"),
     [(slice(0, 5), "0:5"), (slice(0, 5, 2), "0:5:2"), ("-1", "-1:"), ("0", "0")],
 )
-def test_str(page_range: Union[slice, str], expected: str) -> None:
+def test_str(page_range: slice | str, expected: str) -> None:
     assert str(PageRange(page_range)) == expected
 
 

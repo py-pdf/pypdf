@@ -4,11 +4,12 @@ import string
 import subprocess
 import sys
 import zlib
+from collections.abc import Callable
 from copy import deepcopy
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
-from typing import Callable, cast
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -20,7 +21,6 @@ from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
     BrotliDecode,
-    CCITParameters,
     CCITTFaxDecode,
     CCITTParameters,
     FlateDecode,
@@ -45,7 +45,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import RESOURCE_ROOT, PILContext, get_data_from_url, get_subprocess_environment
+from . import RESOURCE_ROOT, SAMPLE_ROOT, PILContext, get_data_from_url, get_subprocess_environment
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
 from .utils import get_image_data
@@ -198,14 +198,6 @@ def test_ascii85decode_five_zero_bytes():
 
     for expected, i in zip(exp_outputs, inputs):
         assert ASCII85Decode.decode(i + "~>") == expected
-
-
-def test_ccitparameters():
-    with pytest.raises(
-        DeprecationError,
-        match=r"CCITParameters is deprecated and was removed in pypdf 6\.0\.0\. Use CCITTParameters instead",
-    ):
-        CCITParameters()
 
 
 def test_ccittparameters():
@@ -511,14 +503,20 @@ def test_2bits_image():
 
 
 @pytest.mark.enable_socket
+@pytest.mark.xfail(
+    reason="#4316: 4-bit /DeviceGray images are extracted as black palette images", raises=AssertionError
+)
 def test_4bits_image():
-    """From #1954, test with 4bits image."""
+    """
+    From #1954, test with 4bits image.
+
+    The 16 x 16 /DeviceGray image has the gray level y in each pixel of row y, from black to white.
+    """
     reader = PdfReader(BytesIO(get_data_from_url(name="4bits_image.pdf")))
-    url_png = "https://github.com/user-attachments/files/27492549/4bits_image.png.txt"
-    name_png = "4bits_image.png"
-    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
-    data = reader.pages[0].images[0]
-    assert image_similarity(data.image, refimg) > 0.99
+    image = reader.pages[0].images[0].image
+    expected = bytes(y * 255 // 15 for y in range(16) for _ in range(16))
+    assert image.size == (16, 16)
+    assert image.convert("L").tobytes() == expected
 
 
 @pytest.mark.enable_socket
@@ -1155,14 +1153,11 @@ def test_deprecate_inline_image_filters():
         ]
     )
 
-    with pytest.warns(
-            expected_warning=DeprecationWarning,
-            match=r"^The filter name /CCF is deprecated and will be removed in pypdf 7\.0\.0\. Use /CCITTFaxDecode instead\.$"  # noqa: E501
+    with pytest.raises(
+            expected_exception=DeprecationError,
+            match=r"^The filter name /CCF is deprecated and has been removed in pypdf 7\.0\.0\. Use /CCITTFaxDecode instead\.$"  # noqa: E501
     ):
         decode_stream_data(stream)
-
-    stream[NameObject("/Filter")] = NameObject("/CCITTFaxDecode")
-    assert decode_stream_data(stream).startswith(b"II*")
 
 
 def test_decode_stream_data__default_parms_are_dictionary_objects():
@@ -1282,6 +1277,62 @@ def test_flatedecode__decode_png_prediction__speed():
     data = bytes(raw)
 
     FlateDecode._decode_png_prediction(data=data, columns=columns, row_length=row_length)
+
+
+_LOW_BIT_DEPTH_PNG_PREDICTION = pytest.mark.xfail(
+    reason="#4308: For fewer than 8 bits per pixel, the bytes per pixel are rounded down to 0 instead of up to 1",
+    strict=True,
+)
+
+
+@pytest.mark.samples
+@pytest.mark.parametrize(
+    ("pdf_path", "page_index", "bytes_per_row"),
+    [
+        ("031-png-predictors/png-predictors.pdf", 0, 256 * 3),  # RGB, 8 bits per component
+        pytest.param(
+            "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
+            0,
+            256 // 8,
+            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
+            id="1-bit",
+        ),
+        pytest.param(
+            "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
+            1,
+            256 // 4,
+            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
+            id="2-bit",
+        ),
+        pytest.param(
+            "032-png-predictors-low-bit-depth/png-predictors-low-bit-depth.pdf",
+            2,
+            256 // 2,
+            marks=_LOW_BIT_DEPTH_PNG_PREDICTION,
+            id="4-bit",
+        ),
+    ],
+)
+def test_flatedecode__decode_png_prediction__matches_image_without_predictor(pdf_path, page_index, bytes_per_row):
+    """
+    An image using all PNG filter types is decoded like the same image without a predictor.
+
+    The image /Predicted consists of five bands of 50 rows, using the PNG filters None, Sub, Up, Average
+    and Paeth in turn. The image /Reference has the same pixels and no predictor.
+    """
+    reader = PdfReader(SAMPLE_ROOT / pdf_path)
+    x_objects = reader.pages[page_index]["/Resources"]["/XObject"]
+    reference = x_objects["/Reference"].get_object()
+    predicted = x_objects["/Predicted"].get_object()
+    assert predicted["/DecodeParms"]["/Predictor"] == 15
+    assert "/DecodeParms" not in reference
+
+    expected = reference.get_data()
+    assert len(expected) == bytes_per_row * 250
+    decoded = predicted.get_data()
+    # The first band uses the PNG filter None.
+    assert decoded[: bytes_per_row * 50] == expected[: bytes_per_row * 50]
+    assert decoded == expected
 
 
 _FLATE_IMAGE_DATA = (

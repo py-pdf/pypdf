@@ -48,14 +48,13 @@ from functools import lru_cache
 from importlib.util import find_spec
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, NoReturn, Optional, Union, cast
+from typing import Any, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._configuration import get_configuration
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    deprecate,
-    deprecation_with_replacement,
+    deprecation,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -179,7 +178,7 @@ class FlateDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[Union[DictionaryObject, IndirectObject]] = None,
+        decode_parms: DictionaryObject | IndirectObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -359,8 +358,8 @@ class ASCIIHexDecode:
 
     @staticmethod
     def decode(
-        data: Union[str, bytes],
-        decode_parms: Optional[DictionaryObject] = None,
+        data: str | bytes,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -426,7 +425,7 @@ class RunLengthDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -507,7 +506,7 @@ class LZWDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -530,8 +529,8 @@ class ASCII85Decode:
 
     @staticmethod
     def decode(
-        data: Union[str, bytes],
-        decode_parms: Optional[DictionaryObject] = None,
+        data: str | bytes,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -563,7 +562,7 @@ class DCTDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -586,7 +585,7 @@ class JPXDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -615,7 +614,7 @@ class BrotliDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -689,11 +688,11 @@ class CCITTParameters:
     K: int = 0
     columns: int = 1728
     rows: int = 0
-    EndOfLine: Union[bool, None] = False
-    EncodedByteAlign: Union[bool, None] = False
-    EndOfBlock: Union[bool, None] = True
+    EndOfLine: bool | None = False
+    EncodedByteAlign: bool | None = False
+    EndOfBlock: bool | None = True
     BlackIs1: bool = False
-    DamagedRowsBeforeError: Union[int, None] = 0
+    DamagedRowsBeforeError: int | None = 0
 
     @property
     def group(self) -> int:
@@ -705,18 +704,6 @@ class CCITTParameters:
             # K > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
             ccitt_group = 3
         return ccitt_group
-
-
-def __create_old_class_instance(
-    K: int = 0,
-    columns: int = 0,
-    rows: int = 0
-) -> NoReturn:
-    deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
-
-
-# Create an alias for the old class name
-CCITParameters = __create_old_class_instance
 
 
 class CCITTFaxDecode:
@@ -736,8 +723,8 @@ class CCITTFaxDecode:
 
     @staticmethod
     def _get_parameters(
-        parameters: Union[ArrayObject, DictionaryObject, IndirectObject, None],
-        rows: Union[int, IndirectObject],
+        parameters: ArrayObject | DictionaryObject | IndirectObject | None,
+        rows: int | IndirectObject,
     ) -> CCITTParameters:
         def get_integer(value: Any, key: str) -> int:
             if isinstance(value, PdfObject):
@@ -791,7 +778,7 @@ class CCITTFaxDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
@@ -854,7 +841,7 @@ class JBIG2Decode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
+        decode_parms: DictionaryObject | None = None,
         **kwargs: Any,
     ) -> bytes:
         configuration = get_configuration()
@@ -924,9 +911,8 @@ class JBIG2Decode:
 def _deprecate_inline_image_filters(filter_name: str, old_name: str, new_name: str) -> None:
     if filter_name != old_name:
         return
-    deprecate(
-        f"The filter name {old_name} is deprecated and will be removed in pypdf 7.0.0. Use {new_name} instead.",
-        4,
+    deprecation(
+        f"The filter name {old_name} is deprecated and has been removed in pypdf 7.0.0. Use {new_name} instead."
     )
 
 

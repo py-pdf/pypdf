@@ -13,8 +13,7 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration
-from pypdf._utils import _TraversalState
-from pypdf.errors import LimitReachedError, PdfReadError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
@@ -1803,7 +1802,7 @@ def test_get_fields__speed() -> None:
 
 def test_get_fields__stack_deprecation() -> None:
     writer = PdfWriter()
-    message = r"^stack is deprecated and will be removed in pypdf 7\.0\.0\.$"
+    message = r"^stack is deprecated and was removed in pypdf 7\.0\.0\.$"
 
     fields = [DictionaryObject({NameObject("/Key"): NumberObject(i)}) for i in range(2)]
     tree = DictionaryObject({
@@ -1816,50 +1815,8 @@ def test_get_fields__stack_deprecation() -> None:
     build_mock.assert_not_called()
 
     # Parameter set to `None` and not `retval`.
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
+    with pytest.raises(expected_exception=DeprecationError, match=message):
         writer.get_fields(tree=tree, stack=None)
-    build_mock.assert_not_called()
-
-    # Parameter set to `None` and `retval`.
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
-        writer.get_fields(tree=tree, retval={}, stack=None)
-    build_mock.assert_has_calls(
-        [
-            mock.call(
-                field=fields[0], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=set(), depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-            mock.call(
-                field=fields[1], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=set(), depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-        ],
-        any_order=False
-    )
-    assert build_mock.call_count == 2
-
-    # Parameter set to something meaningful and `retval`.
-    stack = [object(), object()]
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
-        writer.get_fields(tree=tree, retval={}, stack=stack)
-    expected_visited = {id(entry) for entry in stack}
-    build_mock.assert_has_calls(
-        [
-            mock.call(
-                field=fields[0], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=expected_visited, depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-            mock.call(
-                field=fields[1], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=expected_visited, depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-        ],
-        any_order=False
-    )
-    assert build_mock.call_count == 2
 
 
 def test_get_fields__field_count() -> None:
@@ -1951,3 +1908,41 @@ def test_get_num_pages__forged_count_after_decrypt():
     reader.decrypt("")
     assert len(reader.pages) == 1
     assert reader.page_labels == ["1"]
+
+
+@pytest.mark.timeout(5)
+def test_flatten__page_tree_maximum_page_entries() -> None:
+    page_key_count = pages_per_intermediate_node = top_level_child_count = 200
+
+    keys = b"".join(b" /K%d 0" % i for i in range(page_key_count))
+    leaf = b"<< /Type /Page /MediaBox [0 0 9 9]" + keys + b" >>"
+    a_kids = b" ".join(b"4 0 R" for _ in range(pages_per_intermediate_node))
+    a_node = b"<< /Type /Pages /Kids [" + a_kids + b"] /Count %d >>" % pages_per_intermediate_node
+    top_kids = b" ".join(b"3 0 R" for _ in range(top_level_child_count))
+    top_node = b"<< /Type /Pages /Kids [" + top_kids + b"] /Count %d >>" % (
+        top_level_child_count * pages_per_intermediate_node
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        top_node,
+        a_node,
+        leaf,
+    ]
+    buf = bytearray(b"%PDF-1.7\n")
+    offsets = []
+    for index, obj in enumerate(objects, start=1):
+        offsets.append(len(buf))
+        buf += b"%d 0 obj\n" % index + obj + b"\nendobj\n"
+    xref_offset = len(buf)
+    buf += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    for offset in offsets:
+        buf += b"%010d 00000 n \n" % offset
+    buf += (
+        b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n"
+        % (len(objects) + 1, xref_offset)
+    )
+    data = bytes(buf)
+
+    reader = PdfReader(BytesIO(data))
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum page tree page entry limit exceeded!"):
+        _ = len(reader.pages)  # Trigger flattening

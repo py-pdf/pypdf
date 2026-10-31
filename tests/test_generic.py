@@ -8,14 +8,13 @@ import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
-from typing import Union
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._utils import get_stream_data
 from pypdf.constants import CheckboxRadioButtonAttributes, OutlineFontFlag
-from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
+from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -203,15 +202,8 @@ def test_read_string_from_stream_escape_digit2():
 
 def test_name_object(caplog):
     stream = BytesIO(b"x")
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(PdfReadError, match=r"^Name read error$"):
         NameObject.read_from_stream(stream, None)
-    assert exc.value.args[0] == "Name read error"
-
-    with pytest.raises(
-        DeprecationError,
-        match=r"surfix is deprecated and was removed in pypdf 5\.0\.0\. Use prefix instead\.",
-    ):
-        _ = NameObject.surfix
 
     assert (
         NameObject.read_from_stream(
@@ -256,8 +248,8 @@ def test_name_object(caplog):
     caplog.clear()
     b = BytesIO()
     with pytest.raises(
-            expected_exception=DeprecationError,
-            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and was"
+            expected_exception=PdfStreamError,
+            match=r"^Incorrect first char in NameObject, should start with '/': \(hello\)$"
     ):
         NameObject("hello").write_to_stream(b)
 
@@ -1259,7 +1251,7 @@ def test_cloning_null_obj_keeps_hard_reference():
     assert obj_weakref() is not None
 
 
-def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayObject, DictionaryObject]:
+def _create_direct_objects_container(as_array: bool, size: int) -> ArrayObject | DictionaryObject:
     elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
     elements = elements * (size // len(elements))
     if as_array:
@@ -1267,7 +1259,7 @@ def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayOb
     return DictionaryObject({NameObject(f"/K{i}"): element for i, element in enumerate(elements)})
 
 
-def _clone_and_count(container: Union[ArrayObject, DictionaryObject], writer: PdfWriter) -> tuple[int, int]:
+def _clone_and_count(container: ArrayObject | DictionaryObject, writer: PdfWriter) -> tuple[int, int]:
     """Clone the container and return the number of Python function calls and raised exceptions."""
     calls = 0
     exceptions = 0

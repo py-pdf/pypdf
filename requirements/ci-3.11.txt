@@ -4,51 +4,53 @@
 #
 #    pip-compile --output-file=requirements/ci-3.11.txt requirements/ci.in
 #
-arabic-reshaper==3.0.0
+arabic-reshaper==3.0.1
     # via -r requirements/ci.in
 brotli==1.2.1
     # via -r requirements/ci.in
-cffi==2.1.0
+cffi==2.1.1
     # via cryptography
-coverage[toml]==7.13.0
+coverage[toml]==7.16.2
     # via
     #   -r requirements/ci.in
     #   pytest-cov
-cryptography==50.0.0
+cryptography==50.0.2
     # via -r requirements/ci.in
 defusedxml==0.7.1
     # via fpdf2
-exceptiongroup==1.2.2
-    # via pytest
-execnet==2.1.1
+execnet==2.1.2
     # via pytest-xdist
-fonttools==4.61.0
-    # via fpdf2
-fpdf2==2.8.1
+fonttools==4.65.0
+    # via
+    #   -r requirements/ci.in
+    #   fpdf2
+fpdf2==2.8.9
     # via -r requirements/ci.in
-iniconfig==2.0.0
+iniconfig==2.3.1
     # via pytest
-mypy==1.17.0
+mypy==2.4.0
     # via -r requirements/ci.in
-mypy-extensions==1.0.0
+mypy-extensions==1.1.0
     # via mypy
-packaging==24.1
+packaging==26.3
     # via pytest
-pathspec==1.0.4
+pathspec==1.1.1
     # via mypy
 pillow==13.0.0
     # via
     #   -r requirements/ci.in
     #   fpdf2
-pluggy==1.5.0
+pluggy==1.7.0
     # via pytest
-py-cpuinfo==9.0.0
+py-cpuinfo2==10.1.1
     # via pytest-benchmark
-pycparser==2.22
+pycparser==3.12
     # via cffi
-pycryptodome==3.23.0
+pycryptodome==4.2.0
     # via -r requirements/ci.in
-pytest==9.0.3
+pygments==2.21.0
+    # via pytest
+pytest==9.1.1
     # via
     #   -r requirements/ci.in
     #   pytest-benchmark
@@ -56,30 +58,25 @@ pytest==9.0.3
     #   pytest-socket
     #   pytest-timeout
     #   pytest-xdist
-pytest-benchmark==5.2.3
+pytest-benchmark==5.3.0
     # via -r requirements/ci.in
-pytest-cov==5.0.0
+pytest-cov==7.1.0
     # via -r requirements/ci.in
-pytest-socket==0.7.0
+pytest-socket==0.8.1
     # via -r requirements/ci.in
-pytest-timeout==2.3.1
+pytest-timeout==2.4.0
     # via -r requirements/ci.in
-pytest-xdist==3.6.1
+pytest-xdist==3.8.0
     # via -r requirements/ci.in
 python-bidi==0.6.12
     # via -r requirements/ci.in
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via -r requirements/ci.in
-ruff==0.16.0
+ruff==0.17.3
     # via -r requirements/ci.in
-tomli==2.0.2
-    # via
-    #   coverage
-    #   mypy
-    #   pytest
-typeguard==4.3.0
+typeguard==4.6.0
     # via -r requirements/ci.in
-types-pyyaml==6.0.12.20250915
+types-pyyaml==6.0.12.20260906
     # via -r requirements/ci.in
 typing-extensions==4.16.0
     # via

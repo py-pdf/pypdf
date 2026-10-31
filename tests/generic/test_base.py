@@ -1,8 +1,9 @@
 """Test the pypdf.generic._base module."""
+from collections.abc import Callable
 from contextlib import nullcontext
 from functools import partial
 from io import BytesIO
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import pytest
 

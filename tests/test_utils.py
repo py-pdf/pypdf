@@ -4,10 +4,11 @@ import io
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from io import BytesIO, StringIO
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pytest
 
@@ -459,9 +460,9 @@ def test_rename_kwargs():
             outline = a collection of outline items.
         """
 
-        def decoration(func: Callable) -> Any:  # type: ignore
+        def decoration(func: Callable) -> Any:  # type: ignore[type-arg]
             @functools.wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
                 rename_kwargs(func.__name__, kwargs, aliases, fail=False)
                 return func(*args, **kwargs)
 

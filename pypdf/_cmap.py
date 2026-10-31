@@ -4,7 +4,7 @@ from collections.abc import Callable
 from functools import partial
 from hashlib import sha256
 from io import BytesIO
-from typing import Any, Union, cast
+from typing import Any, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
@@ -51,7 +51,7 @@ _predefined_cmap: dict[str, str] = {
 
 def get_encoding(
     ft: DictionaryObject
-) -> tuple[Union[str, dict[int, str]], dict[Any, Any]]:
+) -> tuple[str | dict[int, str], dict[Any, Any]]:
     encoding = _parse_encoding(ft)
     map_dict, int_entry = _parse_to_unicode(ft)
 
@@ -69,8 +69,8 @@ def get_encoding(
 
 def _parse_encoding(
     ft: DictionaryObject
-) -> Union[str, dict[int, str]]:
-    encoding: Union[str, list[str], dict[int, str]] = []
+) -> str | dict[int, str]:
+    encoding: str | list[str] | dict[int, str] = []
     # If ft["/Encoding"] exists, then use that for encoding. Otherwise, use StandardEncoding as a basis,
     # and add what the embedded font file says, if present. See Table 114, PDF Reference 1.7 / 2.0
     if "/Encoding" not in ft:
@@ -86,8 +86,8 @@ def _parse_encoding(
             zip(range(256), charset_encoding["/StandardEncoding"])
         )
 
-    enc: Union[str, DictionaryObject, NullObject] = cast(
-        Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
+    enc: str | DictionaryObject | NullObject = cast(
+        str | DictionaryObject | NullObject, ft["/Encoding"].get_object()
     )
     if isinstance(enc, str):
         try:
@@ -124,7 +124,7 @@ def _parse_encoding(
         encoding = charset_encoding["/StandardEncoding"].copy()
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         x: int = 0
-        o: Union[int, str]
+        o: int | str
         differences = enc["/Differences"].get_object()
         if not isinstance(differences, ArrayObject):
             logger_warning(
@@ -216,9 +216,9 @@ def _parse_to_unicode(
 
     process_rg: bool = False
     process_char: bool = False
-    multiline_rg: Union[
-        tuple[int, int], None
-    ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
+    multiline_rg: (
+        tuple[int, int] | None
+    ) = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
@@ -280,10 +280,10 @@ def process_cm_line(
     line: bytes,
     process_rg: bool,
     process_char: bool,
-    multiline_rg: Union[tuple[int, int], None],
+    multiline_rg: tuple[int, int] | None,
     map_dict: dict[Any, Any],
     int_entry: list[int],
-) -> tuple[bool, bool, Union[tuple[int, int], None]]:
+) -> tuple[bool, bool, tuple[int, int] | None]:
     if line == b"" or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
     line = line.replace(b"\t", b" ")
@@ -353,8 +353,8 @@ def parse_bfrange(
     line: bytes,
     map_dict: dict[Any, Any],
     int_entry: list[int],
-    multiline_rg: Union[tuple[int, int], None],
-) -> Union[tuple[int, int], None]:
+    multiline_rg: tuple[int, int] | None,
+) -> tuple[int, int] | None:
     lst = line.split()
     closure_found = False
     entry_count = len(int_entry)
@@ -460,7 +460,7 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
         int_entry.append(int(source, 16))
 
 
-def _glyph_name_to_unicode(glyph_name: str) -> Union[str, None]:
+def _glyph_name_to_unicode(glyph_name: str) -> str | None:
     try:
         return adobe_glyphs[glyph_name]
     except KeyError:
