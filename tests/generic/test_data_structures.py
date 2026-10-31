@@ -16,9 +16,11 @@ from pypdf.generic import (
     ContentStream,
     Destination,
     DictionaryObject,
+    Fit,
     NameObject,
     NullObject,
     NumberObject,
+    OutlineItem,
     RectangleObject,
     StreamObject,
     StreamParsingBudget,
@@ -33,6 +35,34 @@ try:
     import resource
 except ImportError:
     resource = None  # type: ignore[assignment]
+
+
+@pytest.mark.parametrize("link", ["/Next", "/Prev", "/N", "/V"])
+def test_dictionary_object__clone_linked_objects_with_constructor_arguments(link: str) -> None:
+    """Linked dictionaries requiring constructor arguments can be cloned."""
+    source = PdfWriter()
+    destination = PdfWriter()
+    first = OutlineItem("First", NumberObject(0), Fit.fit())
+    second = OutlineItem("Second", NumberObject(0), Fit.fit())
+    source._add_object(first)
+    first[NameObject(link)] = source._add_object(second)
+
+    cloned = first.clone(destination)
+    cloned_second = cloned[link]
+
+    assert isinstance(cloned, OutlineItem)
+    assert isinstance(cloned_second, OutlineItem)
+    assert cloned is not first
+    assert cloned_second is not second
+    assert cloned.title == first.title
+    assert cloned_second.items() == second.items()
+    assert cloned.indirect_reference is not None
+    assert cloned.indirect_reference.pdf is destination
+    assert cloned_second.indirect_reference is not None
+    assert cloned_second.indirect_reference.pdf is destination
+    assert first[link] is second
+    assert second.indirect_reference is not None
+    assert second.indirect_reference.pdf is source
 
 
 def test_dictionary_object__get_next_object_position() -> None:
