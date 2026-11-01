@@ -1339,7 +1339,12 @@ def test_flatedecode__decode_png_prediction__matches_image_without_predictor(pdf
 
 @pytest.mark.parametrize(
     ("color_type", "bytes_per_pixel"),
-    [(0, 1), (4, 2), (2, 3), (6, 4)],  # Grayscale, grayscale with alpha, RGB, RGBA with 8 bits per sample
+    [
+        pytest.param(0, 1, id="grayscale"),
+        pytest.param(4, 2, id="grayscale-alpha"),
+        pytest.param(2, 3, id="rgb"),
+        pytest.param(6, 4, id="rgba"),
+    ],
 )
 def test_flatedecode__decode_png_prediction__matches_png_decoder(color_type, bytes_per_pixel):
     """Rows using all PNG filter types are decoded like the PNG decoder of Pillow does."""
