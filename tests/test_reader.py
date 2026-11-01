@@ -5,7 +5,6 @@ import sys
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import Union
 from unittest import mock
 
 import pytest
@@ -43,7 +42,7 @@ from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, normalize_warnings
 HAS_AES = crypt_provider[0] in ["pycryptodome", "cryptography"]
 
 
-NestedList = Union[int, None, list["NestedList"]]
+NestedList = int | None | list["NestedList"]
 
 
 @pytest.mark.parametrize(

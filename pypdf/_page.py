@@ -680,11 +680,16 @@ class PageObject(DictionaryObject):
         if ancest is None:
             ancest = []
         lst: list[str | list[str]] = []
-        if (
-                PG.RESOURCES not in obj or
-                is_null_or_none(resources := cast(DictionaryObject, obj[PG.RESOURCES])) or
-                RES.XOBJECT not in resources
-        ):
+        resources = obj.get(PG.RESOURCES, NullObject()).get_object()
+        if not isinstance(resources, DictionaryObject):
+            if not is_null_or_none(resources):
+                logger_warning(
+                    "Resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources,
+                )
+            resources = DictionaryObject()
+        if RES.XOBJECT not in resources:
             # Forms without XObject resources have no images inside them
             if len(ancest) > 0:
                 return []
@@ -737,15 +742,13 @@ class PageObject(DictionaryObject):
         if isinstance(image_id, list) and len(image_id) == 1:
             image_id = image_id[0]
         xobjs: DictionaryObject | None = None
-        try:
-            xobjs = cast(
-                DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
+        resources = obj.get(PG.RESOURCES, NullObject()).get_object()
+        if isinstance(resources, DictionaryObject) and RES.XOBJECT in resources:
+            xobjs = cast(DictionaryObject, resources[RES.XOBJECT])
+        elif not (image_id[0] == "~" and image_id[-1] == "~"):
+            raise KeyError(
+                f"Cannot access image object {image_id} without XObject resources"
             )
-        except KeyError as exc:
-            if not (image_id[0] == "~" and image_id[-1] == "~"):
-                raise KeyError(
-                    f"Cannot access image object {image_id} without XObject resources"
-                ) from exc
         if isinstance(image_id, str):
             if image_id[0] == "~" and image_id[-1] == "~":
                 if self._content_stream_images is None:
