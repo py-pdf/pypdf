@@ -1769,6 +1769,38 @@ def test_set_page_label(pdf_file_path):
     writer.write(pdf_file_path)
 
 
+def test_set_page_label__start_none():
+    """`start=None` is a legitimate "not set" value and must not crash at write time (#4285).
+
+    It behaves exactly like the default `0`: no `/St` entry is written, so numbering
+    restarts at 1 per the PDF spec.
+    """
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(width=100, height=100)
+    writer.set_page_label(0, 3, "/D", None, None)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    assert PdfReader(buffer).page_labels == ["1", "2", "3", "4"]
+
+
+def test_set_page_label__prefix_only_without_start():
+    """A prefix-only label with `style=None` and `start=None` works (#4285)."""
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(width=100, height=100)
+    writer.set_page_label(0, 3, None, "P", None)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    assert PdfReader(buffer).page_labels == ["P", "P", "P", "P"]
+
+
 @pytest.mark.enable_socket
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
@@ -2480,6 +2512,31 @@ def test_missing_info():
     assert b"/Info" not in b.getvalue()
 
 
+def test_clone_from__clone_indirect_info_values():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer._info[NameObject("/Title")] = writer._add_object(TextStringObject("Indirect title"))
+    source = BytesIO()
+    writer.write(source)
+    assert PdfReader(source).metadata.title == "Indirect title"
+
+    writer = PdfWriter(clone_from=PdfReader(source))
+    assert writer._info.raw_get("/Title").pdf is writer
+    output = BytesIO()
+    writer.write(output)
+    assert PdfReader(output).metadata.title == "Indirect title"
+
+
+def test_clone_from__tolerate_dangling_info_reference():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer._info[NameObject("/Title")] = IndirectObject(999, 0, writer)
+    source = BytesIO()
+    writer.write(source)
+
+    writer = PdfWriter(clone_from=PdfReader(source))
+    writer.compress_identical_objects()
+    assert writer._info["/Title"] == NullObject()
+
+
 @pytest.mark.enable_socket
 def test_germanfields():
     """Cf #2035"""
@@ -3029,40 +3086,25 @@ def test_compress_identical_objects__remove_unreferenced():
         writer.get_object(reference)
 
 
-@pytest.mark.enable_socket
 def test_compress_identical_objects__deprecation():
-    url = "https://github.com/user-attachments/files/16575458/tt2.pdf"
-    name = "iss2794.pdf"
-    in_bytes = BytesIO(get_data_from_url(url=url, name=name))
-    writer = PdfWriter(in_bytes)
-    with pytest.warns(
-        DeprecationWarning,
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    with pytest.raises(
+        DeprecationError,
         match=(
-            r"^remove_orphans is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"^remove_orphans is deprecated and was removed in pypdf 7\.0\.0\. "
             r"Use remove_unreferenced instead\.$"
         ),
     ):
         writer.compress_identical_objects(remove_orphans=True)
-    out1 = BytesIO()
-    writer.write(out1)
-    assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
-    writer.remove_page(
-        1
-    )  # page0 contains fields which keep reference to the deleted page
-    out2 = BytesIO()
-    writer.write(out2)
-    assert len(out1.getvalue()) - 100 < len(out2.getvalue())
-    with pytest.warns(
-        DeprecationWarning,
+
+    with pytest.raises(
+        DeprecationError,
         match=(
-            r"^remove_identicals is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"^remove_identicals is deprecated and was removed in pypdf 7\.0\.0\. "
             r"Use remove_duplicates instead\.$"
         ),
     ):
         writer.compress_identical_objects(remove_identicals=True)
-    out3 = BytesIO()
-    writer.write(out3)
-    assert len(out2.getvalue()) > len(out3.getvalue())
 
 
 def test_set_need_appearances_writer():
@@ -3244,22 +3286,6 @@ def test_auto_write(tmp_path):
     with PdfWriter(target) as writer:
         writer.add_blank_page(100, 100)
     assert target.stat().st_size > 0
-
-
-def test_deprecate_with_as():
-    """Yet another test for #2905"""
-    with PdfWriter() as writer:
-        with pytest.raises(
-                expected_exception=DeprecationError,
-                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
-        ):
-            _ = writer.with_as_usage
-
-        with pytest.raises(
-                expected_exception=DeprecationError,
-                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
-        ):
-            writer.with_as_usage = False  # old code allowed setting this, so...
 
 
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
@@ -3541,6 +3567,67 @@ def test_merge_with_null_acroform_does_not_raise_typeerror():
     target.merge(0, source)
 
     assert "/AcroForm" not in target.root_object
+
+
+@pytest.mark.parametrize(
+    ("fields", "expected_messages"),
+    [
+        pytest.param(NumberObject(1), ["AcroForm /Fields is not an array: 1"], id="number"),
+        pytest.param(NullObject(), ["AcroForm /Fields is not an array: NullObject"], id="null"),
+        pytest.param(ArrayObject([NullObject(), TextStringObject("x"), DictionaryObject()]), [], id="direct-entries"),
+    ],
+)
+def test_append__skips_acroform_fields_that_are_not_an_array_of_references(caplog, fields, expected_messages):
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    reader.root_object["/AcroForm"][NameObject("/Fields")] = fields
+
+    writer = PdfWriter()
+    writer.append(reader)
+
+    assert writer.root_object["/AcroForm"]["/Fields"] == []
+    assert caplog.messages == expected_messages
+
+
+def test_append__skips_acroform_that_is_not_a_dictionary(caplog):
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    reader.root_object[NameObject("/AcroForm")] = NumberObject(1)
+
+    writer = PdfWriter()
+    writer.append(reader)
+
+    assert len(writer.pages) == 1
+    assert "/AcroForm" not in writer.root_object
+    assert caplog.messages == ["AcroForm is not a dictionary: 1"]
+
+
+def test_append__keeps_existing_acroform_fields():
+    writer = PdfWriter()
+    writer.append(RESOURCE_ROOT / "form.pdf")
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    del reader.root_object["/AcroForm"]["/Fields"]
+    writer.append(reader)
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+    del writer.root_object["/AcroForm"]["/Fields"]
+    writer.append(RESOURCE_ROOT / "form.pdf")
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+    writer.root_object["/AcroForm"][NameObject("/Fields")] = NullObject()
+    writer.append(RESOURCE_ROOT / "form.pdf")
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+
+def test_append__skips_duplicate_acroform_fields():
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    fields = reader.root_object["/AcroForm"]["/Fields"]
+    fields.append(fields[0])
+
+    writer = PdfWriter()
+    writer.append(reader)
+
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
 
 
 def test_compress_identical_objects__info_is_none():

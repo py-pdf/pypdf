@@ -43,6 +43,7 @@ from typing import (
     IO,
     Any,
     Literal,
+    NoReturn,
     cast,
 )
 
@@ -60,11 +61,10 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
-    deprecate_with_replacement,
-    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
-from .actions import Action, JavaScript
+from .actions import Action
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import (
     CatalogAttributes,
@@ -418,14 +418,6 @@ class PdfWriter(PdfDocCommon):
         else:
             bytes_data = value
         metadata_stream.set_data(bytes_data)
-
-    @property
-    def with_as_usage(self) -> bool:
-        deprecation_no_replacement("with_as_usage", "5.0")
-
-    @with_as_usage.setter
-    def with_as_usage(self, value: bool) -> None:
-        deprecation_no_replacement("with_as_usage", "5.0")
 
     def __enter__(self) -> Self:
         """Store how writer is initialized by 'with'."""
@@ -793,23 +785,14 @@ class PdfWriter(PdfDocCommon):
                 PAGE_FIT,
             ).dest_array
 
-    def add_js(self, javascript: str) -> None:
+    def add_js(self, javascript: str) -> NoReturn:
         """
         Add JavaScript which will launch upon opening this PDF.
 
         Args:
             javascript: Your JavaScript.
-
-        Example:
-            This will launch the print window when the PDF is opened.
-
-            >>> from pypdf import PdfWriter
-            >>> output = PdfWriter()
-            >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-
         """
-        deprecate_with_replacement("add_js", "add_open_action", "7.0.0")
-        self.add_open_action(JavaScript(javascript))
+        deprecation_with_replacement("add_js", "add_open_action", "7.0.0")
 
     def add_open_action(self, action: Action) -> None:
         """
@@ -1261,9 +1244,7 @@ class PdfWriter(PdfDocCommon):
                     self._info_obj.indirect_reference.idnum - 1
                 ] = self._info.hash_bin()
         elif inf is not None:
-            self._info_obj = self._add_object(
-                DictionaryObject(cast(DictionaryObject, inf.get_object()))
-            )
+            self._info_obj = self._add_object(inf.clone(self))
         # else: _info_obj = None done in clone_reader_document_root()
 
         try:
@@ -1672,13 +1653,9 @@ class PdfWriter(PdfDocCommon):
 
         """
         if remove_identicals != self._UNSET:
-            deprecate_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
-            assert isinstance(remove_identicals, bool)
-            remove_duplicates = remove_identicals
+            deprecation_with_replacement("remove_identicals", "remove_duplicates", "7.0.0")
         if remove_orphans != self._UNSET:
-            deprecate_with_replacement("remove_orphans", "remove_unreferenced", "7.0.0")
-            assert isinstance(remove_orphans, bool)
-            remove_unreferenced = remove_orphans
+            deprecation_with_replacement("remove_orphans", "remove_unreferenced", "7.0.0")
 
         def replace_in_obj(
             obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
@@ -2047,7 +2024,7 @@ class PdfWriter(PdfDocCommon):
                 if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
-                    del page[PG.ANNOTS][i]  # type:ignore
+                    del page[PG.ANNOTS][i]  # type: ignore[attr-defined]
                 else:
                     i += 1
 
@@ -2873,33 +2850,41 @@ class PdfWriter(PdfDocCommon):
                 self.clean_page(pag)
             self._set_cloned_kids(parent_fields, reader)
 
-        if "/AcroForm" in _ro and not is_null_or_none(_ro["/AcroForm"]):
-            if "/AcroForm" not in self._root_object:
+        acro_form = _ro.get("/AcroForm")
+        if acro_form is not None:
+            acro_form = acro_form.get_object()
+            if not is_null_or_none(acro_form) and not isinstance(acro_form, DictionaryObject):
+                logger_warning(
+                    "AcroForm is not a dictionary: %(acro_form)s",
+                    source=__name__,
+                    acro_form=acro_form,
+                )
+        if isinstance(acro_form, DictionaryObject):
+            writer_acro_form = self._root_object.get("/AcroForm")
+            if writer_acro_form is None or not isinstance(writer_acro_form.get_object(), DictionaryObject):
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
-                    cast(
-                        DictionaryObject,
-                        reader.root_object["/AcroForm"],
-                    ).clone(self, False, ("/Fields",))
+                    acro_form.clone(self, False, ("/Fields",))
                 )
                 arr = ArrayObject()
             else:
-                arr = cast(
-                    ArrayObject,
-                    cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
+                arr = cast(DictionaryObject, writer_acro_form.get_object()).get("/Fields", ArrayObject()).get_object()
+                if not isinstance(arr, ArrayObject):
+                    arr = ArrayObject()
+            fields = acro_form.get("/Fields", ArrayObject()).get_object()
+            if not isinstance(fields, ArrayObject):
+                logger_warning(
+                    "AcroForm /Fields is not an array: %(fields)s",
+                    source=__name__,
+                    fields=fields,
                 )
+                fields = ArrayObject()
             trslat = self._id_translated[id(reader)]
-            try:
-                for f in reader.root_object["/AcroForm"]["/Fields"]:  # type: ignore[index]
-                    try:
-                        ind = IndirectObject(trslat[f.idnum], 0, self)
-                        if ind not in arr:
-                            arr.append(ind)
-                    except KeyError:
-                        # for trslat[] which mean the field has not be copied
-                        # through the page
-                        pass
-            except KeyError:  # for /Acroform or /Fields are not existing
-                arr = self._add_object(ArrayObject())
+            for f in fields:
+                # trslat only knows the fields which have been copied through the pages
+                if isinstance(f, IndirectObject) and f.idnum in trslat:
+                    ind = IndirectObject(trslat[f.idnum], 0, self)
+                    if ind not in arr:
+                        arr.append(ind)
             cast(DictionaryObject, self._root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr
@@ -3475,7 +3460,7 @@ class PdfWriter(PdfDocCommon):
             new_page_label[NameObject("/S")] = NameObject(style)
         if prefix is not None:
             new_page_label[NameObject("/P")] = TextStringObject(prefix)
-        if start != 0:
+        if start is not None and start != 0:
             new_page_label[NameObject("/St")] = NumberObject(start)
 
         if NameObject(CatalogAttributes.PAGE_LABELS) not in self._root_object:

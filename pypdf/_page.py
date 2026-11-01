@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import (
     Any,
     Literal,
+    NoReturn,
     cast,
     overload,
 )
@@ -52,9 +53,9 @@ from ._utils import (
     TransformationMatrixType,
     _human_readable_bytes,
     _TraversalState,
-    deprecate,
-    deprecate_no_replacement,
-    deprecate_with_replacement,
+    deprecation,
+    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
     matrix_multiply,
 )
@@ -679,11 +680,16 @@ class PageObject(DictionaryObject):
         if ancest is None:
             ancest = []
         lst: list[str | list[str]] = []
-        if (
-                PG.RESOURCES not in obj or
-                is_null_or_none(resources := cast(DictionaryObject, obj[PG.RESOURCES])) or
-                RES.XOBJECT not in resources
-        ):
+        resources = obj.get(PG.RESOURCES, NullObject()).get_object()
+        if not isinstance(resources, DictionaryObject):
+            if not is_null_or_none(resources):
+                logger_warning(
+                    "Resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources,
+                )
+            resources = DictionaryObject()
+        if RES.XOBJECT not in resources:
             # Forms without XObject resources have no images inside them
             if len(ancest) > 0:
                 return []
@@ -736,15 +742,13 @@ class PageObject(DictionaryObject):
         if isinstance(image_id, list) and len(image_id) == 1:
             image_id = image_id[0]
         xobjs: DictionaryObject | None = None
-        try:
-            xobjs = cast(
-                DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
+        resources = obj.get(PG.RESOURCES, NullObject()).get_object()
+        if isinstance(resources, DictionaryObject) and RES.XOBJECT in resources:
+            xobjs = cast(DictionaryObject, resources[RES.XOBJECT])
+        elif not (image_id[0] == "~" and image_id[-1] == "~"):
+            raise KeyError(
+                f"Cannot access image object {image_id} without XObject resources"
             )
-        except KeyError as exc:
-            if not (image_id[0] == "~" and image_id[-1] == "~"):
-                raise KeyError(
-                    f"Cannot access image object {image_id} without XObject resources"
-                ) from exc
         if isinstance(image_id, str):
             if image_id[0] == "~" and image_id[-1] == "~":
                 if self._content_stream_images is None:
@@ -808,13 +812,13 @@ class PageObject(DictionaryObject):
         return VirtualListImages(self._get_ids_image, self._get_image)
 
     @property
-    def inline_images(self) -> dict[str, ImageFile] | None:
+    def inline_images(self) -> NoReturn:
         """
         Return only inline images from the page.
 
         .. deprecated::
             Use :attr:`images` and filter by :attr:`ImageFile.is_inline` instead.
-            This property will be removed in pypdf 7.0.
+            This property has been removed in pypdf 7.0.
 
         Examples:
             >>> from pypdf import PdfWriter
@@ -824,30 +828,18 @@ class PageObject(DictionaryObject):
             ...     if image_file.is_inline:
             ...         print(f"{image_name} is inline")
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "PageObject.inline_images",
             "PageObject.images",
             "7.0.0",
         )
-        if self._content_stream_images is None:
-            return None
-        return {
-            image_name: image_file
-            for image_name, image_file in self._content_stream_images.items()
-            if image_file and image_file.is_inline  # for inline images, image_file is populated
-        }
 
     @inline_images.setter
-    def inline_images(self, value: dict[str, ImageFile] | None) -> None:
-        deprecate_no_replacement(
+    def inline_images(self, value: dict[str, ImageFile] | None) -> NoReturn:
+        deprecation_no_replacement(
             "PageObject.inline_images",
             "7.0.0",
         )
-        if value is None:
-            self._content_stream_images = None
-        else:
-            assert self._content_stream_images is not None, "Can't edit inline_images before accessing images"
-            self._content_stream_images.update(value)
 
     def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
@@ -1182,9 +1174,9 @@ class PageObject(DictionaryObject):
 
         from pypdf._writer import PdfWriter  # noqa: PLC0415
         if not isinstance(self.indirect_reference.pdf, PdfWriter):
-            deprecate(
+            deprecation(
                 "Calling `PageObject.replace_contents()` for pages not assigned to a writer is deprecated "
-                "and will be removed in pypdf 7.0.0. Attach the page to the writer first or use "
+                "and has been removed in pypdf 7.0.0. Attach the page to the writer first or use "
                 "`PdfWriter(clone_from=...)` directly. The existing approach has proved being unreliable."
             )
 
@@ -1200,11 +1192,7 @@ class PageObject(DictionaryObject):
                 if not isinstance(reference, IndirectObject):
                     # Direct objects are not part of the writer's object list.
                     continue
-                try:
-                    writer._replace_object(indirect_reference=reference, obj=NullObject())
-                except ValueError:
-                    # Occurs when called on PdfReader.
-                    pass
+                writer._replace_object(indirect_reference=reference, obj=NullObject())
 
         if isinstance(content, ArrayObject):
             content = ArrayObject(writer._add_object(obj) for obj in content)
@@ -1212,29 +1200,20 @@ class PageObject(DictionaryObject):
         if is_null_or_none(content):
             if PG.CONTENTS not in self:
                 return
-            assert self[PG.CONTENTS].indirect_reference is not None
-            writer._replace_object(indirect_reference=self[PG.CONTENTS].indirect_reference, obj=NullObject())
+            contents_reference = self[PG.CONTENTS].indirect_reference
+            assert contents_reference is not None, "mypy"
+            writer._replace_object(indirect_reference=contents_reference, obj=NullObject())
             del self[PG.CONTENTS]
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
-            try:
-                self[NameObject(PG.CONTENTS)] = writer._add_object(content)
-            except AttributeError:
-                # applies at least for page not in writer
-                # as a backup solution, we put content as an object although not in accordance with pdf ref
-                # this will be fixed with the _add_object
-                self[NameObject(PG.CONTENTS)] = content
+            assert content is not None, "mypy"
+            self[NameObject(PG.CONTENTS)] = writer._add_object(content)
         else:
             assert content is not None, "mypy"
             content.indirect_reference = self[
                 PG.CONTENTS
             ].indirect_reference  # TODO: in the future may require generation management
-            try:
-                writer._replace_object(indirect_reference=content.indirect_reference, obj=content)
-            except AttributeError:
-                # applies at least for page not in writer
-                # as a backup solution, we put content as an object although not in accordance with pdf ref
-                # this will be fixed with the _add_object
-                self[NameObject(PG.CONTENTS)] = content
+            assert content.indirect_reference is not None, "mypy"
+            writer._replace_object(indirect_reference=content.indirect_reference, obj=content)
         # forces recalculation of images
         self._content_stream_images = None
 
@@ -1835,11 +1814,11 @@ class PageObject(DictionaryObject):
             out += op.decode("utf-8") + " " + "".join(s) + ope.__repr__() + "\n"
         out += "\n=============================\n"
         try:
-            for fo in self[PG.RESOURCES]["/Font"]:  # type:ignore
+            for fo in self[PG.RESOURCES]["/Font"]:  # type: ignore[index]
                 out += fo + "\n"
-                out += self[PG.RESOURCES]["/Font"][fo].__repr__() + "\n"  # type:ignore
+                out += self[PG.RESOURCES]["/Font"][fo].__repr__() + "\n"  # type: ignore[index]
                 try:
-                    enc_repr = self[PG.RESOURCES]["/Font"][fo][  # type:ignore
+                    enc_repr = self[PG.RESOURCES]["/Font"][fo][  # type: ignore[index]
                         "/Encoding"
                     ].__repr__()
                     out += enc_repr + "\n"
@@ -1849,7 +1828,7 @@ class PageObject(DictionaryObject):
                     pass
                 try:
                     out += (
-                        self[PG.RESOURCES]["/Font"][fo][  # type:ignore
+                        self[PG.RESOURCES]["/Font"][fo][  # type: ignore[index]
                             "/ToUnicode"
                         ]
                         .get_data()

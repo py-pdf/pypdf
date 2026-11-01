@@ -854,7 +854,7 @@ def _saslprep(password: str) -> str:
     return password
 
 
-class EncryptAlgorithm(tuple, Enum):  # type: ignore # noqa: SLOT001
+class EncryptAlgorithm(tuple, Enum):  # type: ignore[type-arg] # noqa: SLOT001
     # V, R, Length
     RC4_40 = (1, 2, 40)
     RC4_128 = (2, 3, 128)

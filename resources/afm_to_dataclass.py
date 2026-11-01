@@ -96,7 +96,7 @@ class Parser:
             if key == "IsFixedPitch" and value.lower() == "true":
                 flags |= FontFlags.FIXED_PITCH
             if key == "FontBBox":
-                bbox = tuple(map(float, value.split(" ")[:4]))  # type: ignore
+                bbox = tuple(map(float, value.split(" ")[:4]))  # type: ignore[assignment]
             if key == "EncodingScheme":
                 if value == "FontSpecific":
                     flags |= FontFlags.SYMBOLIC
