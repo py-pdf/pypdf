@@ -6,6 +6,7 @@ You can extract text from a PDF:
 pypdf_test_setup("user/extract-text", {
     "test Orient.pdf": "../resources/test Orient.pdf",
     "GeoBase_NHNC1_Data_Model_UML_EN.pdf": "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf",
+    "superscript-pdftex.pdf": "../resources/superscript-pdftex.pdf",
 })
 ```
 
