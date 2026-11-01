@@ -1515,7 +1515,12 @@ class PdfReader(PdfDocCommon):
             object_start = index_before_space + 1
 
             # Validate
-            if object_start < object_end and generation_start < generation_end:
+            if (
+                object_start < object_end
+                and object_end - object_start <= IndirectObject._MAXIMUM_PART_LENGTH
+                and generation_start < generation_end
+                and generation_end - generation_start <= IndirectObject._MAXIMUM_PART_LENGTH
+            ):
                 object_number = int(data[object_start:object_end])
                 generation_number = int(data[generation_start:generation_end])
 
