@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793527425914,
+  "lastUpdate": 1793527633190,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -162499,6 +162499,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016049141164290206",
             "extra": "mean: 548.5350756000003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0397a6f87ad3951e90df1cd47f2799e4de00254a",
+          "message": "PI: Decode the PNG Up predictor a row at a time (#4312)\n\n* PI: Decode the PNG Up predictor a row at a time\n\nFlateDecode._decode_png_prediction() undoes the PNG filter of every row\nof predicted image data in Python, one byte at a time. The Up filter,\nthe most common one, is now undone for the whole row with a few integer\noperations, and the Paeth filter does less work per byte. Decoding PNG\npredicted images is up to 2.3x faster on CPython.\n\nWhere the speed comes from\n--------------------------\n\n* Up: each byte is the sum of the filtered byte and the byte above it,\n  modulo 256, independent of the other bytes of the row. Both rows are\n  now converted into one integer each and added at once: the low 7 bits\n  of all bytes are added together, which cannot carry into the next\n  byte, and the top bit of each byte is restored with XOR. A row of\n  4,464 bytes takes 0.011 ms instead of 0.44 ms.\n* Paeth: each byte depends on the decoded byte to its left, so this\n  remains a loop. The three distances are now computed from two\n  differences instead of from the predictor p = left + up - up_left,\n  and made positive by comparisons instead of three abs() calls: 1.15 ms\n  instead of 1.35 ms per row of 4,464 bytes.\n* The decoded row is no longer copied to bytes to serve as the previous\n  row.\n\nThe Sub, Average and None filters are unchanged. The 9.4 MB image of\npdf_font_garbled.pdf, the file of the image benchmarks in\ntests/bench.py, has 1,569 Up, 424 Paeth, 103 Sub and 8 Average rows.\nDecoding it takes 0.64 s instead of 1.47 s.\n\nBenchmark\n---------\n\nImage extraction benchmark of py-pdf/benchmarks (name and data of all\nimages of all pages), best of 3 runs, AMD Ryzen 7 PRO 4750U:\n\n| PDF                  | PNG rows |    main | this change | Speedup |\n|----------------------|---------:|--------:|------------:|--------:|\n| 4 (1707.09725)       |    7,321 |  9.75 s |      8.37 s |    1.2x |\n| pdf_font_garbled.pdf |   21,040 | 26.51 s |     17.37 s |    1.5x |\n\nCPython 3.15.0. PDFs 1 to 3 of the benchmark contain no PNG predicted\ndata and are not affected.\n\nOn PyPy 3.11 (PyPy 8.0.1), whose JIT compiles the byte loop well and\nwhose big integers are slower, the Up filter takes 0.027 ms instead of\n0.011 ms per row: pdf_font_garbled.pdf takes 14.70 s instead of 14.04 s\n(5% slower), PDF 4 3.49 s as before.\n\nBehavior\n--------\n\nUnchanged. This includes rows with fewer than 8 bits per pixel, where\nthe number of bytes per pixel used for Sub, Average and Paeth is 0\ninstead of 1 as in the PNG specification; this is kept as is.\n\nVerification\n------------\n\n* The full test suite passes; ruff and mypy report no issues.\n* For the 445 PDFs the tests use (tests/pdf_cache, resources,\n  sample-files), the decoded data of all 1,010 streams using a PNG\n  predictor, and the content stream operations, extracted text,\n  warnings and exceptions of all 13,070 pages are the same as on main.\n* 301 inputs, the rows of the image above and random rows using all\n  filter types with 1 to 6 bytes per pixel, including 127 inputs with\n  fewer than 8 bits per pixel and non-rectangular data, decode to the\n  same bytes as on main, on CPython and on PyPy.\n* test_flatedecode__decode_png_prediction__matches_png_decoder compares\n  the decoded rows with the PNG decoder of Pillow, for all filter types\n  and 1 to 4 bytes per pixel; it passes on main as well. Changing the\n  new code so that the Up filter carries into the next byte or ignores\n  the previous row, or the Paeth filter computes a wrong distance,\n  drops an absolute value or breaks ties between up and up_left\n  differently makes it fail. Breaking ties between left and up\n  differently cannot change the result: if their distances are equal\n  but their values differ, up_left is closer.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* STY: Name the steps of decoding the PNG Up predictor\n\nThe masks are called low_mask and high_mask, as they are masks, not\nbits. The sum of the low 7 bits and the high bits are named low_sum and\nhigh_bits, and a comment explains how they are combined.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Convert comments to pytest test ids\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-01T11:02:16+01:00",
+          "tree_id": "12741a4c3bf4581c041e2135d5e5db4bce5a9bef",
+          "url": "https://github.com/py-pdf/pypdf/commit/0397a6f87ad3951e90df1cd47f2799e4de00254a"
+        },
+        "date": 1793527620302,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.52547779845199,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0183230857038163",
+            "extra": "mean: 68.84455120000061 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.59417696482447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01034485128062965",
+            "extra": "mean: 36.239529857141406 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9930577509414292,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02986419433762983",
+            "extra": "mean: 1.0069907807999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4884649532257168,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04298313966112268",
+            "extra": "mean: 2.047229782599993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.30922923812853265,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025612282811479745",
+            "extra": "mean: 3.233846857600008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0757429100599418,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029753609711881842",
+            "extra": "mean: 929.5901378000053 msec\nrounds: 5"
           }
         ]
       }
