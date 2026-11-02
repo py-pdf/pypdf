@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793630082687,
+  "lastUpdate": 1793630725360,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -124151,6 +124151,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0131277950540208",
             "extra": "mean: 444.47908920000145 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "plenae@disroot.org",
+            "name": "Pieter Lenaerts",
+            "username": "plenaerts"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6f80d4c215056c4d7840a06e822bc628db5479ee",
+          "message": "MAINT: Generate Symbol and ZapfDingbats encodings from Adobe sources (#4333)\n\n* MAINT: Generate Symbol and ZapfDingbats encodings from Adobe sources\n\nThe built-in encodings of the Symbol and ZapfDingbats fonts were copied\nfrom Unicode's MAPPINGS/VENDORS/ADOBE files, which carry an old Unicode\nlicense that only permits use \"in the creation of products supporting\nthe Unicode Standard\".\n\nGenerate them instead with resources/afm_to_dataclass.py from the\ncharacter codes and glyph names in Adobe's core 14 AFM files and the\nUnicode values in the Adobe Glyph List, the same sources already used\nfor core_font_metrics.py and adobe_glyphs.py.\n\nThis changes a few mappings: the space is U+0020 instead of U+00A0,\nSymbol's fraction is U+2044 FRACTION SLASH instead of U+2215 DIVISION\nSLASH, and ZapfDingbats 0x80-0x8D map to the ornament brackets\nU+2768-U+2775 instead of Private Use Area code points.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-02T15:43:13+01:00",
+          "tree_id": "ffc471a408794da4597f273ff2d5103177e6731d",
+          "url": "https://github.com/py-pdf/pypdf/commit/6f80d4c215056c4d7840a06e822bc628db5479ee"
+        },
+        "date": 1793630712947,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.828630144063639,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005975369813771537",
+            "extra": "mean: 353.52801500000623 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.10181997494933,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014205045125292145",
+            "extra": "mean: 43.28663287500115 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25376354205849677,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012034720364975647",
+            "extra": "mean: 3.94067639459999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.016607663415073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019452848987580834",
+            "extra": "mean: 58.766119533328265 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1518097008576771,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013177861834804813",
+            "extra": "mean: 6.5871943252 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5598537101305634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033416354226992497",
+            "extra": "mean: 641.085759200007 msec\nrounds: 5"
           }
         ]
       }
