@@ -3086,6 +3086,32 @@ def test_compress_identical_objects__remove_unreferenced():
         writer.get_object(reference)
 
 
+def test_compress_identical_objects__keeps_content_array_parts_per_page():
+    """Cf #4111"""
+    writer = PdfWriter()
+    for width in (10, 11, 12):
+        page = writer.add_blank_page(100, 100)
+        parts = ArrayObject()
+        for data in (b"q", f"0 0 {width} 10 re f".encode(), b"Q"):
+            stream = DecodedStreamObject()
+            stream.set_data(data)
+            parts.append(writer._add_object(stream))
+        page[NameObject("/Contents")] = parts
+
+    writer.compress_identical_objects()
+    for page in writer.pages:
+        page.compress_content_streams()
+
+    out = BytesIO()
+    writer.write(out)
+    reader = PdfReader(out)
+    assert [page.get_contents().get_data() for page in reader.pages] == [
+        b"q\n0 0 10 10 re f\nQ\n",
+        b"q\n0 0 11 10 re f\nQ\n",
+        b"q\n0 0 12 10 re f\nQ\n",
+    ]
+
+
 def test_compress_identical_objects__deprecation():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     with pytest.raises(

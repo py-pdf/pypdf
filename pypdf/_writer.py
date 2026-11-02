@@ -1677,12 +1677,20 @@ class PdfWriter(PdfDocCommon):
                     will be performed within replace_in_obj"""
                     replace_in_obj(v, crossref)
 
+        # Streams inside a page's /Contents array must not be shared between pages:
+        # `PageObject.replace_contents()` releases them without being able to check for further usages.
+        page_content_parts: set[int] = set()
+        for page in self.pages:
+            contents = page.get(PG.CONTENTS, None)
+            if contents is not None and isinstance(contents := contents.get_object(), ArrayObject):
+                page_content_parts.update(part.idnum for part in contents if isinstance(part, IndirectObject))
+
         # _idnum_hash: dict[hash] = (1st_ind_obj, [2nd_ind_obj,...])
         self._idnum_hash = {}
         unreferenced = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
-            if is_null_or_none(obj):
+            if is_null_or_none(obj) or idx + 1 in page_content_parts:
                 continue
             assert obj is not None, "mypy"  # mypy: TypeGuard of `is_null_or_none` does not help here.
             assert isinstance(obj.indirect_reference, IndirectObject)
