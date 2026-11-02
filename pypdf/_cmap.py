@@ -13,6 +13,7 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    IndirectObject,
     NullObject,
     StreamObject,
 )
@@ -124,7 +125,6 @@ def _parse_encoding(
         encoding = charset_encoding["/StandardEncoding"].copy()
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         x: int = 0
-        o: int | str
         differences = enc["/Differences"].get_object()
         if not isinstance(differences, ArrayObject):
             logger_warning(
@@ -134,9 +134,11 @@ def _parse_encoding(
             )
             differences = ArrayObject()
         for o in differences:
+            if isinstance(o, IndirectObject):
+                o = o.get_object()
             if isinstance(o, int):
                 x = o
-            else:  # isinstance(o, str):
+            elif isinstance(o, str):
                 try:
                     if x < len(encoding):
                         encoding[x] = _glyph_name_to_unicode(o) or o  # type: ignore[index]
@@ -145,6 +147,15 @@ def _parse_encoding(
                 except Exception:
                     encoding[x] = o  # type: ignore[index]
                 x += 1
+            else:
+                # Table 114 of the PDF 2.0 specification only allows character
+                # codes and glyph names here. Anything else would end up in the
+                # text and break the decoding later on.
+                logger_warning(
+                    "Ignoring invalid font encoding difference: %(entry)s",
+                    source=__name__,
+                    entry=o,
+                )
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
     return encoding
