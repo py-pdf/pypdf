@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793611207181,
+  "lastUpdate": 1793611281742,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -162763,6 +162763,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029528137391154195",
             "extra": "mean: 916.9566069999973 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fcd04e6478dde9bfea83b3405ea32291d4f0dbe0",
+          "message": "DOC: Show how to extract superscripts with a visitor function (#4331)\n\n* DOC: Show how to extract superscripts with a visitor function\n\nThe goal of this PR is to help users with extracting math content in\na slightly better way by using visitor functions to translate\nsuperscripts to their unicode variants; see\nhttps://en.wikipedia.org/wiki/Unicode_subscripts_and_superscripts#Superscripts_and_subscripts_block\n\n## Tagged PDFs and ActualText\n\nUsing visitor functions is not ideal.\n\nAn ideal solution would require a tagged PDF\nor the use of /ActualText. Both would require the generator to create\nit (see https://ctan.org/pkg/tagpdf and https://ctan.org/pkg/accsupp)\n\nFor the pypdf side:\n\n* ActualText: https://github.com/py-pdf/pypdf/issues/1351\n* Tagged PDFs: https://github.com/py-pdf/pypdf/issues/1168\n\nIn the mean time, this improves the situation on the users side\n\nCloses #2045\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\n\n* Add missin testsetup change\n\n---------\n\nCo-authored-by: Claude Sonnet 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-02T10:17:48+01:00",
+          "tree_id": "8f9ffdcffb7a8236e8a98b77e5c19f473d0eab45",
+          "url": "https://github.com/py-pdf/pypdf/commit/fcd04e6478dde9bfea83b3405ea32291d4f0dbe0"
+        },
+        "date": 1793611273437,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 22.476118837164442,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01787866453943705",
+            "extra": "mean: 44.49166723333443 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 45.989663620753646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006568484899188115",
+            "extra": "mean: 21.744016399996724 msec\nrounds: 40"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.5220080169075352,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027077360177655014",
+            "extra": "mean: 657.0267625999975 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.7756825277490452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04195064347413268",
+            "extra": "mean: 1.2891872180000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.461781145802905,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07288352074489068",
+            "extra": "mean: 2.165527997600003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7725863170984357,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03407593110444001",
+            "extra": "mean: 564.147421399997 msec\nrounds: 5"
           }
         ]
       }
