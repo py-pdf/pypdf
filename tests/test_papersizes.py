@@ -4,7 +4,7 @@ import pytest
 from pypdf import papersizes
 
 
-def test_din_a0_paper_size():
+def test_din_a0_paper_size() -> None:
     """The dimensions and area of the DIN A0 paper size are correct."""
     dim = papersizes.PaperSize.A0
     area_square_pixels = float(dim.width) * dim.height
@@ -21,7 +21,7 @@ def test_din_a0_paper_size():
 
 
 @pytest.mark.parametrize("dimensions", papersizes._din_a)
-def test_din_a_aspect_ratio(dimensions):
+def test_din_a_aspect_ratio(dimensions: papersizes.Dimensions) -> None:
     """The aspect ratio of DIN A paper sizes is correct."""
     assert abs(dimensions.height - dimensions.width * 2**0.5) <= 2.5
 
@@ -30,6 +30,8 @@ def test_din_a_aspect_ratio(dimensions):
     ("dimensions_a", "dimensions_b"),
     list(zip(papersizes._din_a, papersizes._din_a[1:])),
 )
-def test_din_a_size_doubling(dimensions_a, dimensions_b):
+def test_din_a_size_doubling(
+    dimensions_a: papersizes.Dimensions, dimensions_b: papersizes.Dimensions
+) -> None:
     """The height of a DIN A paper size doubles when moving to the next size."""
     assert abs(dimensions_a.height - 2 * dimensions_b.width) <= 4

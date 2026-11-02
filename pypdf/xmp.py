@@ -11,17 +11,18 @@ from collections.abc import Callable, Iterator
 from string import hexdigits
 from typing import (
     Any,
+    NoReturn,
     TypeVar,
     cast,
 )
 from xml.dom.expatbuilder import ExpatBuilderNS
-from xml.dom.minidom import Document
+from xml.dom.minidom import Document, ProcessingInstruction
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.xmlbuilder import Options
 from xml.parsers.expat import ExpatError, XMLParserType
 
 from ._configuration import get_configuration
-from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
+from ._utils import StreamType, deprecation_with_replacement
 from .errors import LimitReachedError, PdfReadError, XmpDocumentError
 from .generic import ContentStream, PdfObject, StreamObject
 
@@ -252,19 +253,12 @@ class XmpInformation(PdfObject):
         stream.set_data(_MINIMAL_XMP.encode("utf-8"))
         return cls(stream)
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        deprecate_with_replacement(
+    def write_to_stream(self, stream: StreamType) -> NoReturn:
+        deprecation_with_replacement(
             "XmpInformation.write_to_stream",
             "PdfWriter.xmp_metadata",
             "6.0.0"
         )
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
-        self.stream.write_to_stream(stream)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
         for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
@@ -805,5 +799,17 @@ class XmpInformation(PdfObject):
         if doc is None:
             raise XmpDocumentError("XMP Document is None")
 
-        xml_data = doc.toxml(encoding="utf-8")
-        self.stream.set_data(xml_data)
+        # Serialize the top-level nodes one by one instead of the whole document:
+        # this omits the XML declaration (PDF 2.0, Annex H.2) while preserving
+        # the <?xpacket?> wrapper and other processing instructions.
+        parts = []
+        for node in doc.childNodes:
+            if (
+                isinstance(node, ProcessingInstruction)
+                and node.target == "xpacket"
+                and re.fullmatch(r"""end\s*=\s*(['"])[rw]\1\s*""", node.data)
+            ):
+                # No padding is written, so the packet cannot be updated in place.
+                node.data = 'end="r"'
+            parts.append(node.toxml(encoding="utf-8"))
+        self.stream.set_data(b"".join(parts))

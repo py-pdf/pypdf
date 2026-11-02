@@ -48,14 +48,13 @@ from functools import lru_cache
 from importlib.util import find_spec
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, NoReturn, cast
+from typing import Any, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._configuration import get_configuration
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    deprecate,
-    deprecation_with_replacement,
+    deprecation,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -279,8 +278,11 @@ class FlateDecode:
             data += b"\x00" * (row_length - remainder)
             assert len(data) % row_length == 0
         output = bytearray()
-        previous_row_data = bytes(row_length)
+        previous_row_data = bytearray(row_length)
         bpp = (row_length - 1) // columns  # recomputed locally to not change params
+        # Masks to add all bytes of two rows at once, without carrying over into the next byte.
+        low_mask = int.from_bytes(b"\x7f" * row_length, "big")
+        high_mask = int.from_bytes(b"\x80" * row_length, "big")
         for row in range(0, len(data), row_length):
             row_data = bytearray(data[row : row + row_length])
             filter_byte = row_data[0]
@@ -294,8 +296,13 @@ class FlateDecode:
                     row_data[i] = (row_data[i] + row_data[i - bpp]) % 256
             elif filter_byte == 2:
                 # PNG Up Predictor
-                for i in range(1, row_length):
-                    row_data[i] = (row_data[i] + previous_row_data[i]) % 256
+                current = int.from_bytes(row_data, "big")
+                previous = int.from_bytes(previous_row_data, "big")
+                # The low 7 bits of each byte are added without carrying into the next byte,
+                # the high bit of each byte is added with XOR, dropping its carry.
+                low_sum = (current & low_mask) + (previous & low_mask)
+                high_bits = (current ^ previous) & high_mask
+                row_data = bytearray((low_sum ^ high_bits).to_bytes(row_length, "big"))
             elif filter_byte == 3:
                 # PNG Average Predictor
                 for i in range(1, bpp + 1):
@@ -314,10 +321,17 @@ class FlateDecode:
                     up = previous_row_data[i]
                     up_left = previous_row_data[i - bpp]
 
-                    p = left + up - up_left
-                    dist_left = abs(p - left)
-                    dist_up = abs(p - up)
-                    dist_up_left = abs(p - up_left)
+                    # The distances of p = left + up - up_left to left, up and up_left.
+                    # Avoid calling abs() in this innermost loop.
+                    dist_left = up - up_left
+                    dist_up = left - up_left
+                    dist_up_left = dist_left + dist_up
+                    if dist_left < 0:
+                        dist_left = -dist_left
+                    if dist_up < 0:
+                        dist_up = -dist_up
+                    if dist_up_left < 0:
+                        dist_up_left = -dist_up_left
 
                     if dist_left <= dist_up and dist_left <= dist_up_left:
                         paeth = left
@@ -331,7 +345,7 @@ class FlateDecode:
                 raise PdfReadError(
                     f"Unsupported PNG filter {filter_byte!r}"
                 )  # pragma: no cover
-            previous_row_data = bytes(row_data)
+            previous_row_data = row_data
             output += row_data[1:]
         return bytes(output)
 
@@ -707,18 +721,6 @@ class CCITTParameters:
         return ccitt_group
 
 
-def __create_old_class_instance(
-    K: int = 0,
-    columns: int = 0,
-    rows: int = 0
-) -> NoReturn:
-    deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
-
-
-# Create an alias for the old class name
-CCITParameters = __create_old_class_instance
-
-
 class CCITTFaxDecode:
     """
     §7.4.6, CCITTFaxDecode filter (ISO 32000).
@@ -924,9 +926,8 @@ class JBIG2Decode:
 def _deprecate_inline_image_filters(filter_name: str, old_name: str, new_name: str) -> None:
     if filter_name != old_name:
         return
-    deprecate(
-        f"The filter name {old_name} is deprecated and will be removed in pypdf 7.0.0. Use {new_name} instead.",
-        4,
+    deprecation(
+        f"The filter name {old_name} is deprecated and has been removed in pypdf 7.0.0. Use {new_name} instead."
     )
 
 

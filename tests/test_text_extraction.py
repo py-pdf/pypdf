@@ -4,9 +4,11 @@ Testing the text-extraction submodule and ensuring the quality of text extractio
 The tested code might be in _page.py.
 """
 
+import json
 import re
 from dataclasses import asdict
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -123,7 +125,6 @@ def test_visitor_text_matrices(file_name, constraints):
         assert constraint(x, y), f'Line "{text}" is wrong at x:{x}, y:{y}'
 
 
-@pytest.mark.xfail(reason="known whitespace issue #2336")
 @pytest.mark.enable_socket
 def test_issue_2336():
     name = "Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf"
@@ -1459,7 +1460,29 @@ def test_wrapped_table_cell_line_is_not_split():
             b"1 0 0 1 100 706 Tm (BBB) Tj ET"
         )
     ).pages[0].extract_text()
-    assert [line for line in text.splitlines() if "LBL" in line] == ["LBL AAABBB"]
+    # The invariant from #4130 is that both cell lines stay on the label's line;
+    # the space between the words is the separate #4254 fix.
+    lines = [line for line in text.splitlines() if "LBL" in line]
+    assert len(lines) == 1
+    assert lines[0].split() == ["LBL", "AAA", "BBB"]
+
+
+def test_wrapped_table_cell_lines_are_separated():
+    """Wrapped cell lines must not be glued together. Regression #4254."""
+    # The second line of each cell moved to another baseline but is kept on the
+    # label's line by the line span, so it needs the space the horizontal gap
+    # test alone cannot provide.
+    text = PdfReader(
+        _page_with_helvetica(
+            b"BT /F1 10 Tf "
+            b"1 0 0 1 72 700 Tm (Row) Tj "
+            b"1 0 0 1 160 706 Tm (Alpha) Tj "
+            b"1 0 0 1 160 694 Tm (Beta) Tj "
+            b"1 0 0 1 240 706 Tm (Gamma) Tj "
+            b"1 0 0 1 240 694 Tm (Delta) Tj ET"
+        )
+    ).pages[0].extract_text()
+    assert text == "Row Alpha Beta Gamma Delta"
 
 
 def test_visitor_text_uses_current_text_matrix():
@@ -1620,3 +1643,21 @@ def test_simple_font_character_widths_with_differences_encoding() -> None:
     groups = text_show_operations(ops, page._layout_mode_fonts())
     advance = sum(g["displaced_tx"] - g["tx"] for g in groups)
     assert f"{advance:.1f}" == "25.2"
+
+
+def test_layout_mode_debug_path(tmp_path: Path) -> None:
+    """
+    layout_mode_debug_path is a pypdf feature; the PDF specification does not cover it.
+
+    The page shows "Hello" with the standard font Helvetica (ISO 32000-2:2020, 9.6.2.2),
+    which is not embedded and thus has no font stream that json cannot serialize.
+    """
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj ET")).pages[0]
+    assert page.extract_text(extraction_mode="layout", layout_mode_debug_path=tmp_path) == "Hello"
+
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["bt_groups.json", "bts.json", "fonts.json", "tjs.json"]
+    tj_ops = json.loads(tmp_path.joinpath("tjs.json").read_text("utf-8"))
+    assert len(tj_ops) == 1
+    assert "font" not in tj_ops[0]
+    assert tj_ops[0]["text"] == "Hello"
+    assert tj_ops[0]["font_size"] == 12

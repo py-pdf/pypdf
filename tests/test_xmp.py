@@ -7,7 +7,7 @@ import pytest
 import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import LimitReachedError, PdfReadError, XmpDocumentError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError, XmpDocumentError
 from pypdf.generic import ContentStream, NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
@@ -387,16 +387,14 @@ def test_xmp_information__write_to_stream():
     xmp = writer.xmp_metadata
 
     output = BytesIO()
-    with pytest.warns(
-            DeprecationWarning,
+    with pytest.raises(
+            DeprecationError,
             match=(
-                r"^XmpInformation\.write_to_stream is deprecated and will be removed in pypdf 6\.0\.0\. "
+                r"^XmpInformation\.write_to_stream is deprecated and was removed in pypdf 6\.0\.0\. "
                 r"Use PdfWriter\.xmp_metadata instead\.$"
             )
     ):
         xmp.write_to_stream(output)
-    output_bytes = output.getvalue()
-    assert output_bytes.startswith(b"<<\n/Type /Metadata\n/Subtype /XML\n/Length 2786\n>>\nstream\n<?xpacket begin")
 
 
 def test_pdf_writer__xmp_metadata_setter():
@@ -736,6 +734,43 @@ def test_xmp_information__create_with_writer():
     assert xmp_read.dc_title == {"x-default": "Created with pypdf"}
     assert xmp_read.dc_creator == ["pypdf user"]
     assert xmp_read.pdf_producer == "pypdf library"
+
+
+@pytest.mark.parametrize("packet_end", [None, 'end="r"', 'end="w"', "end='w'", 'end = "w" '])
+def test_xmp_information__update_stream_packet(packet_end):
+    """Metadata updates preserve the packet wrapper without an XML declaration."""
+    original = XmpInformation.create().stream.get_data()
+    if packet_end is None:
+        original = original[original.index(b"<x:xmpmeta"):original.index(b"<?xpacket end")]
+    else:
+        original = original.replace(b'end="r"', packet_end.encode())
+    original = b'<?xml version="1.0" encoding="utf-8"?><!--preserved--><?other value?>' + original
+    stream = StreamObject()
+    stream.set_data(original)
+    xmp = XmpInformation(stream)
+    title = {"x-default": "Title with <markup> & caf\u00e9 \u65e5\u672c\u8a9e"}
+
+    xmp.dc_title = title
+    first_update = xmp.stream.get_data()
+    xmp.dc_title = title
+    assert xmp.stream.get_data() == first_update
+    assert b"<?xml " not in first_update
+    assert first_update.startswith(b"<!--preserved--><?other value?>")
+    if packet_end is None:
+        assert b"<?xpacket" not in first_update
+    else:
+        assert b'<?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>' in first_update
+        assert first_update.endswith(b'<?xpacket end="r"?>')
+
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.xmp_metadata = xmp
+    output = BytesIO()
+    writer.write(output)
+    reread = PdfReader(output).xmp_metadata
+    assert reread is not None
+    assert reread.dc_title == title
+    assert reread.stream.get_data() == first_update
 
 
 def test_xmp_information__namespace_prefix():

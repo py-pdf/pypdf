@@ -4,7 +4,7 @@ import sys
 from enum import Enum, IntFlag, auto, unique
 from typing import Any
 
-from ._utils import deprecate_with_replacement
+from ._utils import deprecation_with_replacement
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -647,13 +647,13 @@ class _CatalogDictionaryMeta(type):
         value = super().__getattribute__(name)
 
         if not name.startswith("__"):
-            deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
+            deprecation_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
         return value
 
 
 class CatalogDictionary(CatalogAttributes, metaclass=_CatalogDictionaryMeta):
     def __init__(self) -> None:
-        deprecate_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
+        deprecation_with_replacement("CatalogDictionary", "CatalogAttributes", "7.0.0")
 
 
 class OutlineFontFlag(IntFlag):

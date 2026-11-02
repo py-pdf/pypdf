@@ -1149,7 +1149,7 @@ def test_text_extraction_invalid_mode():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     with pytest.raises(ValueError, match="Invalid text extraction mode"):
-        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
+        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore[arg-type]
 
 
 @pytest.mark.enable_socket

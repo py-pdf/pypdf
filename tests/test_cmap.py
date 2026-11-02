@@ -397,6 +397,67 @@ def test_get_encoding__type1_font_file_truncated_dup_line():
     assert character_map == {"a": "a"}
 
 
+@pytest.mark.parametrize(
+    ("base_font", "expected"),
+    [
+        (
+            "/Symbol",
+            {
+                0x20: " ",  # space
+                0x61: "α",  # alpha
+                0x6D: "μ",  # mu, the Greek letter rather than the micro sign
+                0xA4: "⁄",  # fraction slash
+                0xE5: "∑",  # summation
+            },
+        ),
+        (
+            "/ZapfDingbats",
+            {
+                0x20: " ",  # space
+                0x34: "✔",  # heavy check mark
+                0x80: "❨",  # medium left parenthesis ornament
+                0x8D: "❵",  # medium right curly bracket ornament
+            },
+        ),
+    ],
+)
+def test_get_encoding__builtin_encoding_of_symbolic_core_font(base_font, expected):
+    ft = DictionaryObject()
+    ft[NameObject("/Type")] = NameObject("/Font")
+    ft[NameObject("/Subtype")] = NameObject("/Type1")
+    ft[NameObject("/BaseFont")] = NameObject(base_font)
+    encoding, _character_map = get_encoding(ft)
+    assert isinstance(encoding, dict)
+    assert len(encoding) == 256
+    for code, character in expected.items():
+        assert encoding[code] == character
+
+
+def test_extract_text__symbolic_core_fonts():
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    font_resources = DictionaryObject()
+    for font_name, base_font in (("/F1", "/Symbol"), ("/F2", "/ZapfDingbats")):
+        font = DictionaryObject()
+        font[NameObject("/Type")] = NameObject("/Font")
+        font[NameObject("/Subtype")] = NameObject("/Type1")
+        font[NameObject("/BaseFont")] = NameObject(base_font)
+        font_resources[NameObject(font_name)] = writer._add_object(font)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+    content = DecodedStreamObject()
+    content.set_data(
+        b"BT /F1 12 Tf 10 100 Td (a\\040m\\244b) Tj ET "
+        b"BT /F2 12 Tf 10 50 Td (4\\040\\200\\215) Tj ET"
+    )
+    page[NameObject("/Contents")] = writer._add_object(content)
+    buffer = BytesIO()
+    writer.write(buffer)
+
+    assert PdfReader(buffer).pages[0].extract_text() == "α μ⁄β\n✔ ❨❵"
+
+
 def test_parse_bfchar(caplog):
     map_dict = {}
     int_entry = []
@@ -1059,3 +1120,34 @@ def test_parse_bfchar__speed() -> None:
     parse_bfchar(pairs, map_dict, int_entry)
     assert int_entry == list(range(count))
     assert len(map_dict) == count + 1
+
+
+def test_get_encoding__unknown_base_encoding_falls_back_to_standard_encoding(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    An unsupported /BaseEncoding name is not an error: pypdf logs it and uses StandardEncoding.
+
+    ISO 32000-2:2020, 9.6.5.2 "Encodings for simple fonts", Table 112 lists the valid
+    /BaseEncoding names; if the entry is absent, StandardEncoding is the default.
+    """
+    font = DictionaryObject({
+        NameObject("/Encoding"): DictionaryObject({
+            NameObject("/BaseEncoding"): NameObject("/UnknownEncoding"),
+        }),
+    })
+    encoding, _ = get_encoding(font)
+    assert encoding == dict(zip(range(256), charset_encoding["/StandardEncoding"]))
+    assert "not implemented yet" in caplog.text
+
+
+def test_get_encoding__to_unicode_stream_with_str_data() -> None:
+    """
+    A /ToUnicode CMap whose stream data is a str instead of bytes is still parsed.
+
+    ISO 32000-2:2020, 9.10.3 "ToUnicode CMaps": the CMap maps character codes to Unicode;
+    here code <01> maps to U+0041.
+    """
+    to_unicode = DecodedStreamObject()
+    to_unicode.set_data("beginbfchar\n<01> <0041>\nendbfchar")
+    font = DictionaryObject({NameObject("/ToUnicode"): to_unicode})
+    _, map_dict = get_encoding(font)
+    assert map_dict["\x01"] == "A"
