@@ -226,11 +226,23 @@ class FlateDecode:
             # TIFF prediction:
             if predictor == 2:
                 row_length -= 1  # remove the predictor byte
-                bpp = row_length // columns
                 str_data_mut = bytearray(str_data)
-                for i in range(len(str_data_mut)):
-                    if i % row_length >= bpp:
-                        str_data_mut[i] = (str_data_mut[i] + str_data_mut[i - bpp]) % 256
+                if bits_per_component == 16:
+                    # Samples are big-endian 16-bit values. Adding them byte by byte
+                    # would drop the carry from the low byte into the high byte.
+                    bpp = colors * 2
+                    for i in range(0, len(str_data_mut) - 1, 2):
+                        if i % row_length >= bpp:
+                            value = (
+                                int.from_bytes(str_data_mut[i:i + 2], "big")
+                                + int.from_bytes(str_data_mut[i - bpp:i - bpp + 2], "big")
+                            ) % 65536
+                            str_data_mut[i:i + 2] = value.to_bytes(2, "big")
+                else:
+                    bpp = row_length // columns
+                    for i in range(len(str_data_mut)):
+                        if i % row_length >= bpp:
+                            str_data_mut[i] = (str_data_mut[i] + str_data_mut[i - bpp]) % 256
                 str_data = bytes(str_data_mut)
             # PNG prediction:
             elif 10 <= predictor <= 15:
