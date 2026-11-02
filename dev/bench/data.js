@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793627552253,
+  "lastUpdate": 1793627927815,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -162895,6 +162895,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03407593110444001",
             "extra": "mean: 564.147421399997 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feapfel447@gmail.com",
+            "name": "Frank",
+            "username": "feafel"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "16dca36576b6eeb4c616db63e6dc98f21aad8c39",
+          "message": "BUG: Keep wrapped table-cell words separated in extract_text() (#4255)\n\n* BUG: Keep wrapped table-cell words separated\n\n#4132 keeps the second line of a wrapped cell on the label's line by\nusing the extracted line's baseline span. For such a fragment the\nhorizontal-gap test against the previous fragment sees little or no\nmovement, so no space was added and the two words were glued together.\n\nAlso add a space when a fragment kept on the line moved to another\nbaseline. This restores the 6.19.0 output for wrapped table cells.\n\nCloses #4254.\n\n* test: assert the #4130 grouping invariant separately\n\nKeep checking that both wrapped cell lines stay on the label's line,\nwithout encoding the glued output that #4254 fixes. The exact spacing\nis covered by the new #4254 test.\n\n---------\n\nCo-authored-by: feafel <feafel@example.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-02T14:45:23+01:00",
+          "tree_id": "baf98381d7793ed10e15de1ec0683834583c2ea4",
+          "url": "https://github.com/py-pdf/pypdf/commit/16dca36576b6eeb4c616db63e6dc98f21aad8c39"
+        },
+        "date": 1793627914471,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.059486502842974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020152440852703554",
+            "extra": "mean: 71.12635300000392 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.639620807198007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036262544501780925",
+            "extra": "mean: 31.605941363636703 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9967137856105291,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03247530769345502",
+            "extra": "mean: 1.0032970491999946 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5474777422242274,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0561690901795978",
+            "extra": "mean: 1.8265582742000048 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.31865367458141763,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04427375708339942",
+            "extra": "mean: 3.1382032588000017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0838545455806388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028483170699311104",
+            "extra": "mean: 922.633026799997 msec\nrounds: 5"
           }
         ]
       }
