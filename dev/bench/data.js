@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793629889630,
+  "lastUpdate": 1793630082687,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -163027,6 +163027,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028483170699311104",
             "extra": "mean: 922.633026799997 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6ff5244af09bf52521b6d94e3c06a46869808bb4",
+          "message": "ROB: Add outline items when the outlines are not an indirect dictionary (#4305)\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-02T15:29:39+01:00",
+          "tree_id": "549ec8a266f2a7e3bd094e87655f780a9b386372",
+          "url": "https://github.com/py-pdf/pypdf/commit/6ff5244af09bf52521b6d94e3c06a46869808bb4"
+        },
+        "date": 1793630069581,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.569791341485956,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0198525605627126",
+            "extra": "mean: 73.69310071428815 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.73935595203535,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010955515671951662",
+            "extra": "mean: 38.85101095239038 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9061854339196904,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021365023167531035",
+            "extra": "mean: 1.103526897000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.45845474428720745,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06269180274655659",
+            "extra": "mean: 2.1812403786000116 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.30808785311734255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.046117039275948055",
+            "extra": "mean: 3.2458274154000035 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0736979140310638,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029012351603229902",
+            "extra": "mean: 931.3606620000087 msec\nrounds: 5"
           }
         ]
       }
