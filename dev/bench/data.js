@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793632087500,
+  "lastUpdate": 1793634966734,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -124283,6 +124283,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01757611874290752",
             "extra": "mean: 384.92421960000627 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dbe8728eb43380fa10bc338dc932d22b9c091251",
+          "message": "TST: Cover content stream renaming, scaling and merging of PageObject (#4338)\n\nAdd tests for PageObject branches without coverage so far:\n\n* _content_stream_rename() with an inline image: renaming a color space\n  resource called /G renames \"/G cs\", but keeps /CS /G in the inline\n  image, where it means DeviceGray,\n* scale() of a page with a /VP viewport, given as array and as\n  dictionary,\n* extract_text() passing text to visitor_text that is not terminated by\n  an ET operator.\n\nTwo strict xfail tests document bugs in merge_page():\n\n* #4335: merging into a page whose /Annots is null silently drops the\n  annotations of the merged page,\n* #3467: merging a page whose annotations were added with\n  PdfWriter.add_annotation() raises TypeError: clone() creates the copy\n  with self.__class__(), but Highlight, FreeText, ... have required\n  keyword-only arguments. The open PRs #3785 and #4262 fix it.\n\nWhere the expected behavior comes from ISO 32000-2:2020, the docstring\nnames the section.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-02T16:53:48+01:00",
+          "tree_id": "44da7a22edcad2d331b2ddf5fc80d009cdf9de8a",
+          "url": "https://github.com/py-pdf/pypdf/commit/dbe8728eb43380fa10bc338dc932d22b9c091251"
+        },
+        "date": 1793634954038,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7505650986485093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008917249629009524",
+            "extra": "mean: 363.56165519999877 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.390228698595486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019729862285050893",
+            "extra": "mean: 44.66233969565166 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24143520842498936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025880697553509642",
+            "extra": "mean: 4.1418979714000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.80230254452737,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019995011806045676",
+            "extra": "mean: 59.51565253333134 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.15104989569615448,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022298000609582553",
+            "extra": "mean: 6.620328967399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.540033423567146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0073426552726781474",
+            "extra": "mean: 649.3365564000044 msec\nrounds: 5"
           }
         ]
       }
