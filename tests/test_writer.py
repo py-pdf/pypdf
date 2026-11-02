@@ -598,6 +598,52 @@ def test_remove_text_all_operators(pdf_file_path):
         writer.write(output_stream)
 
 
+@pytest.mark.parametrize(
+    ("resources", "expected"),
+    [
+        pytest.param(NumberObject(1), "Resources are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Resources are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Resources are not a dictionary: x", id="string"
+        ),
+        pytest.param(
+            DictionaryObject({NameObject("/XObject"): NumberObject(1)}),
+            "XObject resources are not a dictionary: 1",
+            id="xobject-number",
+        ),
+        pytest.param(NullObject(), None, id="null"),
+        pytest.param(
+            DictionaryObject({NameObject("/XObject"): NullObject()}), None, id="xobject-null"
+        ),
+    ],
+)
+@pytest.mark.parametrize("method", ["remove_images", "remove_text"])
+def test_remove_objects__resources_are_not_a_dictionary(caplog, method, resources, expected):
+    """Malformed resources do not stop images or text from being removed."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Resources")] = resources
+    content = DecodedStreamObject()
+    content.set_data(
+        b"BT /F1 12 Tf (Hello) Tj ET q 10 0 0 10 0 0 cm BI /W 1 /H 1 /BPC 8 /CS /G ID \x80 EI Q"
+    )
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    getattr(writer, method)()
+
+    data = page["/Contents"].get_object().get_data()
+    if method == "remove_images":
+        assert b"BI" not in data
+        assert b"(Hello) Tj" in data
+    else:
+        assert b"(Hello)" not in data
+        assert b"BI" in data
+    if expected is None:
+        assert caplog.text == ""
+    else:
+        assert expected in caplog.text
+
+
 def test_write_metadata(pdf_file_path):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
 
@@ -3883,6 +3929,35 @@ def test_append__skips_outline_nodes_that_are_not_dictionaries(caplog, outlines,
 
     assert len(writer.pages) == 1
     assert caplog.messages == [f"Outline node is not a dictionary: {expected}"]
+
+
+@pytest.mark.parametrize(
+    ("outlines", "expected"),
+    [
+        pytest.param(NumberObject(1), ["Outlines are not a dictionary: 1"], id="number"),
+        pytest.param(ArrayObject(), ["Outlines are not a dictionary: []"], id="array"),
+        pytest.param(TextStringObject("x"), ["Outlines are not a dictionary: x"], id="string"),
+        pytest.param(NullObject(), [], id="null"),
+        pytest.param(DictionaryObject(), [], id="direct-dictionary"),
+    ],
+)
+def test_add_outline_item__outlines_not_an_indirect_dictionary(caplog, outlines, expected) -> None:
+    """An outline item can be added when the existing /Outlines entry is not an indirect dictionary."""
+    source = PdfWriter()
+    source.add_blank_page(width=72, height=72)
+    source.root_object[NameObject("/Outlines")] = outlines
+    stream = BytesIO()
+    source.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter(clone_from=PdfReader(stream))
+    writer.add_outline_item("Title", 0)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert [item.title for item in PdfReader(stream).outline] == ["Title"]
+    assert caplog.messages == expected
 
 
 @pytest.mark.timeout(5)
