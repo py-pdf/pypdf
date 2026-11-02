@@ -466,7 +466,7 @@ def test_startxref_same_line_integer_conversion_limit():
         PdfReader._find_previous_startxref_pos(stream)
 
 
-def test_find_pdf_objects_integer_conversion_limit():
+def test_find_pdf_objects__integer_conversion_limit():
     """Oversized object or generation numbers must not leak ValueError."""
     limit = getattr(sys, "get_int_max_str_digits", lambda: 0)()
     if not limit:
