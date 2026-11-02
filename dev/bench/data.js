@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793640827646,
+  "lastUpdate": 1793640984992,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -163687,6 +163687,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02632136828882661",
             "extra": "mean: 936.286994000011 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96533738+Rustaman1280@users.noreply.github.com",
+            "name": "Rustaman Delvianova",
+            "username": "Rustaman1280"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "affcf3a00076194cdf4efc4130f8a85f7a976f71",
+          "message": "ROB: Bound object and generation number lengths in _find_pdf_objects (#4334)\n\n* ROB: Bound object and generation number lengths in _find_pdf_objects\n\nWhen parsing corrupted PDFs or rebuilding xref tables, _find_pdf_objects\nparses object numbers and generation numbers preceding 'obj' tokens.\nPreviously, there were no upper bounds on the digit lengths of these slices,\nallowing oversized digit runs to trigger unhandled ValueError from Python's\nint_max_str_digits conversion limit.\n\nBound object and generation number string lengths by IndirectObject._MAXIMUM_PART_LENGTH\n(64 bytes) to safely skip oversized entries and avoid unhandled exceptions.\n\nSigned-off-by: Rustaman Delvianova <96533738+Rustaman1280@users.noreply.github.com>\n\n---------\n\nSigned-off-by: Rustaman Delvianova <96533738+Rustaman1280@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-02T18:31:17+01:00",
+          "tree_id": "95d862f1f039ae34ca07c488d3eb9245cca31458",
+          "url": "https://github.com/py-pdf/pypdf/commit/affcf3a00076194cdf4efc4130f8a85f7a976f71"
+        },
+        "date": 1793640971381,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.888459710682557,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019859638455528374",
+            "extra": "mean: 72.00222492857377 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.23172267039322,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01068238720392789",
+            "extra": "mean: 36.721878086956885 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.8965794948406718,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021867469315071313",
+            "extra": "mean: 1.1153500673999985 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.47897426981126173,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06557851878383772",
+            "extra": "mean: 2.087794821199992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3100068870646416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0360981863256884",
+            "extra": "mean: 3.225734787600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.070207935295208,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027444106293849135",
+            "extra": "mean: 934.3978558000117 msec\nrounds: 5"
           }
         ]
       }
