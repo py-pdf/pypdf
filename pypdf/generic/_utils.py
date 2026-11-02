@@ -128,7 +128,7 @@ def read_string_from_stream(
     return create_string_object(bytes(txt), forced_encoding)
 
 
-def create_string_object(
+def create_string_object(  # noqa: PLR0911
     string: str | bytes,
     forced_encoding: str | list[str] | dict[int, str] | None = None,
 ) -> TextStringObject | ByteStringObject:
@@ -176,6 +176,16 @@ def create_string_object(
             obj._original_bytes = string
             return obj
         try:
+            if string.startswith(codecs.BOM_UTF8):
+                # UTF-8 text strings have been added with PDF 2.0, see ISO 32000-2:2020, 7.9.2.2.1.
+                # Data which is not valid UTF-8 is still decoded as PDFDocEncoding below.
+                try:
+                    retval = TextStringObject(string[len(codecs.BOM_UTF8):].decode("utf-8"))
+                except UnicodeDecodeError:
+                    pass
+                else:
+                    retval._original_bytes = string
+                    return retval
             if string.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
                 retval = TextStringObject(string.decode("utf-16"))
                 retval._original_bytes = string

@@ -2583,6 +2583,30 @@ def test_clone_from__tolerate_dangling_info_reference():
     assert writer._info["/Title"] == NullObject()
 
 
+@pytest.mark.parametrize(
+    "file_identifier",
+    [
+        # Decoded as UTF-16BE text due to the leading null byte.
+        b"\x00\xa1\xb2\xc3\xd4\xe5\xf6\x07\x18\x29\x3a\x4b\x5c\x6d\x7e\x8f",
+        # Decoded as UTF-8 text due to the leading BOM.
+        b"\xef\xbb\xbfAb\xe2\x82\xac\xc3\xa912\x00\x00\x00\x00",
+    ],
+)
+def test_clone_from__keep_file_identifier_bytes(file_identifier):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer._ID = ArrayObject([ByteStringObject(file_identifier), ByteStringObject(file_identifier)])
+    source = BytesIO()
+    writer.write(source)
+    assert isinstance(PdfReader(source).trailer["/ID"][0], TextStringObject)
+
+    writer = PdfWriter(clone_from=PdfReader(source))
+    output = BytesIO()
+    writer.write(output)
+    file_identifiers = PdfReader(output).trailer["/ID"]
+    assert file_identifiers[0].original_bytes == file_identifier
+    assert file_identifiers[1].original_bytes == file_identifier
+
+
 @pytest.mark.enable_socket
 def test_germanfields():
     """Cf #2035"""
