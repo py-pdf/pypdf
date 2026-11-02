@@ -44,16 +44,9 @@ from typing import (
     IO,
     Any,
     NoReturn,
-    Optional,
-    Union,
+    TypeAlias,
     cast,
 )
-
-if sys.version_info[:2] >= (3, 10):
-    # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -76,10 +69,10 @@ CompressedTransformationMatrix: TypeAlias = tuple[
 
 StreamType = IO[Any]
 BinaryStreamType = IO[bytes]
-StrByteType = Union[str, StreamType]
+StrByteType = str | StreamType
 
 
-def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
+def parse_iso8824_date(text: str | None) -> datetime | None:
     orgtext = text
     if not text:
         return None
@@ -160,7 +153,7 @@ WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
 WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
 
-def read_until_whitespace(stream: StreamType, max_bytes: Optional[int] = None, strict: bool = False) -> bytes:
+def read_until_whitespace(stream: StreamType, max_bytes: int | None = None, strict: bool = False) -> bytes:
     """
     Read non-whitespace characters and return them.
 
@@ -287,7 +280,7 @@ def skip_over_comment(stream: StreamType) -> None:
                 raise PdfStreamError("File ended unexpectedly.")
 
 
-def skip_over_comments(stream: StreamType, *, limit: Optional[int] = None) -> None:
+def skip_over_comments(stream: StreamType, *, limit: int | None = None) -> None:
     """
     Skip consecutive leading comments and the whitespace following each one.
 
@@ -652,13 +645,13 @@ class classproperty:  # noqa: N801
     that can be accessed directly from the class.
     """
 
-    def __init__(self, method=None) -> None:  # type: ignore  # noqa: ANN001
+    def __init__(self, method=None) -> None:  # type: ignore[no-untyped-def]  # noqa: ANN001
         self.fget = method
 
-    def __get__(self, instance, cls=None) -> Any:  # type: ignore  # noqa: ANN001
+    def __get__(self, instance, cls=None) -> Any:  # type: ignore[no-untyped-def]  # noqa: ANN001
         return self.fget(cls)
 
-    def getter(self, method) -> Self:  # type: ignore  # noqa: ANN001
+    def getter(self, method) -> Self:  # type: ignore[no-untyped-def]  # noqa: ANN001
         self.fget = method
         return self
 
@@ -675,7 +668,7 @@ class File:
     """
     Data as bytes.
     """
-    indirect_reference: Optional[IndirectObject] = None
+    indirect_reference: IndirectObject | None = None
     """
     Reference to the object storing the stream.
     """

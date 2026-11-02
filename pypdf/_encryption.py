@@ -30,7 +30,7 @@ import stringprep
 import struct
 import unicodedata
 from enum import Enum, IntEnum
-from typing import Any, Optional, Union
+from typing import Any
 
 from pypdf._crypt_providers import (
     CryptAES,
@@ -854,7 +854,7 @@ def _saslprep(password: str) -> str:
     return password
 
 
-class EncryptAlgorithm(tuple, Enum):  # type: ignore # noqa: SLOT001
+class EncryptAlgorithm(tuple, Enum):  # type: ignore[type-arg] # noqa: SLOT001
     # V, R, Length
     RC4_40 = (1, 2, 40)
     RC4_128 = (2, 3, 128)
@@ -877,7 +877,7 @@ def _get_entry(
     *,
     expected_types: tuple[type, ...],
     type_name: str,
-    default: Optional[Any] = None,
+    default: Any | None = None,
     required: bool = False,
 ) -> Any:
     """Fetch an entry of the encryption dictionary, treating null as absent."""
@@ -935,7 +935,7 @@ class Encryption:
         StmF: str,
         StrF: str,
         EFF: str,
-        values: Optional[EncryptionValues],
+        values: EncryptionValues | None,
     ) -> None:
         # §7.6.2, entries common to all encryption dictionaries
         # use same name as keys of encryption dictionaries entries
@@ -951,7 +951,7 @@ class Encryption:
         self.values: EncryptionValues = values or EncryptionValues()
 
         self._password_type = PasswordType.NOT_DECRYPTED
-        self._key: Optional[bytes] = None
+        self._key: bytes | None = None
         self._are_permissions_valid: bool = True
 
     def is_decrypted(self) -> bool:
@@ -1073,7 +1073,7 @@ class Encryption:
         return CryptRC4(rc4_key)
 
     def _encode_password(
-        self, password: Union[bytes, str], *, strict: bool = False
+        self, password: bytes | str, *, strict: bool = False
     ) -> bytes:
         if isinstance(password, str):
             if self.V >= 5:
@@ -1095,14 +1095,14 @@ class Encryption:
             else:
                 try:
                     pwd = password.encode("latin-1")
-                except Exception:
+                except UnicodeEncodeError:
                     pwd = password.encode("utf-8")
         else:
             pwd = password
         return pwd
 
     def verify(
-        self, password: Union[bytes, str], *, strict: bool = False
+        self, password: bytes | str, *, strict: bool = False
     ) -> PasswordType:
         pwd = self._encode_password(password, strict=strict)
         key, rc = self.verify_v4(pwd) if self.V <= 4 else self.verify_v5(pwd)
@@ -1162,7 +1162,7 @@ class Encryption:
     def write_entry(
         self,
         user_password: str,
-        owner_password: Optional[str],
+        owner_password: str | None,
         *,
         strict: bool = False,
     ) -> DictionaryObject:
@@ -1254,7 +1254,7 @@ class Encryption:
         alg_ver = encryption_entry.get("/V", 0)
         if alg_ver not in (1, 2, 3, 4, 5):
             raise NotImplementedError(f"Encryption V={alg_ver} NOT supported")
-        stm_crypt_filter: Optional[DictionaryObject] = None
+        stm_crypt_filter: DictionaryObject | None = None
         if alg_ver >= 4:
             # /CF is only needed to look up named crypt filters;
             # /StmF, /StrF and /EFF default to /Identity.
@@ -1310,11 +1310,6 @@ class Encryption:
             key_bits = int(
                 _get_entry(stm_crypt_filter, "/Length", expected_types=(int, float), type_name="number", default=16)
             ) * 8
-        if key_bits % 8 != 0 or not (40 <= key_bits <= 128 or key_bits == 256):
-            # ISO 32000-1:2008, 7.6.2 limits legacy key lengths to 40 to 128 bits
-            # in 8-bit increments. ISO 32000-2:2020, 7.6.6 allows 256-bit
-            # AESV3 keys. Reject other lengths before they reach cryptography.
-            raise PdfReadError(f"Invalid encryption key length: {key_bits} bits")
         encrypt_metadata = encryption_entry.get("/EncryptMetadata", NullObject()).get_object()
         if isinstance(encrypt_metadata, BooleanObject):
             encrypt_metadata = encrypt_metadata.value

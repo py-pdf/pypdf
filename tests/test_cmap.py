@@ -877,6 +877,23 @@ def test_get_encoding__differences_is_an_array(caplog):
     assert caplog.text == ""
 
 
+@pytest.mark.parametrize(
+    ("glyph_name", "expected"),
+    [
+        ("/u1D6FD", "𝛽"),
+        ("/unknown", "/unknown"),
+        ("/uFFFFFFFFFFFFFFFFFFFF", "/uFFFFFFFFFFFFFFFFFFFF"),
+    ],
+)
+def test_get_encoding__unicode_glyph_names(glyph_name, expected):
+    """Regression test for #2273: decode Unicode glyph names in /Differences."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), NameObject(glyph_name)]))
+    )
+
+    assert encoding[65] == expected
+
+
 def _build_cff_font_program(encoding: dict[int, str]) -> bytes:
     """A minimal CFF font program whose built-in encoding maps the given character codes to glyph names."""
     from fontTools.fontBuilder import FontBuilder  # noqa: PLC0415
@@ -991,3 +1008,46 @@ def test_cff_type1_font_file_is_parsed_again_when_its_data_changes():
         font_file.set_data(_build_cff_font_program({65: "Q"}))
         assert [page.extract_text() for page in writer.pages] == ["QB"] * 2
         assert parse.call_count == 2
+
+
+@pytest.mark.timeout(5)  # Previously: 22 seconds
+def test_parse_bfchar__speed() -> None:
+    count = 50_000
+    pairs = b" ".join(f"{i:04x} 0041".encode() for i in range(count))
+
+    map_dict = {}
+    int_entry = []
+    parse_bfchar(pairs, map_dict, int_entry)
+    assert int_entry == list(range(count))
+    assert len(map_dict) == count + 1
+
+
+def test_get_encoding__unknown_base_encoding_falls_back_to_standard_encoding(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    An unsupported /BaseEncoding name is not an error: pypdf logs it and uses StandardEncoding.
+
+    ISO 32000-2:2020, 9.6.5.2 "Encodings for simple fonts", Table 112 lists the valid
+    /BaseEncoding names; if the entry is absent, StandardEncoding is the default.
+    """
+    font = DictionaryObject({
+        NameObject("/Encoding"): DictionaryObject({
+            NameObject("/BaseEncoding"): NameObject("/UnknownEncoding"),
+        }),
+    })
+    encoding, _ = get_encoding(font)
+    assert encoding == dict(zip(range(256), charset_encoding["/StandardEncoding"]))
+    assert "not implemented yet" in caplog.text
+
+
+def test_get_encoding__to_unicode_stream_with_str_data() -> None:
+    """
+    A /ToUnicode CMap whose stream data is a str instead of bytes is still parsed.
+
+    ISO 32000-2:2020, 9.10.3 "ToUnicode CMaps": the CMap maps character codes to Unicode;
+    here code <01> maps to U+0041.
+    """
+    to_unicode = DecodedStreamObject()
+    to_unicode.set_data("beginbfchar\n<01> <0041>\nendbfchar")
+    font = DictionaryObject({NameObject("/ToUnicode"): to_unicode})
+    _, map_dict = get_encoding(font)
+    assert map_dict["\x01"] == "A"

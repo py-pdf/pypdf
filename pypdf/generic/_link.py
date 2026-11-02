@@ -28,7 +28,7 @@
 # This module contains code used by _writer.py to track links in pages
 # being added to the writer until the links can be resolved.
 
-from typing import TYPE_CHECKING, Optional, Union, cast
+from typing import TYPE_CHECKING, cast
 
 from .._utils import logger_warning
 from . import ArrayObject, DictionaryObject, IndirectObject, PdfObject, TextStringObject, is_null_or_none
@@ -47,15 +47,34 @@ class NamedReferenceLink:
         self._reference = reference
         self._source_pdf = source_pdf
 
-    def find_referenced_page(self) -> Union[IndirectObject, None]:
+    def find_referenced_page(self) -> IndirectObject | None:
         destination = self._source_pdf.named_destinations.get(str(self._reference))
         return destination.page if destination else None
 
-    def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
-        """target_pdf: PdfWriter which the new link went into"""
+    def patch_reference(
+        self,
+        target_pdf: "PdfWriter",
+        new_page: IndirectObject,
+        *,
+        known_names: set[str] | None = None,
+    ) -> None:
+        """
+        Add the named destination of the link to the new page, unless it exists.
+
+        Args:
+            target_pdf: PdfWriter which the new link went into.
+            new_page: IndirectObject representing the new page in the target PDF.
+            known_names: Names of the named destinations of target_pdf, kept up to
+                date by this method. Collecting them from target_pdf is expensive,
+                thus callers patching many links should pass them.
+        """
+        name = str(self._reference)
+        if known_names is None:
+            known_names = set(target_pdf.named_destinations)
         # point named destination in new PDF to the new page
-        if str(self._reference) not in target_pdf.named_destinations:
-            target_pdf.add_named_destination(str(self._reference), new_page.page_number)
+        if name not in known_names:
+            target_pdf.add_named_destination(name, new_page.page_number)
+            known_names.add(name)
 
 
 class DirectReferenceLink:
@@ -65,7 +84,7 @@ class DirectReferenceLink:
         """reference: an ArrayObject whose first element is the Page indirect object"""
         self._reference = reference
 
-    def find_referenced_page(self) -> Union[IndirectObject, None]:
+    def find_referenced_page(self) -> IndirectObject | None:
         if not self._reference:
             return None
         return cast(IndirectObject, self._reference[0])
@@ -75,7 +94,7 @@ class DirectReferenceLink:
         self._reference[0] = new_page
 
 
-ReferenceLink = Union[NamedReferenceLink, DirectReferenceLink]
+ReferenceLink = NamedReferenceLink | DirectReferenceLink
 
 
 def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[ReferenceLink, ReferenceLink]]:
@@ -121,7 +140,7 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
     return list(zip(new_links, old_links))
 
 
-def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional[ReferenceLink]:
+def _build_link(indirect_object: IndirectObject, page: "PageObject") -> ReferenceLink | None:
     src = cast("PdfReader", page.pdf)
     link = cast(DictionaryObject, indirect_object.get_object())
     if (not isinstance(link, DictionaryObject)) or link.get("/Subtype") != "/Link":
@@ -142,7 +161,7 @@ def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional
     return None  # Nothing to do here
 
 
-def _create_link(reference: PdfObject, source_pdf: "PdfReader") -> Optional[ReferenceLink]:
+def _create_link(reference: PdfObject, source_pdf: "PdfReader") -> ReferenceLink | None:
     if isinstance(reference, TextStringObject):
         return NamedReferenceLink(reference, source_pdf)
     if isinstance(reference, ArrayObject):

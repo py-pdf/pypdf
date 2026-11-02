@@ -28,7 +28,6 @@
 
 from typing import (
     Any,
-    Optional,
     cast,
 )
 
@@ -50,7 +49,7 @@ BOX_NAMES = [
 
 
 class ViewerPreferences(DictionaryObject):
-    def __init__(self, obj: Optional[DictionaryObject] = None) -> None:
+    def __init__(self, obj: DictionaryObject | None = None) -> None:
         super().__init__(self)
         if not is_null_or_none(obj):
             self.update(obj.items())  # type: ignore[union-attr]
@@ -59,13 +58,13 @@ class ViewerPreferences(DictionaryObject):
         except AttributeError:
             pass
 
-    def _get_bool(self, key: str, default: Optional[BooleanObject]) -> Optional[BooleanObject]:
+    def _get_bool(self, key: str, default: BooleanObject | None) -> BooleanObject | None:
         return self.get(key, default)
 
     def _set_bool(self, key: str, v: bool) -> None:
         self[NameObject(key)] = BooleanObject(v is True)
 
-    def _get_name(self, key: str, default: Optional[NameObject]) -> Optional[NameObject]:
+    def _get_name(self, key: str, default: NameObject | None) -> NameObject | None:
         return self.get(key, default)
 
     def _set_name(self, key: str, lst: list[str], v: NameObject) -> None:
@@ -73,10 +72,10 @@ class ViewerPreferences(DictionaryObject):
             raise ValueError(f"{v} is an unacceptable value")
         self[NameObject(key)] = NameObject(v)
 
-    def _get_arr(self, key: str, default: Optional[list[Any]]) -> Optional[ArrayObject]:
+    def _get_arr(self, key: str, default: list[Any] | None) -> ArrayObject | None:
         return self.get(key, None if default is None else ArrayObject(default))
 
-    def _set_arr(self, key: str, v: Optional[ArrayObject]) -> None:
+    def _set_arr(self, key: str, v: ArrayObject | None) -> None:
         if v is None:
             try:
                 del self[NameObject(key)]
@@ -93,7 +92,7 @@ class ViewerPreferences(DictionaryObject):
             )
         self[NameObject(key)] = v
 
-    def _get_int(self, key: str, default: Optional[NumberObject]) -> Optional[NumberObject]:
+    def _get_int(self, key: str, default: NumberObject | None) -> NumberObject | None:
         return self.get(key, default)
 
     def _set_int(self, key: str, v: int) -> None:
@@ -106,7 +105,7 @@ class ViewerPreferences(DictionaryObject):
         return NameObject("/PrintScaling")
 
     def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":  # noqa: PYI034
-        def _add_prop_bool(key: str, default: Optional[BooleanObject]) -> property:
+        def _add_prop_bool(key: str, default: BooleanObject | None) -> property:
             return property(
                 lambda self: self._get_bool(key, default),
                 lambda self, v: self._set_bool(key, v),
@@ -117,7 +116,7 @@ class ViewerPreferences(DictionaryObject):
             )
 
         def _add_prop_name(
-            key: str, lst: list[str], default: Optional[NameObject]
+            key: str, lst: list[str], default: NameObject | None
         ) -> property:
             return property(
                 lambda self: self._get_name(key, default),
@@ -129,7 +128,7 @@ class ViewerPreferences(DictionaryObject):
             """,
             )
 
-        def _add_prop_arr(key: str, default: Optional[ArrayObject]) -> property:
+        def _add_prop_arr(key: str, default: ArrayObject | None) -> property:
             return property(
                 lambda self: self._get_arr(key, default),
                 lambda self, v: self._set_arr(key, v),
@@ -139,7 +138,7 @@ class ViewerPreferences(DictionaryObject):
             """,
             )
 
-        def _add_prop_int(key: str, default: Optional[int]) -> property:
+        def _add_prop_int(key: str, default: int | None) -> property:
             return property(
                 lambda self: self._get_int(key, default),
                 lambda self, v: self._set_int(key, v),

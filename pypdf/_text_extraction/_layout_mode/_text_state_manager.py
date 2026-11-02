@@ -4,16 +4,16 @@ from collections import ChainMap, Counter
 from collections import ChainMap as ChainMapType
 from collections import Counter as CounterType
 from collections.abc import MutableMapping
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from ...errors import PdfReadError
 from ...generic._font import Font
 from .. import mult
 from ._text_state_params import TextStateParams
 
-TextStateManagerKeyType = Union[int, Literal["is_text", "is_render"]]
-TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, Union[float, bool]]
-TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, Union[float, bool]]
+TextStateManagerKeyType = int | Literal["is_text", "is_render"]
+TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, float | bool]
+TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, float | bool]
 
 
 class TextStateManager:
@@ -45,11 +45,11 @@ class TextStateManager:
         self.Tz: float = 100.0
         self.TL: float = 0.0
         self.Ts: float = 0.0
-        self.font_stack: list[tuple[Union[Font, None], Union[int, float]]] = []
-        self.font: Union[Font, None] = None
-        self.font_size: Union[int, float] = 0
+        self.font_stack: list[tuple[Font | None, int | float]] = []
+        self.font: Font | None = None
+        self.font_size: int | float = 0
 
-    def set_state_param(self, op: bytes, value: Union[float, list[Any]]) -> None:
+    def set_state_param(self, op: bytes, value: float | list[Any]) -> None:
         """
         Set a text state parameter. Supports Tc, Tz, Tw, TL, and Ts operators.
 
@@ -63,9 +63,9 @@ class TextStateManager:
         if op not in [b"Tc", b"Tz", b"Tw", b"TL", b"Ts"]:
             return
         name = op.decode()
-        raw = value[0] if isinstance(value, list) else value
-        # a non-numeric operand (e.g. a name from a malformed content stream)
-        # leaves the parameter unchanged, matching the ROB handling of Td/Tm/Tf
+        raw = (value[0] if value else None) if isinstance(value, list) else value
+        # a missing or non-numeric operand (e.g. a name from a malformed content
+        # stream) leaves the parameter unchanged, matching the ROB handling of Td/Tm/Tf
         self.__setattr__(name, self._as_float(raw, getattr(self, name)))
 
     def set_font(self, font: Font, size: float) -> None:
@@ -80,7 +80,7 @@ class TextStateManager:
         self.font = font
         self.font_size = size
 
-    def text_state_params(self, value: Union[bytes, str] = "") -> TextStateParams:
+    def text_state_params(self, value: bytes | str = "") -> TextStateParams:
         """
         Create a TextStateParams instance to display a text string. Type[bytes] values
         will be decoded implicitly.
@@ -143,6 +143,7 @@ class TextStateManager:
         _d: float = 1.0,
         _e: float = 0.0,
         _f: float = 0.0,
+        *,
         is_text: bool = False,
         is_render: bool = False,
     ) -> TextStateManagerDictType:
@@ -184,29 +185,50 @@ class TextStateManager:
         """Concatenate an additional transform matrix"""
         self.transform_stack = self.reset_tm()
         self.q_queue.update(self.q_depth[-1:])
-        self.transform_stack = self.transform_stack.new_child(self.new_transform(*args))
+        # A matrix operator consumes the 6 operands nearest to it; extra values
+        # from a malformed content stream must not overflow the transform.
+        self.transform_stack = self.transform_stack.new_child(
+            self.new_transform(*args[-6:])
+        )
         return self.transform_stack
 
     def _complete_matrix(self, operands: list[float]) -> list[float]:
         """Adds a, b, c, and d to an "e/f only" operand set (e.g Td)"""
         if len(operands) == 2:  # this is a Td operator or equivalent
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
-        return operands
+        # Tm consumes the 6 operands nearest to it; extra values from a
+        # malformed content stream must not overflow the transform.
+        return operands[-6:]
 
     def add_tm(self, operands: list[float]) -> TextStateManagerChainMapType:
         """Append a text transform matrix"""
-        self.transform_stack = self.transform_stack.new_child(
-            self.new_transform(  # type: ignore[misc]
-                *self._complete_matrix(operands), is_text=True  # type: ignore[arg-type]
-            )
-        )
+        # Build a new text transformation matrix from the supplied operands.
+        new_child = self.new_transform(*self._complete_matrix(operands), is_text=True)
+        # Get the most recently added transformation from the stack.
+        top = self.transform_stack.maps[0]
+
+        # If the current transformation is a text matrix and is not a rendering
+        # transformation, combine the matrices instead of adding another stack
+        # entry. This prevents unnecessary growth of the transform stack.
+        # Non-rendering transformations do not emit anything and thus can be merged.
+        if top.get("is_text") and not top.get("is_render"):
+            # Multiply the new matrix by the current top matrix, preserving the
+            # transformation order used when a new stack entry would be pushed.
+            combined = mult(list(new_child.values()), top)
+            # Replace the current top entry with the combined transformation.
+            # The existing stack structure is preserved rather than extended.
+            self.transform_stack.maps[0] = self.new_transform(*combined, is_text=True)
+        else:
+            # If the current transformation is not a suitable text matrix to
+            # combine with, push the new transformation onto the stack as before.
+            self.transform_stack = self.transform_stack.new_child(new_child)
         return self.transform_stack
 
     def add_trm(self, operands: list[float]) -> TextStateManagerChainMapType:
         """Append a text rendering transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
-            self.new_transform(  # type: ignore[misc]
-                *self._complete_matrix(operands), is_text=True, is_render=True  # type: ignore[arg-type]
+            self.new_transform(
+                *self._complete_matrix(operands), is_text=True, is_render=True
             )
         )
         return self.transform_stack

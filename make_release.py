@@ -101,7 +101,7 @@ def is_semantic_version(version: str) -> bool:
         return False
     try:
         return bool([int(part) for part in version.split(".")])
-    except Exception:
+    except ValueError:
         return False
 
 

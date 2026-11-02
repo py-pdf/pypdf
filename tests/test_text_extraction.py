@@ -4,9 +4,11 @@ Testing the text-extraction submodule and ensuring the quality of text extractio
 The tested code might be in _page.py.
 """
 
+import json
 import re
 from dataclasses import asdict
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -123,7 +125,6 @@ def test_visitor_text_matrices(file_name, constraints):
         assert constraint(x, y), f'Line "{text}" is wrong at x:{x}, y:{y}'
 
 
-@pytest.mark.xfail(reason="known whitespace issue #2336")
 @pytest.mark.enable_socket
 def test_issue_2336():
     name = "Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf"
@@ -486,12 +487,8 @@ def test_content_stream_is_dictionary_object(caplog):
 
     reader = PdfReader(BytesIO(data), strict=True)
     page = reader.pages[0]
-    with pytest.raises(PdfReadError) as exception:
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
         page.extract_text()
-    assert (
-        "Invalid Elementary Object starting with b\\'\\\\x18\\' @3557: b\\'ateDecode/Length 629\\\\x18ck["
-        in exception.value.args[0]
-    )
 
 
 @pytest.mark.enable_socket
@@ -721,6 +718,28 @@ def test_td_operator_with_missing_or_non_numeric_operands(operator: bytes) -> No
 
 
 @pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        pytest.param(b"BT /F1 12 Tf 72 700 Td BT (Hello) Tj ET ET", ["Hello"], id="nested-text-object"),
+        pytest.param(b"BT /F1 12 Tf 72 700 Td (Hello) Tj BT ET", ["Hello"], id="nested-bt-takes-the-et"),
+        pytest.param(
+            b"BT /F1 12 Tf 72 700 Td (Hello) Tj BT 72 650 Td (World) Tj ET ET",
+            ["Hello", "World"],
+            id="text-before-and-after",
+        ),
+    ],
+)
+def test_layout_mode_bt_inside_a_text_object(content: bytes, expected: list[str]) -> None:
+    """A BT inside a text object resets the text matrix and the text object ends at
+    the first ET, so layout mode shows each string once, as plain mode does.
+    """
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    lines = [line.strip() for line in page.extract_text(extraction_mode="layout").splitlines() if line.strip()]
+    assert lines == expected
+    assert page.extract_text().split() == expected
+
+
+@pytest.mark.parametrize(
     "operator",
     [b"/X Tz", b"/X Tc", b"/X Ts", b"/X Tw", b"/X TL T*", b"/X /Y Td", b"/X 0 0 1 0 0 Tm"],
 )
@@ -732,6 +751,28 @@ def test_layout_mode_text_operator_with_a_non_numeric_operand(operator: bytes) -
     page = PdfReader(_page_with_helvetica(content)).pages[0]
     assert "Hello" in page.extract_text(extraction_mode="layout")
     assert "World" in page.extract_text(extraction_mode="layout")
+
+
+@pytest.mark.parametrize(
+    "operator",
+    [
+        pytest.param(b"Tc", id="Tc"),
+        pytest.param(b"Tw", id="Tw"),
+        pytest.param(b"Tz", id="Tz"),
+        pytest.param(b"Ts", id="Ts"),
+        pytest.param(b"TL T*", id="TL"),
+    ],
+)
+def test_layout_mode_text_state_operator_without_operands(operator: bytes) -> None:
+    """A text state operator without an operand leaves the parameter unchanged in layout mode,
+    matching plain mode, and the text around it is kept.
+    """
+    content = b"BT /F1 12 Tf 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    text = page.extract_text(extraction_mode="layout")
+    assert "Hello" in text
+    assert "World" in text
 
 
 def test_process_operation__cm_multiplication_issue():
@@ -1602,3 +1643,21 @@ def test_simple_font_character_widths_with_differences_encoding() -> None:
     groups = text_show_operations(ops, page._layout_mode_fonts())
     advance = sum(g["displaced_tx"] - g["tx"] for g in groups)
     assert f"{advance:.1f}" == "25.2"
+
+
+def test_layout_mode_debug_path(tmp_path: Path) -> None:
+    """
+    layout_mode_debug_path is a pypdf feature; the PDF specification does not cover it.
+
+    The page shows "Hello" with the standard font Helvetica (ISO 32000-2:2020, 9.6.2.2),
+    which is not embedded and thus has no font stream that json cannot serialize.
+    """
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj ET")).pages[0]
+    assert page.extract_text(extraction_mode="layout", layout_mode_debug_path=tmp_path) == "Hello"
+
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["bt_groups.json", "bts.json", "fonts.json", "tjs.json"]
+    tj_ops = json.loads(tmp_path.joinpath("tjs.json").read_text("utf-8"))
+    assert len(tj_ops) == 1
+    assert "font" not in tj_ops[0]
+    assert tj_ops[0]["text"] == "Hello"
+    assert tj_ops[0]["font_size"] == 12

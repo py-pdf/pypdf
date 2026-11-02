@@ -5,7 +5,6 @@ import sys
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import Union
 from unittest import mock
 
 import pytest
@@ -17,7 +16,6 @@ from pypdf.constants import ImageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
-    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     LimitReachedError,
@@ -44,7 +42,7 @@ from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, normalize_warnings
 HAS_AES = crypt_provider[0] in ["pycryptodome", "cryptography"]
 
 
-NestedList = Union[int, None, list["NestedList"]]
+NestedList = int | None | list["NestedList"]
 
 
 @pytest.mark.parametrize(
@@ -222,16 +220,8 @@ def test_get_outline(src, outline_elements):
         ("pdflatex-outline.pdf", []),
         ("crazyones.pdf", []),
         ("git.pdf", ["Image9.png"]),
-        pytest.param(
-            "imagemagick-lzw.pdf",
-            ["Im0.png"],
-            marks=pytest.mark.xfail(reason="broken image extraction"),
-        ),
-        pytest.param(
-            "imagemagick-ASCII85Decode.pdf",
-            ["Im0.png"],
-            # marks=pytest.mark.xfail(reason="broken image extraction"),
-        ),
+        ("imagemagick-lzw.pdf", ["Im0.tiff"]),
+        ("imagemagick-ASCII85Decode.pdf", ["Im0.png"]),
         ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
         (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),
     ],
@@ -753,10 +743,9 @@ def test_read_malformed_header(caplog):
         PdfReader(io.BytesIO(b"foo"), strict=True)
     assert exc.value.args[0] == "PDF starts with 'foo', but '%PDF-' expected"
     caplog.clear()
-    try:
+
+    with pytest.raises(PdfStreamError):
         PdfReader(io.BytesIO(b"foo"), strict=False)
-    except Exception:
-        pass
     assert caplog.messages[0].startswith("invalid pdf header")
 
 
@@ -1100,42 +1089,6 @@ def test_issue604(caplog, strict):
         # oi can be destination or a list:preferred to just print them
         for oi in outline:
             out.append(get_dest_pages(oi))  # noqa: PERF401
-
-
-def test_decode_permissions():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    base = {
-        "accessability": False,  # Do not fix typo, as part of official, but deprecated API.
-        "annotations": False,
-        "assemble": False,
-        "copy": False,
-        "forms": False,
-        "modify": False,
-        "print_high_quality": False,
-        "print": False,
-    }
-
-    print_ = base.copy()
-    print_["print"] = True
-    with pytest.raises(
-        DeprecationError,
-            match=(
-                r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
-                r"Use user_access_permissions instead"
-            ),
-    ):
-        assert reader.decode_permissions(4) == print_
-
-    modify = base.copy()
-    modify["modify"] = True
-    with pytest.raises(
-        DeprecationError,
-        match=(
-            r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
-            r"Use user_access_permissions instead"
-        ),
-    ):
-        assert reader.decode_permissions(8) == modify
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
@@ -2747,7 +2700,7 @@ def test_objstm_skips_cache_for_overridden_objects():
 def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
     """Decompressing a non-authoritative stream must not cache stale object copies."""
 
-    def _write_obj(buf: io.BytesIO, objnum: int, data: Union[str, bytes]) -> int:
+    def _write_obj(buf: io.BytesIO, objnum: int, data: str | bytes) -> int:
         offset = buf.tell()
         buf.write(f"{objnum} 0 obj\n".encode())
         buf.write(data if isinstance(data, bytes) else data.encode())
@@ -3467,3 +3420,76 @@ def test_read_standard_xref_table__speed__caching() -> None:
 
     reader = PdfReader(BytesIO(body))
     _ = len(reader.pages)
+
+
+def _generate_pdf15_xref_stream_pdf_file(
+        size: int, encoded: bytes, index: str | None = None, prev: bool = False
+) -> bytes:
+    pdf = bytearray(b"%PDF-1.7\n")
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+
+    prev_offset = len(pdf) if prev else None
+    if prev:
+        pdf += (
+            f"3 0 obj\n<< /Type /XRef /Size 12 /Index [10 2] /W [1 0 0] /Root 1 0 R /Filter /FlateDecode "
+            f"/Length {len(encoded)} >>\nstream\n"
+        ).encode()
+        pdf += encoded + b"\nendstream\nendobj\n"
+
+    startxref = len(pdf)
+    index_entry = f"/Index {index} " if index is not None else ""
+    prev_entry = f"/Prev {prev_offset} " if prev_offset is not None else ""
+
+    pdf += (
+        f"3 0 obj\n<< /Type /XRef /Size {size} {index_entry}/W [1 0 0] /Root 1 0 R "
+        f"{prev_entry}/Filter /FlateDecode /Length {len(encoded)} >>\nstream\n"
+    ).encode()
+    pdf += encoded + b"\nendstream\nendobj\n"
+    pdf += f"startxref\n{startxref}\n%%EOF\n".encode()
+    return pdf
+
+
+@pytest.mark.timeout(10)
+@pytest.mark.parametrize("strict", ["True", "False"])
+def test_read_pdf15_xref_stream__entry_limit(strict: bool, caplog):
+    encoded = FlateDecode.encode(b"\x02" * 10)
+    pdf = _generate_pdf15_xref_stream_pdf_file(size=10, encoded=encoded)
+
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Maximum XRef stream entry limit reached: 10 > 3\.$"
+    ):
+        _ = PdfReader(BytesIO(pdf), strict=strict, xref_stream_maximum_entries=3)
+    assert caplog.messages == []
+
+
+@pytest.mark.timeout(10)
+def test_read_pdf15_xref_stream__entry_limit__prev(caplog):
+    encoded = FlateDecode.encode(b"\x02\x02")
+    pdf = _generate_pdf15_xref_stream_pdf_file(size=22, encoded=encoded, index="[20 2]", prev=True)
+    reader = PdfReader(BytesIO(pdf), xref_stream_maximum_entries=3)
+
+    assert list(reader.xref_objStm) == [20, 21]
+    assert "Previous trailer cannot be read: ('Maximum XRef stream entry limit reached: 4 > 3.',)" in caplog.messages
+
+
+@pytest.mark.timeout(10)
+def test_read_pdf15_xref_stream__negative_count(caplog):
+    encoded = FlateDecode.encode(b"\x02" * 2)
+    pdf = _generate_pdf15_xref_stream_pdf_file(size=12, encoded=encoded, index="[0 -5 10 2]")
+
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Negative XRef count -5\.$"):
+        _ = PdfReader(BytesIO(pdf), strict=True)
+    assert caplog.messages == []
+
+    reader = PdfReader(BytesIO(pdf), strict=False)
+    assert list(reader.xref_objStm) == [10, 11]
+    assert caplog.messages == ["Negative XRef count -5, using 0."]
+
+
+def test_read_standard_xref_table__end_of_file__trailer() -> None:
+    data = b"%PDF-1.4\nstartxref\n28\n%%EOF\nxref\n1 0\naaa"
+
+    with pytest.raises(PdfReadError, match=r"^Xref parsing stuck at position 33: b'aaa'$"):
+        PdfReader(BytesIO(data))

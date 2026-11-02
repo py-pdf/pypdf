@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from itertools import groupby
 from math import ceil
 from pathlib import Path
-from typing import Any, Literal, Optional, TypedDict
+from typing import Any, Literal, TypedDict
 
 from ..._utils import logger_warning
 from ...generic import ArrayObject
@@ -57,10 +57,7 @@ def set_font_operation(state_mgr: TextStateManager, fonts: dict[str, Font], oper
 
     """
     name = operands[0] if operands else ""
-    try:
-        size = float(operands[1])
-    except (IndexError, TypeError, ValueError):
-        size = state_mgr.font_size
+    size = state_mgr._as_float(operands[1] if len(operands) > 1 else None, state_mgr.font_size)
     state_mgr.set_font(resolve_font(fonts, name), size)
 
 
@@ -223,20 +220,18 @@ def recurse_to_target_op(
                     bt_groups.append(bt_group(tj_ops[bt_idx], _text, last_displaced_tx))
                 text_state_mgr.reset_tm()
             break
-        if op == b"q":
+        if op == b"q" or (op == b"BT" and end_target == b"Q"):
             bts, tjs = recurse_to_target_op(
-                ops, text_state_mgr, b"Q", fonts, strip_rotated
+                ops, text_state_mgr, b"ET" if op == b"BT" else b"Q", fonts, strip_rotated
             )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
         elif op == b"cm":
             text_state_mgr.add_cm(*operands)
         elif op == b"BT":
-            bts, tjs = recurse_to_target_op(
-                ops, text_state_mgr, b"ET", fonts, strip_rotated
-            )
-            bt_groups.extend(bts)
-            tj_ops.extend(tjs)
+            # text objects cannot be nested and end at the first ET: a BT inside
+            # one only resets the text matrix, as in plain mode
+            text_state_mgr.reset_tm()
         elif op == b"Tj" and operands and isinstance(operands[0], (str, bytes)):
             tj_ops.append(text_state_mgr.text_state_params(operands[0]))
         elif op == b"TJ" and operands and isinstance(operands[0], ArrayObject):
@@ -284,7 +279,7 @@ def recurse_to_target_op(
 
 
 def y_coordinate_groups(
-    bt_groups: list[BTGroup], debug_path: Optional[Path] = None
+    bt_groups: list[BTGroup], debug_path: Path | None = None
 ) -> dict[int, list[BTGroup]]:
     """
     Group text operations by rendered y coordinate, i.e. the line number.
@@ -335,7 +330,7 @@ def text_show_operations(
     ops: Iterator[tuple[list[Any], bytes]],
     fonts: dict[str, Font],
     strip_rotated: bool = True,
-    debug_path: Optional[Path] = None,
+    debug_path: Path | None = None,
 ) -> list[BTGroup]:
     """
     Extract text from BT/ET operator pairs.

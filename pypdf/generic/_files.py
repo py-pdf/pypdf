@@ -381,12 +381,14 @@ class EmbeddedFile:
         logger_warning(message, source=__name__)
 
     @classmethod
-    def _load_from_names(cls, names: ArrayObject) -> Iterator[EmbeddedFile]:
+    def _load_from_names(cls, names: ArrayObject, strict: bool = False) -> Iterator[EmbeddedFile]:
         """
         Convert the given name tree into class instances.
 
         Args:
             names: The name tree to load the data from.
+            strict: Whether to raise an exception on a file specification that is not a dictionary
+                instead of issuing a warning and skipping it.
 
         Returns:
             Iterable of class instances for the files found.
@@ -396,6 +398,14 @@ class EmbeddedFile:
             if not isinstance(name, str):
                 # Skip plain strings and retrieve them as `direct_name` by index.
                 file_dictionary = name.get_object()
+                if isinstance(file_dictionary, NullObject):
+                    # A null value is equivalent to an omitted entry.
+                    continue
+                if not isinstance(file_dictionary, DictionaryObject):
+                    cls._report_malformed(
+                        f"Embedded file specification is not a dictionary: {file_dictionary}", strict=strict
+                    )
+                    continue
                 direct_name = names[i - 1].get_object()
                 yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary, parent=names)
 
@@ -454,7 +464,7 @@ class EmbeddedFile:
                 if not isinstance(kid_names, ArrayObject):
                     cls._report_malformed(f"Embedded files name list is not an array: {kid_names}", strict=strict)
                     continue
-                yield from cls._load_from_names(kid_names)
+                yield from cls._load_from_names(kid_names, strict=strict)
         if "/Names" in container:
             container_names = container["/Names"].get_object()
             if isinstance(container_names, NullObject):
@@ -462,4 +472,4 @@ class EmbeddedFile:
             if not isinstance(container_names, ArrayObject):
                 cls._report_malformed(f"Embedded files name list is not an array: {container_names}", strict=strict)
                 return
-            yield from cls._load_from_names(container_names)
+            yield from cls._load_from_names(container_names, strict=strict)

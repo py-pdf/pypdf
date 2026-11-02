@@ -5,7 +5,7 @@ from typing import Any
 
 import PIL
 import pytest
-from PIL import Image
+from PIL import Image, features
 
 from pypdf import PdfReader
 from pypdf._utils import Version
@@ -14,6 +14,7 @@ from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
+    DictionaryObject,
     NameObject,
     NumberObject,
     PdfObject,
@@ -24,6 +25,7 @@ from pypdf.generic._image_xobject import (
     _get_image_mode,
     _get_mode_and_invert_color,
     _handle_flate,
+    _handle_jpx,
     _image_from_bytes,
     _xobj_to_image,
     bits2byte,
@@ -31,6 +33,34 @@ from pypdf.generic._image_xobject import (
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
+
+_OPENJPEG_VERSION = features.version_codec("jpg_2000")
+requires_jpeg2000 = pytest.mark.skipif(
+    condition=_OPENJPEG_VERSION is None, reason="Saving JPEG 2000 images requires Pillow with OpenJPEG"
+)
+requires_cmyk_jpeg2000_saving = pytest.mark.skipif(
+    condition=(
+        Version(PIL.__version__) < Version("11.1.0")
+        or _OPENJPEG_VERSION is None
+        or Version(_OPENJPEG_VERSION) < Version("2.5.3")
+    ),
+    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+ with OpenJPEG 2.5.3+",
+)
+
+
+# A single band value, or one value per band of an RGB, RGBA or CMYK image.
+PixelColor = int | tuple[int, int, int] | tuple[int, int, int, int]
+
+
+def _create_image(
+    mode: str, size: tuple[int, int], *, color: PixelColor = 0, diagonal_color: PixelColor | None = None
+) -> Image.Image:
+    """Create a solid image, optionally with a diagonal line in ``diagonal_color`` from the top left."""
+    image = Image.new(mode=mode, size=size, color=color)
+    if diagonal_color is not None:
+        for i in range(min(size)):
+            image.putpixel((i, i), diagonal_color)
+    return image
 
 
 def _handle_flate_indexed_image_mode_1(base: str, lookup_data: bytes) -> Image.Image:
@@ -294,10 +324,17 @@ def test_get_imagemode__empty_array() -> None:
 
 
 def test_p_image_with_alpha_mask() -> None:
+    """
+    A palette image with an /SMask is converted to RGB with the mask as its alpha channel.
+
+    ISO 32000-2:2020, 8.9.5.1 (Table 87) and 11.6.5.2: the soft-mask image
+    provides the opacity of each sample. pypdf converts the palette image to
+    RGB before adding the alpha channel, and the result is saved as PNG.
+    """
     # Generate the base image. Use TIFF as this is easy to do on the fly.
-    image = Image.new(mode="P", size=(10, 10), color=0)
+    image = _create_image("P", (10, 10))
     image_data = BytesIO()
-    image.save(image_data, format="tiff")
+    image.save(image_data, format="TIFF")
 
     # Set the common values.
     x_object = StreamObject()
@@ -312,14 +349,12 @@ def test_p_image_with_alpha_mask() -> None:
     x_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("palette")
 
     # Generate the mask image. Will be a diagonal white stripe.
-    image = Image.new(mode="1", size=(image.width, image.height))
-    for i in range(10):
-        image.putpixel((i, i), 1)
-    image_data = BytesIO()
-    image.save(image_data, format="tiff")
+    mask = _create_image("1", image.size, diagonal_color=1)
+    mask_data = BytesIO()
+    mask.save(mask_data, format="TIFF")
 
     # Set the mask data.
-    mask_object.set_data(image_data.getvalue())
+    mask_object.set_data(mask_data.getvalue())
     mask_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("1bit")
 
     # Add the mask to the image.
@@ -356,11 +391,14 @@ def test_handle_flate__icc_based__image_mode_1() -> None:
             assert image.getpixel((x, y)) == 255 * int(not is_black_square)
 
 
-@pytest.mark.skipif(
-    condition=Version(PIL.__version__) < Version("12.1.0"),
-    reason="Unsuitable Pillow version."
-)
+@requires_cmyk_jpeg2000_saving
 def test_handle_jpx__explicit_decode() -> None:
+    """
+    An explicit /Decode array is applied to JPEG 2000 samples.
+
+    ISO 32000-2:2020, 8.9.5.2: [1 0] for a component inverts it. 7.4.9 only
+    ignores /Decode when /ColorSpace is absent.
+    """
     stream = StreamObject()
     stream[NameObject("/BitsPerComponent")] = NumberObject(8)
     stream[NameObject("/ColorSpace")] = NameObject("/DeviceCMYK")
@@ -368,20 +406,15 @@ def test_handle_jpx__explicit_decode() -> None:
     stream[NameObject("/Filter")] = NameObject("/JPXDecode")
     stream[NameObject("/Height")] = NumberObject(16)
     stream[NameObject("/Width")] = NumberObject(16)
-
-    image = Image.new(mode="CMYK", size=(16, 16))
-    for i in range(16):
-        image.putpixel((i, i), 255)
+    # Cyan on the diagonal, no ink elsewhere.
     image_data = BytesIO()
-    image.save(image_data, format="JPEG2000")
+    _create_image("CMYK", (16, 16), diagonal_color=255).save(image_data, format="JPEG2000")
     stream.set_data(image_data.getvalue())
-    image.save(image_data, format="JPEG2000")
 
     result = _xobj_to_image(x_object=stream)[2]
     for y in range(16):
         for x in range(16):
             assert result.getpixel((x, y)) == (255 * (x != y), 255, 255, 255), (x, y)
-            assert image.getpixel((x, y)) == (255 * (x == y), 0, 0, 0), (x, y)
 
 
 def test_bits2byte__limit() -> None:
@@ -569,7 +602,7 @@ def test_xobj_to_image__empty_filter_array() -> None:
 def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
     """/DCTDecode data must not be handed to arbitrary Pillow image plugins."""
     data = BytesIO()
-    Image.new("L", (1, 1)).save(data, format=image_format)
+    _create_image("L", (1, 1)).save(data, format=image_format)
     image = _minimal_image_xobject()
     image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.DCT_DECODE)
     image.set_data(data.getvalue())
@@ -578,10 +611,182 @@ def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
         _xobj_to_image(image)
 
     data = BytesIO()
-    Image.new("L", (1, 1)).save(data, format="JPEG")
+    _create_image("L", (1, 1)).save(data, format="JPEG")
     image.set_data(data.getvalue())
 
     extension, _, img = _xobj_to_image(image)
 
     assert extension == ".jpg"
     assert img.format == "JPEG"
+
+
+def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A single-colorant /DeviceN with a /DeviceCMYK alternate is read as inverted gray.
+
+    ISO 32000-2:2020, 8.6.6.5 maps the colorant to the alternate space with a
+    tint transform. pypdf skips that and treats the colorant as gray, warning
+    when it is not /Black.
+    """
+    color_space = ArrayObject([
+        NameObject("/DeviceN"),
+        ArrayObject([NameObject("/Cyan")]),
+        NameObject("/DeviceCMYK"),
+        DictionaryObject(),
+    ])
+    assert _get_image_mode(color_space, 1, "") == ("L", True)
+    assert caplog.messages == ["Color /Cyan converted to Gray. Please share PDF with pypdf dev team"]
+
+
+def test_handle_flate__indexed_lookup_stream_with_str_data() -> None:
+    """
+    An /Indexed color table is applied when the lookup stream holds str data.
+
+    ISO 32000-2:2020, 8.6.6.3 allows the lookup to be a stream or a byte
+    string. pypdf encodes str stream data to bytes before using it.
+    """
+    lookup = DecodedStreamObject()
+    # Pass a str on purpose to test the str handling: set_data() is annotated
+    # with bytes, but does not check its argument, so callers can store str.
+    lookup.set_data("abcdef")  # type: ignore[arg-type]
+    color_space = ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup])
+    image = _handle_flate(
+        size=(2, 1), data=b"\x00\x01", mode="P", color_space=color_space, colors=1, obj_as_text="dummy"
+    )[0]
+    assert image.mode == "RGB"
+    assert [image.getpixel((x, 0)) for x in range(2)] == [(97, 98, 99), (100, 101, 102)]
+
+
+def test_handle_flate__icc_based_with_different_component_count() -> None:
+    """
+    An /ICCBased /N that disagrees with the image does not change how its samples are read.
+
+    ISO 32000-2:2020, 8.6.5.5 (Table 65) requires /N to match the profile.
+    pypdf keeps the mode it derived from the image dictionary.
+    """
+    icc_profile = DecodedStreamObject()
+    icc_profile[NameObject("/N")] = NumberObject(1)
+    color_space = ArrayObject([NameObject("/ICCBased"), icc_profile])
+    image = _handle_flate(
+        size=(2, 2), data=bytes(range(12)), mode="RGB", color_space=color_space, colors=3, obj_as_text="dummy"
+    )[0]
+    assert image.size == (2, 2)
+    assert image.tobytes() == bytes(range(12))
+
+
+@requires_cmyk_jpeg2000_saving
+def test_xobj_to_image__jpx_rgba_data_with_cmyk_color_space() -> None:
+    """
+    Four-channel JPEG 2000 data is reinterpreted as CMYK without conversion.
+
+    ISO 32000-2:2020, 7.4.9: a present /ColorSpace determines how the samples
+    are interpreted, and the color space in the JPEG 2000 data is ignored.
+    Pillow decodes this data as RGBA; its bytes are reused as C, M, Y, K. The
+    fourth channel is black, not opacity, even though /SMaskInData defaults to 0.
+    """
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_CMYK)
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
+    data = BytesIO()
+    _create_image("RGBA", (4, 4), color=(1, 2, 3, 4)).save(data, format="JPEG2000")
+    image.set_data(data.getvalue())
+
+    extension, _, img = _xobj_to_image(image)
+
+    assert extension == ".jp2"
+    assert img.mode == "CMYK"
+    assert img.getpixel((0, 0)) == (1, 2, 3, 4)
+
+
+@requires_cmyk_jpeg2000_saving
+def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
+    """
+    CMYK JPEG 2000 data with the color space /ICCBased is converted to RGB.
+
+    The color space is the name /ICCBased on its own, without the ICC profile
+    stream that a well-formed [/ICCBased profile] array carries. _xobj_to_image
+    passes this name on for a malformed one-element [/ICCBased] array.
+
+    pypdf-specific, not from ISO 32000-2:2020: Pillow's naive CMYK to RGB
+    formula is used; no ICC profile is applied.
+    """
+    data = BytesIO()
+    _create_image("CMYK", (4, 4)).save(data, format="JPEG2000")
+    image = _handle_jpx(size=(4, 4), data=data.getvalue(), mode="", color_space="/ICCBased", colors=4)[0]
+    assert image.mode == "RGB"
+    assert image.getpixel((0, 0)) == (255, 255, 255)
+
+
+@requires_cmyk_jpeg2000_saving
+@pytest.mark.xfail(
+    reason="Only the name /ICCBased on its own, not an [/ICCBased profile] array, triggers the CMYK to RGB conversion",
+    raises=AssertionError,
+    strict=True,
+)
+def test_xobj_to_image__jpx_cmyk_image_with_icc_based_color_space_array() -> None:
+    """
+    CMYK JPEG 2000 data with an [/ICCBased profile] color space is converted to RGB.
+
+    This is how the color space appears in a well-formed PDF (ISO 32000-2:2020,
+    8.6.5.5), so it should be handled like the name /ICCBased on its own.
+    """
+    icc_profile = DecodedStreamObject()
+    icc_profile[NameObject("/N")] = NumberObject(4)
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject([NameObject("/ICCBased"), icc_profile])
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
+    data = BytesIO()
+    _create_image("CMYK", (4, 4)).save(data, format="JPEG2000")
+    image.set_data(data.getvalue())
+
+    _, _, img = _xobj_to_image(image)
+
+    assert img.mode == "RGB"
+    assert img.getpixel((0, 0)) == (255, 255, 255)
+
+
+_SMASK_IN_DATA_NOT_READ = pytest.mark.xfail(
+    reason="/SMaskInData is not read: the opacity channel is always kept as is", raises=AssertionError, strict=True
+)
+
+
+@requires_jpeg2000
+@pytest.mark.parametrize(
+    ("smask_in_data", "expected_mode", "expected_pixel"),
+    [
+        pytest.param(None, "RGB", (10, 20, 30), marks=_SMASK_IN_DATA_NOT_READ, id="absent-defaults-to-0"),
+        pytest.param(0, "RGB", (10, 20, 30), marks=_SMASK_IN_DATA_NOT_READ, id="0-ignore-opacity"),
+        pytest.param(1, "RGBA", (10, 20, 30, 51), id="1-opacity"),
+        pytest.param(2, "RGBA", (50, 100, 150, 51), marks=_SMASK_IN_DATA_NOT_READ, id="2-premultiplied-opacity"),
+    ],
+)
+def test_xobj_to_image__jpx_smask_in_data(
+    smask_in_data: int | None, expected_mode: str, expected_pixel: tuple[int, ...]
+) -> None:
+    """
+    /SMaskInData decides how an opacity channel in the JPEG 2000 data is used.
+
+    ISO 32000-2:2020, 7.4.9 and 8.9.5.1 (Table 87): 0, the default, ignores it;
+    1 uses it as the soft mask; 2 also uses it, but the color channels have been
+    premultiplied with it. The alpha of 51 = 255 / 5 un-premultiplies (10, 20, 30)
+    exactly to (50, 100, 150).
+    """
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_RGB)
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
+    if smask_in_data is not None:
+        image[NameObject("/SMaskInData")] = NumberObject(smask_in_data)
+    data = BytesIO()
+    _create_image("RGBA", (4, 4), color=(10, 20, 30, 51)).save(data, format="JPEG2000")
+    image.set_data(data.getvalue())
+
+    _, _, img = _xobj_to_image(image)
+
+    assert img.mode == expected_mode
+    assert img.getpixel((0, 0)) == expected_pixel

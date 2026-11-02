@@ -7,7 +7,7 @@ import pytest
 import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import LimitReachedError, PdfReadError, XmpDocumentError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError, XmpDocumentError
 from pypdf.generic import ContentStream, NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
@@ -387,16 +387,14 @@ def test_xmp_information__write_to_stream():
     xmp = writer.xmp_metadata
 
     output = BytesIO()
-    with pytest.warns(
-            DeprecationWarning,
+    with pytest.raises(
+            DeprecationError,
             match=(
-                r"^XmpInformation\.write_to_stream is deprecated and will be removed in pypdf 6\.0\.0\. "
+                r"^XmpInformation\.write_to_stream is deprecated and was removed in pypdf 6\.0\.0\. "
                 r"Use PdfWriter\.xmp_metadata instead\.$"
             )
     ):
         xmp.write_to_stream(output)
-    output_bytes = output.getvalue()
-    assert output_bytes.startswith(b"<<\n/Type /Metadata\n/Subtype /XML\n/Length 2786\n>>\nstream\n<?xpacket begin")
 
 
 def test_pdf_writer__xmp_metadata_setter():

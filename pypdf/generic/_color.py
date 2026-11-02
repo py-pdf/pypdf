@@ -15,8 +15,8 @@ class Color:
     @classmethod
     def from_normalized_values(
         cls,
-        color: Union[Sequence[float], None],
-        operator: Union[str, None] = None,
+        color: Sequence[float] | None,
+        operator: str | None = None,
     ) -> Union["Color", None]:
         """
         Method to instantiate a color class. Can be called with value of None for cases where an appearance
