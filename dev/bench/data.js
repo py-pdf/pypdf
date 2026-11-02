@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793527633190,
+  "lastUpdate": 1793610077126,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -123887,6 +123887,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009849929949065089",
             "extra": "mean: 392.08413899999925 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alexandrkholodniak@gmail.com",
+            "name": "Alex Kholodniak",
+            "username": "kholdrex"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f39b92aee0e9c276e5833767f221afc9c689eb49",
+          "message": "PI: Read every page label number tree once for all pages (#4321)\n\n* Read page label number trees once for all pages in every shape\n\n* Cover the remaining page label tree shapes in tests\n\n* Address review comments",
+          "timestamp": "2026-11-02T09:59:30+01:00",
+          "tree_id": "625481f828c04e056adb64d3fb30033070b71b21",
+          "url": "https://github.com/py-pdf/pypdf/commit/f39b92aee0e9c276e5833767f221afc9c689eb49"
+        },
+        "date": 1793610068777,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.059486809918592,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010104189730243103",
+            "extra": "mean: 197.6485041999922 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 34.596775340790884,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008355254570147736",
+            "extra": "mean: 28.90442794594682 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.45098163571661654,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03560467541007216",
+            "extra": "mean: 2.217385189999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 31.998121667598294,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013762409195513241",
+            "extra": "mean: 31.251834416662426 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.26226336377752685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06522895282415207",
+            "extra": "mean: 3.812961084599988 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.8218021777547215,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007185684403182569",
+            "extra": "mean: 354.38345320000053 msec\nrounds: 5"
           }
         ]
       }
