@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793631890705,
+  "lastUpdate": 1793632087500,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -163291,6 +163291,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03047700200261966",
             "extra": "mean: 939.7289637999961 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "63337279+Ak4shh@users.noreply.github.com",
+            "name": "Akash",
+            "username": "Ak4shh"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0447b44c28facc5997d02d41cc7c3bb1cb535647",
+          "message": "BUG: Serialize XMP packets without an XML declaration (#4296)\n\n* BUG: Serialize XMP packets without an XML declaration\n\nPreserve document child nodes and mark serialized packets read-only because no padding is reserved for in-place updates. Add packet and Unicode round-trip coverage and update the manual XML editing example.\n\nFixes #3396.\n\nAI assistance: Codex (GPT-6).\n\n* Serialize XMP packet nodes in a single pass\n\nRevert the manual serialization steps from the metadata docs example.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\n\n---------\n\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-02T16:03:11+01:00",
+          "tree_id": "cda15d625a6e08cc64d9783c8da92eecf0c4edbd",
+          "url": "https://github.com/py-pdf/pypdf/commit/0447b44c28facc5997d02d41cc7c3bb1cb535647"
+        },
+        "date": 1793632074690,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.502667787010747,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018699765375390538",
+            "extra": "mean: 68.95283093332978 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.47377539825067,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008919340570632395",
+            "extra": "mean: 33.928466458333396 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0148189075073082,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02854420962605236",
+            "extra": "mean: 985.3974857999958 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.523354140786203,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013315631980773722",
+            "extra": "mean: 1.9107520550000061 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.31002274855968076,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018287013570384175",
+            "extra": "mean: 3.225569751400019 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.097497756740915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03175604327729989",
+            "extra": "mean: 911.1635936000084 msec\nrounds: 5"
           }
         ]
       }
