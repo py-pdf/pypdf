@@ -11,6 +11,7 @@ from collections.abc import Callable, Iterator
 from string import hexdigits
 from typing import (
     Any,
+    NoReturn,
     TypeVar,
     cast,
 )
@@ -21,7 +22,7 @@ from xml.dom.xmlbuilder import Options
 from xml.parsers.expat import ExpatError, XMLParserType
 
 from ._configuration import get_configuration
-from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
+from ._utils import StreamType, deprecation_with_replacement
 from .errors import LimitReachedError, PdfReadError, XmpDocumentError
 from .generic import ContentStream, PdfObject, StreamObject
 
@@ -252,19 +253,12 @@ class XmpInformation(PdfObject):
         stream.set_data(_MINIMAL_XMP.encode("utf-8"))
         return cls(stream)
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
-        deprecate_with_replacement(
+    def write_to_stream(self, stream: StreamType) -> NoReturn:
+        deprecation_with_replacement(
             "XmpInformation.write_to_stream",
             "PdfWriter.xmp_metadata",
             "6.0.0"
         )
-        if encryption_key is not None:  # deprecated
-            deprecation_no_replacement(
-                "the encryption_key parameter of write_to_stream", "5.0.0"
-            )
-        self.stream.write_to_stream(stream)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
         for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):

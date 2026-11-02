@@ -45,7 +45,6 @@ from typing import (
     Any,
     NoReturn,
     TypeAlias,
-    Union,
     cast,
 )
 
@@ -70,7 +69,7 @@ CompressedTransformationMatrix: TypeAlias = tuple[
 
 StreamType = IO[Any]
 BinaryStreamType = IO[bytes]
-StrByteType = Union[str, StreamType]
+StrByteType = str | StreamType
 
 
 def parse_iso8824_date(text: str | None) -> datetime | None:
@@ -646,13 +645,13 @@ class classproperty:  # noqa: N801
     that can be accessed directly from the class.
     """
 
-    def __init__(self, method=None) -> None:  # type: ignore  # noqa: ANN001
+    def __init__(self, method=None) -> None:  # type: ignore[no-untyped-def]  # noqa: ANN001
         self.fget = method
 
-    def __get__(self, instance, cls=None) -> Any:  # type: ignore  # noqa: ANN001
+    def __get__(self, instance, cls=None) -> Any:  # type: ignore[no-untyped-def]  # noqa: ANN001
         return self.fget(cls)
 
-    def getter(self, method) -> Self:  # type: ignore  # noqa: ANN001
+    def getter(self, method) -> Self:  # type: ignore[no-untyped-def]  # noqa: ANN001
         self.fget = method
         return self
 

@@ -28,9 +28,7 @@ class PdfObjectProtocol(Protocol):
     def hash_value(self) -> bytes:
         ...  # pragma: no cover
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: str | bytes | None = None
-    ) -> None:
+    def write_to_stream(self, stream: StreamType) -> None:
         ...  # pragma: no cover
 
 

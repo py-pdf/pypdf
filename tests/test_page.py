@@ -19,7 +19,7 @@ from pypdf._page import PageObject, _get_fonts_walk
 from pypdf.annotations import Highlight, Polygon
 from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
+from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -1592,15 +1592,14 @@ def test_replace_contents_on_reader():
 
     expected_message = (
         "Calling `PageObject.replace_contents()` for pages not assigned to a writer is deprecated and "
-        "will be removed in pypdf 7.0.0. Attach the page to the writer first or use `PdfWriter(clone_from=...)` "
+        "has been removed in pypdf 7.0.0. Attach the page to the writer first or use `PdfWriter(clone_from=...)` "
         "directly. The existing approach has proved being unreliable."
     )
-    with pytest.warns(DeprecationWarning, match=rf"^{re.escape(expected_message)}$"):
+    with pytest.raises(DeprecationError, match=rf"^{re.escape(expected_message)}$"):
         page.replace_contents(content_stream)
 
 
 @pytest.mark.enable_socket
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_replace_contents_on_reader__indirect_reference():
     url = "https://github.com/user-attachments/files/24195534/test.pdf"
     name = "issue3568.pdf"
@@ -1611,8 +1610,14 @@ def test_replace_contents_on_reader__indirect_reference():
     writer.add_page(lhs)
 
     lhs = reader.get_page(1)
-    lhs.merge_page(PageObject.create_blank_page(reader))
-    writer.add_page(lhs)
+
+    expected_message = (
+        "Calling `PageObject.replace_contents()` for pages not assigned to a writer is deprecated and "
+        "has been removed in pypdf 7.0.0. Attach the page to the writer first or use `PdfWriter(clone_from=...)` "
+        "directly. The existing approach has proved being unreliable."
+    )
+    with pytest.raises(DeprecationError, match=rf"^{re.escape(expected_message)}$"):
+        lhs.merge_page(PageObject.create_blank_page(reader))
 
 
 def test_merge_page__coverage():
