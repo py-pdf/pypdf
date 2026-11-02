@@ -14,7 +14,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration, mult
 from pypdf._page import PageObject
-from pypdf._text_extraction import get_text_operands, set_custom_rtl
+from pypdf._text_extraction import get_display_str, get_text_operands, set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import (
     BTGroup,
     fixed_width_page,
@@ -1639,3 +1639,41 @@ def test_layout_mode_debug_path(tmp_path: Path) -> None:
     assert "font" not in tj_ops[0]
     assert tj_ops[0]["text"] == "Hello"
     assert tj_ops[0]["font_size"] == 12
+
+
+@pytest.mark.parametrize(
+    ("text", "rtl_dir", "text_operands", "character_map", "expected", "expected_visited"),
+    [
+        pytest.param("", False, "abc", {}, ("abc", False, ""), [], id="left-to-right"),
+        pytest.param("", False, "\u05d0\u05d1\u05d2", {}, ("\u05d2\u05d1\u05d0", True, ""), [""], id="right-to-left"),
+        pytest.param(
+            "x",
+            False,
+            "ab \u05d0\u05d1, cd",
+            {},
+            ("cd", False, "xab  ,\u05d1\u05d0"),
+            ["xab ", " ,\u05d1\u05d0"],
+            id="direction-changes",
+        ),
+        pytest.param(
+            "\u05d0",
+            True,
+            "\x01\u05d1.",
+            {"\x01": "XY"},
+            (".\u05d1XY\u05d0", True, ""),
+            [],
+            id="byte-sequence-in-right-to-left-run",
+        ),
+    ],
+)
+def test_get_display_str(text, rtl_dir, text_operands, character_map, expected, expected_visited):
+    visited = []
+    font = Font(name="Test", encoding="charmap", character_map=character_map)
+
+    result = get_display_str(
+        text, [1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 0, 0], None, font, text_operands, 12, rtl_dir,
+        lambda visited_text, *_: visited.append(visited_text),
+    )
+
+    assert result == expected
+    assert visited == expected_visited
