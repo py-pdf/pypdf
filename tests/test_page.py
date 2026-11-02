@@ -967,6 +967,23 @@ def test_merge_page_with_annotations():
     assert len(page0.annotations) == 1
 
 
+def test_merge_page_with_annotations_into_null_annots():
+    """/Annots null on the target page is treated as missing."""
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_annotation(0, Polygon(vertices=[(10, 10), (20, 10), (20, 20)]))
+    data = BytesIO()
+    source.write(data)
+
+    writer = PdfWriter()
+    target = writer.add_blank_page(100, 100)
+    target[NameObject("/Annots")] = NullObject()
+    target.merge_page(PdfReader(data).pages[0])
+
+    assert isinstance(target["/Annots"], ArrayObject)
+    assert len(target.annotations) == 1
+
+
 @pytest.mark.parametrize(
     ("quad_count", "transformation", "expected"),
     [
