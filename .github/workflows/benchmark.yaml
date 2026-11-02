@@ -57,3 +57,33 @@ jobs:
         alert-threshold: '200%'
         comment-on-alert: true
         fail-on-alert: true
+
+  publish:
+    # Runs after the matrix jobs, so the pushes to gh-pages cannot race each other.
+    name: Publish benchmark pages
+    needs: benchmark
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Write the page to the branch.
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Update benchmark pages
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git fetch --depth=1 origin gh-pages
+        git worktree add "$RUNNER_TEMP/gh-pages" FETCH_HEAD
+        cp docs/benchmark-page/index.html docs/benchmark-page/ng.html "$RUNNER_TEMP/gh-pages/dev/bench/"
+        cd "$RUNNER_TEMP/gh-pages"
+        git add dev/bench/index.html dev/bench/ng.html
+        if git diff --cached --quiet; then
+          echo "The benchmark pages on gh-pages are up to date."
+          exit 0
+        fi
+        git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+          commit -m "Update benchmark page from ${GITHUB_SHA}"
+        git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages

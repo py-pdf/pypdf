@@ -15,17 +15,11 @@ jobs:
     name: GitHub Pages check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout GitHub Pages
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          ref: 'gh-pages'
-          path: 'gh-pages'
-          persist-credentials: false
-      - name: Checkout main (tools)
+      # The pages are maintained in docs/benchmark-page/ on main; benchmark.yaml copies them to gh-pages.
+      - name: Checkout Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: main
-          path: main
           persist-credentials: false
       - name: Setup Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
@@ -33,5 +27,4 @@ jobs:
           python-version: '3.x'
       - name: Check GitHub Pages
         run: |
-          export PYTHONPATH="$GITHUB_WORKSPACE"
-          python main/.github/scripts/check_gh_pages_updates.py
+          python .github/scripts/check_gh_pages_updates.py docs/benchmark-page

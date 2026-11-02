@@ -46,10 +46,10 @@ def scan_html(path: Path) -> list[re.Match[str]]:
 
 
 def main() -> None:
-    """Perform the checks."""
+    """Perform the checks for the HTML files in the directory given as the only argument."""
     outdated_found = False
 
-    for html_path in sorted(Path("gh-pages").rglob("*.html"), key=str):
+    for html_path in sorted(Path(sys.argv[1]).rglob("*.html"), key=str):
         matches = scan_html(html_path)
         if not matches:
             continue

@@ -109,3 +109,6 @@ finished within the PR and have a test for that feature.
 We need to keep an eye on performance, and thus we have a few benchmarks.
 
 See [py-pdf.github.io/pypdf/dev/bench](https://py-pdf.github.io/pypdf/dev/bench/)
+
+How the page is built and published is described in
+[docs/benchmark-page/README.md](https://github.com/py-pdf/pypdf/blob/main/docs/benchmark-page/README.md).
