@@ -1893,6 +1893,59 @@ def test_get_fields__nesting_depth() -> None:
         writer.get_fields(retval={}, tree=tree, _visited=set())
 
 
+def _build_deep_named_dest_writer(depth: int) -> PdfWriter:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    leaf = DictionaryObject()
+    leaf[NameObject("/Names")] = ArrayObject(
+        [
+            NameObject("/dest1"),
+            ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")]),
+        ]
+    )
+    current = writer._add_object(leaf)
+    for _ in range(depth - 1):
+        node = DictionaryObject()
+        node[NameObject("/Kids")] = ArrayObject([current])
+        current = writer._add_object(node)
+
+    names = DictionaryObject()
+    names[NameObject("/Dests")] = current
+    writer._root_object[NameObject("/Names")] = writer._add_object(names)
+    return writer
+
+
+def test_named_destinations__maximum_depth() -> None:
+    writer = _build_deep_named_dest_writer(depth=5)
+    with apply_configuration(named_destinations_maximum_depth=2), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^Maximum named destination depth exceeded:",
+            ):
+        _ = writer.named_destinations
+
+
+def test_named_destinations__maximum_entries() -> None:
+    writer = _build_deep_named_dest_writer(depth=10)
+    with apply_configuration(named_destinations_maximum_entries=3), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^Maximum named destination entry limit exceeded:",
+            ):
+        _ = writer.named_destinations
+
+
+def test_named_destinations__within_limits() -> None:
+    writer = _build_deep_named_dest_writer(depth=3)
+    with apply_configuration(
+        named_destinations_maximum_depth=100,
+        named_destinations_maximum_entries=100_000,
+    ):
+        dests = writer.named_destinations
+    assert "dest1" in dests or "/dest1" in dests
+
+
 def test_get_num_pages__forged_count_after_decrypt():
     """The unvalidated /Pages /Count must not be used once the document is decrypted."""
     writer = PdfWriter()
