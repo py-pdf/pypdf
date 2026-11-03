@@ -2048,9 +2048,6 @@ def test_extract_text__visitor_receives_text_without_end_operator() -> None:
     assert parts[-1] == "Hello"
 
 
-@pytest.mark.xfail(
-    reason="#4335: Annotations are dropped if the target page has a null /Annots entry", strict=True
-)
 def test_merge_page__target_with_null_annotations() -> None:
     """
     merge_page() adds the annotations of the merged page to a target page with
