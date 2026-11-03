@@ -2030,14 +2030,24 @@ class PdfWriter(PdfDocCommon):
     ) -> None:
         page = cast(DictionaryObject, page.get_object())
         if PG.ANNOTS in page:
+            annotations = page[PG.ANNOTS]
+            if not isinstance(annotations, ArrayObject):
+                logger_warning(
+                    "Annotations are not an array: %(annotations)s",
+                    source=__name__,
+                    annotations=annotations,
+                )
+                return
             i = 0
-            while i < len(cast(ArrayObject, page[PG.ANNOTS])):
-                an = cast(ArrayObject, page[PG.ANNOTS])[i]
-                obj = cast(DictionaryObject, an.get_object())
-                if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
+            while i < len(annotations):
+                an = annotations[i]
+                obj = an.get_object()
+                # An entry that is not a dictionary has no subtype: it is only removed with all the annotations
+                subtype = obj.get("/Subtype") if isinstance(obj, DictionaryObject) else None
+                if subtypes is None or (subtype is not None and subtype in subtypes):
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
-                    del page[PG.ANNOTS][i]  # type: ignore[attr-defined]
+                    del annotations[i]
                 else:
                     i += 1
 
