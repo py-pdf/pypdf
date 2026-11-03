@@ -466,6 +466,25 @@ def test_startxref_same_line_integer_conversion_limit():
         PdfReader._find_previous_startxref_pos(stream)
 
 
+def test_find_pdf_objects__integer_conversion_limit():
+    """Oversized object or generation numbers must not leak ValueError."""
+    limit = getattr(sys, "get_int_max_str_digits", lambda: 0)()
+    if not limit:
+        pytest.skip("Python integer conversion limit is disabled")
+    valid_part = b"3 0 obj\n<< /Type /Pages >>\nendobj\n"
+    data = (
+        b"%PDF-1.4\n"
+        + b"1" * (limit + 10)
+        + b" 0 obj\n<< /Type /Catalog >>\nendobj\n"
+        + b"2 "
+        + b"1" * (limit + 10)
+        + b" obj\n<< /Type /Catalog >>\nendobj\n"
+        + valid_part
+    )
+    objects = list(PdfReader._find_pdf_objects(data))
+    assert objects == [(3, 0, len(data) - len(valid_part))]
+
+
 def test_find_previous_startxref_pos_recovery_variants():
     """Cover the backward-scan branches of _find_previous_startxref_pos (#3238)."""
 

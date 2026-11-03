@@ -1725,14 +1725,27 @@ class PdfWriter(PdfDocCommon):
         return ref
 
     def get_outline_root(self) -> TreeObject:
+        outline: TreeObject | None = None
         if Core.OUTLINES in self._root_object:
             # Entries in the catalog dictionary
-            outline = cast(TreeObject, self._root_object[Core.OUTLINES])
-            if not isinstance(outline, TreeObject):
-                t = TreeObject(outline)
-                self._replace_object(outline.indirect_reference.idnum, t)
-                outline = t
-        else:
+            entry = self._root_object[Core.OUTLINES]
+            if isinstance(entry, TreeObject):
+                outline = entry
+            elif isinstance(entry, DictionaryObject):
+                outline = TreeObject(entry)
+                reference = getattr(entry, "indirect_reference", None)
+                if reference is None:
+                    # A direct dictionary cannot be replaced in place
+                    self._root_object[NameObject(Core.OUTLINES)] = self._add_object(outline)
+                else:
+                    self._replace_object(reference.idnum, outline)
+            elif not is_null_or_none(entry):
+                logger_warning(
+                    "Outlines are not a dictionary: %(entry)s",
+                    source=__name__,
+                    entry=entry,
+                )
+        if outline is None:
             outline = TreeObject()
             outline.update({})
             outline_ref = self._add_object(outline)
@@ -2153,12 +2166,23 @@ class PdfWriter(PdfDocCommon):
         ):
             # to prevent infinite looping
             return [], []  # pragma: no cover
-        try:
-            d = cast(
-                dict[Any, Any],
-                cast(DictionaryObject, elt["/Resources"])["/XObject"],
-            )
-        except KeyError:
+        resources = elt.get("/Resources", NullObject()).get_object()
+        if not isinstance(resources, DictionaryObject):
+            if not is_null_or_none(resources):
+                logger_warning(
+                    "Resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources,
+                )
+            resources = DictionaryObject()
+        d: dict[Any, Any] = resources.get("/XObject", DictionaryObject()).get_object()
+        if not isinstance(d, DictionaryObject):
+            if not is_null_or_none(d):
+                logger_warning(
+                    "XObject resources are not a dictionary: %(x_object)s",
+                    source=__name__,
+                    x_object=d,
+                )
             d = {}
         images = []
         forms = []
