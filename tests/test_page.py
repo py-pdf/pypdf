@@ -967,6 +967,32 @@ def test_merge_page_with_annotations():
     assert len(page0.annotations) == 1
 
 
+def test_merge_page_with_annotations_of_merged_page():
+    """Annotations of the page passed to merge_page are cloned as well."""
+    writer = PdfWriter()
+    merged_writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    merged_writer.add_blank_page(100, 100)
+
+    writer.add_annotation(
+        page_number=0,
+        annotation=Polygon(vertices=[(50, 550), (200, 650), (70, 750), (50, 700)]),
+    )
+
+    page = merged_writer.pages[0]
+    page.merge_page(writer.pages[0])
+
+    assert len(page.annotations) == 1
+    assert page.annotations[0]["/Subtype"] == "/Polygon"
+
+    buffer = BytesIO()
+    merged_writer.write(buffer)
+
+    reread_page = PdfReader(buffer).pages[0]
+    assert len(reread_page.annotations) == 1
+    assert reread_page.annotations[0]["/Subtype"] == "/Polygon"
+
+
 @pytest.mark.parametrize(
     ("quad_count", "transformation", "expected"),
     [
@@ -2022,7 +2048,8 @@ def test_merge_page__target_with_null_annotations() -> None:
     # ISO 32000-2:2020, Table 182: the four vertices in counterclockwise order.
     quad_points = ArrayObject(FloatObject(value) for value in (10, 10, 20, 10, 20, 20, 10, 20))
     source.add_annotation(0, Highlight(rect=(10, 10, 20, 20), quad_points=quad_points))
-    # Write and read the source, so the annotation is a plain dictionary and #3467 does not interfere.
+    # Write and read the source, so the annotation is a plain dictionary
+    # rather than the Highlight instance.
     source_data = BytesIO()
     source.write(source_data)
     writer = PdfWriter()
@@ -2034,16 +2061,13 @@ def test_merge_page__target_with_null_annotations() -> None:
     assert len(target["/Annots"]) == 1
 
 
-@pytest.mark.xfail(
-    reason="#3467: Cloning annotations created with pypdf.annotations fails", strict=True
-)
 def test_merge_page__annotation_added_by_writer() -> None:
     """
     merge_page() copies an annotation that was added with
     PdfWriter.add_annotation() and not yet written.
 
-    The writer keeps the Highlight object itself, whose constructor requires
-    arguments, so cloning it with self.__class__() fails.
+    The writer keeps the Highlight object itself, so it is cloned directly
+    rather than read back as a plain dictionary first.
     """
     source = PdfWriter()
     source.add_blank_page(100, 100)
