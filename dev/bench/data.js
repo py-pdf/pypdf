@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793700445154,
+  "lastUpdate": 1793703585776,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -124613,6 +124613,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.15638137465232224",
             "extra": "mean: 711.4062941999975 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "neha12345biswas@gmail.com",
+            "name": "Neha Biswas",
+            "username": "BiswasNehaa"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "08065a0c6b07e7b339575ef2bcc1828f6b00a04c",
+          "message": "ROB: Detect LZW/ASCII85 image format via Pillow and correct image comments (#3902)\n\nCloses #3869.",
+          "timestamp": "2026-11-03T11:57:25+01:00",
+          "tree_id": "3d14ad1bc55f265ab61d47fb697058a5035011f2",
+          "url": "https://github.com/py-pdf/pypdf/commit/08065a0c6b07e7b339575ef2bcc1828f6b00a04c"
+        },
+        "date": 1793703573183,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.781823598655906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007338700992022715",
+            "extra": "mean: 359.47642419999966 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.69396342605855,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019798624695467693",
+            "extra": "mean: 44.064581458333585 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2462771769264095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007393828518223211",
+            "extra": "mean: 4.060465579799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.82494188609021,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018074459967566722",
+            "extra": "mean: 59.435569333332225 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.15094779499781794,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03328174639850476",
+            "extra": "mean: 6.624806940800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5116294798447791,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002504736787098018",
+            "extra": "mean: 661.537773200007 msec\nrounds: 5"
           }
         ]
       }
