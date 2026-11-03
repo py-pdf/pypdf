@@ -683,3 +683,38 @@ def test_rectangle__default_border_color():
     annotation = Rectangle(rect=(10, 10, 90, 90))
     assert "/C" not in annotation
     assert "/IC" not in annotation
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    [
+        Ellipse(rect=(0, 0, 100, 100)),
+        FreeText(rect=(0, 0, 100, 100), text="free text"),
+        Highlight(
+            rect=(0, 0, 100, 100), quad_points=ArrayObject([FloatObject(0)] * 8)
+        ),
+        Line(rect=(0, 0, 100, 100), p1=(0, 0), p2=(100, 100)),
+        Link(rect=(0, 0, 100, 100), url="https://example.com"),
+        Polygon(vertices=[(0, 0), (100, 100), (50, 50)]),
+        PolyLine(vertices=[(0, 0), (100, 100)]),
+        Popup(rect=(0, 0, 100, 100)),
+        Rectangle(rect=(0, 0, 100, 100)),
+        Text(rect=(0, 0, 100, 100), text="text"),
+    ],
+    ids=lambda annotation: type(annotation).__name__,
+)
+def test_clone_and_replicate_annotation(annotation):
+    """Annotations requiring constructor arguments can be cloned and replicated."""
+    writer = PdfWriter()
+
+    cloned = annotation.clone(writer, force_duplicate=True)
+    replicated = annotation.replicate(writer)
+
+    for copy in (cloned, replicated):
+        assert type(copy) is type(annotation)
+        assert copy is not annotation
+        assert copy.items() == annotation.items()
+
+        # The copy must not share its entries with the source annotation.
+        copy[NameObject("/Test")] = NumberObject(1)
+        assert "/Test" not in annotation

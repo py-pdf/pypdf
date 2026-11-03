@@ -156,7 +156,8 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
         lower, upper = line_span[1], line_span[2]
         distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
     last = (output + text)[-1:]
-    if distance > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
+    threshold = 0.8 * min(str_height * scale_prev_y, font_size * scale_y)
+    if distance > threshold:
         if last not in ("", "\n"):
             output += text + "\n"
             if visitor_text is not None:
@@ -170,8 +171,12 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
             text = ""
         line_span = (axis_index, axis, axis)
     else:
+        # A fragment kept on this line only by the line span moved to another
+        # baseline, so comparing its horizontal gap with the previous fragment
+        # would miss the word separation (#4254).
+        moved_to_other_baseline = abs(moved_height) > threshold
         if (
-            (moved_width >= (spacewidth + str_widths) * scale_prev_x)
+            (moved_to_other_baseline or moved_width >= (spacewidth + str_widths) * scale_prev_x)
             and last not in ("", " ")
         ):
             text += " "
@@ -253,10 +258,17 @@ def get_display_str(
     completed_text: list[str] = []
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
+    # Characters are only ever prepended in a right-to-left run and appended in a
+    # left-to-right run. Collect them and join once, as building the string one
+    # prepended character at a time takes quadratic time.
+    run_parts = [text]
 
     def clear_character_caches() -> None:
         neutral_cache.clear()
         rtl_cache.clear()
+
+    def get_run_text() -> str:
+        return "".join(reversed(run_parts)) if rtl_dir else "".join(run_parts)
 
     for raw_character in text_operands:
         x = font.character_map.get(raw_character, raw_character)
@@ -266,31 +278,21 @@ def get_display_str(
                 neutral_cache[x] = is_char_neutral(x, CUSTOM_RTL_SPECIAL_CHARS)
             if neutral_cache[x]:
                 # Cases where the current inserting order is kept
-                text = x + text if rtl_dir else text + x
+                run_parts.append(x)
             else:
                 if x not in rtl_cache:
                     rtl_cache[x] = is_char_rtl(x, CUSTOM_RTL_MIN, CUSTOM_RTL_MAX)
-                if rtl_cache[x]:
-                    # Right-to-left characters
-                    if not rtl_dir:
-                        rtl_dir = True
-                        if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
-                            clear_character_caches()
-                        completed_text.append(text)
-                        text = ""
-                    text = x + text
-                else:
-                    # Left-to-right characters
-                    if rtl_dir:
-                        rtl_dir = False
-                        if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
-                            clear_character_caches()
-                        completed_text.append(text)
-                        text = ""
-                    text = text + x
+                if rtl_cache[x] != rtl_dir:
+                    # The direction changes: right-to-left or left-to-right characters
+                    text = get_run_text()
+                    rtl_dir = rtl_cache[x]
+                    if visitor_text is not None:
+                        visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
+                        clear_character_caches()
+                    completed_text.append(text)
+                    run_parts = []
+                run_parts.append(x)
         else:
             # Treat a sequence of bytes as a neutral character.
-            text = x + text if rtl_dir else text + x
-    return text, rtl_dir, "".join(completed_text)
+            run_parts.append(x)
+    return get_run_text(), rtl_dir, "".join(completed_text)
