@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793699724304,
+  "lastUpdate": 1793699787827,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -163819,6 +163819,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027444106293849135",
             "extra": "mean: 934.3978558000117 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "63337279+Ak4shh@users.noreply.github.com",
+            "name": "Akash",
+            "username": "Ak4shh"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a7ebac569b39d226621623459af593dc519746b",
+          "message": "BUG: Fix cloning of objects that require constructor arguments (#4262)\n\n* Fix cloning of objects that require constructor arguments\n\nDictionaryObject.clone() and DictionaryObject.replicate() created the target\nobject via self.__class__(). That fails for every annotation class (Text,\nFreeText, Link, Polygon, ...), because their constructors require arguments,\nso PageObject.merge_page() raised TypeError whenever the merged page carried a\nmarkup annotation.\n\nCreate the empty target through a helper that skips __init__ when the class\ncannot be instantiated without arguments. The clone is populated from the\nsource object right afterwards, so the constructor arguments are not needed;\nthe annotation constructors only store their arguments in the dictionary\nanyway.\n\nFixes #3467.\n\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\n\n* Clone linked objects requiring constructor arguments\n\nLinked entries such as /Next, /Prev, /N and /V were still instantiated\nvia `__class__()`, failing for classes like OutlineItem.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\n\n* Narrow optional indirect references in clone test for mypy\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\n\n* TST: Remove obsolete annotation cloning xfail marker\n\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\n\n---------\n\nSigned-off-by: Ak4shh <akashposa40@gmail.com>\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-03T10:52:58+01:00",
+          "tree_id": "3b08c9e5eda405424715ac2ca9840ab8f783be26",
+          "url": "https://github.com/py-pdf/pypdf/commit/6a7ebac569b39d226621623459af593dc519746b"
+        },
+        "date": 1793699779292,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 21.670933923803123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018727739973703427",
+            "extra": "mean: 46.1447579285732 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 43.07770146917263,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008314437111679326",
+            "extra": "mean: 23.213866243899353 msec\nrounds: 41"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.4452658546768355,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08832033301628368",
+            "extra": "mean: 691.9142224000041 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.7706424149337496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024498333306501842",
+            "extra": "mean: 1.297618688800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4538750633345221,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026836512371724325",
+            "extra": "mean: 2.2032494859999927 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7630205367675553,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03632259478545796",
+            "extra": "mean: 567.2083672000042 msec\nrounds: 5"
           }
         ]
       }
