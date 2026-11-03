@@ -112,6 +112,22 @@ def _get_page_resources(obj: Any) -> DictionaryObject:
     return resources
 
 
+def _get_own_resources(page: Any) -> DictionaryObject:
+    """Return the page's own /Resources, or an empty dictionary if missing or malformed."""
+    resources = page.get(PG.RESOURCES)
+    if is_null_or_none(resources):
+        return DictionaryObject()
+    resources = resources.get_object()
+    if not isinstance(resources, DictionaryObject):
+        logger_warning(
+            "Page resources are not a dictionary: %(resources)s",
+            source=__name__,
+            resources=resources,
+        )
+        return DictionaryObject()
+    return resources
+
+
 def _get_font_resources(resources: Any) -> DictionaryObject:
     """Return the /Font resources, or an empty dictionary if missing or malformed."""
     fonts = resources.get(RES.FONT)
@@ -1360,13 +1376,11 @@ class PageObject(DictionaryObject):
         assert isinstance(self.indirect_reference, IndirectObject)
         pdf = self.indirect_reference.pdf
 
-        if PG.RESOURCES not in self:
-            self[NameObject(PG.RESOURCES)] = DictionaryObject()
-        original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        if PG.RESOURCES not in page2:
-            page2resources = DictionaryObject()
-        else:
-            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        original_resources = _get_own_resources(self)
+        if self.get(PG.RESOURCES, NullObject()).get_object() is not original_resources:
+            # missing, null or malformed: the merged resources are stored in a new dictionary
+            self[NameObject(PG.RESOURCES)] = original_resources
+        page2resources = _get_own_resources(page2)
 
         rename = {}
         for res in (
