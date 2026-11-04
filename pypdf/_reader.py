@@ -53,6 +53,7 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     StrByteType,
     StreamType,
+    _TraversalState,
     get_stream_data,
     get_stream_size,
     logger_warning,
@@ -1823,12 +1824,20 @@ class PdfReader(PdfDocCommon):
         tree: DictionaryObject | None = None,
         retval: dict[str, Destination] | None = None,
         visited: set[int] | None = None,
+        depth: int = 0,
+        traversal_state: _TraversalState | None = None,
     ) -> dict[str, Destination]:
         """Override from PdfDocCommon. In the reader we can assume this is
         static, but not in the writer.
         """
         if tree or retval:
-            return super()._get_named_destinations(tree=tree, retval=retval, visited=visited)
+            return super()._get_named_destinations(
+                tree=tree,
+                retval=retval,
+                visited=visited,
+                depth=depth,
+                traversal_state=traversal_state,
+            )
 
         if self._named_destinations_cache is None:
             self._named_destinations_cache = super()._get_named_destinations()
