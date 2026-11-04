@@ -15,7 +15,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageStat
 
 from pypdf import PageObject, PdfReader, PdfWriter, apply_configuration
 from pypdf._page import ImageFile
-from pypdf.errors import DeprecationError, LimitReachedError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
     ArrayObject,
@@ -1093,3 +1093,19 @@ def test_handle_flate__indexed_cmyk_palette():
         (119, 179, 209),
         (0, 0, 0),
     ]
+
+
+def test_images__inline_image_custom_colorspace_resources_not_a_dictionary():
+    """A custom inline-image color space with non-dictionary resources raises the clear input error, not a TypeError."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Resources")] = NumberObject(1)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    with pytest.raises(PdfReadError, match="Cannot find resource entry /CS0"):
+        list(PdfReader(stream).pages[0].images)
