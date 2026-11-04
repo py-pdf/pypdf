@@ -486,7 +486,7 @@ class PdfWriter(PdfDocCommon):
             else:
                 obj = self._objects[indirect_reference.idnum - 1]
         except IndexError:
-            raise PdfReadError(f"Object {indirect_reference!r} not found!")
+            raise PdfReadError(f"Object {indirect_reference!r} not found!") from None
         if obj is None:
             raise PdfReadError(f"Object {indirect_reference!r} not found!")
         return obj
