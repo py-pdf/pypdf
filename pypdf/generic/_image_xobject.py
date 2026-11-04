@@ -1,7 +1,7 @@
 """Functions to convert an image XObject to an image"""
-
+from collections.abc import Sequence
 from io import BytesIO
-from typing import Any, Literal, TypeAlias, cast
+from typing import IO, Any, Literal, TypeAlias, cast
 
 from .._configuration import get_configuration
 from .._utils import check_if_whitespace_only, logger_warning
@@ -193,9 +193,7 @@ def _expand_low_bit_samples(
     return "P", bits2byte(data, size, bits)
 
 
-def _image_from_bytes(
-    mode: str, size: tuple[int, int], data: bytes
-) -> Image.Image:
+def _validate_image_size(*, mode: str, size: tuple[int, int]) -> tuple[int, int]:
     pixel_count = size[0] * size[1]
     bytes_per_pixel = len(mode)
     required_byte_count = pixel_count * bytes_per_pixel
@@ -206,6 +204,14 @@ def _image_from_bytes(
             f"Requested image buffer size {required_byte_count} exceeds limit "
             f"{configuration.image_maximum_buffer_size}."
         )
+
+    return pixel_count, required_byte_count
+
+
+def _create_image_from_bytes(
+    mode: str, size: tuple[int, int], data: bytes
+) -> Image.Image:
+    pixel_count, required_byte_count = _validate_image_size(mode=mode, size=size)
 
     try:
         img = Image.frombytes(mode, size, data)
@@ -221,6 +227,24 @@ def _image_from_bytes(
         data = b"".join(bytes((x,) * int(k)) for x in data)
         img = Image.frombytes(mode, size, data)
     return img
+
+
+def _create_image_from_buffer(*, buf: IO[bytes], formats: tuple[str, ...] | None = None) -> Image.Image:
+    image = Image.open(fp=buf, formats=formats)
+    _validate_image_size(mode=image.mode, size=image.size)
+    return image
+
+
+def _convert_image(*, image: Image.Image, mode: str) -> Image.Image:
+    _validate_image_size(mode=mode, size=image.size)
+    return image.convert(mode)
+
+
+def _merge_image(*, mode: str, bands: Sequence[Image.Image]) -> Image.Image:
+    if not bands:
+        return Image.merge(mode=mode, bands=bands)
+    _validate_image_size(mode=mode, size=bands[0].size)
+    return Image.merge(mode=mode, bands=bands)
 
 
 def __handle_flate__indexed(color_space: ArrayObject) -> tuple[Any, Any, Any, Any]:
@@ -259,7 +283,7 @@ def _handle_flate(
     if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
         color_space, base, hival, lookup = __handle_flate__indexed(color_space)
     mode, data = _expand_low_bit_samples(mode, size, data, color_space)
-    img = _image_from_bytes(mode, size, data)
+    img = _create_image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -314,16 +338,16 @@ def _handle_flate(
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
-                source = img.convert("L")
+                source = _convert_image(image=img, mode="L")
                 bands = [
                     source.point(
                         [low_value] * 128 + [high_value] * 128
                     )
                     for low_value, high_value in zip(colors_arr[0], colors_arr[1])
                 ]
-                img = bands[0] if nb == 1 else Image.merge(mode, bands)
+                img = bands[0] if nb == 1 else _merge_image(mode=mode, bands=bands)
             else:
-                img = img.convert(conv)
+                img = _convert_image(image=img, mode=conv)
                 if len(lookup) != (hival + 1) * nb:
                     logger_warning("Invalid Lookup Table in %(obj_as_text)s", source=__name__, obj_as_text=obj_as_text)
                     lookup = None
@@ -352,7 +376,7 @@ def _handle_flate(
                     mode = "RGB"
                 if lookup is not None:
                     img.putpalette(lookup, rawmode=mode)
-            img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
+            img = _convert_image(image=img, mode="L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
     elif not is_null_or_none(color_space) and color_space[0] == "/ICCBased":
         # Exclude pure black-and-white images.
         # TODO: The ICC profile itself is never applied; only the number of components
@@ -365,7 +389,7 @@ def _handle_flate(
             # Table 65 - Additional Entries Specific to an ICC Profile Stream Dictionary
             mode2 = _get_image_mode(color_space, colors, mode)[0]
             if mode != mode2:
-                img = Image.frombytes(mode, size, data)  # reloaded as mode may have changed
+                img = _create_image_from_bytes(mode, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
         image_format = "TIFF"
         extension = ".tif"
@@ -386,7 +410,7 @@ def _handle_jpx(
     Process image encoded as JPX/JPEG2000
     Returns img, image_format, extension, inversion
     """
-    img1: Image.Image = Image.open(BytesIO(data), formats=("JPEG2000",))
+    img1: Image.Image = _create_image_from_buffer(buf=BytesIO(data), formats=("JPEG2000",))
     mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
         mode = cast(ImageMode, img1.mode)
@@ -400,13 +424,13 @@ def _handle_jpx(
     elif {img1.mode, mode} == {"RGBA", "CMYK"}:
         # RGBA / CMYK are 4bytes encoding where
         # the encoding should be corrected
-        img = Image.frombytes(mode, img1.size, img1.tobytes())
+        img = _create_image_from_bytes(mode, img1.size, img1.tobytes())
     else:  # pragma: no cover
-        img = img1.convert(mode)
+        img = _convert_image(image=img1, mode=mode)
     # CMYK conversion
     # https://stackverflow.com/questions/38855022/
     if img.mode == "CMYK" and color_space == "/ICCBased":
-        img = img.convert("RGB")
+        img = _convert_image(image=img, mode="RGB")
     return img, "JPEG2000", ".jp2", invert_color
 
 
@@ -551,11 +575,11 @@ def _apply_alpha(
     else:
         # TODO: implement mask
         if alpha.mode != "L":
-            alpha = alpha.convert("L")
+            alpha = _convert_image(image=alpha, mode="L")
         if img.mode == "P":
-            img = img.convert("RGB")
+            img = _convert_image(image=img, mode="RGB")
         elif img.mode == "1":
-            img = img.convert("L")
+            img = _convert_image(image=img, mode="L")
         img.putalpha(alpha)
 
     if "JPEG" in image_format:
@@ -639,13 +663,13 @@ def _xobj_to_image(
         # The filter does not tell which image format the decoded data has, so
         # let Pillow detect it.
         try:
-            img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+            img = _create_image_from_buffer(buf=BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
             # Not a TIFF or PNG container: interpret the data as raw pixel samples.
             fallback_mode, fallback_data = _expand_low_bit_samples(
                 mode, size, data, color_space
             )
-            img = _image_from_bytes(fallback_mode, size, fallback_data)
+            img = _create_image_from_bytes(fallback_mode, size, fallback_data)
             # There is no format information, thus fall back to the usual one
             # for the filter.
             image_format = "TIFF" if last_filter == FT.LZW_DECODE else "PNG"
@@ -653,7 +677,7 @@ def _xobj_to_image(
             image_format = cast(str, img.format)
         extension = ".tiff" if image_format == "TIFF" else ".png"
     elif last_filter == FT.DCT_DECODE:
-        img, image_format, extension = Image.open(BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
+        img, image_format, extension = _create_image_from_buffer(buf=BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
         # invert_color kept unchanged
     elif last_filter == FT.JPX_DECODE:
         img, image_format, extension, invert_color = _handle_jpx(
@@ -661,21 +685,21 @@ def _xobj_to_image(
         )
     elif last_filter == FT.CCITT_FAX_DECODE:
         img, image_format, extension, invert_color = (
-            Image.open(BytesIO(data), formats=("TIFF",)),
+            _create_image_from_buffer(buf=BytesIO(data), formats=("TIFF",)),
             "TIFF",
             ".tiff",
             False,
         )
     elif last_filter == FT.JBIG2_DECODE:
         img, image_format, extension, invert_color = (
-            Image.open(BytesIO(data), formats=("PNG", "PPM")),
+            _create_image_from_buffer(buf=BytesIO(data), formats=("PNG", "PPM")),
             "PNG",
             ".png",
             False,
         )
     elif mode == "CMYK":
         img, image_format, extension, invert_color = (
-            _image_from_bytes(mode, size, data),
+            _create_image_from_bytes(mode, size, data),
             "TIFF",
             ".tif",
             False,
@@ -687,7 +711,7 @@ def _xobj_to_image(
         # directly, so low-bit samples have to be expanded here as well.
         mode, data = _expand_low_bit_samples(mode, size, data, color_space)
         img, image_format, extension, invert_color = (
-            _image_from_bytes(mode, size, data),
+            _create_image_from_bytes(mode, size, data),
             "PNG",
             ".png",
             False,
@@ -715,18 +739,18 @@ def _xobj_to_image(
         img.save(img_byte_arr, format=image_format, **pillow_parameters)
     except OSError:  # pragma: no cover  # covered with pillow 10.3
         # in case of we convert to RGBA and then to PNG
-        img1 = img.convert("RGBA")
+        img1 = _convert_image(image=img, mode="RGBA")
         image_format = "PNG"
         extension = ".png"
         img_byte_arr = BytesIO()
         img1.save(img_byte_arr, format=image_format)
     data = img_byte_arr.getvalue()
 
-    try:  # temporary try/except until other fixes of images
-        img = Image.open(BytesIO(data))
+    try:
+        img = _create_image_from_buffer(buf=BytesIO(data), formats=None)
     except MemoryError:  # pragma: no cover  # TODO: BLE001
         raise
     except Exception as exception:
         logger_warning("Failed loading image: %(exception)s", source=__name__, exception=exception)
-        img = None  # type: ignore[assignment,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
+        img = None  # type: ignore[assignment]
     return extension, data, img
