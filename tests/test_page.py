@@ -2101,3 +2101,29 @@ def test_merge_page__annotation_added_by_writer() -> None:
     target.merge_page(source.pages[0])
 
     assert len(target["/Annots"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Resources are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Resources are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Resources are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_get_fonts__resources_are_not_a_dictionary(caplog, value, expected):
+    """Resources which are not a dictionary yield no fonts and a warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    embedded, unembedded = PdfReader(stream).pages[0]._get_fonts()
+
+    assert embedded == set()
+    assert unembedded == set()
+    assert expected in caplog.text
