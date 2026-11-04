@@ -119,6 +119,9 @@ class Configuration:
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
 
+    xfa_decoding_work_maximum_length: int = 300_000_000
+    """The maximum allowed accumulated decoding work in bytes for the XFA form."""
+
     jbig2dec_binary: str | None = dataclasses.field(default_factory=_determine_jbig2dec_binary)
     """
     The location of the ``jbig2dec`` binary.

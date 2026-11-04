@@ -17,6 +17,7 @@ from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
+    ContentStream,
     DictionaryObject,
     EmbeddedFile,
     EncodedStreamObject,
@@ -1946,3 +1947,32 @@ def test_flatten__page_tree_maximum_page_entries() -> None:
     reader = PdfReader(BytesIO(data))
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum page tree page entry limit exceeded!"):
         _ = len(reader.pages)  # Trigger flattening
+
+
+def test_xfa__work_limit() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    n_fields = 100
+    field_content = b"A" * 1_000
+    fields = []
+    for _ in range(n_fields):
+        stream = ContentStream(stream=None, pdf=None)
+        stream.set_data(field_content)
+        fields.append(writer._add_object(stream))
+
+    xfa = ArrayObject()
+    for index, field in enumerate(fields):
+        xfa.append(TextStringObject(f"tag{index}"))
+        xfa.append(field)
+
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject({
+        NameObject("/XFA"): xfa,
+    })
+
+    with apply_configuration(xfa_decoding_work_maximum_length=5_000), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^XFA decoding exceeded the maximum accumulated decoding work of 5000 bytes\.$"
+            ):
+        _ = writer.xfa
