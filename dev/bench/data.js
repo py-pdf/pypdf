@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793816458597,
+  "lastUpdate": 1793816602957,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -164413,6 +164413,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02627829424086948",
             "extra": "mean: 936.582640000006 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f5b3f0777b8d1242cbe9fb2b8bbb21680271fbb6",
+          "message": "PI: Speed up LZW decoding for clear table markers (#4354)\n\n* PI: Speed up LZW decoding for clear table markers\n\nPreviously, each clear table marker re-generated the full list, which\nwould cause long runtimes for streams consisting of an alternating\nseries of emitting a byte and clearing the table. But even for other\ncases, re-creating the whole list means overhead, thus only clear the\nactually changed entries when initializing the decoding table after the\ninitial initialization.\n\n* Increase timeout",
+          "timestamp": "2026-11-04T19:18:30+01:00",
+          "tree_id": "122fc3b74f10e1b75ab36571cbadccbb3d1f3749",
+          "url": "https://github.com/py-pdf/pypdf/commit/f5b3f0777b8d1242cbe9fb2b8bbb21680271fbb6"
+        },
+        "date": 1793816590293,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.425947048470762,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020882662332287548",
+            "extra": "mean: 69.3195390666574 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.359014330002797,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010344456619346257",
+            "extra": "mean: 31.888757391307678 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9906333636184597,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030481489671411333",
+            "extra": "mean: 1.0094551997999814 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5063498158119389,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06187004618654464",
+            "extra": "mean: 1.974919252999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.31981675249221053,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03154794365622503",
+            "extra": "mean: 3.1267905517999908 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0777847325214724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015805464748298425",
+            "extra": "mean: 927.8290643999981 msec\nrounds: 5"
           }
         ]
       }
