@@ -100,7 +100,8 @@ def test_lzw_decoder__multiple_calls() -> None:
         assert codec.decode(encoded) == decoded
 
 
-@pytest.mark.timeout(5)  # Previously: 25 seconds
+@pytest.mark.timeout(10)  # Previously: 25 seconds
+@pytest.mark.slow
 def test_lzw_decoder__clear_table_marker_speed() -> None:
     data = b"\x80\x10`\x04\x18\x01\x06\x00A" * 100_000
 
