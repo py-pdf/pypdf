@@ -515,7 +515,8 @@ def test_4bits_image():
     image = reader.pages[0].images[0].image
     expected = bytes(y * 255 // 15 for y in range(16) for _ in range(16))
     assert image.size == (16, 16)
-    assert image.convert("L").tobytes() == expected
+    assert image.mode == "L"
+    assert image.tobytes() == expected
 
 
 @pytest.mark.enable_socket
@@ -564,7 +565,8 @@ def test_4bits_runlengthdecode():
     # the full 0-255 grayscale range.
     expected = bytes((x + y) % 16 * 255 // 15 for y in range(16) for x in range(16))
     assert image.size == (16, 16)
-    assert image.convert("L").tobytes() == expected
+    assert image.mode == "L"
+    assert image.tobytes() == expected
 
 
 @pytest.mark.enable_socket
