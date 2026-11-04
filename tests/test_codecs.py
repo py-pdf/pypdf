@@ -90,3 +90,18 @@ def test_lzw_decoder__output_limit():
             expected_exception=LimitReachedError, match=r"^Limit reached while decompressing: 75000828 > 75000000$"
     ):
         page.images[0].image.load()
+
+
+def test_lzw_decoder__multiple_calls() -> None:
+    decoded = b"Hello World!"
+    codec = LzwCodec()
+    encoded = codec.encode(decoded)
+    for _ in range(10):
+        assert codec.decode(encoded) == decoded
+
+
+@pytest.mark.timeout(5)  # Previously: 25 seconds
+def test_lzw_decoder__clear_table_marker_speed() -> None:
+    data = b"\x80\x10`\x04\x18\x01\x06\x00A" * 100_000
+
+    assert LzwCodec().decode(data) == b"A" * 400_000
