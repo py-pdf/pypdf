@@ -513,6 +513,7 @@ def test_4bits_image():
     """
     reader = PdfReader(BytesIO(get_data_from_url(name="4bits_image.pdf")))
     image = reader.pages[0].images[0].image
+    # 4-bit DeviceGray samples are scaled to the full 0-255 grayscale range.
     expected = bytes(y * 255 // 15 for y in range(16) for _ in range(16))
     assert image.size == (16, 16)
     assert image.mode == "L"
