@@ -90,6 +90,73 @@ def test_read_xmp_metadata(src, has_xmp):
         assert xmp.dc_contributor == []
 
 
+@pytest.mark.parametrize("name", ["title", "description", "rights"])
+@pytest.mark.parametrize("prefix", ["dc", "legacy"])
+@pytest.mark.parametrize(
+    ("serialized", "expected"),
+    [
+        ("Legacy metadata", "Legacy metadata"),
+        ("Étude &amp; &quot;Plan&quot;", 'Étude & "Plan"'),
+        ("", ""),
+    ],
+)
+def test_langalt_metadata_attribute(name, prefix, serialized, expected):
+    """
+    Language-alternative metadata stored as an attribute is read as x-default.
+
+    This is a regression test for issue #4277.
+    """
+    stream = ContentStream(None, None)
+    stream.set_data(
+        (
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:{prefix}="{pypdf.xmp.DC_NAMESPACE}" '
+            f'{prefix}:{name}="{serialized}" />'
+            '</rdf:RDF>'
+        ).encode()
+    )
+    xmp = XmpInformation(stream)
+    assert getattr(xmp, f"dc_{name}") == {"x-default": expected}
+
+
+def test_langalt_attribute_preserves_language_alternatives():
+    """Element alternatives retain their language keys alongside an attribute fallback."""
+    stream = ContentStream(None, None)
+    stream.set_data(
+        (
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:dc="{pypdf.xmp.DC_NAMESPACE}" dc:title="Legacy title">'
+            '<dc:title><rdf:Alt>'
+            '<rdf:li xml:lang="fr">Titre français</rdf:li>'
+            '<rdf:li xml:lang="x-default">Preferred title</rdf:li>'
+            '</rdf:Alt></dc:title>'
+            '</rdf:Description></rdf:RDF>'
+        ).encode()
+    )
+    xmp = XmpInformation(stream)
+    assert xmp.dc_title == {"fr": "Titre français", "x-default": "Preferred title"}
+
+
+def test_langalt_attribute_survives_pdf_roundtrip():
+    """A legacy title attribute remains readable after a PDF write/read round trip."""
+    stream = ContentStream(None, None)
+    stream.set_data(
+        (
+            f'<rdf:RDF xmlns:rdf="{pypdf.xmp.RDF_NAMESPACE}">'
+            f'<rdf:Description rdf:about="" xmlns:dc="{pypdf.xmp.DC_NAMESPACE}" '
+            'dc:title="Legacy title" />'
+            '</rdf:RDF>'
+        ).encode()
+    )
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.xmp_metadata = XmpInformation(stream)
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    assert reader.xmp_metadata.dc_title == {"x-default": "Legacy title"}
+
+
 def get_all_tiff(xmp: pypdf.xmp.XmpInformation):
     """Return all TIFF metadata as a dictionary."""
     data = {}
