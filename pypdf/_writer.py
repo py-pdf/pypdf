@@ -478,15 +478,12 @@ class PdfWriter(PdfDocCommon):
         self,
         indirect_reference: int | IndirectObject,
     ) -> PdfObject:
-        try:
-            if isinstance(indirect_reference, int):
-                obj = self._objects[indirect_reference - 1]
-            elif indirect_reference.pdf != self:
-                raise ValueError("PDF must be self")
-            else:
-                obj = self._objects[indirect_reference.idnum - 1]
-        except IndexError:
-            raise PdfReadError(f"Object {indirect_reference!r} not found!") from None
+        if isinstance(indirect_reference, int):
+            obj = self._objects[indirect_reference - 1]
+        elif indirect_reference.pdf != self:
+            raise ValueError("PDF must be self")
+        else:
+            obj = self._objects[indirect_reference.idnum - 1]
         if obj is None:
             raise PdfReadError(f"Object {indirect_reference!r} not found!")
         return obj

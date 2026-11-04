@@ -100,7 +100,7 @@ def _find_outline_item_before_page(
             continue
         try:
             child_page_number = writer._get_page_number_by_indirect(page_ref, _page_cache=page_cache)
-        except (PdfReadError, ValueError) as exc:
+        except (PdfReadError, ValueError, IndexError) as exc:
             logger_warning(
                 f"Could not resolve page number for outline item: {exc}",
                 source=__name__,
