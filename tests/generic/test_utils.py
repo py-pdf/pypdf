@@ -25,10 +25,10 @@ def test_create_string_object__forced_encoding__dict() -> None:
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (b"\xef\xbb\xbf", ""),
-        (b"\xef\xbb\xbfHello World", "Hello World"),
-        (b"\xef\xbb\xbfGr\xc3\xbc\xc3\x9fe \xe2\x82\xac", "Grüße €"),
-        (b"\xef\xbb\xbf\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e", "日本語"),
+        pytest.param(b"\xef\xbb\xbf", "", id="bom-only"),
+        pytest.param(b"\xef\xbb\xbfHello World", "Hello World", id="ascii"),
+        pytest.param(b"\xef\xbb\xbfGr\xc3\xbc\xc3\x9fe \xe2\x82\xac", "Grüße €", id="latin-and-euro"),
+        pytest.param(b"\xef\xbb\xbf\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e", "日本語", id="cjk"),
     ],
 )
 def test_create_string_object__utf8(value: bytes, expected: str) -> None:

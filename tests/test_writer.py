@@ -2587,9 +2587,9 @@ def test_clone_from__tolerate_dangling_info_reference():
     "file_identifier",
     [
         # Decoded as UTF-16BE text due to the leading null byte.
-        b"\x00\xa1\xb2\xc3\xd4\xe5\xf6\x07\x18\x29\x3a\x4b\x5c\x6d\x7e\x8f",
+        pytest.param(b"\x00\xa1\xb2\xc3\xd4\xe5\xf6\x07\x18\x29\x3a\x4b\x5c\x6d\x7e\x8f", id="leading-null-byte"),
         # Decoded as UTF-8 text due to the leading BOM.
-        b"\xef\xbb\xbfAb\xe2\x82\xac\xc3\xa912\x00\x00\x00\x00",
+        pytest.param(b"\xef\xbb\xbfAb\xe2\x82\xac\xc3\xa912\x00\x00\x00\x00", id="utf8-bom"),
     ],
 )
 def test_clone_from__keep_file_identifier_bytes(file_identifier):
