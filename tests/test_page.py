@@ -344,6 +344,68 @@ def test_page_number_of_identical_pages():
         assert number == page.page_number
 
 
+def test_page_number_follows_inserted_and_removed_pages():
+    """
+    The page number of every page must stay right when pages are inserted
+    in front of it, removed in front of it, or removed completely
+    (ISO 32000-2:2020, 7.7.3.2, page tree nodes: the order of the leaf
+    nodes defines the page numbers).
+    """
+    writer = PdfWriter()
+    pages = [writer.add_blank_page(width=100 + i, height=200) for i in range(4)]
+    assert [page.page_number for page in pages] == [0, 1, 2, 3]
+
+    writer.insert_blank_page(width=300, height=300, index=0)
+    assert writer.pages[0].page_number == 0
+    assert [page.page_number for page in pages] == [1, 2, 3, 4]
+
+    writer.remove_page(1)  # the first of the original pages
+    assert [page.page_number for page in pages[1:]] == [1, 2, 3]
+    assert pages[0].page_number is None
+    assert writer.get_page_number(pages[2]) == 2
+
+    last = writer.add_blank_page(width=50, height=50)
+    assert last.page_number == 4
+    assert [page.page_number for page in writer.pages] == [0, 1, 2, 3, 4]
+
+
+def test_page_number_of_a_reader_follows_removed_pages():
+    """After a page of a reader is removed, the pages behind it move up (ISO 32000-2:2020, 7.7.3.2)."""
+    writer = PdfWriter()
+    for i in range(4):
+        writer.add_blank_page(width=100 + i, height=200)
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    pages = list(reader.pages)
+    assert [page.page_number for page in pages] == [0, 1, 2, 3]
+
+    reader.remove_page(0)
+    assert [page.page_number for page in pages[1:]] == [0, 1, 2]
+    assert [reader.get_page_number(page) for page in pages[1:]] == [0, 1, 2]
+
+
+def test_page_number_of_a_page_of_another_document():
+    """
+    A page that is not in the page tree of a writer has no page number in it
+    (ISO 32000-2:2020, 7.7.3.2), even if the writer has a page at the same
+    position or with the same object number.
+    """
+    first = PdfWriter()
+    second = PdfWriter()
+    for writer in (first, second):
+        for i in range(4):
+            writer.add_blank_page(width=100 + i, height=200)
+    output = BytesIO()
+    first.write(output)
+    reader = PdfReader(output)
+
+    assert second.get_page_number(first.pages[2]) is None
+    assert second.get_page_number(reader.pages[2]) is None
+    assert first.pages[2].page_number == 2
+    assert second.get_page_number(second.pages[2]) == 2
+
+
 def test_page_number_of_named_destination():
     """A named destination has to resolve to the page it points at."""
     writer = PdfWriter()

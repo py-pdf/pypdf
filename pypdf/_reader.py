@@ -383,7 +383,14 @@ class PdfReader(PdfDocCommon):
         else:
             idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
-        return self._page_id2num.get(idnum, None)
+        number: int | None = self._page_id2num.get(idnum, None)
+        if number is not None and not (
+            number < len(self.pages) and getattr(self.pages[number].indirect_reference, "idnum", None) == idnum
+        ):
+            # The pages changed since the map was built, for example by remove_page().
+            self._page_id2num = None
+            return self._get_page_number_by_indirect(indirect_reference)
+        return number
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
