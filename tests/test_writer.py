@@ -1515,6 +1515,25 @@ def test_add_single_annotation(pdf_file_path):
 
 
 @pytest.mark.samples
+def test_add_outline_item_with_page_not_in_writer() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(200, 200)
+
+    other_writer = PdfWriter()
+    other_writer.add_blank_page(200, 200)
+    foreign_page = other_writer.pages[0]
+
+    with pytest.raises(ValueError, match="does not belong to this writer"):
+        writer.add_outline_item("Foreign page", foreign_page)
+
+    with pytest.raises(ValueError, match="out of range"):
+        writer.add_outline_item("Missing page", 5)
+
+    # Valid usages keep working.
+    writer.add_outline_item("Page 1", 0)
+    writer.add_outline_item("Page 1 (object)", writer.pages[0])
+
+
 def test_colors_in_outline_item(pdf_file_path):
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()

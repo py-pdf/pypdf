@@ -1887,12 +1887,21 @@ class PdfWriter(PdfDocCommon):
             if isinstance(page_number, IndirectObject):
                 page_ref = page_number
             elif isinstance(page_number, PageObject):
-                page_ref = page_number.indirect_reference
+                page_ref = getattr(page_number, "indirect_reference", None)
+                if page_ref is None or not any(
+                    getattr(page, "indirect_reference", None) is page_ref
+                    for page in self.pages
+                ):
+                    raise ValueError(
+                        "page_number: the given page does not belong to this writer."
+                    )
             elif isinstance(page_number, int):
                 try:
                     page_ref = self.pages[page_number].indirect_reference
                 except IndexError:
-                    page_ref = NumberObject(page_number)
+                    raise ValueError(
+                        f"page_number: {page_number} is out of range for this writer."
+                    )
             else:
                 raise TypeError(f"page_number: invalid type {type(page_number)}")
             if page_ref is None:
