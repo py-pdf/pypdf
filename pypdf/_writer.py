@@ -29,8 +29,8 @@
 
 import decimal
 import enum
-import hashlib
 import re
+import secrets
 import struct
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -135,13 +135,6 @@ class ObjectDeletionFlag(enum.IntFlag):
     INLINE_IMAGES = enum.auto()
     DRAWING_IMAGES = enum.auto()
     IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
-
-
-def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
-    hash_object = hashlib.md5(usedforsecurity=False)
-    for block in iter(lambda: stream.read(blocksize), b""):
-        hash_object.update(block)
-    return hash_object.hexdigest()
 
 
 class PdfWriter(PdfDocCommon):
@@ -1258,12 +1251,6 @@ class PdfWriter(PdfDocCommon):
             ):
                 after_page_append(page.get_object())
 
-    def _compute_document_identifier(self) -> ByteStringObject:
-        stream = BytesIO()
-        self._write_pdf_structure(stream)
-        stream.seek(0)
-        return ByteStringObject(_rolling_checksum(stream).encode("utf8"))
-
     def generate_file_identifiers(self) -> None:
         """
         Generate an identifier for the PDF that will be written.
@@ -1278,9 +1265,9 @@ class PdfWriter(PdfDocCommon):
         """
         if self._ID:
             id1 = self._ID[0]
-            id2 = self._compute_document_identifier()
+            id2 = ByteStringObject(secrets.token_bytes(16))
         else:
-            id1 = self._compute_document_identifier()
+            id1 = ByteStringObject(secrets.token_bytes(16))
             id2 = id1
         self._ID = ArrayObject((id1, id2))
 
