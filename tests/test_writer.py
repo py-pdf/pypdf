@@ -20,6 +20,7 @@ from pypdf import (
     Transformation,
 )
 from pypdf._utils import get_stream_data
+from pypdf._writer import _NamedDestinationIndex
 from pypdf.annotations import Link
 from pypdf.constants import FieldDictionaryAttributes
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
@@ -983,6 +984,79 @@ def test_add_named_destination_with_fit(fit, expected):
     destination = reader.named_destinations["Target"]
     assert reader.get_destination_page_number(destination) == 1
     assert destination.dest_array[1:] == expected
+
+
+def _build_reader_with_named_destinations(*, titles) -> PdfReader:
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    names = ArrayObject()
+    for title in titles:
+        names.extend([TextStringObject(title), ArrayObject([page.indirect_reference, NameObject("/Fit")])])
+    writer.root_object[NameObject("/Names")] = DictionaryObject(
+        {NameObject("/Dests"): DictionaryObject({NameObject("/Names"): names})}
+    )
+    output = BytesIO()
+    writer.write(output)
+    return PdfReader(output)
+
+
+def _get_named_destination_titles(writer: PdfWriter) -> list[str]:
+    return [str(title) for title in writer.get_named_dest_root()[::2]]
+
+
+_MANY_TITLES = [f"d{index:02d}" for index in range(40)]
+
+
+@pytest.mark.parametrize(
+    "titles",
+    [pytest.param(["c", "a", "b"], id="few-destinations"), pytest.param(_MANY_TITLES[::-1], id="many-destinations")],
+)
+def test_append__named_destinations_sorted_without_duplicates(titles):
+    writer = PdfWriter()
+    writer.append(_build_reader_with_named_destinations(titles=titles))
+    writer.append(_build_reader_with_named_destinations(titles=[titles[0], "zz"]))
+
+    assert _get_named_destination_titles(writer) == [*sorted(titles), "zz"]
+
+
+def test_append__named_destinations_into_unsorted_array():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    names = writer.get_named_dest_root()
+    for title in ("zz", "aa"):
+        names.extend([TextStringObject(title), ArrayObject([NumberObject(0), NameObject("/Fit")])])
+
+    writer.append(_build_reader_with_named_destinations(titles=_MANY_TITLES))
+
+    # Each title goes before the first greater key, as in add_named_destination_array().
+    assert _get_named_destination_titles(writer) == [*_MANY_TITLES, "zz", "aa"]
+
+
+def test_append__named_destinations_into_indirect_array():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    names = writer.get_named_dest_root()
+    dests = writer.root_object["/Names"]["/Dests"]
+    dests[NameObject("/Names")] = writer._add_object(names)
+
+    writer.append(_build_reader_with_named_destinations(titles=_MANY_TITLES[1:]))
+    writer.append(_build_reader_with_named_destinations(titles=_MANY_TITLES[:2]))
+
+    assert _get_named_destination_titles(writer) == _MANY_TITLES
+
+
+def test_named_destination_index__titles_which_are_not_strings():
+    names = ArrayObject([TextStringObject("a"), NullObject()])
+    index = _NamedDestinationIndex(is_enabled=True)
+
+    assert index.contains(DictionaryObject({NameObject("/a"): NullObject()}), "/a")
+    assert not index.contains(names, b"a")
+    assert index.insert(names, "b", NullObject())
+    assert not index.insert(names, b"c", NullObject())
+    # The pending "b" is added before the array is scanned again.
+    assert names[::2] == ["a", "b"]
+    index.record_insertion(names, b"c")
+    assert index.contains(names, "b")
 
 
 @pytest.mark.parametrize("catalog_dests", [False, True])

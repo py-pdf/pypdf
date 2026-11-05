@@ -35,7 +35,7 @@ import struct
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
-from itertools import compress
+from itertools import compress, pairwise
 from pathlib import Path
 from re import Pattern
 from types import TracebackType
@@ -142,6 +142,84 @@ def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
     for block in iter(lambda: stream.read(blocksize), b""):
         hash_object.update(block)
     return hash_object.hexdigest()
+
+
+# Building the index reads the whole /Names array, which costs more than it saves
+# when a document adds only a few named destinations.
+_NAMED_DESTINATION_INDEX_MINIMUM = 32
+
+
+class _NamedDestinationIndex:
+    """
+    Look up and insert named destinations in a ``/Names`` array without scanning it.
+
+    ``PdfWriter.merge`` adds the named destinations of a document one by one, and both
+    looking each one up in the growing array and inserting it there take quadratic time.
+    The string entries are kept in a set instead, as only strings compare equal to a title.
+    If the keys are sorted strings, the new destinations are collected and sorted into the
+    array once by ``flush``: inserting each one before the first greater key gives the same
+    order as this stable sort. Other arrays are scanned as before.
+    """
+
+    def __init__(self, *, is_enabled: bool) -> None:
+        self._is_enabled = is_enabled
+        self._array: list[Any] | None = None
+        self._length = 0
+        self._strings: set[str] = set()
+        self._is_sorted = False
+        self._pending: list[tuple[str, Any]] = []
+
+    def _update(self, array: list[Any]) -> None:
+        if array is self._array and len(array) == self._length:
+            return
+        self.flush()
+        self._array = array
+        self._length = len(array)
+        self._strings = {entry for entry in array if isinstance(entry, str)}
+        keys = array[::2]
+        self._is_sorted = (
+            self._length % 2 == 0
+            and all(isinstance(key, str) for key in keys)
+            and all(previous <= key for previous, key in pairwise(keys))
+        )
+
+    def contains(self, container: Any, title: Any) -> bool:
+        if isinstance(container, IndirectObject):
+            container = container.get_object()
+        if not self._is_enabled or not isinstance(container, list) or not isinstance(title, str):
+            return title in container
+        self._update(container)
+        return title in self._strings
+
+    def insert(self, array: list[Any], title: Any, destination: Any) -> bool:
+        """Insert like ``PdfWriter.add_named_destination_array``; return False if the array has to be scanned."""
+        if not self._is_enabled:
+            return False
+        self._update(array)
+        if not self._is_sorted or not isinstance(title, str):
+            self.flush()
+            return False
+        self._pending.append((title, destination))
+        self._strings.add(title)
+        return True
+
+    def record_insertion(self, array: list[Any], title: Any) -> None:
+        """Update the index after ``add_named_destination_array`` inserted ``title`` into ``array``."""
+        if array is self._array and isinstance(title, str):
+            self._strings.add(title)
+            self._length = len(array)
+
+    def flush(self) -> None:
+        if not self._pending:
+            return
+        array = self._array
+        assert array is not None, "mypy"
+        pairs = [(array[i], array[i + 1]) for i in range(0, len(array), 2)]
+        pairs += [(TextStringObject(title), destination) for title, destination in self._pending]
+        pairs.sort(key=lambda pair: pair[0])
+        array[:] = [entry for pair in pairs for entry in pair]
+        self._pending = []
+        self._length = len(array)
 
 
 class PdfWriter(PdfDocCommon):
@@ -2834,8 +2912,17 @@ class PdfWriter(PdfDocCommon):
 
         arr: Any
 
-        for dest in reader._named_destinations.values():
-            self._merge__process_named_dests(dest=dest, reader=reader, srcpages=srcpages)
+        named_destinations = _NamedDestinationIndex(
+            is_enabled=len(reader._named_destinations) >= _NAMED_DESTINATION_INDEX_MINIMUM
+        )
+        # Keep the destinations added before an error, as adding them one by one did.
+        try:
+            for dest in reader._named_destinations.values():
+                self._merge__process_named_dests(
+                    dest=dest, reader=reader, srcpages=srcpages, named_destinations=named_destinations
+                )
+        finally:
+            named_destinations.flush()
 
         outline_item_typ: TreeObject
         if outline_item is not None:
@@ -2916,14 +3003,20 @@ class PdfWriter(PdfDocCommon):
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)
 
-    def _merge__process_named_dests(self, dest: Any, reader: PdfDocCommon, srcpages: dict[int, PageObject]) -> None:
+    def _merge__process_named_dests(
+        self,
+        dest: Any,
+        reader: PdfDocCommon,
+        srcpages: dict[int, PageObject],
+        named_destinations: _NamedDestinationIndex,
+    ) -> None:
         arr: Any = dest.dest_array
-        if "/Names" in self._root_object and dest["/Title"] in cast(
-            list[Any],
+        if "/Names" in self._root_object and named_destinations.contains(
             cast(
                 DictionaryObject,
                 cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
             ).get("/Names", DictionaryObject()),
+            dest["/Title"],
         ):
             # already exists: should not duplicate it
             pass
@@ -2941,14 +3034,22 @@ class PdfWriter(PdfDocCommon):
                 arr[NumberObject(0)] = NumberObject(
                     srcpages[p.indirect_reference.idnum].page_number
                 )
-                self.add_named_destination_array(dest["/Title"], arr)
+                self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
             except KeyError:
                 pass
         elif dest["/Page"].indirect_reference.idnum in srcpages:
             arr[NumberObject(0)] = srcpages[
                 dest["/Page"].indirect_reference.idnum
             ].indirect_reference
-            self.add_named_destination_array(dest["/Title"], arr)
+            self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
+
+    def _add_named_destination_array_indexed(
+        self, title: Any, destination: Any, named_destinations: _NamedDestinationIndex
+    ) -> None:
+        names = self.get_named_dest_root()
+        if not named_destinations.insert(names, title, destination):
+            self.add_named_destination_array(title, destination)
+            named_destinations.record_insertion(names, title)
 
     def _add_articles_thread(
         self,
