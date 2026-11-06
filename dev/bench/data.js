@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793963172375,
+  "lastUpdate": 1793963373281,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -164809,6 +164809,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0643713671989189",
             "extra": "mean: 946.9271992000017 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "18904b932b47891fddf13d5598bbc0b4d5eea17a",
+          "message": "SEC: Block not strictly increasing offsets in object streams (#4364)\n\nOffsets in an object stream should not be identical, but in increasing\norder. Previously, we would allow identical offsets, which would cause\nthe same object to be created multiple times.",
+          "timestamp": "2026-11-06T12:04:35+01:00",
+          "tree_id": "f8c5e1f6aa4a69b8d2e4e16dfe1b345762131ba5",
+          "url": "https://github.com/py-pdf/pypdf/commit/18904b932b47891fddf13d5598bbc0b4d5eea17a"
+        },
+        "date": 1793963359596,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.495570917927443,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019746519494750387",
+            "extra": "mean: 68.98658946666576 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.04519800714328,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010879732388122853",
+            "extra": "mean: 39.92781369565473 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9302220524280216,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039969817804493504",
+            "extra": "mean: 1.0750121407999813 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.4922238760020141,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05756887596105507",
+            "extra": "mean: 2.031595883000011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3200835057407935,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029553450315212965",
+            "extra": "mean: 3.124184726999988 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1196962848371108,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04638716687135379",
+            "extra": "mean: 893.099328400001 msec\nrounds: 5"
           }
         ]
       }
