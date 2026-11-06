@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793964187986,
+  "lastUpdate": 1793964381954,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -164941,6 +164941,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04638716687135379",
             "extra": "mean: 893.099328400001 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8cd1b7948f479a85a1483f2f4f1996dbdce776a3",
+          "message": "SEC: Make file identifiers non-deterministic (#4366)\n\nPreviously, the file identifiers were generated as MD5 hash from the\nfile content. This has multiple side effects:\n\n  * For large files, this requires calculation overhead.\n  * MD5 is regularly flagged as being insecure, while recommended in the\n    specification.\n  * Templated low entropy PDF files allow retrieving secrets from\n    encrypted files based on the identifiers, given one document with\n    the same template.\n\nFor this reason, switch to a completely random string, as this\n\"attempt[s] to ensure the uniqueness of file identifiers\" as well, while\nallowing no insights into the actual document.\n\nThis closes #2003 as well, which has been open/stale for a few years,\ngiven no explicit reason for the change. With the above bullet points,\nthis has changed now.",
+          "timestamp": "2026-11-06T12:21:37+01:00",
+          "tree_id": "be976f26bd94dfe31ac630927b8933a25275b74f",
+          "url": "https://github.com/py-pdf/pypdf/commit/8cd1b7948f479a85a1483f2f4f1996dbdce776a3"
+        },
+        "date": 1793964369426,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 15.006942347530392,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017532563887309845",
+            "extra": "mean: 66.63582606249996 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.965668944614134,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004556570704860906",
+            "extra": "mean: 31.283562428575078 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.9931525662209585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024702056633562598",
+            "extra": "mean: 1.0068946444000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5294106564064724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07022488860490383",
+            "extra": "mean: 1.8888928432 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.32176054762767115,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0360188046106795",
+            "extra": "mean: 3.107901224599982 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1120238175093784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039262634811043085",
+            "extra": "mean: 899.2613146000053 msec\nrounds: 5"
           }
         ]
       }
