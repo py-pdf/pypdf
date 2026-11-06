@@ -706,6 +706,15 @@ def _xobj_to_image(
         )
     elif mode == "":
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
+    elif isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
+        img, image_format, extension, _ = _handle_flate(
+            size,
+            data,
+            mode,
+            color_space,
+            colors,
+            obj_as_text,
+        )
     else:
         # Images without a filter (for example inline images) reach Pillow
         # directly, so low-bit samples have to be expanded here as well.
