@@ -206,20 +206,36 @@ def test_free_text__appearance_stream():
     assert b"(Hello World) Tj" in data
     assert b"(Second line) Tj" in data
 
-    # Cover the bold-only and italic-only font branches.
-    for bold, italic, expected in [(True, False, "/Helvetica-Bold"), (False, True, "/Helvetica-Oblique"), (True, True, "/Helvetica-BoldOblique")]:
+    # Cover the bold-only, italic-only and bold+italic font branches.
+    font_cases = [
+        (True, False, "/Helvetica-Bold"),
+        (False, True, "/Helvetica-Oblique"),
+        (True, True, "/Helvetica-BoldOblique"),
+    ]
+    for bold, italic, expected in font_cases:
         annot = FreeText(text="x", rect=(0, 0, 100, 50), bold=bold, italic=italic)
-        w = PdfWriter(); w.add_blank_page(width=200, height=100); w.add_annotation(0, annot)
-        out2 = BytesIO(); w.write(out2)
-        ap = PdfReader(out2).pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_object()
+        writer = PdfWriter()
+        writer.add_blank_page(width=200, height=100)
+        writer.add_annotation(0, annot)
+        out = BytesIO()
+        writer.write(out)
+        ap = PdfReader(out).pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_object()
         assert ap["/Resources"]["/Font"]["/Helv"]["/BaseFont"] == expected
 
-    # No border/background/font colour: exercises the skip and default-colour branches.
-    plain = FreeText(text="plain", rect=(0, 0, 100, 50), font_color=None,
-                     border_color=None, background_color=None)
-    w = PdfWriter(); w.add_blank_page(width=200, height=100); w.add_annotation(0, plain)
-    out3 = BytesIO(); w.write(out3)
-    ap = PdfReader(out3).pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_object()
+    # No border/background/font colour exercises the skip and default-colour branches.
+    plain = FreeText(
+        text="plain",
+        rect=(0, 0, 100, 50),
+        font_color=None,
+        border_color=None,
+        background_color=None,
+    )
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=100)
+    writer.add_annotation(0, plain)
+    out = BytesIO()
+    writer.write(out)
+    ap = PdfReader(out).pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_object()
     assert ap["/Subtype"] == "/Form"
 
 
