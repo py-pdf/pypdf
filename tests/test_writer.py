@@ -4237,7 +4237,11 @@ def test_generate_file_identifiers__update() -> None:
 
 
 def test_update_page_form_field_values__tuple_value_on_field_with_separate_widget() -> None:
-    """The value of a (value, font, size) tuple goes to the field, not to its widget."""
+    """
+    The value of a (value, font, size) tuple goes to the field, not to its widget.
+
+    This test is a regression test for issue #4367.
+    """
     writer = PdfWriter()
     page = writer.add_blank_page(width=200, height=100)
     font = writer._add_object(
