@@ -48,65 +48,77 @@ def merger_operate(merger):
     # to force to build outlines and ensure the add_outline_item is
     # at end of the list
     merger.write(BytesIO())
-    outline_item = merger.add_outline_item("An outline item", 0)
+    outline_item = merger.add_outline_item(title="An outline item", page_number=0)
     oi2 = merger.add_outline_item(
-        "deeper", 0, parent=outline_item, italic=True, bold=True
+        title="deeper", page_number=0, parent=outline_item, italic=True, bold=True
     )
     merger.add_outline_item(
-        "Let's see", 2, oi2, color=(255, 255, 0), bold=True, italic=True, fit=Fit.fit_box_vertically(left=12)
+        title="Let's see",
+        page_number=2,
+        parent=oi2,
+        color=(255, 255, 0),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box_vertically(left=12),
     )
     merger.add_outline_item(
-        "The XYZ fit",
-        0,
-        outline_item,
+        title="The XYZ fit",
+        page_number=0,
+        parent=outline_item,
         color=(255, 0, 15),
         bold=True,
         italic=True,
         fit=Fit.xyz(left=10, top=20, zoom=3),
     )
     merger.add_outline_item(
-        "The FitH fit",
-        0,
-        outline_item,
+        title="The FitH fit",
+        page_number=0,
+        parent=outline_item,
         color=(255, 0, 15),
         bold=True,
         italic=True,
         fit=Fit.fit_horizontally(top=10),
     )
     merger.add_outline_item(
-        "The FitV fit",
-        0,
-        outline_item,
+        title="The FitV fit",
+        page_number=0,
+        parent=outline_item,
         color=(255, 0, 15),
         bold=True,
         italic=True,
         fit=Fit.fit_vertically(left=10),
     )
     merger.add_outline_item(
-        "The FitR fit",
-        0,
-        outline_item,
+        title="The FitR fit",
+        page_number=0,
+        parent=outline_item,
         color=(255, 0, 15),
         bold=True,
         italic=True,
         fit=Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
     )
     merger.add_outline_item(
-        "The FitB fit", 0, outline_item, color=(255, 0, 15), bold=True, italic=True, fit=Fit.fit_box()
+        title="The FitB fit",
+        page_number=0,
+        parent=outline_item,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box(),
     )
     merger.add_outline_item(
-        "The FitBH fit",
-        0,
-        outline_item,
+        title="The FitBH fit",
+        page_number=0,
+        parent=outline_item,
         color=(255, 0, 15),
         bold=True,
         italic=True,
         fit=Fit.fit_box_horizontally(top=10),
     )
     merger.add_outline_item(
-        "The FitBV fit",
-        0,
-        outline_item,
+        title="The FitBV fit",
+        page_number=0,
+        parent=outline_item,
         color=(255, 0, 15),
         bold=True,
         italic=True,
@@ -212,7 +224,7 @@ def test_merge_write_closed_fh_with_writer(pdf_file_path):
     merger.add_metadata({"author": "Martin Thoma"})
     merger.set_page_layout("/SinglePage")
     merger.page_mode = "/UseNone"
-    merger.add_outline_item("An outline item", 0)
+    merger.add_outline_item(title="An outline item", page_number=0)
 
 
 @pytest.mark.enable_socket

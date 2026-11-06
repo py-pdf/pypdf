@@ -61,6 +61,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
+    deprecate_positional_arguments,
     deprecate_with_replacement,
     deprecation_with_replacement,
     logger_warning,
@@ -1831,8 +1832,10 @@ class PdfWriter(PdfDocCommon):
             outline_item_object, parent, before, is_open
         )
 
+    @deprecate_positional_arguments("8.0.0")
     def add_outline_item(
         self,
+        *,
         title: str,
         page_number: PageObject | IndirectObject | int | None,
         parent: TreeObject | IndirectObject | None = None,
@@ -1851,35 +1854,24 @@ class PdfWriter(PdfDocCommon):
             page_number: Page number this outline item will point to.
             parent: A reference to a parent outline item to create nested
                 outline items.
-            before:
+            before: The outline item in front of which the new outline item
+                is inserted. If None, the new outline item is appended.
             color: Color of the outline item's font as a red, green, blue tuple
                 from 0.0 to 1.0 or as a Hex String (#RRGGBB)
             bold: Outline item font is bold
             italic: Outline item font is italic
             fit: The fit of the destination page.
+            is_open: Whether the children of the outline item are shown.
 
         Returns:
             The added outline item as an indirect object.
 
         .. deprecated:: 7.0.0
-            Passing the positional parameters in the order without ``before``
-            (title, page_number, parent, color, bold, italic, fit, pagenum)
-            is deprecated and will be removed in pypdf 8.0.0.
-            Use keyword arguments instead.
+            Passing positional arguments is deprecated and will be removed
+            in pypdf 8.0.0. Use keyword arguments instead.
 
         """
         page_ref: NullObject | IndirectObject | NumberObject | None
-        if isinstance(italic, Fit):  # it means that we are on the old params
-            deprecate_with_replacement(
-                "Passing (title, page_number, parent, color, bold, italic, fit, pagenum) to add_outline_item",
-                "keyword arguments",
-                "8.0.0",
-            )
-            if fit is not None and page_number is None:
-                page_number = fit
-            return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic, is_open=is_open
-            )
         if page_number is None:
             action_ref = None
         else:
@@ -2831,8 +2823,8 @@ class PdfWriter(PdfDocCommon):
             outline_item_typ = cast(
                 "TreeObject",
                 self.add_outline_item(
-                    TextStringObject(outline_item),
-                    next(iter(srcpages.values())).indirect_reference,
+                    title=TextStringObject(outline_item),
+                    page_number=next(iter(srcpages.values())).indirect_reference,
                     fit=PAGE_FIT,
                 ).get_object(),
             )
