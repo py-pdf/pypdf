@@ -1866,7 +1866,7 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added outline item as an indirect object.
 
-        .. deprecated:: 7.0.0
+        .. deprecated:: 7.0.1
             Passing positional arguments is deprecated and will be removed
             in pypdf 8.0.0. Use keyword arguments instead.
 
@@ -2245,7 +2245,7 @@ class PdfWriter(PdfDocCommon):
             to_delete: The type of images to be deleted
                 (default = all images types)
 
-        .. deprecated:: 7.0.0
+        .. deprecated:: 7.0.1
             Passing a boolean as ``to_delete`` is deprecated and will be
             removed in pypdf 8.0.0. Use ``ImageType.ALL`` instead.
 
