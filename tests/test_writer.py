@@ -4234,3 +4234,43 @@ def test_generate_file_identifiers__update() -> None:
     writer.generate_file_identifiers()
     assert writer._ID[0] == id_permanent
     assert writer._ID[1] != id_changing
+
+
+def test_update_page_form_field_values_tuple_writes_to_parent_field() -> None:
+    """Issue #4367: Tuple value should be written to parent field rather than widget."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=100)
+    font = writer._add_object(
+        DictionaryObject({
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        })
+    )
+    field = DictionaryObject({
+        NameObject("/FT"): NameObject("/Tx"),
+        NameObject("/T"): TextStringObject("name"),
+        NameObject("/DA"): TextStringObject("/Helv 12 Tf 0 g"),
+    })
+    field_ref = writer._add_object(field)
+    widget = DictionaryObject({
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Widget"),
+        NameObject("/Rect"): RectangleObject([10, 10, 190, 30]),
+        NameObject("/Parent"): field_ref,
+    })
+    widget_ref = writer._add_object(widget)
+    field[NameObject("/Kids")] = ArrayObject([widget_ref])
+    page[NameObject("/Annots")] = ArrayObject([widget_ref])
+    writer._root_object[NameObject("/AcroForm")] = DictionaryObject({
+        NameObject("/Fields"): ArrayObject([field_ref]),
+        NameObject("/DR"): DictionaryObject({NameObject("/Font"): DictionaryObject({NameObject("/Helv"): font})}),
+    })
+
+    writer.update_page_form_field_values(page, {"name": ("Alice", "/Helv", 10)}, auto_regenerate=False)
+
+    # Value /V must be written to the parent field, not just the widget
+    assert field.get("/V") == "Alice"
+    assert writer.get_form_text_fields()["name"] == "Alice"
+    appearance = widget["/AP"]["/N"].get_object().get_data()
+    assert b"(Alice) Tj" in appearance
