@@ -458,6 +458,7 @@ class PdfReader(PdfDocCommon):
 
             # Phase 1: Read the index (objnum, offset) pairs from the header.
             obj_index: list[tuple[int, int]] = []
+            last_offset: int = -1
             for _i in range(n):
                 read_non_whitespace(stream_data)
                 stream_data.seek(-1, 1)
@@ -488,7 +489,11 @@ class PdfReader(PdfDocCommon):
                         stmnum=stmnum,
                     )
                     continue
-                obj_index.append((int(objnum), int(offset)))
+                int_offset = int(offset)
+                if int_offset <= last_offset:
+                    raise PdfReadError(f"Invalid offset {offset} in object stream {stmnum}.")
+                last_offset = int_offset
+                obj_index.append((int(objnum), int_offset))
 
             # Phase 2: Parse each object and cache it.
             target_obj: PdfObject = NullObject()
