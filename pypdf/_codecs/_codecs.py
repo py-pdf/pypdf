@@ -7,6 +7,7 @@ the module should not do any PDF parsing.
 
 import io
 from abc import ABC, abstractmethod
+from typing import ClassVar
 
 from pypdf._utils import logger_warning
 from pypdf.errors import LimitReachedError, PdfStreamError
@@ -50,8 +51,15 @@ class LzwCodec(Codec):
     INITIAL_BITS_PER_CODE = 9  # Initial code bit width
     MAX_BITS_PER_CODE = 12  # Maximum code bit width
 
+    _AND_TABLE: ClassVar[list[int]] = [511, 1023, 2047, 4095]
+
     def __init__(self, max_output_length: int = 75_000_000) -> None:
         self.max_output_length = max_output_length
+        self._table_index = -1
+        self._next_bits = -1
+        self._next_data = -1
+        self._byte_pointer = -1
+        self.decoding_table: list[bytes] = []
 
     def _initialize_encoding_table(self) -> None:
         """Initialize the encoding table and state to initial conditions."""
@@ -148,14 +156,20 @@ class LzwCodec(Codec):
 
     def _initialize_decoding_table(self) -> None:
         self.max_code_value = (1 << self.MAX_BITS_PER_CODE) - 1
-        self.decoding_table = [bytes([i]) for i in range(self.CLEAR_TABLE_MARKER)] + [
-            b""
-        ] * (self.max_code_value - self.CLEAR_TABLE_MARKER + 1)
+        if not self.decoding_table:
+            self.decoding_table = [
+                bytes([i]) for i in range(self.CLEAR_TABLE_MARKER)
+            ] + [b""] * (
+                self.max_code_value - self.CLEAR_TABLE_MARKER + 1
+            )
+        else:
+            for i in range(self.EOD_MARKER + 1, self._table_index):
+                self.decoding_table[i] = b""
+
         self._table_index = self.EOD_MARKER + 1
         self._bits_to_get = 9
 
     def _next_code_decode(self, data: bytes) -> int:
-        self._next_data: int
         try:
             while self._next_bits < self._bits_to_get:
                 self._next_data = (self._next_data << 8) | (
@@ -166,7 +180,7 @@ class LzwCodec(Codec):
 
             code = (
                 self._next_data >> (self._next_bits - self._bits_to_get)
-            ) & self._and_table[self._bits_to_get - 9]
+            ) & self._AND_TABLE[self._bits_to_get - 9]
             self._next_bits -= self._bits_to_get
 
             # Reduce data to get rid of the overhead,
@@ -212,9 +226,7 @@ class LzwCodec(Codec):
         The following code was converted to Python from the following code:
         https://github.com/empira/PDFsharp/blob/master/src/foundation/src/PDFsharp/src/PdfSharp/Pdf.Filters/LzwDecode.cs
         """
-        self._and_table = [511, 1023, 2047, 4095]
         self._table_index = 0
-        self._bits_to_get = 9
         self._byte_pointer = 0
         self._next_data = 0
         self._next_bits = 0
@@ -223,9 +235,6 @@ class LzwCodec(Codec):
         output_length = 0
 
         self._initialize_decoding_table()
-        self._byte_pointer = 0
-        self._next_data = 0
-        self._next_bits = 0
         old_code = self.CLEAR_TABLE_MARKER
 
         while True:
