@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793966279604,
+  "lastUpdate": 1793966394108,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -165073,6 +165073,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.039262634811043085",
             "extra": "mean: 899.2613146000053 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "8eeb0509d712e324e68e2bd38aff69e3b672e0cd",
+          "message": "REL: 7.0.0\n\n## What's new\n\n### Security (SEC)\n- Make file identifiers non-deterministic (#4366) by @stefan6419846\n- Block not strictly increasing offsets in object streams (#4364) by @stefan6419846\n- Limit XFA form decoding work (#4363) by @stefan6419846\n- Apply image size limits more strictly (#4361) by @stefan6419846\n\n### Deprecations (DEP)\n- Cleanup deprecations for the next major release (#4306) by @stefan6419846\n- Remove support for cryptography<43 (#4304) by @stefan6419846\n- Drop support for Python 3.9 (#4292) by @stefan6419846\n\n### New Features (ENH)\n- Allow setting border color for rectangle annotations (#4297) by @Ak4shh\n\n### Performance Improvements (PI)\n- Speed up LZW decoding for clear table markers (#4354) by @stefan6419846\n- Build right-to-left text runs with a single join (#4344) by @kholdrex\n- Read every page label number tree once for all pages (#4321) by @kholdrex\n- Decode the PNG Up predictor a row at a time (#4312) by @MartinThoma\n\n### Bug Fixes (BUG)\n- Fix cloning of objects that require constructor arguments (#4262) by @Ak4shh\n- Serialize XMP packets without an XML declaration (#4296) by @Ak4shh\n\n### Maintenance (MAINT)\n- Generate Symbol and ZapfDingbats encodings from Adobe sources (#4333) by @plenaerts\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.4...7.0.0)",
+          "timestamp": "2026-11-06T12:54:54+01:00",
+          "tree_id": "c407f26708e9696aca4cb24b6d44e7486093c4af",
+          "url": "https://github.com/py-pdf/pypdf/commit/8eeb0509d712e324e68e2bd38aff69e3b672e0cd"
+        },
+        "date": 1793966383137,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 17.401990193026275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019003467798526102",
+            "extra": "mean: 57.46469161905073 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.586022358571253,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013964185789209063",
+            "extra": "mean: 31.659573612903426 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.2204491437527398,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03384531480883205",
+            "extra": "mean: 819.3704793999984 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.576599713040048,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05492222626960815",
+            "extra": "mean: 1.7343054069999937 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4066661293620255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020847879070360318",
+            "extra": "mean: 2.4590196424 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4755599696964703,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03309064596713239",
+            "extra": "mean: 677.7088160000062 msec\nrounds: 5"
           }
         ]
       }
