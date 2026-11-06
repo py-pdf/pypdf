@@ -60,14 +60,12 @@ from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .errors import LimitReachedError, PdfReadError, PyPdfError
-from .filters import _decompress_with_limit
 from .generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
     Destination,
     DictionaryObject,
-    EncodedStreamObject,
     Field,
     Fit,
     FloatObject,
@@ -75,6 +73,7 @@ from .generic import (
     NameObject,
     NullObject,
     PdfObject,
+    StreamObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
@@ -1674,33 +1673,54 @@ class PdfDocCommon(ABC):
         ...  # pragma: no cover
 
     @property
-    def xfa(self) -> dict[str, Any] | None:
-        retval: dict[str, Any] = {}
+    def xfa(self) -> dict[str, bytes] | None:
+
         catalog = self.root_object
 
         if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
             return None
 
         tree = cast(TreeObject, catalog["/AcroForm"])
+        retval: dict[str, bytes] = {}
 
-        if "/XFA" in tree:
-            fields = tree["/XFA"].get_object()
-            if not isinstance(fields, ArrayObject):
-                logger_warning(
-                    "XFA entry is not an array: %(fields)s",
-                    source=__name__,
-                    fields=fields,
+        if "/XFA" not in tree:
+            return retval
+
+        fields = tree["/XFA"].get_object()
+        if not isinstance(fields, ArrayObject):
+            logger_warning(
+                "XFA entry is not an array: %(fields)s",
+                source=__name__,
+                fields=fields,
+            )
+            return retval
+
+        accumulated_length = 0
+        decoding_work_maximum_length = get_configuration().xfa_decoding_work_maximum_length
+
+        field_iterator = iter(fields)
+        for field in field_iterator:
+            tag = field
+            field = next(field_iterator, None)
+            if is_null_or_none(field):
+                continue
+            assert field is not None, "mypy"
+
+            field = cast(StreamObject | None, field.get_object())
+            if is_null_or_none(field):
+                continue
+            assert field is not None, "mypy"
+
+            decoded_data = field.get_data()
+            accumulated_length += len(decoded_data)
+
+            if accumulated_length > decoding_work_maximum_length:
+                raise LimitReachedError(
+                    "XFA decoding exceeded the maximum accumulated "
+                    f"decoding work of {decoding_work_maximum_length} bytes."
                 )
-                return retval
-            i = iter(fields)
-            for f in i:
-                tag = f
-                f = next(i, None)
-                if isinstance(f, IndirectObject):
-                    field = cast(EncodedStreamObject | None, f.get_object())
-                    if field:
-                        es = _decompress_with_limit(field._data)
-                        retval[tag] = es
+
+            retval[tag] = decoded_data
         return retval
 
     @property
