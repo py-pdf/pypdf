@@ -4229,4 +4229,3 @@ def test_add_outline_item_dict_with_action() -> None:
     assert len(reader.outline) == 1
     assert reader.outline[0].title == "Action Bookmark"
     assert reader.get_destination_page_number(reader.outline[0]) == 0
-
