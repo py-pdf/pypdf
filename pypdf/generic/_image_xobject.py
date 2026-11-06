@@ -752,5 +752,5 @@ def _xobj_to_image(
         raise
     except Exception as exception:
         logger_warning("Failed loading image: %(exception)s", source=__name__, exception=exception)
-        img = None  # type: ignore[assignment]
+        img = None  # type: ignore[assignment,unused-ignore]
     return extension, data, img
