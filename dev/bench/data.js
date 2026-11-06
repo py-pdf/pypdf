@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793961259419,
+  "lastUpdate": 1793962038491,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -124877,6 +124877,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018454369495998765",
             "extra": "mean: 641.9214430000011 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4f4751172535a8352a2dbddd82f8ac9e7dd932a6",
+          "message": "SEC: Limit XFA form decoding work (#4363)\n\nThis additionally fixes a bug with legitimate XFA forms not being read\ncorrectly. The corresponding test never checked the results, thus it\nremained unnoticed that `bool(field)` would always evaluate to `False`\nand thus the tag would be skipped. Now, we properly check at least the\nreturned keys and the code has been rewritten to be more explicit and\nreadable.",
+          "timestamp": "2026-11-06T11:45:43+01:00",
+          "tree_id": "b06584fb7ae37197ac7e9fa33e4c160d69973d03",
+          "url": "https://github.com/py-pdf/pypdf/commit/4f4751172535a8352a2dbddd82f8ac9e7dd932a6"
+        },
+        "date": 1793962030209,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.316072099206635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012396919115473835",
+            "extra": "mean: 188.10881066666477 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 38.000000286900544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0043662392958433265",
+            "extra": "mean: 26.315789274999624 msec\nrounds: 40"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.44699840595433593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07310052495525254",
+            "extra": "mean: 2.237144443199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 33.59283615300827,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008796304446290104",
+            "extra": "mean: 29.76825164285657 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.26542453399417915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06347901309464825",
+            "extra": "mean: 3.7675492349999957 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.7856204740154125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015189978222991668",
+            "extra": "mean: 358.9864482000024 msec\nrounds: 5"
           }
         ]
       }
