@@ -488,6 +488,8 @@ class PdfDocCommon(ABC):
         tree: DictionaryObject | None = None,
         retval: dict[str, Destination] | None = None,
         visited: set[int] | None = None,
+        depth: int = 0,
+        traversal_state: _TraversalState | None = None,
     ) -> dict[str, Destination]:
         """
         Retrieve the named destinations present in the document.
@@ -496,11 +498,16 @@ class PdfDocCommon(ABC):
             tree: The current tree.
             retval: The previously retrieved destinations for nested calls.
             visited: Already known/visited objects.
+            depth: Current name tree nesting depth.
+            traversal_state: Shared visitor counters.
 
         Returns:
             A dictionary which maps names to destinations.
 
         """
+        if traversal_state is None:
+            traversal_state = _TraversalState()
+
         if visited is None:
             visited = set()
         if retval is None:
@@ -529,11 +536,25 @@ class PdfDocCommon(ABC):
             return retval
         assert tree is not None, "mypy"
 
+        configuration = get_configuration()
+        if depth > configuration.named_destinations_maximum_depth:
+            raise LimitReachedError(
+                f"Maximum named destination depth exceeded: "
+                f"{depth} > {configuration.named_destinations_maximum_depth}."
+            )
+
         tree_id = id(tree)
         if tree_id in visited:
             logger_warning("Detected cycle in destination tree.", source=__name__)
             return retval
         visited.add(tree_id)
+
+        traversal_state.entry_count += 1
+        if traversal_state.entry_count > configuration.named_destinations_maximum_entries:
+            raise LimitReachedError(
+                f"Maximum named destination entry limit exceeded: "
+                f"{traversal_state.entry_count} > {configuration.named_destinations_maximum_entries}."
+            )
 
         if PagesAttributes.KIDS in tree:
             kids = tree[PagesAttributes.KIDS].get_object()
@@ -546,7 +567,13 @@ class PdfDocCommon(ABC):
                 return retval
             # recurse down the tree
             for kid in kids:
-                self._get_named_destinations(tree=kid.get_object(), retval=retval, visited=visited)
+                self._get_named_destinations(
+                    tree=kid.get_object(),
+                    retval=retval,
+                    visited=visited,
+                    depth=depth + 1,
+                    traversal_state=traversal_state,
+                )
         # §7.9.6, entries in a name tree node dictionary
         elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
             names = tree[CA.NAMES].get_object()
