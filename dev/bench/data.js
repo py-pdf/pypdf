@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793961147618,
+  "lastUpdate": 1793961259419,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -164545,6 +164545,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015805464748298425",
             "extra": "mean: 927.8290643999981 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "148e90b157e8186ec91d611bb7e75ec99008ac19",
+          "message": "SEC: Apply image size limits more strictly (#4361)\n\nPreviously, only some operations would apply the image size limits.\nAfter this change, all relevant image operations should check these\nlimits, id est creating, converting and merging images, by introducing\ncorresponding helper functions.",
+          "timestamp": "2026-11-06T11:30:04+01:00",
+          "tree_id": "a3adabc67c05d3fcefb123656ca17097f9c37e3a",
+          "url": "https://github.com/py-pdf/pypdf/commit/148e90b157e8186ec91d611bb7e75ec99008ac19"
+        },
+        "date": 1793961248514,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.62134038754388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016573621186653866",
+            "extra": "mean: 53.7018270000003 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 30.87374053872581,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03529534459350208",
+            "extra": "mean: 32.389985228568975 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.2576316756072272,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0295885138299845",
+            "extra": "mean: 795.1453667999942 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.6096792334412385,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033942428906426",
+            "extra": "mean: 1.6402067597999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.40601956489774255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06053311283585171",
+            "extra": "mean: 2.4629354997999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4735857792153864,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04919842325554621",
+            "extra": "mean: 678.6167551999938 msec\nrounds: 5"
           }
         ]
       }
