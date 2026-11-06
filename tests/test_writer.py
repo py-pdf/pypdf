@@ -4201,3 +4201,31 @@ def test_find_outline_item__cyclic(name: str) -> None:
 
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Detected cyclic outline hierarchy\.$"):
         writer.find_outline_item("Dummy")
+
+
+def test_add_outline_item_dict_with_action() -> None:
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=100, height=100)
+    outline_ref = writer.add_outline_item_dict(
+        {
+            NameObject("/Title"): TextStringObject("Action Bookmark"),
+            NameObject("/A"): DictionaryObject(
+                {
+                    NameObject("/S"): NameObject("/GoTo"),
+                    NameObject("/D"): ArrayObject(
+                        [page.indirect_reference, NameObject("/Fit")]
+                    ),
+                }
+            ),
+        }
+    )
+    outline_obj = outline_ref.get_object()
+    assert isinstance(outline_obj, TreeObject)
+    assert isinstance(outline_obj.raw_get("/A"), IndirectObject)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    reader = PdfReader(stream)
+    assert len(reader.outline) == 1
+    assert reader.outline[0].title == "Action Bookmark"
+    assert reader.get_destination_page_number(reader.outline[0]) == 0
