@@ -2121,4 +2121,3 @@ def test_get_fonts__resources_are_null(caplog):
     assert embedded == set()
     assert unembedded == set()
     assert "Resources are not a dictionary" not in caplog.text
-
