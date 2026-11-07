@@ -15,6 +15,7 @@ from .generic import (
     DictionaryObject,
     NullObject,
     StreamObject,
+    is_null_or_none,
 )
 from .generic._data_structures import _FontFileCharacterMap
 
@@ -206,8 +207,11 @@ def _parse_to_unicode(
                     if not font_file_data:
                         return map_dict, int_entry
 
-                    return _derive_character_map_from_font_file(
-                        font_file_dict, font_file_data, font_file_processor, map_dict, int_entry
+                    return _rank_font_program_encoding(
+                        ft,
+                        *_derive_character_map_from_font_file(
+                            font_file_dict, font_file_data, font_file_processor, map_dict, int_entry
+                        ),
                     )
 
             return map_dict, int_entry
@@ -474,6 +478,62 @@ def _glyph_name_to_unicode(glyph_name: str) -> str | None:
             return chr(int(code_point, 16))
         except ValueError:  # pragma: no cover
             return None
+
+
+def _get_differences_codes(encoding: DictionaryObject) -> set[int]:
+    """
+    Return the character codes covered by the /Differences array of an /Encoding dictionary.
+
+    /Differences is a flat sequence of character codes and glyph names (ISO 32000-2:2020,
+    9.6.6.2): an integer starts a run and sets the code of its first glyph name, and every
+    following glyph name applies to the next consecutive code. Codes that are not listed
+    keep the glyphs of the base encoding.
+    """
+    codes: set[int] = set()
+    differences = encoding.get("/Differences")
+    if not isinstance(differences, ArrayObject):
+        # A missing or malformed /Differences overrides no code.
+        return codes
+    code = 0
+    for entry in differences:
+        if isinstance(entry, int):
+            # The start of a run; the glyph names that follow cover the next codes.
+            code = entry
+        else:
+            codes.add(code)
+            code += 1
+    return codes
+
+
+def _rank_font_program_encoding(
+    ft: DictionaryObject,
+    map_dict: dict[Any, Any],
+    int_entry: list[int],
+) -> tuple[dict[Any, Any], list[int]]:
+    """
+    Rank the built-in encoding of an embedded font program below the font dictionary's /Encoding.
+
+    ISO 32000-1 / 32000-2, 9.6.6.1: the built-in encoding of a font program is only the default
+    base encoding. A named /Encoding or a /BaseEncoding replaces it, and /Differences override
+    the codes they list, so those codes must not be resolved through the font program. See #4343.
+    """
+    encoding = ft.get("/Encoding")
+    if encoding is None or is_null_or_none(encoding):
+        # Without /Encoding, the built-in encoding is the base encoding.
+        return map_dict, int_entry
+    encoding = encoding.get_object()
+    if not isinstance(encoding, DictionaryObject) or "/BaseEncoding" in encoding:
+        # A named base encoding replaces the built-in encoding entirely.
+        return {}, []
+    if not (overridden_codes := _get_differences_codes(encoding)):
+        return map_dict, int_entry
+    # The built-in encoding is the base encoding, but /Differences take precedence over it.
+    # Drop the codes they list instead of remapping them: with the entries gone, get_encoding()
+    # leaves those codes to the font dictionary and the character map no longer overrides them.
+    return (
+        {key: value for key, value in map_dict.items() if key not in {chr(code) for code in overridden_codes}},
+        [code for code in int_entry if code not in overridden_codes],
+    )
 
 
 def _derive_character_map_from_font_file(
