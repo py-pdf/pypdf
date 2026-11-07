@@ -2031,10 +2031,29 @@ def test_extract_text__visitor_receives_text_without_end_operator() -> None:
     assert parts[-1] == "Hello"
 
 
-@pytest.mark.xfail(
-    reason="#4335: Annotations are dropped if the target page has a null /Annots entry", strict=True
-)
-def test_merge_page__target_with_null_annotations() -> None:
+def test_merge_page__target_with_non_array_annotations(caplog) -> None:
+    """
+    merge_page() replaces an /Annots entry of the target page that is not an
+    array, and reports it, so the annotations of the merged page are kept.
+    """
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_annotation(0, Polygon(vertices=[(10, 10), (20, 10), (20, 20)]))
+    writer = PdfWriter()
+    target = writer.add_blank_page(100, 100)
+    target[NameObject("/Annots")] = NumberObject(4)
+
+    target.merge_page(source.pages[0])
+
+    assert "Annotations are not an array: 4" in caplog.text
+    output = BytesIO()
+    writer.write(output)
+    annotations = PdfReader(output).pages[0]["/Annots"]
+    assert len(annotations) == 1
+    assert annotations[0].get_object()["/Subtype"] == "/Polygon"
+
+
+def test_merge_page__target_with_null_annotations(caplog) -> None:
     """
     merge_page() adds the annotations of the merged page to a target page with
     /Annots null.
@@ -2057,6 +2076,8 @@ def test_merge_page__target_with_null_annotations() -> None:
     target[NameObject("/Annots")] = NullObject()
 
     target.merge_page(PdfReader(source_data).pages[0])
+
+    assert "Annotations are not an array" not in caplog.text
 
     assert len(target["/Annots"]) == 1
 
