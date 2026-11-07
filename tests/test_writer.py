@@ -4272,3 +4272,59 @@ def test_generate_file_identifiers__update() -> None:
     writer.generate_file_identifiers()
     assert writer._ID[0] == id_permanent
     assert writer._ID[1] != id_changing
+
+
+def test_update_page_form_field_values__tuple_value_on_field_with_separate_widget() -> None:
+    """
+    The value of a (value, font, size) tuple goes to the field, not to its widget.
+
+    This test is a regression test for issue #4367.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=100)
+    font = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/BaseFont"): NameObject("/Helvetica"),
+            }
+        )
+    )
+    field = DictionaryObject(
+        {
+            NameObject("/FT"): NameObject("/Tx"),
+            NameObject("/T"): TextStringObject("name"),
+            NameObject("/DA"): TextStringObject("/Helv 12 Tf 0 g"),
+        }
+    )
+    field_ref = writer._add_object(field)
+    widget_ref = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Widget"),
+                NameObject("/Rect"): RectangleObject([10, 10, 190, 30]),
+                NameObject("/Parent"): field_ref,
+            }
+        )
+    )
+    field[NameObject("/Kids")] = ArrayObject([widget_ref])
+    page[NameObject("/Annots")] = ArrayObject([widget_ref])
+    writer._root_object[NameObject("/AcroForm")] = DictionaryObject(
+        {
+            NameObject("/Fields"): ArrayObject([field_ref]),
+            NameObject("/DR"): DictionaryObject(
+                {NameObject("/Font"): DictionaryObject({NameObject("/Helv"): font})}
+            ),
+        }
+    )
+
+    writer.update_page_form_field_values(
+        writer.pages[0], {"name": ("Alice", "/Helv", 10)}, auto_regenerate=False
+    )
+
+    assert field["/V"] == "Alice"
+    assert "/V" not in widget_ref.get_object()
+    appearance = widget_ref.get_object()["/AP"]["/N"].get_object().get_data()
+    assert b"(Alice) Tj" in appearance
