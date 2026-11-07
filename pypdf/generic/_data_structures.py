@@ -442,7 +442,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                         )
                         prev_obj: DictionaryObject | None = self
                         while cur_obj is not None:
-                            source_reference = cur_obj.indirect_reference
+                            source_reference = getattr(cur_obj, "indirect_reference", None)
                             clon = cast(
                                 "DictionaryObject",
                                 cur_obj._reference_clone(
@@ -459,13 +459,19 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                                 visited.add((source_idnum, source_generation))
                             objs.append((cur_obj, clon))
                             assert prev_obj is not None
-                            prev_obj[NameObject(k)] = clon.indirect_reference
+                            clone_reference = getattr(clon, "indirect_reference", None)
+                            prev_obj[NameObject(k)] = clone_reference if clone_reference is not None else clon
                             prev_obj = clon
                             try:
                                 if cur_obj == src:
                                     cur_obj = None
                                 else:
-                                    cur_obj = cast("DictionaryObject", cur_obj[k])
+                                    next_obj = cur_obj[k]
+                                    cur_obj = (
+                                        next_obj
+                                        if isinstance(next_obj, DictionaryObject)
+                                        else None
+                                    )
                             except MemoryError:  # pragma: no cover  # TODO: BLE001
                                 raise
                             except Exception:
