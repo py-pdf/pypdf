@@ -626,9 +626,9 @@ def test_low_bit_devicergb_image_mode():
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
 
-    # A single-component space must still map to a palette image ("P").
+    # A single-component /DeviceGray space decodes to scaled grayscale ("L").
     gray = _handle_flate((2, 2), bytes([0xF0, 0x0F]), "4bits", "/DeviceGray", 1, "")[0]
-    assert gray.mode == "P"
+    assert gray.mode == "L"
 
 
 def test_low_bit_devicergb_image_without_filter():
