@@ -1963,12 +1963,13 @@ class PdfWriter(PdfDocCommon):
 
         return page_destination_ref
 
-    def _get_page_reference(self, page_number: int) -> Any:
+    def _get_page_reference(self, page_number: int) -> IndirectObject:
         """Look up a page by number, reporting a bad index rather than an IndexError from the kids array."""
-        try:
-            return self.pages[page_number].indirect_reference
-        except IndexError:
-            raise IndexError(f"Page number {page_number} is out of range") from None
+        pages = self.pages
+        count = len(pages)
+        if not (-count <= page_number < count):
+            raise IndexError(f"Page number {page_number} is out of range")
+        return cast(IndirectObject, pages[page_number].indirect_reference)
 
     def add_named_destination(
         self,
