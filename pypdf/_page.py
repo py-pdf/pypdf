@@ -97,11 +97,20 @@ except ImportError:
 MERGE_CROP_BOX = "cropbox"  # DEPRECATED: Use pypdf.Configuration.
 
 
-def _get_page_resources(obj: Any) -> DictionaryObject:
-    """Return the inherited /Resources, or an empty dictionary if malformed."""
-    resources = obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject())
+def _get_page_resources(obj: Any, inherit: bool = True) -> DictionaryObject:
+    """
+    Return the /Resources, or an empty dictionary if missing or malformed.
+
+    With ``inherit=False``, only the /Resources set on the page itself are used,
+    not those inherited from its parents.
+    """
+    if inherit:
+        resources = obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject())
+    else:
+        resources = obj.get(PG.RESOURCES)
     if is_null_or_none(resources):
         return DictionaryObject()
+    resources = resources.get_object()
     if not isinstance(resources, DictionaryObject):
         logger_warning(
             "Page resources are not a dictionary: %(resources)s",
@@ -1360,13 +1369,11 @@ class PageObject(DictionaryObject):
         assert isinstance(self.indirect_reference, IndirectObject)
         pdf = self.indirect_reference.pdf
 
-        if PG.RESOURCES not in self:
-            self[NameObject(PG.RESOURCES)] = DictionaryObject()
-        original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        if PG.RESOURCES not in page2:
-            page2resources = DictionaryObject()
-        else:
-            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        original_resources = _get_page_resources(self, inherit=False)
+        if self.get(PG.RESOURCES, NullObject()).get_object() is not original_resources:
+            # missing, null or malformed: the merged resources are stored in a new dictionary
+            self[NameObject(PG.RESOURCES)] = original_resources
+        page2resources = _get_page_resources(page2, inherit=False)
 
         rename = {}
         for res in (
