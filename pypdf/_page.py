@@ -1958,10 +1958,14 @@ class PageObject(DictionaryObject):
                         # A name is a str too, but not text to show
                         if isinstance(op, (str, bytes)) and not isinstance(op, NameObject):
                             extractor.process_operation(b"Tj", [op])
+                        # A positive offset moves the next glyph back (kerning), so only
+                        # a negative one can be a gap between words.
+                        # A Tf just before this TJ has already moved the text to the output.
+                        previous = extractor.text or extractor.output
                         if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                            abs(float(op)) >= _confirm_space_width
-                            and extractor.text
-                            and extractor.text[-1] != " "
+                            -float(op) >= _confirm_space_width
+                            and previous
+                            and previous[-1] not in " \n"
                         ):
                             extractor.process_operation(b"Tj", [" "])
             elif operator == b"TD" and len(operands) >= 2:

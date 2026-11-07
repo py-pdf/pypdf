@@ -621,6 +621,22 @@ def test_do_operator_without_operand_is_skipped() -> None:
     assert page.extract_text() == "HelloWorld"
 
 
+def test_tj_positive_offset_is_not_a_word_gap() -> None:
+    """A positive TJ offset is kerning (it moves the next glyph back), not a space."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 12 Tf 40 700 Td [(T) 300 (echnical) -300 (W) 300 (ork)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Technical Work"
+
+
+def test_tj_gap_right_after_a_font_change_is_a_space() -> None:
+    """A word gap at the start of a TJ array is kept when a Tf came just before it."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 9 Tf 40 700 Td [(Programming:)] TJ /F1 9 Tf [-457 (Python)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Programming: Python"
+
+
 def test_tj_operator_without_an_array_is_skipped() -> None:
     """A TJ operator whose operand is not an array is skipped and the text around it is kept."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj 5 TJ (World) Tj ET")).pages[0]
