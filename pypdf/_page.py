@@ -97,24 +97,17 @@ except ImportError:
 MERGE_CROP_BOX = "cropbox"  # DEPRECATED: Use pypdf.Configuration.
 
 
-def _get_page_resources(obj: Any) -> DictionaryObject:
-    """Return the inherited /Resources, or an empty dictionary if malformed."""
-    resources = obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject())
-    if is_null_or_none(resources):
-        return DictionaryObject()
-    if not isinstance(resources, DictionaryObject):
-        logger_warning(
-            "Page resources are not a dictionary: %(resources)s",
-            source=__name__,
-            resources=resources,
-        )
-        return DictionaryObject()
-    return resources
+def _get_page_resources(obj: Any, inherit: bool = True) -> DictionaryObject:
+    """
+    Return the /Resources, or an empty dictionary if missing or malformed.
 
-
-def _get_own_resources(page: Any) -> DictionaryObject:
-    """Return the page's own /Resources, or an empty dictionary if missing or malformed."""
-    resources = page.get(PG.RESOURCES)
+    With ``inherit=False``, only the /Resources set on the page itself are used,
+    not those inherited from its parents.
+    """
+    if inherit:
+        resources = obj.get_inherited(key=PG.RESOURCES, default=DictionaryObject())
+    else:
+        resources = obj.get(PG.RESOURCES)
     if is_null_or_none(resources):
         return DictionaryObject()
     resources = resources.get_object()
@@ -1376,11 +1369,11 @@ class PageObject(DictionaryObject):
         assert isinstance(self.indirect_reference, IndirectObject)
         pdf = self.indirect_reference.pdf
 
-        original_resources = _get_own_resources(self)
+        original_resources = _get_page_resources(self, inherit=False)
         if self.get(PG.RESOURCES, NullObject()).get_object() is not original_resources:
             # missing, null or malformed: the merged resources are stored in a new dictionary
             self[NameObject(PG.RESOURCES)] = original_resources
-        page2resources = _get_own_resources(page2)
+        page2resources = _get_page_resources(page2, inherit=False)
 
         rename = {}
         for res in (

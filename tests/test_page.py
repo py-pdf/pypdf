@@ -1382,7 +1382,7 @@ def test_merge_with_no_resources():
 )
 @pytest.mark.parametrize("malformed", ["page", "merged page", "merged page from a reader"])
 def test_merge_page__resources_are_not_a_dictionary(caplog, resources, expected, malformed):
-    """Malformed /Resources on either page are treated as empty, instead of raising a TypeError."""
+    """Malformed /Resources on either page are treated as empty."""
     writer = PdfWriter()
     for _ in range(2):
         page = writer.add_blank_page(72, 72)
