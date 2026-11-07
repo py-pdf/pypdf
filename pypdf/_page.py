@@ -849,11 +849,18 @@ class PageObject(DictionaryObject):
             if isinstance(v, NameObject):
                 # It is a custom name, thus we have to look in resources.
                 # The only applicable case is for ColorSpace.
-                if "/Resources" in self:
-                    resources = cast(DictionaryObject, self["/Resources"])
-                    if "/ColorSpace" in resources and v in cast(DictionaryObject, resources["/ColorSpace"]):
-                        color_space = cast(DictionaryObject, resources["/ColorSpace"])
-                        return color_space[v]
+                resources = self.get("/Resources", NullObject()).get_object()
+                if not isinstance(resources, DictionaryObject):
+                    if not is_null_or_none(resources):
+                        logger_warning(
+                            "Resources are not a dictionary: %(resources)s",
+                            source=__name__,
+                            resources=resources,
+                        )
+                    resources = DictionaryObject()
+                if "/ColorSpace" in resources and v in cast(DictionaryObject, resources["/ColorSpace"]):
+                    color_space = cast(DictionaryObject, resources["/ColorSpace"])
+                    return color_space[v]
                 raise PdfReadError(f"Cannot find resource entry {v} for {k}") from exception
         return v
 
@@ -2640,15 +2647,20 @@ def _get_fonts_walk(
         ).values():
             process_font(f)
     if "/Resources" in obj:
-        if "/Font" in cast(DictionaryObject, obj["/Resources"]):
-            for f in cast(
-                DictionaryObject, cast(DictionaryObject, obj["/Resources"])["/Font"]
-            ).values():
+        resources = cast(DictionaryObject, obj["/Resources"]).get_object()
+        if not isinstance(resources, DictionaryObject):
+            if not is_null_or_none(resources):
+                logger_warning(
+                    "Resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources,
+                )
+            resources = DictionaryObject()
+        if "/Font" in resources:
+            for f in cast(DictionaryObject, resources["/Font"]).values():
                 process_font(f)
-        if "/XObject" in cast(DictionaryObject, obj["/Resources"]):
-            for x in cast(
-                DictionaryObject, cast(DictionaryObject, obj["/Resources"])["/XObject"]
-            ).values():
+        if "/XObject" in resources:
+            for x in cast(DictionaryObject, resources["/XObject"]).values():
                 _get_fonts_walk(cast(DictionaryObject, x.get_object()), fnt, emb)
     if "/Annots" in obj:
         for a in cast(ArrayObject, obj["/Annots"]):
