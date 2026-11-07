@@ -644,6 +644,44 @@ def test_remove_objects__resources_are_not_a_dictionary(caplog, method, resource
         assert expected in caplog.text
 
 
+@pytest.mark.parametrize(
+    ("annotations", "expected"),
+    [
+        pytest.param(NumberObject(4), "Annotations are not an array: 4", id="number"),
+        pytest.param(TextStringObject("x"), "Annotations are not an array: x", id="string"),
+        pytest.param(DictionaryObject(), "Annotations are not an array: {}", id="dictionary"),
+    ],
+)
+@pytest.mark.parametrize("method", ["remove_annotations", "remove_links"])
+def test_remove_annotations__annotations_are_not_an_array(caplog, method, annotations, expected):
+    """An /Annots entry that is not an array is left as is, instead of raising a TypeError."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Annots")] = annotations
+
+    if method == "remove_annotations":
+        writer.remove_annotations(subtypes=None)
+    else:
+        writer.remove_links()
+
+    assert page["/Annots"] == annotations
+    assert expected in caplog.text
+
+
+def test_remove_annotations__entries_are_not_dictionaries():
+    """Entries that are not dictionaries have no subtype: they are kept by a filter and removed with all."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    link = DictionaryObject({NameObject("/Subtype"): NameObject("/Link")})
+    page[NameObject("/Annots")] = ArrayObject([NumberObject(1), TextStringObject("x"), link])
+
+    writer.remove_annotations("/Link")
+    assert page["/Annots"] == ArrayObject([NumberObject(1), TextStringObject("x")])
+
+    writer.remove_annotations(subtypes=None)
+    assert page["/Annots"] == ArrayObject()
+
+
 def test_write_metadata(pdf_file_path):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
 
