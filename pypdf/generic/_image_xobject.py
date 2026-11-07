@@ -193,9 +193,36 @@ def _expand_low_bit_samples(
     return "P", bits2byte(data, size, bits)
 
 
+# Bytes per pixel Pillow allocates for a decoded image. The length of the mode
+# name is not a reliable indicator: "I" and "F" use four bytes per pixel,
+# while the 16-bit modes use two and "1" uses one byte per pixel internally.
+_IMAGE_MODE_BYTES_PER_PIXEL: dict[str, int] = {
+    "1": 1,
+    "L": 1,
+    "P": 1,
+    "LA": 2,
+    "La": 2,
+    "PA": 2,
+    "I;16": 2,
+    "I;16B": 2,
+    "I;16L": 2,
+    "I;16N": 2,
+    "RGB": 3,
+    "YCbCr": 3,
+    "LAB": 3,
+    "HSV": 3,
+    "RGBA": 4,
+    "RGBX": 4,
+    "RGBa": 4,
+    "CMYK": 4,
+    "I": 4,
+    "F": 4,
+}
+
+
 def _validate_image_size(*, mode: str, size: tuple[int, int]) -> tuple[int, int]:
     pixel_count = size[0] * size[1]
-    bytes_per_pixel = len(mode)
+    bytes_per_pixel = _IMAGE_MODE_BYTES_PER_PIXEL.get(mode, len(mode))
     required_byte_count = pixel_count * bytes_per_pixel
 
     configuration = get_configuration()

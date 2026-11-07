@@ -23,12 +23,14 @@ from pypdf.generic import (
 )
 from pypdf.generic._image_xobject import (
     _convert_image,
+    _create_image_from_buffer,
     _create_image_from_bytes,
     _get_image_mode,
     _get_mode_and_invert_color,
     _handle_flate,
     _handle_jpx,
     _merge_image,
+    _validate_image_size,
     _xobj_to_image,
     bits2byte,
 )
@@ -528,6 +530,48 @@ def test_create_image_from_bytes__limit(mode: str, expected: str) -> None:
             match=rf"^Requested image buffer size {expected} exceeds limit 75000000\.$"
     ):
         _ = _create_image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
+
+
+@pytest.mark.parametrize("mode", ["I", "F"])
+def test_validate_image_size__four_byte_modes(mode: str) -> None:
+    """``I``/``F`` use four bytes per pixel although their name is one character long."""
+    with pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"^Requested image buffer size 100000000 exceeds limit 75000000\.$",
+    ):
+        _validate_image_size(mode=mode, size=(5_000, 5_000))
+
+
+@pytest.mark.parametrize("mode", ["I;16", "I;16B", "I;16L", "I;16N"])
+def test_validate_image_size__16_bit_modes(mode: str) -> None:
+    """16-bit modes use two bytes per pixel, not the length of their name."""
+    assert _validate_image_size(mode=mode, size=(5_000, 5_000)) == (25_000_000, 50_000_000)
+
+
+def test_create_image_from_buffer__16_bit_png_is_not_rejected() -> None:
+    """A 16-bit PNG within the limit must not be rejected as four bytes per pixel."""
+    buffer = BytesIO()
+    Image.new("I;16", (1_000, 1_000)).save(buffer, format="PNG")
+    buffer.seek(0)
+
+    with apply_configuration(image_maximum_buffer_size=3_000_000):
+        image = _create_image_from_buffer(buf=buffer, formats=("PNG",))
+
+    assert image.mode == "I;16"
+    assert image.size == (1_000, 1_000)
+
+
+def test_create_image_from_buffer__32_bit_tiff_is_limited() -> None:
+    """A 32-bit TIFF is counted as four bytes per pixel instead of one."""
+    buffer = BytesIO()
+    Image.new("I", (1_000, 1_000)).save(buffer, format="TIFF")
+    buffer.seek(0)
+
+    with apply_configuration(image_maximum_buffer_size=3_000_000), pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"^Requested image buffer size 4000000 exceeds limit 3000000\.$",
+    ):
+        _create_image_from_buffer(buf=buffer, formats=("TIFF",))
 
 
 def _minimal_image_xobject() -> StreamObject:
