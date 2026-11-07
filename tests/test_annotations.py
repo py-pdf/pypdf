@@ -182,6 +182,63 @@ def test_free_text__font_color(font_color, border_color, expected_appearance):
     assert annotation["/DA"] == expected_appearance
 
 
+def test_free_text__appearance_stream():
+    free_text_annotation = FreeText(
+        text="Hello World\nSecond line",
+        rect=(50, 550, 200, 650),
+        font_color="00ff00",
+        border_color="0000ff",
+        background_color="cdcdcd",
+    )
+    writer = PdfWriter()
+    writer.add_blank_page(width=300, height=700)
+    writer.add_annotation(0, free_text_annotation)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output)
+    annotation = reader.pages[0]["/Annots"][0].get_object()
+    appearance = annotation["/AP"]["/N"].get_object()
+    assert appearance["/Type"] == "/XObject"
+    assert appearance["/Subtype"] == "/Form"
+    assert appearance["/BBox"] == [0, 0, 150, 100]
+    data = appearance.get_data()
+    assert b"(Hello World) Tj" in data
+    assert b"(Second line) Tj" in data
+
+    # Cover the bold-only, italic-only and bold+italic font branches.
+    font_cases = [
+        (True, False, "/Helvetica-Bold"),
+        (False, True, "/Helvetica-Oblique"),
+        (True, True, "/Helvetica-BoldOblique"),
+    ]
+    for bold, italic, expected in font_cases:
+        annot = FreeText(text="x", rect=(0, 0, 100, 50), bold=bold, italic=italic)
+        writer = PdfWriter()
+        writer.add_blank_page(width=200, height=100)
+        writer.add_annotation(0, annot)
+        out = BytesIO()
+        writer.write(out)
+        ap = PdfReader(out).pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_object()
+        assert ap["/Resources"]["/Font"]["/Helv"]["/BaseFont"] == expected
+
+    # No border/background/font colour exercises the skip and default-colour branches.
+    plain = FreeText(
+        text="plain",
+        rect=(0, 0, 100, 50),
+        font_color=None,
+        border_color=None,
+        background_color=None,
+    )
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=100)
+    writer.add_annotation(0, plain)
+    out = BytesIO()
+    writer.write(out)
+    ap = PdfReader(out).pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_object()
+    assert ap["/Subtype"] == "/Form"
+
+
 def test_annotation_dictionary():
     a = AnnotationDictionary()
     a.flags = AnnotationFlag.HIDDEN | AnnotationFlag.PRINT | AnnotationFlag.NO_ZOOM
@@ -713,7 +770,12 @@ def test_clone_and_replicate_annotation(annotation):
     for copy in (cloned, replicated):
         assert type(copy) is type(annotation)
         assert copy is not annotation
-        assert copy.items() == annotation.items()
+        expected = dict(annotation.items())
+        actual = dict(copy.items())
+        if "/AP" in expected:
+            # Cloning stores a direct appearance stream as an indirect object, so compare its data.
+            assert actual.pop("/AP")["/N"].get_data() == expected.pop("/AP")["/N"].get_data()
+        assert actual == expected
 
         # The copy must not share its entries with the source annotation.
         copy[NameObject("/Test")] = NumberObject(1)

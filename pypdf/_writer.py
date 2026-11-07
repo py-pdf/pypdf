@@ -2612,6 +2612,12 @@ class PdfWriter(PdfDocCommon):
                 Fit(fit_type=fit_type, fit_args=fit_args),
             ).dest_array
 
+        # A stream cannot be stored directly inside an annotation dictionary, so store
+        # a normal appearance stream as an indirect object.
+        appearance = to_add.get("/AP")
+        if isinstance(appearance, DictionaryObject) and isinstance(appearance.get("/N"), StreamObject):
+            appearance[NameObject("/N")] = self._add_object(appearance["/N"])
+
         page.annotations.append(self._add_object(to_add))
 
         if to_add.get("/Subtype") == "/Popup" and NameObject("/Parent") in to_add:
