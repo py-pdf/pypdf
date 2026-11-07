@@ -30,11 +30,13 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import functools
+import inspect
 import logging
 import os
 import re
 import sys
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import DEFAULT_BUFFER_SIZE
@@ -44,7 +46,9 @@ from typing import (
     IO,
     Any,
     NoReturn,
+    ParamSpec,
     TypeAlias,
+    TypeVar,
     cast,
 )
 
@@ -483,6 +487,56 @@ def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) 
     deprecation(
         f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead."
     )
+
+
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+
+
+def deprecate_positional_arguments(removed_in: str) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
+    """
+    Accept positional arguments for keyword-only parameters, but issue a warning.
+
+    Use it for a function whose parameters became keyword-only. The positional
+    arguments that exceed the positional parameters are passed to the
+    keyword-only parameters in the order of the signature.
+
+    Args:
+        removed_in: The version in which positional arguments will raise an error.
+
+    Returns:
+        The decorator.
+
+    """
+    def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
+        parameters = inspect.signature(func).parameters.values()
+        positional_count = sum(
+            parameter.kind in (parameter.POSITIONAL_ONLY, parameter.POSITIONAL_OR_KEYWORD)
+            for parameter in parameters
+        )
+        keyword_only_names = [parameter.name for parameter in parameters if parameter.kind == parameter.KEYWORD_ONLY]
+
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            extra_args = args[positional_count:]
+            if extra_args:
+                if len(extra_args) > len(keyword_only_names):
+                    raise TypeError(
+                        f"{func.__qualname__}() takes {positional_count + len(keyword_only_names)} "
+                        f"positional arguments but {len(args)} were given"
+                    )
+                for name, value in zip(keyword_only_names, extra_args):
+                    if name in kwargs:
+                        raise TypeError(f"{func.__qualname__}() got multiple values for argument '{name}'")
+                    kwargs[name] = value
+                deprecate_with_replacement(
+                    f"Passing positional arguments to {func.__qualname__}()", "keyword arguments", removed_in
+                )
+            return func(*args[:positional_count], **kwargs)
+
+        return cast(Callable[_P, _R], wrapper)
+
+    return decorator
 
 
 def deprecate_no_replacement(name: str, removed_in: str) -> None:

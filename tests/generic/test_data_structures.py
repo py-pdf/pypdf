@@ -571,11 +571,11 @@ def _outlined_pdf(nested: bool = False) -> BytesIO:
     writer = PdfWriter()
     for _ in range(4):
         writer.add_blank_page(200, 200)
-    cover = writer.add_outline_item("Cover", 0)
-    writer.add_outline_item("Body", 1)
+    cover = writer.add_outline_item(title="Cover", page_number=0)
+    writer.add_outline_item(title="Body", page_number=1)
     if nested:
-        writer.add_outline_item("Sub", 2, parent=cover)
-    writer.add_outline_item("End", 3)
+        writer.add_outline_item(title="Sub", page_number=2, parent=cover)
+    writer.add_outline_item(title="End", page_number=3)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -616,7 +616,7 @@ def test_remove_from_tree_on_outline_item_without_clone() -> None:
     for _ in range(3):
         writer.add_blank_page(200, 200)
     for page_number, title in enumerate(["Cover", "Body", "End"]):
-        writer.add_outline_item(title, page_number)
+        writer.add_outline_item(title=title, page_number=page_number)
 
     _flat_outline(writer.outline)[0].remove_from_tree()
 
