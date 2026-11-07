@@ -1798,6 +1798,52 @@ def test_annotations__is_not_an_array(caplog, value, expected):
     assert expected in caplog.text
 
 
+def test_get_rectangle__fallback_skips_null_entries():
+    """A "/CropBox null" entry must not stop the fallback chain of the other boxes."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    writer.pages[0][NameObject("/CropBox")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    # Read the dependent boxes first: reading the crop box resolves and stores
+    # the fallback value, which used to hide the null entry.
+    page = PdfReader(stream).pages[0]
+    assert page.trimbox == RectangleObject([0, 0, 100, 200])
+    assert page.artbox == RectangleObject([0, 0, 100, 200])
+    assert page.bleedbox == RectangleObject([0, 0, 100, 200])
+
+
+def test_get_rectangle__fallback_skips_indirect_null_entry():
+    """An indirect null page box is treated like a direct null entry."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    writer._objects.append(NullObject())
+    null_ref = IndirectObject(len(writer._objects), 0, writer)
+    writer.pages[0][NameObject("/CropBox")] = null_ref
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].trimbox == RectangleObject([0, 0, 100, 200])
+
+
+def test_scale_by__with_null_crop_box():
+    """scale_by() reads every box, so a null /CropBox used to break it."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    writer.pages[0][NameObject("/CropBox")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter()
+    page = writer.add_page(PdfReader(stream).pages[0])
+    page.scale_by(0.5)
+    assert page.mediabox == RectangleObject([0, 0, 50, 100])
+
+
 def test_get_rectangle__size_handling(caplog):
     """
     See issue #2991 and related ones. We would previously generate invalid page boxes when they
