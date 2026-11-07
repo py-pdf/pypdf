@@ -176,24 +176,9 @@ def create_string_object(
             obj._original_bytes = string
             return obj
         try:
-            if string.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
-                retval = TextStringObject(string.decode("utf-16"))
-                retval._original_bytes = string
-                retval.autodetect_utf16 = True
-                retval.utf16_bom = string[:2]
-                return retval
-            if string.startswith(b"\x00"):
-                retval = TextStringObject(string.decode("utf-16be"))
-                retval._original_bytes = string
-                retval.autodetect_utf16 = True
-                retval.utf16_bom = codecs.BOM_UTF16_BE
-                return retval
-            if string[1:2] == b"\x00":
-                retval = TextStringObject(string.decode("utf-16le"))
-                retval._original_bytes = string
-                retval.autodetect_utf16 = True
-                retval.utf16_bom = codecs.BOM_UTF16_LE
-                return retval
+            unicode_string = _create_unicode_string_object(string)
+            if unicode_string is not None:
+                return unicode_string
 
             # This is probably a big performance hit here, but we need
             # to convert string objects into the text/unicode-aware
@@ -208,6 +193,50 @@ def create_string_object(
         retval.autodetect_pdfdocencoding = True
         return retval
     raise TypeError("create_string_object should have str or unicode arg")
+
+
+def _create_unicode_string_object(string: bytes) -> TextStringObject | None:
+    """
+    Decode a text string which is marked or detected as UTF-8 or UTF-16.
+
+    Args:
+        string: The data being used
+
+    Returns:
+        A TextStringObject, or None if the data should be decoded as PDFDocEncoding.
+
+    Raises:
+        UnicodeDecodeError: If the data cannot be decoded as UTF-16.
+
+    """
+    if string.startswith(codecs.BOM_UTF8):
+        # UTF-8 text strings have been added with PDF 2.0, see ISO 32000-2:2020, 7.9.2.2.1.
+        # Data which is not valid UTF-8 is still decoded as PDFDocEncoding.
+        try:
+            retval = TextStringObject(string[len(codecs.BOM_UTF8):].decode("utf-8"))
+        except UnicodeDecodeError:
+            return None
+        retval._original_bytes = string
+        return retval
+    if string.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
+        retval = TextStringObject(string.decode("utf-16"))
+        retval._original_bytes = string
+        retval.autodetect_utf16 = True
+        retval.utf16_bom = string[:2]
+        return retval
+    if string.startswith(b"\x00"):
+        retval = TextStringObject(string.decode("utf-16be"))
+        retval._original_bytes = string
+        retval.autodetect_utf16 = True
+        retval.utf16_bom = codecs.BOM_UTF16_BE
+        return retval
+    if string[1:2] == b"\x00":
+        retval = TextStringObject(string.decode("utf-16le"))
+        retval._original_bytes = string
+        retval.autodetect_utf16 = True
+        retval.utf16_bom = codecs.BOM_UTF16_LE
+        return retval
+    return None
 
 
 def decode_pdfdocencoding(byte_array: bytes) -> str:
