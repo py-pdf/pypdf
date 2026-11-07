@@ -2105,3 +2105,20 @@ def test_get_fonts__resources_are_not_a_dictionary(caplog, value, expected):
     assert embedded == set()
     assert unembedded == set()
     assert expected in caplog.text
+
+
+def test_get_fonts__resources_are_null(caplog):
+    """Null /Resources yields no fonts and no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    embedded, unembedded = PdfReader(stream).pages[0]._get_fonts()
+
+    assert embedded == set()
+    assert unembedded == set()
+    assert "Resources are not a dictionary" not in caplog.text
+
