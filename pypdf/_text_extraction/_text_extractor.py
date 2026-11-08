@@ -151,6 +151,17 @@ class TextExtraction:
             if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
                 self._post_process_text_operation(str_widths or 0.0)
 
+    def process_tj_offset(self, offset: float, space_width: float) -> None:
+        """Add a space for a word gap in a TJ array and count the offset in the text width."""
+        # The offset moved the pen, so it counts towards the width and the added space does not.
+        str_widths = self._actual_str_size["str_widths"] - offset * self.font_size
+        # A Tf just before this TJ has already moved the text to the output.
+        previous = self.text or self.output
+        # A positive offset moves the next glyph back (kerning), so only a negative one can be a gap.
+        if -offset >= space_width and previous and previous[-1] not in " \n":
+            self.process_operation(b"Tj", [" "])
+        self._actual_str_size["str_widths"] = str_widths
+
     def _post_process_text_operation(self, str_widths: float) -> None:
         """Handle common post-processing for text positioning operations."""
         text_was_empty = self.text == ""

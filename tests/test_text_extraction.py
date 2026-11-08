@@ -637,6 +637,19 @@ def test_tj_gap_right_after_a_font_change_is_a_space() -> None:
     assert page.extract_text() == "Programming: Python"
 
 
+@pytest.mark.enable_socket
+def test_surname_in_capital_and_small_capitals_stays_one_word() -> None:
+    """
+    A surname set as a capital followed by small capitals is extracted as one word.
+
+    ISO 32000-2:2020, 9.4.3 (text-showing operators) and 9.4.4 (text space details).
+    """
+    url = "https://github.com/user-attachments/files/22596566/7552c42e9280b4476e59e77acc0bc812.pdf"
+    name = "7552c42e9280b4476e59e77acc0bc812.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "MOREAU (Antoine)" in reader.pages[143].extract_text()
+
+
 def test_tj_operator_without_an_array_is_skipped() -> None:
     """A TJ operator whose operand is not an array is skipped and the text around it is kept."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj 5 TJ (World) Tj ET")).pages[0]
