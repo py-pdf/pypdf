@@ -1396,8 +1396,16 @@ class PageObject(DictionaryObject):
             arr.sort()
 
         if not is_null_or_none(page2.get(PG.ANNOTS, None)):
-            annots = None if is_null_or_none(self.get(PG.ANNOTS)) else self.annotations
-            if annots is None:
+            annots = self.get(PG.ANNOTS)
+            if annots is not None:
+                annots = annots.get_object()
+            if not isinstance(annots, ArrayObject):
+                if not is_null_or_none(annots):
+                    logger_warning(
+                        "Annotations are not an array: %(annotations)s",
+                        source=__name__,
+                        annotations=annots,
+                    )
                 annots = ArrayObject()
                 self[NameObject(PG.ANNOTS)] = annots
             if ctm is None:
