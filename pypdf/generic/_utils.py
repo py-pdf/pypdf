@@ -195,12 +195,12 @@ def create_string_object(
     raise TypeError("create_string_object should have str or unicode arg")
 
 
-def _create_unicode_string_object(string: bytes) -> TextStringObject | None:
+def _create_unicode_string_object(data: bytes) -> TextStringObject | None:
     """
     Decode a text string which is marked or detected as UTF-8 or UTF-16.
 
     Args:
-        string: The data being used
+        data: The data being used
 
     Returns:
         A TextStringObject, or None if the data should be decoded as PDFDocEncoding.
@@ -209,30 +209,30 @@ def _create_unicode_string_object(string: bytes) -> TextStringObject | None:
         UnicodeDecodeError: If the data cannot be decoded as UTF-16.
 
     """
-    if string.startswith(codecs.BOM_UTF8):
+    if data.startswith(codecs.BOM_UTF8):
         # UTF-8 text strings have been added with PDF 2.0, see ISO 32000-2:2020, 7.9.2.2.1.
         # Data which is not valid UTF-8 is still decoded as PDFDocEncoding.
         try:
-            retval = TextStringObject(string[len(codecs.BOM_UTF8):].decode("utf-8"))
+            retval = TextStringObject(data[len(codecs.BOM_UTF8):].decode("utf-8"))
         except UnicodeDecodeError:
             return None
-        retval._original_bytes = string
+        retval._original_bytes = data
         return retval
-    if string.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
-        retval = TextStringObject(string.decode("utf-16"))
-        retval._original_bytes = string
+    if data.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
+        retval = TextStringObject(data.decode("utf-16"))
+        retval._original_bytes = data
         retval.autodetect_utf16 = True
-        retval.utf16_bom = string[:2]
+        retval.utf16_bom = data[:2]
         return retval
-    if string.startswith(b"\x00"):
-        retval = TextStringObject(string.decode("utf-16be"))
-        retval._original_bytes = string
+    if data.startswith(b"\x00"):
+        retval = TextStringObject(data.decode("utf-16be"))
+        retval._original_bytes = data
         retval.autodetect_utf16 = True
         retval.utf16_bom = codecs.BOM_UTF16_BE
         return retval
-    if string[1:2] == b"\x00":
-        retval = TextStringObject(string.decode("utf-16le"))
-        retval._original_bytes = string
+    if data[1:2] == b"\x00":
+        retval = TextStringObject(data.decode("utf-16le"))
+        retval._original_bytes = data
         retval.autodetect_utf16 = True
         retval.utf16_bom = codecs.BOM_UTF16_LE
         return retval
