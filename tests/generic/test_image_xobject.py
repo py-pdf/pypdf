@@ -585,6 +585,24 @@ def test_xobj_to_image__acyclic_smask_still_applied() -> None:
     assert img.mode == "LA"
 
 
+def test_xobj_to_image__smask_with_different_size(caplog: pytest.LogCaptureFixture) -> None:
+    """A soft mask with other dimensions than its image is scaled to the image size."""
+    image = _minimal_image_xobject()
+    image[NameObject("/Width")] = NumberObject(2)
+    image.set_data(b"\x00\xff")
+    mask = _minimal_image_xobject()
+    mask[NameObject("/Width")] = NumberObject(4)
+    mask[NameObject("/Height")] = NumberObject(2)
+    mask.set_data(b"\x80" * 8)
+    image[NameObject("/SMask")] = mask
+
+    img = _xobj_to_image(image)[2]
+
+    assert img.mode == "LA"
+    assert [img.getpixel((x, 0)) for x in range(2)] == [(0, 128), (255, 128)]
+    assert caplog.messages == []
+
+
 def test_xobj_to_image__empty_filter_array() -> None:
     """An empty /Filter array means no filter and must not raise IndexError."""
     image = _minimal_image_xobject()
