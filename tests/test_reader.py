@@ -3,7 +3,6 @@ import io
 import struct
 import sys
 import time
-import tracemalloc
 import zlib
 from io import BytesIO
 from pathlib import Path
@@ -3572,6 +3571,7 @@ def test_get_object_from_stream__duplicate_offsets() -> None:
 
 def test_reader_does_not_copy_the_stream() -> None:
     """This test is a regression test for issue #4369."""
+    tracemalloc = pytest.importorskip("tracemalloc", reason="Requires tracemalloc")
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     writer.add_metadata({"/Padding": "x" * 1_000_000})
