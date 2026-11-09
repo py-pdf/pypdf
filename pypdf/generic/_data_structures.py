@@ -467,11 +467,10 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                                     cur_obj = None
                                 else:
                                     next_obj = cur_obj[k]
-                                    cur_obj = (
-                                        next_obj
-                                        if isinstance(next_obj, DictionaryObject)
-                                        else None
-                                    )
+                                    if isinstance(next_obj, DictionaryObject):
+                                        cur_obj = next_obj
+                                    else:
+                                        cur_obj = None
                             except MemoryError:  # pragma: no cover  # TODO: BLE001
                                 raise
                             except Exception:

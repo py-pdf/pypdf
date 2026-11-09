@@ -16,7 +16,6 @@ from ..generic import (
     DictionaryObject,
     NameObject,
     NullObject,
-    PdfObject,
     TextStringObject,
     create_string_object,
     is_null_or_none,
@@ -138,22 +137,16 @@ class Action(DictionaryObject, ABC):
         # restricted to a single action but can contain an array of actions,
         # each of which in turn can have a Next entry of its own.
         # §12.6.2 Action dictionaries ISO 32000-2:2020
-        head = additional_actions.get(trigger_name)
-        # Action dictionaries are frequently stored as indirect objects, for
-        # example when a page is read back from a file written by pypdf.
-        resolved = head.get_object() if isinstance(head, PdfObject) else head
-        if not isinstance(resolved, DictionaryObject):
+        head = current = additional_actions.get(trigger_name, NullObject()).get_object()
+        if not isinstance(current, DictionaryObject):
             raise ParseError(
                 f"The type in a page object's additional-actions key must be a DictionaryObject: "
-                f"received type {type(resolved).__name__}."
+                f"received type {type(current).__name__}."
             )
-        current: DictionaryObject = resolved
 
         visited = set()
         while True:
-            next_node = current.get("/Next", None)
-            if isinstance(next_node, PdfObject):
-                next_node = next_node.get_object()
+            next_node = current.get("/Next", NullObject()).get_object()
 
             if is_null_or_none(next_node):
                 break
@@ -171,12 +164,7 @@ class Action(DictionaryObject, ABC):
             visited.add(id_next)
 
             if isinstance(next_node, ArrayObject):
-                current = cast(
-                    DictionaryObject,
-                    next_node[-1].get_object()
-                    if isinstance(next_node[-1], PdfObject)
-                    else next_node[-1],
-                )
+                current = cast(DictionaryObject, next_node[-1].get_object())
             else:
                 current = next_node
 

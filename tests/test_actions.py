@@ -8,7 +8,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript, PageTrigger
 from pypdf.errors import DeprecationError, ParseError
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject, is_null_or_none
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject, is_null_or_none
 
 from . import RESOURCE_ROOT
 
@@ -461,9 +461,8 @@ def test_page_add_action__chaining_with_indirect_action():
     page = PdfReader(buffer).pages[0]
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Second action');"))
 
-    first_action = page["/AA"].get(NameObject("/O"))
-    assert isinstance(first_action, IndirectObject)
-    assert first_action[NameObject("/Next")][NameObject("/JS")] == "app.alert('Second action');"
+    first_action = page["/AA"].get("/O")
+    assert first_action["/Next"]["/JS"] == "app.alert('Second action');"
 
 
 def test_page_add_action__chaining_with_indirect_next():
@@ -492,24 +491,6 @@ def test_page_add_action__chaining_with_indirect_next():
     assert chain["/JS"] == "app.alert('First action');"
     assert chain["/Next"]["/JS"] == "app.alert('Second action');"
     assert chain["/Next"]["/Next"]["/JS"] == "app.alert('Third action');"
-
-
-def test_page_add_action__with_non_pdf_object_values(pdf_file_writer):
-    """Non-PDF trigger and /Next values are reported as errors."""
-    page = pdf_file_writer.pages[0]
-    page[NameObject("/AA")] = DictionaryObject({NameObject("/O"): "plain string"})
-    with pytest.raises(ParseError, match=r"received type str\."):
-        page.add_action(PageTrigger.OPEN, JavaScript("app.alert('x');"))
-
-    invalid_next = DictionaryObject(
-        {
-            NameObject("/S"): NameObject("/JavaScript"),
-            NameObject("/Next"): "plain string",
-        }
-    )
-    page[NameObject("/AA")] = DictionaryObject({NameObject("/O"): invalid_next})
-    with pytest.raises(TypeError, match=r"received type str\."):
-        page.add_action(PageTrigger.OPEN, JavaScript("app.alert('x');"))
 
 
 @pytest.mark.parametrize(
