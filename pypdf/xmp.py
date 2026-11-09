@@ -292,9 +292,11 @@ class XmpInformation(PdfObject):
         name: str,
         converter: Callable[[str], Any] = _identity,
     ) -> Any | None:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cached
+        # 🎯 修复：使用 setdefault 确保 namespace 字典存在，并检查 'name' 是否在键中
+        ns_cache = self.cache.setdefault(namespace, {})
+        if name in ns_cache:
+            return ns_cache[name]
+
         value = None
         for element in self.get_element("", namespace, name):
             if element.nodeType == element.ATTRIBUTE_NODE:
@@ -302,16 +304,20 @@ class XmpInformation(PdfObject):
             else:
                 value = self._get_text(element)
             break
+
         if value is not None:
             value = converter(value)
-        ns_cache = self.cache.setdefault(namespace, {})
+
+        # 存入缓存并返回
         ns_cache[name] = value
         return value
 
     def _getter_bag(self, namespace: str, name: str) -> list[str] | None:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cast(list[str], cached)
+        # 🎯 修复：检查键是否存在，而不是检查值是否为真
+        ns_cache = self.cache.setdefault(namespace, {})
+        if name in ns_cache:
+            return cast(list[str], ns_cache[name])
+
         retval: list[str] = []
         for element in self.get_element("", namespace, name):
             if (bags := _generic_get(element, self, list_type="Bag")) is not None:
@@ -319,7 +325,7 @@ class XmpInformation(PdfObject):
             else:
                 value = self._get_text(element)
                 retval.append(value)
-        ns_cache = self.cache.setdefault(namespace, {})
+
         ns_cache[name] = retval
         return retval
 
@@ -329,33 +335,31 @@ class XmpInformation(PdfObject):
         name: str,
         converter: Callable[[Any], Any] = _identity,
     ) -> list[Any] | None:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cast(list[Any], cached)
+        # 🎯 修复：检查键是否存在
+        ns_cache = self.cache.setdefault(namespace, {})
+        if name in ns_cache:
+            return cast(list[Any], ns_cache[name])
+
         retval: list[Any] = []
         for element in self.get_element("", namespace, name):
             if (seqs := _generic_get(element, self, list_type="Seq", converter=converter)) is not None:
                 retval.extend(seqs)
             elif (bags := _generic_get(element, self, list_type="Bag")) is not None:
                 # See issue at https://github.com/py-pdf/pypdf/issues/3324
-                # Some applications violate the XMP metadata standard regarding `dc:creator` which should
-                # be an "ordered array" and thus a sequence, but use an unordered array (bag) instead.
-                # This seems to stem from the fact that the original Dublin Core specification does indeed
-                # use bags or direct values, while PDFs are expected to follow the XMP standard and ignore
-                # the plain Dublin Core variant. For this reason, add a fallback here to deal with such
-                # issues accordingly.
                 retval.extend(bags)
             else:
                 value = converter(self._get_text(element))
                 retval.append(value)
-        ns_cache = self.cache.setdefault(namespace, {})
+
         ns_cache[name] = retval
         return retval
 
     def _get_langalt_values(self, namespace: str, name: str) -> dict[Any, Any] | None:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cast(dict[Any, Any], cached)
+        # 🎯 修复：检查键是否存在
+        ns_cache = self.cache.setdefault(namespace, {})
+        if name in ns_cache:
+            return cast(dict[Any, Any], ns_cache[name])
+
         retval: dict[Any, Any] = {}
         for element in self.get_element("", namespace, name):
             alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
@@ -366,7 +370,7 @@ class XmpInformation(PdfObject):
                         retval[item.getAttribute("xml:lang")] = value
             else:
                 retval["x-default"] = self._get_text(element)
-        ns_cache = self.cache.setdefault(namespace, {})
+
         ns_cache[name] = retval
         return retval
 
