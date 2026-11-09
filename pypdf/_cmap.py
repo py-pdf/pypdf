@@ -16,7 +16,7 @@ from .generic import (
     StreamObject,
     is_null_or_none,
 )
-from .generic._data_structures import _FontFileCharacterMap
+from .generic._data_structures import _FontFileEncoding
 
 _predefined_cmap: dict[str, str] = {
     "/Identity-H": "utf-16-be",
@@ -71,7 +71,7 @@ def _parse_encoding(
     ft: DictionaryObject
 ) -> str | dict[int, str]:
     encoding: str | list[str] | dict[int, str] = []
-    map_dict: dict[Any, Any] = {}
+    embedded_font_encoding: dict[Any, Any] = {}
     int_entry: list[int] = []
 
     enc_object: str | DictionaryObject | NullObject = cast(
@@ -91,7 +91,9 @@ def _parse_encoding(
         ft.get("/Subtype", "") == "/Type1" and
         (font_descriptor := ft.get("/FontDescriptor"))
     ):
-        map_dict, int_entry = _parse_encoding_from_embedded_font(ft, font_descriptor, map_dict, int_entry)
+        embedded_font_encoding, int_entry = _parse_encoding_from_embedded_font(
+            ft, font_descriptor, embedded_font_encoding, int_entry
+        )
 
     # When ft["/Encoding"] is absent or cannot be used, use StandardEncoding as a basis, and add
     # what the embedded font file encoding says, if present. See Table 114, PDF Reference 1.7 / 2.0
@@ -107,9 +109,9 @@ def _parse_encoding(
                 zip(range(256), charset_encoding["/StandardEncoding"])
             )
         # Overwrite the standard encoding with the encoding information from the embedded font file.
-        if map_dict:
+        if embedded_font_encoding:
             for x in int_entry:
-                encoding[x] = map_dict[chr(x)]
+                encoding[x] = embedded_font_encoding[chr(x)]
         return encoding
 
     if isinstance(enc, str):
@@ -148,9 +150,9 @@ def _parse_encoding(
 
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         # Overwrite the standard encoding with the encoding information from the embedded font file, if applicable.
-        if map_dict:
+        if embedded_font_encoding:
             for x in int_entry:
-                encoding[x] = map_dict[chr(x)]
+                encoding[x] = embedded_font_encoding[chr(x)]
 
         x: int = 0
         o: int | str
@@ -440,16 +442,16 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
 def _parse_encoding_from_embedded_font(
     font_dictionary: DictionaryObject,
     font_descriptor: DictionaryObject,
-    map_dict: dict[Any, Any],
+    embedded_font_encoding: dict[Any, Any],
     int_entry: list[int]
 ) -> tuple[dict[Any, Any], list[int]]:
     from .generic._font import HAS_FONTTOOLS  # noqa: PLC0415
     """
-    Derive the character map from an embedded font program, caching the result on its stream. See Table 126
+    Derive the encoding from an embedded font program, caching the result on its stream. See Table 126
     about embedded font file organization in the PDF specification 1.7 for details
 
-    The character map depends only on the decoded font data, and the same font program is reached from every
-    font dictionary, resource name and page referencing its stream. Parsing a CFF font program with fontTools is
+    The encoding depends only on the decoded font data, and the same font program is reached from every
+    font dictionary, resource name and page referencing its stream. Parsing a font program with fontTools is
     expensive, so each stream is parsed once and reused until its data changes, which a digest of the data
     detects (a writer may replace the font program). See #4156.
     """
@@ -458,13 +460,13 @@ def _parse_encoding_from_embedded_font(
         (
             "/FontFile",
             lambda _: True,
-            _derive_character_map_from_type1_font_file
+            _derive_encoding_from_type1_font_file
         ),
         # A CFF Type1 font file, as part of a Type1 or MMType1 font dictionary, when subtype is Type1C.
         (
             "/FontFile3",
             lambda stream: stream.get("/Subtype") == "/Type1C",
-            _derive_character_map_from_cff_type1_font_file,
+            _derive_encoding_from_cff_type1_font_file,
         )
     )
     for font_file, condition, font_file_processor in font_file_handlers:
@@ -488,15 +490,17 @@ def _parse_encoding_from_embedded_font(
             font_file_data = font_file_dict.get_data()
             if font_file_data:
                 digest = sha256(font_file_data).digest()
-                cached = font_file_dict._font_file_character_map
+                cached = font_file_dict._font_file_encoding
                 if cached is None or cached.digest != digest:
-                    cached_map_dict, cached_int_entry = font_file_processor(font_file_data, map_dict, int_entry)
-                    cached = _FontFileCharacterMap(digest, cached_map_dict, cached_int_entry)
-                    font_file_dict._font_file_character_map = cached
-                map_dict.update(cached.map_dict)
+                    cached_encoding, cached_int_entry = font_file_processor(
+                        font_file_data, embedded_font_encoding, int_entry
+                    )
+                    cached = _FontFileEncoding(digest, cached_encoding, cached_int_entry)
+                    font_file_dict._font_file_encoding = cached
+                embedded_font_encoding.update(cached.embedded_font_encoding)
                 int_entry.extend(cached.int_entry)
-                return map_dict, int_entry
-    return {}, []
+
+    return embedded_font_encoding, int_entry
 
 
 def _glyph_name_to_unicode(glyph_name: str) -> str | None:
@@ -515,9 +519,9 @@ def _glyph_name_to_unicode(glyph_name: str) -> str | None:
             return None
 
 
-def _derive_character_map_from_cff_type1_font_file(
+def _derive_encoding_from_cff_type1_font_file(
     font_data: bytes,
-    map_dict: dict[Any, Any],
+    embedded_font_encoding: dict[Any, Any],
     int_entry: list[int],
 ) -> tuple[dict[Any, Any], list[int]]:
     try:
@@ -528,31 +532,31 @@ def _derive_character_map_from_cff_type1_font_file(
         cff_encoding = cff_font.Encoding
         # Encoding can fall back to literal strings "StandardEncoding" or "ExpertEncoding", which we do not parse.
         if isinstance(cff_encoding, str):
-            return map_dict, int_entry
+            return embedded_font_encoding, int_entry
         for i in range(min(len(cff_encoding), 256)):
             glyph_name = cff_encoding[i]
             if not glyph_name or glyph_name == ".notdef":
                 continue
             if unipoint := _glyph_name_to_unicode(f"/{glyph_name}"):
-                map_dict[chr(i)] = unipoint
+                embedded_font_encoding[chr(i)] = unipoint
                 int_entry.append(i)
     except MemoryError:  # pragma: no cover  # TODO: BLE001
         raise
     except Exception:
-        return map_dict, int_entry
+        return embedded_font_encoding, int_entry
     else:
-        return map_dict, int_entry
+        return embedded_font_encoding, int_entry
 
 
-def _derive_character_map_from_type1_font_file(
+def _derive_encoding_from_type1_font_file(
     font_data: bytes,
-    map_dict: dict[Any, Any],
+    embedded_font_encoding: dict[Any, Any],
     int_entry: list[int],
 ) -> tuple[dict[Any, Any], list[int]]:
     txt = font_data.split(b"eexec\n")[0]  # Only the clear part
     encoding_part = txt.split(b"/Encoding")
     if len(encoding_part) < 2:
-        return map_dict, int_entry
+        return embedded_font_encoding, int_entry
     txt = encoding_part[1]  # To get the encoding part
     lines = txt.replace(b"\r", b"\n").split(b"\n")
     for li in lines:
@@ -567,7 +571,7 @@ def _derive_character_map_from_type1_font_file(
 
             # Ensure the character code stays strictly within the 8-bit limit (0-255)
             if 0 <= i <= 255 and (unipoint := _glyph_name_to_unicode(words[2].decode())):
-                map_dict[chr(i)] = unipoint
+                embedded_font_encoding[chr(i)] = unipoint
                 int_entry.append(i)
 
-    return map_dict, int_entry
+    return embedded_font_encoding, int_entry
