@@ -74,12 +74,12 @@ def _parse_encoding(
     embedded_font_encoding: dict[Any, Any] = {}
     int_entry: list[int] = []
 
-    enc_object: str | DictionaryObject | NullObject = cast(
-        str | DictionaryObject | NullObject, ft.get("/Encoding")
-    )
-    enc = None
-    if enc_object:
-        enc = enc_object.get_object()
+    if "/Encoding" in ft:
+        enc: str | DictionaryObject | NullObject | None = cast(
+            str | DictionaryObject | NullObject, ft["/Encoding"].get_object()
+        )
+    else:
+        enc = None
 
     has_no_encoding = enc is None or is_null_or_none(enc)
     has_no_base_encoding = isinstance(enc, DictionaryObject) and "/BaseEncoding" not in enc
@@ -97,7 +97,7 @@ def _parse_encoding(
 
     # When ft["/Encoding"] is absent or cannot be used, use StandardEncoding as a basis, and add
     # what the embedded font file encoding says, if present. See Table 114, PDF Reference 1.7 / 2.0
-    if has_no_encoding or (has_no_base_encoding and "/Differences" not in enc):
+    if has_no_encoding or (has_no_base_encoding and "/Differences" not in cast(DictionaryObject, enc)):
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
             # This will match Symbol and ZapfDingBats
             encoding = dict(
@@ -109,9 +109,7 @@ def _parse_encoding(
                 zip(range(256), charset_encoding["/StandardEncoding"])
             )
         # Overwrite the standard encoding with the encoding information from the embedded font file.
-        if embedded_font_encoding:
-            for x in int_entry:
-                encoding[x] = embedded_font_encoding[chr(x)]
+        _correct_encoding(embedded_font_encoding, int_entry, encoding)
         return encoding
 
     if isinstance(enc, str):
@@ -150,9 +148,7 @@ def _parse_encoding(
 
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         # Overwrite the standard encoding with the encoding information from the embedded font file, if applicable.
-        if embedded_font_encoding:
-            for x in int_entry:
-                encoding[x] = embedded_font_encoding[chr(x)]
+        _correct_encoding(embedded_font_encoding, int_entry, cast(list[str], encoding))
 
         x: int = 0
         o: int | str
@@ -437,6 +433,16 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
             )
         ] = map_to
         int_entry.append(int(source, 16))
+
+
+def _correct_encoding(
+    embedded_font_encoding: dict[Any, Any] | None,
+    int_entry: list[int],
+    encoding: dict[int, str] | list[str]
+) -> None:
+    if embedded_font_encoding:
+        for x in int_entry:
+            encoding[x] = embedded_font_encoding[chr(x)]
 
 
 def _parse_encoding_from_embedded_font(
