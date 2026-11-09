@@ -1114,8 +1114,9 @@ def test_inline_image__perceptual() -> None:
     assert len(page.images) == 1
     assert image_similarity(image, page.images[0].image) > 0.9999
 
-def test_images__inline_image_custom_colorspace_resources_not_a_dictionary():
-    """A custom inline-image color space with non-dictionary resources raises the clear input error, not a TypeError."""
+
+def test_inline_image__custom_color_space_resources__not_a_dictionary():
+    """A custom inline-image color space with non-dictionary resources raises the clear input error."""
     writer = PdfWriter()
     page = writer.add_blank_page(width=72, height=72)
     page[NameObject("/Resources")] = NumberObject(1)
@@ -1126,11 +1127,11 @@ def test_images__inline_image_custom_colorspace_resources_not_a_dictionary():
     writer.write(stream)
     stream.seek(0)
 
-    with pytest.raises(PdfReadError, match="Cannot find resource entry /CS0"):
+    with pytest.raises(PdfReadError, match=r"^Cannot find resource entry /CS0 for /CS$"):
         list(PdfReader(stream).pages[0].images)
 
 
-def test_images__inline_image_custom_colorspace_resolved_from_resources():
+def test_inline_image__custom_color_space__resolved_from_resources():
     """A custom inline-image color space is resolved through dictionary /Resources."""
     writer = PdfWriter()
     page = writer.add_blank_page(width=72, height=72)

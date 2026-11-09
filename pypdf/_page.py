@@ -858,8 +858,9 @@ class PageObject(DictionaryObject):
                             resources=resources,
                         )
                     resources = DictionaryObject()
-                if "/ColorSpace" in resources and v in cast(DictionaryObject, resources["/ColorSpace"]):
-                    color_space = cast(DictionaryObject, resources["/ColorSpace"])
+                if "/ColorSpace" in resources and v in (
+                    color_space := cast(DictionaryObject, resources["/ColorSpace"])
+                ):
                     return color_space[v]
                 raise PdfReadError(f"Cannot find resource entry {v} for {k}") from exception
         return v
