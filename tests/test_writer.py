@@ -4273,7 +4273,7 @@ def test_update_page_form_field_values__tuple_value_on_field_with_separate_widge
     )
     field[NameObject("/Kids")] = ArrayObject([widget_ref])
     page[NameObject("/Annots")] = ArrayObject([widget_ref])
-    writer._root_object[NameObject("/AcroForm")] = DictionaryObject(
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject(
         {
             NameObject("/Fields"): ArrayObject([field_ref]),
             NameObject("/DR"): DictionaryObject(
