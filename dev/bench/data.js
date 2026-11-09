@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794242214433,
+  "lastUpdate": 1794242845507,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125537,6 +125537,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006182259201064355",
             "extra": "mean: 473.45156239999824 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rajuriprathik@gmail.com",
+            "name": "rajuriprathik-a11y",
+            "username": "rajuriprathik-a11y"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fc40cb649e416dad2aac2d4dcc5fcb962c6118de",
+          "message": "BUG: Fix page reference lookup for hierarchical page trees in PdfWriter (#4356)\n\nCloses #4355.",
+          "timestamp": "2026-11-09T17:45:37+01:00",
+          "tree_id": "f3152d4b4c18ce3cdc871739efc800fb07c2af59",
+          "url": "https://github.com/py-pdf/pypdf/commit/fc40cb649e416dad2aac2d4dcc5fcb962c6118de"
+        },
+        "date": 1794242834561,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.411624989718876,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009985266266719878",
+            "extra": "mean: 226.6738452000027 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.85115582423494,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007297306065750787",
+            "extra": "mean: 27.893103499999636 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.38672709348144346,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017916125195938694",
+            "extra": "mean: 2.585802797000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 23.25673554220223,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010978214051744802",
+            "extra": "mean: 42.998296049992746 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.21538753359541973,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024233238123282583",
+            "extra": "mean: 4.642794238399995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.914667894623317,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005893940880671",
+            "extra": "mean: 522.2837876000085 msec\nrounds: 5"
           }
         ]
       }
