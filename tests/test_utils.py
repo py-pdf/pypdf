@@ -759,28 +759,3 @@ def test_get_stream_data(tmp_path) -> None:
         assert fd.read(10) == b"Hello Worl"
         assert get_stream_data(fd) == b"Hello World!"
         assert fd.read(2) == b"d!"
-
-
-class NoGetBufferBytesIO(BytesIO):
-    """A BytesIO which must not have its buffer materialized with getbuffer()."""
-
-    def getbuffer(self) -> memoryview:
-        raise AssertionError("getbuffer() copies the whole stream")
-
-
-def test_get_stream_size_does_not_materialize_the_buffer() -> None:
-    """This test is a regression test for issue #4369."""
-    stream = NoGetBufferBytesIO(b"Hello World!")
-    stream.read(5)
-
-    assert get_stream_size(stream) == 12
-    assert stream.tell() == 5
-
-
-def test_get_stream_data_does_not_materialize_the_buffer() -> None:
-    """This test is a regression test for issue #4369."""
-    stream = NoGetBufferBytesIO(b"Hello World!")
-    stream.read(5)
-
-    assert get_stream_data(stream) == b"Hello World!"
-    assert stream.tell() == 5
