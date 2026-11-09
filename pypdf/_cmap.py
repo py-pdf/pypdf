@@ -1,3 +1,4 @@
+import re
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from collections.abc import Callable
@@ -120,6 +121,16 @@ def _parse_encoding(
                 source=__name__, encoding=encoding
             )
             encoding = charset_encoding["/StandardEncoding"].copy()
+    elif isinstance(enc, StreamObject) and ft.get("/Subtype", "") == "/Type0":
+        # A Type0 font can use a CMap stream in place of a predefined CMap name
+        # (ISO 32000-2:2020, 9.7.6.1). Its code spaces say how many bytes a
+        # character code occupies, which is all extraction needs: /ToUnicode is
+        # keyed by character code, not by CID.
+        encoding = (
+            "utf-16-be"
+            if _codespace_code_length(enc) == 2
+            else charset_encoding["/StandardEncoding"].copy()
+        )
     else:
         encoding = charset_encoding["/StandardEncoding"].copy()
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
@@ -148,6 +159,35 @@ def _parse_encoding(
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
     return encoding
+
+
+_CODESPACE_RANGES = re.compile(rb"begincodespacerange(.*?)endcodespacerange", re.DOTALL)
+_HEX_OPERAND = re.compile(rb"<([0-9A-Fa-f\s]*)>")
+
+
+def _codespace_code_length(cmap: StreamObject) -> int | None:
+    """
+    Number of bytes each character code of an embedded CMap has.
+
+    ``begincodespacerange`` lists the code spaces of a CMap as low/high hex
+    pairs; all of them together say how long a character code is.
+
+    ``None`` is returned when the stream has no readable code spaces or when
+    they do not all have the same length. Splitting a string across code
+    spaces of mixed width is not implemented, so such a CMap is left to the
+    caller to treat as unsupported.
+    """
+    code_length: int | None = None
+    for ranges in _CODESPACE_RANGES.findall(cmap.get_data()):
+        for digits in _HEX_OPERAND.findall(ranges):
+            digits = re.sub(rb"\s", b"", digits)
+            if len(digits) % 2:
+                return None
+            length = len(digits) // 2
+            if length not in (1, 2) or code_length not in (None, length):
+                return None
+            code_length = length
+    return code_length
 
 
 def _parse_to_unicode(
