@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794231914235,
+  "lastUpdate": 1794233748843,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125339,6 +125339,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01014626697956376",
             "extra": "mean: 441.6164911999971 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "229f6ebc4d03c7c3d35f24bd8e6df4abacdaac16",
+          "message": "BUG: Copy the operations in ContentStream.replicate() (#4372)\n\nreplicate() returned right after it copied the data and the\ndictionary entries. The lines that copy the operations and the forced\nencoding came after the return and never ran. A content stream whose\noperations were parsed holds no raw data, so its replica was empty.\nreplicate() is used when a writer in incremental mode is created from\na reader.\n\nThe unreachable lines are now the end of the method, without the\nset_data() call, which would drop the operations again.\n\nCo-authored-by: Claude Sonnet 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-09T15:12:15+01:00",
+          "tree_id": "329be2ffacc11647a6f04412dca9b867dec6b60a",
+          "url": "https://github.com/py-pdf/pypdf/commit/229f6ebc4d03c7c3d35f24bd8e6df4abacdaac16"
+        },
+        "date": 1794233739046,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.070831159641246,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00878947300274237",
+            "extra": "mean: 197.20632940000087 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 39.24869271100877,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007226296014964884",
+            "extra": "mean: 25.478555613637354 msec\nrounds: 44"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4410881477980719,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016197389388727845",
+            "extra": "mean: 2.2671205404000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 25.955644497994722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017622307045924543",
+            "extra": "mean: 38.527265238097165 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.2435911459970613,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1005532366848978",
+            "extra": "mean: 4.105239523000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9544636671349203,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018341408847248598",
+            "extra": "mean: 511.6493167999977 msec\nrounds: 5"
           }
         ]
       }
