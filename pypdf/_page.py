@@ -1403,9 +1403,7 @@ class PageObject(DictionaryObject):
             arr.sort()
 
         if not is_null_or_none(page2.get(PG.ANNOTS, None)):
-            annots = self.get(PG.ANNOTS)
-            if annots is not None:
-                annots = annots.get_object()
+            annots = self.get(PG.ANNOTS, NullObject()).get_object()
             if not isinstance(annots, ArrayObject):
                 if not is_null_or_none(annots):
                     logger_warning(
