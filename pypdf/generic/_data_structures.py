@@ -1395,8 +1395,6 @@ class ContentStream(DecodedStreamObject):
             d__[k.replicate(pdf_dest)] = (
                 v.replicate(pdf_dest) if hasattr(v, "replicate") else v
             )
-        return d__
-        d__.set_data(self._data)
         d__.pdf = pdf_dest
         d__._operations = list(self._operations)
         d__.forced_encoding = self.forced_encoding

@@ -29,8 +29,8 @@
 
 import decimal
 import enum
-import hashlib
 import re
+import secrets
 import struct
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -135,13 +135,6 @@ class ObjectDeletionFlag(enum.IntFlag):
     INLINE_IMAGES = enum.auto()
     DRAWING_IMAGES = enum.auto()
     IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
-
-
-def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
-    hash_object = hashlib.md5(usedforsecurity=False)
-    for block in iter(lambda: stream.read(blocksize), b""):
-        hash_object.update(block)
-    return hash_object.hexdigest()
 
 
 class PdfWriter(PdfDocCommon):
@@ -1258,12 +1251,6 @@ class PdfWriter(PdfDocCommon):
             ):
                 after_page_append(page.get_object())
 
-    def _compute_document_identifier(self) -> ByteStringObject:
-        stream = BytesIO()
-        self._write_pdf_structure(stream)
-        stream.seek(0)
-        return ByteStringObject(_rolling_checksum(stream).encode("utf8"))
-
     def generate_file_identifiers(self) -> None:
         """
         Generate an identifier for the PDF that will be written.
@@ -1278,9 +1265,9 @@ class PdfWriter(PdfDocCommon):
         """
         if self._ID:
             id1 = self._ID[0]
-            id2 = self._compute_document_identifier()
+            id2 = ByteStringObject(secrets.token_bytes(16))
         else:
-            id1 = self._compute_document_identifier()
+            id1 = ByteStringObject(secrets.token_bytes(16))
             id2 = id1
         self._ID = ArrayObject((id1, id2))
 
@@ -1954,14 +1941,13 @@ class PdfWriter(PdfDocCommon):
 
         return page_destination_ref
 
-    def _get_page_reference(self, page_number: int) -> Any:
+    def _get_page_reference(self, page_number: int) -> IndirectObject:
         """Look up a page by number, reporting a bad index rather than an IndexError from the kids array."""
-        pages = cast(DictionaryObject, self.get_object(self._pages))
-        kids = cast(ArrayObject, pages[PagesAttributes.KIDS])
-        count = len(kids)
+        pages = self.pages
+        count = len(pages)
         if not (-count <= page_number < count):
             raise IndexError(f"Page number {page_number} is out of range")
-        return kids[page_number]
+        return cast(IndirectObject, pages[page_number].indirect_reference)
 
     def add_named_destination(
         self,
@@ -2030,14 +2016,24 @@ class PdfWriter(PdfDocCommon):
     ) -> None:
         page = cast(DictionaryObject, page.get_object())
         if PG.ANNOTS in page:
+            annotations = page[PG.ANNOTS]
+            if not isinstance(annotations, ArrayObject):
+                logger_warning(
+                    "Annotations are not an array: %(annotations)s",
+                    source=__name__,
+                    annotations=annotations,
+                )
+                return
             i = 0
-            while i < len(cast(ArrayObject, page[PG.ANNOTS])):
-                an = cast(ArrayObject, page[PG.ANNOTS])[i]
-                obj = cast(DictionaryObject, an.get_object())
-                if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
+            while i < len(annotations):
+                an = annotations[i]
+                obj = an.get_object()
+                # An entry that is not a dictionary has no subtype: it is only removed with all the annotations
+                subtype = obj.get("/Subtype") if isinstance(obj, DictionaryObject) else None
+                if subtypes is None or (subtype is not None and subtype in subtypes):
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
-                    del page[PG.ANNOTS][i]  # type: ignore[attr-defined]
+                    del annotations[i]
                 else:
                     i += 1
 

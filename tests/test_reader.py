@@ -3,6 +3,7 @@ import io
 import struct
 import sys
 import time
+import zlib
 from io import BytesIO
 from pathlib import Path
 from unittest import mock
@@ -2896,7 +2897,7 @@ def test_read_pdf15_xref_stream__size_limit(caplog):
 
 @pytest.mark.timeout(10)
 def test_get_object_from_stream__size_limit(caplog):
-    obj_stm_encoded = FlateDecode.encode(b"4 0\nnull")
+    obj_stm_encoded = FlateDecode.encode(b"4 0 5 6\n")
     pdf = _build_pdf_with_object_stream(b"/N 5000000 /First 4 /Filter /FlateDecode", obj_stm_encoded)
 
     with pytest.raises(LimitReachedError, match=r"^Value /N 5000000 for object 3 exceeds maximum allowed value 2\.$"):
@@ -2911,8 +2912,8 @@ def test_get_object_from_stream__size_limit(caplog):
         _ = reader.pages[0]
     assert caplog.messages == [
         "Value /N 5000000 for object 3 exceeds maximum allowed value 2. Limiting to 2.",
-        "NumberObject(b'') invalid; use 0 instead",
-        "NumberObject(b'') invalid; use 0 instead",
+        "Invalid object number (5) or offset (6) in object stream 3; skipping the entry.",
+        "Ignoring page tree entry that is not a dictionary: 5",
     ]
 
 
@@ -3512,3 +3513,57 @@ def test_read_standard_xref_table__end_of_file__trailer() -> None:
 
     with pytest.raises(PdfReadError, match=r"^Xref parsing stuck at position 33: b'aaa'$"):
         PdfReader(BytesIO(data))
+
+
+def test_get_object_from_stream__duplicate_offsets() -> None:
+    body_entries = 100
+    n = 10
+    entries = [
+        b"<< /Type /Catalog"
+        + b"".join(b" /K%d 0" % i for i in range(body_entries))
+        + b" >>"
+    ]
+    offsets = [0] * n
+
+    header = b"".join(b"%d %d " % (i + 3, offsets[i]) for i in range(n))
+    decoded = header + b" ".join(entries)
+    compressed = zlib.compress(decoded, 9)
+
+    pdf = bytearray(b"%PDF-1.5\n%\xe2\xe3\xcf\xd3\n")
+    offset_objstm = len(pdf)
+    pdf += (
+        b"1 0 obj\n"
+        b"<< /Type /ObjStm /N %d /First %d "
+        b"/Filter /FlateDecode /Length %d >>\nstream\n"
+
+    ) % (n, len(header), len(compressed))
+    pdf += compressed + b"\nendstream\nendobj\n"
+
+    offset_xref = len(pdf)
+    size = n + 3
+    xref = bytearray()
+
+    def add_entry(kind: int, field2: int, field3: int) -> None:
+        xref.extend(bytes([kind]))
+        xref.extend(field2.to_bytes(4, "big"))
+        xref.extend(field3.to_bytes(2, "big"))
+
+    add_entry(0, 0, 65535)
+    add_entry(1, offset_objstm, 0)
+    add_entry(1, offset_xref, 0)
+    for i in range(n):
+        # Type 2: compressed object in ObjStm object 1.
+        add_entry(2, 1, i)
+
+    pdf += (
+        b"2 0 obj\n"
+        b"<< /Type /XRef /Size %d /Root 3 0 R /W [1 4 2] "
+        b"/Length %d >>\nstream\n"
+    ) % (size, len(xref))
+    pdf += xref + b"\nendstream\nendobj\n"
+    pdf += b"startxref\n%d\n%%%%EOF\n" % offset_xref
+
+    reader = PdfReader(BytesIO(pdf), strict=False)
+
+    with pytest.raises(PdfReadError, match=r"^Invalid offset 0 in object stream 1\.$"):
+        _ = reader.root_object

@@ -1381,6 +1381,28 @@ def test_get_contents_from_nullobject():
     page1.merge_page(page2, over=True)
 
 
+@pytest.mark.parametrize(
+    ("contents", "expected"),
+    [
+        pytest.param(NumberObject(3), "Page contents are not a stream or an array: 3", id="number"),
+        pytest.param(TextStringObject("x"), "Page contents are not a stream or an array: x", id="string"),
+        pytest.param(DictionaryObject(), "Page contents are not a stream or an array: {}", id="dictionary"),
+    ],
+)
+def test_get_contents__not_a_stream_or_an_array(caplog, contents, expected):
+    """A malformed /Contents is treated as missing, so the page can still be edited."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    page[NameObject("/Contents")] = contents
+
+    assert page.get_contents() is None
+    assert expected in caplog.text
+    page.compress_content_streams()
+    page.scale_by(2)
+    page.merge_page(writer.add_blank_page(100, 100))
+    writer.remove_text()
+
+
 @pytest.mark.enable_socket
 def test_pos_text_in_textvisitor():
     """See #2200"""

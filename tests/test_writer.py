@@ -644,6 +644,44 @@ def test_remove_objects__resources_are_not_a_dictionary(caplog, method, resource
         assert expected in caplog.text
 
 
+@pytest.mark.parametrize(
+    ("annotations", "expected"),
+    [
+        pytest.param(NumberObject(4), "Annotations are not an array: 4", id="number"),
+        pytest.param(TextStringObject("x"), "Annotations are not an array: x", id="string"),
+        pytest.param(DictionaryObject(), "Annotations are not an array: {}", id="dictionary"),
+    ],
+)
+@pytest.mark.parametrize("method", ["remove_annotations", "remove_links"])
+def test_remove_annotations__annotations_are_not_an_array(caplog, method, annotations, expected):
+    """An /Annots entry that is not an array is left as is, instead of raising a TypeError."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Annots")] = annotations
+
+    if method == "remove_annotations":
+        writer.remove_annotations(subtypes=None)
+    else:
+        writer.remove_links()
+
+    assert page["/Annots"] == annotations
+    assert expected in caplog.text
+
+
+def test_remove_annotations__entries_are_not_dictionaries():
+    """Entries that are not dictionaries have no subtype: they are kept by a filter and removed with all."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    link = DictionaryObject({NameObject("/Subtype"): NameObject("/Link")})
+    page[NameObject("/Annots")] = ArrayObject([NumberObject(1), TextStringObject("x"), link])
+
+    writer.remove_annotations("/Link")
+    assert page["/Annots"] == ArrayObject([NumberObject(1), TextStringObject("x")])
+
+    writer.remove_annotations(subtypes=None)
+    assert page["/Annots"] == ArrayObject()
+
+
 def test_write_metadata(pdf_file_path):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
 
@@ -4133,12 +4171,118 @@ def test_add_uri_out_of_range(page_number):
         writer.add_uri(page_number, "https://example.com", RectangleObject([0, 0, 1, 1]))
 
 
-@pytest.mark.parametrize("page_number", [0, 2, -1, -3])
+@pytest.mark.parametrize("page_number", [0, 1, 2, -1, -3])
 def test_add_named_destination_in_range(page_number):
     writer = PdfWriter()
     for _ in range(3):
         writer.add_blank_page(100, 100)
-    assert writer.add_named_destination("destination", page_number) is not None
+    destination_reference = writer.add_named_destination("destination", page_number)
+    assert destination_reference is not None
+    destination_dictionary = writer.get_object(destination_reference)
+    target_page_reference = destination_dictionary["/D"][0]
+    assert writer.get_object(target_page_reference)["/Type"] == "/Page"
+    assert target_page_reference == writer.pages[page_number].indirect_reference
+
+
+@pytest.mark.parametrize("page_number", [0, 1, 2, -1, -3])
+def test_add_uri_in_range(page_number):
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(100, 100)
+    writer.add_uri(page_number, "https://example.com", RectangleObject([0, 0, 1, 1]))
+    assert "/Annots" in writer.pages[page_number]
+
+
+def create_hierarchical_pdf_bytes() -> bytes:
+    """A minimal 4-page PDF with a 2-level /Pages tree."""
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(100, 100)
+    root_pages_reference = writer._pages
+    root_pages = root_pages_reference.get_object()
+    (
+        page_reference_0,
+        page_reference_1,
+        page_reference_2,
+        page_reference_3,
+    ) = root_pages["/Kids"]
+
+    first_intermediate_node = DictionaryObject({
+        NameObject("/Type"): NameObject("/Pages"),
+        NameObject("/Count"): NumberObject(2),
+        NameObject("/Kids"): ArrayObject([page_reference_0, page_reference_1]),
+        NameObject("/Parent"): root_pages_reference,
+    })
+    first_node_reference = writer._add_object(first_intermediate_node)
+    second_intermediate_node = DictionaryObject({
+        NameObject("/Type"): NameObject("/Pages"),
+        NameObject("/Count"): NumberObject(2),
+        NameObject("/Kids"): ArrayObject([page_reference_2, page_reference_3]),
+        NameObject("/Parent"): root_pages_reference,
+    })
+    second_node_reference = writer._add_object(second_intermediate_node)
+
+    writer.pages[0][NameObject("/Parent")] = first_node_reference
+    writer.pages[1][NameObject("/Parent")] = first_node_reference
+    writer.pages[2][NameObject("/Parent")] = second_node_reference
+    writer.pages[3][NameObject("/Parent")] = second_node_reference
+
+    root_pages[NameObject("/Kids")] = ArrayObject([
+        first_node_reference,
+        second_node_reference,
+    ])
+    root_pages[NameObject("/Count")] = NumberObject(4)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    return buffer.getvalue()
+
+
+@pytest.mark.parametrize("page_number", [0, 1, 2, 3, -1, -2, -4])
+def test_add_named_destination__hierarchical_tree__valid_page_reference(page_number):
+    pdf_bytes = create_hierarchical_pdf_bytes()
+    reader = PdfReader(BytesIO(pdf_bytes))
+    writer = PdfWriter(fileobj=BytesIO(pdf_bytes), clone_from=reader, incremental=True)
+
+    destination_reference = writer.add_named_destination("destination", page_number)
+    assert destination_reference is not None
+    destination_dictionary = writer.get_object(destination_reference)
+    target_page_reference = destination_dictionary["/D"][0]
+    assert writer.get_object(target_page_reference)["/Type"] == "/Page"
+    assert target_page_reference == writer.pages[page_number].indirect_reference
+
+
+@pytest.mark.parametrize("page_number", [0, 1, 2, 3, -1, -2, -4])
+def test_add_uri__hierarchical_tree__valid_page_reference(page_number):
+    pdf_bytes = create_hierarchical_pdf_bytes()
+    reader = PdfReader(BytesIO(pdf_bytes))
+    writer = PdfWriter(fileobj=BytesIO(pdf_bytes), clone_from=reader, incremental=True)
+
+    writer.add_uri(page_number, "https://example.com", RectangleObject([0, 0, 10, 10]))
+    assert "/Annots" in writer.pages[page_number]
+
+    for intermediate_node in writer._pages.get_object()["/Kids"]:
+        assert "/Annots" not in intermediate_node.get_object()
+
+
+@pytest.mark.parametrize("page_number", [4, 100, -5, -100])
+def test_add_named_destination__hierarchical_tree__out_of_range_page_reference(page_number):
+    pdf_bytes = create_hierarchical_pdf_bytes()
+    reader = PdfReader(BytesIO(pdf_bytes))
+    writer = PdfWriter(fileobj=BytesIO(pdf_bytes), clone_from=reader, incremental=True)
+
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_named_destination("destination", page_number)
+
+
+@pytest.mark.parametrize("page_number", [4, 100, -5, -100])
+def test_add_uri__hierarchical_tree__out_of_range_page_reference(page_number):
+    pdf_bytes = create_hierarchical_pdf_bytes()
+    reader = PdfReader(BytesIO(pdf_bytes))
+    writer = PdfWriter(fileobj=BytesIO(pdf_bytes), clone_from=reader, incremental=True)
+
+    with pytest.raises(IndexError, match=f"Page number {page_number} is out of range"):
+        writer.add_uri(page_number, "https://example.com", RectangleObject([0, 0, 10, 10]))
 
 
 def test_update_page_form_field_values__warns_for_unannotated_page(caplog):
@@ -4201,3 +4345,36 @@ def test_find_outline_item__cyclic(name: str) -> None:
 
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Detected cyclic outline hierarchy\.$"):
         writer.find_outline_item("Dummy")
+
+
+def test_generate_file_identifiers__non_deterministic() -> None:
+    writer1 = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer2 = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    assert writer1._ID == writer2._ID
+
+    writer1.generate_file_identifiers()
+    writer2.generate_file_identifiers()
+
+    assert writer1._ID[0] == writer2._ID[0]
+    assert writer1._ID[1] != writer2._ID[1]
+
+
+def test_generate_file_identifiers__initially_identical() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    writer.generate_file_identifiers()
+    assert writer._ID[0] == writer._ID[1]
+
+
+def test_generate_file_identifiers__update() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    writer.generate_file_identifiers()
+    id_permanent, id_changing = writer._ID[:2]
+
+    writer.generate_file_identifiers()
+    assert writer._ID[0] == id_permanent
+    assert writer._ID[1] != id_changing
