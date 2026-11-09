@@ -10,7 +10,8 @@ from pypdf._cmap import (
     __parse_bfrange__decode,
     _check_token_length,
     _derive_character_map_from_cff_type1_font_file,
-    _parse_to_unicode,
+    _parse_encoding,
+    _parse_encoding_from_embedded_font,
     get_encoding,
     parse_bfchar,
     parse_bfrange,
@@ -393,8 +394,8 @@ def test_get_encoding__type1_font_file_truncated_dup_line():
     ft = _type1_font(
         b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
     )
-    _encoding, character_map = get_encoding(ft)
-    assert character_map == {"a": "a"}
+    encoding, _ = _parse_encoding_from_embedded_font(ft, ft["/FontDescriptor"])
+    assert encoding == {"a": "a"}
 
 
 @pytest.mark.parametrize(
@@ -862,7 +863,7 @@ def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
     font_dict[NameObject("/FontDescriptor")] = font_descriptor
     # Ensure a warning is logged when fontTools is missing for CFF Type1 font parsing
     with mock.patch("pypdf.generic._font.HAS_FONTTOOLS", False):
-        _parse_to_unicode(font_dict)
+        _parse_encoding(font_dict)
     assert (
         "fontTools is required to fully parse the encoding of a CFF Type1 font in font dictionary"
         in caplog.text
@@ -876,7 +877,7 @@ def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
     font_file_stream.update({NameObject("/Subtype"): NameObject("/Type1C")})
     font_descriptor = DictionaryObject({NameObject("/FontFile3"): font_file_stream})
     font_dict[NameObject("/FontDescriptor")] = font_descriptor
-    _parse_to_unicode(font_dict)
+    _parse_encoding(font_dict)
 
     # Ensure we return early when encoding is a string
     mock_cff_set = mock.MagicMock()
@@ -885,7 +886,7 @@ def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
     mock_cff_set.topDictIndex = [mock_font_str_encoding]
 
     with mock.patch("fontTools.cffLib.CFFFontSet", return_value=mock_cff_set):
-        _parse_to_unicode(font_dict)
+        _parse_encoding(font_dict)
 
 
 def _generate_font_with_differences(differences: PdfObject) -> DictionaryObject:
