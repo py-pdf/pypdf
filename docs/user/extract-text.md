@@ -288,7 +288,7 @@ print("".join(parts))
 ```{testoutput}
 :options: +NORMALIZE_WHITESPACE
 
-x² = 9 means x∈{3,−3}.
+x² = 9 means x ∈{3, −3}.
 ```
 
 Subscripts work the same way with the opposite vertical direction and the Unicode subscript characters.

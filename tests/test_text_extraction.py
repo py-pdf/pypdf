@@ -1785,3 +1785,29 @@ def test_extract_text__each_text_operator(build_page: Callable[[bytes], BytesIO]
     and Do with a form XObject (8.8.1, Table 86).
     """
     assert PdfReader(build_page(content)).pages[0].extract_text() == "Hello"
+
+
+@pytest.mark.enable_socket
+def test_word_continued_on_a_line_with_character_spacing_stays_one_word() -> None:
+    """
+    A word split over two text-showing operators on a line with character spacing stays one word.
+
+    ISO 32000-2:2020, 9.3.2 (character spacing) and 9.4.4 (text space details).
+    """
+    url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "The channel between the reader" in reader.pages[113].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_word_gap_before_a_symbol_in_another_font_is_a_space() -> None:
+    """
+    A word gap before a symbol set in another font is extracted as a space.
+
+    ISO 32000-2:2020, 9.4.2 (text-positioning operators) and 9.4.4 (text space details).
+    """
+    url = "https://arxiv.org/pdf/1602.06541.pdf"
+    name = "1602.06541.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "an MRF and C be the set" in reader.pages[7].extract_text()
