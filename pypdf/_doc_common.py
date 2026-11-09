@@ -1192,7 +1192,12 @@ class PdfDocCommon(ABC):
             if self.strict:
                 raise
             # create a link to first Page
-            tmp = self.pages[0].indirect_reference
+            try:
+                tmp = self.pages[0].indirect_reference
+            except IndexError:
+                # the document has no pages: keep the missing-destination
+                # semantics of the None branch below
+                tmp = None
             indirect_reference = NullObject() if tmp is None else tmp
             return Destination(title, indirect_reference, Fit.fit())
 
