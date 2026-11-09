@@ -394,7 +394,7 @@ def test_get_encoding__type1_font_file_truncated_dup_line():
     ft = _type1_font(
         b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
     )
-    encoding, _ = _parse_encoding_from_embedded_font(ft, ft["/FontDescriptor"])
+    encoding, _ = _parse_encoding_from_embedded_font(ft, ft["/FontDescriptor"], {}, [])
     assert encoding == {"a": "a"}
 
 

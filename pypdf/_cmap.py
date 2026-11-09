@@ -1,6 +1,5 @@
 from binascii import Error as BinasciiError
 from binascii import unhexlify
-from collections.abc import Callable
 from functools import partial
 from hashlib import sha256
 from io import BytesIO
@@ -440,12 +439,20 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
 
 def _parse_encoding_from_embedded_font(
     font_dictionary: DictionaryObject,
-    font_descriptor: DictionaryObject
+    font_descriptor: DictionaryObject,
+    map_dict: dict[Any, Any],
+    int_entry: list[int]
 ) -> tuple[dict[Any, Any], list[int]]:
     from .generic._font import HAS_FONTTOOLS  # noqa: PLC0415
+    """
+    Derive the character map from an embedded font program, caching the result on its stream. See Table 126
+    about embedded font file organization in the PDF specification 1.7 for details
 
-    # We try to read encoding from an embedded font file, if we can. See Table 126 about embedded font
-    # file organization in the PDF specification 1.7 for details.
+    The character map depends only on the decoded font data, and the same font program is reached from every
+    font dictionary, resource name and page referencing its stream. Parsing a CFF font program with fontTools is
+    expensive, so each stream is parsed once and reused until its data changes, which a digest of the data
+    detects (a writer may replace the font program). See #4156.
+    """
     font_file_handlers = (
         # A normal Type1 font file, can be part of a Type1 or MMType1 font dictionary.
         (
@@ -476,12 +483,19 @@ def _parse_encoding_from_embedded_font(
                     source=__name__,
                     font_dictionary=font_dictionary,
                 )
+                return {}, []
 
             font_file_data = font_file_dict.get_data()
             if font_file_data:
-                return _derive_character_map_from_font_file(
-                    font_file_dict, font_file_data, font_file_processor, {}, []
-                )
+                digest = sha256(font_file_data).digest()
+                cached = font_file_dict._font_file_character_map
+                if cached is None or cached.digest != digest:
+                    cached_map_dict, cached_int_entry = font_file_processor(font_file_data, map_dict, int_entry)
+                    cached = _FontFileCharacterMap(digest, cached_map_dict, cached_int_entry)
+                    font_file_dict._font_file_character_map = cached
+                map_dict.update(cached.map_dict)
+                int_entry.extend(cached.int_entry)
+                return map_dict, int_entry
     return {}, []
 
 
@@ -499,32 +513,6 @@ def _glyph_name_to_unicode(glyph_name: str) -> str | None:
             return chr(int(code_point, 16))
         except ValueError:  # pragma: no cover
             return None
-
-
-def _derive_character_map_from_font_file(
-    font_file: StreamObject,
-    font_data: bytes,
-    font_file_processor: Callable[[bytes, dict[Any, Any], list[int]], tuple[dict[Any, Any], list[int]]],
-    map_dict: dict[Any, Any],
-    int_entry: list[int],
-) -> tuple[dict[Any, Any], list[int]]:
-    """
-    Derive the character map from an embedded font program, caching the result on its stream.
-
-    The character map depends only on the decoded font data, and the same font program is reached from every
-    font dictionary, resource name and page referencing its stream. Parsing a CFF font program with fontTools is
-    expensive, so each stream is parsed once and reused until its data changes, which a digest of the data
-    detects (a writer may replace the font program). See #4156.
-    """
-    digest = sha256(font_data).digest()
-    cached = font_file._font_file_character_map
-    if cached is None or cached.digest != digest:
-        cached_map_dict, cached_int_entry = font_file_processor(font_data, {}, [])
-        cached = _FontFileCharacterMap(digest, cached_map_dict, cached_int_entry)
-        font_file._font_file_character_map = cached
-    map_dict.update(cached.map_dict)
-    int_entry.extend(cached.int_entry)
-    return map_dict, int_entry
 
 
 def _derive_character_map_from_cff_type1_font_file(
