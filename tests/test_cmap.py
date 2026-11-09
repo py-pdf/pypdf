@@ -227,10 +227,16 @@ def test_tabs_in_cmap():
 
 
 @pytest.mark.enable_socket
-def test_ignoring_non_put_entries():
-    """Issue #2290"""
+def test__derive_encoding_from_type1_font_file():
+    """This tests deriving an encoding from an embedded Type1 font and addresses issue #2290"""
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
-    reader.pages[0].extract_text()
+    ft = reader.pages[0]["/Resources"]["/Font"]["/F1"]
+    embedded_encoding, _ = _parse_encoding_from_embedded_font(ft)
+    # The encoding of this font is "/WinAnsiEncoding". Assert that we have
+    # correctly derived this encoding from the embedded font.
+    win_ansi_encoding = dict(zip(range(256), charset_encoding[ft["/Encoding"]]))
+    for key, value in embedded_encoding.items():
+        assert win_ansi_encoding[ord(key)] == value
 
 
 @pytest.mark.enable_socket
