@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794243029645,
+  "lastUpdate": 1794245383027,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125603,6 +125603,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005893940880671",
             "extra": "mean: 522.2837876000085 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b63ad4ea799df4875162af8038982dc9478e7357",
+          "message": "BUG: Decode UTF-8 text strings (#4348)\n\n* BUG: Decode UTF-8 text strings\n\nPDF 2.0 allows text strings to be encoded as UTF-8 with a leading\nEF BB BF (ISO 32000-2:2020, 7.9.2.2.1). Decode them as UTF-8 when the\ndata is valid UTF-8 and keep the original bytes for writing.\n\nConvert a cloned /ID with original_bytes, as get_original_bytes()\nre-encodes the decoded text and changes the identifier.\n\n* TST: Read UTF-8 text strings from the PDF Association example file\n\n* STY: Move text string encoding detection into a helper function\n\n* STY: Rename parameter of _create_unicode_string_object to data",
+          "timestamp": "2026-11-09T18:27:21+01:00",
+          "tree_id": "69db908e56dd02f034a8cafe4f358d235d9bec28",
+          "url": "https://github.com/py-pdf/pypdf/commit/b63ad4ea799df4875162af8038982dc9478e7357"
+        },
+        "date": 1794245368165,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7157992703440397,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009011071156802386",
+            "extra": "mean: 368.2157259999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.192857233916673,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021750347720245235",
+            "extra": "mean: 45.059542782608915 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24535998215291902,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016199555076666643",
+            "extra": "mean: 4.075644248200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.666800871452214,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016991990955349003",
+            "extra": "mean: 59.99951686666236 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14754653747204935,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011350836034991048",
+            "extra": "mean: 6.7775226524 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5414925444217815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003977310071970447",
+            "extra": "mean: 648.7219180000011 msec\nrounds: 5"
           }
         ]
       }
