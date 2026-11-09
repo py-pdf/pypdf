@@ -129,17 +129,12 @@ def _get_font_resources(resources: Any) -> DictionaryObject:
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: PdfObject | None = self.get(name)
-    if isinstance(retval, IndirectObject):
-        # Pages of a writer have no `pdf`, the reference knows its own document.
-        retval = retval.get_object()
+    retval: PdfObject = self.get(name, NullObject()).get_object()
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
         for d in defaults:
-            retval = self.get(d)
-            if isinstance(retval, IndirectObject):
-                retval = retval.get_object()
+            retval = self.get(d, NullObject()).get_object()
             if not is_null_or_none(retval):
                 break
     if not isinstance(retval, ArrayObject):

@@ -1813,15 +1813,16 @@ def test_get_rectangle__fallback_skips_null_entries():
     assert page.trimbox == RectangleObject([0, 0, 100, 200])
     assert page.artbox == RectangleObject([0, 0, 100, 200])
     assert page.bleedbox == RectangleObject([0, 0, 100, 200])
+    # The crop box itself resolves to the media box as well.
+    assert page.cropbox == RectangleObject([0, 0, 100, 200])
 
 
 def test_get_rectangle__fallback_skips_indirect_null_entry():
     """An indirect null page box is treated like a direct null entry."""
     writer = PdfWriter()
     writer.add_blank_page(width=100, height=200)
-    writer._objects.append(NullObject())
-    null_ref = IndirectObject(len(writer._objects), 0, writer)
-    writer.pages[0][NameObject("/CropBox")] = null_ref
+    null_reference = writer._add_object(NullObject())
+    writer.pages[0][NameObject("/CropBox")] = null_reference
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
