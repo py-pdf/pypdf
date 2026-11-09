@@ -390,9 +390,13 @@ def test_get_encoding__type1_font_file_without_encoding():
 
 
 def test_get_encoding__type1_font_file_truncated_dup_line():
-    # A "dup" entry missing the glyph name must be skipped, not crash.
+    # Test that:
+    # - A "dup" entry missing the glyph name must be skipped, not crash;
+    # - The length of "words" is checked in _derive_encoding_from_type1_font_file (#2290);
+    # - A ValueError in i = int(words[1]) does not cause a crash; and
+    # - The fourth element should be "put", for a valid entry.
     ft = _type1_font(
-        b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
+        b"/Encoding 256 array\ndup\ndup 65\ndup 97/a put\ndup 97/a tup\ndup abc/a put\nreadonly def\neexec\n"
     )
     encoding, _ = _parse_encoding_from_embedded_font(ft, ft["/FontDescriptor"], {}, [])
     assert encoding == {"a": "a"}
