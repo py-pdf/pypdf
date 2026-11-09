@@ -327,9 +327,9 @@ class PdfWriter(PdfDocCommon):
             self.incremental = False
         if isinstance(self._ID, list):
             if isinstance(self._ID[0], TextStringObject):
-                self._ID[0] = ByteStringObject(self._ID[0].get_original_bytes())
+                self._ID[0] = ByteStringObject(self._ID[0].original_bytes)
             if isinstance(self._ID[1], TextStringObject):
-                self._ID[1] = ByteStringObject(self._ID[1].get_original_bytes())
+                self._ID[1] = ByteStringObject(self._ID[1].original_bytes)
 
     # for commonality
     @property
