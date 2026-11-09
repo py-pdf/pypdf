@@ -3,6 +3,7 @@ import io
 import struct
 import sys
 import time
+import tracemalloc
 import zlib
 from io import BytesIO
 from pathlib import Path
@@ -3567,3 +3568,25 @@ def test_get_object_from_stream__duplicate_offsets() -> None:
 
     with pytest.raises(PdfReadError, match=r"^Invalid offset 0 in object stream 1\.$"):
         _ = reader.root_object
+
+
+def test_reader_does_not_copy_the_stream() -> None:
+    """This test is a regression test for issue #4369."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.add_metadata({"/Padding": "x" * 1_000_000})
+    buffer = BytesIO()
+    writer.write(buffer)
+    data = buffer.getvalue()
+
+    stream = BytesIO(data)
+    tracemalloc.start()
+    try:
+        before, _ = tracemalloc.get_traced_memory()
+        reader = PdfReader(stream)
+        after, _ = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert len(reader.pages) == 1
+    assert after - before < len(data) // 2

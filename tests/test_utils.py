@@ -4,6 +4,7 @@ import io
 import re
 import subprocess
 import sys
+import tracemalloc
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from io import BytesIO, StringIO
@@ -759,3 +760,39 @@ def test_get_stream_data(tmp_path) -> None:
         assert fd.read(10) == b"Hello Worl"
         assert get_stream_data(fd) == b"Hello World!"
         assert fd.read(2) == b"d!"
+
+
+def test_get_stream_size_does_not_copy_the_stream() -> None:
+    """This test is a regression test for issue #4369."""
+    data = b"x" * 1_000_000
+    stream = BytesIO(data)
+    stream.read(5)
+
+    tracemalloc.start()
+    try:
+        before, _ = tracemalloc.get_traced_memory()
+        assert get_stream_size(stream) == len(data)
+        after, _ = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert stream.tell() == 5
+    assert after - before < len(data) // 2
+
+
+def test_get_stream_data_does_not_copy_the_stream_twice() -> None:
+    """This test is a regression test for issue #4369."""
+    data = b"x" * 1_000_000
+    stream = BytesIO(data)
+    stream.read(5)
+
+    tracemalloc.start()
+    try:
+        result = get_stream_data(stream)
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert result == data
+    assert stream.tell() == 5
+    assert peak < len(data) * 3 // 2
