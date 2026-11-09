@@ -9,7 +9,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import (
     __parse_bfrange__decode,
     _check_token_length,
-    _derive_character_map_from_cff_type1_font_file,
+    _derive_encoding_from_cff_type1_font_file,
     _parse_encoding,
     _parse_encoding_from_embedded_font,
     get_encoding,
@@ -848,7 +848,7 @@ def test_japanese_cmap_encodings(cmap_name: str, python_codec: str, caplog) -> N
     assert "Advanced encoding" not in caplog.text
 
 
-def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
+def test__derive_encoding_from_cff_type1_font_file_guards(caplog):
     font_file_stream = StreamObject()
     font_dict = DictionaryObject(
         {
@@ -1047,8 +1047,8 @@ def test_cff_type1_font_file_is_parsed_once_per_font_program():
     reader = PdfReader(stream)
 
     with mock.patch(
-        "pypdf._cmap._derive_character_map_from_cff_type1_font_file",
-        wraps=_derive_character_map_from_cff_type1_font_file,
+        "pypdf._cmap._derive_encoding_from_cff_type1_font_file",
+        wraps=_derive_encoding_from_cff_type1_font_file,
     ) as parse:
         assert [page.extract_text() for page in reader.pages] == ["ZY"] * 4
         assert parse.call_count == 1
@@ -1066,8 +1066,8 @@ def test_cff_type1_font_file_is_parsed_again_when_its_data_changes():
     )
 
     with mock.patch(
-        "pypdf._cmap._derive_character_map_from_cff_type1_font_file",
-        wraps=_derive_character_map_from_cff_type1_font_file,
+        "pypdf._cmap._derive_encoding_from_cff_type1_font_file",
+        wraps=_derive_encoding_from_cff_type1_font_file,
     ) as parse:
         assert [page.extract_text() for page in writer.pages] == ["ZY"] * 2
         assert parse.call_count == 1

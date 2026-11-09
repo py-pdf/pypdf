@@ -1115,20 +1115,18 @@ def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
     return names
 
 
-class _FontFileCharacterMap(NamedTuple):
-    """The character map pypdf._cmap derived from an embedded font program. See #4156."""
-
-    digest: bytes
-    """SHA-256 digest of the decoded font data the map was derived from."""
-    map_dict: dict[Any, Any]
+class _FontFileEncoding(NamedTuple):
+    """The encoding pypdf._cmap derived from an embedded font program. See #4156."""
+    digest: bytes  # SHA-256 digest of the decoded font data the encoding was derived from
+    embedded_font_encoding: dict[Any, Any]
     int_entry: list[int]
 
 
 class StreamObject(DictionaryObject):
-    _font_file_character_map: _FontFileCharacterMap | None = None
+    _font_file_encoding: _FontFileEncoding | None = None
     """
-    The character map pypdf._cmap derived from this stream as an embedded font program. Parsing a CFF font
-    program with fontTools is expensive, and the same program is reached from every font resource and page
+    The encoding pypdf._cmap derived from this stream as an embedded font program. Parsing a font program
+    with fontTools is expensive, and the same program is reached from every font resource and page
     referencing it. See #4156.
     """
 
