@@ -292,7 +292,7 @@ class XmpInformation(PdfObject):
         name: str,
         converter: Callable[[str], Any] = _identity,
     ) -> Any | None:
-        # 🎯 修复：使用 setdefault 确保 namespace 字典存在，并检查 'name' 是否在键中
+        # Fix: Use setdefault to make sure the namespace dictionary exists, and check if 'name' is one of the keys
         ns_cache = self.cache.setdefault(namespace, {})
         if name in ns_cache:
             return ns_cache[name]
@@ -308,12 +308,12 @@ class XmpInformation(PdfObject):
         if value is not None:
             value = converter(value)
 
-        # 存入缓存并返回
+        # Save to cache and return
         ns_cache[name] = value
         return value
 
     def _getter_bag(self, namespace: str, name: str) -> list[str] | None:
-        # 🎯 修复：检查键是否存在，而不是检查值是否为真
+        # Fix: Check if the key exists, not if the value is truthy
         ns_cache = self.cache.setdefault(namespace, {})
         if name in ns_cache:
             return cast(list[str], ns_cache[name])
@@ -335,7 +335,7 @@ class XmpInformation(PdfObject):
         name: str,
         converter: Callable[[Any], Any] = _identity,
     ) -> list[Any] | None:
-        # 🎯 修复：检查键是否存在
+        # Fix: Check if the key exists
         ns_cache = self.cache.setdefault(namespace, {})
         if name in ns_cache:
             return cast(list[Any], ns_cache[name])
@@ -355,7 +355,7 @@ class XmpInformation(PdfObject):
         return retval
 
     def _get_langalt_values(self, namespace: str, name: str) -> dict[Any, Any] | None:
-        # 🎯 修复：检查键是否存在
+        # Fix: Check if the key exists
         ns_cache = self.cache.setdefault(namespace, {})
         if name in ns_cache:
             return cast(dict[Any, Any], ns_cache[name])
