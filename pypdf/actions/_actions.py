@@ -137,7 +137,8 @@ class Action(DictionaryObject, ABC):
         # restricted to a single action but can contain an array of actions,
         # each of which in turn can have a Next entry of its own.
         # §12.6.2 Action dictionaries ISO 32000-2:2020
-        head = current = additional_actions.get(trigger_name, NullObject()).get_object()
+        head = additional_actions.get(trigger_name, NullObject())
+        current = head.get_object()
         if not isinstance(current, DictionaryObject):
             raise ParseError(
                 f"The type in a page object's additional-actions key must be a DictionaryObject: "

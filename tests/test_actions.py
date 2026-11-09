@@ -8,7 +8,14 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript, PageTrigger
 from pypdf.errors import DeprecationError, ParseError
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject, is_null_or_none
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    is_null_or_none,
+)
 
 from . import RESOURCE_ROOT
 
@@ -446,8 +453,8 @@ def test_page_add_action__chaining_with_array(pdf_file_writer):
 
 def test_page_add_action__chaining_with_indirect_action():
     """
-    A page action stored as an indirect object can be extended after a
-    round-trip through a file.
+    This test ensures that a page action stored as an indirect object can be
+    extended after a round-trip through a file, and stays indirect.
     """
     writer = PdfWriter()
     page = writer.add_blank_page(100, 100)
@@ -462,6 +469,7 @@ def test_page_add_action__chaining_with_indirect_action():
     page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Second action');"))
 
     first_action = page["/AA"].get("/O")
+    assert isinstance(first_action, IndirectObject)
     assert first_action["/Next"]["/JS"] == "app.alert('Second action');"
 
 
