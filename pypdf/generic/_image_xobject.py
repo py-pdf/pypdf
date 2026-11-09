@@ -31,6 +31,22 @@ ImageMode: TypeAlias = Literal[
 
 MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
+_PROCESS_COLORANTS = ("/Cyan", "/Magenta", "/Yellow", "/Black")
+
+
+def _get_process_colorant_channels(color_space: Any) -> list[int] | None:
+    """
+    Return the CMYK channel of each colorant of a /DeviceN space.
+
+    Returns None if the space is something else or uses a colorant which is not a process colorant.
+    """
+    if not isinstance(color_space, list) or not color_space or color_space[0] != "/DeviceN":
+        return None
+    colorants = color_space[1].get_object()
+    if not colorants or not all(colorant in _PROCESS_COLORANTS for colorant in colorants):
+        return None
+    return [_PROCESS_COLORANTS.index(colorant) for colorant in colorants]
+
 
 def _get_image_mode(
     color_space: str | list[Any] | Any,
@@ -67,6 +83,8 @@ def _get_image_mode(
         color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space_str = color_space[1].get_object()
+        if _get_process_colorant_channels(color_space_str) is not None:
+            color_space_str = ColorSpaces.DEVICE_CMYK
         mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
@@ -291,6 +309,16 @@ def _handle_flate(
             lookup = lookup.original_bytes
         if isinstance(lookup, str):
             lookup = lookup.encode()
+        if (channels := _get_process_colorant_channels(base)) is not None:
+            # Put each tint into its own CMYK channel instead of evaluating the tint transform.
+            cmyk_lookup = bytearray()
+            for index in range(0, len(lookup) - len(channels) + 1, len(channels)):
+                cmyk = bytearray(4)
+                for channel, tint in zip(channels, lookup[index : index + len(channels)]):
+                    cmyk[channel] = tint
+                cmyk_lookup += cmyk
+            lookup = bytes(cmyk_lookup)
+            base = ColorSpaces.DEVICE_CMYK
         try:
             nb, conv, mode = {  # type: ignore[assignment]
                 "1": (0, "", ""),
