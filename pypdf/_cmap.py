@@ -110,8 +110,7 @@ def _parse_encoding(
         # Overwrite the standard encoding with the encoding information from the embedded font file.
         if map_dict:
             for x in int_entry:
-                if x <= 255:
-                    encoding[x] = map_dict[chr(x)]
+                encoding[x] = map_dict[chr(x)]
         return encoding
 
     if isinstance(enc, str):
@@ -152,8 +151,7 @@ def _parse_encoding(
         # Overwrite the standard encoding with the encoding information from the embedded font file, if applicable.
         if map_dict:
             for x in int_entry:
-                if x <= 255:
-                    encoding[x] = map_dict[chr(x)]
+                encoding[x] = map_dict[chr(x)]
 
         x: int = 0
         o: int | str
@@ -579,8 +577,8 @@ def _derive_character_map_from_type1_font_file(
             except ValueError:
                 continue
 
-            unipoint = _glyph_name_to_unicode(words[2].decode())
-            if unipoint:
+            # Ensure the character code stays strictly within the 8-bit limit (0-255)
+            if 0 <= i <= 255 and (unipoint := _glyph_name_to_unicode(words[2].decode())):
                 map_dict[chr(i)] = unipoint
                 int_entry.append(i)
 
