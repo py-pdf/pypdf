@@ -254,6 +254,10 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
                     kids=kids,
                 )
                 break
+            # The keys are page indices where a labelling range starts, so a page
+            # between the /Limits of two kids belongs to the range started by the
+            # largest key before it, the last key of the preceding kid.
+            preceding_kid = None
             for kid in kids:
                 # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
                 kid = kid.get_object()
@@ -272,22 +276,24 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
                     )
                     continue
                 if limits[0] <= index <= limits[1]:
-                    if not is_null_or_none(kid.get("/Kids", None)):
-                        # Recursive definition.
-                        level += 1
-                        if level == 100:  # pragma: no cover
-                            raise NotImplementedError(
-                                "Too deep nesting is not supported."
-                            )
-                        number_tree = kid
-                        # Exit the inner `for` loop and continue at the next level with the
-                        # next iteration of the `while` loop.
-                        break
-                    return get_label_from_nums(kid, index)
+                    break
+                if limits[0] <= index:
+                    preceding_kid = kid
             else:
-                # When there are no kids, make sure to exit the `while` loop directly
-                # and continue with the fallback.
-                break
+                if preceding_kid is None:
+                    # When no kid starts at or before the index, make sure to exit the
+                    # `while` loop directly and continue with the fallback.
+                    break
+                kid = preceding_kid
+            if not is_null_or_none(kid.get("/Kids", None)):
+                # Recursive definition.
+                level += 1
+                if level == 100:  # pragma: no cover
+                    raise NotImplementedError("Too deep nesting is not supported.")
+                number_tree = kid
+                # Continue at the next level with the next iteration of the `while` loop.
+                continue
+            return get_label_from_nums(kid, index)
 
     logger_warning("Could not reliably determine page label for %(index)d.", source=__name__, index=index)
     return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
@@ -370,6 +376,9 @@ class _FirstKidFinder:
         self._starts: list[int] = []
         self._ends: list[int] = []
         self._first_kids: list[DictionaryObject | Exception] = []
+        # Kids read so far with valid /Limits and their lower limits, in order.
+        self._read_kids: list[DictionaryObject] = []
+        self._read_lows: list[float] = []
 
     def find(self, index: int) -> DictionaryObject | Exception | None:
         while True:
@@ -382,6 +391,17 @@ class _FirstKidFinder:
             self._next_kid += 1
             if kid_range is not None:
                 self._cover(*kid_range)
+
+    def find_preceding(self, index: int) -> DictionaryObject | None:
+        """
+        Find the kid ``index2label`` picks for a page index no kid contains: the last
+        kid in order whose ``/Limits`` start before it. Only valid once ``find`` has
+        returned ``None`` for the index, which means that all kids have been read.
+        """
+        for position in range(len(self._read_kids) - 1, -1, -1):
+            if self._read_lows[position] <= index:
+                return self._read_kids[position]
+        return None
 
     def _read_kid(self, kid: Any) -> tuple[int, int, DictionaryObject | Exception] | None:
         try:
@@ -401,6 +421,8 @@ class _FirstKidFinder:
         ):
             logger_warning("Ignoring kid with missing or malformed /Limits in /PageLabels.", source=__name__)
             return None
+        self._read_kids.append(kid)
+        self._read_lows.append(limits[0])
         page_range = _get_page_range(limits, self._page_count)
         return None if page_range is None else (*page_range, kid)
 
@@ -479,6 +501,8 @@ def _get_labels_from_kids(number_tree: DictionaryObject, page_count: int) -> lis
             kid = finder.find(index)
             if isinstance(kid, Exception):
                 raise kid
+            if kid is None:
+                kid = finder.find_preceding(index)
             if kid is None:
                 unmatched.append(index)
             else:

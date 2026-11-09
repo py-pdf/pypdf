@@ -206,12 +206,76 @@ def test_index2label_kids__recursive(caplog):
         "N",
         "O",
         "P",
-        "17",
-        "18",
-        "19",
+        # The only labelling range starts at page 0, so it also covers the pages
+        # beyond the /Limits of the kids, which bound the keys, not the pages.
+        "Q",
+        "R",
+        "S",
     ]
     assert r.page_labels == expected
-    assert caplog.text != ""
+    assert caplog.text == ""
+
+
+def _kid(limits: list[int], nums: list[object]) -> DictionaryObject:
+    kid = DictionaryObject()
+    kid[NameObject("/Limits")] = ArrayObject([NumberObject(n) for n in limits])
+    kid[NameObject("/Nums")] = ArrayObject(nums)
+    return kid
+
+
+def _label(prefix: str) -> DictionaryObject:
+    label = DictionaryObject()
+    label[NameObject("/S")] = NameObject("/D")
+    label[NameObject("/P")] = TextStringObject(prefix)
+    return label
+
+
+@pytest.mark.parametrize(
+    ("kids", "expected"),
+    [
+        pytest.param(
+            [
+                _kid([0, 2], [NumberObject(0), _label("a-"), NumberObject(2), _label("b-")]),
+                _kid([4, 4], [NumberObject(4), _label("c-")]),
+            ],
+            # Page 3 is between the /Limits of the two kids, pages 5 and 6 after the
+            # /Limits of the last one.
+            ["a-1", "a-2", "b-1", "b-2", "c-1", "c-2", "c-3"],
+            id="between-and-after-kids",
+        ),
+        pytest.param(
+            [_kid([2, 2], [NumberObject(2), _label("a-")])],
+            ["1", "2", "a-1", "a-2", "a-3", "a-4", "a-5"],
+            id="before-first-kid",
+        ),
+    ],
+)
+def test_index2label__page_between_kids(caplog, kids, expected):
+    """
+    Each key starts a labelling range which lasts until the next key, so a page
+    beyond the /Limits of a kid is labelled by the last range of that kid.
+    """
+    writer = PdfWriter()
+    for _ in range(7):
+        writer.add_blank_page(width=72, height=72)
+    number_tree = DictionaryObject()
+    number_tree[NameObject("/Kids")] = ArrayObject(kids)
+    writer.root_object[NameObject("/PageLabels")] = number_tree
+
+    assert [index2label(writer, index) for index in range(7)] == expected
+    assert writer.page_labels == expected
+    if expected[0] == "1":
+        assert "Could not reliably determine page label for 0." in caplog.text
+    else:
+        assert caplog.text == ""
+
+
+@pytest.mark.enable_socket
+def test_index2label__page_between_kids__real_file():
+    """Page 59 lies between the kids with /Limits [0 58] and [60 154]."""
+    url = "https://github.com/user-attachments/files/18381759/tika-982336.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name="tika-982336.pdf")))
+    assert reader.page_labels[58:61] == ["4-5-1", "4-5-2", "4-6-1"]
 
 
 def test_get_label_from_nums__empty_nums_list():
