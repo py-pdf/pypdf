@@ -15,7 +15,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageStat
 
 from pypdf import PageObject, PdfReader, PdfWriter, apply_configuration
 from pypdf._page import ImageFile
-from pypdf.errors import DeprecationError, LimitReachedError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
     ArrayObject,
@@ -467,11 +467,13 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
 @pytest.mark.enable_socket
 @pytest.mark.timeout(30)
 def test_large_compressed_image():
+    """This test ensures that a small stream which expands past the default limit decodes once the limit is raised."""
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
     reader = PdfReader(
         BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))
     )
-    list(reader.pages[0].images)
+    with apply_configuration(image_maximum_buffer_size=80_000_000):
+        list(reader.pages[0].images)
 
 
 @pytest.mark.timeout(timeout=1, method="thread")
@@ -1113,3 +1115,39 @@ def test_inline_image__perceptual() -> None:
 
     assert len(page.images) == 1
     assert image_similarity(image, page.images[0].image) > 0.9999
+
+
+def test_inline_image__custom_color_space_resources__not_a_dictionary():
+    """A custom inline-image color space with non-dictionary resources raises the clear input error."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Resources")] = NumberObject(1)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    with pytest.raises(PdfReadError, match=r"^Cannot find resource entry /CS0 for /CS$"):
+        list(PdfReader(stream).pages[0].images)
+
+
+def test_inline_image__custom_color_space__resolved_from_resources():
+    """A custom inline-image color space is resolved through dictionary /Resources."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    resources = DictionaryObject()
+    resources[NameObject("/ColorSpace")] = DictionaryObject(
+        {NameObject("/CS0"): NameObject("/DeviceGray")}
+    )
+    page[NameObject("/Resources")] = resources
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    images = list(PdfReader(stream).pages[0].images)
+    assert len(images) == 1
