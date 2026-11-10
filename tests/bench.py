@@ -86,8 +86,8 @@ def merge():
     with open(pdf_path, "rb") as fh:
         writer.append(fh)
 
-    outline_item = writer.add_outline_item("An outline item", 0)
-    writer.add_outline_item("deeper", 0, parent=outline_item)
+    outline_item = writer.add_outline_item(title="An outline item", page_number=0)
+    writer.add_outline_item(title="deeper", page_number=0, parent=outline_item)
     writer.add_metadata({"/Author": "Martin Thoma"})
     writer.add_named_destination("title", 0)
     writer.set_page_layout("/SinglePage")
