@@ -210,7 +210,7 @@ _SINGLE_BAND_BYTES_PER_PIXEL: dict[str, int] = {
 }
 
 
-def _allocated_bytes_per_pixel(mode: str) -> int:
+def _get_allocated_bytes_per_pixel(mode: str) -> int:
     """Bytes Pillow allocates per pixel for a decoded image in the given mode.
 
     This is the size of the internal pixel, not the size of the raw data: every
@@ -243,7 +243,7 @@ def _allocated_bytes_per_pixel(mode: str) -> int:
 
 def _validate_image_size(*, mode: str, size: tuple[int, int]) -> tuple[int, int]:
     pixel_count = size[0] * size[1]
-    required_byte_count = pixel_count * _allocated_bytes_per_pixel(mode)
+    required_byte_count = pixel_count * _get_allocated_bytes_per_pixel(mode)
 
     configuration = get_configuration()
     if required_byte_count > configuration.image_maximum_buffer_size:
