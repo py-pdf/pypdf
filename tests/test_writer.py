@@ -3852,6 +3852,13 @@ def test_write__incremental__encrypted_source():
         writer.write(output)
     assert output.getvalue() == b""
 
+    with pytest.raises(
+        NotImplementedError,
+        match=r"^Writing incremental updates of encrypted PDF files is currently not supported\.$",
+    ):
+        writer._write_increment(output)
+    assert output.getvalue() == b""
+
 
 @pytest.mark.timeout(5)
 def test_get_filtered_outline__first__cyclic(caplog) -> None:
