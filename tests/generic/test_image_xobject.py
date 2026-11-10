@@ -7,7 +7,7 @@ import PIL
 import pytest
 from PIL import Image, features
 
-from pypdf import PdfReader
+from pypdf import PdfReader, apply_configuration
 from pypdf._utils import Version
 from pypdf.constants import ColorSpaces, FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
@@ -22,11 +22,13 @@ from pypdf.generic import (
     TextStringObject,
 )
 from pypdf.generic._image_xobject import (
+    _convert_image,
+    _create_image_from_bytes,
     _get_image_mode,
     _get_mode_and_invert_color,
     _handle_flate,
     _handle_jpx,
-    _image_from_bytes,
+    _merge_image,
     _xobj_to_image,
     bits2byte,
 )
@@ -231,13 +233,13 @@ def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFi
     ) in caplog.text
 
 
-def test_image_from_bytes__zero_data() -> None:
+def test_create_image_from_bytes__zero_data() -> None:
     mode = "RGB"
     size = (1, 1)
     data = b""
 
     with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
-        _image_from_bytes(mode, size, data)
+        _create_image_from_bytes(mode, size, data)
 
 
 def test_device_rgb_mode_is_not_overwritten() -> None:
@@ -520,12 +522,12 @@ def test_xobj_to_image__malformed_decode(
         ("CMYK", "32000000000"),
     ],
 )
-def test_image_from_bytes__limit(mode: str, expected: str) -> None:
+def test_create_image_from_bytes__limit(mode: str, expected: str) -> None:
     with pytest.raises(
             expected_exception=LimitReachedError,
             match=rf"^Requested image buffer size {expected} exceeds limit 75000000\.$"
     ):
-        _ = _image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
+        _ = _create_image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
 
 
 def _minimal_image_xobject() -> StreamObject:
@@ -790,3 +792,55 @@ def test_xobj_to_image__jpx_smask_in_data(
 
     assert img.mode == expected_mode
     assert img.getpixel((0, 0)) == expected_pixel
+
+
+def test_xobj_to_image__jpx_size_limit() -> None:
+    side = 70
+    image = _create_image(mode="RGB", size=(side, side))
+    encoded = BytesIO()
+    image.save(
+        encoded,
+        format="JPEG2000",
+        quality_mode="rates",
+        quality_layers=[100],
+    )
+    image.close()
+
+    x_object = DecodedStreamObject()
+    x_object.set_data(encoded.getvalue())
+    x_object[NameObject("/Type")] = NameObject("/XObject")
+    x_object[NameObject("/Subtype")] = NameObject("/Image")
+    x_object[NameObject("/Width")] = NumberObject(side)
+    x_object[NameObject("/Height")] = NumberObject(side)
+    x_object[NameObject("/ColorSpace")] = NameObject("/DeviceRGB")
+    x_object[NameObject("/BitsPerComponent")] = NumberObject(8)
+    x_object[NameObject("/Filter")] = NameObject("/JPXDecode")
+
+    with apply_configuration(image_maximum_buffer_size=100), \
+            pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 14700 exceeds limit 100\.$"
+            ):
+        _xobj_to_image(x_object=x_object)
+
+
+def test_convert_image() -> None:
+    image = _create_image(mode="RGB", size=(20, 20))
+
+    with apply_configuration(image_maximum_buffer_size=500):
+        _convert_image(image=image, mode="P")
+
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 1600 exceeds limit 500\.$"
+        ):
+            _convert_image(image=image, mode="CMYK")
+
+
+def test_merge_image() -> None:
+    with pytest.raises(expected_exception=ValueError, match=r"^wrong number of bands$"):
+        _merge_image(mode="RGB", bands=[])
+
+    with apply_configuration(image_maximum_buffer_size=100), \
+            pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 4800 exceeds limit 100\.$"
+            ):
+        _merge_image(mode="RGB", bands=[_create_image(mode="L", size=(40, 40)) for _ in range(3)])

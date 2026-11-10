@@ -53,6 +53,7 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     StrByteType,
     StreamType,
+    _TraversalState,
     get_stream_data,
     get_stream_size,
     logger_warning,
@@ -457,6 +458,7 @@ class PdfReader(PdfDocCommon):
 
             # Phase 1: Read the index (objnum, offset) pairs from the header.
             obj_index: list[tuple[int, int]] = []
+            last_offset: int = -1
             for _i in range(n):
                 read_non_whitespace(stream_data)
                 stream_data.seek(-1, 1)
@@ -487,7 +489,11 @@ class PdfReader(PdfDocCommon):
                         stmnum=stmnum,
                     )
                     continue
-                obj_index.append((int(objnum), int(offset)))
+                int_offset = int(offset)
+                if int_offset <= last_offset:
+                    raise PdfReadError(f"Invalid offset {offset} in object stream {stmnum}.")
+                last_offset = int_offset
+                obj_index.append((int(objnum), int_offset))
 
             # Phase 2: Parse each object and cache it.
             target_obj: PdfObject = NullObject()
@@ -1823,12 +1829,20 @@ class PdfReader(PdfDocCommon):
         tree: DictionaryObject | None = None,
         retval: dict[str, Destination] | None = None,
         visited: set[int] | None = None,
+        depth: int = 0,
+        traversal_state: _TraversalState | None = None,
     ) -> dict[str, Destination]:
         """Override from PdfDocCommon. In the reader we can assume this is
         static, but not in the writer.
         """
         if tree or retval:
-            return super()._get_named_destinations(tree=tree, retval=retval, visited=visited)
+            return super()._get_named_destinations(
+                tree=tree,
+                retval=retval,
+                visited=visited,
+                depth=depth,
+                traversal_state=traversal_state,
+            )
 
         if self._named_destinations_cache is None:
             self._named_destinations_cache = super()._get_named_destinations()

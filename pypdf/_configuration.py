@@ -116,8 +116,16 @@ class Configuration:
     form_fields_maximum_depth: int = 100
     """The maximum allowed depth for form fields."""
 
+    named_destinations_maximum_entries: int = 100_000
+    """The maximum allowed number of named destination name tree nodes."""
+    named_destinations_maximum_depth: int = 100
+    """The maximum allowed depth for a named destination name tree."""
+
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
+
+    xfa_decoding_work_maximum_length: int = 300_000_000
+    """The maximum allowed accumulated decoding work in bytes for the XFA form."""
 
     jbig2dec_binary: str | None = dataclasses.field(default_factory=_determine_jbig2dec_binary)
     """

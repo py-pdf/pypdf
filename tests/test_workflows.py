@@ -775,22 +775,24 @@ def test_get_outline(url, name):
 
 @pytest.mark.enable_socket
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "expected_keys"),
     [
         (
             "https://github.com/user-attachments/files/18381707/tika-935981.pdf",
             "tika-935981.pdf",
+            set(),
         ),
         (
             "https://github.com/user-attachments/files/18381709/tika-937334.pdf",
             "tika-937334.pdf",
+            {"PDFSecurity", "config", "datasets", "localeSet", "postamble", "preamble", "template"}
         ),
     ],
 )
-def test_get_xfa(url, name):
+def test_get_xfa(url, name, expected_keys: set[str]):
     data = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(data)
-    reader.xfa
+    assert set(reader.xfa.keys()) == expected_keys
 
 
 @pytest.mark.enable_socket
