@@ -233,7 +233,7 @@ def image_extraction(data):
 
 
 @pytest.mark.enable_socket
-@apply_configuration(disable_legacy_handling=True)
+@apply_configuration(disable_legacy_handling=True, image_maximum_buffer_size=80_000_000)
 def test_large_compressed_image_performance(benchmark):
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
     data = BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))
