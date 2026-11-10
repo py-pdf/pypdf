@@ -1118,8 +1118,7 @@ def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
 class _FontFileEncoding(NamedTuple):
     """The encoding pypdf._cmap derived from an embedded font program. See #4156."""
     digest: bytes  # SHA-256 digest of the decoded font data the encoding was derived from
-    embedded_font_encoding: dict[Any, Any]
-    int_entry: list[int]
+    embedded_font_encoding: dict[int, str]
 
 
 class StreamObject(DictionaryObject):
