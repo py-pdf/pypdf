@@ -24,13 +24,16 @@ from pypdf.generic import (
 )
 from pypdf.generic._image_xobject import (
     _convert_image,
+    _create_image_from_buffer,
     _create_image_from_bytes,
+    _get_allocated_bytes_per_pixel,
     _get_image_mode,
     _get_mode_and_invert_color,
     _get_process_colorant_channels,
     _handle_flate,
     _handle_jpx,
     _merge_image,
+    _validate_image_size,
     _xobj_to_image,
     bits2byte,
 )
@@ -520,7 +523,7 @@ def test_xobj_to_image__malformed_decode(
     ("mode", "expected"),
     [
         ("1", "8000000000"),
-        ("RGB", "24000000000"),
+        ("RGB", "32000000000"),
         ("CMYK", "32000000000"),
     ],
 )
@@ -530,6 +533,109 @@ def test_create_image_from_bytes__limit(mode: str, expected: str) -> None:
             match=rf"^Requested image buffer size {expected} exceeds limit 75000000\.$"
     ):
         _ = _create_image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
+
+
+@pytest.mark.parametrize("mode", ["I", "F"])
+def test_validate_image_size__four_byte_modes(mode: str) -> None:
+    """``I``/``F`` use four bytes per pixel although their name is one character long."""
+    with pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"^Requested image buffer size 100000000 exceeds limit 75000000\.$",
+    ):
+        _validate_image_size(mode=mode, size=(5_000, 5_000))
+
+
+@pytest.mark.parametrize("mode", ["I;16", "I;16B", "I;16L", "I;16N"])
+def test_validate_image_size__16_bit_modes(mode: str) -> None:
+    """16-bit modes use two bytes per pixel, not the length of their name."""
+    assert _validate_image_size(mode=mode, size=(5_000, 5_000)) == (25_000_000, 50_000_000)
+
+
+@pytest.mark.parametrize("mode", ["LA", "La", "PA", "RGB", "YCbCr", "LAB", "HSV"])
+def test_validate_image_size__padded_modes(mode: str) -> None:
+    """This test ensures that modes Pillow pads to four bytes are counted as four."""
+    with pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"^Requested image buffer size 100000000 exceeds limit 75000000\.$",
+    ):
+        _validate_image_size(mode=mode, size=(5_000, 5_000))
+
+
+def test_create_image_from_bytes__samples_are_expanded_per_band() -> None:
+    """This test ensures that raw data is expanded to the number of bands."""
+    image = _create_image_from_bytes(mode="RGB", size=(2, 2), data=b"\x01\x02\x03\x04")
+    assert image.getpixel((0, 0)) == (1, 1, 1)
+
+
+def test_get_allocated_bytes_per_pixel__matches_pillow() -> None:
+    """This test ensures that the estimate covers every mode Pillow reports.
+
+    The values are the ``pixelsize`` Pillow sets in ``ImagingNewPrologueSubtype()``
+    (``src/libImaging/Storage.c``). Comparing the mode set as well makes a mode
+    that a newer Pillow adds show up as a failure instead of silently taking the
+    fallback of four bytes.
+    """
+    expected = {
+        "1": 1,
+        "I;16": 2,
+        "I;16B": 2,
+        "I;16L": 2,
+        "I;16N": 2,
+        "L": 1,
+        "LA": 4,
+        "La": 4,
+        "P": 1,
+        "PA": 4,
+        "RGB": 4,
+        "RGBA": 4,
+        "RGBX": 4,
+        "RGBa": 4,
+        "CMYK": 4,
+        "F": 4,
+        "HSV": 4,
+        "I": 4,
+        "LAB": 4,
+        "YCbCr": 4,
+    }
+    assert set(expected) == set(Image.MODES)
+    for mode, value in expected.items():
+        assert _get_allocated_bytes_per_pixel(mode) == value, mode
+
+
+def test_validate_image_size__unknown_mode_is_not_rejected() -> None:
+    """This test ensures that a missing color space still reaches Pillow.
+
+    ``_get_mode_and_invert_color()`` returns an empty mode when the color space
+    is missing and ``_handle_flate()`` builds an image from it, so the empty mode
+    must not raise here: the data is malformed and Pillow reports it.
+    """
+    assert _validate_image_size(mode="", size=(10, 10)) == (100, 0)
+
+
+def test_create_image_from_buffer__16_bit_png_is_not_rejected() -> None:
+    """A 16-bit PNG within the limit must not be rejected as four bytes per pixel."""
+    buffer = BytesIO()
+    Image.new("I;16", (1_000, 1_000)).save(buffer, format="PNG")
+    buffer.seek(0)
+
+    with apply_configuration(image_maximum_buffer_size=3_000_000):
+        image = _create_image_from_buffer(buf=buffer, formats=("PNG",))
+
+    assert image.mode == "I;16"
+    assert image.size == (1_000, 1_000)
+
+
+def test_create_image_from_buffer__32_bit_tiff_is_limited() -> None:
+    """A 32-bit TIFF is counted as four bytes per pixel instead of one."""
+    buffer = BytesIO()
+    Image.new("I", (1_000, 1_000)).save(buffer, format="TIFF")
+    buffer.seek(0)
+
+    with apply_configuration(image_maximum_buffer_size=3_000_000), pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"^Requested image buffer size 4000000 exceeds limit 3000000\.$",
+    ):
+        _create_image_from_buffer(buf=buffer, formats=("TIFF",))
 
 
 def _minimal_image_xobject() -> StreamObject:
@@ -872,7 +978,7 @@ def test_xobj_to_image__jpx_size_limit() -> None:
 
     with apply_configuration(image_maximum_buffer_size=100), \
             pytest.raises(
-                expected_exception=LimitReachedError, match=r"^Requested image buffer size 14700 exceeds limit 100\.$"
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 19600 exceeds limit 100\.$"
             ):
         _xobj_to_image(x_object=x_object)
 
@@ -895,6 +1001,6 @@ def test_merge_image() -> None:
 
     with apply_configuration(image_maximum_buffer_size=100), \
             pytest.raises(
-                expected_exception=LimitReachedError, match=r"^Requested image buffer size 4800 exceeds limit 100\.$"
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 6400 exceeds limit 100\.$"
             ):
         _merge_image(mode="RGB", bands=[_create_image(mode="L", size=(40, 40)) for _ in range(3)])
