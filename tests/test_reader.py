@@ -1768,6 +1768,7 @@ def test_outline_with_invalid_destinations():
     # caused by different malformations
     assert len(reader.outline) == 9
 
+
 def _build_minimal_pdf(objects: list[tuple[str, str]]) -> bytes:
     """Build a minimal, xref-valid PDF from literal object bodies."""
     out = BytesIO()
@@ -1809,7 +1810,6 @@ def test_root_recovery_with_non_integer_size(caplog):
             'Searching object with "/Catalog" key',
         )
     )
-
 
 
 @pytest.mark.enable_socket

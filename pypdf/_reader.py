@@ -258,9 +258,8 @@ class PdfReader(PdfDocCommon):
             logger_warning("Invalid Root object in trailer", source=__name__)
         if self._validated_root is None:
             logger_warning('Searching object with "/Catalog" key', source=__name__)
-            try:
-                number_of_objects = int(self.trailer.get("/Size", 0))
-            except (TypeError, ValueError):
+            number_of_objects = cast(int, self.trailer.get("/Size", 0))
+            if not isinstance(number_of_objects, int):
                 # the trailer may be corrupted and carry a non-integer /Size;
                 # treat it like a missing one and fail with the regular
                 # PdfReadError for an unrecoverable root
