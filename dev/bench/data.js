@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794342147180,
+  "lastUpdate": 1794342304046,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -166921,6 +166921,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.048613511897486965",
             "extra": "mean: 618.9246131999994 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "costajohnt@gmail.com",
+            "name": "John Costa",
+            "username": "costajohnt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d7012cb15bae3e1ed011d69e4517a7a1616337d3",
+          "message": "BUG: Treat /Annots null as missing when merging annotations (#4336)\n\nCloses #4335.\n\n* TST: Remove xfail now that #4335 is fixed\n\n* BUG: Replace non-array /Annots when merging annotations\n\nThe try/except around annots.append in _merge_page_writer silently dropped\nthe merged annotations when the target /Annots was not an array. Replace\nthe value instead, reported by the warning from the annotations property,\nand remove the try/except.\n\n* MAINT: Check the target /Annots type directly in _merge_page_writer\n\n* MAINT: Apply review suggestion for /Annots lookup\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-10T21:20:04+01:00",
+          "tree_id": "e31b0ec730cade318b98460a296e091363e55102",
+          "url": "https://github.com/py-pdf/pypdf/commit/d7012cb15bae3e1ed011d69e4517a7a1616337d3"
+        },
+        "date": 1794342291073,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.459550471777838,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018708188119562364",
+            "extra": "mean: 69.15844320000133 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.40383421694748,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017176403741065004",
+            "extra": "mean: 37.87328733332764 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0200154835331243,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03182766309653591",
+            "extra": "mean: 980.3772747999915 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5267082209739616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022142873036503582",
+            "extra": "mean: 1.8985843778000118 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3181669298495782,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03175607222023335",
+            "extra": "mean: 3.1430042100000035 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.083440219333639,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028516070958542916",
+            "extra": "mean: 922.9858576000083 msec\nrounds: 5"
           }
         ]
       }
