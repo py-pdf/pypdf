@@ -335,7 +335,7 @@ class XmpInformation(PdfObject):
         name: str,
         converter: Callable[[Any], Any] = _identity,
     ) -> list[Any] | None:
-        # Fix: Check if the key exists
+        # Check if the key exists
         ns_cache = self.cache.setdefault(namespace, {})
         if name in ns_cache:
             return cast(list[Any], ns_cache[name])
@@ -346,6 +346,12 @@ class XmpInformation(PdfObject):
                 retval.extend(seqs)
             elif (bags := _generic_get(element, self, list_type="Bag")) is not None:
                 # See issue at https://github.com/py-pdf/pypdf/issues/3324
+                # Some applications violate the XMP metadata standard regarding `dc:creator` which should
+                # be an "ordered array" and thus a sequence, but use an unordered array (bag) instead.
+                # This seems to stem from the fact that the original Dublin Core specification does indeed
+                # use bags or direct values, while PDFs are expected to follow the XMP standard and ignore
+                # the plain Dublin Core variant. For this reason, add a fallback here to deal with such
+                # issues accordingly.
                 retval.extend(bags)
             else:
                 value = converter(self._get_text(element))
@@ -355,7 +361,7 @@ class XmpInformation(PdfObject):
         return retval
 
     def _get_langalt_values(self, namespace: str, name: str) -> dict[Any, Any] | None:
-        # Fix: Check if the key exists
+        # Check if the key exists
         ns_cache = self.cache.setdefault(namespace, {})
         if name in ns_cache:
             return cast(dict[Any, Any], ns_cache[name])
