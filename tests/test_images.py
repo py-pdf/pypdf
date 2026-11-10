@@ -467,11 +467,13 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
 @pytest.mark.enable_socket
 @pytest.mark.timeout(30)
 def test_large_compressed_image():
+    """This test ensures that a small stream which expands past the default limit decodes once the limit is raised."""
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
     reader = PdfReader(
         BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))
     )
-    list(reader.pages[0].images)
+    with apply_configuration(image_maximum_buffer_size=80_000_000):
+        list(reader.pages[0].images)
 
 
 @pytest.mark.timeout(timeout=1, method="thread")
