@@ -2388,6 +2388,16 @@ def test_root_object__not_a_dictionary(caplog, root_body):
     assert "Root found at IndirectObject(4, 0," in caplog.text
 
 
+def test_root_object__invalid_size(caplog):
+    data = _generate_pdf_with_root(b"<< /Type /Pages >>").replace(
+        b"/Size 4", b"/Size /Bogus"
+    )
+    reader = PdfReader(BytesIO(data), strict=False)
+
+    with pytest.raises(PdfReadError, match=r"^Cannot find Root object in pdf$"):
+        _ = reader.root_object
+
+
 @pytest.mark.enable_socket
 def test_issue3151(caplog):
     """Tests for #3151"""

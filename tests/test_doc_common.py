@@ -258,6 +258,28 @@ def test_named_destinations__non_array_value():
     assert "foo" in reader.named_destinations
 
 
+def test_named_destinations__unknown_fit_without_pages():
+    writer = PdfWriter()
+    names = DictionaryObject()
+    names[NameObject("/Names")] = ArrayObject(
+        [
+            TextStringObject("foo"),
+            ArrayObject([NumberObject(0), NameObject("/UnknownFit"), NumberObject(0)]),
+        ]
+    )
+    dests = DictionaryObject()
+    dests[NameObject("/Dests")] = names
+    writer.root_object[NameObject("/Names")] = dests
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    reader = PdfReader(stream, strict=False)
+
+    assert "foo" in reader.named_destinations
+    assert isinstance(reader.named_destinations["foo"]["/Page"], NullObject)
+
+
 def _reader_with_button_field(field: DictionaryObject) -> PdfReader:
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
