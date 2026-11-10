@@ -1371,6 +1371,42 @@ def test_merge_with_no_resources():
     writer.pages[0].merge_page(p1)
 
 
+@pytest.mark.parametrize(
+    ("resources", "expected"),
+    [
+        pytest.param(NumberObject(3), "Page resources are not a dictionary: 3", id="number"),
+        pytest.param(ArrayObject([NumberObject(1)]), "Page resources are not a dictionary: [1]", id="array"),
+        pytest.param(TextStringObject("x"), "Page resources are not a dictionary: x", id="string"),
+        pytest.param(NullObject(), None, id="null"),
+    ],
+)
+@pytest.mark.parametrize("malformed", ["page", "merged page", "merged page from a reader"])
+def test_merge_page__resources_are_not_a_dictionary(caplog, resources, expected, malformed):
+    """Malformed /Resources on either page are treated as empty."""
+    writer = PdfWriter()
+    for _ in range(2):
+        page = writer.add_blank_page(72, 72)
+        font = DictionaryObject({NameObject("/Type"): NameObject("/Font")})
+        page[NameObject("/Resources")] = DictionaryObject(
+            {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})}
+        )
+    writer.pages[0 if malformed == "page" else 1][NameObject("/Resources")] = resources
+    page2 = writer.pages[1]
+    if malformed == "merged page from a reader":
+        stream = BytesIO()
+        writer.write(stream)
+        page2 = PdfReader(stream).pages[1]
+
+    writer.pages[0].merge_page(page2)
+
+    # The font of the page that has well-formed resources is kept
+    assert list(writer.pages[0]["/Resources"]["/Font"]) == ["/F1"]
+    if expected is None:
+        assert caplog.text == ""
+    else:
+        assert expected in caplog.text
+
+
 def test_get_contents_from_nullobject():
     """Issue #2157"""
     writer = PdfWriter()
