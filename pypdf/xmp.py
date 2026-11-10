@@ -292,7 +292,7 @@ class XmpInformation(PdfObject):
         name: str,
         converter: Callable[[str], Any] = _identity,
     ) -> Any | None:
-        # Fix: Use setdefault to make sure the namespace dictionary exists, and check if 'name' is one of the keys
+        # Use `setdefault` to make sure the namespace dictionary exists, and check if `name` is one of the keys
         ns_cache = self.cache.setdefault(namespace, {})
         if name in ns_cache:
             return ns_cache[name]
