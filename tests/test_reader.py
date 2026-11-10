@@ -1768,6 +1768,7 @@ def test_outline_with_invalid_destinations():
     # caused by different malformations
     assert len(reader.outline) == 9
 
+
 def _build_minimal_pdf(objects: list[tuple[str, str]]) -> bytes:
     """Build a minimal, xref-valid PDF from literal object bodies."""
     out = BytesIO()
@@ -1805,8 +1806,6 @@ def test_named_destination_fallback_without_pages(caplog):
     assert destination["/Type"] == "/Fit"
     assert isinstance(destination["/Page"], NullObject)
     assert "Unknown destination: '/Dest1'" in caplog.text
-
-
 
 
 @pytest.mark.enable_socket
