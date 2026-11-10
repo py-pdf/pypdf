@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794310324894,
+  "lastUpdate": 1794310878780,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125867,6 +125867,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002104069268080822",
             "extra": "mean: 582.9870710000023 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "ee1fafc8c785e950eb0406d36458ed73fcb9a5db",
+          "message": "REL: 7.0.1\n\n## What's new\n\n### Security (SEC)\n- Determine image buffer sizes using the actual bytes per pixel (#4374) by @Master-Norna\n\n### Performance Improvements (PI)\n- Don't parse content streams without text operators in extract_text() (#4346) by @MartinThoma\n\n### Bug Fixes (BUG)\n- Decode UTF-8 text strings (#4348) by @metsw24-max\n- Fix page reference lookup for hierarchical page trees in PdfWriter (#4356) by @rajuriprathik-a11y\n- Copy the operations in ContentStream.replicate() (#4372) by @MartinThoma\n- Deal with more rendering intents for inline images (#4383) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.0...7.0.1)",
+          "timestamp": "2026-11-10T12:38:53+01:00",
+          "tree_id": "2e9b176fbeb500afb813ff2af664803a0a48eba0",
+          "url": "https://github.com/py-pdf/pypdf/commit/ee1fafc8c785e950eb0406d36458ed73fcb9a5db"
+        },
+        "date": 1794310863265,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0743060838016034,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010836544410583219",
+            "extra": "mean: 325.27665520000113 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.201133811420664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00934683954956351",
+            "extra": "mean: 38.16628727586268 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28496686127779347,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016319767446844522",
+            "extra": "mean: 3.509179963999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.021665323499956,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033565286665816975",
+            "extra": "mean: 58.748658312498314 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.16519355073859698,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030248533354781382",
+            "extra": "mean: 6.053505088600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.714877546749083,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00345221393233567",
+            "extra": "mean: 583.1320153999997 msec\nrounds: 5"
           }
         ]
       }
