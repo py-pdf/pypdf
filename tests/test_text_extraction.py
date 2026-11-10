@@ -1711,7 +1711,7 @@ def test_extract_text__content_without_text_operators_is_not_parsed() -> None:
     Table 107) and by Do, which can paint a form XObject with text (8.8.1,
     Table 86). Content without them gives an empty string anyway.
     """
-    # A gray rectangle, as in a figure: only colour, path construction and painting.
+    # A gray rectangle, as in a figure: only color, path construction and painting.
     page = PdfReader(_page_with_helvetica(b"0.5 g 10 10 100 100 re f")).pages[0]
 
     with mock.patch.object(ContentStream, "_parse_content_stream", autospec=True) as parse:

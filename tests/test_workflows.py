@@ -947,9 +947,9 @@ def test_extra_test_iss1541():
     )
     # The page only shows an inline image, so extract_text() does not need to parse it.
     assert reader.pages[0].extract_text() == ""
-    cs = ContentStream(reader.pages[0]["/Contents"], None, None)
+    content_stream = ContentStream(reader.pages[0]["/Contents"], None, None)
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
-        cs.operations
+        content_stream.operations
 
 
 @pytest.mark.enable_socket

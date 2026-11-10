@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-import re
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass
@@ -97,24 +96,6 @@ except ImportError:
 
 MERGE_CROP_BOX = "cropbox"  # DEPRECATED: Use pypdf.Configuration.
 
-# The operators that can add text: the text-showing operators (ISO 32000-2:2020,
-# 9.4.3, Table 107) and Do, which can paint a form XObject with text (8.8.1, Table 86).
-# The bytes may also occur in strings, names or inline image data; that only
-# means that the content stream is parsed.
-_TEXT_OPERATORS = (b"Tj", b"TJ", b"Do", b"'", b'"')
-# Searching for their first bytes and comparing the next byte is faster than
-# searching for the alternation Tj|TJ|Do|'|" in content streams with many graphics.
-_TEXT_OPERATOR_START = re.compile(rb"[TD'\"]")
-
-
-def _has_text_operator(data: bytes) -> bool:
-    """Return whether the bytes contain an operator that can add text."""
-    for match in _TEXT_OPERATOR_START.finditer(data):
-        start = match.start()
-        if data[start : start + 2] in _TEXT_OPERATORS or match[0] in _TEXT_OPERATORS:
-            return True
-    return False
-
 
 def _get_page_resources(obj: Any) -> DictionaryObject:
     """Return the inherited /Resources, or an empty dictionary if malformed."""
@@ -145,26 +126,6 @@ def _get_font_resources(resources: Any) -> DictionaryObject:
         )
         return DictionaryObject()
     return fonts
-
-
-def _get_content_stream_for_text(
-    obj: DictionaryObject, pdf: Any, content_key: str | None, *, has_visitor: bool
-) -> ContentStream | None:
-    """
-    Return the content stream to extract text from, or None if it cannot give any text.
-
-    Content without text, e.g. a figure, gives no text either. It is only parsed if
-    a visitor has to see its operators.
-    """
-    try:
-        content = obj[content_key].get_object() if isinstance(content_key, str) else obj
-        if not isinstance(content, ContentStream):
-            content = ContentStream(content, pdf, "bytes")
-    except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
-        return None
-    if not has_visitor and not _has_text_operator(content.get_data()):
-        return None
-    return content
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -1930,6 +1891,8 @@ class PageObject(DictionaryObject):
                         fonts[font_resource].space_width = space_width
                 except (AttributeError, TypeError):
                     pass
+
+        from ._text_extraction import _get_content_stream_for_text  # noqa: PLC0415
 
         content = _get_content_stream_for_text(
             obj,
