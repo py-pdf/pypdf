@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794305727032,
+  "lastUpdate": 1794308426569,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125735,6 +125735,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01911414979830096",
             "extra": "mean: 381.1833962000037 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5a936f961c64c791682f997fec83221fa85b51b0",
+          "message": "PI: Don't parse content streams without text operators in extract_text() (#4346)\n\n* PI: Do not parse content streams without text operators in extract_text()\n\nextract_text() tokenized every content stream, including those that\ncannot add any text, such as the form XObjects of figures. Text is only\nadded by the text-showing operators Tj, TJ, ' and \" (ISO 32000-2:2020,\n9.4.3) and by Do, which can paint a form XObject with text (8.8.1). If\nnone of them occurs in the bytes of a content stream and no visitor has\nto see its operators, _extract_text() now returns \"\" without parsing it.\n\nThe check looks at the bytes, not at the resources: pypdf extracts text\neven if the font named by Tf is missing from /Resources, so a missing\n/Font entry does not mean that there is no text.\n\nThe check searches for the first bytes T, D, ' and \" and compares the\noperator from there. In content streams with many graphics before the\nfirst text operator, this is 2 to 4 times faster than searching for the\nregular expression Tj|TJ|Do|'|\": for the streams of crystallography.pdf,\nit takes 7.9 ms instead of 28.0 ms, and for those of all PDFs of\npy-pdf/benchmarks together 30.5 ms instead of 68.7 ms.\n\nThe TextExtraction is now only created after the check: its constructor\nbuilds the WinAnsiEncoding table with 256 bytes.decode() calls, about\n0.3 ms per content stream. The fonts are still built before the check,\nso that malformed /Font entries are reported as before.\n\nThis helps documents whose figures are form XObjects. GeoTopo-book.pdf\npaints 8 such form XObjects 326 times; not parsing them saves 5.1 % of\nthe instructions of its text extraction and 4 % of the time.\n\nText extraction of the PDFs of py-pdf/benchmarks:\n\n* time: CPU seconds. Each PDF was extracted 20 times, on one CPU core\n  and alternating main and the branch (main, branch, branch, main, five\n  times); each column shows the median of its 10 runs.\n* instruction change: the instructions that valgrind --tool=callgrind\n  counts with PYTHONHASHSEED=0, minus those of a run that only starts\n  Python, imports pypdf and reads the file. Two runs of the same\n  version on Ballinasloe_WS.pdf differed by 20 instructions.\n* skipped: the content streams that were not parsed, of all that were\n  processed; a form XObject painted several times counts each time.\n\nThe 9 PDFs with skipped streams were measured again after the\nTextExtraction was moved behind the check. The other 20 run the same\ncode as before, so their rows come from the first measurement.\n\n                                             time instruction\n  PDF                        main  branch  change      change skipped\n  2201.00200.pdf             0.58    0.36   -38 %    -38.86 %    4 / 11\n  2201.00021.pdf             0.75    0.52   -30 %    -31.43 %    4 / 14\n  GeoTopo-book.pdf           5.25    5.02    -4 %     -5.09 %  326 / 450\n  2201.00214.pdf            18.57   18.59     0 %     -0.51 %    0 / 22\n  USC-EMBA.pdf               8.30    8.22    -1 %     -0.48 %   19 / 240\n  1707.09725.pdf             3.08    3.07     0 %     -0.35 %    5 / 145\n  2201.00151.pdf             5.07    5.07     0 %     -0.20 %    0 / 12\n  2201.00037.pdf             1.42    1.42     0 %     -0.14 %    2 / 42\n  irbookonlinereading.pdf   32.29   32.38     0 %     -0.06 %    0 / 581\n  2201.00029.pdf             0.46    0.46     0 %     -0.03 %    0 / 24\n  2201.00069.pdf             0.64    0.64     0 %     -0.01 %    0 / 15\n  Ballinasloe_WS.pdf         2.50    2.48    -1 %     -0.01 %    2 / 39\n  tika-972174.pdf            3.58    3.58     0 %     +0.00 %    1 / 174\n  1602.06541.pdf             0.74    0.74     0 %     +0.01 %    0 / 17\n  2201.00022.pdf             0.65    0.64     0 %     +0.03 %    0 / 14\n  2201.00178.pdf             0.64    0.64     0 %     +0.03 %    0 / 16\n  PDF32000_2008.pdf         28.24   28.51    +1 %     +0.03 %    0 / 756\n  1601.03642.pdf             0.28    0.28    -1 %     +0.04 %    0 / 8\n  2201.00201.pdf             0.51    0.51    -1 %     +0.04 %    0 / 9\n  google-doc.pdf             0.06    0.06             +0.05 %    0 / 1\n  2021_book_security.pdf    10.71   10.68     0 %     +0.08 %    0 / 268\n  WBT-whitepaper.pdf        21.39   21.53    +1 %     +0.08 %   15 / 72\n  crystallography.pdf        2.91    2.93    +1 %     +0.44 %    0 / 154\n  libreoffice-writer.pdf     0.02    0.02             +0.44 %    0 / 1\n  reportlab-overlay.pdf      0.00    0.01             +0.45 %    0 / 1\n  FTX-claim.pdf              0.02    0.02             +0.55 %    0 / 10\n  pdfkit.pdf                 0.01    0.01             +0.57 %    0 / 1\n  imagemagick-images.pdf     0.01    0.01             +0.59 %    0 / 6\n  cmyk-image.pdf             0.00    0.00             +0.78 %    0 / 1\n  Total                     148.7   148.4     0 %     -0.59 %\n\n2201.00200.pdf, 2201.00021.pdf and GeoTopo-book.pdf get faster by\nabout 0.22 s each. The time changes of the other files are smaller than\nthe differences between runs of the same version: the middle half of\nthe 10 runs of a version spans 1 to 3 % of the median for most files\nand up to 6 % for some. All files together execute 0.59 % fewer\ninstructions.\n\nThe check costs the most on crystallography.pdf (+0.44 %, 81 million\ninstructions), whose streams hold 1.25 MB of graphics before their first\ntext operator. On the small PDFs, the branch executes 0.1 to 0.5\nmillion more instructions, less than a millisecond.\n\nFor the 449 PDFs in resources/, sample-files/ and the test download\ncache, the extracted text, exceptions and warnings stay the same. For\nall 20,302 content streams that extract_text() processes in these and\nthe benchmark PDFs, the check gives the same result as the regular\nexpression; 2,227 of them have no text operator. Moving the\nTextExtraction behind the check changes nothing for the 478 PDFs of\nboth sets: the text of each page, the exceptions, the warnings and the\nlog messages stay the same.\n\nA content stream without text that cannot be parsed no longer raises:\nthe page of #1541 with a broken inline image now gives \"\". The test\nchecks the parser error with ContentStream directly.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* MAINT: Move the text operator check to the text extraction module\n\n_TEXT_OPERATORS, _TEXT_OPERATOR_START, _has_text_operator() and\n_get_content_stream_for_text() only serve text extraction, so they now\nlive in pypdf/_text_extraction/ instead of pypdf/_page.py. _extract_text()\nimports _get_content_stream_for_text() locally.\n\nThe tests use American English (\"color\") and name the content stream\ncontent_stream instead of cs.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-10T11:58:12+01:00",
+          "tree_id": "a96a7188242dbceda815153191d2a179ad267ec3",
+          "url": "https://github.com/py-pdf/pypdf/commit/5a936f961c64c791682f997fec83221fa85b51b0"
+        },
+        "date": 1794308413799,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.736041383225646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008018510735243688",
+            "extra": "mean: 365.4915478000021 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.956887933432743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015538885870470382",
+            "extra": "mean: 43.5599112083338 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25894292546863396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022594794168212733",
+            "extra": "mean: 3.861854878599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.707387191628847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002039533290267966",
+            "extra": "mean: 59.85376340000338 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14785431613542813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03599000709262189",
+            "extra": "mean: 6.7634143265999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5052626633478328,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010157975974074663",
+            "extra": "mean: 664.335882599994 msec\nrounds: 5"
           }
         ]
       }
