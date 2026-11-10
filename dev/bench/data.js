@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794310963803,
+  "lastUpdate": 1794318493952,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -125933,6 +125933,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00345221393233567",
             "extra": "mean: 583.1320153999997 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ayushkumarsaha32@gmail.com",
+            "name": "ayush",
+            "username": "AP24110011695"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "abc41b66191e81f9c62d6c881d01841ffe202049",
+          "message": "ROB: Guard the remaining non-dictionary /Resources accesses (#4353)\n\n* ROB: Guard the remaining non-dictionary /Resources accesses\n\n_get_fonts_walk and the inline-image color-space lookup checked the\npresence of /Resources but not its type, raising TypeError when the\nvalue is not a dictionary. The same class was fixed for images (#4272)\nand for removing objects (#4329); these two siblings follow the same\npattern: warn and treat as an empty dictionary, keeping the intended\nPdfReadError for unresolvable color-space names.\n\n* TST: Cover the resolution and null branches of the non-dictionary /Resources guards\n\nThe inline-image color-space lookup was only tested on its short-circuit\npath (empty resources): the membership check and the return of the\nresolved color space had no coverage. /Resources that resolve to null\nskip the warning by design; pin that too.\n\n* fix: end test files with a single newline (pre-commit end-of-file hook)\n\nSigned-off-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>\n\n* MAINT: Apply the review suggestions\n\nWalrus operator for the color-space lookup, house test naming,\nanchored regex match, and a trimmed docstring.\n\n---------\n\nSigned-off-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>\nCo-authored-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>",
+          "timestamp": "2026-11-10T14:34:57+01:00",
+          "tree_id": "47476c0ba1328defe84f86e2a3bf58efe470a087",
+          "url": "https://github.com/py-pdf/pypdf/commit/abc41b66191e81f9c62d6c881d01841ffe202049"
+        },
+        "date": 1794318480686,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.949092547973491,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008798133612291585",
+            "extra": "mean: 339.0873577999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.431794418646465,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027971269095474105",
+            "extra": "mean: 44.57958116666531 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27822343931335325,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02270336219022326",
+            "extra": "mean: 3.5942334781999987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.285519192838244,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002785046177636367",
+            "extra": "mean: 61.40424435714412 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14584516344040507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09436981921881712",
+            "extra": "mean: 6.856586645800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6735724956549003,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003664038468205224",
+            "extra": "mean: 597.5241601999926 msec\nrounds: 5"
           }
         ]
       }
