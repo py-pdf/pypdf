@@ -30,6 +30,7 @@ from pypdf.generic import (
     NullObject,
     NumberObject,
     RectangleObject,
+    StreamObject,
     TextStringObject,
 )
 
@@ -774,6 +775,36 @@ def test_get_fonts__acroform_default_resources():
     acro_form = DictionaryObject({NameObject("/DR"): resources})
 
     assert _get_fonts_walk(acro_form, set(), set()) == ({"/Helvetica"}, set())
+
+
+@pytest.mark.parametrize("states", [False, True])
+def test_get_fonts__annotation_appearance(states):
+    """
+    The fonts of an appearance stream without /Type, as in germanfields.pdf, and
+    those of the appearance streams of each state of a check box are collected.
+    """
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/ZapfDingbats"),
+    })
+    appearance = StreamObject()
+    appearance[NameObject("/Subtype")] = NameObject("/Form")
+    appearance[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/ZaDb"): font})
+    })
+    if states:
+        normal = DictionaryObject({
+            NameObject("/Off"): StreamObject(),
+            NameObject("/Yes"): appearance,
+        })
+    else:
+        normal = appearance
+    annotation = DictionaryObject({
+        NameObject("/AP"): DictionaryObject({NameObject("/N"): normal})
+    })
+
+    assert _get_fonts_walk(annotation, set(), set()) == ({"/ZapfDingbats"}, set())
 
 
 def test_annotation_getter():
