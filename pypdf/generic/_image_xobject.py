@@ -193,10 +193,57 @@ def _expand_low_bit_samples(
     return "P", bits2byte(data, size, bits)
 
 
+# Bytes per pixel Pillow allocates for a single-band image, keyed by mode.
+# Pillow keeps one sample of "1", "L" and "P" in one byte, the 16-bit family in
+# two and "I"/"F" in four. Image.getmodetype() cannot tell them apart: it
+# reports "L" for "1", "L", "P" and the whole 16-bit family.
+_SINGLE_BAND_BYTES_PER_PIXEL: dict[str, int] = {
+    "1": 1,
+    "L": 1,
+    "P": 1,
+    "I;16": 2,
+    "I;16B": 2,
+    "I;16L": 2,
+    "I;16N": 2,
+    "I": 4,
+    "F": 4,
+}
+
+
+def _allocated_bytes_per_pixel(mode: str) -> int:
+    """Bytes Pillow allocates per pixel for a decoded image in the given mode.
+
+    This is the size of the internal pixel, not the size of the raw data: every
+    mode with two or more bands is stored in a four-byte pixel, so "RGB",
+    "YCbCr", "LAB", "HSV", "LA", "La" and "PA" all take four bytes although
+    they have three or two bands. The length of the mode name says nothing
+    about it either: "I" and "F" need four bytes per pixel and the 16-bit modes
+    two.
+
+    The number of bands is taken from Pillow, so the multi-band half needs no
+    table. The four bytes are Pillow's image32 storage, which the API does not
+    report: it holds for every mode Pillow had from 8.0.0 to 12.3.0, and the
+    test over Image.MODES fails when a release adds a mode, so the assumption
+    cannot go stale unnoticed. The width of a single sample is not exposed in a
+    version-independent way either, so those modes stay in a table; an unknown
+    mode takes four bytes, the safe direction for a limit.
+    """
+    try:
+        bands = Image.getmodebands(mode)
+    except KeyError:
+        # Not a mode Pillow knows: _get_mode_and_invert_color() returns an empty
+        # mode when the color space is missing, and _handle_flate() builds an
+        # image from it. Keep the name length so that such data is still
+        # reported by Pillow instead of failing here.
+        return len(mode)
+    if bands > 1:
+        return 4
+    return _SINGLE_BAND_BYTES_PER_PIXEL.get(mode, 4)
+
+
 def _validate_image_size(*, mode: str, size: tuple[int, int]) -> tuple[int, int]:
     pixel_count = size[0] * size[1]
-    bytes_per_pixel = len(mode)
-    required_byte_count = pixel_count * bytes_per_pixel
+    required_byte_count = pixel_count * _allocated_bytes_per_pixel(mode)
 
     configuration = get_configuration()
     if required_byte_count > configuration.image_maximum_buffer_size:
@@ -211,7 +258,7 @@ def _validate_image_size(*, mode: str, size: tuple[int, int]) -> tuple[int, int]
 def _create_image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
-    pixel_count, required_byte_count = _validate_image_size(mode=mode, size=size)
+    pixel_count, _ = _validate_image_size(mode=mode, size=size)
 
     try:
         img = Image.frombytes(mode, size, data)
@@ -223,7 +270,12 @@ def _create_image_from_bytes(
             ) from exc
         if data_length % pixel_count != 0:
             raise
-        k = required_byte_count / data_length
+        # The expansion factor counts raw samples per pixel, not the bytes
+        # Pillow allocates: the modes that reach this function are "1", "L",
+        # "P", "RGB", "RGBA" and "CMYK", whose names spell out their samples,
+        # so len(mode) is the sample count.
+        raw_byte_count = pixel_count * len(mode)
+        k = raw_byte_count / data_length
         data = b"".join(bytes((x,) * int(k)) for x in data)
         img = Image.frombytes(mode, size, data)
     return img
