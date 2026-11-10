@@ -5,10 +5,11 @@ Some parts are still in _page.py. In doubt, they will stay there.
 """
 
 import math
+import re
 from collections.abc import Callable, Mapping
 from typing import Any, Literal
 
-from .._utils import is_char_neutral, is_char_rtl
+from .._utils import RTL_CHARACTER_RANGES, is_char_neutral, is_char_rtl
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 from ..generic._font import Font
 
@@ -18,6 +19,7 @@ CUSTOM_RTL_SPECIAL_CHARS: str = ""
 LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
 UNICODE_LOWER_LIMIT = 0
 UNICODE_UPPER_LIMIT = 0x10FFFF
+RTL_CHARACTER_PATTERN = re.compile("[" + "".join(f"{start}-{end}" for start, end in RTL_CHARACTER_RANGES) + "]")
 
 
 class OrientationNotFoundError(Exception):
@@ -255,6 +257,13 @@ def get_display_str(
 
     """
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
+    characters = [font.character_map.get(raw_character, raw_character) for raw_character in text_operands]
+    if not rtl_dir and not (CUSTOM_RTL_MIN and CUSTOM_RTL_MAX):
+        # Without a right-to-left character, all characters are appended in order.
+        appended_text = "".join(characters)
+        if RTL_CHARACTER_PATTERN.search(appended_text) is None:
+            return text + appended_text, rtl_dir, ""
+
     completed_text: list[str] = []
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
@@ -270,8 +279,7 @@ def get_display_str(
     def get_run_text() -> str:
         return "".join(reversed(run_parts)) if rtl_dir else "".join(run_parts)
 
-    for raw_character in text_operands:
-        x = font.character_map.get(raw_character, raw_character)
+    for x in characters:
         # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
             if x not in neutral_cache:
