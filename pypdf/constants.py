@@ -731,10 +731,12 @@ class ImageType(IntFlag):
 
 
 _INLINE_IMAGE_VALUE_MAPPING = {
+    # Short color space names.
     "/G": "/DeviceGray",
     "/RGB": "/DeviceRGB",
     "/CMYK": "/DeviceCMYK",
     "/I": "/Indexed",
+    # Short filter names.
     "/AHx": "/ASCIIHexDecode",
     "/A85": "/ASCII85Decode",
     "/LZW": "/LZWDecode",
@@ -742,10 +744,12 @@ _INLINE_IMAGE_VALUE_MAPPING = {
     "/RL": "/RunLengthDecode",
     "/CCF": "/CCITTFaxDecode",
     "/DCT": "/DCTDecode",
+    # Long color space names.
     "/DeviceGray": "/DeviceGray",
     "/DeviceRGB": "/DeviceRGB",
     "/DeviceCMYK": "/DeviceCMYK",
     "/Indexed": "/Indexed",
+    # Long filter names.
     "/ASCIIHexDecode": "/ASCIIHexDecode",
     "/ASCII85Decode": "/ASCII85Decode",
     "/LZWDecode": "/LZWDecode",
@@ -753,7 +757,11 @@ _INLINE_IMAGE_VALUE_MAPPING = {
     "/RunLengthDecode": "/RunLengthDecode",
     "/CCITTFaxDecode": "/CCITTFaxDecode",
     "/DCTDecode": "/DCTDecode",
+    # Rendering intents (table 69 of ISO 3200-2:2020).
+    "/AbsoluteColorimetric": "/AbsoluteColorimetric",
     "/RelativeColorimetric": "/RelativeColorimetric",
+    "/Saturation": "/Saturation",
+    "/Perceptual": "/Perceptual",
 }
 
 _INLINE_IMAGE_KEY_MAPPING = {

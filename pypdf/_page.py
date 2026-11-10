@@ -1156,6 +1156,13 @@ class PageObject(DictionaryObject):
             if is_null_or_none(obj):
                 return None
             resolved_object = obj.get_object()
+            if not isinstance(resolved_object, (ArrayObject, StreamObject)):
+                logger_warning(
+                    "Page contents are not a stream or an array: %(contents)s",
+                    source=__name__,
+                    contents=resolved_object,
+                )
+                return None
             return ContentStream(resolved_object, pdf)
         return None
 

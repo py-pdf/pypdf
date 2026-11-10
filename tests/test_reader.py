@@ -127,6 +127,28 @@ def test_read_metadata_title_is_utf8():
         assert title == "Microsoft Word - トランスバース社買収電話会議英語Final.docx"
 
 
+@pytest.mark.enable_socket
+def test_read_utf8_text_strings():
+    """UTF-8 text strings with a byte order mark, see ISO 32000-2:2020, 7.9.2.2.1."""
+    # PDF 2.0 example file provided by the PDF Association under CC BY-SA 4.0.
+    url = (
+        "https://raw.githubusercontent.com/pdf-association/pdf20examples/"
+        "c20f2c17bfcc4baab7cfe62e70fae64caf14d5fa/pdf20-utf8-test.pdf"
+    )
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name="pdf20-utf8-test.pdf")))
+
+    assert reader.metadata.title == "表ポあA鷗ŒéＢ逍Üßªąñ丂㐀𠀀"
+    assert reader.metadata.author == "Peter Wyatt"
+    assert [item.title for item in reader.outline] == [
+        "PDF 2.0 with UTF-8 test file",
+        "\u202a\u202atest\u202a",
+        "\U0001f308\ufe0f\n",
+    ]
+    ocgs = reader.root_object["/OCProperties"]["/OCGs"]
+    assert [ocg.get_object()["/Name"] for ocg in ocgs] == ["Layer 1", "گچپژ"]
+    assert reader.page_labels == ["Prefixi"]
+
+
 def test_iss1943():
     with PdfReader(RESOURCE_ROOT / "crazyones.pdf") as reader:
         docinfo = reader.metadata
