@@ -1789,7 +1789,8 @@ def _build_minimal_pdf(objects: list[tuple[str, str]]) -> bytes:
 
 def test_named_destination_fallback_without_pages(caplog):
     """Cf #4386: an unknown fit type must degrade to the missing-destination
-    fallback even when the document has no pages, instead of raising IndexError."""
+    fallback even when the document has no pages, instead of raising IndexError.
+    """
     data = _build_minimal_pdf(
         [
             ("1", "<< /Type /Catalog /Pages 2 0 R /Names << /Dests << /Dest1 3 0 R >> >> >>"),
