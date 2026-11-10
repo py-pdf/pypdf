@@ -71,7 +71,7 @@ def _parse_encoding(
     ft: DictionaryObject
 ) -> str | dict[int, str]:
     encoding: str | list[str] | dict[int, str] = []
-    embedded_font_encoding: dict[Any, Any] = {}
+    embedded_font_encoding: dict[str, str] = {}
     int_entry: list[int] = []
 
     if "/Encoding" in ft:
@@ -88,12 +88,9 @@ def _parse_encoding(
     # or when base encoding is absent from an encoding dictionary.
     if (
         (has_no_encoding or has_no_base_encoding) and
-        ft.get("/Subtype", "") == "/Type1" and
-        (font_descriptor := ft.get("/FontDescriptor"))
+        ft.get("/Subtype", "") == "/Type1"
     ):
-        embedded_font_encoding, int_entry = _parse_encoding_from_embedded_font(
-            ft, font_descriptor, embedded_font_encoding, int_entry
-        )
+        embedded_font_encoding, int_entry = _parse_encoding_from_embedded_font(ft)
 
     # When ft["/Encoding"] is absent or cannot be used, use StandardEncoding as a basis, and add
     # what the embedded font file encoding says, if present. See Table 114, PDF Reference 1.7 / 2.0
@@ -436,7 +433,7 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
 
 
 def _correct_encoding(
-    embedded_font_encoding: dict[Any, Any] | None,
+    embedded_font_encoding: dict[str, str] | None,
     int_entry: list[int],
     encoding: dict[int, str] | list[str]
 ) -> None:
@@ -445,12 +442,7 @@ def _correct_encoding(
             encoding[x] = embedded_font_encoding[chr(x)]
 
 
-def _parse_encoding_from_embedded_font(
-    font_dictionary: DictionaryObject,
-    font_descriptor: DictionaryObject,
-    embedded_font_encoding: dict[Any, Any],
-    int_entry: list[int]
-) -> tuple[dict[Any, Any], list[int]]:
+def _parse_encoding_from_embedded_font(font_dictionary: DictionaryObject) -> tuple[dict[str, str], list[int]]:
     from .generic._font import HAS_FONTTOOLS  # noqa: PLC0415
     """
     Derive the encoding from an embedded font program, caching the result on its stream. See Table 126
@@ -461,52 +453,49 @@ def _parse_encoding_from_embedded_font(
     expensive, so each stream is parsed once and reused until its data changes, which a digest of the data
     detects (a writer may replace the font program). See #4156.
     """
-    font_file_handlers = (
+    if (
+        "/FontDescriptor" not in font_dictionary or
+        not isinstance(font_descriptor := font_dictionary["/FontDescriptor"], DictionaryObject)
+    ):
+        return {}, []
+
+    if not any(
+        (font_file := target) in font_descriptor
+        and isinstance(font_file_dict := cast(StreamObject, font_descriptor[font_file]), StreamObject)
+        for target in ("/FontFile", "/FontFile3")
+    ):
+        return {}, []
+
+    font_file_handlers = {
         # A normal Type1 font file, can be part of a Type1 or MMType1 font dictionary.
-        (
-            "/FontFile",
-            lambda _: True,
-            _derive_encoding_from_type1_font_file
-        ),
-        # A CFF Type1 font file, as part of a Type1 or MMType1 font dictionary, when subtype is Type1C.
-        (
-            "/FontFile3",
-            lambda stream: stream.get("/Subtype") == "/Type1C",
-            _derive_encoding_from_cff_type1_font_file,
+        "/FontFile": _derive_encoding_from_type1_font_file,
+        # A CFF Type1 font file, as part of a Type1 or MMType1 font dictionary.
+        "/FontFile3": _derive_encoding_from_cff_type1_font_file,
+    }
+    font_file_processor = font_file_handlers[font_file]
+
+    if font_file == "/FontFile3" and not HAS_FONTTOOLS:
+        logger_warning(
+            (
+                "fontTools is required to fully parse the encoding of a CFF Type1 font in font "
+                "dictionary %(font_dictionary)s, but is not installed. Consider installing "
+                "fontTools if you encounter encoding problems."
+            ),
+            source=__name__,
+            font_dictionary=font_dictionary,
         )
-    )
-    for font_file, condition, font_file_processor in font_file_handlers:
-        if (
-            font_file in font_descriptor and
-            isinstance(font_file_dict := font_descriptor[font_file], StreamObject) and
-            condition(font_file_dict)
-        ):
-            if font_file == "/FontFile3" and not HAS_FONTTOOLS:
-                logger_warning(
-                    (
-                        "fontTools is required to fully parse the encoding of a CFF Type1 font in font "
-                        "dictionary %(font_dictionary)s, but is not installed. Consider installing "
-                        "fontTools if you encounter encoding problems."
-                    ),
-                    source=__name__,
-                    font_dictionary=font_dictionary,
-                )
-                return {}, []
+        return {}, []
 
-            font_file_data = font_file_dict.get_data()
-            if font_file_data:
-                digest = sha256(font_file_data).digest()
-                cached = font_file_dict._font_file_encoding
-                if cached is None or cached.digest != digest:
-                    cached_encoding, cached_int_entry = font_file_processor(
-                        font_file_data, embedded_font_encoding, int_entry
-                    )
-                    cached = _FontFileEncoding(digest, cached_encoding, cached_int_entry)
-                    font_file_dict._font_file_encoding = cached
-                embedded_font_encoding.update(cached.embedded_font_encoding)
-                int_entry.extend(cached.int_entry)
+    if not (font_file_data := font_file_dict.get_data()):
+        return {}, []
 
-    return embedded_font_encoding, int_entry
+    digest = sha256(font_file_data).digest()
+    cached = font_file_dict._font_file_encoding
+    if cached is None or cached.digest != digest:
+        cached_encoding, cached_int_entry = font_file_processor(font_file_data)
+        cached = _FontFileEncoding(digest, cached_encoding, cached_int_entry)
+        font_file_dict._font_file_encoding = cached
+    return cached.embedded_font_encoding, cached.int_entry
 
 
 def _glyph_name_to_unicode(glyph_name: str) -> str | None:
@@ -525,11 +514,9 @@ def _glyph_name_to_unicode(glyph_name: str) -> str | None:
             return None
 
 
-def _derive_encoding_from_cff_type1_font_file(
-    font_data: bytes,
-    embedded_font_encoding: dict[Any, Any],
-    int_entry: list[int],
-) -> tuple[dict[Any, Any], list[int]]:
+def _derive_encoding_from_cff_type1_font_file(font_data: bytes) -> tuple[dict[str, str], list[int]]:
+    embedded_font_encoding: dict[str, str] = {}
+    int_entry: list[int] = []
     try:
         from fontTools.cffLib import CFFFontSet  # noqa: PLC0415
         cff_set = CFFFontSet()
@@ -554,11 +541,9 @@ def _derive_encoding_from_cff_type1_font_file(
         return embedded_font_encoding, int_entry
 
 
-def _derive_encoding_from_type1_font_file(
-    font_data: bytes,
-    embedded_font_encoding: dict[Any, Any],
-    int_entry: list[int],
-) -> tuple[dict[Any, Any], list[int]]:
+def _derive_encoding_from_type1_font_file(font_data: bytes) -> tuple[dict[str, str], list[int]]:
+    embedded_font_encoding: dict[str, str] = {}
+    int_entry: list[int] = []
     txt = font_data.split(b"eexec\n")[0]  # Only the clear part
     encoding_part = txt.split(b"/Encoding")
     if len(encoding_part) < 2:
@@ -579,5 +564,4 @@ def _derive_encoding_from_type1_font_file(
             if 0 <= i <= 255 and (unipoint := _glyph_name_to_unicode(words[2].decode())):
                 embedded_font_encoding[chr(i)] = unipoint
                 int_entry.append(i)
-
     return embedded_font_encoding, int_entry
