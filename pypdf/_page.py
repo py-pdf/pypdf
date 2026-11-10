@@ -1886,16 +1886,14 @@ class PageObject(DictionaryObject):
         if traversal_state is None:
             traversal_state = _TraversalState()
 
-        extractor = TextExtraction()
-        font_resources: dict[str, DictionaryObject] = {}
-        fonts: dict[str, Font] = {}
-
         resources_dict = _get_page_resources(obj)
         if not resources_dict:
             # No resources means no text is possible (no font); we consider the
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
+        font_resources: dict[str, DictionaryObject] = {}
+        fonts: dict[str, Font] = {}
         if font_resources_dict := _get_font_resources(resources_dict):
             for font_resource in font_resources_dict:
                 try:
@@ -1908,19 +1906,24 @@ class PageObject(DictionaryObject):
                 except (AttributeError, TypeError):
                     pass
 
-        try:
-            content = (
-                obj[content_key].get_object() if isinstance(content_key, str) else obj
-            )
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, pdf, "bytes")
-        except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
+        from ._text_extraction import _get_content_stream_for_text  # noqa: PLC0415
+
+        content = _get_content_stream_for_text(
+            obj,
+            pdf,
+            content_key,
+            has_visitor=any(
+                visitor is not None for visitor in (visitor_operand_before, visitor_operand_after, visitor_text)
+            ),
+        )
+        if content is None:
             return ""
         # We check all strings are TextStringObjects. ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
         # Initialize the extractor with the necessary parameters
+        extractor = TextExtraction()
         extractor.initialize_extraction(orientations, visitor_text, font_resources, fonts)
 
         for operands, operator in content.operations:
