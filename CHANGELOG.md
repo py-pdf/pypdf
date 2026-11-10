@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## Version 7.0.1, 2026-11-10
+
+### Security (SEC)
+- Determine image buffer sizes using the actual bytes per pixel (#4374)
+
+### Performance Improvements (PI)
+- Don't parse content streams without text operators in extract_text() (#4346)
+
+### Bug Fixes (BUG)
+- Decode UTF-8 text strings (#4348)
+- Fix page reference lookup for hierarchical page trees in PdfWriter (#4356)
+- Copy the operations in ContentStream.replicate() (#4372)
+- Deal with more rendering intents for inline images (#4383)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.0...7.0.1)
+
 ## Version 7.0.0, 2026-11-06
 
 ### Security (SEC)

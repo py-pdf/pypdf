@@ -4,7 +4,7 @@ Tests which ensure that image extraction works properly go here.
 Typically, tests in here should compare the extracted images count, names,
 and/or the actual image data with the expected value.
 """
-
+import zlib
 from io import BytesIO
 from pathlib import Path
 from unittest import mock
@@ -31,6 +31,7 @@ from pypdf.generic import (
 from pypdf.generic._image_xobject import _handle_flate, _xobj_to_image
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
+from .generic.test_image_xobject import _create_image
 
 
 def open_image(path: Path | Image.Image | BytesIO) -> Image.Image:
@@ -466,11 +467,13 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
 @pytest.mark.enable_socket
 @pytest.mark.timeout(30)
 def test_large_compressed_image():
+    """This test ensures that a small stream which expands past the default limit decodes once the limit is raised."""
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
     reader = PdfReader(
         BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))
     )
-    list(reader.pages[0].images)
+    with apply_configuration(image_maximum_buffer_size=80_000_000):
+        list(reader.pages[0].images)
 
 
 @pytest.mark.timeout(timeout=1, method="thread")
@@ -1093,3 +1096,22 @@ def test_handle_flate__indexed_cmyk_palette():
         (119, 179, 209),
         (0, 0, 0),
     ]
+
+
+def test_inline_image__perceptual() -> None:
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=10, height=10)
+
+    image = _create_image(size=(5, 5), mode="RGB")
+    contents = (
+        b"BI\n/BPC 8\n/Intent /Perceptual\n/W 5\n/F /FlateDecode\n/CS /RGB\n/H 5\nID\n"
+        + zlib.compress(image.tobytes())
+        + b"\nEI\n"
+    )
+    stream = ContentStream(stream=None, pdf=writer)
+    stream.set_data(contents)
+
+    page.replace_contents(stream)
+
+    assert len(page.images) == 1
+    assert image_similarity(image, page.images[0].image) > 0.9999
