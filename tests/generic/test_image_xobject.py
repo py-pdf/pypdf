@@ -22,10 +22,10 @@ from pypdf.generic import (
     TextStringObject,
 )
 from pypdf.generic._image_xobject import (
-    _allocated_bytes_per_pixel,
     _convert_image,
     _create_image_from_buffer,
     _create_image_from_bytes,
+    _get_allocated_bytes_per_pixel,
     _get_image_mode,
     _get_mode_and_invert_color,
     _handle_flate,
@@ -565,7 +565,7 @@ def test_create_image_from_bytes__samples_are_expanded_per_band() -> None:
     assert image.getpixel((0, 0)) == (1, 1, 1)
 
 
-def test_allocated_bytes_per_pixel__matches_pillow() -> None:
+def test_get_allocated_bytes_per_pixel__matches_pillow() -> None:
     """This test ensures that the estimate covers every mode Pillow reports.
 
     The values are the ``pixelsize`` Pillow sets in ``ImagingNewPrologueSubtype()``
@@ -597,7 +597,7 @@ def test_allocated_bytes_per_pixel__matches_pillow() -> None:
     }
     assert set(expected) == set(Image.MODES)
     for mode, value in expected.items():
-        assert _allocated_bytes_per_pixel(mode) == value, mode
+        assert _get_allocated_bytes_per_pixel(mode) == value, mode
 
 
 def test_validate_image_size__unknown_mode_is_not_rejected() -> None:
