@@ -29,6 +29,7 @@ from pypdf.generic._image_xobject import (
     _handle_flate,
     _handle_jpx,
     _merge_image,
+    _resize_image,
     _xobj_to_image,
     bits2byte,
 )
@@ -603,6 +604,38 @@ def test_xobj_to_image__smask_with_different_size(caplog: pytest.LogCaptureFixtu
     assert caplog.messages == []
 
 
+@pytest.mark.parametrize(
+    ("image_size", "mask_size", "mask_data", "expected_alpha"),
+    [
+        ((2, 2), (4, 1), b"\x00\x00\xff\xff", b"\x15\xea\x15\xea"),
+        ((4, 1), (2, 1), b"\x00\xff", b"\x00\x35\xca\xff"),
+        ((2, 1), (8, 1), b"\x00\x00\x00\xff\x00\x00\x00\x00", b"\x32\x1b"),
+    ],
+    ids=["other-aspect-ratio", "upscale", "downscale-thin-line"],
+)
+def test_xobj_to_image__smask_scaled(
+    image_size: tuple[int, int], mask_size: tuple[int, int], mask_data: bytes, expected_alpha: bytes
+) -> None:
+    """
+    A soft mask is stretched over its image in each direction separately.
+
+    ISO 32000-1:2008, 11.6.5.3 (Table 145): both images are mapped to the unit square.
+    """
+    image = _minimal_image_xobject()
+    image[NameObject("/Width")] = NumberObject(image_size[0])
+    image[NameObject("/Height")] = NumberObject(image_size[1])
+    image.set_data(bytes(image_size[0] * image_size[1]))
+    mask = _minimal_image_xobject()
+    mask[NameObject("/Width")] = NumberObject(mask_size[0])
+    mask[NameObject("/Height")] = NumberObject(mask_size[1])
+    mask.set_data(mask_data)
+    image[NameObject("/SMask")] = mask
+
+    img = _xobj_to_image(image)[2]
+
+    assert img.getchannel("A").tobytes() == expected_alpha
+
+
 def test_xobj_to_image__empty_filter_array() -> None:
     """An empty /Filter array means no filter and must not raise IndexError."""
     image = _minimal_image_xobject()
@@ -851,6 +884,18 @@ def test_convert_image() -> None:
                 expected_exception=LimitReachedError, match=r"^Requested image buffer size 1600 exceeds limit 500\.$"
         ):
             _convert_image(image=image, mode="CMYK")
+
+
+def test_resize_image() -> None:
+    image = _create_image(mode="L", size=(10, 10))
+
+    with apply_configuration(image_maximum_buffer_size=500):
+        _resize_image(image=image, size=(20, 20))
+
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 900 exceeds limit 500\.$"
+        ):
+            _resize_image(image=image, size=(30, 30))
 
 
 def test_merge_image() -> None:
