@@ -1418,9 +1418,16 @@ class PageObject(DictionaryObject):
             arr.sort()
 
         if not is_null_or_none(page2.get(PG.ANNOTS, None)):
-            if PG.ANNOTS not in self:
-                self[NameObject(PG.ANNOTS)] = ArrayObject()
-            annots = cast(ArrayObject, self[PG.ANNOTS].get_object())
+            annots = self.get(PG.ANNOTS, NullObject()).get_object()
+            if not isinstance(annots, ArrayObject):
+                if not is_null_or_none(annots):
+                    logger_warning(
+                        "Annotations are not an array: %(annotations)s",
+                        source=__name__,
+                        annotations=annots,
+                    )
+                annots = ArrayObject()
+                self[NameObject(PG.ANNOTS)] = annots
             if ctm is None:
                 trsf = Transformation()
             else:
@@ -1464,11 +1471,8 @@ class PageObject(DictionaryObject):
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
                 except KeyError:
                     pass
-                try:
-                    aa[NameObject("/P")] = self.indirect_reference
-                    annots.append(aa.indirect_reference)
-                except AttributeError:
-                    pass
+                aa[NameObject("/P")] = self.indirect_reference
+                annots.append(aa.indirect_reference)
 
         new_content_array = ArrayObject()
         original_content = self.get_contents()
