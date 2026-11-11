@@ -18,7 +18,6 @@ from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject, _get_fonts_walk
 from pypdf.annotations import Highlight, Polygon
 from pypdf.constants import PageAttributes
-from pypdf.constants import PageAttributes as PG
 from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -184,12 +183,12 @@ def test_transformation_equivalence():
     page_base2.merge_page(page_box2)
 
     # Should be the same
-    assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
+    assert page_base1[NameObject(PageAttributes.CONTENTS)] == page_base2[NameObject(PageAttributes.CONTENTS)]
     assert page_base1.mediabox == page_base2.mediabox
     assert page_base1.trimbox == page_base2.trimbox
-    assert page_base1.get(NameObject(PG.ANNOTS)) == page_base2.get(NameObject(PG.ANNOTS))
+    assert page_base1.get(NameObject(PageAttributes.ANNOTS)) == page_base2.get(NameObject(PageAttributes.ANNOTS))
     compare_dict_objects(
-        page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
+        page_base1[NameObject(PageAttributes.RESOURCES)], page_base2[NameObject(PageAttributes.RESOURCES)]
     )
 
 
@@ -372,11 +371,11 @@ def test_compress_content_streams_releases_replaced_streams():
     writer = create_stamped_writer()
     # Merging makes `/Contents` an indirect reference to an array, which is what
     # `replace_contents()` failed to resolve before checking its type.
-    contents = writer.pages[0].raw_get(PG.CONTENTS)
+    contents = writer.pages[0].raw_get(PageAttributes.CONTENTS)
     assert isinstance(contents, IndirectObject)
     assert isinstance(contents.get_object(), ArrayObject)
     replaced = [
-        reference.idnum for page in writer.pages for reference in page[PG.CONTENTS]
+        reference.idnum for page in writer.pages for reference in page[PageAttributes.CONTENTS]
     ]
 
     for page in writer.pages:
@@ -406,7 +405,7 @@ def test_replace_contents_skips_direct_array_entries():
     released = writer._add_object(ContentStream(None, writer))
     direct = ContentStream(None, writer)
     assert not isinstance(direct, IndirectObject)
-    page[NameObject(PG.CONTENTS)] = ArrayObject([direct, released])
+    page[NameObject(PageAttributes.CONTENTS)] = ArrayObject([direct, released])
 
     page.replace_contents(ContentStream(None, writer))
 
@@ -1121,17 +1120,17 @@ def test_merge_resources(apage1, apage2, expected_result, expected_renames):
     for new_res in (False, True):
         # Arrange
         page1 = PageObject()
-        page1[NameObject(PG.RESOURCES)] = DictionaryObject()
+        page1[NameObject(PageAttributes.RESOURCES)] = DictionaryObject()
         for k, v in apage1.items():
-            page1[PG.RESOURCES][NameObject(k)] = NameObject(v)
+            page1[PageAttributes.RESOURCES][NameObject(k)] = NameObject(v)
 
         page2 = PageObject()
-        page2[NameObject(PG.RESOURCES)] = DictionaryObject()
+        page2[NameObject(PageAttributes.RESOURCES)] = DictionaryObject()
         for k, v in apage2.items():
-            page2[PG.RESOURCES][NameObject(k)] = NameObject(v)
+            page2[PageAttributes.RESOURCES][NameObject(k)] = NameObject(v)
 
         # Act
-        result, renames = page1._merge_resources(page1, page2, PG.RESOURCES, new_res)
+        result, renames = page1._merge_resources(page1, page2, PageAttributes.RESOURCES, new_res)
 
         # Assert
         assert result == expected_result

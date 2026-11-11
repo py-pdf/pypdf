@@ -61,12 +61,12 @@ from .._utils import (
 from ..constants import (
     CheckboxRadioButtonAttributes,
     FieldDictionaryAttributes,
+    FilterTypes,
     OutlineFontFlag,
     StreamAttributes,
+    TypArguments,
+    TypFitArguments,
 )
-from ..constants import FilterTypes as FT
-from ..constants import TypArguments as TA
-from ..constants import TypFitArguments as TF
 from ..errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
 from ._base import (
     BooleanObject,
@@ -1187,7 +1187,7 @@ class StreamObject(DictionaryObject):
         if StreamAttributes.FILTER in self:
             f = self[StreamAttributes.FILTER]
             if isinstance(f, ArrayObject):
-                f = ArrayObject([NameObject(FT.FLATE_DECODE), *f])
+                f = ArrayObject([NameObject(FilterTypes.FLATE_DECODE), *f])
                 try:
                     params = ArrayObject(
                         [NullObject(), *self.get(StreamAttributes.DECODE_PARMS, ArrayObject())]
@@ -1198,12 +1198,12 @@ class StreamObject(DictionaryObject):
                         [NullObject(), self.get(StreamAttributes.DECODE_PARMS, ArrayObject())]
                     )
             else:
-                f = ArrayObject([NameObject(FT.FLATE_DECODE), f])
+                f = ArrayObject([NameObject(FilterTypes.FLATE_DECODE), f])
                 params = ArrayObject(
                     [NullObject(), self.get(StreamAttributes.DECODE_PARMS, NullObject())]
                 )
         else:
-            f = NameObject(FT.FLATE_DECODE)
+            f = NameObject(FilterTypes.FLATE_DECODE)
             params = None
         retval = EncodedStreamObject()
         retval.update(self)
@@ -1279,7 +1279,7 @@ class EncodedStreamObject(StreamObject):
     def set_data(self, data: bytes) -> None:
         from ..filters import FlateDecode  # noqa: PLC0415
 
-        if self.get(StreamAttributes.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
+        if self.get(StreamAttributes.FILTER, "") in (FilterTypes.FLATE_DECODE, [FilterTypes.FLATE_DECODE]):
             if not isinstance(data, bytes):
                 raise TypeError("Data must be bytes")
             if self.decoded_self is None:
@@ -1918,42 +1918,42 @@ class Destination(TreeObject):
                 args.append(NumberObject(0.0))
             # surplus arguments are ignored rather than failing the unpacking
             (
-                self[NameObject(TA.LEFT)],
-                self[NameObject(TA.TOP)],
+                self[NameObject(TypArguments.LEFT)],
+                self[NameObject(TypArguments.TOP)],
                 self[NameObject("/Zoom")],
             ) = args[:3]
         elif len(args) == 0:
             pass
-        elif typ == TF.FIT_R:
+        elif typ == TypFitArguments.FIT_R:
             if len(args) == 4:  # a wrong number of arguments degrades to null
                 (
-                    self[NameObject(TA.LEFT)],
-                    self[NameObject(TA.BOTTOM)],
-                    self[NameObject(TA.RIGHT)],
-                    self[NameObject(TA.TOP)],
+                    self[NameObject(TypArguments.LEFT)],
+                    self[NameObject(TypArguments.BOTTOM)],
+                    self[NameObject(TypArguments.RIGHT)],
+                    self[NameObject(TypArguments.TOP)],
                 ) = args
             else:
                 (
-                    self[NameObject(TA.LEFT)],
-                    self[NameObject(TA.BOTTOM)],
-                    self[NameObject(TA.RIGHT)],
-                    self[NameObject(TA.TOP)],
+                    self[NameObject(TypArguments.LEFT)],
+                    self[NameObject(TypArguments.BOTTOM)],
+                    self[NameObject(TypArguments.RIGHT)],
+                    self[NameObject(TypArguments.TOP)],
                 ) = (NullObject(), NullObject(), NullObject(), NullObject())
-        elif typ in [TF.FIT_H, TF.FIT_BH]:
+        elif typ in [TypFitArguments.FIT_H, TypFitArguments.FIT_BH]:
             try:  # Prefer to be more robust not only to null parameters
-                (self[NameObject(TA.TOP)],) = args
+                (self[NameObject(TypArguments.TOP)],) = args
             except MemoryError:  # pragma: no cover  # TODO: BLE001
                 raise
             except Exception:
-                (self[NameObject(TA.TOP)],) = (NullObject(),)
-        elif typ in [TF.FIT_V, TF.FIT_BV]:
+                (self[NameObject(TypArguments.TOP)],) = (NullObject(),)
+        elif typ in [TypFitArguments.FIT_V, TypFitArguments.FIT_BV]:
             try:  # Prefer to be more robust not only to null parameters
-                (self[NameObject(TA.LEFT)],) = args
+                (self[NameObject(TypArguments.LEFT)],) = args
             except MemoryError:  # pragma: no cover  # TODO: BLE001
                 raise
             except Exception:
-                (self[NameObject(TA.LEFT)],) = (NullObject(),)
-        elif typ in [TF.FIT, TF.FIT_B]:
+                (self[NameObject(TypArguments.LEFT)],) = (NullObject(),)
+        elif typ in [TypFitArguments.FIT, TypFitArguments.FIT_B]:
             pass
         else:
             raise PdfReadError(f"Unknown Destination Type: {typ!r}")

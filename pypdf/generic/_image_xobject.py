@@ -5,8 +5,7 @@ from typing import IO, Any, Literal, TypeAlias, cast
 
 from .._configuration import get_configuration
 from .._utils import check_if_whitespace_only, logger_warning
-from ..constants import ColorSpaces, ImageAttributes, StreamAttributes
-from ..constants import FilterTypes as FT
+from ..constants import ColorSpaces, FilterTypes, ImageAttributes, StreamAttributes
 from ..errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from ..generic import (
     ArrayObject,
@@ -529,7 +528,7 @@ def _handle_jpx(
 def _apply_decode(
     img: Image.Image,
     x_object: dict[str, Any],
-    lfilters: FT,
+    lfilters: FilterTypes,
     color_space: str | list[Any] | Any,
     invert_color: bool,
 ) -> Image.Image:
@@ -537,7 +536,7 @@ def _apply_decode(
     # requires reverting scale (cf p243,2§ last sentence)
     if ImageAttributes.DECODE in x_object:
         decode = x_object[ImageAttributes.DECODE]
-        if img.mode == "CMYK" and lfilters == FT.DCT_DECODE:
+        if img.mode == "CMYK" and lfilters == FilterTypes.DCT_DECODE:
             # Adobe writes CMYK JPEGs with inverted component values, which is
             # what the [min max] -> [1 0] remap in the branches below
             # compensates for. An explicit /Decode array is expressed in terms
@@ -554,10 +553,10 @@ def _apply_decode(
                 for index in range(0, len(decode) - 1, 2)
                 for value in (decode[index + 1], decode[index])
             ]
-    elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
+    elif img.mode == "CMYK" and lfilters == FilterTypes.JPX_DECODE:
         decode = [1.0, 0.0] if not invert_color else [0.0, 1.0]
         decode = decode * len(img.getbands())
-    elif (img.mode == "CMYK" and lfilters == FT.DCT_DECODE) or (invert_color and img.mode == "L"):
+    elif (img.mode == "CMYK" and lfilters == FilterTypes.DCT_DECODE) or (invert_color and img.mode == "L"):
         decode = [1.0, 0.0] * len(img.getbands())
     else:
         decode = None
@@ -736,7 +735,7 @@ def _xobj_to_image(
         decode_parms = {}
 
     extension = None
-    if last_filter in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
+    if last_filter in (FilterTypes.FLATE_DECODE, FilterTypes.RUN_LENGTH_DECODE):
         img, image_format, extension, _ = _handle_flate(
             size,
             data,
@@ -745,7 +744,7 @@ def _xobj_to_image(
             colors,
             obj_as_text,
         )
-    elif last_filter in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
+    elif last_filter in (FilterTypes.LZW_DECODE, FilterTypes.ASCII_85_DECODE):
         # The filter does not tell which image format the decoded data has, so
         # let Pillow detect it.
         try:
@@ -758,25 +757,25 @@ def _xobj_to_image(
             img = _create_image_from_bytes(fallback_mode, size, fallback_data)
             # There is no format information, thus fall back to the usual one
             # for the filter.
-            image_format = "TIFF" if last_filter == FT.LZW_DECODE else "PNG"
+            image_format = "TIFF" if last_filter == FilterTypes.LZW_DECODE else "PNG"
         else:
             image_format = cast(str, img.format)
         extension = ".tiff" if image_format == "TIFF" else ".png"
-    elif last_filter == FT.DCT_DECODE:
+    elif last_filter == FilterTypes.DCT_DECODE:
         img, image_format, extension = _create_image_from_buffer(buf=BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
         # invert_color kept unchanged
-    elif last_filter == FT.JPX_DECODE:
+    elif last_filter == FilterTypes.JPX_DECODE:
         img, image_format, extension, invert_color = _handle_jpx(
             size, data, mode, color_space, colors
         )
-    elif last_filter == FT.CCITT_FAX_DECODE:
+    elif last_filter == FilterTypes.CCITT_FAX_DECODE:
         img, image_format, extension, invert_color = (
             _create_image_from_buffer(buf=BytesIO(data), formats=("TIFF",)),
             "TIFF",
             ".tiff",
             False,
         )
-    elif last_filter == FT.JBIG2_DECODE:
+    elif last_filter == FilterTypes.JBIG2_DECODE:
         img, image_format, extension, invert_color = (
             _create_image_from_buffer(buf=BytesIO(data), formats=("PNG", "PPM")),
             "PNG",
