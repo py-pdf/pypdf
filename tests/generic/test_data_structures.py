@@ -4,6 +4,7 @@ import sys
 from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -985,7 +986,8 @@ def test_dictionary_object__clone__cycle_through_direct_dictionary(annotation_ob
     assert len(writer.pages) == 1
 
     # The cycle is kept: Following /N leads back to the annotation itself.
-    annotation = writer.pages[0]["/Annots"][0].get_object()
+    annotations = cast(ArrayObject, writer.pages[0]["/Annots"])
+    annotation = annotations[0].get_object()
     target = annotation["/AP"]["/N"]
     if len(annotation_objects) == 2:
         target = target["/N"]
