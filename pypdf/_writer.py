@@ -2835,6 +2835,11 @@ class PdfWriter(PdfDocCommon):
 
         outline_item_typ: TreeObject
         if outline_item is not None:
+            if not srcpages:
+                raise ValueError(
+                    "An outline item needs a page to point to, "
+                    "but no page was merged."
+                )
             outline_item_typ = cast(
                 "TreeObject",
                 self.add_outline_item(

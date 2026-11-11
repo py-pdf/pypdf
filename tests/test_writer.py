@@ -42,6 +42,7 @@ from pypdf.generic import (
 )
 from pypdf.generic._font import Font
 from pypdf.generic._viewerpref import BOX_NAMES
+from pypdf.pagerange import PageRange
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url, is_sublist
 from .test_images import image_similarity
@@ -4409,3 +4410,50 @@ def test_generate_file_identifiers__update() -> None:
     writer.generate_file_identifiers()
     assert writer._ID[0] == id_permanent
     assert writer._ID[1] != id_changing
+
+
+def _in_memory_source_pdf(pages: int = 3) -> BytesIO:
+    """Build a source PDF without relying on the sample-files submodule."""
+    writer = PdfWriter()
+    for _ in range(pages):
+        writer.add_blank_page(width=72, height=72)
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+    return output
+
+
+@pytest.mark.parametrize(
+    "pages",
+    [[], (1, 1), (2, 0), PageRange("2:2")],
+    ids=["empty_list", "empty_tuple", "reversed_tuple", "empty_page_range"],
+)
+def test_merge__outline_item_without_merged_pages(pages) -> None:
+    """The outline item has no page to point at when the selection is empty."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    with pytest.raises(ValueError, match="no page was merged"):
+        writer.merge(None, _in_memory_source_pdf(), "chapter", pages)
+
+    assert len(writer.pages) == 1
+
+
+def test_append__outline_item_without_merged_pages() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    with pytest.raises(ValueError, match="no page was merged"):
+        writer.append(_in_memory_source_pdf(), "chapter", [])
+
+    assert len(writer.pages) == 1
+
+
+def test_merge__without_merged_pages_stays_a_no_op() -> None:
+    """Without an outline item the empty selection must stay the documented no-op."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    writer.merge(None, _in_memory_source_pdf(), None, [])
+
+    assert len(writer.pages) == 1
