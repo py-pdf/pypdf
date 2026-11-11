@@ -992,3 +992,8 @@ def test_dictionary_object__clone__cycle_through_direct_dictionary(annotation_ob
     if len(annotation_objects) == 2:
         target = target["/N"]
     assert target.indirect_reference == annotation.indirect_reference
+
+    # Merging a page clones its annotations with force_duplicate=True.
+    page = PdfWriter().add_blank_page(200, 200)
+    page.merge_page(PdfReader(BytesIO(data)).pages[0])
+    assert len(cast(ArrayObject, page["/Annots"])) == 1

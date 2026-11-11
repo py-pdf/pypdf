@@ -405,8 +405,10 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     continue
                 ignore_fields[x] -= 1  # type: ignore[operator]
             x += 1
-        #  Check if this is a chain list, we need to loop to prevent recur
-        if any(
+        #  Check if this is a chain list, we need to loop to prevent recur.
+        #  Only indirect objects are chain nodes: A direct dictionary has no
+        #  identity for the loop detection, so its links are cloned generically.
+        if getattr(src, "indirect_reference", None) is not None and any(
             field not in ignore_fields
             and field in src
             and isinstance(src.raw_get(field), IndirectObject)
@@ -443,17 +445,12 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                         prev_obj: DictionaryObject | None = self
                         while cur_obj is not None:
                             source_reference = cur_obj.indirect_reference
-                            new_clone = cur_obj._new_for_clone()
                             clon = cast(
                                 "DictionaryObject",
                                 cur_obj._reference_clone(
-                                    new_clone, pdf_dest, force_duplicate
+                                    cur_obj._new_for_clone(), pdf_dest, force_duplicate
                                 ),
                             )
-                            if clon is not new_clone:
-                                # Already cloned, or still being cloned further up
-                                # the stack: The generic loop below sets the link.
-                                break
                             # Check to see if we've previously processed our item
                             if source_reference is not None:
                                 source_idnum = source_reference.idnum
