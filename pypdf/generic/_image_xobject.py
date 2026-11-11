@@ -292,6 +292,11 @@ def _convert_image(*, image: Image.Image, mode: str) -> Image.Image:
     return image.convert(mode)
 
 
+def _resize_image(*, image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    _validate_image_size(mode=image.mode, size=size)
+    return image.resize(size)
+
+
 def _merge_image(*, mode: str, bands: Sequence[Image.Image]) -> Image.Image:
     if not bands:
         return Image.merge(mode=mode, bands=bands)
@@ -616,23 +621,17 @@ def _apply_alpha(
         return img, extension, image_format
 
     alpha = _xobj_to_image(s_mask, visited=visited)[2]
+    # TODO: implement mask
+    if alpha.mode != "L":
+        alpha = _convert_image(image=alpha, mode="L")
     if img.size != alpha.size:
-        logger_warning(
-            "Image and mask size not matching: %(image_size)s vs. %(alpha_size)s %(obj_as_text)s",
-            source=__name__,
-            image_size=img.size,
-            alpha_size=alpha.size,
-            obj_as_text=obj_as_text,
-        )
-    else:
-        # TODO: implement mask
-        if alpha.mode != "L":
-            alpha = _convert_image(image=alpha, mode="L")
-        if img.mode == "P":
-            img = _convert_image(image=img, mode="RGB")
-        elif img.mode == "1":
-            img = _convert_image(image=img, mode="L")
-        img.putalpha(alpha)
+        # Both are mapped onto the unit square, thus a soft mask may use other dimensions than its image.
+        alpha = _resize_image(image=alpha, size=img.size)
+    if img.mode == "P":
+        img = _convert_image(image=img, mode="RGB")
+    elif img.mode == "1":
+        img = _convert_image(image=img, mode="L")
+    img.putalpha(alpha)
 
     if "JPEG" in image_format:
         image_format = "JPEG2000"
