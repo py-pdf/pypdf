@@ -1371,6 +1371,42 @@ def test_merge_with_no_resources():
     writer.pages[0].merge_page(p1)
 
 
+@pytest.mark.parametrize(
+    ("resources", "expected"),
+    [
+        pytest.param(NumberObject(3), "Page resources are not a dictionary: 3", id="number"),
+        pytest.param(ArrayObject([NumberObject(1)]), "Page resources are not a dictionary: [1]", id="array"),
+        pytest.param(TextStringObject("x"), "Page resources are not a dictionary: x", id="string"),
+        pytest.param(NullObject(), None, id="null"),
+    ],
+)
+@pytest.mark.parametrize("malformed", ["page", "merged page", "merged page from a reader"])
+def test_merge_page__resources_are_not_a_dictionary(caplog, resources, expected, malformed):
+    """Malformed /Resources on either page are treated as empty."""
+    writer = PdfWriter()
+    for _ in range(2):
+        page = writer.add_blank_page(72, 72)
+        font = DictionaryObject({NameObject("/Type"): NameObject("/Font")})
+        page[NameObject("/Resources")] = DictionaryObject(
+            {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})}
+        )
+    writer.pages[0 if malformed == "page" else 1][NameObject("/Resources")] = resources
+    page2 = writer.pages[1]
+    if malformed == "merged page from a reader":
+        stream = BytesIO()
+        writer.write(stream)
+        page2 = PdfReader(stream).pages[1]
+
+    writer.pages[0].merge_page(page2)
+
+    # The font of the page that has well-formed resources is kept
+    assert list(writer.pages[0]["/Resources"]["/Font"]) == ["/F1"]
+    if expected is None:
+        assert caplog.text == ""
+    else:
+        assert expected in caplog.text
+
+
 def test_get_contents_from_nullobject():
     """Issue #2157"""
     writer = PdfWriter()
@@ -1379,6 +1415,28 @@ def test_get_contents_from_nullobject():
     assert page1.get_contents() is None
     page2 = writer.add_blank_page(100, 100)
     page1.merge_page(page2, over=True)
+
+
+@pytest.mark.parametrize(
+    ("contents", "expected"),
+    [
+        pytest.param(NumberObject(3), "Page contents are not a stream or an array: 3", id="number"),
+        pytest.param(TextStringObject("x"), "Page contents are not a stream or an array: x", id="string"),
+        pytest.param(DictionaryObject(), "Page contents are not a stream or an array: {}", id="dictionary"),
+    ],
+)
+def test_get_contents__not_a_stream_or_an_array(caplog, contents, expected):
+    """A malformed /Contents is treated as missing, so the page can still be edited."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    page[NameObject("/Contents")] = contents
+
+    assert page.get_contents() is None
+    assert expected in caplog.text
+    page.compress_content_streams()
+    page.scale_by(2)
+    page.merge_page(writer.add_blank_page(100, 100))
+    writer.remove_text()
 
 
 @pytest.mark.enable_socket
@@ -2031,10 +2089,29 @@ def test_extract_text__visitor_receives_text_without_end_operator() -> None:
     assert parts[-1] == "Hello"
 
 
-@pytest.mark.xfail(
-    reason="#4335: Annotations are dropped if the target page has a null /Annots entry", strict=True
-)
-def test_merge_page__target_with_null_annotations() -> None:
+def test_merge_page__target_with_non_array_annotations(caplog) -> None:
+    """
+    merge_page() replaces an /Annots entry of the target page that is not an
+    array, and reports it, so the annotations of the merged page are kept.
+    """
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_annotation(0, Polygon(vertices=[(10, 10), (20, 10), (20, 20)]))
+    writer = PdfWriter()
+    target = writer.add_blank_page(100, 100)
+    target[NameObject("/Annots")] = NumberObject(4)
+
+    target.merge_page(source.pages[0])
+
+    assert "Annotations are not an array: 4" in caplog.text
+    output = BytesIO()
+    writer.write(output)
+    annotations = PdfReader(output).pages[0]["/Annots"]
+    assert len(annotations) == 1
+    assert annotations[0].get_object()["/Subtype"] == "/Polygon"
+
+
+def test_merge_page__target_with_null_annotations(caplog) -> None:
     """
     merge_page() adds the annotations of the merged page to a target page with
     /Annots null.
@@ -2058,6 +2135,8 @@ def test_merge_page__target_with_null_annotations() -> None:
 
     target.merge_page(PdfReader(source_data).pages[0])
 
+    assert "Annotations are not an array" not in caplog.text
+
     assert len(target["/Annots"]) == 1
 
 
@@ -2079,3 +2158,45 @@ def test_merge_page__annotation_added_by_writer() -> None:
     target.merge_page(source.pages[0])
 
     assert len(target["/Annots"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Resources are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Resources are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Resources are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_get_fonts__resources_are_not_a_dictionary(caplog, value, expected):
+    """Resources which are not a dictionary yield no fonts and a warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    embedded, unembedded = PdfReader(stream).pages[0]._get_fonts()
+
+    assert embedded == set()
+    assert unembedded == set()
+    assert expected in caplog.text
+
+
+def test_get_fonts__resources_are_null(caplog):
+    """Null /Resources yields no fonts and no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    embedded, unembedded = PdfReader(stream).pages[0]._get_fonts()
+
+    assert embedded == set()
+    assert unembedded == set()
+    assert "Resources are not a dictionary" not in caplog.text
