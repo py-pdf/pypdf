@@ -1023,7 +1023,7 @@ class PdfWriter(PdfDocCommon):
                         lst = ArrayObject(TextStringObject(v) for v in value)
                         parent_annotation[NameObject(FA.V)] = lst
                     elif isinstance(value, tuple):
-                        annotation[NameObject(FA.V)] = TextStringObject(
+                        parent_annotation[NameObject(FA.V)] = TextStringObject(
                             value[0],
                         )
                     else:

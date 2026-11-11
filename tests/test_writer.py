@@ -2279,7 +2279,7 @@ def test_update_form_fields2(caplog):
                     "p2 YY": "24",
                     "Initial": "JSS",
                     # "p2 I DO NOT Agree": "null",
-                    "p2 Last Name": "Smith",
+                    "p2 Last Name": ("Smith", "/Helv", 12),
                     "p3 First Name": "شهرزاد",
                     "p3 Middle Name": "R",
                     "p3 MM": "01",
@@ -2325,6 +2325,13 @@ def test_update_form_fields2(caplog):
         "test2.p3 DD": "25",
         "test2.p3 YY": "21",
     }
+    # The value of a (value, font name, font size) tuple goes to the field, not to its widgets
+    field = merger.get_fields()["test2.p2 Last Name"].indirect_reference.get_object()
+    assert field["/V"] == "Smith"
+    for kid in field["/Kids"]:
+        widget = kid.get_object()
+        assert "/V" not in widget
+        assert b"(Smith) Tj" in widget["/AP"]["/N"].get_data()
     assert "/PYPDF1cp1257" in merger.pages[0]["/Resources"]["/Font"]
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
