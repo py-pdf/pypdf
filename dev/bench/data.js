@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794418663502,
+  "lastUpdate": 1794419040271,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126197,6 +126197,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001730353704679358",
             "extra": "mean: 473.9514108000037 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2573438329@qq.com",
+            "name": "Nor.na",
+            "username": "Master-Norna"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "049dbfb366931b0f86ea6956951b5b7d6f27b01e",
+          "message": "BUG: Skip null entries when falling back between page boxes (#4375)\n\n* BUG: Skip null entries when falling back between page boxes\n\n`_get_rectangle` stopped its fallback chain at the first candidate that\nwas not `None`, so a `/CropBox null` ended the loop with a `NullObject`\nand the following array check raised `ValueError`. `/TrimBox`, `/ArtBox`\nand `/BleedBox` all default to `/CropBox`, hence a page with a null crop\nbox could not report them, and `PageObject.scale_by()`, which reads every\nbox, failed as well.\n\nThe indirect dereference also ran after the loop, so an indirect\nreference to null was not treated as an absent value either.\n\nDereference the candidate before the null check and use `is_null_or_none`\ninside the loop, so the fallback continues past null entries.\n\nCo-Authored-By: Agent-Yan <352840372+Agent-Yan@users.noreply.github.com>\n\n* MAINT: Apply review feedback on null page boxes\n\nUse get(name, NullObject()).get_object() in _get_rectangle() instead of\nthe manual dereference, build the indirect null reference with\nwriter._add_object(), and check the crop box itself in the fallback test.\n\nCo-Authored-By: Agent-Yan <352840372+Agent-Yan@users.noreply.github.com>\n\n---------\n\nCo-authored-by: Agent-Yan <352840372+Agent-Yan@users.noreply.github.com>",
+          "timestamp": "2026-11-11T18:42:29+01:00",
+          "tree_id": "4311784928e0ee1b85a9a0feae0ccd0f14dbb44f",
+          "url": "https://github.com/py-pdf/pypdf/commit/049dbfb366931b0f86ea6956951b5b7d6f27b01e"
+        },
+        "date": 1794419031401,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.277596751322494,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010303215839294812",
+            "extra": "mean: 189.48018333333513 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 33.89249660016622,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009709975901589061",
+            "extra": "mean: 29.505055700001037 msec\nrounds: 40"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.47233022816227255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03857033188785132",
+            "extra": "mean: 2.117162824600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 31.749166709143463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011306557606977205",
+            "extra": "mean: 31.49688964000461 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.26169838376040216,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020446142869250977",
+            "extra": "mean: 3.8211928771999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.737341152291432,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0046582394520143545",
+            "extra": "mean: 365.31800179999436 msec\nrounds: 5"
           }
         ]
       }
