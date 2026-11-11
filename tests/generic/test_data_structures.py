@@ -944,3 +944,49 @@ def test_dictionary_object__clone__cycle_detection() -> None:
     writer = PdfWriter()
     writer.append(BytesIO(data))
     assert len(writer.pages) == 1
+
+
+@pytest.mark.parametrize(
+    "annotation_objects",
+    [
+        # The inline appearance dictionary links back to the annotation.
+        [b"<< /Type /Annot /Subtype /Widget /Rect [0 0 10 10] /AP << /N 4 0 R >> >>"],
+        # The same, but going through another dictionary first.
+        [
+            b"<< /Type /Annot /Subtype /Widget /Rect [0 0 10 10] /AP << /N 5 0 R >> >>",
+            b"<< /N 4 0 R >>",
+        ],
+    ],
+    ids=["self-reference", "two-node-cycle"],
+)
+def test_dictionary_object__clone__cycle_through_direct_dictionary(annotation_objects: list[bytes]) -> None:
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Annots [4 0 R] >>",
+        *annotation_objects,
+    ]
+    object_count = len(objects)
+    out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = []
+    for num, obj in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % num + obj + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n" % (object_count + 1)
+    out += b"0000000000 65535 f \n"
+    for offset in offsets:
+        out += b"%010d 00000 n \n" % offset
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (object_count + 1, xref)
+    data = bytes(out)
+
+    writer = PdfWriter()
+    writer.append(BytesIO(data))
+    assert len(writer.pages) == 1
+
+    # The cycle is kept: Following /N leads back to the annotation itself.
+    annotation = writer.pages[0]["/Annots"][0].get_object()
+    target = annotation["/AP"]["/N"]
+    if len(annotation_objects) == 2:
+        target = target["/N"]
+    assert target.indirect_reference == annotation.indirect_reference

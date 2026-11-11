@@ -443,12 +443,17 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                         prev_obj: DictionaryObject | None = self
                         while cur_obj is not None:
                             source_reference = cur_obj.indirect_reference
+                            new_clone = cur_obj._new_for_clone()
                             clon = cast(
                                 "DictionaryObject",
                                 cur_obj._reference_clone(
-                                    cur_obj._new_for_clone(), pdf_dest, force_duplicate
+                                    new_clone, pdf_dest, force_duplicate
                                 ),
                             )
+                            if clon is not new_clone:
+                                # Already cloned, or still being cloned further up
+                                # the stack: The generic loop below sets the link.
+                                break
                             # Check to see if we've previously processed our item
                             if source_reference is not None:
                                 source_idnum = source_reference.idnum
