@@ -979,7 +979,11 @@ def _build_cff_font_program(encoding: dict[int, str]) -> bytes:
 
 
 def _build_pdf_with_cff_font(
-    font_program: bytes, font_dictionaries: int, resource_names: int, pages: int
+    font_program: bytes,
+    font_dictionaries: int,
+    resource_names: int,
+    pages: int,
+    font_encoding: NameObject | DictionaryObject | NullObject | None = None,
 ) -> tuple[PdfWriter, DecodedStreamObject]:
     """
     A PDF showing "AB" with a Type1 font embedding the given CFF font program on each page.
@@ -1005,16 +1009,17 @@ def _build_pdf_with_cff_font(
                 }
             )
         )
-        font = writer._add_object(
-            DictionaryObject(
-                {
-                    NameObject("/Type"): NameObject("/Font"),
-                    NameObject("/Subtype"): NameObject("/Type1"),
-                    NameObject("/BaseFont"): NameObject("/Test"),
-                    NameObject("/FontDescriptor"): font_descriptor,
-                }
-            )
+        font_dictionary = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/BaseFont"): NameObject("/Test"),
+                NameObject("/FontDescriptor"): font_descriptor,
+            }
         )
+        if font_encoding is not None:
+            font_dictionary[NameObject("/Encoding")] = font_encoding
+        font = writer._add_object(font_dictionary)
         for name_index in range(resource_names):
             fonts[NameObject(f"/F{font_index}_{name_index}")] = font
     resources = writer._add_object(DictionaryObject({NameObject("/Font"): fonts}))
@@ -1069,6 +1074,66 @@ def test_cff_type1_font_file_is_parsed_again_when_its_data_changes():
         font_file.set_data(_build_cff_font_program({65: "Q"}))
         assert [page.extract_text() for page in writer.pages] == ["QB"] * 2
         assert parse.call_count == 2
+
+
+def _cff_font_encoding(
+    base_encoding: str | None, differences: list[PdfObject] | None
+) -> DictionaryObject:
+    encoding = DictionaryObject({NameObject("/Type"): NameObject("/Encoding")})
+    if base_encoding is not None:
+        encoding[NameObject("/BaseEncoding")] = NameObject(base_encoding)
+    if differences is not None:
+        encoding[NameObject("/Differences")] = ArrayObject(differences)
+    return encoding
+
+
+@pytest.mark.parametrize(
+    ("font_encoding", "expected"),
+    [
+        # ISO 32000-2:2020, 9.6.6.1: without /Encoding the built-in encoding is the base encoding.
+        (None, "ZY"),
+        # A null /Encoding is the same as a missing one.
+        (NullObject(), "ZY"),
+        # An /Encoding dictionary without /Differences keeps the built-in encoding as the base.
+        (_cff_font_encoding(None, None), "ZY"),
+        # A named /Encoding replaces the built-in encoding.
+        (NameObject("/WinAnsiEncoding"), "AB"),
+        # A /BaseEncoding replaces the built-in encoding, and /Differences override it.
+        (_cff_font_encoding("/WinAnsiEncoding", [NumberObject(65), NameObject("/A"), NameObject("/B")]), "AB"),
+        # Without /BaseEncoding the built-in encoding is the base encoding, but /Differences
+        # still take precedence over it.
+        (_cff_font_encoding(None, [NumberObject(65), NameObject("/A")]), "AY"),
+    ],
+    ids=[
+        "no-encoding",
+        "null-encoding",
+        "empty-encoding-dict",
+        "named-encoding",
+        "base-encoding",
+        "differences-only",
+    ],
+)
+def test_get_encoding__cff_type1_font_program_is_ranked_below_font_encoding(
+    font_encoding: NameObject | DictionaryObject | NullObject | None, expected: str
+) -> None:
+    """
+    The font program's built-in encoding is only the base encoding of a font dictionary.
+
+    The content stream shows the codes 0x41 and 0x42, which the CFF program maps to "Z" and "Y".
+    The font dictionary's /Encoding must win over the font program. Resolves #4343.
+    """
+    pytest.importorskip("fontTools", reason="Requires fontTools")
+    writer, _ = _build_pdf_with_cff_font(
+        _build_cff_font_program({65: "Z", 66: "Y"}),
+        font_dictionaries=1,
+        resource_names=1,
+        pages=1,
+        font_encoding=font_encoding,
+    )
+    stream = BytesIO()
+    writer.write(stream)
+
+    assert PdfReader(stream).pages[0].extract_text() == expected
 
 
 @pytest.mark.timeout(5)  # Previously: 22 seconds
