@@ -83,9 +83,24 @@ def test_str_init_zero_step(init_str: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "init_slice", [slice(None, None, 0), slice(1, 5, 0), slice(0, 0, 0)]
+)
+def test_slice_init_zero_step(init_slice: slice) -> None:
+    """A zero-step slice is rejected at construction, like a zero-step string."""
+    with pytest.raises(ParseError) as exc:
+        PageRange(init_slice)
+    assert exc.value.args[0] == init_slice
+
+
+@pytest.mark.parametrize(
     ("value", "expected"),
     [
         (slice(1, 5), True),
+        (slice(1, 5, 2), True),
+        (slice(None, None, -1), True),
+        (slice(None, None, 0), False),
+        (slice(1, 5, 0), False),
+        (slice(0, 0, 0), False),
         (PageRange("1:5"), True),
         ("1:5", True),
         (5, False),
