@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794417648297,
+  "lastUpdate": 1794418480672,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126131,6 +126131,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005516844510831934",
             "extra": "mean: 349.9431573999999 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2573438329@qq.com",
+            "name": "Nor.na",
+            "username": "Master-Norna"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "757b0fba5d008d8bd568b3b155e85894a272c544",
+          "message": "BUG: Resolve indirect action dictionaries when appending a page action (#4373)\n\n* BUG: Resolve indirect action dictionaries when appending a page action\n\nAction._create_new() resolved the /AA dictionary but not the action\nvalues inside it, so add_action() raised ParseError/TypeError when an\nexisting trigger value or a /Next entry was an IndirectObject.\n\nResolve those references before the type checks, keeping the original\n/AA value in place so indirect references are not inlined. Also make the\n/Next-chain clone tolerate nodes without an indirect reference and stop\nat the terminating null.\n\nCo-Authored-By: Agent-Yan <352840372+Agent-Yan@users.noreply.github.com>\n\n* MAINT: Apply review feedback on indirect page actions\n\nResolve the trigger and /Next values with get_object() directly instead\nof introducing a separate resolved variable, and drop the defensive\nisinstance checks that the internal contracts make unnecessary.\n\nRemove the test that passed plain strings through /AA, and assert the\nresolved action chain instead of the original indirect reference.\n\nCo-Authored-By: Agent-Yan <352840372+Agent-Yan@users.noreply.github.com>\n\n* MAINT: Keep the page action reference indirect when appending\n\n`head = current = additional_actions.get(...).get_object()` replaced the raw\ntrigger value with the resolved dictionary, so the final\n`additional_actions.update({trigger_name: head})` stored a direct dictionary\nin `/AA`. A page whose action was an indirect object came back with an inline\ncopy after `add_action()`, and writing the page put the appended action in the\nfile twice: once inlined and once in the still-referenced object.\n\nKeep the raw value in `head` and resolve only `current`, so the value written\nback is the one that was already there. The round-trip test now asserts that\nthe value stays an `IndirectObject`.\n\n---------\n\nCo-authored-by: Agent-Yan <352840372+Agent-Yan@users.noreply.github.com>",
+          "timestamp": "2026-11-11T18:32:39+01:00",
+          "tree_id": "4eac5db01e79f15adb0bc7d5c3bfdbad5b049e10",
+          "url": "https://github.com/py-pdf/pypdf/commit/757b0fba5d008d8bd568b3b155e85894a272c544"
+        },
+        "date": 1794418469851,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.674851297436194,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008091587288805565",
+            "extra": "mean: 272.1198544000032 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.073511893706367,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008951349601527322",
+            "extra": "mean: 36.93647148275819 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3474332082761398,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011417858010844483",
+            "extra": "mean: 2.8782510599999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.084340997524492,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014705650126278745",
+            "extra": "mean: 47.42856322222306 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18820073191142653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0604747415245448",
+            "extra": "mean: 5.31347561640001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1099209269407075,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001730353704679358",
+            "extra": "mean: 473.9514108000037 msec\nrounds: 5"
           }
         ]
       }
