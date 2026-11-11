@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794420245592,
+  "lastUpdate": 1794420367693,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -167449,6 +167449,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03687791251841528",
             "extra": "mean: 938.8362390000111 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yamamoto7.pgming@gmail.com",
+            "name": "yamamoto7",
+            "username": "yamamoto7"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "35120aebe7f858361235c9018a0462ca898d34b5",
+          "message": "BUG: Write tuple values of update_page_form_field_values to the field (#4368)\n\n* BUG: Write tuple values of update_page_form_field_values to the field\n\nWhen a field and its widget are separate objects, the tuple branch\nwrote /V to the widget, unlike the string and list branches.\n\nCloses #4367\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\n\n* ✅ test(writer): document issue #4367 regression in tuple value test\n\nRefs: #4367\n\n* TST: Use public root_object in tuple value form field test\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Cover tuple values in test_update_form_fields2\n\n* TST: Assert widget and appearance stream for tuple values\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-11T19:02:40+01:00",
+          "tree_id": "1987b1fb2e40a9ac2d105e3a915be55600b3bb95",
+          "url": "https://github.com/py-pdf/pypdf/commit/35120aebe7f858361235c9018a0462ca898d34b5"
+        },
+        "date": 1794420358597,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.0843945044561,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016729701172169365",
+            "extra": "mean: 43.319308193548885 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 53.87328168817095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007808598339865205",
+            "extra": "mean: 18.562076945454983 msec\nrounds: 55"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.6481767425678886,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04281485457389198",
+            "extra": "mean: 606.7310466000038 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.8193118789085041,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05354904173805382",
+            "extra": "mean: 1.2205364352000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.48449976247399057,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016792978790594118",
+            "extra": "mean: 2.0639845000000037 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7440315650626599,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038414047729822605",
+            "extra": "mean: 573.3841175999999 msec\nrounds: 5"
           }
         ]
       }
