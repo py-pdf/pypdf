@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794417529702,
+  "lastUpdate": 1794417648297,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -167053,6 +167053,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028516070958542916",
             "extra": "mean: 922.9858576000083 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mcwitherx@gmail.com",
+            "name": "Pixeless_",
+            "username": "Pixeless001"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d4a358dacececb9cfdf7bd67d0cad29a1ee4ca0",
+          "message": "ENH: Scale a soft mask to the size of its image (#4391)\n\n* BUG: Scale a soft mask to the size of its image\n\nAn image and its /SMask are both mapped onto the unit square, so the\nmask may have other dimensions than the image. pypdf logged \"Image and\nmask size not matching\" in this case and dropped the mask. Resize the\nmask to the image size instead.\n\n* MAINT: Check the size limit and test scaling for soft masks\n\nAddress the review: resize the soft mask through a new _resize_image\nhelper, which checks the target size against image_maximum_buffer_size\nlike the other image helpers, and add tests for a mask with another\naspect ratio, a smaller mask and a larger mask with a one-sample feature.",
+          "timestamp": "2026-11-11T18:17:05+01:00",
+          "tree_id": "c1797450215d8ef922909d2ecb299fa5fc432bbf",
+          "url": "https://github.com/py-pdf/pypdf/commit/6d4a358dacececb9cfdf7bd67d0cad29a1ee4ca0"
+        },
+        "date": 1794417639271,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 21.370085202736064,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019083938046094283",
+            "extra": "mean: 46.79438525925801 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 43.160069129508024,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00881056679174382",
+            "extra": "mean: 23.16956437209022 msec\nrounds: 43"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.5014173508914113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04252130649629608",
+            "extra": "mean: 666.0373276000087 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.7352500364879944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02927316210303325",
+            "extra": "mean: 1.3600815374000035 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4485300897621304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03943394636456371",
+            "extra": "mean: 2.229504826599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7323894771452406,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0375692008091247",
+            "extra": "mean: 577.2374013999865 msec\nrounds: 5"
           }
         ]
       }
