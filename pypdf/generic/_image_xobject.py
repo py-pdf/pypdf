@@ -40,10 +40,14 @@ def _get_process_colorant_channels(color_space: Any) -> list[int] | None:
 
     Returns None if the space is something else or uses a colorant which is not a process colorant.
     """
-    if not isinstance(color_space, list) or not color_space or color_space[0] != "/DeviceN":
+    if not isinstance(color_space, list) or len(color_space) < 2 or color_space[0] != "/DeviceN":
         return None
     colorants = color_space[1].get_object()
-    if not colorants or not all(colorant in _PROCESS_COLORANTS for colorant in colorants):
+    if (
+        not isinstance(colorants, list)
+        or not colorants
+        or not all(colorant in _PROCESS_COLORANTS for colorant in colorants)
+    ):
         return None
     return [_PROCESS_COLORANTS.index(colorant) for colorant in colorants]
 
@@ -363,10 +367,11 @@ def _handle_flate(
             lookup = lookup.encode()
         if (channels := _get_process_colorant_channels(base)) is not None:
             # Put each tint into its own CMYK channel instead of evaluating the tint transform.
+            colorant_count = len(channels)
             cmyk_lookup = bytearray()
-            for index in range(0, len(lookup) - len(channels) + 1, len(channels)):
+            for index in range(0, len(lookup) - colorant_count + 1, colorant_count):
                 cmyk = bytearray(4)
-                for channel, tint in zip(channels, lookup[index : index + len(channels)]):
+                for channel, tint in zip(channels, lookup[index : index + colorant_count]):
                     cmyk[channel] = tint
                 cmyk_lookup += cmyk
             lookup = bytes(cmyk_lookup)

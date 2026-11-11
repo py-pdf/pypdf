@@ -748,7 +748,7 @@ def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.
     assert caplog.messages == ["Color /Cyan converted to Gray. Please share PDF with pypdf dev team"]
 
 
-def _device_n(*colorants: str) -> ArrayObject:
+def _create_device_n(*colorants: str) -> ArrayObject:
     return ArrayObject([
         NameObject("/DeviceN"),
         ArrayObject([NameObject(colorant) for colorant in colorants]),
@@ -759,11 +759,14 @@ def _device_n(*colorants: str) -> ArrayObject:
 
 def test_get_process_colorant_channels() -> None:
     """Only a /DeviceN space made of process colorants is mapped to CMYK channels."""
-    assert _get_process_colorant_channels(_device_n("/Black", "/Cyan")) == [3, 0]
-    assert _get_process_colorant_channels(_device_n("/Cyan", "/HKS 44 K")) is None
-    assert _get_process_colorant_channels(_device_n()) is None
+    assert _get_process_colorant_channels(_create_device_n("/Black", "/Cyan")) == [3, 0]
+    assert _get_process_colorant_channels(_create_device_n("/Cyan", "/HKS 44 K")) is None
+    assert _get_process_colorant_channels(_create_device_n()) is None
     assert _get_process_colorant_channels(NameObject("/DeviceCMYK")) is None
     assert _get_process_colorant_channels(ArrayObject()) is None
+    assert _get_process_colorant_channels(ArrayObject([NameObject("/DeviceN")])) is None
+    names_not_an_array = DictionaryObject({NameObject("/Cyan"): NumberObject(1)})
+    assert _get_process_colorant_channels(ArrayObject([NameObject("/DeviceN"), names_not_an_array])) is None
 
 
 @pytest.mark.parametrize(
@@ -772,6 +775,7 @@ def test_get_process_colorant_channels() -> None:
         (["/Cyan"], b"\x00\xff", [(255, 255, 255), (0, 255, 255)]),
         (["/Magenta", "/Black"], b"\x00\x00\xff\x80", [(255, 255, 255), (127, 0, 127)]),
     ],
+    ids=["cyan", "magenta-black"],
 )
 def test_xobj_to_image__indexed_device_n_process_colorants(
     caplog: pytest.LogCaptureFixture, colorants: list[str], lookup_data: bytes, expected_pixels: list[Any]
@@ -788,7 +792,7 @@ def test_xobj_to_image__indexed_device_n_process_colorants(
     x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
     x_object[NameObject(ImageAttributes.BITS_PER_COMPONENT)] = NumberObject(8)
     x_object[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject(
-        [NameObject("/Indexed"), _device_n(*colorants), NumberObject(1), lookup]
+        [NameObject("/Indexed"), _create_device_n(*colorants), NumberObject(1), lookup]
     )
     x_object[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.FLATE_DECODE)
     x_object._data = zlib.compress(b"\x00\x01")
