@@ -15,6 +15,7 @@ from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    EncodedStreamObject,
     NameObject,
     NumberObject,
     PdfObject,
@@ -28,6 +29,7 @@ from pypdf.generic._image_xobject import (
     _get_allocated_bytes_per_pixel,
     _get_image_mode,
     _get_mode_and_invert_color,
+    _get_process_colorant_channels,
     _handle_flate,
     _handle_jpx,
     _merge_image,
@@ -795,6 +797,62 @@ def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.
     ])
     assert _get_image_mode(color_space, 1, "") == ("L", True)
     assert caplog.messages == ["Color /Cyan converted to Gray. Please share PDF with pypdf dev team"]
+
+
+def _create_device_n(*colorants: str) -> ArrayObject:
+    return ArrayObject([
+        NameObject("/DeviceN"),
+        ArrayObject([NameObject(colorant) for colorant in colorants]),
+        NameObject("/DeviceCMYK"),
+        DictionaryObject(),
+    ])
+
+
+def test_get_process_colorant_channels() -> None:
+    """Only a /DeviceN space made of process colorants is mapped to CMYK channels."""
+    assert _get_process_colorant_channels(_create_device_n("/Black", "/Cyan")) == [3, 0]
+    assert _get_process_colorant_channels(_create_device_n("/Cyan", "/HKS 44 K")) is None
+    assert _get_process_colorant_channels(_create_device_n()) is None
+    assert _get_process_colorant_channels(NameObject("/DeviceCMYK")) is None
+    assert _get_process_colorant_channels(ArrayObject()) is None
+    assert _get_process_colorant_channels(ArrayObject([NameObject("/DeviceN")])) is None
+    names_not_an_array = DictionaryObject({NameObject("/Cyan"): NumberObject(1)})
+    assert _get_process_colorant_channels(ArrayObject([NameObject("/DeviceN"), names_not_an_array])) is None
+
+
+@pytest.mark.parametrize(
+    ("colorants", "lookup_data", "expected_pixels"),
+    [
+        (["/Cyan"], b"\x00\xff", [(255, 255, 255), (0, 255, 255)]),
+        (["/Magenta", "/Black"], b"\x00\x00\xff\x80", [(255, 255, 255), (127, 0, 127)]),
+    ],
+    ids=["cyan", "magenta-black"],
+)
+def test_xobj_to_image__indexed_device_n_process_colorants(
+    caplog: pytest.LogCaptureFixture, colorants: list[str], lookup_data: bytes, expected_pixels: list[Any]
+) -> None:
+    """
+    An /Indexed lookup over a /DeviceN of process colorants is read as CMYK.
+
+    This test is a regression test for issue #3302.
+    """
+    lookup = DecodedStreamObject()
+    lookup.set_data(lookup_data)
+    x_object = EncodedStreamObject()
+    x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(2)
+    x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
+    x_object[NameObject(ImageAttributes.BITS_PER_COMPONENT)] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject(
+        [NameObject("/Indexed"), _create_device_n(*colorants), NumberObject(1), lookup]
+    )
+    x_object[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.FLATE_DECODE)
+    x_object._data = zlib.compress(b"\x00\x01")
+
+    img = _xobj_to_image(x_object)[2]
+
+    assert img.mode == "RGB"
+    assert [img.getpixel((x, 0)) for x in range(2)] == expected_pixels
+    assert caplog.messages == []
 
 
 def test_handle_flate__indexed_lookup_stream_with_str_data() -> None:
