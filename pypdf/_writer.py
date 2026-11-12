@@ -62,6 +62,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     deprecate_positional_arguments,
+    deprecate_with_replacement,
     deprecation_with_replacement,
     logger_warning,
 )
@@ -2253,8 +2254,13 @@ class PdfWriter(PdfDocCommon):
             to_delete: The type of images to be deleted
                 (default = all images types)
 
+        .. deprecated:: 7.1.0
+            Passing a boolean as ``to_delete`` is deprecated and will be
+            removed in pypdf 8.0.0. Use ``ImageType.ALL`` instead.
+
         """
         if isinstance(to_delete, bool):
+            deprecate_with_replacement("Passing a boolean to remove_images", "ImageType.ALL", "8.0.0")
             to_delete = ImageType.ALL
 
         i = ObjectDeletionFlag.NONE
