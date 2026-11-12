@@ -151,6 +151,8 @@ class PdfWriter(PdfDocCommon):
 
             When writing incrementally, the original document is written first and new/modified
             content is appended. To be used for signed document/forms to keep signature valid.
+            Encryption is not supported in this mode: calling ``encrypt`` or writing changes to an
+            encrypted document raises a ``NotImplementedError``.
 
         full: If true, loads all the objects (always full if incremental = True).
             This parameter may allow loading large PDFs.
@@ -1439,6 +1441,8 @@ class PdfWriter(PdfDocCommon):
     def _write_increment(self, stream: StreamType) -> None:
         # Only reached from `write()` inside `if self.incremental`.
         assert self._reader is not None, "mypy"
+        if self._reader.is_encrypted:
+            raise NotImplementedError("Writing incremental updates of encrypted PDF files is currently not supported.")
         object_positions = {}
         object_blocks = []
         current_start = -1
@@ -1454,10 +1458,6 @@ class PdfWriter(PdfDocCommon):
                 # first write new/modified object
                 object_positions[idnum] = stream.tell()
                 stream.write(f"{idnum} 0 obj\n".encode())
-                """ encryption is not operational
-                if self._encryption and obj != self._encrypt_entry:
-                    obj = self._encryption.encrypt_object(obj, idnum, 0)
-                """
                 obj.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
 
