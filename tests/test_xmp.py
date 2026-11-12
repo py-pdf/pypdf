@@ -736,6 +736,43 @@ def test_xmp_information__create_with_writer():
     assert xmp_read.pdf_producer == "pypdf library"
 
 
+@pytest.mark.parametrize("packet_end", [None, 'end="r"', 'end="w"', "end='w'", 'end = "w" '])
+def test_xmp_information__update_stream_packet(packet_end):
+    """Metadata updates preserve the packet wrapper without an XML declaration."""
+    original = XmpInformation.create().stream.get_data()
+    if packet_end is None:
+        original = original[original.index(b"<x:xmpmeta"):original.index(b"<?xpacket end")]
+    else:
+        original = original.replace(b'end="r"', packet_end.encode())
+    original = b'<?xml version="1.0" encoding="utf-8"?><!--preserved--><?other value?>' + original
+    stream = StreamObject()
+    stream.set_data(original)
+    xmp = XmpInformation(stream)
+    title = {"x-default": "Title with <markup> & caf\u00e9 \u65e5\u672c\u8a9e"}
+
+    xmp.dc_title = title
+    first_update = xmp.stream.get_data()
+    xmp.dc_title = title
+    assert xmp.stream.get_data() == first_update
+    assert b"<?xml " not in first_update
+    assert first_update.startswith(b"<!--preserved--><?other value?>")
+    if packet_end is None:
+        assert b"<?xpacket" not in first_update
+    else:
+        assert b'<?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>' in first_update
+        assert first_update.endswith(b'<?xpacket end="r"?>')
+
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.xmp_metadata = xmp
+    output = BytesIO()
+    writer.write(output)
+    reread = PdfReader(output).xmp_metadata
+    assert reread is not None
+    assert reread.dc_title == title
+    assert reread.stream.get_data() == first_update
+
+
 def test_xmp_information__namespace_prefix():
     """Test _get_namespace_prefix method."""
     xmp = XmpInformation.create()

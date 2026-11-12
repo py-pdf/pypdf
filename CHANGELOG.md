@@ -7,6 +7,53 @@
 - Rename ``TypArguments`` to ``TypeArguments`` and ``TypFitArguments`` to ``FitTypes``
 - Add semantic names for stroking and non-stroking graphics-state constants
 
+## Version 7.0.1, 2026-11-10
+
+### Security (SEC)
+- Determine image buffer sizes using the actual bytes per pixel (#4374)
+
+### Performance Improvements (PI)
+- Don't parse content streams without text operators in extract_text() (#4346)
+
+### Bug Fixes (BUG)
+- Decode UTF-8 text strings (#4348)
+- Fix page reference lookup for hierarchical page trees in PdfWriter (#4356)
+- Copy the operations in ContentStream.replicate() (#4372)
+- Deal with more rendering intents for inline images (#4383)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.0...7.0.1)
+
+## Version 7.0.0, 2026-11-06
+
+### Security (SEC)
+- Make file identifiers non-deterministic (#4366)
+- Block not strictly increasing offsets in object streams (#4364)
+- Limit XFA form decoding work (#4363)
+- Apply image size limits more strictly (#4361)
+
+### Deprecations (DEP)
+- Cleanup deprecations for the next major release (#4306)
+- Remove support for cryptography<43 (#4304)
+- Drop support for Python 3.9 (#4292)
+
+### New Features (ENH)
+- Allow setting border color for rectangle annotations (#4297)
+
+### Performance Improvements (PI)
+- Speed up LZW decoding for clear table markers (#4354)
+- Build right-to-left text runs with a single join (#4344)
+- Read every page label number tree once for all pages (#4321)
+- Decode the PNG Up predictor a row at a time (#4312)
+
+### Bug Fixes (BUG)
+- Fix cloning of objects that require constructor arguments (#4262)
+- Serialize XMP packets without an XML declaration (#4296)
+
+### Maintenance (MAINT)
+- Generate Symbol and ZapfDingbats encodings from Adobe sources (#4333)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.4...7.0.0)
+
 ## Version 6.21.4, 2026-10-28
 
 ### Security (SEC)

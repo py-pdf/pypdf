@@ -16,9 +16,11 @@ from pypdf.generic import (
     ContentStream,
     Destination,
     DictionaryObject,
+    Fit,
     NameObject,
     NullObject,
     NumberObject,
+    OutlineItem,
     RectangleObject,
     StreamObject,
     StreamParsingBudget,
@@ -33,6 +35,34 @@ try:
     import resource
 except ImportError:
     resource = None  # type: ignore[assignment]
+
+
+@pytest.mark.parametrize("link", ["/Next", "/Prev", "/N", "/V"])
+def test_dictionary_object__clone_linked_objects_with_constructor_arguments(link: str) -> None:
+    """Linked dictionaries requiring constructor arguments can be cloned."""
+    source = PdfWriter()
+    destination = PdfWriter()
+    first = OutlineItem("First", NumberObject(0), Fit.fit())
+    second = OutlineItem("Second", NumberObject(0), Fit.fit())
+    source._add_object(first)
+    first[NameObject(link)] = source._add_object(second)
+
+    cloned = first.clone(destination)
+    cloned_second = cloned[link]
+
+    assert isinstance(cloned, OutlineItem)
+    assert isinstance(cloned_second, OutlineItem)
+    assert cloned is not first
+    assert cloned_second is not second
+    assert cloned.title == first.title
+    assert cloned_second.items() == second.items()
+    assert cloned.indirect_reference is not None
+    assert cloned.indirect_reference.pdf is destination
+    assert cloned_second.indirect_reference is not None
+    assert cloned_second.indirect_reference.pdf is destination
+    assert first[link] is second
+    assert second.indirect_reference is not None
+    assert second.indirect_reference.pdf is source
 
 
 def test_dictionary_object__get_next_object_position() -> None:
@@ -541,11 +571,11 @@ def _outlined_pdf(nested: bool = False) -> BytesIO:
     writer = PdfWriter()
     for _ in range(4):
         writer.add_blank_page(200, 200)
-    cover = writer.add_outline_item("Cover", 0)
-    writer.add_outline_item("Body", 1)
+    cover = writer.add_outline_item(title="Cover", page_number=0)
+    writer.add_outline_item(title="Body", page_number=1)
     if nested:
-        writer.add_outline_item("Sub", 2, parent=cover)
-    writer.add_outline_item("End", 3)
+        writer.add_outline_item(title="Sub", page_number=2, parent=cover)
+    writer.add_outline_item(title="End", page_number=3)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -586,7 +616,7 @@ def test_remove_from_tree_on_outline_item_without_clone() -> None:
     for _ in range(3):
         writer.add_blank_page(200, 200)
     for page_number, title in enumerate(["Cover", "Body", "End"]):
-        writer.add_outline_item(title, page_number)
+        writer.add_outline_item(title=title, page_number=page_number)
 
     _flat_outline(writer.outline)[0].remove_from_tree()
 

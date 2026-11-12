@@ -17,6 +17,7 @@ from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
+    ContentStream,
     DictionaryObject,
     EmbeddedFile,
     EncodedStreamObject,
@@ -1361,8 +1362,8 @@ def test_outline__reads_a_well_formed_outline():
     writer = PdfWriter()
     for _ in range(2):
         writer.add_blank_page(width=72, height=72)
-    writer.add_outline_item("Chapter 1", 0)
-    writer.add_outline_item("Chapter 2", 1)
+    writer.add_outline_item(title="Chapter 1", page_number=0)
+    writer.add_outline_item(title="Chapter 2", page_number=1)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -1597,7 +1598,7 @@ def test_outline__reads_a_well_formed_outlines_entry():
     writer = PdfWriter()
     for _ in range(2):
         writer.add_blank_page(width=72, height=72)
-    writer.add_outline_item("Chapter 1", 0)
+    writer.add_outline_item(title="Chapter 1", page_number=0)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -1893,6 +1894,59 @@ def test_get_fields__nesting_depth() -> None:
         writer.get_fields(retval={}, tree=tree, _visited=set())
 
 
+def _build_deep_named_dest_writer(depth: int) -> PdfWriter:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    leaf = DictionaryObject()
+    leaf[NameObject("/Names")] = ArrayObject(
+        [
+            NameObject("/dest1"),
+            ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")]),
+        ]
+    )
+    current = writer._add_object(leaf)
+    for _ in range(depth - 1):
+        node = DictionaryObject()
+        node[NameObject("/Kids")] = ArrayObject([current])
+        current = writer._add_object(node)
+
+    names = DictionaryObject()
+    names[NameObject("/Dests")] = current
+    writer._root_object[NameObject("/Names")] = writer._add_object(names)
+    return writer
+
+
+def test_named_destinations__maximum_depth() -> None:
+    writer = _build_deep_named_dest_writer(depth=5)
+    with apply_configuration(named_destinations_maximum_depth=2), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^Maximum named destination depth exceeded:",
+            ):
+        _ = writer.named_destinations
+
+
+def test_named_destinations__maximum_entries() -> None:
+    writer = _build_deep_named_dest_writer(depth=10)
+    with apply_configuration(named_destinations_maximum_entries=3), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^Maximum named destination entry limit exceeded:",
+            ):
+        _ = writer.named_destinations
+
+
+def test_named_destinations__within_limits() -> None:
+    writer = _build_deep_named_dest_writer(depth=3)
+    with apply_configuration(
+        named_destinations_maximum_depth=100,
+        named_destinations_maximum_entries=100_000,
+    ):
+        dests = writer.named_destinations
+    assert "dest1" in dests or "/dest1" in dests
+
+
 def test_get_num_pages__forged_count_after_decrypt():
     """The unvalidated /Pages /Count must not be used once the document is decrypted."""
     writer = PdfWriter()
@@ -1946,3 +2000,32 @@ def test_flatten__page_tree_maximum_page_entries() -> None:
     reader = PdfReader(BytesIO(data))
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum page tree page entry limit exceeded!"):
         _ = len(reader.pages)  # Trigger flattening
+
+
+def test_xfa__work_limit() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    n_fields = 100
+    field_content = b"A" * 1_000
+    fields = []
+    for _ in range(n_fields):
+        stream = ContentStream(stream=None, pdf=None)
+        stream.set_data(field_content)
+        fields.append(writer._add_object(stream))
+
+    xfa = ArrayObject()
+    for index, field in enumerate(fields):
+        xfa.append(TextStringObject(f"tag{index}"))
+        xfa.append(field)
+
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject({
+        NameObject("/XFA"): xfa,
+    })
+
+    with apply_configuration(xfa_decoding_work_maximum_length=5_000), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^XFA decoding exceeded the maximum accumulated decoding work of 5000 bytes\.$"
+            ):
+        _ = writer.xfa

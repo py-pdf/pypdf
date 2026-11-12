@@ -775,22 +775,24 @@ def test_get_outline(url, name):
 
 @pytest.mark.enable_socket
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "expected_keys"),
     [
         (
             "https://github.com/user-attachments/files/18381707/tika-935981.pdf",
             "tika-935981.pdf",
+            set(),
         ),
         (
             "https://github.com/user-attachments/files/18381709/tika-937334.pdf",
             "tika-937334.pdf",
+            {"PDFSecurity", "config", "datasets", "localeSet", "postamble", "preamble", "template"}
         ),
     ],
 )
-def test_get_xfa(url, name):
+def test_get_xfa(url, name, expected_keys: set[str]):
     data = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(data)
-    reader.xfa
+    assert set(reader.xfa.keys()) == expected_keys
 
 
 @pytest.mark.enable_socket
@@ -943,8 +945,11 @@ def test_extra_test_iss1541():
     reader = PdfReader(
         BytesIO(get_stream_data(data).replace(b"EI \n", b"E! \n")), strict=False
     )
+    # The page only shows an inline image, so extract_text() does not need to parse it.
+    assert reader.pages[0].extract_text() == ""
+    content_stream = ContentStream(reader.pages[0]["/Contents"], None, None)
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
-        reader.pages[0].extract_text()
+        content_stream.operations
 
 
 @pytest.mark.enable_socket

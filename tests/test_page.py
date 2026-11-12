@@ -967,6 +967,32 @@ def test_merge_page_with_annotations():
     assert len(page0.annotations) == 1
 
 
+def test_merge_page_with_annotations_of_merged_page():
+    """Annotations of the page passed to merge_page are cloned as well."""
+    writer = PdfWriter()
+    merged_writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    merged_writer.add_blank_page(100, 100)
+
+    writer.add_annotation(
+        page_number=0,
+        annotation=Polygon(vertices=[(50, 550), (200, 650), (70, 750), (50, 700)]),
+    )
+
+    page = merged_writer.pages[0]
+    page.merge_page(writer.pages[0])
+
+    assert len(page.annotations) == 1
+    assert page.annotations[0]["/Subtype"] == "/Polygon"
+
+    buffer = BytesIO()
+    merged_writer.write(buffer)
+
+    reread_page = PdfReader(buffer).pages[0]
+    assert len(reread_page.annotations) == 1
+    assert reread_page.annotations[0]["/Subtype"] == "/Polygon"
+
+
 @pytest.mark.parametrize(
     ("quad_count", "transformation", "expected"),
     [
@@ -1345,6 +1371,42 @@ def test_merge_with_no_resources():
     writer.pages[0].merge_page(p1)
 
 
+@pytest.mark.parametrize(
+    ("resources", "expected"),
+    [
+        pytest.param(NumberObject(3), "Page resources are not a dictionary: 3", id="number"),
+        pytest.param(ArrayObject([NumberObject(1)]), "Page resources are not a dictionary: [1]", id="array"),
+        pytest.param(TextStringObject("x"), "Page resources are not a dictionary: x", id="string"),
+        pytest.param(NullObject(), None, id="null"),
+    ],
+)
+@pytest.mark.parametrize("malformed", ["page", "merged page", "merged page from a reader"])
+def test_merge_page__resources_are_not_a_dictionary(caplog, resources, expected, malformed):
+    """Malformed /Resources on either page are treated as empty."""
+    writer = PdfWriter()
+    for _ in range(2):
+        page = writer.add_blank_page(72, 72)
+        font = DictionaryObject({NameObject("/Type"): NameObject("/Font")})
+        page[NameObject("/Resources")] = DictionaryObject(
+            {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})}
+        )
+    writer.pages[0 if malformed == "page" else 1][NameObject("/Resources")] = resources
+    page2 = writer.pages[1]
+    if malformed == "merged page from a reader":
+        stream = BytesIO()
+        writer.write(stream)
+        page2 = PdfReader(stream).pages[1]
+
+    writer.pages[0].merge_page(page2)
+
+    # The font of the page that has well-formed resources is kept
+    assert list(writer.pages[0]["/Resources"]["/Font"]) == ["/F1"]
+    if expected is None:
+        assert caplog.text == ""
+    else:
+        assert expected in caplog.text
+
+
 def test_get_contents_from_nullobject():
     """Issue #2157"""
     writer = PdfWriter()
@@ -1353,6 +1415,28 @@ def test_get_contents_from_nullobject():
     assert page1.get_contents() is None
     page2 = writer.add_blank_page(100, 100)
     page1.merge_page(page2, over=True)
+
+
+@pytest.mark.parametrize(
+    ("contents", "expected"),
+    [
+        pytest.param(NumberObject(3), "Page contents are not a stream or an array: 3", id="number"),
+        pytest.param(TextStringObject("x"), "Page contents are not a stream or an array: x", id="string"),
+        pytest.param(DictionaryObject(), "Page contents are not a stream or an array: {}", id="dictionary"),
+    ],
+)
+def test_get_contents__not_a_stream_or_an_array(caplog, contents, expected):
+    """A malformed /Contents is treated as missing, so the page can still be edited."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    page[NameObject("/Contents")] = contents
+
+    assert page.get_contents() is None
+    assert expected in caplog.text
+    page.compress_content_streams()
+    page.scale_by(2)
+    page.merge_page(writer.add_blank_page(100, 100))
+    writer.remove_text()
 
 
 @pytest.mark.enable_socket
@@ -1772,6 +1856,53 @@ def test_annotations__is_not_an_array(caplog, value, expected):
     assert expected in caplog.text
 
 
+def test_get_rectangle__fallback_skips_null_entries():
+    """A "/CropBox null" entry must not stop the fallback chain of the other boxes."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    writer.pages[0][NameObject("/CropBox")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    # Read the dependent boxes first: reading the crop box resolves and stores
+    # the fallback value, which used to hide the null entry.
+    page = PdfReader(stream).pages[0]
+    assert page.trimbox == RectangleObject([0, 0, 100, 200])
+    assert page.artbox == RectangleObject([0, 0, 100, 200])
+    assert page.bleedbox == RectangleObject([0, 0, 100, 200])
+    # The crop box itself resolves to the media box as well.
+    assert page.cropbox == RectangleObject([0, 0, 100, 200])
+
+
+def test_get_rectangle__fallback_skips_indirect_null_entry():
+    """An indirect null page box is treated like a direct null entry."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    null_reference = writer._add_object(NullObject())
+    writer.pages[0][NameObject("/CropBox")] = null_reference
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].trimbox == RectangleObject([0, 0, 100, 200])
+
+
+def test_scale_by__with_null_crop_box():
+    """scale_by() reads every box, so a null /CropBox used to break it."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    writer.pages[0][NameObject("/CropBox")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter()
+    page = writer.add_page(PdfReader(stream).pages[0])
+    page.scale_by(0.5)
+    assert page.mediabox == RectangleObject([0, 0, 50, 100])
+
+
 def test_get_rectangle__size_handling(caplog):
     """
     See issue #2991 and related ones. We would previously generate invalid page boxes when they
@@ -1935,3 +2066,184 @@ def test_translate_value_inline_image_colorspace_not_found(resources):
     custom_name = NameObject("/CustomCS")
     with pytest.raises(PdfReadError, match=r"^Cannot find resource entry .+ for .+$"):
         page._translate_value_inline_image("/CS", custom_name)
+
+
+def test_content_stream_rename__device_color_space_abbreviation_in_inline_image_is_not_renamed() -> None:
+    """
+    Renaming a resource called /G does not change /CS /G in an inline image.
+
+    In an inline image, /G always means DeviceGray and never refers to a
+    resource in the ColorSpace subdictionary (ISO 32000-2:2020, 8.9.7, NOTE 3).
+    Renaming it to /G-0 would leave the image with an unknown color space.
+    """
+    content = ContentStream(None, None)
+    # The same name /G appears twice:
+    # * "/G cs" is the control. The operand of cs is a resource in the
+    #   ColorSpace subdictionary unless it is DeviceGray, DeviceRGB, DeviceCMYK
+    #   or Pattern (8.6.8, Table 73), and the abbreviation G is only valid in
+    #   inline images (8.9.7). So this /G is the resource and is renamed.
+    # * In the inline image (BI ... ID ... EI), /G means DeviceGray and is kept.
+    #   The image is 1x1 gray (8.9.7, Table 91 for the abbreviations): one byte
+    #   of data, \x80.
+    content.set_data(b"/G cs BI /W 1 /H 1 /CS /G /BPC 8 ID \x80 EI")
+    rename = {NameObject("/G"): NameObject("/G-0")}
+
+    renamed = PageObject._content_stream_rename(content, rename, None)
+
+    (cs_operands, cs_operator), (image_operands, image_operator) = renamed.operations
+    assert (cs_operands, cs_operator) == ([NameObject("/G-0")], b"cs")
+    assert image_operator == b"INLINE IMAGE"
+    assert image_operands["settings"]["/CS"] == "/G"
+    assert image_operands["data"] == b"\x80"
+
+
+@pytest.mark.parametrize("as_array", [True, False])
+def test_scale__viewport_bounding_box(as_array: bool) -> None:
+    """
+    scale() scales the bounding box of a viewport together with the page.
+
+    The /BBox of a viewport is given in default user space (ISO 32000-2:2020,
+    12.9.1, Table 265), so it has to follow the page content. /VP has to be an
+    array of viewport dictionaries (Table 31); a single dictionary is malformed,
+    but is scaled as well.
+    """
+    page = PageObject.create_blank_page(None, 100, 100)
+    viewport = DictionaryObject({NameObject("/BBox"): RectangleObject((0, 0, 10, 20))})
+    page[NameObject("/VP")] = ArrayObject([viewport]) if as_array else viewport
+
+    # Different factors for x and y, so swapped axes would be noticed.
+    page.scale(2, 3)
+
+    scaled_viewport = page["/VP"][0] if as_array else page["/VP"]
+    assert scaled_viewport["/BBox"] == RectangleObject((0, 0, 20, 60))
+
+
+def test_extract_text__visitor_receives_text_without_end_operator() -> None:
+    """
+    visitor_text receives the text of a text object that is not closed.
+
+    A text object ends with ET (ISO 32000-2:2020, 9.4.1). Without it, the text
+    is still pending when the content stream ends, and has to be passed to the
+    visitor then.
+    """
+    from .test_text_extraction import _page_with_helvetica  # noqa: PLC0415
+
+    # A text object with BT, but without ET.
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj")).pages[0]
+    parts = []
+    assert page.extract_text(visitor_text=lambda text, *_: parts.append(text)) == "Hello"
+    assert "".join(parts) == "Hello"
+    assert parts[-1] == "Hello"
+
+
+def test_merge_page__target_with_non_array_annotations(caplog) -> None:
+    """
+    merge_page() replaces an /Annots entry of the target page that is not an
+    array, and reports it, so the annotations of the merged page are kept.
+    """
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_annotation(0, Polygon(vertices=[(10, 10), (20, 10), (20, 20)]))
+    writer = PdfWriter()
+    target = writer.add_blank_page(100, 100)
+    target[NameObject("/Annots")] = NumberObject(4)
+
+    target.merge_page(source.pages[0])
+
+    assert "Annotations are not an array: 4" in caplog.text
+    output = BytesIO()
+    writer.write(output)
+    annotations = PdfReader(output).pages[0]["/Annots"]
+    assert len(annotations) == 1
+    assert annotations[0].get_object()["/Subtype"] == "/Polygon"
+
+
+def test_merge_page__target_with_null_annotations(caplog) -> None:
+    """
+    merge_page() adds the annotations of the merged page to a target page with
+    /Annots null.
+
+    A null value is the same as a missing entry (ISO 32000-2:2020, 7.3.9), so
+    the target page has no annotations yet (/Annots, Table 31). After the merge,
+    it has an /Annots array with the merged annotation.
+    """
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    # ISO 32000-2:2020, Table 182: the four vertices in counterclockwise order.
+    quad_points = ArrayObject(FloatObject(value) for value in (10, 10, 20, 10, 20, 20, 10, 20))
+    source.add_annotation(0, Highlight(rect=(10, 10, 20, 20), quad_points=quad_points))
+    # Write and read the source, so the annotation is a plain dictionary
+    # rather than the Highlight instance.
+    source_data = BytesIO()
+    source.write(source_data)
+    writer = PdfWriter()
+    target = writer.add_blank_page(100, 100)
+    target[NameObject("/Annots")] = NullObject()
+
+    target.merge_page(PdfReader(source_data).pages[0])
+
+    assert "Annotations are not an array" not in caplog.text
+
+    assert len(target["/Annots"]) == 1
+
+
+def test_merge_page__annotation_added_by_writer() -> None:
+    """
+    merge_page() copies an annotation that was added with
+    PdfWriter.add_annotation() and not yet written.
+
+    The writer keeps the Highlight object itself, so it is cloned directly
+    rather than read back as a plain dictionary first.
+    """
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    # ISO 32000-2:2020, Table 182: the four vertices in counterclockwise order.
+    quad_points = ArrayObject(FloatObject(value) for value in (10, 10, 20, 10, 20, 20, 10, 20))
+    source.add_annotation(0, Highlight(rect=(10, 10, 20, 20), quad_points=quad_points))
+    target = PdfWriter().add_blank_page(100, 100)
+
+    target.merge_page(source.pages[0])
+
+    assert len(target["/Annots"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Resources are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Resources are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Resources are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_get_fonts__resources_are_not_a_dictionary(caplog, value, expected):
+    """Resources which are not a dictionary yield no fonts and a warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    embedded, unembedded = PdfReader(stream).pages[0]._get_fonts()
+
+    assert embedded == set()
+    assert unembedded == set()
+    assert expected in caplog.text
+
+
+def test_get_fonts__resources_are_null(caplog):
+    """Null /Resources yields no fonts and no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    embedded, unembedded = PdfReader(stream).pages[0]._get_fonts()
+
+    assert embedded == set()
+    assert unembedded == set()
+    assert "Resources are not a dictionary" not in caplog.text

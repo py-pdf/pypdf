@@ -4,16 +4,16 @@ from collections import ChainMap, Counter
 from collections import ChainMap as ChainMapType
 from collections import Counter as CounterType
 from collections.abc import MutableMapping
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from ...errors import PdfReadError
 from ...generic._font import Font
 from .. import mult
 from ._text_state_params import TextStateParams
 
-TextStateManagerKeyType = Union[int, Literal["is_text", "is_render"]]
-TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, Union[float, bool]]
-TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, Union[float, bool]]
+TextStateManagerKeyType = int | Literal["is_text", "is_render"]
+TextStateManagerChainMapType = ChainMapType[TextStateManagerKeyType, float | bool]
+TextStateManagerDictType = MutableMapping[TextStateManagerKeyType, float | bool]
 
 
 class TextStateManager:
@@ -185,14 +185,20 @@ class TextStateManager:
         """Concatenate an additional transform matrix"""
         self.transform_stack = self.reset_tm()
         self.q_queue.update(self.q_depth[-1:])
-        self.transform_stack = self.transform_stack.new_child(self.new_transform(*args))
+        # A matrix operator consumes the 6 operands nearest to it; extra values
+        # from a malformed content stream must not overflow the transform.
+        self.transform_stack = self.transform_stack.new_child(
+            self.new_transform(*args[-6:])
+        )
         return self.transform_stack
 
     def _complete_matrix(self, operands: list[float]) -> list[float]:
         """Adds a, b, c, and d to an "e/f only" operand set (e.g Td)"""
         if len(operands) == 2:  # this is a Td operator or equivalent
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
-        return operands
+        # Tm consumes the 6 operands nearest to it; extra values from a
+        # malformed content stream must not overflow the transform.
+        return operands[-6:]
 
     def add_tm(self, operands: list[float]) -> TextStateManagerChainMapType:
         """Append a text transform matrix"""

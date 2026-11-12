@@ -28,7 +28,7 @@
 # This module contains code used by _writer.py to track links in pages
 # being added to the writer until the links can be resolved.
 
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, cast
 
 from .._utils import logger_warning
 from . import ArrayObject, DictionaryObject, IndirectObject, PdfObject, TextStringObject, is_null_or_none
@@ -94,7 +94,7 @@ class DirectReferenceLink:
         self._reference[0] = new_page
 
 
-ReferenceLink = Union[NamedReferenceLink, DirectReferenceLink]
+ReferenceLink = NamedReferenceLink | DirectReferenceLink
 
 
 def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[ReferenceLink, ReferenceLink]]:

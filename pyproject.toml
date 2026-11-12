@@ -187,7 +187,6 @@ ignore = [
     "PLW2901", # `with` statement variable `img` overwritten by assignment target
     "PT011",   # `pytest.raises(ValueError)` is too broad, set the `match`
     "PT012",   # `pytest.raises()` block should contain a single simple statement
-    "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
@@ -204,7 +203,6 @@ ignore = [
     "TRY003",  # Avoid specifying long messages outside the exception class
     "TRY004",  # Prefer `TypeError` exception for invalid type
     "TRY301",  # Abstract `raise` to an inner function
-    "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.10+
 ]
 
 [tool.ruff.lint.mccabe]
@@ -219,6 +217,7 @@ max-complexity = 31  # Recommended: 10
 "make_release.py" = ["S603", "S607", "T201"]
 "pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff
 "tests/*" = ["ANN001", "ANN201", "B017", "B018", "D103", "D104", "S105", "S106"]
+"tests/test_page.py" = ["PT014"]  # Duplicate test cases in pytest.mark.parametrize
 "tests/test_workflows.py" =  ["T201"]
 
 [tool.ruff.lint.pydocstyle]

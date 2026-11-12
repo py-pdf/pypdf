@@ -893,7 +893,7 @@ def test_remove_child_in_tree():
     writer = PdfWriter()
     writer._add_object(tree)
     writer.add_page(reader.pages[0])
-    writer.add_outline_item("foo", page_number=0)
+    writer.add_outline_item(title="foo", page_number=0)
     obj = writer._objects[-1]
     tree.add_child(obj, writer)
     tree.remove_child(obj)
@@ -1120,10 +1120,8 @@ def test_create_string_object_force():
         ("1.0", "1"),
         ("0.123000", "0.123"),
         ("0.000123000", "0.000123"),
-        ("0.0", "0.0"),
         ("0", "0.0"),
         ("1", "1"),
-        ("1.0", "1"),
         ("1.01", "1.01"),
         ("1.010", "1.01"),
         ("0000.0000", "0.0"),
@@ -1772,3 +1770,30 @@ def test_get_inherited_malformed_parent():
     number_parent = DictionaryObject({NameObject("/Parent"): NumberObject(42)})
     assert number_parent.get_inherited("/Rotate", "dflt") == "dflt"
     assert number_parent.get_inherited("/Rotate") is None
+
+
+def test_content_stream_replicate__parsed_operations():
+    """The replica of a content stream whose operations were parsed has the same operations."""
+    writer = PdfWriter()
+    content = ContentStream(None, None)
+    content.set_data(b"BT /F1 12 Tf (Hello) Tj ET")
+    operations = list(content.operations)
+    assert operations
+
+    replica = content.replicate(writer)
+
+    assert replica is not content
+    assert replica.operations == operations
+    assert replica.get_data() == content.get_data()
+    assert b"Hello" in replica.get_data()
+
+
+def test_content_stream_replicate__raw_data():
+    """The replica of a content stream that was never parsed has the same data."""
+    writer = PdfWriter()
+    content = ContentStream(None, None)
+    content.set_data(b"q 1 0 0 1 10 10 cm Q")
+
+    replica = content.replicate(writer)
+
+    assert replica.get_data() == b"q 1 0 0 1 10 10 cm Q"
