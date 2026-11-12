@@ -1810,7 +1810,6 @@ def _build_minimal_pdf(objects: list[tuple[str, str]]) -> bytes:
     return out.getvalue()
 
 
-
 def test_root_recovery_with_non_integer_size(caplog):
     """Cf #4387: a non-integer /Size in a corrupted trailer must not crash
     the root recovery loop with a TypeError.
