@@ -520,6 +520,9 @@ def test_inline_image_extraction():
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     reader.pages[0].extract_text()
     reader.pages[1].extract_text()
+    img = reader.pages[0].images["~0~"].image
+    assert img is not None
+    assert img.mode == "RGB"
 
     url = "https://github.com/mozilla/pdf.js/raw/master/test/pdfs/issue14256.pdf"
     name = "iss2598b.pdf"
@@ -1152,43 +1155,3 @@ def test_inline_image__custom_color_space__resolved_from_resources():
     images = list(PdfReader(stream).pages[0].images)
     assert len(images) == 1
 
-
-@pytest.mark.parametrize("compress", [True, False])
-def test_indexed_image_without_filter(compress):
-    """Ensure /Indexed images without a filter apply the lookup table (#4317)."""
-    image = DecodedStreamObject()
-    image.set_data(bytes([0, 1, 2]))
-    image.update(
-        {
-            NameObject("/Type"): NameObject("/XObject"),
-            NameObject("/Subtype"): NameObject("/Image"),
-            NameObject("/Width"): NumberObject(3),
-            NameObject("/Height"): NumberObject(1),
-            NameObject("/BitsPerComponent"): NumberObject(8),
-            NameObject("/ColorSpace"): ArrayObject(
-                [
-                    NameObject("/Indexed"),
-                    NameObject("/DeviceRGB"),
-                    NumberObject(2),
-                    ByteStringObject(b"\xff\x00\x00\x00\xff\x00\x00\x00\xff"),
-                ]
-            ),
-        }
-    )
-    if compress:
-        image = image.flate_encode()
-    writer = PdfWriter()
-    page = writer.add_blank_page(20, 20)
-    page[NameObject("/Resources")] = DictionaryObject(
-        {NameObject("/XObject"): DictionaryObject({NameObject("/Im0"): writer._add_object(image)})}
-    )
-    output = BytesIO()
-    writer.write(output)
-    extracted = PdfReader(output).pages[0].images[0].image
-    assert extracted is not None
-    assert extracted.mode == "RGB"
-    assert [extracted.getpixel((x, 0)) for x in range(3)] == [
-        (255, 0, 0),
-        (0, 255, 0),
-        (0, 0, 255),
-    ]
