@@ -36,23 +36,31 @@ crypt_provider = ("local_crypt_fallback", "0.0.0")
 
 class CryptRC4(CryptBase):
     def __init__(self, key: bytes) -> None:
-        self.s = bytearray(range(256))
+        s = bytearray(range(256))
+        key_length = len(key)
         j = 0
         for i in range(256):
-            j = (j + self.s[i] + key[i % len(key)]) % 256
-            self.s[i], self.s[j] = self.s[j], self.s[i]
+            s_i = s[i]
+            j = (j + s_i + key[i % key_length]) & 0xFF
+            s[i] = s[j]
+            s[j] = s_i
+        self.s = s
 
     def encrypt(self, data: bytes) -> bytes:
         s = bytearray(self.s)
-        out = [0 for _ in range(len(data))]
-        i, j = 0, 0
+        keystream = bytearray(len(data))
+        i = j = 0
         for k in range(len(data)):
-            i = (i + 1) % 256
-            j = (j + s[i]) % 256
-            s[i], s[j] = s[j], s[i]
-            x = s[(s[i] + s[j]) % 256]
-            out[k] = data[k] ^ x
-        return bytes(out)
+            i = (i + 1) & 0xFF
+            s_i = s[i]
+            j = (j + s_i) & 0xFF
+            s_j = s[j]
+            s[i] = s_j
+            s[j] = s_i
+            keystream[k] = s[(s_i + s_j) & 0xFF]
+        # XOR the whole keystream with the data at once instead of byte by byte.
+        xored = int.from_bytes(data, "big") ^ int.from_bytes(keystream, "big")
+        return xored.to_bytes(len(data), "big")
 
     def decrypt(self, data: bytes, *, strict: bool = True) -> bytes:
         return self.encrypt(data)
