@@ -1866,12 +1866,19 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added outline item as an indirect object.
 
+        Raises:
+            IndexError: If ``page_number`` is an integer that does not
+                refer to a page of this writer.
+            ValueError: If ``page_number`` is a page object that has not
+                been added to this writer.
+            TypeError: If ``page_number`` has an unsupported type.
+
         .. deprecated:: 7.1.0
             Passing positional arguments is deprecated and will be removed
             in pypdf 8.0.0. Use keyword arguments instead.
 
         """
-        page_ref: NullObject | IndirectObject | NumberObject | None
+        page_ref: IndirectObject | None
         if page_number is None:
             action_ref = None
         else:
@@ -1879,20 +1886,15 @@ class PdfWriter(PdfDocCommon):
                 page_ref = page_number
             elif isinstance(page_number, PageObject):
                 page_ref = page_number.indirect_reference
+                if page_ref is None:
+                    raise ValueError(
+                        "Cannot add an outline item for a page that has not been "
+                        "added to the writer. Add the page to the writer first."
+                    )
             elif isinstance(page_number, int):
-                try:
-                    page_ref = self.pages[page_number].indirect_reference
-                except IndexError:
-                    page_ref = NumberObject(page_number)
+                page_ref = self._get_page_reference(page_number)
             else:
                 raise TypeError(f"page_number: invalid type {type(page_number)}")
-            if page_ref is None:
-                logger_warning(
-                    "can not find reference of page %(page_number)s",
-                    source=__name__,
-                    page_number=page_number,
-                )
-                page_ref = NullObject()
             dest = Destination(
                 NameObject("/" + title + " outline item"),
                 page_ref,

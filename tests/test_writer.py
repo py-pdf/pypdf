@@ -915,6 +915,27 @@ def test_add_outline_item__page_number_invalid_type():
         writer.add_outline_item(title="Title", page_number="not-a-valid-type")
 
 
+def test_add_outline_item__page_number_out_of_range():
+    """Issue #4341: an invalid page index must raise instead of writing a
+    destination that is never resolved."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    with pytest.raises(IndexError, match="Page number 2 is out of range"):
+        writer.add_outline_item(title="Title", page_number=2)
+
+
+def test_add_outline_item__detached_page():
+    """Issue #4341: a page that was never added to the writer must raise
+    instead of silently producing a dead outline item."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    detached_page = PageObject.create_blank_page(None, width=72, height=72)
+
+    with pytest.raises(ValueError, match="has not been added to the writer"):
+        writer.add_outline_item(title="Title", page_number=detached_page)
+
+
 @pytest.mark.parametrize(
     ("is_open", "expected_count"),
     [
