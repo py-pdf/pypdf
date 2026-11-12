@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794484012882,
+  "lastUpdate": 1794494018538,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126593,6 +126593,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01080425075775694",
             "extra": "mean: 546.3130901999989 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rahulsingh.ranjan06@gmail.com",
+            "name": "Rahul",
+            "username": "rahul05ranjan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4571dc6bced5db80f0f6249404a031cf62dd960e",
+          "message": "ROB: Fix IndexError in the named-destination fallback for documents without pages (#4388)\n\n* Fix IndexError in the named-destination fallback for documents without pages\n\n_build_destination catches the PdfReadError of an unknown fit type and,\nin non-strict mode, tries to link the destination to the first page.\nFor a parseable document with an empty /Pages tree this raised an\nunhandled IndexError instead of taking the existing NullObject branch\nthat the very next line already provides.\n\nFixes #4386.\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n* STY: move closing quotes of the new docstring to a separate line\n\n* MNT: address review feedback on tests and destination fallback\n\n- tests/test_reader.py: ensure exactly two empty lines between the new\n  helper and tests (accepts the review suggestion for the\n  _build_minimal_pdf signature block)\n- pypdf/_doc_common.py: replace the IndexError try/except around\n  self.pages[0] with an explicit 'if self.pages' check, keeping the\n  missing-destination fallback behavior identical\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n* Apply batched suggestions from code review\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\n\n---------\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-12T14:34:02+01:00",
+          "tree_id": "2b8889d55911e30d29c8750c139c1a8e2a58c39b",
+          "url": "https://github.com/py-pdf/pypdf/commit/4571dc6bced5db80f0f6249404a031cf62dd960e"
+        },
+        "date": 1794494009249,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.128782145128145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013866159417574036",
+            "extra": "mean: 194.97806139999625 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 33.56596260001023,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008309227147762182",
+            "extra": "mean: 29.79208467567366 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.46792315669304013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05368682123549707",
+            "extra": "mean: 2.1371030386000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 32.09903908393411,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001230896095194085",
+            "extra": "mean: 31.153580560002183 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.2496601061155411,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06870906190223117",
+            "extra": "mean: 4.005445706000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.5863893391179276,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015274559393904067",
+            "extra": "mean: 386.63939139999854 msec\nrounds: 5"
           }
         ]
       }
