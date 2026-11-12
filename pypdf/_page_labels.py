@@ -398,10 +398,10 @@ class _FirstKidFinder:
         kid in order whose ``/Limits`` start before it. Only valid once ``find`` has
         returned ``None`` for the index, which means that all kids have been read.
         """
-        for position in range(len(self._read_kids) - 1, -1, -1):
-            if self._read_lows[position] <= index:
-                return self._read_kids[position]
-        return None
+        position = bisect_right(self._read_lows, index) - 1
+        if position < 0:
+            return None
+        return self._read_kids[position]
 
     def _read_kid(self, kid: Any) -> tuple[int, int, DictionaryObject | Exception] | None:
         try:

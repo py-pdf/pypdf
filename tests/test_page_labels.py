@@ -216,14 +216,14 @@ def test_index2label_kids__recursive(caplog):
     assert caplog.text == ""
 
 
-def _kid(limits: list[int], nums: list[object]) -> DictionaryObject:
+def _make_kid(limits: list[int], nums: list[object]) -> DictionaryObject:
     kid = DictionaryObject()
     kid[NameObject("/Limits")] = ArrayObject([NumberObject(n) for n in limits])
     kid[NameObject("/Nums")] = ArrayObject(nums)
     return kid
 
 
-def _label(prefix: str) -> DictionaryObject:
+def _make_label(prefix: str) -> DictionaryObject:
     label = DictionaryObject()
     label[NameObject("/S")] = NameObject("/D")
     label[NameObject("/P")] = TextStringObject(prefix)
@@ -235,8 +235,8 @@ def _label(prefix: str) -> DictionaryObject:
     [
         pytest.param(
             [
-                _kid([0, 2], [NumberObject(0), _label("a-"), NumberObject(2), _label("b-")]),
-                _kid([4, 4], [NumberObject(4), _label("c-")]),
+                _make_kid([0, 2], [NumberObject(0), _make_label("a-"), NumberObject(2), _make_label("b-")]),
+                _make_kid([4, 4], [NumberObject(4), _make_label("c-")]),
             ],
             # Page 3 is between the /Limits of the two kids, pages 5 and 6 after the
             # /Limits of the last one.
@@ -244,7 +244,7 @@ def _label(prefix: str) -> DictionaryObject:
             id="between-and-after-kids",
         ),
         pytest.param(
-            [_kid([2, 2], [NumberObject(2), _label("a-")])],
+            [_make_kid([2, 2], [NumberObject(2), _make_label("a-")])],
             ["1", "2", "a-1", "a-2", "a-3", "a-4", "a-5"],
             id="before-first-kid",
         ),
