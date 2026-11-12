@@ -30,7 +30,6 @@ from pypdf.generic import (
     NullObject,
     NumberObject,
     RectangleObject,
-    StreamObject,
     TextStringObject,
 )
 
@@ -777,34 +776,23 @@ def test_get_fonts__acroform_default_resources():
     assert _get_fonts_walk(acro_form, set(), set()) == ({"/Helvetica"}, set())
 
 
-@pytest.mark.parametrize("states", [False, True])
-def test_get_fonts__annotation_appearance(states):
-    """
-    The fonts of an appearance stream without /Type, as in germanfields.pdf, and
-    those of the appearance streams of each state of a check box are collected.
-    """
-    font = DictionaryObject({
-        NameObject("/Type"): NameObject("/Font"),
-        NameObject("/Subtype"): NameObject("/Type1"),
-        NameObject("/BaseFont"): NameObject("/ZapfDingbats"),
-    })
-    appearance = StreamObject()
-    appearance[NameObject("/Subtype")] = NameObject("/Form")
-    appearance[NameObject("/Resources")] = DictionaryObject({
-        NameObject("/Font"): DictionaryObject({NameObject("/ZaDb"): font})
-    })
-    if states:
-        normal = DictionaryObject({
-            NameObject("/Off"): StreamObject(),
-            NameObject("/Yes"): appearance,
-        })
-    else:
-        normal = appearance
-    annotation = DictionaryObject({
-        NameObject("/AP"): DictionaryObject({NameObject("/N"): normal})
-    })
+@pytest.mark.enable_socket
+def test_get_fonts__appearance_stream_without_type():
+    url = "https://github.com/py-pdf/pypdf/files/12194195/test.pdf"
+    name = "germanfields.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert reader.pages[0]._get_fonts() == ({"(/Type3)"}, {"/Helvetica"})
 
-    assert _get_fonts_walk(annotation, set(), set()) == ({"/ZapfDingbats"}, set())
+
+def test_get_fonts__appearance_states():
+    """The fonts of the appearance stream of each state of a check box are collected."""
+    reader = PdfReader(RESOURCE_ROOT / "FormTestFromOo.pdf")
+    check_box = reader.get_fields()["CheckBox1"].indirect_reference.get_object()
+    embedded = {"/BAAAAA+LiberationSerif", "/CAAAAA+LiberationSans", "/EAAAAA+SegoeUI"}
+    assert _get_fonts_walk(check_box, set(), set()) == (
+        embedded | {"/LiberationSans", "/ZapfDingbats"},
+        embedded,
+    )
 
 
 def test_annotation_getter():
