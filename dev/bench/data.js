@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794494492995,
+  "lastUpdate": 1794497893528,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126659,6 +126659,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015274559393904067",
             "extra": "mean: 386.63939139999854 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rahulsingh.ranjan06@gmail.com",
+            "name": "Rahul",
+            "username": "rahul05ranjan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b60e834f0dadfc26e16a69874328c3310f18d0c3",
+          "message": "ROB: Fix TypeError in root recovery for a non-integer trailer /Size (#4389)\n\n* Fix TypeError in root recovery for a non-integer trailer /Size\n\nThe root recovery loop did cast(int, trailer.get(\"/Size\", 0)) and passed\nthe result to range(); a corrupted trailer can carry a non-integer /Size\n(a NameObject in the reported case), which raised a bare TypeError\ninstead of running the recovery with the default. The size is now\nvalidated with int() and falls back to 0, so such a file fails with the\nregular PdfReadError for an unrecoverable root, like other invalid-root\ncases.\n\nFixes #4387.\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n* STY: move closing quotes of the new docstring to a separate line\n\n* MNT: address review feedback on root recovery and tests\n\n- pypdf/_reader.py: replace the try/except around the trailer /Size\n  conversion with an explicit isinstance(int) validation, following the\n  existing pattern in _read_standard_xref_table__handle_size; the loop\n  keeps its existing _root_object_recovery_limit LimitReachedError bound\n- tests/test_reader.py: ensure exactly two empty lines between the new\n  helper and tests (accepts the review suggestion for the\n  _build_minimal_pdf signature block)\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n* add back missing empty lines\n\n* remove obsolete empty line\n\n---------\n\nCo-authored-by: rahul05ranjan <11793455+rahul05ranjan@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-12T16:36:28+01:00",
+          "tree_id": "29ea7a153763c48db89a6f37411c50e313b98893",
+          "url": "https://github.com/py-pdf/pypdf/commit/b60e834f0dadfc26e16a69874328c3310f18d0c3"
+        },
+        "date": 1794497881381,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.414527298888556,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007315055665543862",
+            "extra": "mean: 226.52481959999875 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 34.64924686843974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006703718220167134",
+            "extra": "mean: 28.860656157893285 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4244200130944066,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023554480481713935",
+            "extra": "mean: 2.3561565645999907 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 24.51256317704143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015662212549425244",
+            "extra": "mean: 40.79540734999938 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.21166234548301263,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02009086761524143",
+            "extra": "mean: 4.724505899800005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9511501045510833,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012990619586612063",
+            "extra": "mean: 512.5182310000071 msec\nrounds: 5"
           }
         ]
       }
