@@ -4,7 +4,7 @@ Constants
 ## Deprecated names
 
 The following names remain available with a ``DeprecationWarning`` until
-pypdf 7.0.0. Use the uppercase replacement shown here:
+pypdf 8.0.0. Use the uppercase replacement shown here:
 
 * ``TypArguments`` -> ``TypeArguments``
 * ``TypFitArguments`` -> ``FitTypes``
@@ -39,14 +39,14 @@ the same PDF flag bit, as their legacy names did; they are semantic aliases,
 not a naming collision.
 
 .. autoclass:: pypdf.constants.TypeArguments
-        :members:
-        :undoc-members:
-        :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 .. autoclass:: pypdf.constants.FitTypes
-        :members:
-        :undoc-members:
-        :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 The stroking and non-stroking graphics-state keys differ only by case in the
 PDF syntax (``/OP`` vs. ``/op`` and ``/CA`` vs. ``/ca``). The semantic
@@ -73,7 +73,7 @@ replacement names preserve that distinction explicitly.
     :show-inheritance:
 
 .. autoclass:: pypdf.constants.FieldDictionaryAttributes
-       :members:
-       :undoc-members:
+    :members:
+    :undoc-members:
     :exclude-members: FT, Parent, PARENT, Kids, KIDS, T, TU, TM, Ff, FF, V, DV, AA, Opt, OPT, attributes, attributes_dict
-       :show-inheritance:
+    :show-inheritance:
