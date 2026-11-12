@@ -179,9 +179,6 @@ def test_tree_object__insert_child_in_first_position_with_next() -> None:
     child_a_ref = writer._add_object(child_a)
     tree.add_child(child_a_ref, writer)
 
-    # prev = tree["/Last"] = A, prev == before, so no while loop.
-    # try: prev["/Prev"] — A has no /Prev → KeyError → except block fires.
-
     # Create child C with a /Next pointer pointing to something
     child_c = DictionaryObject()
     child_c[NameObject("/Next")] = child_a_ref  # C -> A
@@ -195,6 +192,8 @@ def test_tree_object__insert_child_in_first_position_with_next() -> None:
     c_obj = child_c_ref.get_object()
     assert isinstance(c_obj, DictionaryObject)
     assert c_obj["/Next"] == child_a
+    assert tree["/First"] == c_obj
+    assert "/Prev" not in c_obj
 
 
 @pytest.mark.enable_socket
