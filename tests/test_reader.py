@@ -1854,6 +1854,45 @@ def test_named_destination__fallback_without_pages(caplog):
     assert "Unknown destination: '/Dest1'" in caplog.text
 
 
+@pytest.mark.parametrize(
+    "corrupt_id",
+    [b"/ID /Bogus", b"/ID 42", b"/ID (bare-string)"],
+)
+def test_trailer_id_non_array_raises(corrupt_id):
+    """A non-array trailer /ID must fail with the standard PdfReadError
+    instead of silently exposing a wrong-typed object (mirrors the /Info
+    dictionary validation).
+    """
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R >>"),
+            ("2", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            ("3", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>"),
+        ]
+    )
+    data = data.replace(b"<< /Size 3 /Root", b"<< /Size 3 " + corrupt_id + b" /Root")
+    reader = PdfReader(BytesIO(data))
+    with pytest.raises(PdfReadError):
+        reader._ID
+
+
+def test_writer_clone_from_non_array_id_raises():
+    """Cloning from a document with a non-array trailer /ID must fail with
+    the standard PdfReadError instead of silently copying garbage.
+    """
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R >>"),
+            ("2", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            ("3", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>"),
+        ]
+    )
+    data = data.replace(b"<< /Size 3 /Root", b"<< /Size 3 /ID 42 /Root")
+    reader = PdfReader(BytesIO(data))
+    with pytest.raises(PdfReadError):
+        PdfWriter(clone_from=reader)
+
+
 @pytest.mark.enable_socket
 def test_pdfreader_multiple_definitions(caplog):
     """iss325"""
