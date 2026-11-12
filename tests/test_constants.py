@@ -6,13 +6,13 @@ import pytest
 from pypdf import constants
 
 from pypdf.constants import (
+    PDF_KEYS,
     AnnotationDictionaryAttributes,
     CatalogDictionary,
     CheckboxRadioButtonAttributes,
     FieldDictionaryAttributes,
     FileSpecificationDictionaryEntries,
     FilterTypeAbbreviations,
-    PDF_KEYS,
     GraphicsStateParameters,
     InteractiveFormDictEntries,
     OutlineFontFlag,
