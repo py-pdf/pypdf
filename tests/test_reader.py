@@ -1853,6 +1853,8 @@ def test_named_destination__fallback_without_pages(caplog):
     assert destination["/Type"] == "/Fit"
     assert isinstance(destination["/Page"], NullObject)
     assert "Unknown destination: '/Dest1'" in caplog.text
+
+
 @pytest.mark.enable_socket
 def test_pdfreader_multiple_definitions(caplog):
     """iss325"""
