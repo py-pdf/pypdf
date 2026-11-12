@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794499681180,
+  "lastUpdate": 1794499734048,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -168505,6 +168505,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028182501117682487",
             "extra": "mean: 682.1865552000077 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a0e60a403e7c1a5937d7c980151cf71e6b44b6e4",
+          "message": "DEP: Deprecate passing a boolean to remove_images (#4412)\n\nPassing a boolean to PdfWriter.remove_images() still removes all images,\nbut now issues a DeprecationWarning and will be removed in pypdf 8.0.0.\nUse ImageType.ALL instead.\n\npypdf 3.5.0 deprecated the boolean parameter ignore_byte_string_object\n(#1666), pypdf 3.17.0 made to_delete the first parameter (#2214), and\npypdf 4.0.0 removed ignore_byte_string_object (#2367), but\nremove_images() kept accepting a boolean in its place, without a\nwarning.\n\nThe docstring has a `.. deprecated:: 7.1.0` note, as add_outline_item()\nhas since #4401.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-12T17:05:39+01:00",
+          "tree_id": "82fa004aae98f6c5db78770809a18c26529b41fd",
+          "url": "https://github.com/py-pdf/pypdf/commit/a0e60a403e7c1a5937d7c980151cf71e6b44b6e4"
+        },
+        "date": 1794499725627,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 25.164977206992493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01593123641039776",
+            "extra": "mean: 39.737766967741734 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 51.42989479962117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00827811791907181",
+            "extra": "mean: 19.44394410869699 msec\nrounds: 46"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.8051719205192938,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02359243297981169",
+            "extra": "mean: 553.9638572000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.8441948714601685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.055133796169315887",
+            "extra": "mean: 1.1845606196000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4880046449164413,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03702286318043625",
+            "extra": "mean: 2.049160823400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8093365625581053,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03866738536657761",
+            "extra": "mean: 552.6887703999989 msec\nrounds: 5"
           }
         ]
       }
