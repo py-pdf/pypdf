@@ -1154,4 +1154,3 @@ def test_inline_image__custom_color_space__resolved_from_resources():
 
     images = list(PdfReader(stream).pages[0].images)
     assert len(images) == 1
-
