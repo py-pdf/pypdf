@@ -907,7 +907,7 @@ class TreeObject(DictionaryObject):
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
             return child_reference
-        prev = cast("DictionaryObject", self["/Last"])
+        prev = cast("DictionaryObject", self["/First"])
 
         visited: set[int] = set()
         while prev.indirect_reference != before:
@@ -935,6 +935,7 @@ class TreeObject(DictionaryObject):
         except MemoryError:  # pragma: no cover  # TODO: BLE001
             raise
         except Exception:  # it means we are inserting in first position
+            self[NameObject("/First")] = child_reference
             child_obj.pop("/Next", None)
         child_obj[NameObject("/Next")] = prev
         prev[NameObject("/Prev")] = child_reference
