@@ -127,8 +127,8 @@ def test_writer_clone_bookmarks():
     writer.clone_document_from_reader(reader, cat1)
     assert "/Page" in cat
     assert writer.pages[0].raw_get("/Parent") == writer._pages
-    writer.add_outline_item("Page 1", 0)
-    writer.add_outline_item("Page 2", 1)
+    writer.add_outline_item(title="Page 1", page_number=0)
+    writer.add_outline_item(title="Page 2", page_number=1)
 
     # Assert
     bytes_stream = BytesIO()
@@ -141,8 +141,8 @@ def test_writer_clone_bookmarks():
     # test with append
     writer = PdfWriter()
     writer.append(reader)
-    writer.add_outline_item("Page 1", 0)
-    writer.add_outline_item("Page 2", 1)
+    writer.add_outline_item(title="Page 1", page_number=0)
+    writer.add_outline_item(title="Page 2", page_number=1)
 
     # Assert
     bytes_stream = BytesIO()
@@ -177,49 +177,73 @@ def writer_operate(writer: PdfWriter) -> None:
     writer.remove_links()
     writer.add_outline_item_destination(page)
     oi = writer.add_outline_item(
-        "An outline item", 0, None, (255, 0, 15), True, True, Fit.fit_box_vertically(10)
+        title="An outline item",
+        page_number=0,
+        parent=None,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box_vertically(10),
     )
     writer.add_outline_item(
-        "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
+        title="The XYZ fit",
+        page_number=0,
+        parent=oi,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.xyz(left=10, top=20, zoom=3),
     )
     writer.add_outline_item(
-        "The XYZ fit no args", 0, oi, (255, 0, 15), True, True, Fit.xyz()
+        title="The XYZ fit no args", page_number=0, parent=oi, color=(255, 0, 15), bold=True, italic=True, fit=Fit.xyz()
     )
     writer.add_outline_item(
-        "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
+        title="The FitH fit",
+        page_number=0,
+        parent=oi,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_horizontally(top=10),
     )
     writer.add_outline_item(
-        "The FitV fit", 0, oi, (255, 0, 15), True, True, Fit.fit_vertically(left=10)
+        title="The FitV fit",
+        page_number=0,
+        parent=oi,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_vertically(left=10),
     )
     writer.add_outline_item(
-        "The FitR fit",
-        0,
-        oi,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
+        title="The FitR fit",
+        page_number=0,
+        parent=oi,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
     )
     writer.add_outline_item(
-        "The FitB fit", 0, oi, (255, 0, 15), True, True, Fit.fit_box()
+        title="The FitB fit", page_number=0, parent=oi, color=(255, 0, 15), bold=True, italic=True, fit=Fit.fit_box()
     )
     writer.add_outline_item(
-        "The FitBH fit",
-        0,
-        oi,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_box_horizontally(top=10),
+        title="The FitBH fit",
+        page_number=0,
+        parent=oi,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box_horizontally(top=10),
     )
     writer.add_outline_item(
-        "The FitBV fit",
-        0,
-        oi,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit_box_vertically(left=10),
+        title="The FitBV fit",
+        page_number=0,
+        parent=oi,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit_box_vertically(left=10),
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
@@ -816,36 +840,36 @@ def test_add_outline_item(pdf_file_path):
         writer.add_page(page)
 
     outline_item = writer.add_outline_item(
-        "An outline item",
-        1,
-        None,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit(),
+        title="An outline item",
+        page_number=1,
+        parent=None,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit(),
         is_open=False,
     )
     _o2a = writer.add_outline_item(
-        "Another", 2, outline_item, None, False, False, Fit.fit()
+        title="Another", page_number=2, parent=outline_item, color=None, bold=False, italic=False, fit=Fit.fit()
     )
     _o2b = writer.add_outline_item(
-        "Another bis", 2, outline_item, None, False, False, Fit.fit()
+        title="Another bis", page_number=2, parent=outline_item, color=None, bold=False, italic=False, fit=Fit.fit()
     )
     outline_item2 = writer.add_outline_item(
-        "An outline item 2",
-        1,
-        None,
-        (255, 0, 15),
-        True,
-        True,
-        Fit.fit(),
+        title="An outline item 2",
+        page_number=1,
+        parent=None,
+        color=(255, 0, 15),
+        bold=True,
+        italic=True,
+        fit=Fit.fit(),
         is_open=True,
     )
     _o3a = writer.add_outline_item(
-        "Another 2", 2, outline_item2, None, False, False, Fit.fit()
+        title="Another 2", page_number=2, parent=outline_item2, color=None, bold=False, italic=False, fit=Fit.fit()
     )
     _o3b = writer.add_outline_item(
-        "Another 2bis", 2, outline_item2, None, False, False, Fit.fit()
+        title="Another 2bis", page_number=2, parent=outline_item2, color=None, bold=False, italic=False, fit=Fit.fit()
     )
 
     # write "output" to pypdf-output.pdf
@@ -869,8 +893,8 @@ def test_add_outline_item_collapsed():
     for page in reader.pages:
         writer.add_page(page)
 
-    parent = writer.add_outline_item("Parent Item", 0, is_open=False)
-    writer.add_outline_item("Child Item", 0, parent=parent, is_open=False)
+    parent = writer.add_outline_item(title="Parent Item", page_number=0, is_open=False)
+    writer.add_outline_item(title="Child Item", page_number=0, parent=parent, is_open=False)
 
     with BytesIO() as output_stream:
         writer.write(output_stream)
@@ -888,7 +912,7 @@ def test_add_outline_item__page_number_invalid_type():
     writer.add_blank_page(width=72, height=72)
 
     with pytest.raises(TypeError, match="page_number: invalid type"):
-        writer.add_outline_item("Title", "not-a-valid-type")
+        writer.add_outline_item(title="Title", page_number="not-a-valid-type")
 
 
 @pytest.mark.parametrize(
@@ -906,9 +930,9 @@ def test_add_outline_item_nested_count(is_open, expected_count):
     for page in reader.pages:
         writer.add_page(page)
 
-    parent = writer.add_outline_item("Parent Item", 0, is_open=is_open)
-    writer.add_outline_item("Child 1", 0, parent=parent)
-    writer.add_outline_item("Child 2", 0, parent=parent)
+    parent = writer.add_outline_item(title="Parent Item", page_number=0, is_open=is_open)
+    writer.add_outline_item(title="Child 1", page_number=0, parent=parent)
+    writer.add_outline_item(title="Child 2", page_number=0, parent=parent)
 
     with BytesIO() as output_stream:
         writer.write(output_stream)
@@ -1558,9 +1582,9 @@ def test_colors_in_outline_item(pdf_file_path):
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     purple_rgb = (0.5019607843137255, 0.0, 0.5019607843137255)
-    writer.add_outline_item("First Outline Item", page_number=2, color="800080")
-    writer.add_outline_item("Second Outline Item", page_number=3, color="#800080")
-    writer.add_outline_item("Third Outline Item", page_number=4, color=purple_rgb)
+    writer.add_outline_item(title="First Outline Item", page_number=2, color="800080")
+    writer.add_outline_item(title="Second Outline Item", page_number=3, color="#800080")
+    writer.add_outline_item(title="Third Outline Item", page_number=4, color=purple_rgb)
 
     with open(pdf_file_path, "wb") as f:
         writer.write(f)
@@ -2279,7 +2303,7 @@ def test_update_form_fields2(caplog):
                     "p2 YY": "24",
                     "Initial": "JSS",
                     # "p2 I DO NOT Agree": "null",
-                    "p2 Last Name": "Smith",
+                    "p2 Last Name": ("Smith", "/Helv", 12),
                     "p3 First Name": "شهرزاد",
                     "p3 Middle Name": "R",
                     "p3 MM": "01",
@@ -2325,6 +2349,13 @@ def test_update_form_fields2(caplog):
         "test2.p3 DD": "25",
         "test2.p3 YY": "21",
     }
+    # The value of a (value, font name, font size) tuple goes to the field, not to its widgets
+    field = merger.get_fields()["test2.p2 Last Name"].indirect_reference.get_object()
+    assert field["/V"] == "Smith"
+    for kid in field["/Kids"]:
+        widget = kid.get_object()
+        assert "/V" not in widget
+        assert b"(Smith) Tj" in widget["/AP"]["/N"].get_data()
     assert "/PYPDF1cp1257" in merger.pages[0]["/Resources"]["/Font"]
     assert "Text string 'شهرزاد' contains characters not supported by font encoding." in caplog.text
 
@@ -2621,6 +2652,30 @@ def test_clone_from__tolerate_dangling_info_reference():
     assert writer._info["/Title"] == NullObject()
 
 
+@pytest.mark.parametrize(
+    "file_identifier",
+    [
+        # Decoded as UTF-16BE text due to the leading null byte.
+        pytest.param(b"\x00\xa1\xb2\xc3\xd4\xe5\xf6\x07\x18\x29\x3a\x4b\x5c\x6d\x7e\x8f", id="leading-null-byte"),
+        # Decoded as UTF-8 text due to the leading BOM.
+        pytest.param(b"\xef\xbb\xbfAb\xe2\x82\xac\xc3\xa912\x00\x00\x00\x00", id="utf8-bom"),
+    ],
+)
+def test_clone_from__keep_file_identifier_bytes(file_identifier):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer._ID = ArrayObject([ByteStringObject(file_identifier), ByteStringObject(file_identifier)])
+    source = BytesIO()
+    writer.write(source)
+    assert isinstance(PdfReader(source).trailer["/ID"][0], TextStringObject)
+
+    writer = PdfWriter(clone_from=PdfReader(source))
+    output = BytesIO()
+    writer.write(output)
+    file_identifiers = PdfReader(output).trailer["/ID"]
+    assert file_identifiers[0].original_bytes == file_identifier
+    assert file_identifiers[1].original_bytes == file_identifier
+
+
 @pytest.mark.enable_socket
 def test_germanfields():
     """Cf #2035"""
@@ -2877,7 +2932,7 @@ REFERENCES 76"""
         parent = _get_parent_bookmark(indent_size, history_indent, bookmarks)
         history_indent.append(indent_size)
         title, page = " ".join(line2[:-1]), int(line2[-1]) - 1
-        new_bookmark = writer.add_outline_item(title, page, parent=parent)
+        new_bookmark = writer.add_outline_item(title=title, page_number=page, parent=parent)
         bookmarks.append(new_bookmark)
 
 
@@ -3852,6 +3907,13 @@ def test_write__incremental__encrypted_source():
         writer.write(output)
     assert output.getvalue() == b""
 
+    with pytest.raises(
+        NotImplementedError,
+        match=r"^Writing incremental updates of encrypted PDF files is currently not supported\.$",
+    ):
+        writer._write_increment(output)
+    assert output.getvalue() == b""
+
 
 @pytest.mark.timeout(5)
 def test_get_filtered_outline__first__cyclic(caplog) -> None:
@@ -3989,7 +4051,7 @@ def test_add_outline_item__outlines_not_an_indirect_dictionary(caplog, outlines,
     stream.seek(0)
 
     writer = PdfWriter(clone_from=PdfReader(stream))
-    writer.add_outline_item("Title", 0)
+    writer.add_outline_item(title="Title", page_number=0)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -4378,3 +4440,41 @@ def test_generate_file_identifiers__update() -> None:
     writer.generate_file_identifiers()
     assert writer._ID[0] == id_permanent
     assert writer._ID[1] != id_changing
+
+
+def test_add_outline_item__positional_arguments() -> None:
+    """
+    add_outline_item() warns about, but still accepts, positional arguments in the order of its signature.
+
+    That is the order (title, page_number, parent, before, color, bold, italic, fit, is_open).
+    """
+    writer = PdfWriter()
+    # Two pages, so that the page number 1 differs from the default 0.
+    writer.add_blank_page(72, 72)
+    writer.add_blank_page(72, 72)
+    parent = writer.add_outline_item(title="parent", page_number=0)
+    first = writer.add_outline_item(title="first", page_number=0, parent=parent)
+    last = writer.add_outline_item(title="last", page_number=0, parent=parent)
+
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^Passing positional arguments to PdfWriter\.add_outline_item\(\) is deprecated and will be "
+            r"removed in pypdf 8\.0\.0\. Use keyword arguments instead\.$"
+        ),
+    ):
+        item = writer.add_outline_item(
+            "positional", 1, parent, last, (1, 0, 0), True, False, Fit.fit_horizontally(10), True
+        )
+
+    item = item.get_object()
+    # ISO 32000-2:2020, 12.3.3, Table 151: the new item is a child of `parent`, in front of `last`.
+    assert item["/Parent"].indirect_reference == parent
+    assert item["/Prev"].indirect_reference == first
+    assert item["/Next"].indirect_reference == last
+    # /C is the DeviceRGB color of the text, /F holds the flags.
+    assert item["/C"] == [1, 0, 0]
+    # Table 152: bit 1 is italic, bit 2 is bold.
+    assert item["/F"] == 2
+    # Table 149: [page /FitH top].
+    assert item["/A"]["/D"] == [writer.pages[1].indirect_reference, "/FitH", 10]

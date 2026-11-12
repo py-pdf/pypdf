@@ -31,6 +31,26 @@ ImageMode: TypeAlias = Literal[
 
 MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
+_PROCESS_COLORANTS = ("/Cyan", "/Magenta", "/Yellow", "/Black")
+
+
+def _get_process_colorant_channels(color_space: Any) -> list[int] | None:
+    """
+    Return the CMYK channel of each colorant of a /DeviceN space.
+
+    Returns None if the space is something else or uses a colorant which is not a process colorant.
+    """
+    if not isinstance(color_space, list) or len(color_space) < 2 or color_space[0] != "/DeviceN":
+        return None
+    colorants = color_space[1].get_object()
+    if (
+        not isinstance(colorants, list)
+        or not colorants
+        or not all(colorant in _PROCESS_COLORANTS for colorant in colorants)
+    ):
+        return None
+    return [_PROCESS_COLORANTS.index(colorant) for colorant in colorants]
+
 
 def _get_image_mode(
     color_space: str | list[Any] | Any,
@@ -67,6 +87,8 @@ def _get_image_mode(
         color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space_str = color_space[1].get_object()
+        if _get_process_colorant_channels(color_space_str) is not None:
+            color_space_str = ColorSpaces.DEVICE_CMYK
         mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
@@ -193,10 +215,57 @@ def _expand_low_bit_samples(
     return "P", bits2byte(data, size, bits)
 
 
+# Bytes per pixel Pillow allocates for a single-band image, keyed by mode.
+# Pillow keeps one sample of "1", "L" and "P" in one byte, the 16-bit family in
+# two and "I"/"F" in four. Image.getmodetype() cannot tell them apart: it
+# reports "L" for "1", "L", "P" and the whole 16-bit family.
+_SINGLE_BAND_BYTES_PER_PIXEL: dict[str, int] = {
+    "1": 1,
+    "L": 1,
+    "P": 1,
+    "I;16": 2,
+    "I;16B": 2,
+    "I;16L": 2,
+    "I;16N": 2,
+    "I": 4,
+    "F": 4,
+}
+
+
+def _get_allocated_bytes_per_pixel(mode: str) -> int:
+    """Bytes Pillow allocates per pixel for a decoded image in the given mode.
+
+    This is the size of the internal pixel, not the size of the raw data: every
+    mode with two or more bands is stored in a four-byte pixel, so "RGB",
+    "YCbCr", "LAB", "HSV", "LA", "La" and "PA" all take four bytes although
+    they have three or two bands. The length of the mode name says nothing
+    about it either: "I" and "F" need four bytes per pixel and the 16-bit modes
+    two.
+
+    The number of bands is taken from Pillow, so the multi-band half needs no
+    table. The four bytes are Pillow's image32 storage, which the API does not
+    report: it holds for every mode Pillow had from 8.0.0 to 12.3.0, and the
+    test over Image.MODES fails when a release adds a mode, so the assumption
+    cannot go stale unnoticed. The width of a single sample is not exposed in a
+    version-independent way either, so those modes stay in a table; an unknown
+    mode takes four bytes, the safe direction for a limit.
+    """
+    try:
+        bands = Image.getmodebands(mode)
+    except KeyError:
+        # Not a mode Pillow knows: _get_mode_and_invert_color() returns an empty
+        # mode when the color space is missing, and _handle_flate() builds an
+        # image from it. Keep the name length so that such data is still
+        # reported by Pillow instead of failing here.
+        return len(mode)
+    if bands > 1:
+        return 4
+    return _SINGLE_BAND_BYTES_PER_PIXEL.get(mode, 4)
+
+
 def _validate_image_size(*, mode: str, size: tuple[int, int]) -> tuple[int, int]:
     pixel_count = size[0] * size[1]
-    bytes_per_pixel = len(mode)
-    required_byte_count = pixel_count * bytes_per_pixel
+    required_byte_count = pixel_count * _get_allocated_bytes_per_pixel(mode)
 
     configuration = get_configuration()
     if required_byte_count > configuration.image_maximum_buffer_size:
@@ -211,7 +280,7 @@ def _validate_image_size(*, mode: str, size: tuple[int, int]) -> tuple[int, int]
 def _create_image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
-    pixel_count, required_byte_count = _validate_image_size(mode=mode, size=size)
+    pixel_count, _ = _validate_image_size(mode=mode, size=size)
 
     try:
         img = Image.frombytes(mode, size, data)
@@ -223,7 +292,12 @@ def _create_image_from_bytes(
             ) from exc
         if data_length % pixel_count != 0:
             raise
-        k = required_byte_count / data_length
+        # The expansion factor counts raw samples per pixel, not the bytes
+        # Pillow allocates: the modes that reach this function are "1", "L",
+        # "P", "RGB", "RGBA" and "CMYK", whose names spell out their samples,
+        # so len(mode) is the sample count.
+        raw_byte_count = pixel_count * len(mode)
+        k = raw_byte_count / data_length
         data = b"".join(bytes((x,) * int(k)) for x in data)
         img = Image.frombytes(mode, size, data)
     return img
@@ -238,6 +312,11 @@ def _create_image_from_buffer(*, buf: IO[bytes], formats: tuple[str, ...] | None
 def _convert_image(*, image: Image.Image, mode: str) -> Image.Image:
     _validate_image_size(mode=mode, size=image.size)
     return image.convert(mode)
+
+
+def _resize_image(*, image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    _validate_image_size(mode=image.mode, size=size)
+    return image.resize(size)
 
 
 def _merge_image(*, mode: str, bands: Sequence[Image.Image]) -> Image.Image:
@@ -291,6 +370,17 @@ def _handle_flate(
             lookup = lookup.original_bytes
         if isinstance(lookup, str):
             lookup = lookup.encode()
+        if (channels := _get_process_colorant_channels(base)) is not None:
+            # Put each tint into its own CMYK channel instead of evaluating the tint transform.
+            colorant_count = len(channels)
+            cmyk_lookup = bytearray()
+            for index in range(0, len(lookup) - colorant_count + 1, colorant_count):
+                cmyk = bytearray(4)
+                for channel, tint in zip(channels, lookup[index : index + colorant_count]):
+                    cmyk[channel] = tint
+                cmyk_lookup += cmyk
+            lookup = bytes(cmyk_lookup)
+            base = ColorSpaces.DEVICE_CMYK
         try:
             nb, conv, mode = {  # type: ignore[assignment]
                 "1": (0, "", ""),
@@ -564,23 +654,17 @@ def _apply_alpha(
         return img, extension, image_format
 
     alpha = _xobj_to_image(s_mask, visited=visited)[2]
+    # TODO: implement mask
+    if alpha.mode != "L":
+        alpha = _convert_image(image=alpha, mode="L")
     if img.size != alpha.size:
-        logger_warning(
-            "Image and mask size not matching: %(image_size)s vs. %(alpha_size)s %(obj_as_text)s",
-            source=__name__,
-            image_size=img.size,
-            alpha_size=alpha.size,
-            obj_as_text=obj_as_text,
-        )
-    else:
-        # TODO: implement mask
-        if alpha.mode != "L":
-            alpha = _convert_image(image=alpha, mode="L")
-        if img.mode == "P":
-            img = _convert_image(image=img, mode="RGB")
-        elif img.mode == "1":
-            img = _convert_image(image=img, mode="L")
-        img.putalpha(alpha)
+        # Both are mapped onto the unit square, thus a soft mask may use other dimensions than its image.
+        alpha = _resize_image(image=alpha, size=img.size)
+    if img.mode == "P":
+        img = _convert_image(image=img, mode="RGB")
+    elif img.mode == "1":
+        img = _convert_image(image=img, mode="L")
+    img.putalpha(alpha)
 
     if "JPEG" in image_format:
         image_format = "JPEG2000"

@@ -127,6 +127,28 @@ def test_read_metadata_title_is_utf8():
         assert title == "Microsoft Word - トランスバース社買収電話会議英語Final.docx"
 
 
+@pytest.mark.enable_socket
+def test_read_utf8_text_strings():
+    """UTF-8 text strings with a byte order mark, see ISO 32000-2:2020, 7.9.2.2.1."""
+    # PDF 2.0 example file provided by the PDF Association under CC BY-SA 4.0.
+    url = (
+        "https://raw.githubusercontent.com/pdf-association/pdf20examples/"
+        "c20f2c17bfcc4baab7cfe62e70fae64caf14d5fa/pdf20-utf8-test.pdf"
+    )
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name="pdf20-utf8-test.pdf")))
+
+    assert reader.metadata.title == "表ポあA鷗ŒéＢ逍Üßªąñ丂㐀𠀀"
+    assert reader.metadata.author == "Peter Wyatt"
+    assert [item.title for item in reader.outline] == [
+        "PDF 2.0 with UTF-8 test file",
+        "\u202a\u202atest\u202a",
+        "\U0001f308\ufe0f\n",
+    ]
+    ocgs = reader.root_object["/OCProperties"]["/OCGs"]
+    assert [ocg.get_object()["/Name"] for ocg in ocgs] == ["Layer 1", "گچپژ"]
+    assert reader.page_labels == ["Prefixi"]
+
+
 def test_iss1943():
     with PdfReader(RESOURCE_ROOT / "crazyones.pdf") as reader:
         docinfo = reader.metadata
@@ -1788,6 +1810,7 @@ def _build_minimal_pdf(objects: list[tuple[str, str]]) -> bytes:
     return out.getvalue()
 
 
+
 def test_root_recovery_with_non_integer_size(caplog):
     """Cf #4387: a non-integer /Size in a corrupted trailer must not crash
     the root recovery loop with a TypeError.
@@ -1812,6 +1835,24 @@ def test_root_recovery_with_non_integer_size(caplog):
     )
 
 
+def test_named_destination__fallback_without_pages(caplog):
+    """Cf #4386: an unknown fit type must degrade to the missing-destination
+    fallback even when the document has no pages.
+    """
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R /Names << /Dests << /Dest1 3 0 R >> >> >>"),
+            ("2", "<< /Type /Pages /Kids [] /Count 0 >>"),
+            ("3", "[ 2 0 R (junk) 0 ]"),  # unknown fit type with an argument
+        ]
+    )
+    reader = PdfReader(BytesIO(data), strict=False)
+    destinations = reader.named_destinations
+    assert len(destinations) == 1
+    destination = destinations["/Dest1"]
+    assert destination["/Type"] == "/Fit"
+    assert isinstance(destination["/Page"], NullObject)
+    assert "Unknown destination: '/Dest1'" in caplog.text
 @pytest.mark.enable_socket
 def test_pdfreader_multiple_definitions(caplog):
     """iss325"""

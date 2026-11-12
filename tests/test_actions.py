@@ -1,5 +1,6 @@
 """Test the pypdf.actions submodule."""
 
+from io import BytesIO
 from typing import Any
 
 import pytest
@@ -7,7 +8,14 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript, PageTrigger
 from pypdf.errors import DeprecationError, ParseError
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject, is_null_or_none
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    is_null_or_none,
+)
 
 from . import RESOURCE_ROOT
 
@@ -441,6 +449,56 @@ def test_page_add_action__chaining_with_array(pdf_file_writer):
     final_action = intermediate[NameObject("/Next")]
 
     assert final_action[NameObject("/JS")] == "app.alert('Final action');"
+
+
+def test_page_add_action__chaining_with_indirect_action():
+    """
+    This test ensures that a page action stored as an indirect object can be
+    extended after a round-trip through a file, and stays indirect.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    first = JavaScript("app.alert('First action');")
+    page[NameObject("/AA")] = DictionaryObject({NameObject("/O"): writer._add_object(first)})
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    page = PdfReader(buffer).pages[0]
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Second action');"))
+
+    first_action = page["/AA"].get("/O")
+    assert isinstance(first_action, IndirectObject)
+    assert first_action["/Next"]["/JS"] == "app.alert('Second action');"
+
+
+def test_page_add_action__chaining_with_indirect_next():
+    """An indirect /Next entry can be extended and cloned into a writer."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    first_action = JavaScript("app.alert('First action');")
+    second_action = JavaScript("app.alert('Second action');")
+    first_action[NameObject("/Next")] = writer._add_object(second_action)
+    page[NameObject("/AA")] = DictionaryObject({NameObject("/O"): first_action})
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    page = PdfReader(buffer).pages[0]
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Third action');"))
+
+    output = PdfWriter()
+    output.add_page(page)
+    buffer = BytesIO()
+    output.write(buffer)
+    buffer.seek(0)
+
+    chain = PdfReader(buffer).pages[0]["/AA"]["/O"]
+    assert chain["/JS"] == "app.alert('First action');"
+    assert chain["/Next"]["/JS"] == "app.alert('Second action');"
+    assert chain["/Next"]["/Next"]["/JS"] == "app.alert('Third action');"
 
 
 @pytest.mark.parametrize(
