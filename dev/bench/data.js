@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794473874294,
+  "lastUpdate": 1794483949050,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -167779,6 +167779,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03515738812664405",
             "extra": "mean: 930.4283181999949 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "51643b0a518321f35aaf78d8deaef960abf35820",
+          "message": "DEP: Make add_outline_item keyword-only (#4401)\n\n* DEP: Make add_outline_item keyword-only\n\nPassing positional arguments to PdfWriter.add_outline_item() still\nworks, but now issues a DeprecationWarning and will be removed in\npypdf 8.0.0. All its parameters are now keyword-only.\n\nThe new decorator deprecate_positional_arguments() passes positional\narguments to the keyword-only parameters in the order of the signature,\nso other methods can follow.\n\nadd_outline_item() no longer supports the order without `before`\n(title, page_number, parent, color, bold, italic, fit), which it\nrecognized by a Fit in `italic`. #1437 introduced that order and #1371\nreplaced it; both were first released in PyPDF2 3.0.0, so no release\nhad it.\n\nThe docstring has a `.. deprecated:: 7.0.2` note, following the\ndeprecation process. It now also describes `before` and `is_open`.\n\nTests now call add_outline_item() with keyword arguments throughout.\ndeprecate_positional_arguments() has its own tests.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Apply suggestion from @stefan6419846\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-12T12:40:00+01:00",
+          "tree_id": "7dfc9a7f976400003a83e8cad7b3ac151f34e04d",
+          "url": "https://github.com/py-pdf/pypdf/commit/51643b0a518321f35aaf78d8deaef960abf35820"
+        },
+        "date": 1794483940139,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.956877688168184,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016581556521881712",
+            "extra": "mean: 41.74166654838664 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 44.07826273581664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012629003905267385",
+            "extra": "mean: 22.686919536586704 msec\nrounds: 41"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.7520202826202196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020735779767407213",
+            "extra": "mean: 570.7696479999981 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.774993176266452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06239769764373232",
+            "extra": "mean: 1.2903339418000086 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.48639397819040253,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10222635257588732",
+            "extra": "mean: 2.0559465060000037 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.741012716601679,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0401694689274635",
+            "extra": "mean: 574.3783433999965 msec\nrounds: 5"
           }
         ]
       }
