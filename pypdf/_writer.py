@@ -1865,7 +1865,7 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added outline item as an indirect object.
 
-        .. deprecated:: 7.0.2
+        .. deprecated:: 7.1.0
             Passing positional arguments is deprecated and will be removed
             in pypdf 8.0.0. Use keyword arguments instead.
 
