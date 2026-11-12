@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794472032158,
+  "lastUpdate": 1794473728022,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126461,6 +126461,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008258722037739199",
             "extra": "mean: 660.3808886000081 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mcwitherx@gmail.com",
+            "name": "hwdev",
+            "username": "Pixeless001"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f539c46efdd890f5099e34eddf92113c68a3ae96",
+          "message": "DOC: Note that incremental mode does not support encryption (#4393)\n\n* DOC: Note that incremental mode does not support encryption\n\nPdfWriter.encrypt() and writing an increment of an encrypted source\ndocument both raise NotImplementedError in incremental mode, but the\ndocstring of the incremental parameter did not say so.\n\nCloses #4322\n\n* MAINT: Raise NotImplementedError in _write_increment if encrypted\n\n_write_increment kept a disabled block for encrypting the appended\nobjects. Replace it with the NotImplementedError that write() already\nraises for an encrypted source document, so the method itself refuses\nto append cleartext objects.",
+          "timestamp": "2026-11-12T09:53:02+01:00",
+          "tree_id": "8423a7138e4bbd87355d1116b94c1823f098124f",
+          "url": "https://github.com/py-pdf/pypdf/commit/f539c46efdd890f5099e34eddf92113c68a3ae96"
+        },
+        "date": 1794473714932,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.852889687685318,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009714415469584046",
+            "extra": "mean: 350.5217900000005 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.23181014679774,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002041973676495931",
+            "extra": "mean: 44.980592826087964 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27346612692982447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030305117212032214",
+            "extra": "mean: 3.656760020799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.589587975552433,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002191971649837526",
+            "extra": "mean: 60.278772533330496 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14533018012212617,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010500235234476156",
+            "extra": "mean: 6.880883235399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5716888459304945,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006780882525305816",
+            "extra": "mean: 636.2582534000012 msec\nrounds: 5"
           }
         ]
       }
