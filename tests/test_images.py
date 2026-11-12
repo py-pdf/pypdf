@@ -1154,3 +1154,61 @@ def test_inline_image__custom_color_space__resolved_from_resources():
 
     images = list(PdfReader(stream).pages[0].images)
     assert len(images) == 1
+
+
+@pytest.mark.enable_socket
+@pytest.mark.parametrize(
+    ("url", "name", "page_index", "image_key", "expected_pixels", "expected_color_count"),
+    [
+        pytest.param(
+            "https://github.com/py-pdf/pypdf/files/15210011/Pages.62.73.from.0560-22_WSP.Plan_July.2022_Version.1.pdf",
+            "iss2598a.pdf",
+            0,
+            "~0~",
+            {(0, 0): (50, 66, 65), (4, 100): (64, 75, 77), (2, 205): (32, 51, 59)},
+            255,
+            id="8-bit-named-color-space-no-filter",
+        ),
+        pytest.param(
+            "https://github.com/py-pdf/pypdf/files/15210011/Pages.62.73.from.0560-22_WSP.Plan_July.2022_Version.1.pdf",
+            "iss2598a.pdf",
+            1,
+            "~339~",
+            {(0, 0): (30, 50, 51), (1, 0): (29, 49, 50), (0, 1): (29, 49, 50)},
+            14,
+            id="4-bit-named-color-space-no-filter",
+        ),
+        pytest.param(
+            "https://github.com/user-attachments/files/18058571/9bf7a2e2-72c8-4ac1-b8ae-164df16c8cef.pdf",
+            "iss2998.pdf",
+            0,
+            "~0~",
+            {(0, 0): (74, 110, 169), (15, 15): (255, 255, 255), (29, 29): (74, 110, 169)},
+            36,
+            id="8-bit-color-space-array-no-filter",
+        ),
+        pytest.param(
+            "https://github.com/user-attachments/files/18381775/tika-998719.pdf",
+            "tika-998719.pdf",
+            7,
+            "~0~",
+            {(0, 0): (249, 249, 249), (10, 0): (228, 228, 225), (11, 0): (92, 89, 83), (12, 0): (51, 50, 42)},
+            9,
+            id="8-bit-color-space-array-ascii85-lzw",
+        ),
+    ],
+)
+def test_inline_image_with_indexed_color_space(
+    url, name, page_index, image_key, expected_pixels, expected_color_count
+):
+    """
+    Inline /Indexed images are extracted with the colors of their lookup table.
+
+    ISO 32000-2:2020, 8.6.6.3 "Indexed colour spaces" and 8.9.7 "Inline images"
+    """
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+
+    img = reader.pages[page_index].images[image_key].image.convert("RGB")
+
+    assert {position: img.getpixel(position) for position in expected_pixels} == expected_pixels
+    assert len(img.getcolors(maxcolors=256)) == expected_color_count
