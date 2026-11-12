@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794498447120,
+  "lastUpdate": 1794498580194,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -168241,6 +168241,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026867750374709936",
             "extra": "mean: 678.9959141999873 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "193022578+jayhemnani9910@users.noreply.github.com",
+            "name": "Jay Hemnani",
+            "username": "jayhemnani9910"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5dcb69b107392776a5f86a35e770343272caa370",
+          "message": "BUG: Fix word spaces from TJ kerning and after a font change (#4377)\n\n* BUG: Fix word spaces from TJ kerning and after a font change\n\nA positive TJ offset moves the next glyph back, but abs() let it count\nas a word gap, so kerned and accented letters in pdfLaTeX output were\nsplit (\"F rameworks\", \"caf´ e\"). A gap at the start of a TJ right\nafter Tf was dropped because Tf had already moved the text to the\noutput (\"Programming:Python\").\n\n* BUG: Count TJ offsets in the text width instead of added spaces\n\n* TST: Update the expected text for the TJ offset change\n\nThe -250 offsets in issue3587.pdf are the quarter-em gaps Typst puts\nbetween CJK and Latin text. The gaps are now counted in the text width,\nso they no longer turn into spaces on only one side of a Latin letter.\n\n* BUG: Count character spacing in the text width and use the smaller space width at a font change",
+          "timestamp": "2026-11-12T16:45:25+01:00",
+          "tree_id": "d7e612168b3d6ff82f1bf26a7d33d84a32daf2bf",
+          "url": "https://github.com/py-pdf/pypdf/commit/5dcb69b107392776a5f86a35e770343272caa370"
+        },
+        "date": 1794498568511,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.713247755563895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017506576283607855",
+            "extra": "mean: 53.438078363638205 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.693560861655115,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007852733018771974",
+            "extra": "mean: 28.016257718749493 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3641868024697004,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02217988567302962",
+            "extra": "mean: 733.0374390000088 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5490581565918894,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04165073350638449",
+            "extra": "mean: 1.8213006910000105 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.39050412063927364,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049644128643490076",
+            "extra": "mean: 2.560792440199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4677875446996795,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02442392512803349",
+            "extra": "mean: 681.2975103999861 msec\nrounds: 5"
           }
         ]
       }
