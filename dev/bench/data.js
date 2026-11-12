@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794501235773,
+  "lastUpdate": 1794509048431,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -126989,6 +126989,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006243153822484309",
             "extra": "mean: 575.8015979999982 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39011904+Goldloli@users.noreply.github.com",
+            "name": "小卡塔克",
+            "username": "Goldloli"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b35c1e6d746cc80535d36d0b72b6343a09f99122",
+          "message": "BUG: Decode 2/4-bit DeviceGray samples as scaled grayscale (#4351)\n\n* BUG: decode 2/4-bit DeviceGray samples as scaled grayscale\n\n* TST: update 4-bit DeviceGray expectations for the grayscale fix\n\n* TST: assert L mode directly instead of a no-op convert\n\nThe decoded 4-bit DeviceGray images are already in mode \"L\", so\nconverting to \"L\" was a no-op. Assert the mode and compare the raw\nbytes directly.\n\n* TST: document the 4-bit DeviceGray grayscale scaling in the test\n\nCloses #4316.",
+          "timestamp": "2026-11-12T19:42:36+01:00",
+          "tree_id": "a1bc85685707f381a094d46e33487077b13a4931",
+          "url": "https://github.com/py-pdf/pypdf/commit/b35c1e6d746cc80535d36d0b72b6343a09f99122"
+        },
+        "date": 1794509039339,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.987938317199505,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012083758398266716",
+            "extra": "mean: 200.4836339999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.401725478980644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027454069426807347",
+            "extra": "mean: 36.49405220000038 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4726328242963533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029591662599959517",
+            "extra": "mean: 2.1158073426 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 32.26964557144691,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019339356233714757",
+            "extra": "mean: 30.988874599999576 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.25611096387701543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015348196387114673",
+            "extra": "mean: 3.904557559200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.6307779460994847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015024806629521978",
+            "extra": "mean: 380.11569979999535 msec\nrounds: 5"
           }
         ]
       }
