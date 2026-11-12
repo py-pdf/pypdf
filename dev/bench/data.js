@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794509698611,
+  "lastUpdate": 1794509814776,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -168901,6 +168901,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02591689601965588",
             "extra": "mean: 541.1305700000185 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "158475962+Krushil-Dhankecha@users.noreply.github.com",
+            "name": "Krushil Dhankecha",
+            "username": "Krushil-Dhankecha"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "77c9a418421b6a783b9e7795973e778f3a10fb9d",
+          "message": "BUG: Write the empty range before the last page as \"-1:0\" (#4411)\n\nCloses #4410\n\n__init__ reads a lone \"-1\" as the last page, slice(-1, None), because\nslice(-1, 0) would select nothing. __str__ shortens any range of one page\nto that number without the same exception, so slice(-1, 0) came out as\n\"-1\" and parsing that string gave back a different range.\n\nEvery other single-page range keeps its short form, since for those the\nlone number parses to exactly slice(start, start + 1).",
+          "timestamp": "2026-11-12T19:52:42+01:00",
+          "tree_id": "2333b04b77be3e9b1be9ceda00ef0f3892f9642d",
+          "url": "https://github.com/py-pdf/pypdf/commit/77c9a418421b6a783b9e7795973e778f3a10fb9d"
+        },
+        "date": 1794509805138,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 16.48137797411978,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031674747928434658",
+            "extra": "mean: 60.67453835293811 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 61.70693849113842,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024795194678924755",
+            "extra": "mean: 16.20563302040349 msec\nrounds: 49"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3104776288404545,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010747973264438345",
+            "extra": "mean: 763.0805578000036 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.34492146088804926,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03640101594099761",
+            "extra": "mean: 2.899210728799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5526461958342445,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0221449073974402",
+            "extra": "mean: 1.8094759496000052 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8425563977695383,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024534502531478253",
+            "extra": "mean: 542.7242288000116 msec\nrounds: 5"
           }
         ]
       }
