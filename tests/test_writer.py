@@ -4478,3 +4478,20 @@ def test_add_outline_item__positional_arguments() -> None:
     assert item["/F"] == 2
     # Table 149: [page /FitH top].
     assert item["/A"]["/D"] == [writer.pages[1].indirect_reference, "/FitH", 10]
+
+
+def test_remove_images__legacy_boolean_parameter() -> None:
+    """remove_images() warns about a boolean, but still removes all images."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "side-by-side-subfig.pdf")
+    assert writer.pages[0].images
+
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^Passing a boolean to remove_images is deprecated and will be removed in pypdf 8\.0\.0\. "
+            r"Use ImageType\.ALL instead\.$"
+        ),
+    ):
+        writer.remove_images(True)
+
+    assert not writer.pages[0].images
