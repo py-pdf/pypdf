@@ -3,16 +3,16 @@ import re
 from collections.abc import Callable
 
 import pytest
-import pypdf.constants as constants
+from pypdf import constants
 
 from pypdf.constants import (
     AnnotationDictionaryAttributes,
-    CheckboxRadioButtonAttributes,
-    FilterTypeAbbreviations,
-    PDF_KEYS,
     CatalogDictionary,
+    CheckboxRadioButtonAttributes,
     FieldDictionaryAttributes,
     FileSpecificationDictionaryEntries,
+    FilterTypeAbbreviations,
+    PDF_KEYS,
     GraphicsStateParameters,
     InteractiveFormDictEntries,
     OutlineFontFlag,

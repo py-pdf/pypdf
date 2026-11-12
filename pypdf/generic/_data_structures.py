@@ -65,8 +65,8 @@ from ..constants import (
     StreamAttributes,
 )
 from ..constants import FilterTypes as FT
-from ..constants import TypeArguments as TA
 from ..constants import FitTypes as TF
+from ..constants import TypeArguments as TA
 from ..errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
 from ._base import (
     BooleanObject,

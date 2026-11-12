@@ -4,7 +4,7 @@ import sys
 from enum import Enum, EnumMeta, IntFlag, auto, unique
 from typing import Any
 
-from ._utils import deprecate_with_replacement, deprecation_with_replacement
+from ._utils import deprecate_with_replacement
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
