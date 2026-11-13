@@ -955,7 +955,7 @@ def test_add_outline_item__before_nested_sibling():
     output = BytesIO()
     writer.write(output)
 
-    def flatten(outline):
+    def flatten(outline) -> list[str]:
         titles = []
         for entry in outline:
             if isinstance(entry, list):

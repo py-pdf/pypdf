@@ -907,6 +907,19 @@ class TreeObject(DictionaryObject):
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
             return child_reference
+        # A cycle reachable from /Last stays an error (matching the pre-existing
+        # safety net), even though the insertion search below starts from /First.
+        guard_visited: set[int] = set()
+        guard = cast("DictionaryObject", self["/Last"])
+        while True:
+            guard_id = id(guard)
+            if guard_id in guard_visited:
+                raise LimitReachedError("Detected cycle in tree structure.")
+            guard_visited.add(guard_id)
+            if "/Next" not in guard:
+                break
+            guard = cast("TreeObject", guard["/Next"])
+
         prev = cast("DictionaryObject", self["/First"])
 
         visited: set[int] = set()
