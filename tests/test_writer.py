@@ -3227,21 +3227,69 @@ def test_compress_identical_objects__remove_unreferenced():
 
 
 def test_compress_identical_objects__does_not_decode_streams():
+    """
+    compress_identical_objects() merges equal encoded streams without decoding them.
+
+    A stream consists of its dictionary and its encoded bytes; /Filter says how
+    to decode them (ISO 32000-2:2020, 7.3.8). Two streams whose dictionaries and
+    encoded bytes are equal therefore decode to the same data, so they can be
+    merged without decoding either of them.
+    """
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    # Two indirect streams with the same dictionary and the same encoded bytes.
+    # The bytes are not valid Flate data, so any attempt to decode them would
+    # fail: the test only passes if the streams are compared as encoded bytes.
     streams = []
     for _ in range(2):
         stream = EncodedStreamObject()
         stream[NameObject("/Filter")] = NameObject("/FlateDecode")
         stream._data = b"This is not valid Flate data."
         streams.append(writer._add_object(stream))
+    # Reference both streams from the catalog, so that they are reachable and
+    # compress_identical_objects() keeps one of them.
     writer.root_object[NameObject("/TestStreams")] = ArrayObject(streams)
 
     writer.compress_identical_objects()
 
     kept = writer.root_object["/TestStreams"]
+    # Both references now point to the same object: the streams were merged.
     assert kept[0] == kept[1]
+    # The kept stream was never decoded; decoding would have cached the result here.
     assert kept[0].get_object().decoded_self is None
+    # The second stream was removed from the writer.
     assert writer._objects[streams[1].idnum - 1] is None
+
+
+@pytest.mark.parametrize(
+    "pdf_name",
+    [
+        # The resources with the most objects that compress_identical_objects() merges.
+        "issue-604.pdf",
+        "SF424_page2.pdf",
+        "imagemagick-images.pdf",
+    ],
+)
+def test_compress_identical_objects__same_output_as_comparing_decoded_streams(pdf_name: str) -> None:
+    """
+    Comparing streams by their encoded bytes gives the same output as comparing their decoded data.
+
+    The merged objects, and therefore the written file, do not depend on
+    whether the streams were decoded for the comparison; only the time does.
+    """
+    def compress_and_write(*, compare_decoded_data: bool) -> bytes:
+        writer = PdfWriter(clone_from=RESOURCE_ROOT / pdf_name)
+        if compare_decoded_data:
+            # Compare streams by their dictionary and decoded data, as
+            # StreamObject does, which decodes every stream.
+            with mock.patch.object(EncodedStreamObject, "hash_value_data", StreamObject.hash_value_data):
+                writer.compress_identical_objects()
+        else:
+            writer.compress_identical_objects()
+        output = BytesIO()
+        writer.write(output)
+        return output.getvalue()
+
+    assert compress_and_write(compare_decoded_data=False) == compress_and_write(compare_decoded_data=True)
 
 
 def test_compress_identical_objects__deprecation():
