@@ -334,7 +334,7 @@ class PdfReader(PdfDocCommon):
             raise PdfReadError(
                 "Trailer /ID entry does not point to an array"
             )
-        return cast(ArrayObject, file_identifiers)
+        return file_identifiers
 
     @property
     def pdf_header(self) -> str:
