@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794572274722,
+  "lastUpdate": 1794573396378,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127253,6 +127253,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006373702338810363",
             "extra": "mean: 661.3523458000031 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nurnabid754@gmail.com",
+            "name": "Nabid Nur",
+            "username": "Hisernberg"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5f2fa4697ea5cb14f35d769edd80e4d0f15af46e",
+          "message": "DOC: Fix dead migration guide link in README (#4409)\n\n/docs restructure moved user/migration-1-to-2.html to\nmeta/migration-1-to-2.html; the old URL 404s.\n\nCo-authored-by: Hisernberg <169257061+Hisernberg@users.noreply.github.com>",
+          "timestamp": "2026-11-13T13:34:46+01:00",
+          "tree_id": "83257e8472114b33d7ae2478ca0dffacf103715f",
+          "url": "https://github.com/py-pdf/pypdf/commit/5f2fa4697ea5cb14f35d769edd80e4d0f15af46e"
+        },
+        "date": 1794573384997,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.81995040562973,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008031676151745703",
+            "extra": "mean: 261.7835033999995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.760855428625753,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008046561649947557",
+            "extra": "mean: 36.021944733332845 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.37652485932718177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01315472117587997",
+            "extra": "mean: 2.6558671366 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.159106976975544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014213131216736623",
+            "extra": "mean: 47.26097377777608 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18804709502747113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04531445088137526",
+            "extra": "mean: 5.3178167940000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1261253389004646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005048310506118857",
+            "extra": "mean: 470.33915719999584 msec\nrounds: 5"
           }
         ]
       }
