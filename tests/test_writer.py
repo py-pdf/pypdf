@@ -917,6 +917,58 @@ def test_add_outline_item__page_number_invalid_type():
         writer.add_outline_item(title="Title", page_number="not-a-valid-type")
 
 
+def _outline_titles(writer: PdfWriter) -> list[str]:
+    output = BytesIO()
+    writer.write(output)
+    return [item["/Title"] for item in PdfReader(output).outline]
+
+
+def test_add_outline_item__before_first_item():
+    """Issue #4340: inserting before the first item must make it visible."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    second = writer.add_outline_item(title="second", page_number=0)
+    writer.add_outline_item(title="first", page_number=0, before=second)
+
+    assert _outline_titles(writer) == ["first", "second"]
+
+
+def test_add_outline_item__before_middle_item():
+    """Issue #4340: `before` must be honored for items other than the last one."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.add_outline_item(title="first", page_number=0)
+    middle = writer.add_outline_item(title="middle", page_number=0)
+    writer.add_outline_item(title="last", page_number=0)
+    writer.add_outline_item(title="inserted", page_number=0, before=middle)
+
+    assert _outline_titles(writer) == ["first", "inserted", "middle", "last"]
+
+
+def test_add_outline_item__before_nested_sibling():
+    """Issue #4340: `before` must also work below the outline root."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    parent = writer.add_outline_item(title="parent", page_number=0)
+    first_child = writer.add_outline_item(title="c1", page_number=0, parent=parent)
+    writer.add_outline_item(title="c2", page_number=0, parent=parent)
+    writer.add_outline_item(title="c1b", page_number=0, parent=parent, before=first_child)
+
+    output = BytesIO()
+    writer.write(output)
+
+    def flatten(outline) -> list[str]:
+        titles = []
+        for entry in outline:
+            if isinstance(entry, list):
+                titles.extend(flatten(entry))
+            else:
+                titles.append(entry["/Title"])
+        return titles
+
+    assert flatten(PdfReader(output).outline) == ["parent", "c1b", "c1", "c2"]
+
+
 @pytest.mark.parametrize(
     ("is_open", "expected_count"),
     [
