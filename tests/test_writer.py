@@ -30,6 +30,7 @@ from pypdf.generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    EncodedStreamObject,
     Fit,
     IndirectObject,
     NameObject,
@@ -3223,6 +3224,24 @@ def test_compress_identical_objects__remove_unreferenced():
             match=rf"^Object IndirectObject\({reference.idnum}, 0, \d+\) not found!$"
     ):
         writer.get_object(reference)
+
+
+def test_compress_identical_objects__does_not_decode_streams():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    streams = []
+    for _ in range(2):
+        stream = EncodedStreamObject()
+        stream[NameObject("/Filter")] = NameObject("/FlateDecode")
+        stream._data = b"This is not valid Flate data."
+        streams.append(writer._add_object(stream))
+    writer.root_object[NameObject("/TestStreams")] = ArrayObject(streams)
+
+    writer.compress_identical_objects()
+
+    kept = writer.root_object["/TestStreams"]
+    assert kept[0] == kept[1]
+    assert kept[0].get_object().decoded_self is None
+    assert writer._objects[streams[1].idnum - 1] is None
 
 
 def test_compress_identical_objects__deprecation():

@@ -1258,6 +1258,10 @@ class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
         self.decoded_self: DecodedStreamObject | None = None
 
+    def hash_value_data(self) -> bytes:
+        # Use _data as decoding is slow, and it would keep a decoded copy in memory.
+        return DictionaryObject.hash_value_data(self) + self._data
+
     # This overrides the parent method
     def get_data(self) -> bytes:
         from ..filters import decode_stream_data  # noqa: PLC0415
