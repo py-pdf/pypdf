@@ -756,6 +756,7 @@ def test_index2labels__kid_which_cannot_be_read():
     with pytest.raises(IndexError):
         index2labels(writer, 30)
 
+
 @pytest.mark.parametrize(
     ("number", "expected"),
     [
@@ -772,7 +773,7 @@ def test_number2decimal_arabic_numeral(number, expected):
 @pytest.mark.parametrize("number", [0, -1, -4_000])
 def test_number2decimal_arabic_numeral__rejects_non_positive_numbers(number):
     """A page label is a page number, as the Roman and letter styles already require."""
-    with pytest.raises(ValueError, match="Expecting a positive number"):
+    with pytest.raises(expected_exception=ValueError, match=r"^Expecting a positive number\.$"):
         number2decimal_arabic_numeral(number)
 
 
@@ -785,11 +786,7 @@ def test_number2decimal_arabic_numeral__rejects_non_positive_numbers(number):
     ],
 )
 def test_page_labels__nums_range_starting_after_the_first_page(caplog, style, expected):
-    """Pages before the first /Nums key fall back to their position, whatever the style.
-
-    /D used to reach `str()` with the computed number, which cannot fail, so those
-    pages were labeled "-1" and "0" instead.
-    """
+    """Pages before the first /Nums key fall back to their position, whatever the style."""
     writer = PdfWriter()
     for _ in range(5):
         writer.add_blank_page(width=72, height=72)
