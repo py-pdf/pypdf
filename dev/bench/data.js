@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794509814776,
+  "lastUpdate": 1794565840714,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127121,6 +127121,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005164714977734818",
             "extra": "mean: 659.5742319999971 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "954802ca7f3873df262ceaa9e54c631f86e7df37",
+          "message": "PI: Do not decode streams to find identical objects (#4424)\n\n* PI: Do not decode streams to find identical objects\n\ncompress_identical_objects() previously decoded every EncodedStreamObject via\nget_data() to compute hash_value_data(), including decompressing zlib streams\nand running PNG predictors, and kept the decoded stream objects cached in\nmemory.\n\nOverride EncodedStreamObject.hash_value_data() to hash the dictionary metadata\nplus the raw encoded stream bytes (self._data) instead. This also avoids\ncrashing when a stream uses an unsupported filter or broken encoding.\n\nBenchmarks (PdfWriter.compress_identical_objects()):\n- pdf_font_garbled.pdf (10 PNG-predicted RGB streams):\n  5.174 s -> 0.002 s (2,587x faster, -99.96%)\n- 1707.09725.pdf (py-pdf/benchmarks):\n  5.50 s -> 0.04 s (137x faster), peak memory 237 MiB -> 70 MiB (-70.5%)\n- GeoTopo.pdf (117 pages):\n  0.212 s -> 0.051 s (4.16x faster, -75.9%)\n\n* Better tests\n\n* DOC: Explain which streams compress_identical_objects() still merges\n\nAddress the review of #4424.\n\nDocument in EncodedStreamObject.hash_value_data() that streams with\nequal decoded data but different encoded bytes, for example the same\ndata compressed with two zlib levels, are no longer merged, and that a\nparameter compare_decoded_streams of compress_identical_objects() could\nbring back the comparison of the decoded data for maximum compression.\n\nTest that such streams are kept as separate objects and still decode\nto the original data.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-13T11:28:16+01:00",
+          "tree_id": "1e649bf99a5ebc971d00b105f36378d6299c8027",
+          "url": "https://github.com/py-pdf/pypdf/commit/954802ca7f3873df262ceaa9e54c631f86e7df37"
+        },
+        "date": 1794565826189,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9491671974744835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007920676425136516",
+            "extra": "mean: 339.0787748000008 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.513306991752497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021801467305064904",
+            "extra": "mean: 44.41817456521776 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2942748733113744,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031535218493013197",
+            "extra": "mean: 3.3981834355999965 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.483442256273307,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018883867140730112",
+            "extra": "mean: 60.66693985714165 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14670332392305055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04713081664762257",
+            "extra": "mean: 6.816478136000001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7443417397619188,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009088117941384479",
+            "extra": "mean: 573.2821597999987 msec\nrounds: 5"
           }
         ]
       }
