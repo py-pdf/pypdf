@@ -776,6 +776,25 @@ def test_get_fonts__acroform_default_resources():
     assert _get_fonts_walk(acro_form, set(), set()) == ({"/Helvetica"}, set())
 
 
+@pytest.mark.enable_socket
+def test_get_fonts__appearance_stream_without_type():
+    url = "https://github.com/py-pdf/pypdf/files/12194195/test.pdf"
+    name = "germanfields.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert reader.pages[0]._get_fonts() == ({"(/Type3)"}, {"/Helvetica"})
+
+
+def test_get_fonts__appearance_states():
+    """The fonts of the appearance stream of each state of a check box are collected."""
+    reader = PdfReader(RESOURCE_ROOT / "FormTestFromOo.pdf")
+    check_box = reader.get_fields()["CheckBox1"].indirect_reference.get_object()
+    embedded = {"/BAAAAA+LiberationSerif", "/CAAAAA+LiberationSans", "/EAAAAA+SegoeUI"}
+    assert _get_fonts_walk(check_box, set(), set()) == (
+        embedded | {"/LiberationSans", "/ZapfDingbats"},
+        embedded,
+    )
+
+
 def test_annotation_getter():
     pdf_path = RESOURCE_ROOT / "commented.pdf"
     reader = PdfReader(pdf_path)
