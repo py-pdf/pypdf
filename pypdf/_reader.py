@@ -63,7 +63,7 @@ from ._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from .constants import TrailerKeys as TK
+from .constants import TrailerKeys
 from .errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -190,7 +190,7 @@ class PdfReader(PdfDocCommon):
         # Some documents may not have a /ID, use two empty
         # byte strings instead. Solves
         # https://github.com/py-pdf/pypdf/issues/608
-        id_entry = self.trailer.get(TK.ID, NullObject()).get_object()
+        id_entry = self.trailer.get(TrailerKeys.ID, NullObject()).get_object()
         id1_entry = b""
         if isinstance(id_entry, ArrayObject) and id_entry:
             first_id_entry = id_entry[0].get_object()
@@ -200,7 +200,7 @@ class PdfReader(PdfDocCommon):
                 logger_warning("Ignoring non-string first /ID entry of the trailer", source=__name__)
         elif not isinstance(id_entry, NullObject):
             logger_warning("Ignoring malformed /ID entry of the trailer", source=__name__)
-        encrypt_entry = self.trailer[TK.ENCRYPT]
+        encrypt_entry = self.trailer[TrailerKeys.ENCRYPT]
         if not isinstance(encrypt_entry, DictionaryObject):
             raise PdfReadError("/Encrypt entry of the trailer is not a dictionary")
         self._encryption = Encryption.read(encrypt_entry, id1_entry)
@@ -242,7 +242,7 @@ class PdfReader(PdfDocCommon):
         """Provide access to "/Root". Standardized with PdfWriter."""
         if self._validated_root:
             return self._validated_root
-        root = self.trailer.get(TK.ROOT, NullObject()).get_object()
+        root = self.trailer.get(TrailerKeys.ROOT, NullObject()).get_object()
         root_dictionary: DictionaryObject
         if isinstance(root, DictionaryObject):
             root_dictionary = root
@@ -302,7 +302,7 @@ class PdfReader(PdfDocCommon):
             /Info Dictionary; None if the entry does not exist
 
         """
-        info = self.trailer.get(TK.INFO, None)
+        info = self.trailer.get(TrailerKeys.INFO, None)
         if is_null_or_none(info):
             return None
         assert info is not None, "mypy"
@@ -322,7 +322,7 @@ class PdfReader(PdfDocCommon):
             /ID array; None if the entry does not exist
 
         """
-        file_identifiers = self.trailer.get(TK.ID, None)
+        file_identifiers = self.trailer.get(TrailerKeys.ID, None)
         if is_null_or_none(file_identifiers):
             return None
         assert file_identifiers is not None, "mypy"
@@ -1248,7 +1248,7 @@ class PdfReader(PdfDocCommon):
                 try:
                     xrefstream = self._read_pdf15_xref_stream(stream)
                 except Exception as exception:  # pragma: no cover
-                    if TK.ROOT in self.trailer:
+                    if TrailerKeys.ROOT in self.trailer:
                         logger_warning(
                             "Previous trailer cannot be read: %(args)s",
                             source=__name__,
@@ -1266,7 +1266,9 @@ class PdfReader(PdfDocCommon):
 
     # The trailer keys a PDF 1.5+ cross-reference stream carries in place of a
     # `trailer` keyword (PDF 2.0 specification, table 17).
-    _XREF_STREAM_TRAILER_KEYS = (TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE)
+    _XREF_STREAM_TRAILER_KEYS = (
+        TrailerKeys.ROOT, TrailerKeys.ENCRYPT, TrailerKeys.INFO, TrailerKeys.ID, TrailerKeys.SIZE
+    )
 
     def _process_xref_stream(self, xrefstream: DictionaryObject) -> None:
         """Process and handle the xref stream."""
@@ -1720,7 +1722,7 @@ class PdfReader(PdfDocCommon):
         Note that this property, if true, will remain true even after the
         :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
         """
-        return TK.ENCRYPT in self.trailer
+        return TrailerKeys.ENCRYPT in self.trailer
 
     def add_form_topname(self, name: str) -> DictionaryObject | None:
         """
