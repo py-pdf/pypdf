@@ -292,9 +292,11 @@ class XmpInformation(PdfObject):
         name: str,
         converter: Callable[[str], Any] = _identity,
     ) -> Any | None:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cached
+        # Use `setdefault` to make sure the namespace dictionary exists, and check if `name` is one of the keys
+        ns_cache = self.cache.setdefault(namespace, {})
+        if name in ns_cache:
+            return ns_cache[name]
+
         value = None
         for element in self.get_element("", namespace, name):
             if element.nodeType == element.ATTRIBUTE_NODE:
@@ -302,16 +304,20 @@ class XmpInformation(PdfObject):
             else:
                 value = self._get_text(element)
             break
+
         if value is not None:
             value = converter(value)
-        ns_cache = self.cache.setdefault(namespace, {})
+
+        # Save to cache and return
         ns_cache[name] = value
         return value
 
     def _getter_bag(self, namespace: str, name: str) -> list[str] | None:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cast(list[str], cached)
+        # Fix: Check if the key exists, not if the value is truthy
+        ns_cache = self.cache.setdefault(namespace, {})
+        if name in ns_cache:
+            return cast(list[str], ns_cache[name])
+
         retval: list[str] = []
         for element in self.get_element("", namespace, name):
             if (bags := _generic_get(element, self, list_type="Bag")) is not None:
@@ -319,7 +325,7 @@ class XmpInformation(PdfObject):
             else:
                 value = self._get_text(element)
                 retval.append(value)
-        ns_cache = self.cache.setdefault(namespace, {})
+
         ns_cache[name] = retval
         return retval
 
@@ -329,9 +335,11 @@ class XmpInformation(PdfObject):
         name: str,
         converter: Callable[[Any], Any] = _identity,
     ) -> list[Any] | None:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cast(list[Any], cached)
+        # Check if the key exists
+        ns_cache = self.cache.setdefault(namespace, {})
+        if name in ns_cache:
+            return cast(list[Any], ns_cache[name])
+
         retval: list[Any] = []
         for element in self.get_element("", namespace, name):
             if (seqs := _generic_get(element, self, list_type="Seq", converter=converter)) is not None:
@@ -348,14 +356,16 @@ class XmpInformation(PdfObject):
             else:
                 value = converter(self._get_text(element))
                 retval.append(value)
-        ns_cache = self.cache.setdefault(namespace, {})
+
         ns_cache[name] = retval
         return retval
 
     def _get_langalt_values(self, namespace: str, name: str) -> dict[Any, Any] | None:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cast(dict[Any, Any], cached)
+        # Check if the key exists
+        ns_cache = self.cache.setdefault(namespace, {})
+        if name in ns_cache:
+            return cast(dict[Any, Any], ns_cache[name])
+
         retval: dict[Any, Any] = {}
         for element in self.get_element("", namespace, name):
             alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
@@ -366,7 +376,7 @@ class XmpInformation(PdfObject):
                         retval[item.getAttribute("xml:lang")] = value
             else:
                 retval["x-default"] = self._get_text(element)
-        ns_cache = self.cache.setdefault(namespace, {})
+
         ns_cache[name] = retval
         return retval
 
