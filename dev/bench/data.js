@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794572121497,
+  "lastUpdate": 1794572274722,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -169165,6 +169165,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03698248301795046",
             "extra": "mean: 693.2408785999996 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "1e3e7e37af4dd1da866010def52dafec3f38e67d",
+          "message": "REL: 7.1.0\n\n## What's new\n\n### Deprecations (DEP)\n- Deprecate passing a boolean to remove_images (#4412) by @MartinThoma\n- Make add_outline_item keyword-only (#4401) by @MartinThoma\n\n### New Features (ENH)\n- Scale a soft mask to the size of its image (#4391) by @Pixeless001\n\n### Performance Improvements (PI)\n- Do not decode streams to find identical objects (#4424) by @MartinThoma\n- Speed up the pure-Python RC4 used without a crypto library (#4396) by @deadstrobe5\n- Skip per-character direction checks for left-to-right text in extract_text() (#4395) by @deadstrobe5\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.1...7.1.0)",
+          "timestamp": "2026-11-13T13:12:42+01:00",
+          "tree_id": "9b2a4ac96522a620402ba4242571c971d01cb4c3",
+          "url": "https://github.com/py-pdf/pypdf/commit/1e3e7e37af4dd1da866010def52dafec3f38e67d"
+        },
+        "date": 1794572259723,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 15.179274206095647,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017214431927546875",
+            "extra": "mean: 65.8793026875042 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.080248487441672,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008960827627384677",
+            "extra": "mean: 38.34319295238028 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0910528750146584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03227795635800525",
+            "extra": "mean: 916.5458640000054 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5551531881735442,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05184103533154597",
+            "extra": "mean: 1.8013046152000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.32231500681546565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13282935070543805",
+            "extra": "mean: 3.102554888399993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1061305366521035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030180269562111926",
+            "extra": "mean: 904.0524304000087 msec\nrounds: 5"
           }
         ]
       }
