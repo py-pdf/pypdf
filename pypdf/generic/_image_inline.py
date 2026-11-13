@@ -127,32 +127,58 @@ def extract_inline__run_length_decode(stream: StreamType) -> bytes:
     """
     data_out = bytearray()
     # Read data until delimiter 128
+    fallback = False
     while True:
         data_buffered = stream.read(BUFFER_SIZE)
         if not data_buffered:
+            if fallback:
+                # The stream ended while searching for the `EI` marker.
+                raise PdfReadError("EI stream not found.")
             raise PdfReadError("Unexpected end of stream.")
-        pos_tok = data_buffered.find(b"\x80")
-        if pos_tok >= 0:  # found
-            # Ideally, we could just use plain run-length decoding here, where 80_16 = 128_10
-            # marks the EOD. But there apparently are cases like in issue #3517, where we have
-            # an inline image with up to 51 EOD markers. In these cases, be resilient here and
-            # use the default `EI` marker detection instead. Please note that this fallback
-            # still omits special `EI` handling within the stream, but for now assume that having
-            # both of these cases occur at the same time is very unlikely (and the image stream
-            # is broken anyway).
-            # For now, do not skip over more than one whitespace character.
-            after_token = data_buffered[pos_tok + 1 : pos_tok + 4]
-            if after_token.startswith(b"EI") or after_token.endswith(b"EI"):
-                data_out += data_buffered[: pos_tok + 1]
-                stream.seek(-len(data_buffered) + pos_tok + 1, 1)
-            else:
+        if not fallback:
+            pos_tok = data_buffered.find(b"\x80")
+            if pos_tok >= 0:  # found
+                # Ideally, we could just use plain run-length decoding here, where 80_16 = 128_10
+                # marks the EOD. But there apparently are cases like in issue #3517, where we have
+                # an inline image with up to 51 EOD markers. In these cases, be resilient here and
+                # use the default `EI` marker detection instead. Please note that this fallback
+                # still omits special `EI` handling within the stream, but for now assume that having
+                # both of these cases occur at the same time is very unlikely (and the image stream
+                # is broken anyway).
+                # For now, do not skip over more than one whitespace character.
+                after_token = data_buffered[pos_tok + 1 : pos_tok + 4]
+                if after_token.startswith(b"EI") or after_token.endswith(b"EI"):
+                    data_out += data_buffered[: pos_tok + 1]
+                    stream.seek(-len(data_buffered) + pos_tok + 1, 1)
+                    break
                 logger_warning("Early EOD in RunLengthDecode of inline image, using fallback.", source=__name__)
-                ei_marker = data_buffered.find(b"EI")
-                if ei_marker > 0:
-                    data_out += data_buffered[: ei_marker]
-                    stream.seek(-len(data_buffered) + ei_marker - 1, 1)
+                fallback = True
+                # Fall through to the `EI` search below on this buffer.
+            else:
+                data_out += data_buffered
+                continue
+        # Fallback: the 0x80 byte is image data, not an EOD marker, so search
+        # for the `EI` marker instead. Keep reading while `EI` is not in the
+        # current buffer: it may be more than BUFFER_SIZE away (#4419).
+        ei_marker = data_buffered.find(b"EI")
+        if ei_marker > 0:
+            data_out += data_buffered[:ei_marker]
+            stream.seek(-len(data_buffered) + ei_marker - 1, 1)
             break
-        data_out += data_buffered
+        if ei_marker == 0:
+            # The buffer starts with the `EI` marker: the image data ended
+            # at the previous buffer boundary.
+            stream.seek(-len(data_buffered), 1)
+            break
+        if len(data_buffered) == 1:
+            # A single byte cannot hold the `EI` marker and there is nothing
+            # left to read after it; let the next read raise instead of
+            # looping on the same byte.
+            data_out += data_buffered
+            continue
+        # `EI` may straddle the buffer boundary: keep the last byte for the next read.
+        data_out += data_buffered[:-1]
+        stream.seek(-1, 1)
 
     if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found.")
