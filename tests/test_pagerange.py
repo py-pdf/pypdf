@@ -73,7 +73,14 @@ def test_str_init_error() -> None:
     assert exc.value.args[0] == "1-2"
 
 
-@pytest.mark.parametrize("init_str", ["::0", "1:5:0", "0:0:0"])
+@pytest.mark.parametrize(
+    "init_str",
+    [
+        pytest.param("::0", id="open-range"),
+        pytest.param("1:5:0", id="bounded-range"),
+        pytest.param("0:0:0", id="empty-range"),
+    ],
+)
 def test_str_init_zero_step(init_str: str) -> None:
     """A zero stride selects nothing and only raised once the range was applied."""
     assert PageRange.valid(init_str) is False
@@ -83,7 +90,12 @@ def test_str_init_zero_step(init_str: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "init_slice", [slice(None, None, 0), slice(1, 5, 0), slice(0, 0, 0)]
+    "init_slice",
+    [
+        pytest.param(slice(None, None, 0), id="open-slice"),
+        pytest.param(slice(1, 5, 0), id="bounded-slice"),
+        pytest.param(slice(0, 0, 0), id="empty-slice"),
+    ],
 )
 def test_slice_init_zero_step(init_slice: slice) -> None:
     """A zero-step slice is rejected at construction, like a zero-step string."""
@@ -95,17 +107,17 @@ def test_slice_init_zero_step(init_slice: slice) -> None:
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (slice(1, 5), True),
-        (slice(1, 5, 2), True),
-        (slice(None, None, -1), True),
-        (slice(None, None, 0), False),
-        (slice(1, 5, 0), False),
-        (slice(0, 0, 0), False),
-        (PageRange("1:5"), True),
-        ("1:5", True),
-        (5, False),
-        (None, False),
-        (["1:5"], False),
+        pytest.param(slice(1, 5), True, id="slice-default-step"),
+        pytest.param(slice(1, 5, 2), True, id="slice-positive-step"),
+        pytest.param(slice(None, None, -1), True, id="slice-reverse"),
+        pytest.param(slice(None, None, 0), False, id="slice-open-zero-step"),
+        pytest.param(slice(1, 5, 0), False, id="slice-bounded-zero-step"),
+        pytest.param(slice(0, 0, 0), False, id="slice-empty-zero-step"),
+        pytest.param(PageRange("1:5"), True, id="page-range"),
+        pytest.param("1:5", True, id="range-string"),
+        pytest.param(5, False, id="integer"),
+        pytest.param(None, False, id="none"),
+        pytest.param(["1:5"], False, id="list"),
     ],
 )
 def test_valid(value: Any, expected: bool) -> None:
