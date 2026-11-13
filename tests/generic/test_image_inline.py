@@ -193,6 +193,38 @@ def test_extract_inline_dct__multiple_eod() -> None:
 
 
 @pytest.mark.timeout(5)
+def test_extract_inline__run_length_decode__early_eod_ei_beyond_buffer() -> None:
+    """A 0x80 data byte must not end the image when `EI` is far away (#4419)."""
+    # A literal run of 128 bytes, with a 0x80 data byte inside it: 0x80 is
+    # only an end-of-data marker in a length position.
+    run = b"\x7f" + b"\xaa" * 7 + b"\x80" + b"\xaa" * 120
+    # 64 runs (8256 bytes) + EOD + newline: `EI` is beyond the first buffer.
+    image_data = run * 64 + b"\x80\n"
+    assert len(image_data) > BUFFER_SIZE
+    stream = BytesIO(image_data + b"EI\nQ")
+
+    assert extract_inline__run_length_decode(stream) == image_data
+    assert stream.tell() == len(image_data)
+    assert stream.read() == b"EI\nQ"
+
+
+@pytest.mark.timeout(5)
+def test_extract_inline__run_length_decode__ei_across_buffer_boundary() -> None:
+    """The `EI` marker may straddle the buffer boundary in the fallback (#4419)."""
+    run = b"\x7f" + b"\xaa" * 7 + b"\x80" + b"\xaa" * 120
+    # 63 full runs (8127 bytes) + a 61-byte literal run (62 bytes) + EOD +
+    # newline = 8191 bytes, so the `E` of `EI` is the last byte of the first buffer.
+    short_run = b"\x3c" + b"\xaa" * 61
+    image_data = run * 63 + short_run + b"\x80\n"
+    assert len(image_data) == BUFFER_SIZE - 1
+    stream = BytesIO(image_data + b"EI\nQ")
+
+    assert extract_inline__run_length_decode(stream) == image_data
+    assert stream.tell() == len(image_data)
+    assert stream.read() == b"EI\nQ"
+
+
+@pytest.mark.timeout(5)
 def test_extract_inline__ascii_hex_decode__early_end_of_file() -> None:
     stream = BytesIO(b"ABCDE\nF G")
 
