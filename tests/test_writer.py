@@ -3,6 +3,7 @@
 import re
 import shutil
 import subprocess
+import zlib
 from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -3290,6 +3291,35 @@ def test_compress_identical_objects__same_output_as_comparing_decoded_streams(pd
         return output.getvalue()
 
     assert compress_and_write(compare_decoded_data=False) == compress_and_write(compare_decoded_data=True)
+
+
+def test_compress_identical_objects__same_data_with_different_encoded_bytes() -> None:
+    """
+    compress_identical_objects() keeps streams whose encoded bytes differ, even if their decoded data is equal.
+
+    The data of a stream is stored encoded by the filters in /Filter
+    (ISO 32000-2:2020, 7.3.8). The same data compressed with different
+    zlib levels gives different encoded bytes. Such streams are kept as
+    separate objects; both still decode to the original data.
+    """
+    data = b"0 0 m 100 100 l S\n" * 200
+    writer = PdfWriter()
+    references = []
+    for level in (1, 9):
+        stream = EncodedStreamObject()
+        stream[NameObject("/Filter")] = NameObject("/FlateDecode")
+        stream._data = zlib.compress(data, level)
+        references.append(writer._add_object(stream))
+    # The two streams have equal dictionaries and equal decoded data, but different encoded bytes.
+    assert references[0].get_object()._data != references[1].get_object()._data
+    writer.root_object[NameObject("/TestStreams")] = ArrayObject(references)
+
+    writer.compress_identical_objects()
+
+    kept = writer.root_object["/TestStreams"]
+    assert kept[0] != kept[1]
+    assert kept[0].get_object().get_data() == data
+    assert kept[1].get_object().get_data() == data
 
 
 def test_compress_identical_objects__deprecation():
