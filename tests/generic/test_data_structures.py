@@ -595,19 +595,21 @@ def test_tree_object__insert_child__before_is_not_a_child() -> None:
     tree = TreeObject()
     writer._add_object(tree)
     first = writer._add_object(DictionaryObject())
-    last = writer._add_object(DictionaryObject())
+    last_item = DictionaryObject()
+    last = writer._add_object(last_item)
     tree.add_child(first, writer)
     tree.add_child(last, writer)
     not_a_child = writer._add_object(DictionaryObject())
-    new = writer._add_object(DictionaryObject())
+    new_item = DictionaryObject()
+    new = writer._add_object(new_item)
 
     tree.insert_child(new, not_a_child, writer)
 
     assert tree.raw_get("/First") == first
     assert tree.raw_get("/Last") == new
-    assert last.get_object().raw_get("/Next") == new
-    assert new.get_object().raw_get("/Prev") == last
-    assert "/Next" not in new.get_object()
+    assert last_item.raw_get("/Next") == new
+    assert new_item.raw_get("/Prev") == last
+    assert "/Next" not in new_item
 
 
 def test_tree_object__insert_child__first_child_drops_previous_links() -> None:
