@@ -1258,6 +1258,22 @@ class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
         self.decoded_self: DecodedStreamObject | None = None
 
+    def hash_value_data(self) -> bytes:
+        # Hash the encoded bytes instead of the decoded data: decoding is slow,
+        # it keeps a decoded copy of every stream in memory, and it fails for
+        # streams that cannot be decoded.
+        #
+        # Streams with equal dictionaries and equal encoded bytes still get the
+        # same hash, so PdfWriter.compress_identical_objects() merges them.
+        # Streams whose decoded data is equal but whose encoded bytes differ,
+        # for example the same data compressed with two zlib levels, now get
+        # different hashes and are no longer merged. The output stays correct;
+        # it is only not as small as it could be. If users want maximum
+        # compression at the cost of execution time, a parameter such as
+        # compare_decoded_streams of compress_identical_objects() could add
+        # back the comparison of the decoded data.
+        return DictionaryObject.hash_value_data(self) + self._data
+
     # This overrides the parent method
     def get_data(self) -> bytes:
         from ..filters import decode_stream_data  # noqa: PLC0415
