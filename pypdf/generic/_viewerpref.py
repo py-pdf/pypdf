@@ -32,7 +32,7 @@ from typing import (
 )
 
 from ..constants import PageAttributes
-from ._base import BooleanObject, NameObject, NumberObject, is_null_or_none
+from ._base import BooleanObject, NameObject, NumberObject, PdfObject, is_null_or_none
 from ._data_structures import ArrayObject, DictionaryObject
 
 f_obj = BooleanObject(False)
@@ -58,14 +58,20 @@ class ViewerPreferences(DictionaryObject):
         except AttributeError:
             pass
 
+    def _resolve(self, key: str, default: PdfObject | None) -> PdfObject | None:
+        # Any of these entries may be an indirect reference, which dict.get
+        # hands back as-is rather than resolving the way __getitem__ does.
+        value = self.get(key, default)
+        return None if value is None else value.get_object()
+
     def _get_bool(self, key: str, default: BooleanObject | None) -> BooleanObject | None:
-        return self.get(key, default)
+        return cast("BooleanObject | None", self._resolve(key, default))
 
     def _set_bool(self, key: str, v: bool) -> None:
         self[NameObject(key)] = BooleanObject(v is True)
 
     def _get_name(self, key: str, default: NameObject | None) -> NameObject | None:
-        return self.get(key, default)
+        return cast("NameObject | None", self._resolve(key, default))
 
     def _set_name(self, key: str, lst: list[str], v: NameObject) -> None:
         if lst != [] and v not in lst:
@@ -73,7 +79,10 @@ class ViewerPreferences(DictionaryObject):
         self[NameObject(key)] = NameObject(v)
 
     def _get_arr(self, key: str, default: list[Any] | None) -> ArrayObject | None:
-        return self.get(key, None if default is None else ArrayObject(default))
+        return cast(
+            "ArrayObject | None",
+            self._resolve(key, None if default is None else ArrayObject(default)),
+        )
 
     def _set_arr(self, key: str, v: ArrayObject | None) -> None:
         if v is None:
@@ -93,7 +102,7 @@ class ViewerPreferences(DictionaryObject):
         self[NameObject(key)] = v
 
     def _get_int(self, key: str, default: NumberObject | None) -> NumberObject | None:
-        return self.get(key, default)
+        return cast("NumberObject | None", self._resolve(key, default))
 
     def _set_int(self, key: str, v: int) -> None:
         if v < 0:
