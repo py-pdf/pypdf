@@ -321,12 +321,20 @@ class PdfReader(PdfDocCommon):
         Returns:
             /ID array; None if the entry does not exist
 
+        Raises:
+            PdfReadError: If the entry exists but is not an array.
+
         """
         file_identifiers = self.trailer.get(TK.ID, None)
         if is_null_or_none(file_identifiers):
             return None
         assert file_identifiers is not None, "mypy"
-        return cast(ArrayObject, file_identifiers.get_object())
+        file_identifiers = file_identifiers.get_object()
+        if not isinstance(file_identifiers, ArrayObject):
+            raise PdfReadError(
+                "Trailer /ID entry does not point to an array"
+            )
+        return file_identifiers
 
     @property
     def pdf_header(self) -> str:
