@@ -592,7 +592,7 @@ class PdfWriter(PdfDocCommon):
                     NameObject(CatalogAttributes.ACRO_FORM)
                 ] = self._add_object(DictionaryObject())
 
-            need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
+            need_appearances = NameObject(InteractiveFormDictEntries.NEED_APPEARANCES)
             cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])[
                 need_appearances
             ] = BooleanObject(state)
@@ -966,7 +966,7 @@ class PdfWriter(PdfDocCommon):
                     * font id (e.g. /F1, the font id must exist)
                     * font size (0 for autosize)
 
-            flags: A set of flags from :class:`~pypdf.constants.FieldDictionaryAttributes.FfBits`.
+            flags: A set of flags from ``pypdf.constants.FieldDictionaryAttributes.FfBits``.
 
             auto_regenerate: Set/unset the need_appearances flag;
                 the flag is unchanged if auto_regenerate is None.
@@ -979,7 +979,7 @@ class PdfWriter(PdfDocCommon):
         if CatalogAttributes.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
         acro_form = cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])
-        if InteractiveFormDictEntries.Fields not in acro_form:
+        if InteractiveFormDictEntries.FIELDS not in acro_form:
             raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
@@ -1008,7 +1008,7 @@ class PdfWriter(PdfDocCommon):
                 ).get_object()
 
             for field, value in fields.items():
-                rectangle = cast(RectangleObject, annotation[AA.Rect])
+                rectangle = cast(RectangleObject, annotation[AA.RECT])
                 if not (
                     self._get_qualified_field_name(parent=parent_annotation) == field
                     or parent_annotation.get("/T", None) == field
@@ -1020,7 +1020,7 @@ class PdfWriter(PdfDocCommon):
                 ):
                     del parent_annotation["/I"]
                 if flags:
-                    annotation[NameObject(FA.Ff)] = NumberObject(flags)
+                    annotation[NameObject(FA.FF)] = NumberObject(flags)
                 # Set the field value
                 if not (value is None and flatten):  # Only change values if given by user and not flattening.
                     if isinstance(value, list):
@@ -1107,10 +1107,10 @@ class PdfWriter(PdfDocCommon):
             af = DictionaryObject()
             self._root_object[NameObject(CatalogAttributes.ACRO_FORM)] = af
         try:
-            fields = cast(ArrayObject, af[InteractiveFormDictEntries.Fields])
+            fields = cast(ArrayObject, af[InteractiveFormDictEntries.FIELDS])
         except KeyError:
             fields = ArrayObject()
-            af[NameObject(InteractiveFormDictEntries.Fields)] = fields
+            af[NameObject(InteractiveFormDictEntries.FIELDS)] = fields
 
         if "/Annots" not in page:
             return lst
@@ -2381,12 +2381,12 @@ class PdfWriter(PdfDocCommon):
         lnk = DictionaryObject()
         lnk.update(
             {
-                NameObject(AA.Type): NameObject("/Annot"),
-                NameObject(AA.Subtype): NameObject("/Link"),
+                NameObject(AA.TYPE): NameObject("/Annot"),
+                NameObject(AA.SUBTYPE): NameObject("/Link"),
                 NameObject(AA.P): page_link,
-                NameObject(AA.Rect): rect,
+                NameObject(AA.RECT): rect,
                 NameObject("/H"): NameObject("/I"),
-                NameObject(AA.Border): ArrayObject(border_arr),
+                NameObject(AA.BORDER): ArrayObject(border_arr),
                 NameObject("/A"): lnk2,
             }
         )
@@ -3590,8 +3590,8 @@ def _create_outline_item(
     if italic or bold:
         format_flag = 0
         if italic:
-            format_flag += OutlineFontFlag.italic
+            format_flag += OutlineFontFlag.ITALIC
         if bold:
-            format_flag += OutlineFontFlag.bold
+            format_flag += OutlineFontFlag.BOLD
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item

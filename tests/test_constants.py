@@ -4,13 +4,20 @@ from collections.abc import Callable
 
 import pytest
 
+from pypdf import constants
 from pypdf.constants import (
     PDF_KEYS,
+    AnnotationDictionaryAttributes,
     CatalogDictionary,
+    CheckboxRadioButtonAttributes,
+    FieldDictionaryAttributes,
+    FileSpecificationDictionaryEntries,
+    FilterTypeAbbreviations,
     GraphicsStateParameters,
+    InteractiveFormDictEntries,
+    OutlineFontFlag,
     UserAccessPermissions,
 )
-from pypdf.errors import DeprecationError
 
 
 def test_slash_prefix():
@@ -24,10 +31,26 @@ def test_slash_prefix():
     - The attribute name should be a case-insensitive match, with underscores removed
     """
     pattern = re.compile(r"^/[A-Z]+[a-zA-Z0-9]*$")
+    deprecated_attributes = {
+        FileSpecificationDictionaryEntries: {"Type", "Mac", "Unix", "Cl"},
+        FilterTypeAbbreviations: {"AHx"},
+        GraphicsStateParameters: {
+            "OP", "op", "CA", "ca", "OP_STROKING", "OP_NON_STROKING",
+            "CA_STROKING", "CA_NON_STROKING",
+        },
+        AnnotationDictionaryAttributes: {
+            "Type", "Subtype", "Rect", "Contents", "Border", "StructParent"
+        },
+        InteractiveFormDictEntries: {"Fields", "NeedAppearances", "SigFlags"},
+        FieldDictionaryAttributes: {"Parent", "Kids", "Ff", "Opt"},
+        CheckboxRadioButtonAttributes: {"Opt"},
+    }
     for cls in PDF_KEYS:
         if cls == CatalogDictionary:  # Deprecated
             continue
         for attr in dir(cls):
+            if attr in deprecated_attributes.get(cls, set()):
+                continue
             # Skip magic methods
             if attr.startswith("__") and attr.endswith("__"):
                 continue
@@ -126,19 +149,19 @@ def test_user_access_permissions__all():
 
 
 def test_catalog_dictionary():
-    with pytest.raises(
-        DeprecationError,
+    with pytest.warns(
+        DeprecationWarning,
         match=(
-            r"^CatalogDictionary is deprecated and was removed in pypdf 7\.0\.0\. "
+            r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
             r"Use CatalogAttributes instead\.$"
         )
     ):
         assert isinstance(CatalogDictionary(), CatalogDictionary)
 
-    with pytest.raises(
-        DeprecationError,
+    with pytest.warns(
+        DeprecationWarning,
         match=(
-            r"^CatalogDictionary is deprecated and was removed in pypdf 7\.0\.0\. "
+            r"^CatalogDictionary is deprecated and will be removed in pypdf 7\.0\.0\. "
             r"Use CatalogAttributes instead\.$"
         )
     ):
@@ -151,3 +174,87 @@ def test_catalog_dictionary():
         match="type object 'CatalogDictionary' has no attribute 'INVALID'"
     ):
         assert CatalogDictionary.INVALID != "/INVALID"
+
+
+@pytest.mark.parametrize(
+    ("old_name", "new_name"),
+    [("Type", "TYPE"), ("Mac", "MAC"), ("Unix", "UNIX"), ("Cl", "CL")],
+)
+def test_file_specification_deprecated_attributes(old_name, new_name):
+    expected_message = (
+        f"FileSpecificationDictionaryEntries.{old_name} is deprecated and will be removed "
+        f"in pypdf 7.0.0. Use FileSpecificationDictionaryEntries.{new_name} instead."
+    )
+    with pytest.warns(DeprecationWarning, match=f"^{re.escape(expected_message)}$"):
+        assert getattr(FileSpecificationDictionaryEntries, old_name) == getattr(
+            FileSpecificationDictionaryEntries, new_name
+        )
+
+
+@pytest.mark.parametrize(
+    ("container", "old_name", "new_name"),
+    [
+        (FilterTypeAbbreviations, "AHx", "AHX"),
+        (GraphicsStateParameters, "OP", "OP_STROKING"),
+        (GraphicsStateParameters, "op", "OP_NON_STROKING"),
+        (GraphicsStateParameters, "CA", "CA_STROKING"),
+        (GraphicsStateParameters, "ca", "CA_NON_STROKING"),
+        (AnnotationDictionaryAttributes, "Type", "TYPE"),
+        (AnnotationDictionaryAttributes, "Subtype", "SUBTYPE"),
+        (AnnotationDictionaryAttributes, "Rect", "RECT"),
+        (AnnotationDictionaryAttributes, "Contents", "CONTENTS"),
+        (AnnotationDictionaryAttributes, "Border", "BORDER"),
+        (AnnotationDictionaryAttributes, "StructParent", "STRUCT_PARENT"),
+        (InteractiveFormDictEntries, "Fields", "FIELDS"),
+        (InteractiveFormDictEntries, "NeedAppearances", "NEED_APPEARANCES"),
+        (InteractiveFormDictEntries, "SigFlags", "SIG_FLAGS"),
+        (FieldDictionaryAttributes, "Parent", "PARENT"),
+        (FieldDictionaryAttributes, "Kids", "KIDS"),
+        (FieldDictionaryAttributes, "Ff", "FF"),
+        (FieldDictionaryAttributes, "Opt", "OPT"),
+        (FieldDictionaryAttributes.FfBits, "ReadOnly", "READ_ONLY"),
+        (FieldDictionaryAttributes.FfBits, "Required", "REQUIRED"),
+        (FieldDictionaryAttributes.FfBits, "NoExport", "NO_EXPORT"),
+        (FieldDictionaryAttributes.FfBits, "Multiline", "MULTILINE"),
+        (FieldDictionaryAttributes.FfBits, "Password", "PASSWORD"),
+        (FieldDictionaryAttributes.FfBits, "NoToggleToOff", "NO_TOGGLE_TO_OFF"),
+        (FieldDictionaryAttributes.FfBits, "Radio", "RADIO"),
+        (FieldDictionaryAttributes.FfBits, "Pushbutton", "PUSHBUTTON"),
+        (FieldDictionaryAttributes.FfBits, "Combo", "COMBO"),
+        (FieldDictionaryAttributes.FfBits, "Edit", "EDIT"),
+        (FieldDictionaryAttributes.FfBits, "Sort", "SORT"),
+        (FieldDictionaryAttributes.FfBits, "FileSelect", "FILE_SELECT"),
+        (FieldDictionaryAttributes.FfBits, "MultiSelect", "MULTI_SELECT"),
+        (FieldDictionaryAttributes.FfBits, "DoNotSpellCheck", "DO_NOT_SPELL_CHECK"),
+        (FieldDictionaryAttributes.FfBits, "DoNotScroll", "DO_NOT_SCROLL"),
+        (FieldDictionaryAttributes.FfBits, "Comb", "COMB"),
+        (FieldDictionaryAttributes.FfBits, "RadiosInUnison", "RADIOS_IN_UNISON"),
+        (FieldDictionaryAttributes.FfBits, "RichText", "RICH_TEXT"),
+        (FieldDictionaryAttributes.FfBits, "CommitOnSelChange", "COMMIT_ON_SEL_CHANGE"),
+        (CheckboxRadioButtonAttributes, "Opt", "OPT"),
+        (OutlineFontFlag, "italic", "ITALIC"),
+        (OutlineFontFlag, "bold", "BOLD"),
+    ],
+)
+def test_deprecated_constant_attributes(container, old_name, new_name):
+    old_qualified_name = f"{container.__qualname__}.{old_name}"
+    new_qualified_name = f"{container.__qualname__}.{new_name}"
+    expected_message = (
+        f"{old_qualified_name} is deprecated and will be removed in pypdf 7.0.0. "
+        f"Use {new_qualified_name} instead."
+    )
+    with pytest.warns(DeprecationWarning, match=f"^{re.escape(expected_message)}$"):
+        assert getattr(container, old_name) == getattr(container, new_name)
+
+
+@pytest.mark.parametrize(
+    ("old_name", "new_name"),
+    [("TypArguments", "TypeArguments"), ("TypFitArguments", "FitTypes")],
+)
+def test_deprecated_constant_classes(old_name, new_name):
+    expected_message = (
+        f"{old_name} is deprecated and will be removed in pypdf 7.0.0. "
+        f"Use {new_name} instead."
+    )
+    with pytest.warns(DeprecationWarning, match=f"^{re.escape(expected_message)}$"):
+        assert getattr(constants, old_name) is getattr(constants, new_name)

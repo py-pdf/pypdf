@@ -994,8 +994,8 @@ def decode_stream_data(stream: StreamObject) -> bytes:
                 source=__name__, value=params,
             )
             params = DictionaryObject()
-        if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.AHx, new_name=FT.ASCII_HEX_DECODE)
+        if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHX):
+            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.AHX, new_name=FT.ASCII_HEX_DECODE)
             data = ASCIIHexDecode.decode(data)
         elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
             _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.A85, new_name=FT.ASCII_85_DECODE)

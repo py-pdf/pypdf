@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Unreleased
+
+### Maintenance (MAINT)
+- Deprecate mixed-case names in ``constants`` in favor of uppercase names
+- Rename ``TypArguments`` to ``TypeArguments`` and ``TypFitArguments`` to ``FitTypes``
+- Add semantic names for stroking and non-stroking graphics-state constants
+
 ## Version 7.0.1, 2026-11-10
 
 ### Security (SEC)
