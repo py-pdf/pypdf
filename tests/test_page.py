@@ -16,7 +16,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject, _get_fonts_walk
-from pypdf.annotations import Highlight, Polygon
+from pypdf.annotations import Highlight, Link, Polygon
 from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfError
@@ -1040,6 +1040,112 @@ def test_merge_page_preserves_annotation_quad_points(quad_count, transformation,
     annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
     assert annotation["/QuadPoints"] == pytest.approx(expected)
     assert source_page["/Annots"][0].get_object()["/QuadPoints"] == quad_points
+
+
+@pytest.mark.parametrize("read_source", [False, True], ids=["writer-source", "reader-source"])
+@pytest.mark.parametrize(
+    ("ctm", "expected"),
+    [
+        pytest.param(None, (0, 0, 10, 10), id="identity"),
+        pytest.param((1, 0, 0, 1, 10, 20), (10, 20, 20, 30), id="translation"),
+        pytest.param((2, 0, 0, 3, 0, 0), (0, 0, 20, 30), id="scaling"),
+        pytest.param((-1, 0, 0, 1, 10, 0), (0, 0, 10, 10), id="reflection"),
+        pytest.param((0, 1, -1, 0, 10, 0), (0, 0, 10, 10), id="quarter-turn"),
+        # These integer matrices rotate by 45 degrees and scale by sqrt(2).
+        pytest.param((1, 1, -1, 1, 10, 20), (0, 20, 20, 40), id="positive-45-degree-rotation"),
+        pytest.param((1, -1, 1, 1, 10, 20), (10, 10, 30, 30), id="negative-45-degree-rotation"),
+        pytest.param((1, 0, -1, 1, 10, 20), (0, 20, 20, 30), id="negative-x-shear"),
+        pytest.param((1, -1, 0, 1, 10, 20), (10, 10, 20, 30), id="negative-y-shear"),
+        pytest.param((1, 2, -3, 4, 10, 20), (-20, 20, 20, 80), id="combined-affine-transform"),
+    ],
+)
+def test_merge_page_annotation_rectangle_bounds(read_source, ctm, expected) -> None:
+    """The transformed rectangle must enclose all four corners, including after writing."""
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    if read_source:
+        stream = BytesIO()
+        source.write(stream)
+        source_page = PdfReader(stream).pages[0]
+    else:
+        source_page = source.pages[0]
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    if ctm is None:
+        page.merge_page(source_page)
+    else:
+        page.merge_transformed_page(source_page, ctm)
+
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    annotations = reader.pages[0]["/Annots"]
+    assert len(annotations) == 1
+    annotation = annotations[0].get_object()
+    assert annotation["/Rect"] == pytest.approx(expected)
+    assert annotation["/A"]["/URI"] == "https://example.org"
+    assert annotation.raw_get("/P") == reader.pages[0].indirect_reference
+    assert source_page["/Annots"][0].get_object()["/Rect"] == [0, 0, 10, 10]
+
+
+def test_merge_rotated_page_annotation_rectangle_bounds() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_rotated_page(source.pages[0], 45)
+
+    output = BytesIO()
+    writer.write(output)
+    annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
+    diagonal = math.sqrt(50)
+    assert annotation["/Rect"] == pytest.approx((-diagonal, 0, diagonal, 2 * diagonal))
+
+
+def test_merge_page_annotation_rectangle_encloses_quad_points() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(
+        0,
+        Highlight(
+            rect=(0, 0, 10, 10),
+            quad_points=ArrayObject(FloatObject(value) for value in (0, 10, 10, 10, 0, 0, 10, 0)),
+        ),
+    )
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_transformed_page(source.pages[0], (1, 1, -1, 1, 10, 20))
+
+    output = BytesIO()
+    writer.write(output)
+    annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
+    assert annotation["/Rect"] == [0, 20, 20, 40]
+    assert annotation["/QuadPoints"] == [0, 30, 10, 40, 10, 20, 20, 30]
+    left, bottom, right, top = annotation["/Rect"]
+    quads = annotation["/QuadPoints"]
+    assert all(left <= x <= right and bottom <= y <= top for x, y in zip(quads[::2], quads[1::2]))
+
+
+def test_merge_page_annotation_rectangle_repeated_merge() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_transformed_page(source.pages[0], (1, 1, -1, 1, 10, 20))
+    page.merge_transformed_page(source.pages[0], Transformation().translate(50, 60))
+
+    output = BytesIO()
+    writer.write(output)
+    annotations = PdfReader(output).pages[0]["/Annots"]
+    assert len(annotations) == 2
+    assert annotations[0].get_object()["/Rect"] == [0, 20, 20, 40]
+    assert annotations[1].get_object()["/Rect"] == [50, 60, 60, 70]
+    assert annotations[0] != annotations[1]
+    assert source.pages[0]["/Annots"][0].get_object()["/Rect"] == [0, 0, 10, 10]
 
 
 def test_merge_page_reproducible_with_proc_set():

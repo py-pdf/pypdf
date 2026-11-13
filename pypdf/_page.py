@@ -1439,14 +1439,19 @@ class PageObject(DictionaryObject):
                     force_duplicate=True,
                 )
                 r = cast(ArrayObject, a["/Rect"])
-                pt1 = trsf.apply_on((r[0], r[1]), True)
-                pt2 = trsf.apply_on((r[2], r[3]), True)
+                # Rotation and shear can move the other corners beyond this diagonal.
+                points = [
+                    trsf.apply_on((r[0], r[1]), True),
+                    trsf.apply_on((r[2], r[1]), True),
+                    trsf.apply_on((r[0], r[3]), True),
+                    trsf.apply_on((r[2], r[3]), True),
+                ]
                 aa[NameObject("/Rect")] = ArrayObject(
                     (
-                        min(pt1[0], pt2[0]),
-                        min(pt1[1], pt2[1]),
-                        max(pt1[0], pt2[0]),
-                        max(pt1[1], pt2[1]),
+                        min(point[0] for point in points),
+                        min(point[1] for point in points),
+                        max(point[0] for point in points),
+                        max(point[1] for point in points),
                     )
                 )
                 if "/QuadPoints" in a:
