@@ -969,12 +969,22 @@ class PdfDocCommon(ABC):
                             for p in self.pages
                             if k.indirect_reference in p.get("/Annots", "")
                         ]
-        return [
-            x
-            if isinstance(x, PageObject)
-            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore[index, union-attr]
-            for x in ret
-        ]
+        pages = []
+        for x in ret:
+            if isinstance(x, PageObject):
+                pages.append(x)
+                continue
+            page_number = self._get_page_number_by_indirect(x.indirect_reference)  # type: ignore[union-attr]
+            if page_number is None:
+                if self.strict:
+                    raise PdfReadError("Widget points to a page that is not in the page tree")
+                logger_warning(
+                    "Widget points to a page that is not in the page tree; ignoring it.",
+                    source=__name__,
+                )
+                continue
+            pages.append(self.pages[page_number])
+        return pages
 
     @property
     def open_destination(
