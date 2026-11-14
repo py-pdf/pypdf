@@ -751,17 +751,28 @@ def _xobj_to_image(
         try:
             img = _create_image_from_buffer(buf=BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
-            # Not a TIFF or PNG container: interpret the data as raw pixel samples.
-            fallback_mode, fallback_data = _expand_low_bit_samples(
-                mode, size, data, color_space
-            )
-            img = _create_image_from_bytes(fallback_mode, size, fallback_data)
-            # There is no format information, thus fall back to the usual one
-            # for the filter.
-            image_format = "TIFF" if last_filter == FT.LZW_DECODE else "PNG"
+            if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
+                img, image_format, extension, _ = _handle_flate(
+                    size,
+                    data,
+                    mode,
+                    color_space,
+                    colors,
+                    obj_as_text,
+                )
+            else:
+                # Not a TIFF or PNG container: interpret the data as raw pixel samples.
+                fallback_mode, fallback_data = _expand_low_bit_samples(
+                    mode, size, data, cast("str | ArrayObject", color_space)
+                )
+                img = _create_image_from_bytes(fallback_mode, size, fallback_data)
+                # There is no format information, thus fall back to the usual one
+                # for the filter.
+                image_format = "TIFF" if last_filter == FT.LZW_DECODE else "PNG"
+                extension = ".tiff" if image_format == "TIFF" else ".png"
         else:
             image_format = cast(str, img.format)
-        extension = ".tiff" if image_format == "TIFF" else ".png"
+            extension = ".tiff" if image_format == "TIFF" else ".png"
     elif last_filter == FT.DCT_DECODE:
         img, image_format, extension = _create_image_from_buffer(buf=BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
         # invert_color kept unchanged
@@ -792,6 +803,15 @@ def _xobj_to_image(
         )
     elif mode == "":
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
+    elif isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
+        img, image_format, extension, _ = _handle_flate(
+            size,
+            data,
+            mode,
+            color_space,
+            colors,
+            obj_as_text,
+        )
     else:
         # Images without a filter (for example inline images) reach Pillow
         # directly, so low-bit samples have to be expanded here as well.
