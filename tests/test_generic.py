@@ -8,6 +8,7 @@ import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
+from types import CodeType
 
 import pytest
 
@@ -36,6 +37,7 @@ from pypdf.generic import (
     TextStringObject,
     TreeObject,
     create_string_object,
+    decode_pdfdocencoding,
     encode_pdfdocencoding,
     is_null_or_none,
     read_hex_string_from_stream,
@@ -1797,3 +1799,78 @@ def test_content_stream_replicate__raw_data():
     replica = content.replicate(writer)
 
     assert replica.get_data() == b"q 1 0 0 1 10 10 cm Q"
+
+
+@pytest.mark.parametrize(
+    ("input_bytes", "expected_output"),
+    [
+        (b"Hello", "Hello"),
+        (b"", ""),
+        (b"PDF 1.7 Specification", "PDF 1.7 Specification"),
+        (b"Test 123", "Test 123"),
+        (b"\x18\x19\x80\x84\xa0", "\u02d8\u02c7\u2022\u2014\u20ac"),
+    ],
+)
+def test_decode_pdfdocencoding_success(input_bytes, expected_output):
+    """Test that valid byte sequences decode correctly."""
+    assert decode_pdfdocencoding(input_bytes) == expected_output
+
+
+@pytest.mark.parametrize(
+    ("input_bytes", "expected_start", "expected_end", "expected_hex"),
+    [
+        (b"He\x7flo", 2, 3, "0x7f"),
+        (b"\x7f", 0, 1, "0x7f"),
+        (b"Start\x7fEnd", 5, 6, "0x7f"),
+        (b"ABC\x00XYZ", 3, 4, "0x00"),
+    ],
+)
+def test_decode_pdfdocencoding_raises_error(
+    input_bytes, expected_start, expected_end, expected_hex
+):
+    """Test that unassigned bytes raise a precise UnicodeDecodeError at the correct position."""
+    with pytest.raises(UnicodeDecodeError) as exc_info:
+        decode_pdfdocencoding(input_bytes)
+
+    err = exc_info.value
+    assert err.encoding == "pdfdocencoding"
+    assert "does not exist" in err.reason
+    assert (err.start, err.end) == (expected_start, expected_end)
+
+
+def test_decode_pdfdocencoding_performance():
+    """
+    Ensure the performance of decode_pdfdocencoding is within acceptable limits.
+
+    This test counts executed Python bytecode instructions using sys.monitoring.
+    """
+    if not hasattr(sys, "monitoring"):
+        pytest.skip("sys.monitoring requires Python 3.12+")
+
+    # 10KB payload is large enough to show a massive bytecode divergence
+    test_payload = b"A" * 10_000
+    instruction_count = 0
+
+    def instruction_callback(code: CodeType, instruction_offset: int) -> None:
+        nonlocal instruction_count
+        instruction_count += 1
+
+    tool_id = 0
+    try:
+        sys.monitoring.use_tool_id(tool_id, "InstructionCounter")
+        sys.monitoring.register_callback(
+            tool_id, sys.monitoring.events.INSTRUCTION, instruction_callback
+        )
+        sys.monitoring.set_events(tool_id, sys.monitoring.events.INSTRUCTION)
+
+        decode_pdfdocencoding(test_payload)
+    finally:
+        sys.monitoring.set_events(tool_id, sys.monitoring.events.NO_EVENTS)
+        sys.monitoring.free_tool_id(tool_id)
+
+    # We expect a tiny, fixed number of setup/C-call instructions (~500 total).
+    max_allowed_instructions = 2_000
+
+    assert instruction_count < max_allowed_instructions, (
+        f"Instruction budget exceeded: executed {instruction_count:,} bytecode instructions. "
+    )

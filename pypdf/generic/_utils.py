@@ -7,6 +7,8 @@ from .._utils import StreamType, logger_warning, read_non_whitespace
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 from ._base import ByteStringObject, TextStringObject
 
+_PDFDOC_DECODE_MAP = dict(enumerate(_pdfdoc_encoding))
+
 
 def hex_to_rgb(value: str) -> tuple[float, float, float]:
     return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
@@ -240,18 +242,20 @@ def _create_unicode_string_object(data: bytes) -> TextStringObject | None:
 
 
 def decode_pdfdocencoding(byte_array: bytes) -> str:
-    retval = ""
-    for b in byte_array:
-        c = _pdfdoc_encoding[b]
-        if c == "\u0000":
-            raise UnicodeDecodeError(
-                "pdfdocencoding",
-                bytearray(b),
-                -1,
-                -1,
-                "does not exist in translation table",
-            )
-        retval += c
+    # Be optimistic and decode using the PDFDocEncoding map, as
+    # in almost all valid PDF files, unassigned bytes (\u0000) do not occur.
+    retval = bytes(byte_array).decode("latin1").translate(_PDFDOC_DECODE_MAP)
+
+    if "\u0000" in retval:
+        # Find the first invalid byte and report its exact position
+        idx = retval.index("\u0000")
+        raise UnicodeDecodeError(
+            "pdfdocencoding",
+            bytes(byte_array),
+            idx,  # start
+            idx + 1,  # end
+            "does not exist in translation table",
+        )
     return retval
 
 
