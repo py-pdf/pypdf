@@ -442,7 +442,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                         )
                         prev_obj: DictionaryObject | None = self
                         while cur_obj is not None:
-                            source_reference = cur_obj.indirect_reference
+                            source_reference = getattr(cur_obj, "indirect_reference", None)
                             clon = cast(
                                 "DictionaryObject",
                                 cur_obj._reference_clone(
@@ -459,13 +459,18 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                                 visited.add((source_idnum, source_generation))
                             objs.append((cur_obj, clon))
                             assert prev_obj is not None
-                            prev_obj[NameObject(k)] = clon.indirect_reference
+                            clone_reference = getattr(clon, "indirect_reference", None)
+                            prev_obj[NameObject(k)] = clone_reference if clone_reference is not None else clon
                             prev_obj = clon
                             try:
                                 if cur_obj == src:
                                     cur_obj = None
                                 else:
-                                    cur_obj = cast("DictionaryObject", cur_obj[k])
+                                    next_obj = cur_obj[k]
+                                    if isinstance(next_obj, DictionaryObject):
+                                        cur_obj = next_obj
+                                    else:
+                                        cur_obj = None
                             except MemoryError:  # pragma: no cover  # TODO: BLE001
                                 raise
                             except Exception:
@@ -1252,6 +1257,22 @@ class DecodedStreamObject(StreamObject):
 class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
         self.decoded_self: DecodedStreamObject | None = None
+
+    def hash_value_data(self) -> bytes:
+        # Hash the encoded bytes instead of the decoded data: decoding is slow,
+        # it keeps a decoded copy of every stream in memory, and it fails for
+        # streams that cannot be decoded.
+        #
+        # Streams with equal dictionaries and equal encoded bytes still get the
+        # same hash, so PdfWriter.compress_identical_objects() merges them.
+        # Streams whose decoded data is equal but whose encoded bytes differ,
+        # for example the same data compressed with two zlib levels, now get
+        # different hashes and are no longer merged. The output stays correct;
+        # it is only not as small as it could be. If users want maximum
+        # compression at the cost of execution time, a parameter such as
+        # compare_decoded_streams of compress_identical_objects() could add
+        # back the comparison of the decoded data.
+        return DictionaryObject.hash_value_data(self) + self._data
 
     # This overrides the parent method
     def get_data(self) -> bytes:

@@ -1191,8 +1191,12 @@ class PdfDocCommon(ABC):
             )
             if self.strict:
                 raise
-            # create a link to first Page
-            tmp = self.pages[0].indirect_reference
+            # create a link to the first page if the document has one,
+            # and to a null target otherwise
+            if self.pages:
+                tmp = self.pages[0].indirect_reference
+            else:
+                tmp = None
             indirect_reference = NullObject() if tmp is None else tmp
             return Destination(title, indirect_reference, Fit.fit())
 

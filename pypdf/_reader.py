@@ -259,6 +259,11 @@ class PdfReader(PdfDocCommon):
         if self._validated_root is None:
             logger_warning('Searching object with "/Catalog" key', source=__name__)
             number_of_objects = cast(int, self.trailer.get("/Size", 0))
+            if not isinstance(number_of_objects, int):
+                # the trailer may be corrupted and carry a non-integer /Size;
+                # treat it like a missing one and fail with the regular
+                # PdfReadError for an unrecoverable root
+                number_of_objects = 0
             for i in range(number_of_objects):
                 if i >= self._root_object_recovery_limit:
                     raise LimitReachedError("Maximum Root object recovery limit reached.")

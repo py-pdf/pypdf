@@ -15,6 +15,7 @@ from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    EncodedStreamObject,
     NameObject,
     NumberObject,
     PdfObject,
@@ -28,9 +29,11 @@ from pypdf.generic._image_xobject import (
     _get_allocated_bytes_per_pixel,
     _get_image_mode,
     _get_mode_and_invert_color,
+    _get_process_colorant_channels,
     _handle_flate,
     _handle_jpx,
     _merge_image,
+    _resize_image,
     _validate_image_size,
     _xobj_to_image,
     bits2byte,
@@ -691,6 +694,56 @@ def test_xobj_to_image__acyclic_smask_still_applied() -> None:
     assert img.mode == "LA"
 
 
+def test_xobj_to_image__smask_with_different_size(caplog: pytest.LogCaptureFixture) -> None:
+    """A soft mask with other dimensions than its image is scaled to the image size."""
+    image = _minimal_image_xobject()
+    image[NameObject("/Width")] = NumberObject(2)
+    image.set_data(b"\x00\xff")
+    mask = _minimal_image_xobject()
+    mask[NameObject("/Width")] = NumberObject(4)
+    mask[NameObject("/Height")] = NumberObject(2)
+    mask.set_data(b"\x80" * 8)
+    image[NameObject("/SMask")] = mask
+
+    img = _xobj_to_image(image)[2]
+
+    assert img.mode == "LA"
+    assert [img.getpixel((x, 0)) for x in range(2)] == [(0, 128), (255, 128)]
+    assert caplog.messages == []
+
+
+@pytest.mark.parametrize(
+    ("image_size", "mask_size", "mask_data", "expected_alpha"),
+    [
+        ((2, 2), (4, 1), b"\x00\x00\xff\xff", b"\x15\xea\x15\xea"),
+        ((4, 1), (2, 1), b"\x00\xff", b"\x00\x35\xca\xff"),
+        ((2, 1), (8, 1), b"\x00\x00\x00\xff\x00\x00\x00\x00", b"\x32\x1b"),
+    ],
+    ids=["other-aspect-ratio", "upscale", "downscale-thin-line"],
+)
+def test_xobj_to_image__smask_scaled(
+    image_size: tuple[int, int], mask_size: tuple[int, int], mask_data: bytes, expected_alpha: bytes
+) -> None:
+    """
+    A soft mask is stretched over its image in each direction separately.
+
+    ISO 32000-1:2008, 11.6.5.3 (Table 145): both images are mapped to the unit square.
+    """
+    image = _minimal_image_xobject()
+    image[NameObject("/Width")] = NumberObject(image_size[0])
+    image[NameObject("/Height")] = NumberObject(image_size[1])
+    image.set_data(bytes(image_size[0] * image_size[1]))
+    mask = _minimal_image_xobject()
+    mask[NameObject("/Width")] = NumberObject(mask_size[0])
+    mask[NameObject("/Height")] = NumberObject(mask_size[1])
+    mask.set_data(mask_data)
+    image[NameObject("/SMask")] = mask
+
+    img = _xobj_to_image(image)[2]
+
+    assert img.getchannel("A").tobytes() == expected_alpha
+
+
 def test_xobj_to_image__empty_filter_array() -> None:
     """An empty /Filter array means no filter and must not raise IndexError."""
     image = _minimal_image_xobject()
@@ -744,6 +797,62 @@ def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.
     ])
     assert _get_image_mode(color_space, 1, "") == ("L", True)
     assert caplog.messages == ["Color /Cyan converted to Gray. Please share PDF with pypdf dev team"]
+
+
+def _create_device_n(*colorants: str) -> ArrayObject:
+    return ArrayObject([
+        NameObject("/DeviceN"),
+        ArrayObject([NameObject(colorant) for colorant in colorants]),
+        NameObject("/DeviceCMYK"),
+        DictionaryObject(),
+    ])
+
+
+def test_get_process_colorant_channels() -> None:
+    """Only a /DeviceN space made of process colorants is mapped to CMYK channels."""
+    assert _get_process_colorant_channels(_create_device_n("/Black", "/Cyan")) == [3, 0]
+    assert _get_process_colorant_channels(_create_device_n("/Cyan", "/HKS 44 K")) is None
+    assert _get_process_colorant_channels(_create_device_n()) is None
+    assert _get_process_colorant_channels(NameObject("/DeviceCMYK")) is None
+    assert _get_process_colorant_channels(ArrayObject()) is None
+    assert _get_process_colorant_channels(ArrayObject([NameObject("/DeviceN")])) is None
+    names_not_an_array = DictionaryObject({NameObject("/Cyan"): NumberObject(1)})
+    assert _get_process_colorant_channels(ArrayObject([NameObject("/DeviceN"), names_not_an_array])) is None
+
+
+@pytest.mark.parametrize(
+    ("colorants", "lookup_data", "expected_pixels"),
+    [
+        (["/Cyan"], b"\x00\xff", [(255, 255, 255), (0, 255, 255)]),
+        (["/Magenta", "/Black"], b"\x00\x00\xff\x80", [(255, 255, 255), (127, 0, 127)]),
+    ],
+    ids=["cyan", "magenta-black"],
+)
+def test_xobj_to_image__indexed_device_n_process_colorants(
+    caplog: pytest.LogCaptureFixture, colorants: list[str], lookup_data: bytes, expected_pixels: list[Any]
+) -> None:
+    """
+    An /Indexed lookup over a /DeviceN of process colorants is read as CMYK.
+
+    This test is a regression test for issue #3302.
+    """
+    lookup = DecodedStreamObject()
+    lookup.set_data(lookup_data)
+    x_object = EncodedStreamObject()
+    x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(2)
+    x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
+    x_object[NameObject(ImageAttributes.BITS_PER_COMPONENT)] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject(
+        [NameObject("/Indexed"), _create_device_n(*colorants), NumberObject(1), lookup]
+    )
+    x_object[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.FLATE_DECODE)
+    x_object._data = zlib.compress(b"\x00\x01")
+
+    img = _xobj_to_image(x_object)[2]
+
+    assert img.mode == "RGB"
+    assert [img.getpixel((x, 0)) for x in range(2)] == expected_pixels
+    assert caplog.messages == []
 
 
 def test_handle_flate__indexed_lookup_stream_with_str_data() -> None:
@@ -939,6 +1048,18 @@ def test_convert_image() -> None:
                 expected_exception=LimitReachedError, match=r"^Requested image buffer size 1600 exceeds limit 500\.$"
         ):
             _convert_image(image=image, mode="CMYK")
+
+
+def test_resize_image() -> None:
+    image = _create_image(mode="L", size=(10, 10))
+
+    with apply_configuration(image_maximum_buffer_size=500):
+        _resize_image(image=image, size=(20, 20))
+
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 900 exceeds limit 500\.$"
+        ):
+            _resize_image(image=image, size=(30, 30))
 
 
 def test_merge_image() -> None:

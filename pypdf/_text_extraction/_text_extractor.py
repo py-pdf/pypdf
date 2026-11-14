@@ -65,6 +65,7 @@ class TextExtraction:
                 float,
                 float,
                 float,
+                float,
             ]
         ] = []
 
@@ -78,7 +79,10 @@ class TextExtraction:
 
         self.char_scale = 1.0
         self.space_scale = 1.0
+        self.char_spacing = 0.0
         self._space_width: float = 500.0  # will be set correctly at first Tf
+        # Right after a Tf, a word gap is a gap in either the previous or the new font.
+        self._previous_font_space: float | None = None
         self._actual_str_size: dict[str, float] = {
             "str_widths": 0.0,
             "str_height": 0.0,
@@ -111,6 +115,7 @@ class TextExtraction:
             b"Q": self._handle_restore_graphics_state,
             b"cm": self._handle_cm,
             b"Tz": self._handle_tz,
+            b"Tc": self._handle_tc,
             b"Tw": self._handle_tw,
             b"TL": self._handle_tl,
             b"Tf": self._handle_tf,
@@ -151,9 +156,23 @@ class TextExtraction:
             if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
                 self._post_process_text_operation(str_widths or 0.0)
 
+    def process_tj_offset(self, offset: float, space_width: float) -> None:
+        """Add a space for a word gap in a TJ array and count the offset in the text width."""
+        # The offset moved the pen, so it counts towards the width and the added space does not.
+        str_widths = self._actual_str_size["str_widths"] - offset * self.font_size
+        # A Tf just before this TJ has already moved the text to the output.
+        previous = self.text or self.output
+        # A positive offset moves the next glyph back (kerning), so only a negative one can be a gap.
+        if -offset >= space_width and previous and previous[-1] not in " \n":
+            self.process_operation(b"Tj", [" "])
+        self._actual_str_size["str_widths"] = str_widths
+
     def _post_process_text_operation(self, str_widths: float) -> None:
         """Handle common post-processing for text positioning operations."""
         text_was_empty = self.text == ""
+        space_width = self.font_size * self._space_width
+        if self._previous_font_space is not None:
+            space_width = min(space_width, self._previous_font_space)
         try:
             self.text, self.output, self.cm_prev, self.tm_prev, self._line_span = crlf_space_check(
                 self.text,
@@ -166,7 +185,7 @@ class TextExtraction:
                 self.font_size,
                 self.visitor_text,
                 str_widths,
-                self.compute_str_widths(self.font_size * self._space_width),
+                self.compute_str_widths(space_width),
                 self._actual_str_size["str_height"],
                 self._line_span,
             )
@@ -208,7 +227,8 @@ class TextExtraction:
                 visitor_text,
             )
             self.output += completed
-        actual_str_size["str_widths"] += font_widths * font_size
+        # Tc is in text space units and applies to every glyph.
+        actual_str_size["str_widths"] += font_widths * font_size + 1000 * self.char_spacing * len(text_operands)
         actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size
 
@@ -242,6 +262,7 @@ class TextExtraction:
                 self.font_size,
                 self.char_scale,
                 self.space_scale,
+                self.char_spacing,
                 self.TL,
             )
         )
@@ -256,6 +277,7 @@ class TextExtraction:
                 self.font_size,
                 self.char_scale,
                 self.space_scale,
+                self.char_spacing,
                 self.TL,
             ) = self.cm_stack.pop()
         except MemoryError:  # pragma: no cover  # TODO: BLE001
@@ -282,6 +304,10 @@ class TextExtraction:
         """Handle Tz (Set horizontal text scaling) operation - Table 5.2 page 398."""
         self.char_scale = _get_number_operand(operands, 0, 100.0) / 100
 
+    def _handle_tc(self, operands: list[Any]) -> None:
+        """Handle Tc (Set character spacing) operation - Table 5.2 page 398."""
+        self.char_spacing = _get_number_operand(operands, 0, 0.0)
+
     def _handle_tw(self, operands: list[Any]) -> None:
         """Handle Tw (Set word spacing) operation - Table 5.2 page 398."""
         self.space_scale = 1.0 + _get_number_operand(operands, 0, 0.0)
@@ -295,6 +321,7 @@ class TextExtraction:
     def _handle_tf(self, operands: list[Any]) -> None:
         """Handle Tf (Set font size) operation - Table 5.2 page 398."""
         if self.text != "":
+            self._previous_font_space = self.font_size * self._space_width
             self.output += self.text  # .translate(cmap)
             if self.visitor_text is not None:
                 self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
@@ -362,6 +389,7 @@ class TextExtraction:
         """Handle Tj (Show text) operation - Table 5.5 page 406."""
         if not operands or not isinstance(operands[0], (str, bytes)):
             return 0.0
+        self._previous_font_space = None
         self.text, self.rtl_dir, self._actual_str_size = self._handle_tj(
             self.text,
             operands,

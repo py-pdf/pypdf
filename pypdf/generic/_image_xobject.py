@@ -31,6 +31,26 @@ ImageMode: TypeAlias = Literal[
 
 MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
+_PROCESS_COLORANTS = ("/Cyan", "/Magenta", "/Yellow", "/Black")
+
+
+def _get_process_colorant_channels(color_space: Any) -> list[int] | None:
+    """
+    Return the CMYK channel of each colorant of a /DeviceN space.
+
+    Returns None if the space is something else or uses a colorant which is not a process colorant.
+    """
+    if not isinstance(color_space, list) or len(color_space) < 2 or color_space[0] != "/DeviceN":
+        return None
+    colorants = color_space[1].get_object()
+    if (
+        not isinstance(colorants, list)
+        or not colorants
+        or not all(colorant in _PROCESS_COLORANTS for colorant in colorants)
+    ):
+        return None
+    return [_PROCESS_COLORANTS.index(colorant) for colorant in colorants]
+
 
 def _get_image_mode(
     color_space: str | list[Any] | Any,
@@ -67,6 +87,8 @@ def _get_image_mode(
         color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space_str = color_space[1].get_object()
+        if _get_process_colorant_channels(color_space_str) is not None:
+            color_space_str = ColorSpaces.DEVICE_CMYK
         mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
@@ -176,11 +198,11 @@ def _expand_low_bit_samples(
     Expand 2- or 4-bit-per-component samples to one byte per component.
 
     Pillow has no mode for sub-byte samples, so the packed data has to be
-    unpacked before an image can be built from it. For a single-component
-    color space the samples are palette/grayscale indices ("P"). For a
-    multi-component space such as /DeviceRGB they are interleaved color
-    components, so they are also scaled to the full 0-255 range and become
-    an "RGB" image.
+    unpacked before an image can be built from it. A single-component
+    /DeviceGray image holds grayscale samples, scaled to the full 0-255 range
+    as an "L" image. A multi-component space such as /DeviceRGB has interleaved
+    color components, also scaled and combined into an "RGB" image. An indexed
+    color space keeps its raw sample values as palette indices ("P").
 
     Returns the resulting mode and data, unchanged when the mode is not a
     low-bit one.
@@ -190,6 +212,8 @@ def _expand_low_bit_samples(
     bits = int(mode[0])
     if color_space == "/DeviceRGB":
         return "RGB", bits2byte(data, size, bits, colors=3, scale=True)
+    if color_space == "/DeviceGray":
+        return "L", bits2byte(data, size, bits, scale=True)
     return "P", bits2byte(data, size, bits)
 
 
@@ -292,6 +316,11 @@ def _convert_image(*, image: Image.Image, mode: str) -> Image.Image:
     return image.convert(mode)
 
 
+def _resize_image(*, image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    _validate_image_size(mode=image.mode, size=size)
+    return image.resize(size)
+
+
 def _merge_image(*, mode: str, bands: Sequence[Image.Image]) -> Image.Image:
     if not bands:
         return Image.merge(mode=mode, bands=bands)
@@ -343,6 +372,17 @@ def _handle_flate(
             lookup = lookup.original_bytes
         if isinstance(lookup, str):
             lookup = lookup.encode()
+        if (channels := _get_process_colorant_channels(base)) is not None:
+            # Put each tint into its own CMYK channel instead of evaluating the tint transform.
+            colorant_count = len(channels)
+            cmyk_lookup = bytearray()
+            for index in range(0, len(lookup) - colorant_count + 1, colorant_count):
+                cmyk = bytearray(4)
+                for channel, tint in zip(channels, lookup[index : index + colorant_count]):
+                    cmyk[channel] = tint
+                cmyk_lookup += cmyk
+            lookup = bytes(cmyk_lookup)
+            base = ColorSpaces.DEVICE_CMYK
         try:
             nb, conv, mode = {  # type: ignore[assignment]
                 "1": (0, "", ""),
@@ -616,23 +656,17 @@ def _apply_alpha(
         return img, extension, image_format
 
     alpha = _xobj_to_image(s_mask, visited=visited)[2]
+    # TODO: implement mask
+    if alpha.mode != "L":
+        alpha = _convert_image(image=alpha, mode="L")
     if img.size != alpha.size:
-        logger_warning(
-            "Image and mask size not matching: %(image_size)s vs. %(alpha_size)s %(obj_as_text)s",
-            source=__name__,
-            image_size=img.size,
-            alpha_size=alpha.size,
-            obj_as_text=obj_as_text,
-        )
-    else:
-        # TODO: implement mask
-        if alpha.mode != "L":
-            alpha = _convert_image(image=alpha, mode="L")
-        if img.mode == "P":
-            img = _convert_image(image=img, mode="RGB")
-        elif img.mode == "1":
-            img = _convert_image(image=img, mode="L")
-        img.putalpha(alpha)
+        # Both are mapped onto the unit square, thus a soft mask may use other dimensions than its image.
+        alpha = _resize_image(image=alpha, size=img.size)
+    if img.mode == "P":
+        img = _convert_image(image=img, mode="RGB")
+    elif img.mode == "1":
+        img = _convert_image(image=img, mode="L")
+    img.putalpha(alpha)
 
     if "JPEG" in image_format:
         image_format = "JPEG2000"

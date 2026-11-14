@@ -64,12 +64,12 @@ def test_text_string_object__wrongly_detected_bom() -> None:
         writer_page.merge_page(page)
 
         assert writer_page.extract_text() == (
-            "无译形带r的参 z慧队手行 c要枪互工先调 uC一在你 k该方导最 xT况 M味政没出 v大同团\n"
-            "想急压游这体构主m基重张预另做内已织程术并 U种规被中应 s过小立就公测和 F更为 BS\n"
-            "把强型w利 qfJ现能您关文）己个言 VW是 Z亲社 y。说准密令K络通自力 i诸旦明量放及 I\n"
-            "成战康养d都蜂多开 pE次提朋动比台有培愿 A确 l充计标去人如么 b灵 N它 g弃语看 X；j\n"
-            "轮HG采共由地友入（器Y果感建切理情从集德翻a单第识任 Q模 eh目经相哪受起时着 DR\n"
-            "用好o备划付信、度解效作协读 O讨高具击始者意群治扩到 P才兰网认 t马倒来本整 L们 n\n"
+            "无译形带r的参z慧队手行c要枪互工先调uC一在你k该方导最xT况M味政没出v大同团\n"
+            "想急压游这体构主m基重张预另做内已织程术并U种规被中应s过小立就公测和F更为BS\n"
+            "把强型w利qfJ现能您关文）己个言VW是Z亲社y。说准密令K络通自力i诸旦明量放及I\n"
+            "成战康养d都蜂多开pE次提朋动比台有培愿A确l充计标去人如么b灵N它g弃语看X；j\n"
+            "轮HG采共由地友入（器Y果感建切理情从集德翻a单第识任Q模eh目经相哪受起时着DR\n"
+            "用好o备划付信、度解效作协读O讨高具击始者意群治扩到P才兰网认t马倒来本整L们n\n"
             "系可论，步各之但\n"
             "12"
         )

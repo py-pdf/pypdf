@@ -505,9 +505,6 @@ def test_2bits_image():
 
 
 @pytest.mark.enable_socket
-@pytest.mark.xfail(
-    reason="#4316: 4-bit /DeviceGray images are extracted as black palette images", raises=AssertionError
-)
 def test_4bits_image():
     """
     From #1954, test with 4bits image.
@@ -516,9 +513,11 @@ def test_4bits_image():
     """
     reader = PdfReader(BytesIO(get_data_from_url(name="4bits_image.pdf")))
     image = reader.pages[0].images[0].image
+    # 4-bit DeviceGray samples are scaled to the full 0-255 grayscale range.
     expected = bytes(y * 255 // 15 for y in range(16) for _ in range(16))
     assert image.size == (16, 16)
-    assert image.convert("L").tobytes() == expected
+    assert image.mode == "L"
+    assert image.tobytes() == expected
 
 
 @pytest.mark.enable_socket
@@ -562,11 +561,13 @@ def test_runlengthdecode():
 def test_4bits_runlengthdecode():
     """From #1954, test with 4bits RunLengthDecode image."""
     reader = PdfReader(BytesIO(get_data_from_url(name="4bits_rle.pdf")))
-    url_png = "https://github.com/user-attachments/files/27605287/4bit_rle_ref.png.txt"
-    name_png = "4bits_rle.png"
-    refimg = BytesIO(get_data_from_url(url=url_png, name=name_png))
-    data = reader.pages[0].images[0]
-    assert image_similarity(data.image, refimg) > 0.99
+    image = reader.pages[0].images[0].image
+    # A diagonal gradient: each 4-bit sample is (x + y) mod 16, scaled to
+    # the full 0-255 grayscale range.
+    expected = bytes((x + y) % 16 * 255 // 15 for y in range(16) for x in range(16))
+    assert image.size == (16, 16)
+    assert image.mode == "L"
+    assert image.tobytes() == expected
 
 
 @pytest.mark.enable_socket
