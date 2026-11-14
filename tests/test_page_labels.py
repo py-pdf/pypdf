@@ -8,6 +8,7 @@ from pypdf._page_labels import (
     get_label_from_nums,
     index2label,
     index2labels,
+    number2decimal_arabic_numeral,
     number2lowercase_letter,
     number2lowercase_roman_numeral,
     number2uppercase_letter,
@@ -754,3 +755,86 @@ def test_index2labels__kid_which_cannot_be_read():
         index2label(writer, 0)
     with pytest.raises(IndexError):
         index2labels(writer, 30)
+
+
+@pytest.mark.parametrize(
+    ("number", "expected"),
+    [
+        (1, "1"),
+        (2, "2"),
+        (10, "10"),
+        (4_000, "4000"),
+    ],
+)
+def test_number2decimal_arabic_numeral(number, expected):
+    assert number2decimal_arabic_numeral(number) == expected
+
+
+@pytest.mark.parametrize("number", [0, -1, -4_000])
+def test_number2decimal_arabic_numeral__rejects_non_positive_numbers(number):
+    """A page label is a page number, as the Roman and letter styles already require."""
+    with pytest.raises(expected_exception=ValueError, match=r"^Expecting a positive number\.$"):
+        number2decimal_arabic_numeral(number)
+
+
+@pytest.mark.parametrize(
+    ("style", "expected"),
+    [
+        pytest.param("/D", ["1", "2", "1", "2", "3"], id="decimal"),
+        pytest.param("/r", ["1", "2", "i", "ii", "iii"], id="lowercase-roman"),
+        pytest.param("/A", ["1", "2", "A", "B", "C"], id="uppercase-letter"),
+    ],
+)
+def test_page_labels__nums_range_starting_after_the_first_page(caplog, style, expected):
+    """Pages before the first /Nums key fall back to their position, whatever the style."""
+    writer = PdfWriter()
+    for _ in range(5):
+        writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {
+            NameObject("/Nums"): ArrayObject(
+                [NumberObject(2), DictionaryObject({NameObject("/S"): NameObject(style)})]
+            )
+        }
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == expected
+    assert "Ignoring malformed page label entry in /Nums" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("start", "expected"),
+    [
+        pytest.param(0, ["1", "1", "2"], id="zero"),
+        pytest.param(-1, ["1", "2", "1"], id="negative"),
+    ],
+)
+def test_page_labels__non_positive_start(caplog, start, expected):
+    """/St below 1 is out of range, so those pages fall back to their position."""
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {
+            NameObject("/Nums"): ArrayObject(
+                [
+                    NumberObject(0),
+                    DictionaryObject(
+                        {
+                            NameObject("/S"): NameObject("/D"),
+                            NameObject("/St"): NumberObject(start),
+                        }
+                    ),
+                ]
+            )
+        }
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == expected
+    assert "Ignoring malformed page label entry in /Nums" in caplog.text
