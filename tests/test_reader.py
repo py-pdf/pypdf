@@ -12,7 +12,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
-from pypdf._reader import convert_to_int
+from pypdf._reader import convert_to_int, get_stream_data
 from pypdf.constants import ImageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
@@ -3508,6 +3508,58 @@ def test_get_object__speed__repeated_invalid_lookups_for_same_object() -> None:
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     for _ in range(30_000):
         assert reader.get_object(9999) is None
+
+
+def _generate_pdf_with_undefined_refs(n: int) -> bytes:
+    """Build a PDF whose catalog references n undefined objects.
+
+    Object 4 exists in the file body but is left out of the xref table,
+    so it can only be found through the recovery scan.
+    """
+    refs = " ".join(f"{5_000_000 + i} 0 R" for i in range(n))
+    body = bytearray(b"%PDF-1.4\n")
+    offsets = []
+    for obj in (
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R /X ["
+        + refs.encode()
+        + b"] /Y 4 0 R >>\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n",
+        b"4 0 obj\n42\nendobj\n",
+    ):
+        offsets.append(len(body))
+        body += obj
+    xref_pos = len(body)
+    body += b"xref\n0 4\n0000000000 65535 f \n"
+    for offset in offsets[:3]:
+        body += f"{offset:010d} 00000 n \n".encode()
+    body += b"trailer\n<< /Root 1 0 R /Size 4 >>\nstartxref\n" + str(xref_pos).encode() + b"\n%%EOF\n"
+    body += b"%" + b"x" * (49_515 - len(body)) + b"\n"
+    return bytes(body)
+
+
+def test_get_object__speed__distinct_invalid_lookups_scan_file_once() -> None:
+    # https://github.com/py-pdf/pypdf/issues/4428
+    # Each distinct undefined reference used to trigger its own full-file
+    # rescan; now a single recovery index is built on the first lookup.
+    n = 200
+    reader = PdfReader(BytesIO(_generate_pdf_with_undefined_refs(n)))
+    with mock.patch("pypdf._reader.get_stream_data", wraps=get_stream_data) as get_stream_data_mock:
+        for i in range(n):
+            assert reader.get_object(IndirectObject(5_000_000 + i, 0, reader)) is None
+    assert get_stream_data_mock.call_count == 1
+
+
+def test_get_object__recovery_index_finds_object_missing_from_xref() -> None:
+    # https://github.com/py-pdf/pypdf/issues/4428
+    # An object present in the file body but absent from the xref table
+    # must still be recovered through the (now indexed) scan.
+    reader = PdfReader(BytesIO(_generate_pdf_with_undefined_refs(1)))
+    assert reader.get_object(IndirectObject(4, 0, reader)) == 42
+    # A second lookup comes from the cache, without another scan.
+    with mock.patch("pypdf._reader.get_stream_data", wraps=get_stream_data) as get_stream_data_mock:
+        assert reader.get_object(IndirectObject(4, 0, reader)) == 42
+    assert get_stream_data_mock.call_count == 0
 
 
 @pytest.mark.slow
