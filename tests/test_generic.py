@@ -1808,6 +1808,7 @@ def test_content_stream_replicate__raw_data():
         (b"", ""),
         (b"PDF 1.7 Specification", "PDF 1.7 Specification"),
         (b"Test 123", "Test 123"),
+        (b"\x18\x19\x80\x84\xa0", "\u02d8\u02c7\u2022\u2014\u20ac"),
     ],
 )
 def test_decode_pdfdocencoding_success(input_bytes, expected_output):

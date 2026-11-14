@@ -249,12 +249,11 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
     if "\u0000" in retval:
         # Find the first invalid byte and report its exact position
         idx = retval.index("\u0000")
-        b = byte_array[idx]
         raise UnicodeDecodeError(
             "pdfdocencoding",
-            bytearray([b]),
-            idx,  # Exact start index
-            idx + 1,  # Exact end index
+            bytes(byte_array),
+            idx,  # start
+            idx + 1,  # end
             "does not exist in translation table",
         )
     return retval
