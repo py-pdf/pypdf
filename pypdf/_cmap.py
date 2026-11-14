@@ -551,17 +551,24 @@ def _derive_encoding_from_type1_font_file(font_data: bytes) -> tuple[dict[str, s
     txt = encoding_part[1]  # To get the encoding part
     lines = txt.replace(b"\r", b"\n").split(b"\n")
     for li in lines:
+        # A line should be of format 'dup 63 /question put'
         if li.startswith(b"dup"):
-            words = [_w for _w in li.split(b" ") if _w != b""]
-            if len(words) < 3 or (len(words) > 3 and words[3] != b"put"):
-                continue
+            words = li.replace(b"/", b" /").split()
+            # We need at least three elements to parse a line:
+            # - "dup" (words[0]);
+            # - the character code (words[1]); and
+            # - the glyph name (words[2]);
+            # - "put" (words[3]) ends the code definition.
             try:
-                i = int(words[1])
-            except ValueError:
+                if words[3] == b"put":
+                    i = int(words[1])
+                else:
+                    continue
+                # Ensure the character code stays strictly within the 8-bit limit (0-255)
+                if 0 <= i <= 255 and (unipoint := _glyph_name_to_unicode(words[2].decode())):
+                    embedded_font_encoding[chr(i)] = unipoint
+                    int_entry.append(i)
+            except (IndexError, ValueError):
                 continue
 
-            # Ensure the character code stays strictly within the 8-bit limit (0-255)
-            if 0 <= i <= 255 and (unipoint := _glyph_name_to_unicode(words[2].decode())):
-                embedded_font_encoding[chr(i)] = unipoint
-                int_entry.append(i)
     return embedded_font_encoding, int_entry
