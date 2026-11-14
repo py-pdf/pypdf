@@ -807,6 +807,17 @@ def test_array_object__read_from_stream__maximum_element_count() -> None:
             ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
 
 
+def test_array_object__read_from_stream__deeply_nested_array_raises_pdfreaderror() -> None:
+    # A single array nested thousands of levels deep drives recursion depth,
+    # not element count, so array_maximum_element_count never engages.
+    # Previously this raised an uncaught RecursionError instead of PdfReadError.
+    pdf = ReaderDummy()
+    depth = 5000
+    data = b"[" * depth + b"]" * depth
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
+        ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
+
+
 def test_dictionary_object__read_from_stream__token_limit() -> None:
     pdf = ReaderDummy()
     data = b"<< /Key1 << /Key2 << /Key3 << /Key4 << /SomeName 42 >> >> >> >> /Key5 13 >>"
