@@ -156,20 +156,20 @@ class _NamedDestinationIndex:
 
     def __init__(self, *, is_enabled: bool) -> None:
         self._is_enabled = is_enabled
-        self._array: list[Any] | None = None
+        self._names: list[Any] | None = None
         self._length = 0
         self._strings: set[str] = set()
         self._is_sorted = False
         self._pending: list[tuple[str, Any]] = []
 
-    def _update(self, array: list[Any]) -> None:
-        if array is self._array and len(array) == self._length:
+    def _update(self, names: list[Any]) -> None:
+        if names is self._names and len(names) == self._length:
             return
         self.flush()
-        self._array = array
-        self._length = len(array)
-        self._strings = {entry for entry in array if isinstance(entry, str)}
-        keys = array[::2]
+        self._names = names
+        self._length = len(names)
+        self._strings = {entry for entry in names if isinstance(entry, str)}
+        keys = names[::2]
         self._is_sorted = (
             self._length % 2 == 0
             and all(isinstance(key, str) for key in keys)
@@ -184,11 +184,11 @@ class _NamedDestinationIndex:
         self._update(container)
         return title in self._strings
 
-    def insert(self, array: list[Any], title: Any, destination: Any) -> bool:
+    def insert(self, names: list[Any], title: Any, destination: Any) -> bool:
         """Insert like ``PdfWriter.add_named_destination_array``; return False if the array has to be scanned."""
         if not self._is_enabled:
             return False
-        self._update(array)
+        self._update(names)
         if not self._is_sorted or not isinstance(title, str):
             self.flush()
             return False
@@ -196,23 +196,23 @@ class _NamedDestinationIndex:
         self._strings.add(title)
         return True
 
-    def record_insertion(self, array: list[Any], title: Any) -> None:
-        """Update the index after ``add_named_destination_array`` inserted ``title`` into ``array``."""
-        if array is self._array and isinstance(title, str):
+    def record_insertion(self, names: list[Any], title: Any) -> None:
+        """Update the index after ``add_named_destination_array`` inserted ``title`` into ``names``."""
+        if names is self._names and isinstance(title, str):
             self._strings.add(title)
-            self._length = len(array)
+            self._length = len(names)
 
     def flush(self) -> None:
         if not self._pending:
             return
-        array = self._array
-        assert array is not None, "mypy"
-        pairs = [(array[i], array[i + 1]) for i in range(0, len(array), 2)]
+        names = self._names
+        assert names is not None, "mypy"
+        pairs = [(names[i], names[i + 1]) for i in range(0, len(names), 2)]
         pairs += [(TextStringObject(title), destination) for title, destination in self._pending]
         pairs.sort(key=lambda pair: pair[0])
-        array[:] = [entry for pair in pairs for entry in pair]
+        names[:] = [entry for pair in pairs for entry in pair]
         self._pending = []
-        self._length = len(array)
+        self._length = len(names)
 
 
 class PdfWriter(PdfDocCommon):
