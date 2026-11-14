@@ -9,6 +9,7 @@ from ._base import ByteStringObject, TextStringObject
 
 _PDFDOC_DECODE_MAP = dict(enumerate(_pdfdoc_encoding))
 
+
 def hex_to_rgb(value: str) -> tuple[float, float, float]:
     return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
 
@@ -247,15 +248,15 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
 
     if "\u0000" in retval:
         # Find the first invalid byte and report its exact position
-        for idx, b in enumerate(byte_array):
-            if _pdfdoc_encoding[b] == "\u0000":
-                raise UnicodeDecodeError(
-                    "pdfdocencoding",
-                    bytearray([b]),
-                    idx,         # Exact start index
-                    idx + 1,     # Exact end index
-                    "does not exist in translation table",
-                )
+        idx = retval.index("\u0000")
+        b = byte_array[idx]
+        raise UnicodeDecodeError(
+            "pdfdocencoding",
+            bytearray([b]),
+            idx,  # Exact start index
+            idx + 1,  # Exact end index
+            "does not exist in translation table",
+        )
     return retval
 
 

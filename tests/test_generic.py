@@ -1837,8 +1837,6 @@ def test_decode_pdfdocencoding_raises_error(
     assert (err.start, err.end) == (expected_start, expected_end)
 
 
-
-
 def test_decode_pdfdocencoding_performance():
     """
     Ensure the performance of decode_pdfdocencoding is within acceptable limits.
