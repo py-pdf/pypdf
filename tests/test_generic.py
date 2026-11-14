@@ -1801,6 +1801,41 @@ def test_content_stream_replicate__raw_data():
     assert replica.get_data() == b"q 1 0 0 1 10 10 cm Q"
 
 
+@pytest.mark.parametrize(
+    ("input_bytes", "expected_output"),
+    [
+        (b"Hello", "Hello"),
+        (b"", ""),
+        (b"PDF 1.7 Specification", "PDF 1.7 Specification"),
+        (b"Test 123", "Test 123"),
+    ],
+)
+def test_decode_pdfdocencoding_success(input_bytes, expected_output):
+    """Test that valid byte sequences decode correctly."""
+    assert decode_pdfdocencoding(input_bytes) == expected_output
+
+
+@pytest.mark.parametrize(
+    ("input_bytes", "expected_start", "expected_end", "expected_hex"),
+    [
+        (b"He\x7flo", 2, 3, "0x7f"),
+        (b"\x7f", 0, 1, "0x7f"),
+        (b"Start\x7fEnd", 5, 6, "0x7f"),
+        (b"ABC\x00XYZ", 3, 4, "0x00"),
+    ],
+)
+def test_decode_pdfdocencoding_raises_error(
+    input_bytes, expected_start, expected_end, expected_hex
+):
+    """Test that unassigned bytes raise a precise UnicodeDecodeError at the correct position."""
+    with pytest.raises(UnicodeDecodeError) as exc_info:
+        decode_pdfdocencoding(input_bytes)
+
+    err = exc_info.value
+    assert err.encoding == "pdfdocencoding"
+    assert "does not exist" in err.reason
+    assert (err.start, err.end) == (expected_start, expected_end)
+
 
 
 
