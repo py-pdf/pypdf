@@ -85,3 +85,25 @@ defines six log levels:
 * INFO
 * DEBUG
 * NOTSET
+
+### Customizing Log Levels for Specific Messages
+
+If you want to treat specific `pypdf` warning log messages as lower-severity messages (such as `INFO`) to reduce noise in monitoring systems—rather than filtering them out entirely—avoid trying to monkey-patch internal helper functions like `logger_warning`. Instead, use a custom logger class to intercept and adjust the log level dynamically:
+
+```{testcode}
+import logging
+from pypdf import PdfReader
+
+class CustomLogFilter(logging.Logger):
+    def makeRecord(self, *args, **kwargs):
+        if len(args) >= 2:
+            args = list(args)
+            # Example: Downscale WARNING messages from pypdf to INFO
+            if args[1] == logging.WARNING:
+                args[1] = logging.INFO
+        return super().makeRecord(*args, **kwargs)
+
+logging.setLoggerClass(CustomLogFilter)
+pdf_logger = logging.getLogger("pypdf")
+```
+
