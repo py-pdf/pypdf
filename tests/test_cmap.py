@@ -390,16 +390,20 @@ def test_get_encoding__type1_font_file_without_encoding():
 
 
 def test_get_encoding__type1_font_file_truncated_dup_line():
-    # Test that:
-    # - A "dup" entry missing the glyph name must be skipped, not crash;
-    # - The length of "words" is checked in _derive_encoding_from_type1_font_file (#2290);
-    # - A ValueError in i = int(words[1]) does not cause a crash; and
-    # - The fourth element should be "put", for a valid entry.
+    """
+    Verify that malformed ``dup`` lines in a Type 1 encoding are safely skipped.
+
+    Covers:
+    - Truncated lines missing a character code, glyph name, or ``put`` keyword;
+    - Lines whose fourth token is not ``put``;
+    - Lines with a non-integer character code; and
+    - Valid lines lacking whitespace before the glyph slash (e.g., ``97/a``).
+    """
     ft = _type1_font(
-        b"/Encoding 256 array\ndup\ndup 65\ndup 97/a put\ndup 97/a tup\ndup abc/a put\nreadonly def\neexec\n"
+        b"/Encoding 256 array\ndup\ndup 65\ndup 66 /c\ndup 97/a put\ndup 97/a tup\ndup abc/a put\nreadonly def\neexec\n"
     )
-    encoding, _ = _parse_encoding_from_embedded_font(ft)
-    assert encoding == {"a": "a"}
+    encoding = _parse_encoding_from_embedded_font(ft)
+    assert encoding == {97: "a"}
 
 
 @pytest.mark.parametrize(
