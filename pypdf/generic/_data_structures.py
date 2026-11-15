@@ -306,10 +306,6 @@ class ArrayObject(list[Any], PdfObject):
                 # Always propagate security issues.
                 raise
             except (MemoryError, RecursionError) as exc:
-                # A deeply nested array (e.g. "[[[[...]]]]") blows the interpreter's
-                # recursion limit before the element-count budget above ever triggers,
-                # since nesting depth, not element count, drives the recursion here.
-                # Mirrors the guard DictionaryObject.read_from_stream already applies.
                 raise PdfReadError("Error reading PDF file.") from exc
             arr.append(obj)
         return arr
