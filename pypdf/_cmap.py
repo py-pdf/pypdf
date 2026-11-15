@@ -12,7 +12,6 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
-    NullObject,
     StreamObject,
     is_null_or_none,
 )
@@ -74,9 +73,7 @@ def _parse_encoding(
     embedded_font_encoding: dict[int, str] = {}
 
     if "/Encoding" in ft:
-        enc: str | DictionaryObject | NullObject | None = cast(
-            str | DictionaryObject | NullObject, ft["/Encoding"].get_object()
-        )
+        enc = ft["/Encoding"]  # Returns one of string, DictionaryObject, or NullObject
     else:
         enc = None
 
@@ -144,7 +141,7 @@ def _parse_encoding(
 
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         # Overwrite the standard encoding with the encoding information from the embedded font file, if applicable.
-        _correct_encoding(embedded_font_encoding, cast(list[str], encoding))
+        _correct_encoding(embedded_font_encoding, encoding)
 
         x: int = 0
         o: int | str
@@ -162,11 +159,11 @@ def _parse_encoding(
             else:  # isinstance(o, str):
                 try:
                     if x < len(encoding):
-                        encoding[x] = _glyph_name_to_unicode(o) or o  # type: ignore[index]
+                        encoding[x] = _glyph_name_to_unicode(o) or o
                 except MemoryError:  # pragma: no cover  # TODO: BLE001
                     raise
                 except Exception:
-                    encoding[x] = o  # type: ignore[index]
+                    encoding[x] = o
                 x += 1
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
