@@ -376,7 +376,8 @@ class PdfWriter(PdfDocCommon):
         self.temp_fileobj = fileobj
         self.fileobj = ""
         self._with_as_usage = False
-        self._cloned = False
+        # A document cloned from fileobj is not written back to it by __exit__.
+        self._is_cloned_from_fileobj = clone_from is not None and clone_from is fileobj
         # The root of our page tree node
         pages = DictionaryObject(
             {
@@ -394,7 +395,6 @@ class PdfWriter(PdfDocCommon):
             if not isinstance(clone_from, PdfReader):
                 clone_from = PdfReader(clone_from)
             self.clone_document_from_reader(clone_from)
-            self._cloned = True
             if keep_initial_header and not self.incremental:
                 self._header = clone_from.pdf_header.encode()
         else:
@@ -496,13 +496,9 @@ class PdfWriter(PdfDocCommon):
         metadata_stream.set_data(bytes_data)
 
     def __enter__(self) -> Self:
-        """Store how writer is initialized by 'with'."""
-        c: bool = self._cloned
-        t = self.temp_fileobj
-        self.__init__()  # type: ignore[misc]
-        self._cloned = c
+        """Store that the writer is used by 'with', so that __exit__ writes to fileobj."""
         self._with_as_usage = True
-        self.fileobj = t  # type: ignore[assignment]
+        self.fileobj = self.temp_fileobj  # type: ignore[assignment]
         return self
 
     def __exit__(
@@ -512,7 +508,7 @@ class PdfWriter(PdfDocCommon):
         traceback: TracebackType | None,
     ) -> None:
         """Write data to the fileobj."""
-        if self.fileobj and not self._cloned:
+        if self.fileobj and not self._is_cloned_from_fileobj:
             self.write(self.fileobj)
 
     @property
