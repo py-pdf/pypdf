@@ -637,6 +637,31 @@ def test_tj_gap_right_after_a_font_change_is_a_space() -> None:
     assert page.extract_text() == "Programming: Python"
 
 
+@pytest.mark.parametrize(
+    ("content_stream", "expected"),
+    [
+        # ReportLab ends each drawString with T* (move to the next line) right before ET
+        (
+            (
+                b"BT /F1 12 Tf 14.4 TL 1 0 0 1 40 700 Tm (Hel) Tj T* ET "
+                b"BT /F1 12 Tf 14.4 TL 1 0 0 1 58 700 Tm (lo world) Tj T* ET"
+            ),
+            "Hello world",
+        ),
+        (
+            b"BT /F1 12 Tf 40 700 Td (Invoice:) Tj 0 -14 Td ET BT /F1 12 Tf 100 700 Td (12345) Tj ET",
+            "Invoice: 12345",
+        ),
+        # A move followed by text still starts a new line
+        (b"BT /F1 12 Tf 14.4 TL 40 700 Td (Hello) Tj T* (World) Tj ET", "Hello\nWorld"),
+    ],
+)
+def test_move_without_text_after_it_does_not_break_the_line(content_stream: bytes, expected: str) -> None:
+    """A Td, Tm or T* that no text is shown after cannot move a glyph, so it is not a line break."""
+    page = PdfReader(_page_with_helvetica(content_stream)).pages[0]
+    assert page.extract_text() == expected
+
+
 @pytest.mark.enable_socket
 def test_surname_in_capital_and_small_capitals_stays_one_word() -> None:
     """

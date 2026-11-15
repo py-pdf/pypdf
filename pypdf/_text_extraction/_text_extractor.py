@@ -91,6 +91,8 @@ class TextExtraction:
         self.font_size = 12.0  # init just in case of
         # (axis index, min, max) of baselines kept on the current extracted line.
         self._line_span: tuple[int, float, float] | None = None
+        # Text width before a Td, Tm or T* that no text has been shown after yet, see process_operation.
+        self._pending_move_widths: float | None = None
 
         # Text extraction variables
         self.text: str = ""
@@ -143,6 +145,7 @@ class TextExtraction:
         self.output = ""
         self.rtl_dir = False
         self._line_span = None
+        self._pending_move_widths = None
 
     def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
@@ -150,10 +153,18 @@ class TextExtraction:
     def process_operation(self, operator: bytes, operands: list[Any]) -> None:
         if operator in self.operation_handlers:
             handler = self.operation_handlers[operator]
+            if operator == b"Tj" and self._pending_move_widths is not None:
+                self._post_process_text_operation(self._pending_move_widths)
+                self._pending_move_widths = None
             str_widths = handler(operands)
 
-            # Post-process operations that affect text positioning
-            if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
+            # Post-process operations that affect text positioning. A move only matters once
+            # text is shown from the new position, so it is compared then: a move that is not
+            # followed by text, like the T* that ends each text object written by ReportLab,
+            # must not break the line when the next text object continues on it.
+            if operator in {b"Td", b"Tm", b"T*"}:
+                self._pending_move_widths = (self._pending_move_widths or 0.0) + (str_widths or 0.0)
+            elif operator == b"Tj":
                 self._post_process_text_operation(str_widths or 0.0)
 
     def process_tj_offset(self, offset: float, space_width: float) -> None:
