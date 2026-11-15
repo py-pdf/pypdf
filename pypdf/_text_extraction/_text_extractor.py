@@ -43,6 +43,10 @@ def _get_number_operand(operands: list[Any], index: int, default: float) -> floa
     return default
 
 
+# Font resource, font size, space width and text height of the text shown before a move
+_FontState = tuple[DictionaryObject | None, float, float, float]
+
+
 class TextExtraction:
     """
     A class to handle PDF text extraction operations.
@@ -91,8 +95,9 @@ class TextExtraction:
         self.font_size = 12.0  # init just in case of
         # (axis index, min, max) of baselines kept on the current extracted line.
         self._line_span: tuple[int, float, float] | None = None
-        # Text width before a Td, Tm or T* that no text has been shown after yet, see process_operation.
-        self._pending_move_widths: float | None = None
+        # A Td, Tm or T* that no text has been shown after yet: the text width before it and the
+        # font values at that move, see process_operation.
+        self._pending_move: tuple[float, _FontState] | None = None
 
         # Text extraction variables
         self.text: str = ""
@@ -145,7 +150,7 @@ class TextExtraction:
         self.output = ""
         self.rtl_dir = False
         self._line_span = None
-        self._pending_move_widths = None
+        self._pending_move = None
 
     def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
@@ -153,17 +158,23 @@ class TextExtraction:
     def process_operation(self, operator: bytes, operands: list[Any]) -> None:
         if operator in self.operation_handlers:
             handler = self.operation_handlers[operator]
-            if operator == b"Tj" and self._pending_move_widths is not None:
-                self._post_process_text_operation(self._pending_move_widths)
-                self._pending_move_widths = None
+            if operator == b"Tj" and self._pending_move is not None:
+                pending_widths, font_state = self._pending_move
+                self._pending_move = None
+                self._post_process_text_operation(pending_widths, font_state)
             str_widths = handler(operands)
 
             # Post-process operations that affect text positioning. A move only matters once
             # text is shown from the new position, so it is compared then: a move that is not
             # followed by text, like the T* that ends each text object written by ReportLab,
             # must not break the line when the next text object continues on it.
+            # The font values are taken at the first move, as when moves were compared right away,
+            # so a smaller font set before a superscript does not make its rise a line break.
             if operator in {b"Td", b"Tm", b"T*"}:
-                self._pending_move_widths = (self._pending_move_widths or 0.0) + (str_widths or 0.0)
+                if self._pending_move is None:
+                    self._pending_move = (str_widths or 0.0, self._font_state())
+                else:
+                    self._pending_move = (self._pending_move[0] + (str_widths or 0.0), self._pending_move[1])
             elif operator == b"Tj":
                 self._post_process_text_operation(str_widths or 0.0)
 
@@ -178,26 +189,31 @@ class TextExtraction:
             self.process_operation(b"Tj", [" "])
         self._actual_str_size["str_widths"] = str_widths
 
-    def _post_process_text_operation(self, str_widths: float) -> None:
-        """Handle common post-processing for text positioning operations."""
-        text_was_empty = self.text == ""
+    def _font_state(self) -> _FontState:
+        """Font values the line and word-gap checks use: resource, size, space width and text height."""
         space_width = self.font_size * self._space_width
         if self._previous_font_space is not None:
             space_width = min(space_width, self._previous_font_space)
+        return self.font_resource, self.font_size, space_width, self._actual_str_size["str_height"]
+
+    def _post_process_text_operation(self, str_widths: float, font_state: _FontState | None = None) -> None:
+        """Handle common post-processing for text positioning operations."""
+        text_was_empty = self.text == ""
+        font_resource, font_size, space_width, str_height = font_state or self._font_state()
         try:
             self.text, self.output, self.cm_prev, self.tm_prev, self._line_span = crlf_space_check(
                 self.text,
                 (self.cm_prev, self.tm_prev),
                 (self.cm_matrix, self.tm_matrix),
                 (self.memo_cm, self.memo_tm),
-                self.font_resource,
+                font_resource,
                 self.orientations,
                 self.output,
-                self.font_size,
+                font_size,
                 self.visitor_text,
                 str_widths,
                 self.compute_str_widths(space_width),
-                self._actual_str_size["str_height"],
+                str_height,
                 self._line_span,
             )
             if text_was_empty or self.text == "":

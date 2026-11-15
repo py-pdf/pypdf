@@ -662,6 +662,23 @@ def test_move_without_text_after_it_does_not_break_the_line(content_stream: byte
     assert page.extract_text() == expected
 
 
+def test_moves_without_text_between_them_count_as_one() -> None:
+    """A Tm back to the line start followed by a Td is one move from the previous text.
+
+    The SF-424 form draws "spec", then moves to the start of the line and on to "ified". Taking
+    the gap from the line start inserted a space inside the word.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "SF424_page2.pdf")
+    assert "Attach supporting documents as specified in agency instructions." in reader.pages[0].extract_text()
+
+
+@pytest.mark.samples
+def test_move_without_text_after_it_keeps_a_label_with_its_value() -> None:
+    """In the PDFKit sample, a label and its value stay on one line."""
+    reader = PdfReader(SAMPLE_ROOT / "022-pdfkit/pdfkit.pdf")
+    assert "Foo:\tbar\nABC:\tDEF" in reader.pages[0].extract_text()
+
+
 @pytest.mark.enable_socket
 def test_surname_in_capital_and_small_capitals_stays_one_word() -> None:
     """
