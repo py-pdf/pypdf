@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794847233742,
+  "lastUpdate": 1794847571958,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -170155,6 +170155,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022631725486859135",
             "extra": "mean: 550.7650470000158 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "158475962+Krushil-Dhankecha@users.noreply.github.com",
+            "name": "Krushil Dhankecha",
+            "username": "Krushil-Dhankecha"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a6299f11bde5ab9873f2c629f8dcd10a7badb422",
+          "message": "ROB: Fall back to the page position for out-of-range decimal page labels (#4406)\n\n* ROB: Fall back to the page position for out-of-range decimal page labels\n\nCloses #4405\n\n_get_label calls the numbering style mapping function and, on ValueError,\nwarns and falls back to the page position. The Roman and letter functions\nraise that for a non-positive number, so /R, /r, /A and /a already take\nthis path when a file gives /St a value below 1 or starts its /Nums range\nafter the first page. /D mapped to str, which cannot fail, so those pages\nwere labeled \"0\" or \"-1\" with no warning.\n\n/D now has a mapping function with the same check, which leaves the label\nof every valid page unchanged.\n\n* ROB: Address review feedback on the page label tests\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-16T17:39:09+01:00",
+          "tree_id": "e0245d704866ecd7aa764d26409cc520ad694fb4",
+          "url": "https://github.com/py-pdf/pypdf/commit/a6299f11bde5ab9873f2c629f8dcd10a7badb422"
+        },
+        "date": 1794847451248,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 10.801405795894327,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023890081437080283",
+            "extra": "mean: 92.5805417272727 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 37.57259753814104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005147930157019765",
+            "extra": "mean: 26.61514149999533 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.962795385359456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014985354939057107",
+            "extra": "mean: 1.038642286000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3280278447590686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007441496293228476",
+            "extra": "mean: 3.0485216909999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3979990841846852,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07644093931792668",
+            "extra": "mean: 2.5125685955999986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4052742614740752,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034122081129388124",
+            "extra": "mean: 711.6048641999896 msec\nrounds: 5"
           }
         ]
       }
