@@ -2681,18 +2681,12 @@ def _get_fonts_walk(
         for a in cast(ArrayObject, obj["/Annots"]):
             _get_fonts_walk(cast(DictionaryObject, a.get_object()), fnt, emb)
     if "/AP" in obj:
-        if (
-            cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]).get(
-                "/Type"
-            )
-            == "/XObject"
-        ):
-            _get_fonts_walk(
-                cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]),
-                fnt,
-                emb,
-            )
+        normal = cast(DictionaryObject, obj["/AP"])["/N"].get_object()
+        if isinstance(normal, StreamObject):
+            # /Type is optional in an appearance stream
+            _get_fonts_walk(normal, fnt, emb)
         else:
-            for a in cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]):
-                _get_fonts_walk(cast(DictionaryObject, a), fnt, emb)
+            # One appearance stream per state, e.g. /Off and /Yes of a check box
+            for a in cast(DictionaryObject, normal).values():
+                _get_fonts_walk(cast(DictionaryObject, a.get_object()), fnt, emb)
     return fnt, emb  # return the sets for each page
