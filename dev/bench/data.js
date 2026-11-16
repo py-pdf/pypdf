@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794828917415,
+  "lastUpdate": 1794830841320,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127517,6 +127517,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008962644824880194",
             "extra": "mean: 369.30764759999875 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ced2e8e182a38c77083ee38f72288578496804a8",
+          "message": "BUG: Label a page that lies between the /Limits of two page label kids (#4385)\n\n* BUG: Label a page that lies between the /Limits of two page label kids\n\n* Use bisect_right in find_preceding and start the helper names with a verb\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-16T13:04:59+01:00",
+          "tree_id": "b1897399b074b6a9f6ee19f58885a5563feadc96",
+          "url": "https://github.com/py-pdf/pypdf/commit/ced2e8e182a38c77083ee38f72288578496804a8"
+        },
+        "date": 1794830826933,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.76218155085808,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01110860241842145",
+            "extra": "mean: 362.0326838000011 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 21.911072815425037,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002867333413639708",
+            "extra": "mean: 45.63902499999983 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2628404705040038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034922004654348346",
+            "extra": "mean: 3.804589141400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.326635020691576,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00301680592320103",
+            "extra": "mean: 61.249608307691645 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14636742873945718,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01737311070883243",
+            "extra": "mean: 6.832121111999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.539874861668977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004070004358032449",
+            "extra": "mean: 649.4034190000093 msec\nrounds: 5"
           }
         ]
       }
