@@ -888,6 +888,30 @@ def test_fallback_provider__aes_requires_dependency(function_name, args):
         function(*args)
 
 
+@pytest.mark.parametrize(
+    ("key", "plaintext", "ciphertext"),
+    [
+        (b"Key", b"Plaintext", "bbf316e8d940af0ad3"),
+        (b"Wiki", b"pedia", "1021bf0420"),
+        (b"Secret", b"Attack at dawn", "45a01f645fc35b383552544b9bf5"),
+        (b"mykey", b"", ""),
+    ],
+)
+def test_fallback_provider__rc4_known_values(key, plaintext, ciphertext):
+    """The pure-Python RC4 gives the published test vectors."""
+    crypt = pypdf._crypt_providers._fallback.CryptRC4(key)
+    assert crypt.encrypt(plaintext).hex() == ciphertext
+    assert crypt.decrypt(bytes.fromhex(ciphertext)) == plaintext
+
+
+def test_fallback_provider__rc4_keeps_leading_zero_bytes():
+    """Data that encrypts to leading zero bytes keeps its length."""
+    key = b"mykey"
+    keystream = pypdf._crypt_providers._fallback.rc4_encrypt(key, bytes(1000))
+    assert pypdf._crypt_providers._fallback.rc4_encrypt(key, keystream) == bytes(1000)
+    assert pypdf._crypt_providers._fallback.rc4_decrypt(key, bytes(1000)) == keystream
+
+
 def test_encrypt__empty_owner_password_uses_user_password():
     """An empty owner password is replaced by the user password (Algorithm 3, step a)."""
     writer = PdfWriter()

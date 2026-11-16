@@ -1053,11 +1053,13 @@ class Encryption:
         # for AES-256
         aes256_key = key
 
-        stm_crypt = self._get_crypt(self.StmF, rc4_key, aes128_key, aes256_key)
-        str_crypt = self._get_crypt(self.StrF, rc4_key, aes128_key, aes256_key)
-        ef_crypt = self._get_crypt(self.EFF, rc4_key, aes128_key, aes256_key)
+        # Streams, strings and embedded files usually share one crypt filter; set up each method once.
+        crypts: dict[str, CryptBase] = {}
+        for method in (self.StmF, self.StrF, self.EFF):
+            if method not in crypts:
+                crypts[method] = self._get_crypt(method, rc4_key, aes128_key, aes256_key)
 
-        return CryptFilter(stm_crypt, str_crypt, ef_crypt)
+        return CryptFilter(crypts[self.StmF], crypts[self.StrF], crypts[self.EFF])
 
     @staticmethod
     def _get_crypt(
