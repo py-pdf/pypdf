@@ -405,8 +405,10 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     continue
                 ignore_fields[x] -= 1  # type: ignore[operator]
             x += 1
-        #  Check if this is a chain list, we need to loop to prevent recur
-        if any(
+        #  Check if this is a chain list, we need to loop to prevent recur.
+        #  Only indirect objects are chain nodes: A direct dictionary has no
+        #  identity for the loop detection, so its links are cloned generically.
+        if getattr(src, "indirect_reference", None) is not None and any(
             field not in ignore_fields
             and field in src
             and isinstance(src.raw_get(field), IndirectObject)
