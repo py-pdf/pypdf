@@ -61,6 +61,8 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
+    deprecate_positional_arguments,
+    deprecate_with_replacement,
     deprecation_with_replacement,
     logger_warning,
 )
@@ -151,6 +153,8 @@ class PdfWriter(PdfDocCommon):
 
             When writing incrementally, the original document is written first and new/modified
             content is appended. To be used for signed document/forms to keep signature valid.
+            Encryption is not supported in this mode: calling ``encrypt`` or writing changes to an
+            encrypted document raises a ``NotImplementedError``.
 
         full: If true, loads all the objects (always full if incremental = True).
             This parameter may allow loading large PDFs.
@@ -327,9 +331,9 @@ class PdfWriter(PdfDocCommon):
             self.incremental = False
         if isinstance(self._ID, list):
             if isinstance(self._ID[0], TextStringObject):
-                self._ID[0] = ByteStringObject(self._ID[0].get_original_bytes())
+                self._ID[0] = ByteStringObject(self._ID[0].original_bytes)
             if isinstance(self._ID[1], TextStringObject):
-                self._ID[1] = ByteStringObject(self._ID[1].get_original_bytes())
+                self._ID[1] = ByteStringObject(self._ID[1].original_bytes)
 
     # for commonality
     @property
@@ -1023,7 +1027,7 @@ class PdfWriter(PdfDocCommon):
                         lst = ArrayObject(TextStringObject(v) for v in value)
                         parent_annotation[NameObject(FA.V)] = lst
                     elif isinstance(value, tuple):
-                        annotation[NameObject(FA.V)] = TextStringObject(
+                        parent_annotation[NameObject(FA.V)] = TextStringObject(
                             value[0],
                         )
                     else:
@@ -1439,6 +1443,8 @@ class PdfWriter(PdfDocCommon):
     def _write_increment(self, stream: StreamType) -> None:
         # Only reached from `write()` inside `if self.incremental`.
         assert self._reader is not None, "mypy"
+        if self._reader.is_encrypted:
+            raise NotImplementedError("Writing incremental updates of encrypted PDF files is currently not supported.")
         object_positions = {}
         object_blocks = []
         current_start = -1
@@ -1454,10 +1460,6 @@ class PdfWriter(PdfDocCommon):
                 # first write new/modified object
                 object_positions[idnum] = stream.tell()
                 stream.write(f"{idnum} 0 obj\n".encode())
-                """ encryption is not operational
-                if self._encryption and obj != self._encrypt_entry:
-                    obj = self._encryption.encrypt_object(obj, idnum, 0)
-                """
                 obj.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
 
@@ -1830,8 +1832,10 @@ class PdfWriter(PdfDocCommon):
             outline_item_object, parent, before, is_open
         )
 
+    @deprecate_positional_arguments("8.0.0")
     def add_outline_item(
         self,
+        *,
         title: str,
         page_number: PageObject | IndirectObject | int | None,
         parent: TreeObject | IndirectObject | None = None,
@@ -1850,24 +1854,24 @@ class PdfWriter(PdfDocCommon):
             page_number: Page number this outline item will point to.
             parent: A reference to a parent outline item to create nested
                 outline items.
-            before:
+            before: The outline item in front of which the new outline item
+                is inserted. If None, the new outline item is appended.
             color: Color of the outline item's font as a red, green, blue tuple
                 from 0.0 to 1.0 or as a Hex String (#RRGGBB)
             bold: Outline item font is bold
             italic: Outline item font is italic
             fit: The fit of the destination page.
+            is_open: Whether the children of the outline item are shown.
 
         Returns:
             The added outline item as an indirect object.
 
+        .. deprecated:: 7.1.0
+            Passing positional arguments is deprecated and will be removed
+            in pypdf 8.0.0. Use keyword arguments instead.
+
         """
         page_ref: NullObject | IndirectObject | NumberObject | None
-        if isinstance(italic, Fit):  # it means that we are on the old params
-            if fit is not None and page_number is None:
-                page_number = fit
-            return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic, is_open=is_open
-            )
         if page_number is None:
             action_ref = None
         else:
@@ -1941,14 +1945,13 @@ class PdfWriter(PdfDocCommon):
 
         return page_destination_ref
 
-    def _get_page_reference(self, page_number: int) -> Any:
+    def _get_page_reference(self, page_number: int) -> IndirectObject:
         """Look up a page by number, reporting a bad index rather than an IndexError from the kids array."""
-        pages = cast(DictionaryObject, self.get_object(self._pages))
-        kids = cast(ArrayObject, pages[PagesAttributes.KIDS])
-        count = len(kids)
+        pages = self.pages
+        count = len(pages)
         if not (-count <= page_number < count):
             raise IndexError(f"Page number {page_number} is out of range")
-        return kids[page_number]
+        return cast(IndirectObject, pages[page_number].indirect_reference)
 
     def add_named_destination(
         self,
@@ -2251,8 +2254,13 @@ class PdfWriter(PdfDocCommon):
             to_delete: The type of images to be deleted
                 (default = all images types)
 
+        .. deprecated:: 7.1.0
+            Passing a boolean as ``to_delete`` is deprecated and will be
+            removed in pypdf 8.0.0. Use ``ImageType.ALL`` instead.
+
         """
         if isinstance(to_delete, bool):
+            deprecate_with_replacement("Passing a boolean to remove_images", "ImageType.ALL", "8.0.0")
             to_delete = ImageType.ALL
 
         i = ObjectDeletionFlag.NONE
@@ -2648,29 +2656,14 @@ class PdfWriter(PdfDocCommon):
                     act[NameObject("/D")] = TextStringObject(d)
         return page
 
-    def _create_stream(
-        self, fileobj: Path | StrByteType | PdfReader
-    ) -> tuple[IOBase, Encryption | None]:
+    def _create_stream(self, fileobj: Path | StrByteType) -> IOBase:
         # If the fileobj parameter is a string, assume it is a path
         # and create a file object at that location. If it is a file,
-        # copy the file's contents into a BytesIO stream object; if
-        # it is a PdfReader, copy that reader's stream into a
-        # BytesIO stream.
-        # If fileobj is none of the above types, it is not modified
-        encryption_obj = None
+        # copy the file's contents into a BytesIO stream object.
         stream: IOBase
         if isinstance(fileobj, (str, Path)):
             with FileIO(fileobj, "rb") as f:
                 stream = BytesIO(f.read())
-        elif isinstance(fileobj, PdfReader):
-            if fileobj._encryption:
-                encryption_obj = fileobj._encryption
-            orig_tell = fileobj.stream.tell()
-            fileobj.stream.seek(0)
-            stream = BytesIO(fileobj.stream.read())
-
-            # reset the stream to its original location
-            fileobj.stream.seek(orig_tell)
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
             fileobj.seek(0)
             filecontent = fileobj.read()
@@ -2682,7 +2675,7 @@ class PdfWriter(PdfDocCommon):
                 "a file object, or an object implementing .seek and .read. "
                 "Passing a PdfReader directly works as well."
             )
-        return stream, encryption_obj
+        return stream
 
     def append(
         self,
@@ -2784,7 +2777,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(fileobj, PdfDocCommon):
             reader = fileobj
         else:
-            stream, _encryption_obj = self._create_stream(fileobj)
+            stream = self._create_stream(fileobj)
             # Create a new PdfReader instance using the stream
             # (either file or BytesIO or StringIO) created above
             reader = PdfReader(stream, strict=False)  # type: ignore[arg-type]
@@ -2839,8 +2832,8 @@ class PdfWriter(PdfDocCommon):
             outline_item_typ = cast(
                 "TreeObject",
                 self.add_outline_item(
-                    TextStringObject(outline_item),
-                    next(iter(srcpages.values())).indirect_reference,
+                    title=TextStringObject(outline_item),
+                    page_number=next(iter(srcpages.values())).indirect_reference,
                     fit=PAGE_FIT,
                 ).get_object(),
             )

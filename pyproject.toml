@@ -254,5 +254,5 @@ module = "tests.scripts.*"
 ignore_errors = false
 
 [[tool.mypy.overrides]]
-module = ["tests.test_pagerange", "tests.test_papersizes"]
+module = ["tests.test_codecs", "tests.test_pagerange", "tests.test_papersizes"]
 ignore_errors = false

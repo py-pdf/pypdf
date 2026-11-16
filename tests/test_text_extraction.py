@@ -6,9 +6,11 @@ The tested code might be in _page.py.
 
 import json
 import re
+from collections.abc import Callable
 from dataclasses import asdict
 from io import BytesIO
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -617,6 +619,35 @@ def test_do_operator_without_operand_is_skipped() -> None:
     """A Do operator without an operand is skipped and the text around it is kept."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj ET Do BT /F1 12 Tf (World) Tj ET")).pages[0]
     assert page.extract_text() == "HelloWorld"
+
+
+def test_tj_positive_offset_is_not_a_word_gap() -> None:
+    """A positive TJ offset is kerning (it moves the next glyph back), not a space."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 12 Tf 40 700 Td [(T) 300 (echnical) -300 (W) 300 (ork)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Technical Work"
+
+
+def test_tj_gap_right_after_a_font_change_is_a_space() -> None:
+    """A word gap at the start of a TJ array is kept when a Tf came just before it."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 9 Tf 40 700 Td [(Programming:)] TJ /F1 9 Tf [-457 (Python)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Programming: Python"
+
+
+@pytest.mark.enable_socket
+def test_surname_in_capital_and_small_capitals_stays_one_word() -> None:
+    """
+    A surname set as a capital followed by small capitals is extracted as one word.
+
+    ISO 32000-2:2020, 9.4.3 (text-showing operators) and 9.4.4 (text space details).
+    """
+    url = "https://github.com/user-attachments/files/22596566/7552c42e9280b4476e59e77acc0bc812.pdf"
+    name = "7552c42e9280b4476e59e77acc0bc812.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "MOREAU (Antoine)" in reader.pages[143].extract_text()
 
 
 def test_tj_operator_without_an_array_is_skipped() -> None:
@@ -1699,3 +1730,84 @@ def test_get_display_str(text, rtl_dir, text_operands, character_map, expected, 
 
     assert result == expected
     assert visited == expected_visited
+
+
+def test_extract_text__content_without_text_operators_is_not_parsed() -> None:
+    """
+    extract_text() does not parse a content stream that cannot add text.
+
+    Text is only added by the text-showing operators (ISO 32000-2:2020, 9.4.3,
+    Table 107) and by Do, which can paint a form XObject with text (8.8.1,
+    Table 86). Content without them gives an empty string anyway.
+    """
+    # A gray rectangle, as in a figure: only color, path construction and painting.
+    page = PdfReader(_page_with_helvetica(b"0.5 g 10 10 100 100 re f")).pages[0]
+
+    with mock.patch.object(ContentStream, "_parse_content_stream", autospec=True) as parse:
+        assert page.extract_text() == ""
+
+    parse.assert_not_called()
+
+
+@pytest.mark.parametrize("visitor", ["visitor_operand_before", "visitor_operand_after", "visitor_text"])
+def test_extract_text__content_without_text_operators_is_parsed_for_visitors(visitor: str) -> None:
+    """extract_text() parses a content stream that cannot add text if a visitor is given."""
+    page = PdfReader(_page_with_helvetica(b"0.5 g 10 10 100 100 re f")).pages[0]
+
+    with mock.patch.object(
+        ContentStream, "_parse_content_stream", autospec=True, side_effect=ContentStream._parse_content_stream
+    ) as parse:
+        assert page.extract_text(**{visitor: lambda *_: None}) == ""
+
+    parse.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("build_page", "content"),
+    [
+        pytest.param(_page_with_helvetica, b"BT /F1 12 Tf (Hello) Tj ET", id="Tj"),
+        pytest.param(_page_with_helvetica, b"BT /F1 12 Tf [(Hello)] TJ ET", id="TJ"),
+        pytest.param(_page_with_helvetica, b"BT /F1 12 Tf 14 TL (Hello) ' ET", id="'"),
+        pytest.param(_page_with_helvetica, b'BT /F1 12 Tf 14 TL 0 0 (Hello) " ET', id='"'),
+        # The page only contains "/Fx Do"; the text is in the form XObject.
+        pytest.param(
+            lambda content: _page_with_form_xobject(b"/Fx Do", [1, 0, 0, 1, 0, 0], content),
+            b"BT /F1 12 Tf (Hello) Tj ET",
+            id="Do",
+        ),
+    ],
+)
+def test_extract_text__each_text_operator(build_page: Callable[[bytes], BytesIO], content: bytes) -> None:
+    """
+    extract_text() extracts the text of each operator that can add text.
+
+    These are the text-showing operators (ISO 32000-2:2020, 9.4.3, Table 107)
+    and Do with a form XObject (8.8.1, Table 86).
+    """
+    assert PdfReader(build_page(content)).pages[0].extract_text() == "Hello"
+
+
+@pytest.mark.enable_socket
+def test_word_continued_on_a_line_with_character_spacing_stays_one_word() -> None:
+    """
+    A word split over two text-showing operators on a line with character spacing stays one word.
+
+    ISO 32000-2:2020, 9.3.2 (character spacing) and 9.4.4 (text space details).
+    """
+    url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "The channel between the reader" in reader.pages[113].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_word_gap_before_a_symbol_in_another_font_is_a_space() -> None:
+    """
+    A word gap before a symbol set in another font is extracted as a space.
+
+    ISO 32000-2:2020, 9.4.2 (text-positioning operators) and 9.4.4 (text space details).
+    """
+    url = "https://arxiv.org/pdf/1602.06541.pdf"
+    name = "1602.06541.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "an MRF and C be the set" in reader.pages[7].extract_text()
