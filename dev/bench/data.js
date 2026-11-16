@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794828798440,
+  "lastUpdate": 1794828917415,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -169693,6 +169693,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04294367290660419",
             "extra": "mean: 945.0074257999859 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d3cd3bebe446a22fc19e9534aa65a7fa7cf3fbfe",
+          "message": "MAINT: Revert \"BUG: Fix RecursionError when cloning a cycle through a direct dictionary\" (#4438)\n\nThis reverts commit 1d7503d362f5d9cce71cb091960a35bd99b3a7a1.\n\nThe original change broke our CI.",
+          "timestamp": "2026-11-16T12:31:49+01:00",
+          "tree_id": "933a1de3f1c6b38cc6b906b2dd0cf6496cb7a315",
+          "url": "https://github.com/py-pdf/pypdf/commit/d3cd3bebe446a22fc19e9534aa65a7fa7cf3fbfe"
+        },
+        "date": 1794828908623,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 24.167658719821144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016574832555756203",
+            "extra": "mean: 41.37761177419509 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 53.45897568462348,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007667537724885189",
+            "extra": "mean: 18.705932674419575 msec\nrounds: 43"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.7258749414400882,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026613691416004684",
+            "extra": "mean: 579.4162577999941 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.7898642395262495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07826525140004048",
+            "extra": "mean: 1.2660403522000023 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4850734049078457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029652922583176006",
+            "extra": "mean: 2.061543654799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7368337980053805,
+            "unit": "iter/sec",
+            "range": "stddev: 0.048867655949717134",
+            "extra": "mean: 575.7603296000013 msec\nrounds: 5"
           }
         ]
       }
