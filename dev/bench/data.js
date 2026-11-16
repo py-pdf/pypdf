@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794848235164,
+  "lastUpdate": 1794862178944,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127847,6 +127847,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0036026107356009547",
             "extra": "mean: 660.6304220000084 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2470447645@qq.com",
+            "name": "ainuo-AI",
+            "username": "ainuo-AI"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d81502d8871e22b4fb03089d03f5f421829ea600",
+          "message": "BUG: Reject zero-step slices in PageRange (#4404)\n\n* BUG: Reject zero-step slices in PageRange\n\nExtend the zero-stride validation from #4004 to slice inputs.\n\n* TST: Give PageRange validation cases descriptive IDs",
+          "timestamp": "2026-11-16T21:47:14+01:00",
+          "tree_id": "30347dafdb610227942cc89a896c9057bdb86c92",
+          "url": "https://github.com/py-pdf/pypdf/commit/d81502d8871e22b4fb03089d03f5f421829ea600"
+        },
+        "date": 1794862162213,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.115934882701725,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008876223928471587",
+            "extra": "mean: 320.9309686000026 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.075042381566913,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008149683180187111",
+            "extra": "mean: 36.93438355172492 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3127191538762107,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002273780773573972",
+            "extra": "mean: 3.197757437 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 23.83285237008694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016225667815232736",
+            "extra": "mean: 41.95888869999962 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.16572888103730776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03204858558442864",
+            "extra": "mean: 6.033951317000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.717684817213678,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005866785322891189",
+            "extra": "mean: 582.178983 msec\nrounds: 5"
           }
         ]
       }
