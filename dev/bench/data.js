@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794819577366,
+  "lastUpdate": 1794819673225,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -169429,6 +169429,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03519413754577659",
             "extra": "mean: 915.2720124000098 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d162499abeb839b6cd5426dc3eb0b4f5a10665b",
+          "message": "MAINT: Remove the unreachable PdfReader branch of _create_stream (#4414)\n\nPdfWriter._create_stream() has had no reachable PdfReader branch since\n#1371 (pypdf 3.0.0) copied it from PdfMerger into PdfWriter:\nPdfWriter.merge(), its only caller, uses a PdfReader directly (since\n#2570 any PdfDocCommon) and calls _create_stream() only for paths and\nfile objects. PdfMerger.merge() passed every fileobj to its own copy of\n_create_stream(), so the branch was needed there until #2813\n(pypdf 5.0.0) removed PdfMerger.\n\nWithout the branch, the returned encryption was always None, so\n_create_stream() now returns only the stream.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-16T09:57:24+01:00",
+          "tree_id": "933a1de3f1c6b38cc6b906b2dd0cf6496cb7a315",
+          "url": "https://github.com/py-pdf/pypdf/commit/6d162499abeb839b6cd5426dc3eb0b4f5a10665b"
+        },
+        "date": 1794819664199,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 21.376313869850684,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017968513342452336",
+            "extra": "mean: 46.78075023076863 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 40.54424018803933,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011155246256672633",
+            "extra": "mean: 24.664415842105306 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.4898061567591503,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02582396926615455",
+            "extra": "mean: 671.2282638000033 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.7152678428385749,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038972895599472285",
+            "extra": "mean: 1.3980776711999965 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4458800762329194,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0638464829436889",
+            "extra": "mean: 2.242755514999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7613893193013777,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0338827527423023",
+            "extra": "mean: 567.7336572000058 msec\nrounds: 5"
           }
         ]
       }
