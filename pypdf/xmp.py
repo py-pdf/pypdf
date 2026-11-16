@@ -313,7 +313,7 @@ class XmpInformation(PdfObject):
         return value
 
     def _getter_bag(self, namespace: str, name: str) -> list[str] | None:
-        # Fix: Check if the key exists, not if the value is truthy
+        # Check if the key exists, not if the value is truthy
         ns_cache = self.cache.setdefault(namespace, {})
         if name in ns_cache:
             return cast(list[str], ns_cache[name])
