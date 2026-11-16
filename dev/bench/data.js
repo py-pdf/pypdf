@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794847571958,
+  "lastUpdate": 1794848001419,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -127715,6 +127715,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005781721086375615",
             "extra": "mean: 351.91541499999914 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6f763fe4ed70ffda13de9853f38775e5f6c53977",
+          "message": "PI: Decode PDFDocEncoding strings with str.translate instead of per-character concatenation (#4429)\n\n`decode_pdfdocencoding` built its result with `retval += c` in a Python loop, one character per byte. This PR replaces the loop with `bytes.decode(\"latin1\").translate(...)`, followed by a single check for unassigned bytes. Both steps run in C.\n\nI ran into this in pdfly (https://github.com/py-pdf/pdfly/pull/295), where coverage.py on Python 3.11 turned a 0.3 s `PdfWriter(clone_from=...)` into 66 s in CI.\n\n## Problem\n\nWithout tracing, the old loop grows linearly: CPython resizes the string in place when nothing else references it. Under `sys.settrace`, which coverage.py uses on Python < 3.12, it grows superlinearly. Going from 10 KB to 100 KB makes it about 28x slower, not 10x. The most likely cause is that since 3.11 the in-place `str +=` shortcut only runs in a specialized bytecode instruction, and tracing turns specialization off, so every `+=` copies the whole string.\n\nThe CI slowdown in pdfly showed up on Windows. The numbers below are from Linux, so the problem is not limited to Windows.\n\n## Benchmarks\n\nLinux x86_64, Python 3.11.18, 3.14.10 and 3.15.2 (optimized builds installed with uv). Time per call in µs, best of 3 runs, old → new:\n\n| Input            | 3.11            | 3.11 under `sys.settrace` | 3.14            | 3.15            |\n| ---------------- | --------------- | ------------------------- | --------------- | --------------- |\n| ASCII, 30 B      |     2.3 →   1.1 |      19.3 →   2.9         |     2.5 →   0.9 |     2.6 →   0.9 |\n| ASCII, 10 KB     |   753.4 →  17.3 |   7,053.5 →  15.7         |   861.2 →  16.9 |   854.8 →  16.6 |\n| ASCII, 100 KB    | 7,453.5 → 135.1 | 201,034.8 → 137.0         | 8,486.9 → 158.8 | 8,819.7 → 158.5 |\n| Non-ASCII, 10 KB |   843.3 → 326.1 |   8,877.1 → 356.3         |   931.6 → 294.5 |   898.6 → 285.6 |\n\nThe numbers come from the script below. Run it from the repository root with `python bench.py`, and with `python bench.py --trace` for the `sys.settrace` column. It also runs the functional equivalence check described in the next section.\n\n```python\nimport random\nimport sys\nimport timeit\n\nfrom pypdf._codecs import _pdfdoc_encoding\nfrom pypdf.generic import decode_pdfdocencoding as new\n\n\ndef old(byte_array: bytes) -> str:\n    retval = \"\"\n    for b in byte_array:\n        c = _pdfdoc_encoding[b]\n        if c == \"\\u0000\":\n            raise UnicodeDecodeError(\n                \"pdfdocencoding\",\n                bytearray(b),\n                -1,\n                -1,\n                \"does not exist in translation table\",\n            )\n        retval += c\n    return retval\n\n\ndef decode_or_error(f, data):\n    try:\n        return f(data)\n    except UnicodeDecodeError:\n        return \"error\"\n\n\n# Functional equivalence: every single byte, plus random valid strings\nfor i in range(256):\n    assert decode_or_error(old, bytes([i])) == decode_or_error(new, bytes([i])), i\nvalid = bytes(i for i in range(256) if _pdfdoc_encoding[i] != \"\\u0000\")\nfor _ in range(2000):\n    data = bytes(random.choices(valid, k=random.randint(0, 50)))\n    assert old(data) == new(data), data\n\nif \"--trace\" in sys.argv:\n    sys.settrace(lambda *args: lambda *args: None)\n\npayloads = {\n    \"ASCII, 30 B\": b\"Hello World 1234567890 abcdef!\",\n    \"ASCII, 10 KB\": b\"A\" * 10_000,\n    \"ASCII, 100 KB\": b\"A\" * 100_000,\n    \"Non-ASCII, 10 KB\": bytes([0x80, 0x84, 0xA0, 0x18, 0x41]) * 2_000,\n}\nfor label, data in payloads.items():\n    number = max(1, 300_000 // len(data))\n    times_us = [\n        min(timeit.repeat(lambda: f(data), number=number, repeat=3)) / number * 1e6\n        for f in (old, new)\n    ]\n    print(f\"{label:16}  old {times_us[0]:>11,.1f} µs  new {times_us[1]:>7,.1f} µs\")\n```\n\n## Functional equivalence\n\nBoth implementations map each byte on its own, with no state carried between bytes. So two inputs decode the same way if and only if every single byte does. I checked all 256 byte values against the old implementation: the outputs are identical, and both reject the same five unassigned bytes (0x00, 0x16, 0x7F, 0x9F, 0xAD). A check of 2,000 random valid strings also matched.\n\nThe only visible change is the `UnicodeDecodeError` raised for an unassigned byte:\n\n- Before: `object` was `bytearray(b)` (a run of `b` zero bytes, not the input), and `start` and `end` were both -1.\n- After: `object` is the input, and `start` and `end` give the position of the first unassigned byte.\n\n`create_string_object`, the only caller inside pypdf, catches this error and returns a `ByteStringObject`, so its behavior does not change.\n\n## Tests\n\n- Decoding of ASCII and non-ASCII PDFDocEncoding strings (ISO 32000-2:2020, Annex D.3 \"PDFDocEncoding character set\").\n- The error is raised with the right `start` and `end` for unassigned bytes.\n- A performance guard on Python 3.12+: it counts the bytecode instructions executed while decoding 10 KB using `sys.monitoring`. The test sees 35 instructions on Python 3.12 to 3.15, independent of the input length; the old loop ran 140,022 (Python 3.14).\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-16T17:51:00+01:00",
+          "tree_id": "43c8d5f8314a247833be9bde8d3e4cba3ef62da1",
+          "url": "https://github.com/py-pdf/pypdf/commit/6f763fe4ed70ffda13de9853f38775e5f6c53977"
+        },
+        "date": 1794847987860,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7292726126967755,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006852439296529787",
+            "extra": "mean: 366.3979901999994 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.16325415428872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019313416235348959",
+            "extra": "mean: 45.1197280434784 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26708317649890945,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01966450197762698",
+            "extra": "mean: 3.744151964599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.05749071577837,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013325829689963202",
+            "extra": "mean: 45.336072578948006 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14647507219794467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02706021905436504",
+            "extra": "mean: 6.827100236199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5139584181988617,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029842512481203457",
+            "extra": "mean: 660.5201225999906 msec\nrounds: 5"
           }
         ]
       }
