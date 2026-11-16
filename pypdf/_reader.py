@@ -314,7 +314,7 @@ class PdfReader(PdfDocCommon):
         return info
 
     @property
-    def _ID(self) -> ArrayObject | None:
+    def _ID(self) -> ArrayObject | None:  # noqa: N802
         """
         Provide access to "/ID". Standardized with PdfWriter.
 
@@ -351,7 +351,7 @@ class PdfReader(PdfDocCommon):
             # The document-level metadata stream is exempt from encryption
             # only if /EncryptMetadata is false (ISO 32000-2, Table 21).
             self._override_encryption = (
-                self._encryption is not None and not self._encryption.EncryptMetadata
+                self._encryption is not None and not self._encryption.metadata_encrypted
             )
             return cast(XmpInformation, self.root_object.xmp_metadata)
         finally:
