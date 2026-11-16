@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794827300833,
+  "lastUpdate": 1794827463569,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -169561,6 +169561,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0338827527423023",
             "extra": "mean: 567.7336572000058 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "6367575+kmz@users.noreply.github.com",
+            "name": "kmz",
+            "username": "kmz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1d7503d362f5d9cce71cb091960a35bd99b3a7a1",
+          "message": "BUG: Fix RecursionError when cloning a cycle through a direct dictionary (#4408)\n\n* BUG: Fix RecursionError when cloning a cycle through a direct dictionary\n\nThe chain handling in DictionaryObject._clone() ran _clone() again on\nobjects which had already been translated into the destination writer.\nIf such an object is reached through a direct dictionary, for example\n/AP << /N 4 0 R >> inside object 4, every pass starts with a fresh\nvisited set, thus the cycle is never detected.\n\nStop walking the chain once _reference_clone() returns an existing clone.\n\n* Only treat indirect objects as chain nodes\n\nStopping at already translated objects did not help when cloning with\nforce_duplicate=True, as done by PageObject.merge_page() for annotations:\nEach pass created a new clone, thus the recursion remained. It also made\nthe existing loop detection unreachable without force_duplicate.\n\nSkip the chain handling for direct dictionaries instead. Their links are\ncloned by the generic loop, which resolves already translated objects.",
+          "timestamp": "2026-11-16T12:06:01+01:00",
+          "tree_id": "25f27cf85fb69b0b753e5ad642386cfe0d42cb90",
+          "url": "https://github.com/py-pdf/pypdf/commit/1d7503d362f5d9cce71cb091960a35bd99b3a7a1"
+        },
+        "date": 1794827448188,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 15.19353527014608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01853258087607467",
+            "extra": "mean: 65.81746658823437 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.986419385338067,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0075677408295689585",
+            "extra": "mean: 33.348429739128925 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.06481048788838,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02638715421324974",
+            "extra": "mean: 939.1342510000015 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5163769141784195,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06042443825213317",
+            "extra": "mean: 1.936569921199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3192505828863265,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06564805380493492",
+            "extra": "mean: 3.13233570619999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.058192742933698,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04294367290660419",
+            "extra": "mean: 945.0074257999859 msec\nrounds: 5"
           }
         ]
       }
