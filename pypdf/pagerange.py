@@ -113,7 +113,9 @@ class PageRange:
         s = self._slice
         indices: tuple[int, int] | tuple[int, int, int]
         if s.step is None:
-            if s.start is not None and s.stop == s.start + 1:
+            # A lone "-1" parses as the last page, which is slice(-1, None),
+            # so slice(-1, 0) cannot be written that way.
+            if s.start is not None and s.stop == s.start + 1 and s.start != -1:
                 return str(s.start)
 
             indices = s.start, s.stop

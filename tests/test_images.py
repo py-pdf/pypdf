@@ -15,7 +15,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageStat
 
 from pypdf import PageObject, PdfReader, PdfWriter, apply_configuration
 from pypdf._page import ImageFile
-from pypdf.errors import DeprecationError, LimitReachedError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
     ArrayObject,
@@ -629,9 +629,9 @@ def test_low_bit_devicergb_image_mode():
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
 
-    # A single-component space must still map to a palette image ("P").
+    # A single-component /DeviceGray space decodes to scaled grayscale ("L").
     gray = _handle_flate((2, 2), bytes([0xF0, 0x0F]), "4bits", "/DeviceGray", 1, "")[0]
-    assert gray.mode == "P"
+    assert gray.mode == "L"
 
 
 def test_low_bit_devicergb_image_without_filter():
@@ -1115,3 +1115,39 @@ def test_inline_image__perceptual() -> None:
 
     assert len(page.images) == 1
     assert image_similarity(image, page.images[0].image) > 0.9999
+
+
+def test_inline_image__custom_color_space_resources__not_a_dictionary():
+    """A custom inline-image color space with non-dictionary resources raises the clear input error."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Resources")] = NumberObject(1)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    with pytest.raises(PdfReadError, match=r"^Cannot find resource entry /CS0 for /CS$"):
+        list(PdfReader(stream).pages[0].images)
+
+
+def test_inline_image__custom_color_space__resolved_from_resources():
+    """A custom inline-image color space is resolved through dictionary /Resources."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    resources = DictionaryObject()
+    resources[NameObject("/ColorSpace")] = DictionaryObject(
+        {NameObject("/CS0"): NameObject("/DeviceGray")}
+    )
+    page[NameObject("/Resources")] = resources
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    images = list(PdfReader(stream).pages[0].images)
+    assert len(images) == 1

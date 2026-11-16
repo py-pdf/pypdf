@@ -1362,8 +1362,8 @@ def test_outline__reads_a_well_formed_outline():
     writer = PdfWriter()
     for _ in range(2):
         writer.add_blank_page(width=72, height=72)
-    writer.add_outline_item("Chapter 1", 0)
-    writer.add_outline_item("Chapter 2", 1)
+    writer.add_outline_item(title="Chapter 1", page_number=0)
+    writer.add_outline_item(title="Chapter 2", page_number=1)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -1598,7 +1598,7 @@ def test_outline__reads_a_well_formed_outlines_entry():
     writer = PdfWriter()
     for _ in range(2):
         writer.add_blank_page(width=72, height=72)
-    writer.add_outline_item("Chapter 1", 0)
+    writer.add_outline_item(title="Chapter 1", page_number=0)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)

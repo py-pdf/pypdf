@@ -1791,6 +1791,69 @@ def test_outline_with_invalid_destinations():
     assert len(reader.outline) == 9
 
 
+def _build_minimal_pdf(objects: list[tuple[str, str]]) -> bytes:
+    """Build a minimal, xref-valid PDF from literal object bodies."""
+    out = BytesIO()
+    out.write(b"%PDF-1.7\n")
+    offsets = [0]
+    for num, body in objects:
+        offsets.append(out.tell())
+        out.write(f"{num} 0 obj\n{body}\nendobj\n".encode())
+    xref_pos = out.tell()
+    n = len(objects) + 1
+    out.write(f"xref\n0 {n}\n".encode())
+    out.write(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        out.write(f"{offset:010d} 00000 n \n".encode())
+    out.write(f"trailer\n<< /Size {n - 1} /Root 1 0 R >>\n".encode())
+    out.write(f"startxref\n{xref_pos}\n%%EOF".encode())
+    return out.getvalue()
+
+
+def test_root_recovery_with_non_integer_size(caplog):
+    """Cf #4387: a non-integer /Size in a corrupted trailer must not crash
+    the root recovery loop with a TypeError.
+    """
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R >>"),
+            ("2", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            ("3", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>"),
+        ]
+    )
+    data = data.replace(b"/Size 3 /Root 1 0 R", b"/Size /Bogus /Root 3 0 R")
+    reader = PdfReader(BytesIO(data), strict=False)
+    with pytest.raises(PdfReadError):
+        len(reader.pages)
+    assert all(
+        msg in caplog.text
+        for msg in (
+            "Invalid Root object in trailer",
+            'Searching object with "/Catalog" key',
+        )
+    )
+
+
+def test_named_destination__fallback_without_pages(caplog):
+    """Cf #4386: an unknown fit type must degrade to the missing-destination
+    fallback even when the document has no pages.
+    """
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R /Names << /Dests << /Dest1 3 0 R >> >> >>"),
+            ("2", "<< /Type /Pages /Kids [] /Count 0 >>"),
+            ("3", "[ 2 0 R (junk) 0 ]"),  # unknown fit type with an argument
+        ]
+    )
+    reader = PdfReader(BytesIO(data), strict=False)
+    destinations = reader.named_destinations
+    assert len(destinations) == 1
+    destination = destinations["/Dest1"]
+    assert destination["/Type"] == "/Fit"
+    assert isinstance(destination["/Page"], NullObject)
+    assert "Unknown destination: '/Dest1'" in caplog.text
+
+
 @pytest.mark.enable_socket
 def test_pdfreader_multiple_definitions(caplog):
     """iss325"""

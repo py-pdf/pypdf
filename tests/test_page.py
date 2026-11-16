@@ -1875,6 +1875,53 @@ def test_annotations__is_not_an_array(caplog, value, expected):
     assert expected in caplog.text
 
 
+def test_get_rectangle__fallback_skips_null_entries():
+    """A "/CropBox null" entry must not stop the fallback chain of the other boxes."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    writer.pages[0][NameObject("/CropBox")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    # Read the dependent boxes first: reading the crop box resolves and stores
+    # the fallback value, which used to hide the null entry.
+    page = PdfReader(stream).pages[0]
+    assert page.trimbox == RectangleObject([0, 0, 100, 200])
+    assert page.artbox == RectangleObject([0, 0, 100, 200])
+    assert page.bleedbox == RectangleObject([0, 0, 100, 200])
+    # The crop box itself resolves to the media box as well.
+    assert page.cropbox == RectangleObject([0, 0, 100, 200])
+
+
+def test_get_rectangle__fallback_skips_indirect_null_entry():
+    """An indirect null page box is treated like a direct null entry."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    null_reference = writer._add_object(NullObject())
+    writer.pages[0][NameObject("/CropBox")] = null_reference
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).pages[0].trimbox == RectangleObject([0, 0, 100, 200])
+
+
+def test_scale_by__with_null_crop_box():
+    """scale_by() reads every box, so a null /CropBox used to break it."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=200)
+    writer.pages[0][NameObject("/CropBox")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter()
+    page = writer.add_page(PdfReader(stream).pages[0])
+    page.scale_by(0.5)
+    assert page.mediabox == RectangleObject([0, 0, 50, 100])
+
+
 def test_get_rectangle__size_handling(caplog):
     """
     See issue #2991 and related ones. We would previously generate invalid page boxes when they
@@ -2108,10 +2155,29 @@ def test_extract_text__visitor_receives_text_without_end_operator() -> None:
     assert parts[-1] == "Hello"
 
 
-@pytest.mark.xfail(
-    reason="#4335: Annotations are dropped if the target page has a null /Annots entry", strict=True
-)
-def test_merge_page__target_with_null_annotations() -> None:
+def test_merge_page__target_with_non_array_annotations(caplog) -> None:
+    """
+    merge_page() replaces an /Annots entry of the target page that is not an
+    array, and reports it, so the annotations of the merged page are kept.
+    """
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_annotation(0, Polygon(vertices=[(10, 10), (20, 10), (20, 20)]))
+    writer = PdfWriter()
+    target = writer.add_blank_page(100, 100)
+    target[NameObject("/Annots")] = NumberObject(4)
+
+    target.merge_page(source.pages[0])
+
+    assert "Annotations are not an array: 4" in caplog.text
+    output = BytesIO()
+    writer.write(output)
+    annotations = PdfReader(output).pages[0]["/Annots"]
+    assert len(annotations) == 1
+    assert annotations[0].get_object()["/Subtype"] == "/Polygon"
+
+
+def test_merge_page__target_with_null_annotations(caplog) -> None:
     """
     merge_page() adds the annotations of the merged page to a target page with
     /Annots null.
@@ -2135,6 +2201,8 @@ def test_merge_page__target_with_null_annotations() -> None:
 
     target.merge_page(PdfReader(source_data).pages[0])
 
+    assert "Annotations are not an array" not in caplog.text
+
     assert len(target["/Annots"]) == 1
 
 
@@ -2156,3 +2224,45 @@ def test_merge_page__annotation_added_by_writer() -> None:
     target.merge_page(source.pages[0])
 
     assert len(target["/Annots"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Resources are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Resources are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Resources are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_get_fonts__resources_are_not_a_dictionary(caplog, value, expected):
+    """Resources which are not a dictionary yield no fonts and a warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    embedded, unembedded = PdfReader(stream).pages[0]._get_fonts()
+
+    assert embedded == set()
+    assert unembedded == set()
+    assert expected in caplog.text
+
+
+def test_get_fonts__resources_are_null(caplog):
+    """Null /Resources yields no fonts and no warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = NullObject()
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    embedded, unembedded = PdfReader(stream).pages[0]._get_fonts()
+
+    assert embedded == set()
+    assert unembedded == set()
+    assert "Resources are not a dictionary" not in caplog.text

@@ -138,17 +138,14 @@ def _get_font_resources(resources: Any) -> DictionaryObject:
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: PdfObject | None = self.get(name)
+    retval: PdfObject = self.get(name, NullObject()).get_object()
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
         for d in defaults:
-            retval = self.get(d)
-            if retval is not None:
+            retval = self.get(d, NullObject()).get_object()
+            if not is_null_or_none(retval):
                 break
-    if isinstance(retval, IndirectObject):
-        # Pages of a writer have no `pdf`, the reference knows its own document.
-        retval = retval.get_object()
     if not isinstance(retval, ArrayObject):
         raise ValueError(f"Expected an array of four values for {name}, got {retval}")
     if (length := len(retval)) != 4:
@@ -858,11 +855,19 @@ class PageObject(DictionaryObject):
             if isinstance(v, NameObject):
                 # It is a custom name, thus we have to look in resources.
                 # The only applicable case is for ColorSpace.
-                if "/Resources" in self:
-                    resources = cast(DictionaryObject, self["/Resources"])
-                    if "/ColorSpace" in resources and v in cast(DictionaryObject, resources["/ColorSpace"]):
-                        color_space = cast(DictionaryObject, resources["/ColorSpace"])
-                        return color_space[v]
+                resources = self.get("/Resources", NullObject()).get_object()
+                if not isinstance(resources, DictionaryObject):
+                    if not is_null_or_none(resources):
+                        logger_warning(
+                            "Resources are not a dictionary: %(resources)s",
+                            source=__name__,
+                            resources=resources,
+                        )
+                    resources = DictionaryObject()
+                if "/ColorSpace" in resources and v in (
+                    color_space := cast(DictionaryObject, resources["/ColorSpace"])
+                ):
+                    return color_space[v]
                 raise PdfReadError(f"Cannot find resource entry {v} for {k}") from exception
         return v
 
@@ -1410,9 +1415,16 @@ class PageObject(DictionaryObject):
             arr.sort()
 
         if not is_null_or_none(page2.get(PG.ANNOTS, None)):
-            if PG.ANNOTS not in self:
-                self[NameObject(PG.ANNOTS)] = ArrayObject()
-            annots = cast(ArrayObject, self[PG.ANNOTS].get_object())
+            annots = self.get(PG.ANNOTS, NullObject()).get_object()
+            if not isinstance(annots, ArrayObject):
+                if not is_null_or_none(annots):
+                    logger_warning(
+                        "Annotations are not an array: %(annotations)s",
+                        source=__name__,
+                        annotations=annots,
+                    )
+                annots = ArrayObject()
+                self[NameObject(PG.ANNOTS)] = annots
             if ctm is None:
                 trsf = Transformation()
             else:
@@ -1456,11 +1468,8 @@ class PageObject(DictionaryObject):
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
                 except KeyError:
                     pass
-                try:
-                    aa[NameObject("/P")] = self.indirect_reference
-                    annots.append(aa.indirect_reference)
-                except AttributeError:
-                    pass
+                aa[NameObject("/P")] = self.indirect_reference
+                annots.append(aa.indirect_reference)
 
         new_content_array = ArrayObject()
         original_content = self.get_contents()
@@ -1946,12 +1955,8 @@ class PageObject(DictionaryObject):
                         # A name is a str too, but not text to show
                         if isinstance(op, (str, bytes)) and not isinstance(op, NameObject):
                             extractor.process_operation(b"Tj", [op])
-                        if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                            abs(float(op)) >= _confirm_space_width
-                            and extractor.text
-                            and extractor.text[-1] != " "
-                        ):
-                            extractor.process_operation(b"Tj", [" "])
+                        if isinstance(op, (int, float, NumberObject, FloatObject)):
+                            extractor.process_tj_offset(float(op), _confirm_space_width)
             elif operator == b"TD" and len(operands) >= 2:
                 # a non-numeric ty leaves the leading unchanged, like a non-numeric TL
                 if isinstance(operands[1], (int, float)):
@@ -2657,15 +2662,20 @@ def _get_fonts_walk(
         ).values():
             process_font(f)
     if "/Resources" in obj:
-        if "/Font" in cast(DictionaryObject, obj["/Resources"]):
-            for f in cast(
-                DictionaryObject, cast(DictionaryObject, obj["/Resources"])["/Font"]
-            ).values():
+        resources = cast(DictionaryObject, obj["/Resources"]).get_object()
+        if not isinstance(resources, DictionaryObject):
+            if not is_null_or_none(resources):
+                logger_warning(
+                    "Resources are not a dictionary: %(resources)s",
+                    source=__name__,
+                    resources=resources,
+                )
+            resources = DictionaryObject()
+        if "/Font" in resources:
+            for f in cast(DictionaryObject, resources["/Font"]).values():
                 process_font(f)
-        if "/XObject" in cast(DictionaryObject, obj["/Resources"]):
-            for x in cast(
-                DictionaryObject, cast(DictionaryObject, obj["/Resources"])["/XObject"]
-            ).values():
+        if "/XObject" in resources:
+            for x in cast(DictionaryObject, resources["/XObject"]).values():
                 _get_fonts_walk(cast(DictionaryObject, x.get_object()), fnt, emb)
     if "/Annots" in obj:
         for a in cast(ArrayObject, obj["/Annots"]):
