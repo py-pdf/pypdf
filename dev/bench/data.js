@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794843369806,
+  "lastUpdate": 1794843532345,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -170023,6 +170023,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028594092181510614",
             "extra": "mean: 931.2871016000031 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "53dada7c9e34288e3d0fa5e12203f03c844e5c64",
+          "message": "BUG: Collect the fonts of an appearance stream without /Type and of each appearance state (#4399)\n\n* BUG: Collect the fonts of an appearance stream without /Type and of each appearance state\n\n* Use germanfields.pdf and FormTestFromOo.pdf in the tests\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-16T16:34:14+01:00",
+          "tree_id": "b1577ebe3ec7578d561b4c279d03232f8eadf671",
+          "url": "https://github.com/py-pdf/pypdf/commit/53dada7c9e34288e3d0fa5e12203f03c844e5c64"
+        },
+        "date": 1794843521651,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.300928457843913,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002332827207598067",
+            "extra": "mean: 69.92552986666473 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 50.41061170060599,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003298484874501152",
+            "extra": "mean: 19.837093148940678 msec\nrounds: 47"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1953899513022743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009176994027204014",
+            "extra": "mean: 836.5471024000044 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.31500291172531997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014952574650701229",
+            "extra": "mean: 3.174573830199995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5223160788860989,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0290489607959734",
+            "extra": "mean: 1.9145495235999987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.81565625024126,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022631725486859135",
+            "extra": "mean: 550.7650470000158 msec\nrounds: 5"
           }
         ]
       }
