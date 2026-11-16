@@ -124,8 +124,8 @@ def _parse_encoding(
     else:
         encoding = charset_encoding["/StandardEncoding"].copy()
     if isinstance(enc, DictionaryObject) and "/Differences" in enc:
-        x: int = 0
-        differences = enc["/Differences"].get_object()
+        code: int = 0
+        differences = enc["/Differences"]
         if not isinstance(differences, ArrayObject):
             logger_warning(
                 "Font encoding differences are not an array: %(differences)s",
@@ -133,20 +133,20 @@ def _parse_encoding(
                 differences=differences,
             )
             differences = ArrayObject()
-        for o in differences:
-            if isinstance(o, IndirectObject):
-                o = o.get_object()
-            if isinstance(o, int):
-                x = o
-            elif isinstance(o, str):
+        for entry in differences:
+            if isinstance(entry, IndirectObject):
+                entry = entry.get_object()
+            if isinstance(entry, int):
+                code = entry
+            elif isinstance(entry, str):
                 try:
-                    if x < len(encoding):
-                        encoding[x] = _glyph_name_to_unicode(o) or o  # type: ignore[index]
+                    if code < len(encoding):
+                        encoding[code] = _glyph_name_to_unicode(entry) or entry  # type: ignore[index]
                 except MemoryError:  # pragma: no cover  # TODO: BLE001
                     raise
                 except Exception:
-                    encoding[x] = o  # type: ignore[index]
-                x += 1
+                    encoding[code] = entry  # type: ignore[index]
+                code += 1
             else:
                 # Table 114 of the PDF 2.0 specification only allows character
                 # codes and glyph names here. Anything else would end up in the
@@ -154,7 +154,7 @@ def _parse_encoding(
                 logger_warning(
                     "Ignoring invalid font encoding difference: %(entry)s",
                     source=__name__,
-                    entry=o,
+                    entry=entry,
                 )
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
