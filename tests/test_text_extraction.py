@@ -621,6 +621,35 @@ def test_do_operator_without_operand_is_skipped() -> None:
     assert page.extract_text() == "HelloWorld"
 
 
+def test_tj_positive_offset_is_not_a_word_gap() -> None:
+    """A positive TJ offset is kerning (it moves the next glyph back), not a space."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 12 Tf 40 700 Td [(T) 300 (echnical) -300 (W) 300 (ork)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Technical Work"
+
+
+def test_tj_gap_right_after_a_font_change_is_a_space() -> None:
+    """A word gap at the start of a TJ array is kept when a Tf came just before it."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 9 Tf 40 700 Td [(Programming:)] TJ /F1 9 Tf [-457 (Python)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Programming: Python"
+
+
+@pytest.mark.enable_socket
+def test_surname_in_capital_and_small_capitals_stays_one_word() -> None:
+    """
+    A surname set as a capital followed by small capitals is extracted as one word.
+
+    ISO 32000-2:2020, 9.4.3 (text-showing operators) and 9.4.4 (text space details).
+    """
+    url = "https://github.com/user-attachments/files/22596566/7552c42e9280b4476e59e77acc0bc812.pdf"
+    name = "7552c42e9280b4476e59e77acc0bc812.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "MOREAU (Antoine)" in reader.pages[143].extract_text()
+
+
 def test_tj_operator_without_an_array_is_skipped() -> None:
     """A TJ operator whose operand is not an array is skipped and the text around it is kept."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj 5 TJ (World) Tj ET")).pages[0]
@@ -1756,3 +1785,29 @@ def test_extract_text__each_text_operator(build_page: Callable[[bytes], BytesIO]
     and Do with a form XObject (8.8.1, Table 86).
     """
     assert PdfReader(build_page(content)).pages[0].extract_text() == "Hello"
+
+
+@pytest.mark.enable_socket
+def test_word_continued_on_a_line_with_character_spacing_stays_one_word() -> None:
+    """
+    A word split over two text-showing operators on a line with character spacing stays one word.
+
+    ISO 32000-2:2020, 9.3.2 (character spacing) and 9.4.4 (text space details).
+    """
+    url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "The channel between the reader" in reader.pages[113].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_word_gap_before_a_symbol_in_another_font_is_a_space() -> None:
+    """
+    A word gap before a symbol set in another font is extracted as a space.
+
+    ISO 32000-2:2020, 9.4.2 (text-positioning operators) and 9.4.4 (text space details).
+    """
+    url = "https://arxiv.org/pdf/1602.06541.pdf"
+    name = "1602.06541.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "an MRF and C be the set" in reader.pages[7].extract_text()

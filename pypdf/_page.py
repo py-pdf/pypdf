@@ -138,17 +138,14 @@ def _get_font_resources(resources: Any) -> DictionaryObject:
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval: PdfObject | None = self.get(name)
+    retval: PdfObject = self.get(name, NullObject()).get_object()
     if isinstance(retval, RectangleObject):
         return retval
     if is_null_or_none(retval):
         for d in defaults:
-            retval = self.get(d)
-            if retval is not None:
+            retval = self.get(d, NullObject()).get_object()
+            if not is_null_or_none(retval):
                 break
-    if isinstance(retval, IndirectObject):
-        # Pages of a writer have no `pdf`, the reference knows its own document.
-        retval = retval.get_object()
     if not isinstance(retval, ArrayObject):
         raise ValueError(f"Expected an array of four values for {name}, got {retval}")
     if (length := len(retval)) != 4:
@@ -1958,12 +1955,8 @@ class PageObject(DictionaryObject):
                         # A name is a str too, but not text to show
                         if isinstance(op, (str, bytes)) and not isinstance(op, NameObject):
                             extractor.process_operation(b"Tj", [op])
-                        if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                            abs(float(op)) >= _confirm_space_width
-                            and extractor.text
-                            and extractor.text[-1] != " "
-                        ):
-                            extractor.process_operation(b"Tj", [" "])
+                        if isinstance(op, (int, float, NumberObject, FloatObject)):
+                            extractor.process_tj_offset(float(op), _confirm_space_width)
             elif operator == b"TD" and len(operands) >= 2:
                 # a non-numeric ty leaves the leading unchanged, like a non-numeric TL
                 if isinstance(operands[1], (int, float)):
@@ -2688,18 +2681,12 @@ def _get_fonts_walk(
         for a in cast(ArrayObject, obj["/Annots"]):
             _get_fonts_walk(cast(DictionaryObject, a.get_object()), fnt, emb)
     if "/AP" in obj:
-        if (
-            cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]).get(
-                "/Type"
-            )
-            == "/XObject"
-        ):
-            _get_fonts_walk(
-                cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]),
-                fnt,
-                emb,
-            )
+        normal = cast(DictionaryObject, obj["/AP"])["/N"].get_object()
+        if isinstance(normal, StreamObject):
+            # /Type is optional in an appearance stream
+            _get_fonts_walk(normal, fnt, emb)
         else:
-            for a in cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]):
-                _get_fonts_walk(cast(DictionaryObject, a), fnt, emb)
+            # One appearance stream per state, e.g. /Off and /Yes of a check box
+            for a in cast(DictionaryObject, normal).values():
+                _get_fonts_walk(cast(DictionaryObject, a.get_object()), fnt, emb)
     return fnt, emb  # return the sets for each page

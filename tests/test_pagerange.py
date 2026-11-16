@@ -52,6 +52,28 @@ def test_idempotency() -> None:
     assert pr == pr2
 
 
+def test_str_of_the_empty_range_before_the_last_page() -> None:
+    """slice(-1, 0) selects nothing, but "-1" means the last page."""
+    page_range = PageRange(slice(-1, 0))
+
+    assert str(page_range) == "-1:0"
+    assert PageRange(str(page_range)) == page_range
+
+
+@pytest.mark.parametrize(
+    "range_str",
+    [
+        "0", "3", "-1", "-2", ":", "0:3", "-2:", ":-1", "-1:0", "-3:-1",
+        "::2", "::-1", "1:10:2", "3:0:-1", "2::-1", "-1:-3:-1",
+    ],
+)
+def test_str_round_trips(range_str: str) -> None:
+    """A page range and its string select the same pages."""
+    page_range = PageRange(range_str)
+
+    assert PageRange(str(page_range)) == page_range
+
+
 @pytest.mark.parametrize(
     ("range_str", "expected"),
     [
