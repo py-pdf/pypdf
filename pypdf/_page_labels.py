@@ -85,6 +85,15 @@ MAXIMUM_ROMAN_NUMERAL = 3_999
 MAXIMUM_PAGE_LABEL_LENGTH = 512
 
 
+def number2decimal_arabic_numeral(number: int) -> str:
+    # A page label is a page *number*, so reject the non-positive values the
+    # other styles already reject. Without this, a malformed /St or a /Nums
+    # range which does not start at the first page gives labels like "0".
+    if number <= 0:
+        raise ValueError("Expecting a positive number.")
+    return str(number)
+
+
 def number2uppercase_roman_numeral(num: int) -> str:
     if num <= 0:
         raise ValueError("Expecting a positive number.")
@@ -135,7 +144,7 @@ def number2lowercase_letter(number: int) -> str:
 
 _NUMBERING_STYLES: dict[str | None, Callable[[int], str]] = {
     None: lambda _: "",
-    "/D": str,
+    "/D": number2decimal_arabic_numeral,
     "/R": number2uppercase_roman_numeral,
     "/r": number2lowercase_roman_numeral,
     "/A": number2uppercase_letter,
