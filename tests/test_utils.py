@@ -1,5 +1,6 @@
 """Test the pypdf._utils module."""
 import functools
+import inspect
 import io
 import re
 import subprocess
@@ -20,6 +21,7 @@ from pypdf._utils import (
     _human_readable_bytes,
     check_if_whitespace_only,
     classproperty,
+    deprecate_positional_arguments,
     deprecate_with_replacement,
     deprecation_no_replacement,
     format_iso8824_date,
@@ -410,6 +412,50 @@ def test_deprecate_with_replacement():
         match="foo is deprecated and will be removed in pypdf 4.3.2. Use bar instead.",
     ):
         foo()
+
+
+@deprecate_positional_arguments("4.3.2")
+def _join(first: str, *, second: str, third: str = "c") -> str:
+    return first + second + third
+
+
+def test_deprecate_positional_arguments__keyword_arguments() -> None:
+    """Keyword arguments for the keyword-only parameters do not warn."""
+    assert _join("a", second="b") == "abc"
+    assert _join(first="a", second="b", third="d") == "abd"
+
+
+def test_deprecate_positional_arguments__positional_arguments() -> None:
+    """Positional arguments are passed to the keyword-only parameters in the order of the signature, with a warning."""
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^Passing positional arguments to _join\(\) is deprecated and will be removed in pypdf 4\.3\.2\. "
+            r"Use keyword arguments instead\.$"
+        ),
+    ) as record:
+        result = _join("a", "b", "d")
+
+    assert result == "abd"
+    # The warning points to the caller, not to the decorator.
+    assert record[0].filename == __file__
+
+
+def test_deprecate_positional_arguments__too_many_arguments() -> None:
+    """More positional arguments than parameters raise a TypeError."""
+    with pytest.raises(TypeError, match=r"^_join\(\) takes 3 positional arguments but 4 were given$"):
+        _join("a", "b", "c", "d")
+
+
+def test_deprecate_positional_arguments__multiple_values() -> None:
+    """A parameter given both as positional and as keyword argument raises a TypeError."""
+    with pytest.raises(TypeError, match=r"^_join\(\) got multiple values for argument 'second'$"):
+        _join("a", "b", second="b")
+
+
+def test_deprecate_positional_arguments__signature() -> None:
+    """The decorated function keeps its signature, for example for the documentation."""
+    assert str(inspect.signature(_join)) == "(first: str, *, second: str, third: str = 'c') -> str"
 
 
 def test_deprecation_no_replacement():

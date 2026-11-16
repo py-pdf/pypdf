@@ -25,7 +25,7 @@ test_cases = [
 
 
 @pytest.mark.parametrize("data", test_cases)
-def test_encode_decode(data):
+def test_encode_decode(data: bytes) -> None:
     """Decoder and encoder match."""
     codec = LzwCodec()
     compressed_data = codec.encode(data)
@@ -42,7 +42,7 @@ def test_encode_decode(data):
         (b"Hello, World!", b"\x80\x12\x0c\xa6\xc3a\xbcX +\x9b\xceF\xc3 \x86\x02"),
     ],
 )
-def test_encode_lzw(plain, expected_encoded):
+def test_encode_lzw(plain: bytes, expected_encoded: bytes) -> None:
     codec = LzwCodec()
     actual_encoded = codec.encode(plain)
     assert actual_encoded == expected_encoded
@@ -57,13 +57,13 @@ def test_encode_lzw(plain, expected_encoded):
         (b" \x90\x88dH\x08", b"ABCD"),  # No explicit initial clear marker.
     ],
 )
-def test_decode_lzw(encoded, expected_decoded):
+def test_decode_lzw(encoded: bytes, expected_decoded: bytes) -> None:
     codec = LzwCodec()
     actual_decoded = codec.decode(encoded)
     assert actual_decoded == expected_decoded
 
 
-def test_lzw_decoder_table_overflow(caplog):
+def test_lzw_decoder_table_overflow(caplog: pytest.LogCaptureFixture) -> None:
     path = RESOURCE_ROOT / "lzw_decoder_table_overflow.bin"
     codec = LzwCodec()
     assert codec.decode(path.read_bytes()).startswith(
@@ -75,12 +75,12 @@ def test_lzw_decoder_table_overflow(caplog):
 
 @pytest.mark.enable_socket
 @pytest.mark.timeout(timeout=15, method="thread")
-def test_lzw_decoder_large_stream_performance(caplog):
+def test_lzw_decoder_large_stream_performance(caplog: pytest.LogCaptureFixture) -> None:
     LzwCodec().decode(get_data_from_url(name="large_lzw_example_encoded.dat"))
 
 
 @pytest.mark.enable_socket
-def test_lzw_decoder__output_limit():
+def test_lzw_decoder__output_limit() -> None:
     url = "https://github.com/user-attachments/files/23057035/lzw__output_limit.pdf"
     name = "lzw__output_limit.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
@@ -89,7 +89,9 @@ def test_lzw_decoder__output_limit():
     with pytest.raises(
             expected_exception=LimitReachedError, match=r"^Limit reached while decompressing: 75000828 > 75000000$"
     ):
-        page.images[0].image.load()
+        image = page.images[0].image
+        assert image is not None
+        image.load()
 
 
 def test_lzw_decoder__multiple_calls() -> None:
