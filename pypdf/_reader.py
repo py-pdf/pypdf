@@ -408,9 +408,26 @@ class PdfReader(PdfDocCommon):
             # indirect reference to object in object stream
             # read the entire object stream into memory
             stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
-            obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
-            # This is an xref to a stream, so its type better be a stream
-            assert cast(str, obj_stm["/Type"]) == "/ObjStm"
+            obj_stm = IndirectObject(stmnum, 0, self).get_object()
+            # This is an xref to a stream, so its type better be a stream.
+            # A missing or wrongly typed object stream (e.g. in a truncated
+            # file) is ignored in non-strict mode.
+            if not isinstance(obj_stm, StreamObject) or obj_stm.get("/Type") != "/ObjStm":
+                if self.strict:
+                    raise PdfReadError(
+                        f"Object stream {stmnum} referenced by object {obj_id} "
+                        "is missing or is not an object stream."
+                    )
+                logger_warning(
+                    (
+                        "Object stream %(stmnum)d referenced by object %(obj_id)d "
+                        "is missing or is not an object stream; ignoring it."
+                    ),
+                    source=__name__,
+                    stmnum=stmnum,
+                    obj_id=obj_id,
+                )
+                return NullObject()
             # Parse ALL objects in this stream in one pass and cache them.
             # This avoids O(N²) behavior when many objects from the same stream
             # are resolved individually (each call would re-parse the header).
