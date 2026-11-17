@@ -794,6 +794,37 @@ def test_get_fonts__appearance_states():
     )
 
 
+@pytest.mark.parametrize(
+    ("appearance", "expected"),
+    [
+        pytest.param(DictionaryObject(), None, id="no-normal-appearance"),
+        pytest.param(DictionaryObject({NameObject("/D"): DictionaryObject()}), None, id="down-appearance-only"),
+        pytest.param(DictionaryObject({NameObject("/N"): NullObject()}), None, id="null"),
+        pytest.param(
+            DictionaryObject({NameObject("/N"): NumberObject(3)}),
+            "The normal appearance is not a stream or a dictionary: 3",
+            id="number",
+        ),
+    ],
+)
+def test_get_fonts__malformed_appearance(caplog, appearance, expected):
+    """A missing, null or malformed normal appearance /N collects no font."""
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    resources = DictionaryObject({NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})})
+    widget = DictionaryObject({NameObject("/Resources"): resources, NameObject("/AP"): appearance})
+
+    # The font of the annotation itself is still collected
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
+    if expected is None:
+        assert caplog.text == ""
+    else:
+        assert expected in caplog.text
+
+
 def test_annotation_getter():
     pdf_path = RESOURCE_ROOT / "commented.pdf"
     reader = PdfReader(pdf_path)
