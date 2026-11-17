@@ -52,6 +52,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+from ._configuration import get_configuration
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject, Transformation
@@ -82,7 +83,6 @@ from .constants import (
     TrailerKeys,
     UserAccessPermissions,
 )
-from ._configuration import get_configuration
 from .errors import LimitReachedError, PdfReadError, PyPdfError
 from .generic import (
     PAGE_FIT,
