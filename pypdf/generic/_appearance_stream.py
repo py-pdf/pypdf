@@ -83,7 +83,7 @@ class BaseStreamAppearance(DecodedStreamObject):
         matrix = matrix.translate(translation_x_offset, translation_y_offset)
         self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
 
-    def _new_for_clone(self) -> "BaseStreamAppearance":
+    def _new_for_clone(self) -> BaseStreamAppearance:
         """Create a blank instance of this class to receive cloned entries.
 
         The constructor adds entries and generates a default content stream,
