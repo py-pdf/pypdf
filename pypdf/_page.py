@@ -1438,7 +1438,7 @@ class PageObject(DictionaryObject):
                 )
             # Ensure we are working on a copy of the list. Otherwise, if both pages
             # are the same object, we might run into an infinite loop.
-            for a in cast(ArrayObject, deepcopy(page2_annots)):
+            for a in deepcopy(page2_annots):
                 a = a.get_object()
                 aa = a.clone(
                     pdf,
