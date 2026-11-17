@@ -2062,9 +2062,25 @@ class PdfWriter(PdfDocCommon):
         """
         if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
-                self.remove_objects_from_page(page, to_d)
+                self.remove_objects_from_page(page, to_d, text_filters)
             return None
         assert isinstance(to_delete, ObjectDeletionFlag)
+        # Handle combined flags one kind at a time: the annotation branches
+        # return early and TEXT must not share a pass with the image operators.
+        kinds = [
+            kind & to_delete
+            for kind in (
+                ObjectDeletionFlag.TEXT,
+                ObjectDeletionFlag.LINKS,
+                ObjectDeletionFlag.ATTACHMENTS,
+                ObjectDeletionFlag.OBJECTS_3D,
+                ObjectDeletionFlag.ALL_ANNOTATIONS,
+                ObjectDeletionFlag.IMAGES,
+            )
+            if kind & to_delete
+        ]
+        if len(kinds) > 1:
+            return self.remove_objects_from_page(page, kinds, text_filters)
 
         if to_delete & ObjectDeletionFlag.LINKS:
             return self._remove_annots_from_page(page, ("/Link",))

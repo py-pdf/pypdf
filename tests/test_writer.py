@@ -562,6 +562,42 @@ def test_remove_text(input_path, pdf_file_path):
         writer.write(output_stream)
 
 
+@pytest.mark.parametrize(
+    ("to_delete", "expected"),
+    [
+        (ObjectDeletionFlag.TEXT | ObjectDeletionFlag.DRAWING_IMAGES, (False, False, 1)),
+        (ObjectDeletionFlag.TEXT | ObjectDeletionFlag.LINKS, (False, True, 0)),
+        (ObjectDeletionFlag.ALL_ANNOTATIONS | ObjectDeletionFlag.IMAGES, (True, False, 0)),
+    ],
+)
+def test_remove_objects_from_page__combined_flags(to_delete, expected):
+    """Every part of a combined ObjectDeletionFlag is removed."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(200, 200)
+    writer._merge_content_stream_to_page(page, b"BT /F1 12 Tf (hello) Tj ET 0 0 50 50 re f")
+    writer.add_annotation(0, Link(rect=(0, 0, 20, 20), url="https://example.com"))
+
+    writer.remove_objects_from_page(writer.pages[0], to_delete)
+
+    data = writer.pages[0].get_contents().get_data()
+    assert (b"Tj" in data, b"re" in data, len(writer.pages[0].get("/Annots", []))) == expected
+
+
+def test_remove_objects_from_page__list_keeps_text_filters():
+    """text_filters also apply when to_delete is a list."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(200, 200)
+    writer._merge_content_stream_to_page(page, b"BT /F1 12 Tf (drop) Tj /F2 12 Tf (keep) Tj ET")
+
+    writer.remove_objects_from_page(
+        writer.pages[0], [ObjectDeletionFlag.TEXT], text_filters={"font_ids": ["/F1"]}
+    )
+
+    data = writer.pages[0].get_contents().get_data()
+    assert b"(drop)" not in data
+    assert b"(keep)" in data
+
+
 def test_remove_text_all_operators(pdf_file_path):
     stream = (
         b"BT "
