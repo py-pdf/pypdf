@@ -1817,9 +1817,10 @@ class PageObject(DictionaryObject):
         """
         if self.indirect_reference is None:
             return None
-        return self.indirect_reference.pdf._get_page_number_by_indirect(
+        page_number: int | None = self.indirect_reference.pdf._get_page_number_by_indirect(
             self.indirect_reference
         )
+        return page_number
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
