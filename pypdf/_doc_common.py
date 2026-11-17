@@ -48,17 +48,17 @@ from ._utils import (
     logger_warning,
     parse_iso8824_date,
 )
-from .constants import CatalogAttributes as CA
 from .constants import (
+    CatalogAttributes,
     CheckboxRadioButtonAttributes,
     Core,
+    DocumentInformationAttributes,
+    FieldDictionaryAttributes,
     GoToActionArguments,
+    PageAttributes,
     PagesAttributes,
     UserAccessPermissions,
 )
-from .constants import DocumentInformationAttributes as DI
-from .constants import FieldDictionaryAttributes as FA
-from .constants import PageAttributes as PG
 from .errors import LimitReachedError, PdfReadError, PyPdfError
 from .generic import (
     ArrayObject,
@@ -95,10 +95,10 @@ def convert_to_int(d: bytes, size: int) -> int | tuple[Any, ...]:
 
 # Attributes a page inherits from its ancestors in the page tree.
 _INHERITABLE_PAGE_ATTRIBUTES = (
-    NameObject(PG.RESOURCES),
-    NameObject(PG.MEDIABOX),
-    NameObject(PG.CROPBOX),
-    NameObject(PG.ROTATE),
+    NameObject(PageAttributes.RESOURCES),
+    NameObject(PageAttributes.MEDIABOX),
+    NameObject(PageAttributes.CROPBOX),
+    NameObject(PageAttributes.ROTATE),
 )
 
 
@@ -154,15 +154,16 @@ class DocumentInformation(DictionaryObject):
         specified.
         """
         return (
-            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore[union-attr]
-            if self.get(DI.TITLE)
+            self._get_text(DocumentInformationAttributes.TITLE)
+            or self.get(DocumentInformationAttributes.TITLE).get_object()  # type: ignore[union-attr]
+            if self.get(DocumentInformationAttributes.TITLE)
             else None
         )
 
     @property
     def title_raw(self) -> str | None:
         """The "raw" version of title; can return a ``ByteStringObject``."""
-        return self.get(DI.TITLE)
+        return self.get(DocumentInformationAttributes.TITLE)
 
     @property
     def author(self) -> str | None:
@@ -172,12 +173,12 @@ class DocumentInformation(DictionaryObject):
         Returns a ``TextStringObject`` or ``None`` if the author is not
         specified.
         """
-        return self._get_text(DI.AUTHOR)
+        return self._get_text(DocumentInformationAttributes.AUTHOR)
 
     @property
     def author_raw(self) -> str | None:
         """The "raw" version of author; can return a ``ByteStringObject``."""
-        return self.get(DI.AUTHOR)
+        return self.get(DocumentInformationAttributes.AUTHOR)
 
     @property
     def subject(self) -> str | None:
@@ -187,12 +188,12 @@ class DocumentInformation(DictionaryObject):
         Returns a ``TextStringObject`` or ``None`` if the subject is not
         specified.
         """
-        return self._get_text(DI.SUBJECT)
+        return self._get_text(DocumentInformationAttributes.SUBJECT)
 
     @property
     def subject_raw(self) -> str | None:
         """The "raw" version of subject; can return a ``ByteStringObject``."""
-        return self.get(DI.SUBJECT)
+        return self.get(DocumentInformationAttributes.SUBJECT)
 
     @property
     def creator(self) -> str | None:
@@ -204,12 +205,12 @@ class DocumentInformation(DictionaryObject):
         document from which it was converted. Returns a ``TextStringObject`` or
         ``None`` if the creator is not specified.
         """
-        return self._get_text(DI.CREATOR)
+        return self._get_text(DocumentInformationAttributes.CREATOR)
 
     @property
     def creator_raw(self) -> str | None:
         """The "raw" version of creator; can return a ``ByteStringObject``."""
-        return self.get(DI.CREATOR)
+        return self.get(DocumentInformationAttributes.CREATOR)
 
     @property
     def producer(self) -> str | None:
@@ -221,17 +222,17 @@ class DocumentInformation(DictionaryObject):
         PDF. Returns a ``TextStringObject`` or ``None`` if the producer is not
         specified.
         """
-        return self._get_text(DI.PRODUCER)
+        return self._get_text(DocumentInformationAttributes.PRODUCER)
 
     @property
     def producer_raw(self) -> str | None:
         """The "raw" version of producer; can return a ``ByteStringObject``."""
-        return self.get(DI.PRODUCER)
+        return self.get(DocumentInformationAttributes.PRODUCER)
 
     @property
     def creation_date(self) -> datetime | None:
         """Read-only property accessing the document's creation date."""
-        return parse_iso8824_date(self._get_text(DI.CREATION_DATE))
+        return parse_iso8824_date(self._get_text(DocumentInformationAttributes.CREATION_DATE))
 
     @property
     def creation_date_raw(self) -> str | None:
@@ -241,7 +242,7 @@ class DocumentInformation(DictionaryObject):
         Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
-        return self.get(DI.CREATION_DATE)
+        return self.get(DocumentInformationAttributes.CREATION_DATE)
 
     @property
     def modification_date(self) -> datetime | None:
@@ -250,7 +251,7 @@ class DocumentInformation(DictionaryObject):
 
         The date and time the document was most recently modified.
         """
-        return parse_iso8824_date(self._get_text(DI.MOD_DATE))
+        return parse_iso8824_date(self._get_text(DocumentInformationAttributes.MOD_DATE))
 
     @property
     def modification_date_raw(self) -> str | None:
@@ -261,7 +262,7 @@ class DocumentInformation(DictionaryObject):
         Typically, in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
-        return self.get(DI.MOD_DATE)
+        return self.get(DocumentInformationAttributes.MOD_DATE)
 
     @property
     def keywords(self) -> str | None:
@@ -271,12 +272,12 @@ class DocumentInformation(DictionaryObject):
         Returns a ``TextStringObject`` or ``None`` if keywords are not
         specified.
         """
-        return self._get_text(DI.KEYWORDS)
+        return self._get_text(DocumentInformationAttributes.KEYWORDS)
 
     @property
     def keywords_raw(self) -> str | None:
         """The "raw" version of keywords; can return a ``ByteStringObject``."""
-        return self.get(DI.KEYWORDS)
+        return self.get(DocumentInformationAttributes.KEYWORDS)
 
 
 class PdfDocCommon(ABC):
@@ -342,7 +343,7 @@ class PdfDocCommon(ABC):
     @property
     def viewer_preferences(self) -> ViewerPreferences | None:
         """Returns the existing ViewerPreferences as an overloaded dictionary."""
-        o = self.root_object.get(CA.VIEWER_PREFERENCES, None)
+        o = self.root_object.get(CatalogAttributes.VIEWER_PREFERENCES, None)
         if o is None:
             return None
         o = o.get_object()
@@ -358,7 +359,7 @@ class PdfDocCommon(ABC):
             if hasattr(o, "indirect_reference") and o.indirect_reference is not None:
                 self._replace_object(o.indirect_reference, o)
             else:
-                self.root_object[NameObject(CA.VIEWER_PREFERENCES)] = o
+                self.root_object[NameObject(CatalogAttributes.VIEWER_PREFERENCES)] = o
         return o
 
     def get_num_pages(self) -> int:
@@ -451,33 +452,33 @@ class PdfDocCommon(ABC):
 
     def get_named_dest_root(self) -> ArrayObject:
         named_dest = ArrayObject()
-        if CA.NAMES in self.root_object and isinstance(
-            self.root_object[CA.NAMES], DictionaryObject
+        if CatalogAttributes.NAMES in self.root_object and isinstance(
+            self.root_object[CatalogAttributes.NAMES], DictionaryObject
         ):
-            names = cast(DictionaryObject, self.root_object[CA.NAMES])
-            if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
+            names = cast(DictionaryObject, self.root_object[CatalogAttributes.NAMES])
+            if CatalogAttributes.DESTS in names and isinstance(names[CatalogAttributes.DESTS], DictionaryObject):
                 # §3.6.3 Name Dictionary (PDF spec 1.7)
-                dests = cast(DictionaryObject, names[CA.DESTS])
-                if CA.NAMES in dests:
+                dests = cast(DictionaryObject, names[CatalogAttributes.DESTS])
+                if CatalogAttributes.NAMES in dests:
                     # §7.9.6, entries in a name tree node dictionary
-                    named_dest = cast(ArrayObject, dests[CA.NAMES])
+                    named_dest = cast(ArrayObject, dests[CatalogAttributes.NAMES])
                 else:
                     named_dest = ArrayObject()
-                    dests[NameObject(CA.NAMES)] = named_dest
+                    dests[NameObject(CatalogAttributes.NAMES)] = named_dest
             elif hasattr(self, "_add_object"):
                 dests = DictionaryObject()
                 dests_ref = self._add_object(dests)
-                names[NameObject(CA.DESTS)] = dests_ref
-                dests[NameObject(CA.NAMES)] = named_dest
+                names[NameObject(CatalogAttributes.DESTS)] = dests_ref
+                dests[NameObject(CatalogAttributes.NAMES)] = named_dest
 
         elif hasattr(self, "_add_object"):
             names = DictionaryObject()
             names_ref = self._add_object(names)
-            self.root_object[NameObject(CA.NAMES)] = names_ref
+            self.root_object[NameObject(CatalogAttributes.NAMES)] = names_ref
             dests = DictionaryObject()
             dests_ref = self._add_object(dests)
-            names[NameObject(CA.DESTS)] = dests_ref
-            dests[NameObject(CA.NAMES)] = named_dest
+            names[NameObject(CatalogAttributes.DESTS)] = dests_ref
+            dests[NameObject(CatalogAttributes.NAMES)] = named_dest
 
         return named_dest
 
@@ -516,12 +517,12 @@ class PdfDocCommon(ABC):
 
             # get the name tree
             candidate: PdfObject | None = None
-            if CA.DESTS in catalog:
-                candidate = catalog[CA.DESTS].get_object()
-            elif CA.NAMES in catalog:
-                names = catalog[CA.NAMES].get_object()
-                if isinstance(names, DictionaryObject) and CA.DESTS in names:
-                    candidate = names[CA.DESTS].get_object()
+            if CatalogAttributes.DESTS in catalog:
+                candidate = catalog[CatalogAttributes.DESTS].get_object()
+            elif CatalogAttributes.NAMES in catalog:
+                names = catalog[CatalogAttributes.NAMES].get_object()
+                if isinstance(names, DictionaryObject) and CatalogAttributes.DESTS in names:
+                    candidate = names[CatalogAttributes.DESTS].get_object()
             if candidate is not None and not isinstance(candidate, DictionaryObject):
                 logger_warning(
                     "Destination tree is not a dictionary: %(tree)s",
@@ -575,8 +576,8 @@ class PdfDocCommon(ABC):
                     traversal_state=traversal_state,
                 )
         # §7.9.6, entries in a name tree node dictionary
-        elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
-            names = tree[CA.NAMES].get_object()
+        elif CatalogAttributes.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
+            names = tree[CatalogAttributes.NAMES].get_object()
             if not isinstance(names, ArrayObject):
                 logger_warning(
                     "Destination tree names are not an array: %(names)s",
@@ -668,15 +669,15 @@ class PdfDocCommon(ABC):
             if _traversal_state.entry_count > configuration.form_fields_maximum_entries:
                 raise LimitReachedError("Exceeded maximum number of fields allowed.")
 
-        field_attributes = FA.attributes_dict()
+        field_attributes = FieldDictionaryAttributes.attributes_dict()
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
         if retval is None:
             retval = {}
             catalog = self.root_object
             _visited = set()
             # get the AcroForm tree
-            if CA.ACRO_FORM in catalog:
-                entry = catalog[CA.ACRO_FORM]
+            if CatalogAttributes.ACRO_FORM in catalog:
+                entry = catalog[CatalogAttributes.ACRO_FORM]
                 acro_form = None if entry is None else entry.get_object()
                 if acro_form is not None and not isinstance(
                     acro_form, DictionaryObject
@@ -783,18 +784,21 @@ class PdfDocCommon(ABC):
             fileobj.write("\n")
         retval[key] = Field(field)
         obj = retval[key].indirect_reference.get_object()  # to get the full object
-        if obj.get(FA.FT, "") == "/Ch" and obj.get(NameObject(FA.Opt)):
-            retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
-        if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
+        if obj.get(FieldDictionaryAttributes.FT, "") == "/Ch" and obj.get(NameObject(FieldDictionaryAttributes.Opt)):
+            retval[key][NameObject("/_States_")] = obj[NameObject(FieldDictionaryAttributes.Opt)]
+        if obj.get(FieldDictionaryAttributes.FT, "") == "/Btn" and "/AP" in obj:
             #  Checkbox
             normal = self._normal_appearance(obj["/AP"])
             retval[key][NameObject("/_States_")] = ArrayObject(list(normal.keys()))
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
-        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
+        elif (
+            obj.get(FieldDictionaryAttributes.FT, "") == "/Btn"
+            and obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Radio != 0
+        ):
             states: list[str] = []
             retval[key][NameObject("/_States_")] = ArrayObject(states)
-            for k in obj.get(FA.Kids, {}):
+            for k in obj.get(FieldDictionaryAttributes.Kids, {}):
                 k = k.get_object()
                 if "/AP" not in k:
                     raise PdfReadError(f"Button field kid missing /AP: {k!r}")
@@ -804,7 +808,7 @@ class PdfDocCommon(ABC):
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
             if (
-                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
+                obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.NoToggleToOff != 0
                 and "/Off" in retval[key]["/_States_"]
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
@@ -842,20 +846,20 @@ class PdfDocCommon(ABC):
                 )
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        field_attributes_tuple = FA.attributes()
+        field_attributes_tuple = FieldDictionaryAttributes.attributes()
         field_attributes_tuple = (
             field_attributes_tuple + CheckboxRadioButtonAttributes.attributes()
         )
 
         for attr in field_attributes_tuple:
             if attr in (
-                FA.Kids,
-                FA.AA,
+                FieldDictionaryAttributes.Kids,
+                FieldDictionaryAttributes.AA,
             ):
                 continue
             attr_name = field_attributes[attr]
             try:
-                if attr == FA.FT:
+                if attr == FieldDictionaryAttributes.FT:
                     # Make the field type value clearer
                     types = {
                         "/Btn": "Button",
@@ -865,12 +869,12 @@ class PdfDocCommon(ABC):
                     }
                     if field[attr] in types:
                         fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
-                elif attr == FA.Parent:
+                elif attr == FieldDictionaryAttributes.Parent:
                     # Let's just write the name of the parent
                     try:
-                        name = field[attr][FA.TM]
+                        name = field[attr][FieldDictionaryAttributes.TM]
                     except KeyError:
-                        name = field[attr][FA.T]
+                        name = field[attr][FieldDictionaryAttributes.T]
                     fileobj.write(f"{attr_name}: {name}\n")
                 else:
                     fileobj.write(f"{attr_name}: {field[attr]}\n")
@@ -1345,7 +1349,7 @@ class PdfDocCommon(ABC):
              - Show two pages at a time, odd-numbered pages on the right
         """
         try:
-            return cast(NameObject, self.root_object[CA.PAGE_LAYOUT])
+            return cast(NameObject, self.root_object[CatalogAttributes.PAGE_LAYOUT])
         except KeyError:
             return None
 
@@ -1433,7 +1437,9 @@ class PdfDocCommon(ABC):
             # if the page tree node has no /Type, consider as a page if /Kids is also missing
             elif PagesAttributes.KIDS not in node:
                 # Without /Type, only accept it as a page if it carries a structural page key.
-                if self.strict and not any(key in node for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)):
+                if self.strict and not any(
+                    key in node for key in (PageAttributes.CONTENTS, PageAttributes.MEDIABOX, PageAttributes.PARENT)
+                ):
                     raise PdfReadError(f"Non-page object reached through /Kids: {node!r}")
                 node_type = "/Page"
             else:

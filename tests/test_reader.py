@@ -13,9 +13,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
-from pypdf.constants import ImageAttributes
-from pypdf.constants import PageAttributes as PG
-from pypdf.constants import UserAccessPermissions as UAP
+from pypdf.constants import ImageAttributes, PageAttributes, UserAccessPermissions
 from pypdf.errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -195,11 +193,11 @@ def test_broken_meta_data(pdf_path):
 def test_get_annotations(src):
     with PdfReader(src) as reader:
         for page in reader.pages:
-            if PG.ANNOTS in page:
-                for annot in page[PG.ANNOTS]:
+            if PageAttributes.ANNOTS in page:
+                for annot in page[PageAttributes.ANNOTS]:
                     subtype = annot.get_object()[ImageAttributes.SUBTYPE]
                     if subtype == "/Text":
-                        annot.get_object()[PG.CONTENTS]
+                        annot.get_object()[PageAttributes.CONTENTS]
 
 
 @pytest.mark.parametrize(
@@ -214,8 +212,8 @@ def test_get_attachments(src, nb_attachments):
 
     attachments = {}
     for page in reader.pages:
-        if PG.ANNOTS in page:
-            for annotation in page[PG.ANNOTS]:
+        if PageAttributes.ANNOTS in page:
+            for annotation in page[PageAttributes.ANNOTS]:
                 annotobj = annotation.get_object()
                 if annotobj[ImageAttributes.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
@@ -1141,31 +1139,31 @@ def test_user_access_permissions():
 
     # Encrypted.
     reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
-    assert reader.user_access_permissions == UAP.all()
+    assert reader.user_access_permissions == UserAccessPermissions.all()
 
     # Custom writer permissions.
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer.encrypt(
         user_password="",
         owner_password="abc",
-        permissions_flag=UAP.PRINT | UAP.FILL_FORM_FIELDS,
+        permissions_flag=UserAccessPermissions.PRINT | UserAccessPermissions.FILL_FORM_FIELDS,
     )
     output = BytesIO()
     writer.write(output)
     reader = PdfReader(output)
-    assert reader.user_access_permissions == (UAP.PRINT | UAP.FILL_FORM_FIELDS)
+    assert reader.user_access_permissions == (UserAccessPermissions.PRINT | UserAccessPermissions.FILL_FORM_FIELDS)
 
     # All writer permissions.
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer.encrypt(
         user_password="",
         owner_password="abc",
-        permissions_flag=UAP.all(),
+        permissions_flag=UserAccessPermissions.all(),
     )
     output = BytesIO()
     writer.write(output)
     reader = PdfReader(output)
-    assert reader.user_access_permissions == UAP.all()
+    assert reader.user_access_permissions == UserAccessPermissions.all()
 
 
 def test_pages_attribute():

@@ -57,11 +57,14 @@ from ._utils import (
     deprecation,
     logger_warning,
 )
-from .constants import CcittFaxDecodeParameters as CCITT
-from .constants import FilterTypeAbbreviations as FTA
-from .constants import FilterTypes as FT
-from .constants import ImageAttributes, StreamAttributes
-from .constants import LzwFilterParameters as LZW
+from .constants import (
+    CcittFaxDecodeParameters,
+    FilterTypeAbbreviations,
+    FilterTypes,
+    ImageAttributes,
+    LzwFilterParameters,
+    StreamAttributes,
+)
 from .errors import DependencyError, LimitReachedError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
@@ -251,20 +254,20 @@ class FlateDecode:
             return _value
 
         configuration = get_configuration()
-        columns = get(key=LZW.COLUMNS, default=1)
+        columns = get(key=LzwFilterParameters.COLUMNS, default=1)
         if columns > configuration.flate_maximum_columns:
             raise LimitReachedError(
                 f"Number of columns {columns} exceeds defined limit of {configuration.flate_maximum_columns}."
             )
 
-        colors = get(key=LZW.COLORS, default=1)
+        colors = get(key=LzwFilterParameters.COLORS, default=1)
         if colors > 16:
             raise LimitReachedError(
                 f"Color value {colors} exceeds limit of 16. "
                 f"Please open an issue if this limits valid use cases."
             )
 
-        bits_per_component = get(key=LZW.BITS_PER_COMPONENT, default=8)
+        bits_per_component = get(key=LzwFilterParameters.BITS_PER_COMPONENT, default=8)
         if bits_per_component > 16:
             raise PdfReadError(f"More than 16 bits per component are not allowed: {bits_per_component}")
 
@@ -754,7 +757,7 @@ class CCITTFaxDecode:
             return value.value
 
         ccitt_parameters = CCITTParameters(
-            rows=0 if is_null_or_none(rows) else get_integer(rows, CCITT.ROWS)
+            rows=0 if is_null_or_none(rows) else get_integer(rows, CcittFaxDecodeParameters.ROWS)
         )
         if parameters:
             parameters_unwrapped = parameters.get_object()
@@ -773,20 +776,28 @@ class CCITTFaxDecode:
                         source=__name__, value=decode_parm,
                     )
                     continue
-                if CCITT.K in decode_parm:
-                    ccitt_parameters.K = get_integer(decode_parm[CCITT.K], CCITT.K)
-                if CCITT.COLUMNS in decode_parm:
-                    ccitt_parameters.columns = get_integer(decode_parm[CCITT.COLUMNS], CCITT.COLUMNS)
-                if CCITT.BLACK_IS_1 in decode_parm:
-                    ccitt_parameters.BlackIs1 = get_boolean(decode_parm[CCITT.BLACK_IS_1], CCITT.BLACK_IS_1)
+                if CcittFaxDecodeParameters.K in decode_parm:
+                    ccitt_parameters.K = get_integer(
+                        decode_parm[CcittFaxDecodeParameters.K], CcittFaxDecodeParameters.K
+                    )
+                if CcittFaxDecodeParameters.COLUMNS in decode_parm:
+                    ccitt_parameters.columns = get_integer(
+                        decode_parm[CcittFaxDecodeParameters.COLUMNS], CcittFaxDecodeParameters.COLUMNS
+                    )
+                if CcittFaxDecodeParameters.BLACK_IS_1 in decode_parm:
+                    ccitt_parameters.BlackIs1 = get_boolean(
+                        decode_parm[CcittFaxDecodeParameters.BLACK_IS_1], CcittFaxDecodeParameters.BLACK_IS_1
+                    )
 
         if ccitt_parameters.columns < 0 or ccitt_parameters.columns > CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG:
             raise PdfReadError(
-                f"Expected valid 32 bit unsigned value for {CCITT.COLUMNS}, got {ccitt_parameters.columns}!"
+                f"Expected valid 32 bit unsigned value for {CcittFaxDecodeParameters.COLUMNS}, "
+                f"got {ccitt_parameters.columns}!"
             )
         if ccitt_parameters.rows < 0 or ccitt_parameters.rows > CCITTFaxDecode._MAXIMUM_UNSIGNED_LONG:
             raise PdfReadError(
-                f"Expected valid 32 bit unsigned value for {CCITT.ROWS}, got {ccitt_parameters.rows}!"
+                f"Expected valid 32 bit unsigned value for {CcittFaxDecodeParameters.ROWS}, "
+                f"got {ccitt_parameters.rows}!"
             )
         return ccitt_parameters
 
@@ -994,33 +1005,47 @@ def decode_stream_data(stream: StreamObject) -> bytes:
                 source=__name__, value=params,
             )
             params = DictionaryObject()
-        if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.AHx, new_name=FT.ASCII_HEX_DECODE)
+        if filter_name in (FilterTypes.ASCII_HEX_DECODE, FilterTypeAbbreviations.AHx):
+            _deprecate_inline_image_filters(
+                filter_name=filter_name, old_name=FilterTypeAbbreviations.AHx, new_name=FilterTypes.ASCII_HEX_DECODE
+            )
             data = ASCIIHexDecode.decode(data)
-        elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.A85, new_name=FT.ASCII_85_DECODE)
+        elif filter_name in (FilterTypes.ASCII_85_DECODE, FilterTypeAbbreviations.A85):
+            _deprecate_inline_image_filters(
+                filter_name=filter_name, old_name=FilterTypeAbbreviations.A85, new_name=FilterTypes.ASCII_85_DECODE
+            )
             data = ASCII85Decode.decode(data)
-        elif filter_name in (FT.LZW_DECODE, FTA.LZW):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.LZW, new_name=FT.LZW_DECODE)
+        elif filter_name in (FilterTypes.LZW_DECODE, FilterTypeAbbreviations.LZW):
+            _deprecate_inline_image_filters(
+                filter_name=filter_name, old_name=FilterTypeAbbreviations.LZW, new_name=FilterTypes.LZW_DECODE
+            )
             data = LZWDecode.decode(data, params)
-        elif filter_name in (FT.FLATE_DECODE, FTA.FL):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.FL, new_name=FT.FLATE_DECODE)
+        elif filter_name in (FilterTypes.FLATE_DECODE, FilterTypeAbbreviations.FL):
+            _deprecate_inline_image_filters(
+                filter_name=filter_name, old_name=FilterTypeAbbreviations.FL, new_name=FilterTypes.FLATE_DECODE
+            )
             data = FlateDecode.decode(data, params)
-        elif filter_name in (FT.RUN_LENGTH_DECODE, FTA.RL):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.RL, new_name=FT.RUN_LENGTH_DECODE)
+        elif filter_name in (FilterTypes.RUN_LENGTH_DECODE, FilterTypeAbbreviations.RL):
+            _deprecate_inline_image_filters(
+                filter_name=filter_name, old_name=FilterTypeAbbreviations.RL, new_name=FilterTypes.RUN_LENGTH_DECODE
+            )
             data = RunLengthDecode.decode(data)
-        elif filter_name in (FT.CCITT_FAX_DECODE, FTA.CCF):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.CCF, new_name=FT.CCITT_FAX_DECODE)
+        elif filter_name in (FilterTypes.CCITT_FAX_DECODE, FilterTypeAbbreviations.CCF):
+            _deprecate_inline_image_filters(
+                filter_name=filter_name, old_name=FilterTypeAbbreviations.CCF, new_name=FilterTypes.CCITT_FAX_DECODE
+            )
             height = stream.get(ImageAttributes.HEIGHT, 0)
             data = CCITTFaxDecode.decode(data, params, height)
-        elif filter_name in (FT.DCT_DECODE, FTA.DCT):
-            _deprecate_inline_image_filters(filter_name=filter_name, old_name=FTA.DCT, new_name=FT.DCT_DECODE)
+        elif filter_name in (FilterTypes.DCT_DECODE, FilterTypeAbbreviations.DCT):
+            _deprecate_inline_image_filters(
+                filter_name=filter_name, old_name=FilterTypeAbbreviations.DCT, new_name=FilterTypes.DCT_DECODE
+            )
             data = DCTDecode.decode(data)
-        elif filter_name == FT.JPX_DECODE:
+        elif filter_name == FilterTypes.JPX_DECODE:
             data = JPXDecode.decode(data)
-        elif filter_name == FT.BROTLI_DECODE:
+        elif filter_name == FilterTypes.BROTLI_DECODE:
             data = BrotliDecode.decode(data)
-        elif filter_name == FT.JBIG2_DECODE:
+        elif filter_name == FilterTypes.JBIG2_DECODE:
             data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
