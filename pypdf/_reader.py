@@ -320,28 +320,20 @@ class PdfReader(PdfDocCommon):
         return cast(ArrayObject, file_identifiers.get_object())
 
     @property
-    def pdf_header_bytes(self) -> bytes:
+    def pdf_header(self) -> str:
         """
         The first 8 bytes of the file.
 
-        This is typically something like ``b'%PDF-1.6'`` and can be used to
+        This is typically something like ``'%PDF-1.6'`` and can be used to
         detect if the file is actually a PDF file and which version it is.
+
+        Returns a str and not bytes, see issue #4275.
         """
         loc = self.stream.tell()
         self.stream.seek(0, 0)
-        pdf_file_version = self.stream.read(8)
+        pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace") 
         self.stream.seek(loc, 0)  # return to where it was
         return pdf_file_version
-
-    @property
-    def pdf_header(self) -> str:
-        """The first 8 bytes of the file, decoded as a string."""
-        deprecate_with_replacement(
-            "PdfReader.pdf_header",
-            "PdfReader.pdf_header_bytes",
-            "7.0.0",
-        )
-        return self.pdf_header_bytes.decode("utf-8", "backslashreplace")
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
