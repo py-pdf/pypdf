@@ -2558,8 +2558,10 @@ class _VirtualList(Sequence[PageObject]):
         while parent is not None:
             parent = cast(DictionaryObject, parent.get_object())
             try:
-                i = cast(ArrayObject, parent["/Kids"]).index(ind)
-                del cast(ArrayObject, parent["/Kids"])[i]
+                kids = cast(ArrayObject, parent["/Kids"])
+                # In a flat page tree the page sits at `index`: skip the linear search.
+                i = index if first and index < len(kids) and kids[index] == ind else kids.index(ind)
+                del kids[i]
                 first = False
                 try:
                     assert ind is not None
