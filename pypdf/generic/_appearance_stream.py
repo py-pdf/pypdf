@@ -83,6 +83,17 @@ class BaseStreamAppearance(DecodedStreamObject):
         matrix = matrix.translate(translation_x_offset, translation_y_offset)
         self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
 
+    def _new_for_clone(self) -> "BaseStreamAppearance":
+        """Create a blank instance without calling ``__init__``.
+
+        The constructor generates a default border and content stream from
+        the layout, which would replace - and thereby corrupt - the data
+        copied from the source object during cloning. As every entry and the
+        stream data are copied afterwards, the constructor is not needed to
+        receive a clone.
+        """
+        return self.__class__.__new__(self.__class__)
+
     def __init__(self, layout: BaseStreamConfig | None) -> None:
         """
         Takes the appearance stream layout as an argument.
