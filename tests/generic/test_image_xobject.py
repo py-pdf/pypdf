@@ -318,6 +318,30 @@ def test_get_mode_and_invert_color() -> None:
         image.image.load()
 
 
+@pytest.mark.parametrize(
+    ("profile", "colors", "expected"),
+    [
+        # /N is required, but a profile without it is read with the known components
+        pytest.param({}, 3, ("RGB", False), id="no-components-rgb"),
+        pytest.param({}, 1, ("L", False), id="no-components-gray"),
+        pytest.param({}, 4, ("CMYK", True), id="no-components-cmyk"),
+        pytest.param(
+            {"/Alternate": NameObject("/DeviceRGB")}, 3, ("RGB", False), id="no-components-with-alternate"
+        ),
+        # /N still wins when it is given
+        pytest.param({"/N": NumberObject(1)}, 3, ("L", False), id="components"),
+    ],
+)
+def test_get_image_mode__icc_based_without_components(
+    profile: dict[str, object], colors: int, expected: tuple[str, bool]
+) -> None:
+    stream = DecodedStreamObject()
+    for key, value in profile.items():
+        stream[NameObject(key)] = value
+    color_space = ArrayObject([NameObject("/ICCBased"), stream])
+    assert _get_image_mode(color_space, colors, "") == expected
+
+
 @pytest.mark.enable_socket
 def test_get_imagemode__empty_array() -> None:
     url = "https://github.com/user-attachments/files/23050451/poc.pdf"
