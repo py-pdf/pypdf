@@ -142,6 +142,12 @@ class PdfReader(PdfDocCommon):
         self.xref = {}
         self.xref_free_entry: dict[int, dict[Any, Any]] = {}
         self.xref_objStm: dict[int, tuple[Any, Any]] = {}
+        #: Index of indirect-object headers, built lazily on the first
+        #: undefined-reference lookup; maps (generation, idnum) — as the
+        #: digit strings from the file — to the (start, end) offsets of
+        #: the first "N G obj" marker, so resolving many undefined
+        #: references does not rescan the whole file per lookup.
+        self._recovery_index: dict[tuple[bytes, bytes], tuple[int, int]] | None = None
         self.trailer = DictionaryObject()
 
         # Security parameters.
@@ -236,6 +242,7 @@ class PdfReader(PdfDocCommon):
         self.xref = {}
         self.xref_free_entry = {}
         self.xref_objStm = {}
+        self._recovery_index = None
 
     @property
     def root_object(self) -> DictionaryObject:
@@ -555,6 +562,22 @@ class PdfReader(PdfDocCommon):
         finally:
             self._object_stream_resolution_stack.pop()
 
+    def _build_recovery_index(self) -> dict[tuple[bytes, bytes], tuple[int, int]]:
+        """Scan the file once for all indirect-object headers.
+
+        Returns a mapping of (generation, idnum) to the (start, end)
+        offsets of the first "N G obj" marker for that object. The keys
+        keep the digit strings as found in the file, so a lookup matches
+        exactly what a per-object ``re.search`` for that reference would
+        find (e.g. "007 0 obj" does not match a lookup for "7 0 R").
+        """
+        buf = get_stream_data(self.stream)
+        index: dict[tuple[bytes, bytes], tuple[int, int]] = {}
+        for match in re.finditer(rb"\s(\d+)\s+(\d+)\s+obj", buf):
+            key = (match.group(2), match.group(1))
+            index.setdefault(key, (match.start(0), match.end(0)))
+        return index
+
     def get_object(
         self, indirect_reference: int | IndirectObject
     ) -> PdfObject | None:
@@ -652,12 +675,15 @@ class PdfReader(PdfDocCommon):
                     strict=self.strict,
                 )
         else:
-            buf = get_stream_data(self.stream)
-            m = re.search(
-                rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
-                buf,
+            if self._recovery_index is None:
+                self._recovery_index = self._build_recovery_index()
+            offsets = self._recovery_index.get(
+                (
+                    str(indirect_reference.generation).encode(),
+                    str(indirect_reference.idnum).encode(),
+                )
             )
-            if m is not None:
+            if offsets is not None:
                 logger_warning(
                     "Object %(idnum)d %(generation)d found",
                     source=__name__,
@@ -666,10 +692,8 @@ class PdfReader(PdfDocCommon):
                 )
                 if indirect_reference.generation not in self.xref:
                     self.xref[indirect_reference.generation] = {}
-                self.xref[indirect_reference.generation][indirect_reference.idnum] = (
-                    m.start(0) + 1
-                )
-                self.stream.seek(m.end(0) + 1)
+                self.xref[indirect_reference.generation][indirect_reference.idnum] = offsets[0] + 1
+                self.stream.seek(offsets[1] + 1)
                 skip_over_whitespace(self.stream)
                 self.stream.seek(-1, 1)
                 retval = read_object(self.stream, self)
