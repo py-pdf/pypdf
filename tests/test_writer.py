@@ -980,6 +980,27 @@ def test_add_named_destination(pdf_file_path):
         writer.write(output_stream)
 
 
+def test_add_named_destination__kids_name_tree():
+    """Named destinations added to a /Kids-based name tree are kept."""
+    other = PdfWriter()
+    other.add_blank_page(100, 100)
+    other.add_named_destination("chapter-b", 0)
+    other_stream = BytesIO()
+    other.write(other_stream)
+
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "pdflatex-outline.pdf")
+    existing = set(writer.named_destinations)
+    writer.add_named_destination("appendix", 1)
+    writer.append(other_stream)
+
+    output = BytesIO()
+    writer.write(output)
+    assert set(PdfReader(output).named_destinations) == existing | {"appendix", "chapter-b"}
+    dests = writer.root_object["/Names"]["/Dests"]
+    assert "/Kids" not in dests
+    assert dests["/Names"].count("chapter-b") == 1
+
+
 @pytest.mark.parametrize(
     ("media_box", "expected_top"),
     [

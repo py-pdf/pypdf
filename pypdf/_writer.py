@@ -2908,13 +2908,7 @@ class PdfWriter(PdfDocCommon):
 
     def _merge__process_named_dests(self, dest: Any, reader: PdfDocCommon, srcpages: dict[int, PageObject]) -> None:
         arr: Any = dest.dest_array
-        if "/Names" in self._root_object and dest["/Title"] in cast(
-            list[Any],
-            cast(
-                DictionaryObject,
-                cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
-            ).get("/Names", DictionaryObject()),
-        ):
+        if "/Names" in self._root_object and dest["/Title"] in self.get_named_dest_root():
             # already exists: should not duplicate it
             pass
         elif dest["/Page"] is None or isinstance(dest["/Page"], NullObject):
