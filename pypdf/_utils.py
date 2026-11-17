@@ -635,10 +635,6 @@ def _human_readable_bytes(bytes: int) -> str:
 
 
 def get_stream_size(stream: StreamType) -> int:
-    if hasattr(stream, "getbuffer"):
-        with stream.getbuffer() as view:
-            return cast(int, view.nbytes)
-
     position = stream.tell()
     stream.seek(0, os.SEEK_END)
     size = stream.tell()
@@ -647,10 +643,6 @@ def get_stream_size(stream: StreamType) -> int:
 
 
 def get_stream_data(stream: StreamType) -> bytes:
-    if hasattr(stream, "getbuffer"):
-        with stream.getbuffer() as view:
-            return bytes(view)
-
     position = stream.tell()
     stream.seek(0, os.SEEK_SET)
     data = stream.read(-1)
