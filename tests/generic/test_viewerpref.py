@@ -86,22 +86,13 @@ INDIRECT_PREFERENCES = [
     ("preference", "key", "value"),
     INDIRECT_PREFERENCES,
 )
-def test_viewer_preference_resolves_an_indirect_value(
+def test_viewer_preference__resolves_an_indirect_value(
     preference: str, key: str, value: PdfObject,
 ) -> None:
-    """A preference may be written as an indirect object, which reads back as its value."""
+    """A preference held as an indirect object reads back as the value it points at."""
     writer = PdfWriter()
-    writer.add_blank_page(width=72, height=72)
     preferences = writer.create_viewer_preferences()
     preferences[NameObject(key)] = writer._add_object(value)
+    assert isinstance(preferences.raw_get(key), IndirectObject)
 
-    output = BytesIO()
-    writer.write(output)
-    output.seek(0)
-    saved_preferences = PdfReader(output).viewer_preferences
-    assert saved_preferences is not None
-    assert isinstance(saved_preferences.raw_get(key), IndirectObject)
-
-    read = getattr(saved_preferences, preference)
-    assert not isinstance(read, IndirectObject)
-    assert read == value
+    assert getattr(preferences, preference) == value

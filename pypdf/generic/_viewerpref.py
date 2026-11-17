@@ -61,8 +61,10 @@ class ViewerPreferences(DictionaryObject):
     def _resolve(self, key: str, default: PdfObject | None) -> PdfObject | None:
         # Any of these entries may be an indirect reference, which dict.get
         # hands back as-is rather than resolving the way __getitem__ does.
-        value = self.get(key, default)
-        return None if value is None else value.get_object()
+        value: PdfObject | None = self.get(key, default)
+        if value is None:
+            return None
+        return value.get_object()
 
     def _get_bool(self, key: str, default: BooleanObject | None) -> BooleanObject | None:
         return cast("BooleanObject | None", self._resolve(key, default))
