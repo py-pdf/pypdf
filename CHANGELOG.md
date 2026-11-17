@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## Version 7.1.0, 2026-11-13
+
+### Deprecations (DEP)
+- Deprecate passing a boolean to remove_images (#4412)
+- Make add_outline_item keyword-only (#4401)
+
+### New Features (ENH)
+- Scale a soft mask to the size of its image (#4391)
+
+### Performance Improvements (PI)
+- Do not decode streams to find identical objects (#4424)
+- Speed up the pure-Python RC4 used without a crypto library (#4396)
+- Skip per-character direction checks for left-to-right text in extract_text() (#4395)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.1...7.1.0)
+
 ## Version 7.0.1, 2026-11-10
 
 ### Security (SEC)
