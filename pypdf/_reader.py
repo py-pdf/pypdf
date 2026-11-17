@@ -56,7 +56,6 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     StrByteType,
     StreamType,
-    deprecate_with_replacement,
     get_stream_data,
     get_stream_size,
     logger_warning,
@@ -331,7 +330,7 @@ class PdfReader(PdfDocCommon):
         """
         loc = self.stream.tell()
         self.stream.seek(0, 0)
-        pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace") 
+        pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace")
         self.stream.seek(loc, 0)  # return to where it was
         return pdf_file_version
 
