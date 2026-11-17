@@ -3693,3 +3693,29 @@ def test_rebuild_xref_table__maximum_input_length() -> None:
         match=r"^Maximum xref rebuild input length exceeded:",
     ):
         reader._rebuild_xref_table(BytesIO(oversized))
+
+
+def test_rebuild_xref_table__maximum_entries_from_objstm() -> None:
+    """ObjStm members must also consume the xref rebuild entry budget."""
+    # Two top-level objects stay under the budget; the first ObjStm member
+    # pushes entry_count over the limit during the second recovery pass.
+    payload = b"10 0\n<< /Type /Page >>"
+    objstm = (
+        b"<< /Type /ObjStm /N 1 /First 4 /Length %d >>\nstream\n%s\nendstream"
+        % (len(payload), payload)
+    )
+    pdf_data = bytearray(b"%PDF-1.7\n")
+    pdf_data += b"1 0 obj\n<< /Type /Catalog >>\nendobj\n"
+    pdf_data += b"2 0 obj\n" + objstm + b"\nendobj\n"
+    pdf_data += b"startxref\n0\n%%%%EOF\n"
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()))
+    with apply_configuration(xref_rebuild_maximum_entries=2), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild entry limit exceeded:",
+    ):
+        reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))
