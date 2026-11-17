@@ -35,7 +35,7 @@ import struct
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
-from itertools import compress
+from itertools import compress, pairwise
 from pathlib import Path
 from re import Pattern
 from types import TracebackType
@@ -67,21 +67,21 @@ from ._utils import (
     logger_warning,
 )
 from .actions import Action
-from .constants import AnnotationDictionaryAttributes as AA
 from .constants import (
+    AnnotationDictionaryAttributes,
     CatalogAttributes,
     Core,
+    FieldDictionaryAttributes,
     GoToActionArguments,
     ImageType,
     InteractiveFormDictEntries,
     OutlineFontFlag,
+    PageAttributes,
     PageLabelStyle,
     PagesAttributes,
+    TrailerKeys,
     UserAccessPermissions,
 )
-from .constants import FieldDictionaryAttributes as FA
-from .constants import PageAttributes as PG
-from .constants import TrailerKeys as TK
 from .errors import LimitReachedError, PdfReadError, PyPdfError
 from .generic import (
     PAGE_FIT,
@@ -137,6 +137,84 @@ class ObjectDeletionFlag(enum.IntFlag):
     INLINE_IMAGES = enum.auto()
     DRAWING_IMAGES = enum.auto()
     IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
+
+
+# Building the index reads the whole /Names array, which costs more than it saves
+# when a document adds only a few named destinations.
+_NAMED_DESTINATION_INDEX_MINIMUM = 32
+
+
+class _NamedDestinationIndex:
+    """
+    Look up and insert named destinations in a ``/Names`` array without scanning it.
+
+    ``PdfWriter.merge`` adds the named destinations of a document one by one, and both
+    looking each one up in the growing array and inserting it there take quadratic time.
+    The string entries are kept in a set instead, as only strings compare equal to a title.
+    If the keys are sorted strings, the new destinations are collected and sorted into the
+    array once by ``flush``: inserting each one before the first greater key gives the same
+    order as this stable sort. Other arrays are scanned as before.
+    """
+
+    def __init__(self, *, is_enabled: bool) -> None:
+        self._is_enabled = is_enabled
+        self._names: list[Any] | None = None
+        self._length = 0
+        self._strings: set[str] = set()
+        self._is_sorted = False
+        self._pending: list[tuple[str, Any]] = []
+
+    def _update(self, names: list[Any]) -> None:
+        if names is self._names and len(names) == self._length:
+            return
+        self.flush()
+        self._names = names
+        self._length = len(names)
+        self._strings = {entry for entry in names if isinstance(entry, str)}
+        keys = names[::2]
+        self._is_sorted = (
+            self._length % 2 == 0
+            and all(isinstance(key, str) for key in keys)
+            and all(previous <= key for previous, key in pairwise(keys))
+        )
+
+    def contains(self, container: Any, title: Any) -> bool:
+        if isinstance(container, IndirectObject):
+            container = container.get_object()
+        if not self._is_enabled or not isinstance(container, list) or not isinstance(title, str):
+            return title in container
+        self._update(container)
+        return title in self._strings
+
+    def insert(self, names: list[Any], title: Any, destination: Any) -> bool:
+        """Insert like ``PdfWriter.add_named_destination_array``; return False if the array has to be scanned."""
+        if not self._is_enabled:
+            return False
+        self._update(names)
+        if not self._is_sorted or not isinstance(title, str):
+            self.flush()
+            return False
+        self._pending.append((title, destination))
+        self._strings.add(title)
+        return True
+
+    def record_insertion(self, names: list[Any], title: Any) -> None:
+        """Update the index after ``add_named_destination_array`` inserted ``title`` into ``names``."""
+        if names is self._names and isinstance(title, str):
+            self._strings.add(title)
+            self._length = len(names)
+
+    def flush(self) -> None:
+        if not self._pending:
+            return
+        names = self._names
+        assert names is not None, "mypy"
+        pairs = [(names[i], names[i + 1]) for i in range(0, len(names), 2)]
+        pairs += [(TextStringObject(title), destination) for title, destination in self._pending]
+        pairs.sort(key=lambda pair: pair[0])
+        names[:] = [entry for pair in pairs for entry in pair]
+        self._pending = []
+        self._length = len(names)
 
 
 class PdfWriter(PdfDocCommon):
@@ -463,9 +541,9 @@ class PdfWriter(PdfDocCommon):
             return obj.indirect_reference  # type: ignore[return-value]
         # check for /Contents in Pages (/Contents in annotations are strings)
         if isinstance(obj, DictionaryObject) and isinstance(
-            obj.get(PG.CONTENTS, None), (ArrayObject, DictionaryObject)
+            obj.get(PageAttributes.CONTENTS, None), (ArrayObject, DictionaryObject)
         ):
-            obj[NameObject(PG.CONTENTS)] = self._add_object(obj[PG.CONTENTS])
+            obj[NameObject(PageAttributes.CONTENTS)] = self._add_object(obj[PageAttributes.CONTENTS])
         self._objects.append(obj)
         obj.indirect_reference = IndirectObject(len(self._objects), 0, self)
         return obj.indirect_reference
@@ -916,7 +994,7 @@ class PdfWriter(PdfDocCommon):
             x_offset: The horizontal offset for the appearance stream.
             y_offset: The vertical offset for the appearance stream.
         """
-        pg_res = cast(DictionaryObject, page[PG.RESOURCES])
+        pg_res = cast(DictionaryObject, page[PageAttributes.RESOURCES])
         # Always add the resolved stream object to the writer to get a new IndirectObject.
         # This ensures we have a valid IndirectObject managed by *this* writer.
         xobject_ref = self._add_object(appearance_stream_obj)
@@ -936,13 +1014,13 @@ class PdfWriter(PdfDocCommon):
         xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
         self._merge_content_stream_to_page(page, xobject_drawing_commands)
 
-    FFBITS_NUL = FA.FfBits(0)
+    FFBITS_NUL = FieldDictionaryAttributes.FfBits(0)
 
     def update_page_form_field_values(
         self,
         page: PageObject | list[PageObject] | None,
         fields: Mapping[str, str | list[str] | tuple[str, str, float]],
-        flags: FA.FfBits = FFBITS_NUL,
+        flags: FieldDictionaryAttributes.FfBits = FFBITS_NUL,
         auto_regenerate: bool | None = True,
         flatten: bool = False,
     ) -> None:
@@ -988,15 +1066,15 @@ class PdfWriter(PdfDocCommon):
             page = list(self.pages)
         if isinstance(page, list):
             for p in page:
-                if PG.ANNOTS in p:  # just to prevent warnings
+                if PageAttributes.ANNOTS in p:  # just to prevent warnings
                     self.update_page_form_field_values(p, fields, flags, None, flatten=flatten)
             return
-        if PG.ANNOTS not in page:
+        if PageAttributes.ANNOTS not in page:
             logger_warning("No fields to update on this page", source=__name__)
             return
         appearance_stream_obj: StreamObject | None = None
 
-        for annotation in page[PG.ANNOTS]:  # type: ignore[attr-defined]
+        for annotation in page[PageAttributes.ANNOTS]:  # type: ignore[attr-defined]
             annotation = cast(DictionaryObject, annotation.get_object())
             if annotation.get("/Subtype", "") != "/Widget":
                 continue
@@ -1004,11 +1082,11 @@ class PdfWriter(PdfDocCommon):
                 parent_annotation = annotation
             else:
                 parent_annotation = annotation.get(
-                    PG.PARENT, DictionaryObject()
+                    PageAttributes.PARENT, DictionaryObject()
                 ).get_object()
 
             for field, value in fields.items():
-                rectangle = cast(RectangleObject, annotation[AA.Rect])
+                rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
                 if not (
                     self._get_qualified_field_name(parent=parent_annotation) == field
                     or parent_annotation.get("/T", None) == field
@@ -1020,35 +1098,35 @@ class PdfWriter(PdfDocCommon):
                 ):
                     del parent_annotation["/I"]
                 if flags:
-                    annotation[NameObject(FA.Ff)] = NumberObject(flags)
+                    annotation[NameObject(FieldDictionaryAttributes.Ff)] = NumberObject(flags)
                 # Set the field value
                 if not (value is None and flatten):  # Only change values if given by user and not flattening.
                     if isinstance(value, list):
                         lst = ArrayObject(TextStringObject(v) for v in value)
-                        parent_annotation[NameObject(FA.V)] = lst
+                        parent_annotation[NameObject(FieldDictionaryAttributes.V)] = lst
                     elif isinstance(value, tuple):
-                        parent_annotation[NameObject(FA.V)] = TextStringObject(
+                        parent_annotation[NameObject(FieldDictionaryAttributes.V)] = TextStringObject(
                             value[0],
                         )
                     else:
-                        parent_annotation[NameObject(FA.V)] = TextStringObject(value)
+                        parent_annotation[NameObject(FieldDictionaryAttributes.V)] = TextStringObject(value)
                 # Get or create the field's appearance stream object
-                if parent_annotation.get(FA.FT) == "/Btn":
+                if parent_annotation.get(FieldDictionaryAttributes.FT) == "/Btn":
                     # Checkbox button (no /FT found in Radio widgets);
                     # We can find the associated appearance stream object
                     # within the annotation.
                     v = NameObject(value)
-                    ap = cast(DictionaryObject, annotation[NameObject(AA.AP)])
+                    ap = cast(DictionaryObject, annotation[NameObject(AnnotationDictionaryAttributes.AP)])
                     normal_ap = cast(DictionaryObject, ap["/N"])
                     if v not in normal_ap:
                         v = NameObject("/Off")
                     appearance_stream_obj = normal_ap.get(v)
                     # Other cases will be updated through the for loop
-                    annotation[NameObject(AA.AS)] = v
-                    annotation[NameObject(FA.V)] = v
+                    annotation[NameObject(AnnotationDictionaryAttributes.AS)] = v
+                    annotation[NameObject(FieldDictionaryAttributes.V)] = v
                 elif (
-                    parent_annotation.get(FA.FT) == "/Tx"
-                    or parent_annotation.get(FA.FT) == "/Ch"
+                    parent_annotation.get(FieldDictionaryAttributes.FT) == "/Tx"
+                    or parent_annotation.get(FieldDictionaryAttributes.FT) == "/Ch"
                 ):
                     # Textbox; we need to generate the appearance stream object
                     if isinstance(value, tuple):
@@ -1060,20 +1138,20 @@ class PdfWriter(PdfDocCommon):
                             self, page, flatten, acro_form, parent_annotation, annotation
                         )
                     # Add the appearance stream object
-                    if AA.AP not in annotation:
-                        annotation[NameObject(AA.AP)] = DictionaryObject(
+                    if AnnotationDictionaryAttributes.AP not in annotation:
+                        annotation[NameObject(AnnotationDictionaryAttributes.AP)] = DictionaryObject(
                             {NameObject("/N"): self._add_object(appearance_stream_obj)}
                         )
-                    elif "/N" not in (ap:= cast(DictionaryObject, annotation[AA.AP])):
-                        cast(DictionaryObject, annotation[NameObject(AA.AP)])[
+                    elif "/N" not in (ap:= cast(DictionaryObject, annotation[AnnotationDictionaryAttributes.AP])):
+                        cast(DictionaryObject, annotation[NameObject(AnnotationDictionaryAttributes.AP)])[
                             NameObject("/N")
                         ] = self._add_object(appearance_stream_obj)
                     else:  # [/AP][/N] exists
-                        n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore[index]
+                        n = annotation[AnnotationDictionaryAttributes.AP]["/N"].indirect_reference.idnum  # type: ignore[index]
                         self._objects[n - 1] = appearance_stream_obj
                         appearance_stream_obj.indirect_reference = IndirectObject(n, 0, self)
                 elif (
-                    annotation.get(FA.FT) == "/Sig"
+                    annotation.get(FieldDictionaryAttributes.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", source=__name__)
 
@@ -1498,10 +1576,10 @@ class PdfWriter(PdfDocCommon):
                 self._info.indirect_reference.idnum - 1  # type: ignore[union-attr]
             ]
         ):
-            init_data[NameObject(TK.INFO)] = self._info.indirect_reference
-        init_data[NameObject(TK.PREV)] = NumberObject(self._reader._startxref)
+            init_data[NameObject(TrailerKeys.INFO)] = self._info.indirect_reference
+        init_data[NameObject(TrailerKeys.PREV)] = NumberObject(self._reader._startxref)
         if self._ID:
-            init_data[NameObject(TK.ID)] = self._ID
+            init_data[NameObject(TrailerKeys.ID)] = self._ID
         xr = StreamObject.initialize_from_dictionary(init_data)
         xr.set_data(
             b"".join(
@@ -1558,16 +1636,16 @@ class PdfWriter(PdfDocCommon):
         stream.write(b"trailer\n")
         trailer = DictionaryObject(
             {
-                NameObject(TK.SIZE): NumberObject(len(self._objects) + 1),
-                NameObject(TK.ROOT): self.root_object.indirect_reference,
+                NameObject(TrailerKeys.SIZE): NumberObject(len(self._objects) + 1),
+                NameObject(TrailerKeys.ROOT): self.root_object.indirect_reference,
             }
         )
         if self._info is not None:
-            trailer[NameObject(TK.INFO)] = self._info.indirect_reference
+            trailer[NameObject(TrailerKeys.INFO)] = self._info.indirect_reference
         if self._ID is not None:
-            trailer[NameObject(TK.ID)] = self._ID
+            trailer[NameObject(TrailerKeys.ID)] = self._ID
         if self._encrypt_entry:
-            trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference
+            trailer[NameObject(TrailerKeys.ENCRYPT)] = self._encrypt_entry.indirect_reference
         trailer.write_to_stream(stream)
         stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
@@ -1975,7 +2053,7 @@ class PdfWriter(PdfDocCommon):
         """
         page_ref = self._get_page_reference(page_number)
         if fit is None:
-            top = cast(DictionaryObject, page_ref.get_object()).get(PG.MEDIABOX)
+            top = cast(DictionaryObject, page_ref.get_object()).get(PageAttributes.MEDIABOX)
             top = RectangleObject(top).top if top is not None else 0
             fit = Fit.fit_horizontally(top=top)
         if not isinstance(title, TextStringObject):
@@ -2019,8 +2097,8 @@ class PdfWriter(PdfDocCommon):
         subtypes: Iterable[str] | None,
     ) -> None:
         page = cast(DictionaryObject, page.get_object())
-        if PG.ANNOTS in page:
-            annotations = page[PG.ANNOTS]
+        if PageAttributes.ANNOTS in page:
+            annotations = page[PageAttributes.ANNOTS]
             if not isinstance(annotations, ArrayObject):
                 logger_warning(
                     "Annotations are not an array: %(annotations)s",
@@ -2381,21 +2459,21 @@ class PdfWriter(PdfDocCommon):
         lnk = DictionaryObject()
         lnk.update(
             {
-                NameObject(AA.Type): NameObject("/Annot"),
-                NameObject(AA.Subtype): NameObject("/Link"),
-                NameObject(AA.P): page_link,
-                NameObject(AA.Rect): rect,
+                NameObject(AnnotationDictionaryAttributes.Type): NameObject("/Annot"),
+                NameObject(AnnotationDictionaryAttributes.Subtype): NameObject("/Link"),
+                NameObject(AnnotationDictionaryAttributes.P): page_link,
+                NameObject(AnnotationDictionaryAttributes.Rect): rect,
                 NameObject("/H"): NameObject("/I"),
-                NameObject(AA.Border): ArrayObject(border_arr),
+                NameObject(AnnotationDictionaryAttributes.Border): ArrayObject(border_arr),
                 NameObject("/A"): lnk2,
             }
         )
         lnk_ref = self._add_object(lnk)
 
-        if PG.ANNOTS in page_ref:
-            page_ref[PG.ANNOTS].append(lnk_ref)
+        if PageAttributes.ANNOTS in page_ref:
+            page_ref[PageAttributes.ANNOTS].append(lnk_ref)
         else:
-            page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
+            page_ref[NameObject(PageAttributes.ANNOTS)] = ArrayObject([lnk_ref])
 
     _valid_layouts = (
         "/NoLayout",
@@ -2656,29 +2734,14 @@ class PdfWriter(PdfDocCommon):
                     act[NameObject("/D")] = TextStringObject(d)
         return page
 
-    def _create_stream(
-        self, fileobj: Path | StrByteType | PdfReader
-    ) -> tuple[IOBase, Encryption | None]:
+    def _create_stream(self, fileobj: Path | StrByteType) -> IOBase:
         # If the fileobj parameter is a string, assume it is a path
         # and create a file object at that location. If it is a file,
-        # copy the file's contents into a BytesIO stream object; if
-        # it is a PdfReader, copy that reader's stream into a
-        # BytesIO stream.
-        # If fileobj is none of the above types, it is not modified
-        encryption_obj = None
+        # copy the file's contents into a BytesIO stream object.
         stream: IOBase
         if isinstance(fileobj, (str, Path)):
             with FileIO(fileobj, "rb") as f:
                 stream = BytesIO(f.read())
-        elif isinstance(fileobj, PdfReader):
-            if fileobj._encryption:
-                encryption_obj = fileobj._encryption
-            orig_tell = fileobj.stream.tell()
-            fileobj.stream.seek(0)
-            stream = BytesIO(fileobj.stream.read())
-
-            # reset the stream to its original location
-            fileobj.stream.seek(orig_tell)
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
             fileobj.seek(0)
             filecontent = fileobj.read()
@@ -2690,7 +2753,7 @@ class PdfWriter(PdfDocCommon):
                 "a file object, or an object implementing .seek and .read. "
                 "Passing a PdfReader directly works as well."
             )
-        return stream, encryption_obj
+        return stream
 
     def append(
         self,
@@ -2792,7 +2855,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(fileobj, PdfDocCommon):
             reader = fileobj
         else:
-            stream, _encryption_obj = self._create_stream(fileobj)
+            stream = self._create_stream(fileobj)
             # Create a new PdfReader instance using the stream
             # (either file or BytesIO or StringIO) created above
             reader = PdfReader(stream, strict=False)  # type: ignore[arg-type]
@@ -2839,8 +2902,17 @@ class PdfWriter(PdfDocCommon):
 
         arr: Any
 
-        for dest in reader._named_destinations.values():
-            self._merge__process_named_dests(dest=dest, reader=reader, srcpages=srcpages)
+        named_destinations = _NamedDestinationIndex(
+            is_enabled=len(reader._named_destinations) >= _NAMED_DESTINATION_INDEX_MINIMUM
+        )
+        # Keep the destinations added before an error, as adding them one by one did.
+        try:
+            for dest in reader._named_destinations.values():
+                self._merge__process_named_dests(
+                    dest=dest, reader=reader, srcpages=srcpages, named_destinations=named_destinations
+                )
+        finally:
+            named_destinations.flush()
 
         outline_item_typ: TreeObject
         if outline_item is not None:
@@ -2921,14 +2993,20 @@ class PdfWriter(PdfDocCommon):
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)
 
-    def _merge__process_named_dests(self, dest: Any, reader: PdfDocCommon, srcpages: dict[int, PageObject]) -> None:
+    def _merge__process_named_dests(
+        self,
+        dest: Any,
+        reader: PdfDocCommon,
+        srcpages: dict[int, PageObject],
+        named_destinations: _NamedDestinationIndex,
+    ) -> None:
         arr: Any = dest.dest_array
-        if "/Names" in self._root_object and dest["/Title"] in cast(
-            list[Any],
+        if "/Names" in self._root_object and named_destinations.contains(
             cast(
                 DictionaryObject,
                 cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
             ).get("/Names", DictionaryObject()),
+            dest["/Title"],
         ):
             # already exists: should not duplicate it
             pass
@@ -2946,14 +3024,22 @@ class PdfWriter(PdfDocCommon):
                 arr[NumberObject(0)] = NumberObject(
                     srcpages[p.indirect_reference.idnum].page_number
                 )
-                self.add_named_destination_array(dest["/Title"], arr)
+                self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
             except KeyError:
                 pass
         elif dest["/Page"].indirect_reference.idnum in srcpages:
             arr[NumberObject(0)] = srcpages[
                 dest["/Page"].indirect_reference.idnum
             ].indirect_reference
-            self.add_named_destination_array(dest["/Title"], arr)
+            self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
+
+    def _add_named_destination_array_indexed(
+        self, title: Any, destination: Any, named_destinations: _NamedDestinationIndex
+    ) -> None:
+        names = self.get_named_dest_root()
+        if not named_destinations.insert(names, title, destination):
+            self.add_named_destination_array(title, destination)
+            named_destinations.record_insertion(names, title)
 
     def _add_articles_thread(
         self,
