@@ -1856,11 +1856,8 @@ def test_named_destination__fallback_without_pages(caplog):
     "corrupt_id",
     [b"/ID /Bogus", b"/ID 42", b"/ID (bare-string)"],
 )
-def test_trailer_id_non_array_raises(corrupt_id):
-    """A non-array trailer /ID must fail with the standard PdfReadError
-    instead of silently exposing a wrong-typed object (mirrors the /Info
-    dictionary validation).
-    """
+def test_trailer_id__non_array_raises(corrupt_id):
+    """A non-array trailer /ID must fail with the standard PdfReadError."""
     data = _build_minimal_pdf(
         [
             ("1", "<< /Type /Catalog /Pages 2 0 R >>"),
@@ -1874,9 +1871,10 @@ def test_trailer_id_non_array_raises(corrupt_id):
         reader._ID
 
 
-def test_writer_clone_from_non_array_id_raises():
+def test_writer__clone_from__non_array_id_raises():
     """Cloning from a document with a non-array trailer /ID must fail with
-    the standard PdfReadError instead of silently copying garbage.
+    the standard PdfReadError instead of copying the non-array entry into
+    the output trailer.
     """
     data = _build_minimal_pdf(
         [
