@@ -18,7 +18,7 @@ from PIL import __version__ as pil_version
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._utils import Version, get_stream_data
 from pypdf.actions import JavaScript
-from pypdf.constants import PageAttributes as PG
+from pypdf.constants import PageAttributes
 from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
     ArrayObject,
@@ -130,7 +130,7 @@ def test_pdfreader_jpeg_image():
             imagetext = pdftext_file.read()
 
         page = reader.pages[0]
-        x_object = page[PG.RESOURCES]["/XObject"].get_object()
+        x_object = page[PageAttributes.RESOURCES]["/XObject"].get_object()
         data = x_object["/Im4"].get_data()
 
         # Compare the text of the PDF to a known source
