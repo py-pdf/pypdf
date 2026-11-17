@@ -10,7 +10,7 @@ from unittest import mock
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
 from pypdf.constants import ImageAttributes, PageAttributes, UserAccessPermissions
@@ -3650,3 +3650,46 @@ def test_get_object_from_stream__duplicate_offsets() -> None:
 
     with pytest.raises(PdfReadError, match=r"^Invalid offset 0 in object stream 1\.$"):
         _ = reader.root_object
+
+
+def test_rebuild_xref_table__maximum_entries() -> None:
+    """Rebuilding a broken xref must honor the discovered-object budget."""
+    objects = {
+        1: b"<< /Type /Catalog /Pages 2 0 R >>",
+        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        3: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        4: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        5: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+    }
+    pdf_data = bytearray(b"%PDF-1.7\n")
+    for number, obj in objects.items():
+        pdf_data += b"%d 0 obj\n" % number + obj + b"\nendobj\n"
+    pdf_data += b"startxref\n0\n%%%%EOF\n"
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()))
+    with apply_configuration(xref_rebuild_maximum_entries=2), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild entry limit exceeded:",
+    ):
+        reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))
+
+
+def test_rebuild_xref_table__maximum_input_length() -> None:
+    """Rebuilding must refuse oversized inputs before loading the whole file."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()))
+
+    oversized = b"%PDF-1.7\n" + (b"%xxxxxxxx\n" * 5) + b"startxref\n0\n%%%%EOF\n"
+    assert len(oversized) > 10
+    with apply_configuration(xref_rebuild_maximum_input_length=10), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild input length exceeded:",
+    ):
+        reader._rebuild_xref_table(BytesIO(oversized))

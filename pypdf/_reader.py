@@ -46,7 +46,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from ._configuration import apply_legacy_configuration
+from ._configuration import apply_legacy_configuration, get_configuration
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._utils import (
@@ -1563,11 +1563,26 @@ class PdfReader(PdfDocCommon):
             index += 7  # len(b"trailer")
 
     def _rebuild_xref_table(self, stream: StreamType) -> None:
+        configuration = get_configuration()
         self.xref = {}
+        stream.seek(0, 2)
+        input_length = stream.tell()
+        if input_length > configuration.xref_rebuild_maximum_input_length:
+            raise LimitReachedError(
+                f"Maximum xref rebuild input length exceeded: "
+                f"{input_length} > {configuration.xref_rebuild_maximum_input_length}."
+            )
         stream.seek(0, 0)
         stream_data = stream.read(-1)
 
+        entry_count = 0
         for object_number, generation_number, object_start in self._find_pdf_objects(stream_data):
+            entry_count += 1
+            if entry_count > configuration.xref_rebuild_maximum_entries:
+                raise LimitReachedError(
+                    f"Maximum xref rebuild entry limit exceeded: "
+                    f"{entry_count} > {configuration.xref_rebuild_maximum_entries}."
+                )
             if generation_number not in self.xref:
                 self.xref[generation_number] = {}
             self.xref[generation_number][object_number] = object_start
@@ -1614,6 +1629,13 @@ class PdfReader(PdfDocCommon):
                         inner_offset = int(current)
                         self.xref_objStm[inner_object_number] = (object_number, inner_offset)
                         actual_count += 1
+                        # Compressed members also consume the rebuild entry budget.
+                        entry_count += 1
+                        if entry_count > configuration.xref_rebuild_maximum_entries:
+                            raise LimitReachedError(
+                                f"Maximum xref rebuild entry limit exceeded: "
+                                f"{entry_count} > {configuration.xref_rebuild_maximum_entries}."
+                            )
                     expected_count = cast(int, obj["/N"])
                     if actual_count != expected_count:  # pragma: no cover
                         logger_warning(  # pragma: no cover

@@ -82,6 +82,7 @@ from .constants import (
     TrailerKeys,
     UserAccessPermissions,
 )
+from ._configuration import get_configuration
 from .errors import LimitReachedError, PdfReadError, PyPdfError
 from .generic import (
     PAGE_FIT,
@@ -3203,6 +3204,12 @@ class PdfWriter(PdfDocCommon):
                 annots_type=annots.__class__.__name__,
             )
             return outlist
+        configuration = get_configuration()
+        if len(annots) > configuration.annotations_maximum_per_page:
+            raise LimitReachedError(
+                f"Maximum annotations per page exceeded: "
+                f"{len(annots)} > {configuration.annotations_maximum_per_page}."
+            )
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
