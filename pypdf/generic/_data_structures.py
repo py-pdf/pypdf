@@ -910,6 +910,7 @@ class TreeObject(DictionaryObject):
 
         if before is not None:
             # The children are linked from /First to /Last by /Next (ISO 32000-2:2020, 12.3.3).
+            previous: DictionaryObject | None = None
             node = cast("DictionaryObject", self["/First"])
             visited: set[int] = set()
             while True:
@@ -917,11 +918,14 @@ class TreeObject(DictionaryObject):
                     raise LimitReachedError("Detected cycle in tree structure.")
                 visited.add(id(node))
                 if node.indirect_reference == before:
-                    self._link_child_before(child_obj, child_reference, node)
+                    self._link_child_before(
+                        child_obj=child_obj, child_reference=child_reference, previous=previous, node=node
+                    )
                     inc_parent_counter(self, child_obj.get("/Count", 1))
                     return child_reference
                 if "/Next" not in node:
                     break
+                previous = node
                 node = cast("DictionaryObject", node["/Next"])
             # `before` is no child of this node: append at the end.
 
@@ -940,17 +944,24 @@ class TreeObject(DictionaryObject):
         return child_reference
 
     def _link_child_before(
-        self, child_obj: DictionaryObject, child_reference: IndirectObject, node: DictionaryObject
+        self,
+        *,
+        child_obj: DictionaryObject,
+        child_reference: IndirectObject,
+        previous: DictionaryObject | None,
+        node: DictionaryObject,
     ) -> None:
-        """Link ``child_obj`` into the list of children directly in front of ``node``."""
-        previous_reference = node.raw_get("/Prev") if "/Prev" in node else None
-        if previous_reference is None or is_null_or_none(previous_reference):
+        """
+        Link ``child_obj`` into the list of children directly in front of ``node``.
+
+        ``previous`` is the child in front of ``node``, or None if ``node`` is the first child.
+        """
+        if previous is None:
             self[NameObject("/First")] = child_reference
             child_obj.pop("/Prev", None)
         else:
-            previous = cast("DictionaryObject", previous_reference.get_object())
             previous[NameObject("/Next")] = child_reference
-            child_obj[NameObject("/Prev")] = previous_reference
+            child_obj[NameObject("/Prev")] = previous.indirect_reference
         child_obj[NameObject("/Next")] = node.indirect_reference
         node[NameObject("/Prev")] = child_reference
 
