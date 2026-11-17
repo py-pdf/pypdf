@@ -1001,6 +1001,26 @@ def test_add_named_destination__kids_name_tree():
     assert dests["/Names"].count("chapter-b") == 1
 
 
+def test_get_named_dest_root__kids_cycle():
+    """A /Kids cycle or a non-dictionary kid in the name tree is skipped."""
+    writer = PdfWriter()
+    dests = DictionaryObject()
+    dests_ref = writer._add_object(dests)
+    dests[NameObject("/Kids")] = ArrayObject([dests_ref, NullObject()])
+    writer.root_object[NameObject("/Names")] = DictionaryObject({NameObject("/Dests"): dests_ref})
+    assert writer.get_named_dest_root() == []
+    assert "/Kids" not in dests
+
+
+def test_append__kids_name_tree_does_not_duplicate_names():
+    """Appending names which already exist in a /Kids-based name tree does not duplicate them."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "pdflatex-outline.pdf")
+    existing = list(writer.named_destinations)
+    writer.append(RESOURCE_ROOT / "pdflatex-outline.pdf")
+    keys = writer.get_named_dest_root()[::2]
+    assert sorted(keys) == sorted(existing)
+
+
 @pytest.mark.parametrize(
     ("media_box", "expected_top"),
     [
