@@ -1778,13 +1778,14 @@ class PdfWriter(PdfDocCommon):
     def _find_reachable_objects(self) -> set[int]:
         """Get the numbers of all objects which the trailer leads to."""
         reachable: set[int] = set()
+        object_count = len(self._objects)
         objects_to_visit: list[Any] = []
         for obj in (self._root_object, self._info, self._ID, self._encrypt_entry):
             objects_to_visit.extend((obj, getattr(obj, "indirect_reference", None)))
         while objects_to_visit:
             obj = objects_to_visit.pop()
             if isinstance(obj, IndirectObject):
-                if obj.pdf is self and obj.idnum not in reachable and 0 < obj.idnum <= len(self._objects):
+                if obj.pdf is self and obj.idnum not in reachable and 0 < obj.idnum <= object_count:
                     reachable.add(obj.idnum)
                     objects_to_visit.append(self._objects[obj.idnum - 1])
             elif isinstance(obj, DictionaryObject):
