@@ -1780,8 +1780,9 @@ class PdfWriter(PdfDocCommon):
         reachable: set[int] = set()
         object_count = len(self._objects)
         objects_to_visit: list[Any] = []
-        for obj in (self._root_object, self._info, self._ID, self._encrypt_entry):
-            objects_to_visit.extend((obj, getattr(obj, "indirect_reference", None)))
+        for obj in (self.root_object, self._info, self._ID, self._encrypt_entry):
+            reference = getattr(obj, "indirect_reference", None)
+            objects_to_visit.append(obj if reference is None else reference)
         while objects_to_visit:
             obj = objects_to_visit.pop()
             if isinstance(obj, IndirectObject):
