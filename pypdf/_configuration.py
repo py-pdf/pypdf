@@ -121,6 +121,23 @@ class Configuration:
     named_destinations_maximum_depth: int = 100
     """The maximum allowed depth for a named destination name tree."""
 
+    xref_rebuild_maximum_entries: int = 2_000_000
+    """
+    The maximum allowed number of objects discovered while rebuilding a broken
+    cross-reference table.
+    """
+    xref_rebuild_maximum_input_length: int = 75_000_000
+    """
+    The maximum allowed input size in bytes when rebuilding a broken
+    cross-reference table (the recovery path loads the file into memory).
+    """
+
+    annotations_maximum_per_page: int = 100_000
+    """
+    The maximum allowed number of annotations processed per page when merging
+    or appending pages.
+    """
+
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
 

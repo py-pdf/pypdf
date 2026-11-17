@@ -19,6 +19,7 @@ from pypdf import (
     PdfReader,
     PdfWriter,
     Transformation,
+    apply_configuration,
 )
 from pypdf._utils import get_stream_data
 from pypdf._writer import _NamedDestinationIndex
@@ -4666,3 +4667,61 @@ def test_remove_images__legacy_boolean_parameter() -> None:
         writer.remove_images(True)
 
     assert not writer.pages[0].images
+
+
+def test_append__annotations_maximum_per_page() -> None:
+    """Appending a page with too many annotations must fail closed."""
+    source = PdfWriter()
+    page = source.add_blank_page(200, 200)
+    annots = ArrayObject()
+    for i in range(20):
+        annot = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Text"),
+                NameObject("/Rect"): ArrayObject(
+                    [NumberObject(0), NumberObject(0), NumberObject(10), NumberObject(10)]
+                ),
+                NameObject("/Contents"): TextStringObject(f"a{i}"),
+            }
+        )
+        annots.append(source._add_object(annot))
+    page[NameObject("/Annots")] = annots
+    buffer = BytesIO()
+    source.write(buffer)
+    reader = PdfReader(BytesIO(buffer.getvalue()))
+
+    dest = PdfWriter()
+    with apply_configuration(annotations_maximum_per_page=5), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum annotations per page exceeded:",
+    ):
+        dest.append(reader)
+
+
+def test_merge_page__annotations_maximum_per_page() -> None:
+    """Page.merge_page must honor the annotations-per-page budget."""
+    left = PdfWriter()
+    left_page = left.add_blank_page(200, 200)
+    right = PdfWriter()
+    right_page = right.add_blank_page(200, 200)
+    annots = ArrayObject()
+    for i in range(15):
+        annot = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Text"),
+                NameObject("/Rect"): ArrayObject(
+                    [NumberObject(0), NumberObject(0), NumberObject(10), NumberObject(10)]
+                ),
+                NameObject("/Contents"): TextStringObject(f"a{i}"),
+            }
+        )
+        annots.append(right._add_object(annot))
+    right_page[NameObject("/Annots")] = annots
+
+    with apply_configuration(annotations_maximum_per_page=5), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum annotations per page exceeded:",
+    ):
+        left_page.merge_page(right_page)
