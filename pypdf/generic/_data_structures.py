@@ -885,7 +885,7 @@ class TreeObject(DictionaryObject):
     def insert_child(
         self,
         child: Any,
-        before: Any,
+        before: IndirectObject | None,
         pdf: PdfWriterProtocol,
         inc_parent_counter: Callable[..., Any] | None = None,
     ) -> IndirectObject:

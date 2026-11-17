@@ -3389,7 +3389,7 @@ class PdfWriter(PdfDocCommon):
         self,
         outlines: list[Destination],
         parent: TreeObject | IndirectObject,
-        before: TreeObject | IndirectObject | None = None,
+        before: IndirectObject | None = None,
     ) -> None:
         for dest in outlines:
             # TODO: can be improved to keep A and SE entries (ignored for the moment)
