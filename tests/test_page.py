@@ -1059,7 +1059,7 @@ def test_merge_page_preserves_annotation_quad_points(quad_count, transformation,
         pytest.param((1, 2, -3, 4, 10, 20), (-20, 20, 20, 80), id="combined-affine-transform"),
     ],
 )
-def test_merge_page_annotation_rectangle_bounds(read_source, ctm, expected) -> None:
+def test_merge_page__annotation__rectangle_bounds(read_source, ctm, expected) -> None:
     """The transformed rectangle must enclose all four corners, including after writing."""
     source = PdfWriter()
     source.add_blank_page(width=100, height=100)
@@ -1090,7 +1090,7 @@ def test_merge_page_annotation_rectangle_bounds(read_source, ctm, expected) -> N
     assert source_page["/Annots"][0].get_object()["/Rect"] == [0, 0, 10, 10]
 
 
-def test_merge_rotated_page_annotation_rectangle_bounds() -> None:
+def test_merge_rotated_page__annotation__rectangle_bounds() -> None:
     source = PdfWriter()
     source.add_blank_page(width=100, height=100)
     source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
@@ -1105,7 +1105,7 @@ def test_merge_rotated_page_annotation_rectangle_bounds() -> None:
     assert annotation["/Rect"] == pytest.approx((-diagonal, 0, diagonal, 2 * diagonal))
 
 
-def test_merge_page_annotation_rectangle_encloses_quad_points() -> None:
+def test_merge_page__annotation__rectangle_encloses_quad_points() -> None:
     source = PdfWriter()
     source.add_blank_page(width=100, height=100)
     source.add_annotation(
@@ -1129,7 +1129,7 @@ def test_merge_page_annotation_rectangle_encloses_quad_points() -> None:
     assert all(left <= x <= right and bottom <= y <= top for x, y in zip(quads[::2], quads[1::2]))
 
 
-def test_merge_page_annotation_rectangle_repeated_merge() -> None:
+def test_merge_page__annotation__rectangle_repeated_merge() -> None:
     source = PdfWriter()
     source.add_blank_page(width=100, height=100)
     source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
