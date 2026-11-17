@@ -677,6 +677,46 @@ def _apply_alpha(
     return img, extension, image_format
 
 
+def _jpeg_can_be_returned_unchanged(
+    x_object: dict[str, Any], color_space: Any
+) -> bool:
+    """
+    Check whether a /DCTDecode image holds a JPEG file that can be returned
+    unchanged instead of being decoded and re-encoded (#4434).
+
+    This requires that nothing has to be applied to the decoded data:
+
+    * No /SMask, /Mask or /Decode entry.
+    * A plain grayscale or RGB color space (/DeviceGray, /DeviceRGB, /CalGray,
+      /CalRGB or /ICCBased with /N 1 or 3). CMYK is excluded because of the
+      Adobe inversion handled in _apply_decode().
+    """
+    if (
+        ImageAttributes.S_MASK in x_object
+        or ImageAttributes.MASK in x_object
+        or ImageAttributes.DECODE in x_object
+    ):
+        return False
+    # Single-element color space arrays are unwrapped by the caller, so both
+    # the bare name and the array form have to be accepted here.
+    name = (
+        color_space[0].get_object()
+        if isinstance(color_space, list) and color_space
+        else color_space
+    )
+    if name in (
+        ColorSpaces.DEVICE_GRAY,
+        ColorSpaces.DEVICE_RGB,
+        "/CalGray",
+        "/CalRGB",
+    ):
+        return True
+    if name == "/ICCBased" and isinstance(color_space, list) and len(color_space) > 1:
+        icc_profile = color_space[1].get_object()
+        return icc_profile.get("/N") in (1, 3)
+    return False
+
+
 def _xobj_to_image(
         x_object: dict[str, Any],
         pillow_parameters: dict[str, Any] | None = None,
@@ -762,6 +802,14 @@ def _xobj_to_image(
             image_format = cast(str, img.format)
         extension = ".tiff" if image_format == "TIFF" else ".png"
     elif last_filter == FilterTypes.DCT_DECODE:
+        if not pillow_parameters and _jpeg_can_be_returned_unchanged(
+            x_object, color_space
+        ):
+            # The decoded stream data already is the JPEG file, so return it
+            # unchanged; Image.open() only reads the header, and no pixel
+            # buffer is allocated, so the image buffer size limit of
+            # _create_image_from_buffer() does not apply either.
+            return ".jpg", data, Image.open(BytesIO(data), formats=("JPEG",))
         img, image_format, extension = _create_image_from_buffer(buf=BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
         # invert_color kept unchanged
     elif last_filter == FilterTypes.JPX_DECODE:
