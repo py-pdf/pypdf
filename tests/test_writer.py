@@ -3929,6 +3929,15 @@ def test_append__keeps_existing_acroform_fields():
     assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
 
 
+def test_append__same_form_twice_does_not_duplicate_fields():
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    writer = PdfWriter()
+    writer.append(reader)
+    writer.append(reader)
+    assert len(writer.pages) == 2
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 1
+
+
 def test_append__skips_duplicate_acroform_fields():
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     fields = reader.root_object["/AcroForm"]["/Fields"]

@@ -2980,12 +2980,14 @@ class PdfWriter(PdfDocCommon):
                 )
                 fields = ArrayObject()
             trslat = self._id_translated[id(reader)]
+            known = {
+                x.idnum for x in arr if isinstance(x, IndirectObject) and x.generation == 0 and x.pdf is self
+            }
             for f in fields:
                 # trslat only knows the fields which have been copied through the pages
-                if isinstance(f, IndirectObject) and f.idnum in trslat:
-                    ind = IndirectObject(trslat[f.idnum], 0, self)
-                    if ind not in arr:
-                        arr.append(ind)
+                if isinstance(f, IndirectObject) and f.idnum in trslat and trslat[f.idnum] not in known:
+                    known.add(trslat[f.idnum])
+                    arr.append(IndirectObject(trslat[f.idnum], 0, self))
             cast(DictionaryObject, self._root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr
