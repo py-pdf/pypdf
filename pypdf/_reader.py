@@ -1299,6 +1299,9 @@ class PdfReader(PdfDocCommon):
                 self._read_pdf15_xref_stream(stream)
             except MemoryError:  # pragma: no cover  # TODO: BLE001
                 raise
+            except LimitReachedError:
+                # Do not continue on reaching the resource limits.
+                raise
             except Exception:
                 logger_warning(
                     "XRef object at %(xref_stm)d can not be read, some object may be missing",
@@ -1438,6 +1441,9 @@ class PdfReader(PdfDocCommon):
             )
 
         stream_data = BytesIO(xref_stream.get_data())
+        # Do not keep the decoded data cached, as the stream remains in resolved_objects.
+        if isinstance(xref_stream, EncodedStreamObject):
+            xref_stream.decoded_self = None
 
         def get_entry(i: int) -> int | tuple[int, ...]:
             # Reads the correct number of bytes for each entry. See the
