@@ -178,6 +178,13 @@ def test_named_reference_link_patch_reference() -> None:
 
 
 def test_extract_links__non_array_annotations(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Links of a page whose /Annots is not an array are skipped with a warning.
+
+    /Annots of a page must be an array (ISO 32000-2:2020, 7.7.3.3, Table 31).
+    If one of the two pages has a dictionary there instead, extract_links()
+    returns no pairs instead of raising.
+    """
     old_page = PageObject()
     new_page = PageObject()
     new_page[NameObject("/Annots")] = DictionaryObject()
@@ -187,6 +194,13 @@ def test_extract_links__non_array_annotations(caplog: pytest.LogCaptureFixture) 
 
 
 def test_extract_links__link_without_action_or_destination(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A link annotation without /A and /Dest is skipped without a warning.
+
+    Both entries are optional (ISO 32000-2:2020, 12.5.6.5), so such a link
+    points nowhere and there is nothing to pair. Both pages have the same
+    annotations, so there is no warning about differing link counts.
+    """
     old_page = PageObject()
     new_page = PageObject()
     link = DictionaryObject({NameObject("/Subtype"): NameObject("/Link")})

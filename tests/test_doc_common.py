@@ -2032,6 +2032,14 @@ def test_xfa__work_limit() -> None:
 
 
 def test_get_named_dest_root__dests_without_names_array():
+    """
+    Named destinations can be added to a /Dests name tree without a /Names array.
+
+    The /Dests entry of the name dictionary is the root of a name tree
+    (ISO 32000-2:2020, 7.7.4, Table 32, and 7.9.6). get_named_dest_root()
+    returns an empty array and stores it as /Names of that root, so a
+    destination added afterwards is written and read back.
+    """
     writer = PdfWriter()
     writer.add_blank_page(72, 72)
     dests = DictionaryObject()
@@ -2047,6 +2055,15 @@ def test_get_named_dest_root__dests_without_names_array():
 
 
 def test_named_destinations__entries_without_destination_are_skipped():
+    """
+    Named destinations without a destination are skipped, and the others are kept.
+
+    The value of a named destination is a destination array or a dictionary
+    whose /D entry is one (ISO 32000-2:2020, 12.3.2.4). This holds for both
+    places a document can keep its named destinations: the /Dests name tree
+    of the name dictionary (7.7.4, Table 32) and the /Dests dictionary of the
+    catalog used by PDF 1.1 (7.7.2, Table 29).
+    """
     writer = PdfWriter()
     writer.add_blank_page(72, 72)
     page = writer.pages[0].indirect_reference
