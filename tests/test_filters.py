@@ -5,7 +5,6 @@ import string
 import struct
 import subprocess
 import sys
-import tracemalloc
 import zlib
 from collections.abc import Callable
 from copy import deepcopy
@@ -1631,6 +1630,9 @@ def test_decode_stream_data__data_limit() -> None:
 
 @pytest.mark.timeout(2)
 def test_asciihexdecode__memory() -> None:
+    # "ModuleNotFoundError: No module named '_tracemalloc'" on PyPy.
+    tracemalloc = pytest.importorskip("tracemalloc", "Needs to measure memory usage")
+
     data = b"0123456789ABCDEF \n\t" * 99_999 + b">"
 
     tracemalloc.start()
