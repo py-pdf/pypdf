@@ -2494,6 +2494,35 @@ class PageObject(DictionaryObject):
         return Action._delete(self, trigger)
 
 
+def _kid_position(
+    parent: DictionaryObject, kids: ArrayObject, ind: IndirectObject | None, index: int
+) -> int:
+    """
+    Position in ``kids`` of the reference to the page at document ``index``.
+
+    A page can be referenced more than once, so ``kids.index()`` may find the
+    wrong reference. Counting the pages before ``parent`` gives the right slot,
+    in constant time for a flat page tree.
+    """
+    offset = 0
+    node = parent
+    visited = {id(node)}
+    while (grandparent := node.get("/Parent")) is not None:
+        grandparent = cast(DictionaryObject, grandparent.get_object())
+        if id(grandparent) in visited:  # /Parent cycle: fall back to the search
+            break
+        visited.add(id(grandparent))
+        for kid in cast(ArrayObject, grandparent["/Kids"]):
+            if kid == node.indirect_reference:
+                break
+            offset += cast(int, cast(DictionaryObject, kid.get_object()).get("/Count", 1))
+        node = grandparent
+    i = index - offset
+    if 0 <= i < len(kids) and kids[i] == ind:
+        return i
+    return kids.index(ind)  # inconsistent /Count values
+
+
 class _VirtualList(Sequence[PageObject]):
     def __init__(
         self,
@@ -2559,8 +2588,7 @@ class _VirtualList(Sequence[PageObject]):
             parent = cast(DictionaryObject, parent.get_object())
             try:
                 kids = cast(ArrayObject, parent["/Kids"])
-                # In a flat page tree the page sits at `index`: skip the linear search.
-                i = index if first and index < len(kids) and kids[index] == ind else kids.index(ind)
+                i = _kid_position(parent, kids, ind, index) if first else kids.index(ind)
                 del kids[i]
                 first = False
                 try:
