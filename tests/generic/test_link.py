@@ -190,7 +190,19 @@ def test_extract_links__non_array_annotations(caplog: pytest.LogCaptureFixture) 
     new_page[NameObject("/Annots")] = DictionaryObject()
 
     assert extract_links(new_page, old_page) == []
-    assert caplog.messages == ["Expected annotation arrays: [] {}. Ignoring annotations."]
+    assert caplog.messages == ["Ignoring the links on a page: its /Annots is a DictionaryObject, not an array."]
+    caplog.clear()
+
+    # A page of a document is named by its index.
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    source_page = writer.add_blank_page(72, 72)
+    source_page[NameObject("/Annots")] = DictionaryObject()
+
+    assert extract_links(PageObject(), source_page) == []
+    assert caplog.messages == [
+        "Ignoring the links on the page with index 1: its /Annots is a DictionaryObject, not an array."
+    ]
 
 
 def test_extract_links__link_without_action_or_destination(caplog: pytest.LogCaptureFixture) -> None:
