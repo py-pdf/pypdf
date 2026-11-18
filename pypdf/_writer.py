@@ -2980,7 +2980,6 @@ class PdfWriter(PdfDocCommon):
                 )
                 fields = ArrayObject()
             trslat = self._id_translated[id(reader)]
-            # A set instead of `in arr`: appending many forms was quadratic.
             known = {
                 x.idnum for x in arr if isinstance(x, IndirectObject) and x.generation == 0 and x.pdf is self
             }
