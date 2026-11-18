@@ -22,6 +22,7 @@ from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfEr
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    DecodedStreamObject,
     DictionaryObject,
     FloatObject,
     IndirectObject,
@@ -823,6 +824,22 @@ def test_get_fonts__malformed_appearance(caplog, appearance, expected):
         assert caplog.text == ""
     else:
         assert expected in caplog.text
+
+
+def test_get_fonts__appearance_stream():
+    """The fonts of the normal appearance stream of an annotation are collected."""
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    stream = DecodedStreamObject()
+    stream[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})
+    })
+    widget = DictionaryObject({NameObject("/AP"): DictionaryObject({NameObject("/N"): stream})})
+
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
 
 
 def test_annotation_getter():
