@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794997753900,
+  "lastUpdate": 1794997929915,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -170815,6 +170815,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03464021632446237",
             "extra": "mean: 556.9224750000103 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9d76751fde1c7387594e7a1e97047230817c4d24",
+          "message": "SEC: Restrict cross-reference stream work/memory (#4456)\n\nThere have been two small issues in the previous implementation of our\ncross-reference stream parser:\n\n  * Reaching the configured limits was reported internally, but hidden\n    away by a too broad `Exception` handling.\n  * Avoid keeping unnecessary data copies for these streams in memory.",
+          "timestamp": "2026-11-18T11:27:35+01:00",
+          "tree_id": "fdd1551e63dc82036a3d84c77d0761863b4a8f33",
+          "url": "https://github.com/py-pdf/pypdf/commit/9d76751fde1c7387594e7a1e97047230817c4d24"
+        },
+        "date": 1794997916148,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.702750113112328,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01888110182104375",
+            "extra": "mean: 68.01448656249498 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.18415659509472,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008891952808149634",
+            "extra": "mean: 36.78613300000068 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.076894152705872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032508607089998726",
+            "extra": "mean: 928.596368999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 34.77026565044944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01715102708040671",
+            "extra": "mean: 28.76020591999918 msec\nrounds: 50"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3211756069983408,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028127996576331606",
+            "extra": "mean: 3.113561485399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1489374287148153,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028203662519102717",
+            "extra": "mean: 870.3694170000063 msec\nrounds: 5"
           }
         ]
       }
