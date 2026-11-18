@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795010696876,
+  "lastUpdate": 1795036286277,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128837,6 +128837,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012037921835206904",
             "extra": "mean: 479.1811302000042 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e4d392d32a8a1e10909bbe7d515755838d07e747",
+          "message": "PI: Stop copying the page text for every text fragment (#4463)\n\nExtracting the text of a page with a lot of text got slower with every\nfragment already extracted. The line break and space check runs on\neach Td, Tm, T* and Tj operator. When it keeps the current line, it now\ncosts O(1) instead of O(n), with n = number of characters extracted from\nthe page so far. When it ends a line, it stays O(n). For a page with\nk such operators and L lines, the copying goes from O(k * n) to\nO(L * n).\n\n## Problem\n\ncrlf_space_check() needs the last character of the text extracted so\nfar to decide whether to add a line break or a space. It got it with\n(output + text)[-1:]. That concatenation builds a new string containing\neverything extracted from the page so far, only to read one character\nand throw the copy away. It runs for every Td, Tm, T* and Tj operator,\nso the cost of each call grows with the text already on the page.\n\n## Solution\n\nThe last character of output + text is the last character of text, or\nof output when text is empty. (text or output)[-1:] reads it without\nbuilding the concatenation.\n\nStarting a new line still appends to output, which copies it once per\nline, so this removes the per-fragment copy, not every copy.\n\n## Benchmark\n\nextract_text() on one page with 20 positioned words per line, CPU time\nin ms, best of 3:\n\n| Words  | Characters | main | PR   | Speedup |\n|-------:|-----------:|-----:|-----:|--------:|\n|  5,000 |     30,000 |  299 |  282 |   1.06× |\n| 20,000 |    120,000 | 1276 | 1176 |   1.09× |\n| 80,000 |    480,000 | 6403 | 4939 |   1.30× |\n\nThe 14 PDFs of py-pdf/benchmarks extract the same text as on main, with\ntimes within the noise of the machine: pages of normal length are short,\nso the copy was cheap there.\n\nCreated via:\n\n    import time\n    from io import BytesIO\n    from pypdf import PdfReader, PdfWriter\n    from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject\n\n    def make_page(words):\n        writer = PdfWriter()\n        page = writer.add_blank_page(612, 792)\n        ops = [\"BT /F1 2 Tf\"]\n        for i in range(words):\n            y = 780 - (i // 20) % 390 * 2\n            ops.append(f\"1 0 0 1 {(i % 20) * 30} {y} Tm (word{i % 10}) Tj\")\n        stream = DecodedStreamObject()\n        stream.set_data((\"\\n\".join(ops) + \"\\nET\").encode())\n        page[NameObject(\"/Contents\")] = writer._add_object(stream)\n        font = DictionaryObject({\n            NameObject(\"/Type\"): NameObject(\"/Font\"),\n            NameObject(\"/Subtype\"): NameObject(\"/Type1\"),\n            NameObject(\"/BaseFont\"): NameObject(\"/Helvetica\"),\n        })\n        page[NameObject(\"/Resources\")] = DictionaryObject(\n            {NameObject(\"/Font\"): DictionaryObject({NameObject(\"/F1\"): font})}\n        )\n        buffer = BytesIO()\n        writer.write(buffer)\n        return PdfReader(buffer).pages[0]\n\n    for words in (5_000, 20_000, 80_000):\n        page = make_page(words)\n        times = []\n        for _ in range(3):\n            start = time.process_time()\n            page.extract_text()\n            times.append(time.process_time() - start)\n        print(words, f\"{min(times) * 1000:.0f} ms\")\n\n## Behavior\n\nWhat stays the same:\n\n- The extracted text: (text or output)[-1:] equals (output + text)[-1:]\n  for all strings, including when one or both are empty. Checked on the\n  pages above and on the 14 PDFs of py-pdf/benchmarks.\n- The calls to visitor_text and their arguments.\n\nWhat changed:\n\n- Nothing\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-18T22:09:31+01:00",
+          "tree_id": "6ba7620204aab9bd6d62de8c157f1d7ec032fd3d",
+          "url": "https://github.com/py-pdf/pypdf/commit/e4d392d32a8a1e10909bbe7d515755838d07e747"
+        },
+        "date": 1795036274663,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7977564935806236,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0062579381562150056",
+            "extra": "mean: 263.3133540000017 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.560529633393724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010617546019293926",
+            "extra": "mean: 37.64985163333232 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3770693025149857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03192629619497267",
+            "extra": "mean: 2.6520323806000023 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 28.40527754765374,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012918599286317598",
+            "extra": "mean: 35.20472554166609 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18876317758338207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03617183585018922",
+            "extra": "mean: 5.297643389999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.12273552629158,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031563989730597768",
+            "extra": "mean: 471.09024540000064 msec\nrounds: 5"
           }
         ]
       }
