@@ -518,7 +518,7 @@ class VirtualListImages(Sequence[ImageFile]):
         return self.ids_function()
 
     def items(self) -> list[tuple[str | list[str], ImageFile]]:
-        return [(x, self[x]) for x in self.ids_function()]
+        return [(x, self.get_function(x)) for x in self.ids_function()]
 
     @overload
     def __getitem__(self, index: int | str | list[str]) -> ImageFile:
@@ -550,8 +550,8 @@ class VirtualListImages(Sequence[ImageFile]):
         return self.get_function(lst[index])
 
     def __iter__(self) -> Iterator[ImageFile]:
-        for i in range(len(self)):
-            yield self[i]
+        for image_id in self.ids_function():
+            yield self.get_function(image_id)
 
     def __str__(self) -> str:
         p = [f"Image_{i}={n}" for i, n in enumerate(self.ids_function())]
