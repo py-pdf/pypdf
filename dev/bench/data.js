@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795001374177,
+  "lastUpdate": 1795001449881,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -171409,6 +171409,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0340017131669607",
             "extra": "mean: 530.1489698000012 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "57414987+prawalpokharel@users.noreply.github.com",
+            "name": "Prawal Pokharel",
+            "username": "prawalpokharel"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6995be8bb9656be036426072f6c1c5c39004ae19",
+          "message": "PI: List image identifiers only once when iterating over page images (#4452)\n\nVirtualListImages.__iter__ and items() listed all image identifiers of\nthe page again for every single image. On pages with thousands of\nimages, mostly inline images, iterating over page.images took minutes\nto hours. List the identifiers once and get each image directly.\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-11-18T12:27:12+01:00",
+          "tree_id": "7e5b246b1ddce1d355ac035fc6f1010ffb39d796",
+          "url": "https://github.com/py-pdf/pypdf/commit/6995be8bb9656be036426072f6c1c5c39004ae19"
+        },
+        "date": 1795001439225,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.847668547963595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021598901053585737",
+            "extra": "mean: 67.35064140000304 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 55.71870942960397,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033218757168182833",
+            "extra": "mean: 17.94729293332643 msec\nrounds: 45"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.2478693395347553,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020386681211244925",
+            "extra": "mean: 801.3659509999911 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 55.3345475792721,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007976740760947231",
+            "extra": "mean: 18.071892583334186 msec\nrounds: 60"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5377870672677832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0237134080673094",
+            "extra": "mean: 1.859472011999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8590131561022438,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024548612372156484",
+            "extra": "mean: 537.9198080000037 msec\nrounds: 5"
           }
         ]
       }
