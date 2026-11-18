@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795000678389,
+  "lastUpdate": 1795000753721,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -171277,6 +171277,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05459928524394819",
             "extra": "mean: 950.5995040000016 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "09e739f6540155eb2859ae118000be91414d4e7d",
+          "message": "SEC: Limit inline image size for known-size fallback path (#4460)\n\nPlease note that while the actual patch is rather small, this is a\nlarger change which moves the inline image parser from the content\nstream class to the dedicated module. While doing so, the single steps\nhave been separated where suitable and some names have been adapted to\nbe more descriptive.",
+          "timestamp": "2026-11-18T12:16:01+01:00",
+          "tree_id": "61b96225b835bdbedd583b5f5c77cce8ebc4fb3a",
+          "url": "https://github.com/py-pdf/pypdf/commit/09e739f6540155eb2859ae118000be91414d4e7d"
+        },
+        "date": 1795000745120,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 24.32566288474781,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015742049207406912",
+            "extra": "mean: 41.108848903229685 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 49.89239877860696,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00824959402540869",
+            "extra": "mean: 20.043133312499368 msec\nrounds: 48"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.7842540891272933,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023495612569931334",
+            "extra": "mean: 560.4582923999999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 55.73724572487375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015132561821249986",
+            "extra": "mean: 17.94132427956934 msec\nrounds: 93"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5060357872949751,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008996404441760352",
+            "extra": "mean: 1.9761448203999976 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8862622714842778,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0340017131669607",
+            "extra": "mean: 530.1489698000012 msec\nrounds: 5"
           }
         ]
       }
