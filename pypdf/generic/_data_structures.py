@@ -36,7 +36,6 @@ import sys
 from collections.abc import Callable, Iterable, Sequence
 from functools import cache
 from io import BytesIO
-from math import ceil
 from typing import (
     Any,
     NamedTuple,
@@ -81,13 +80,6 @@ from ._base import (
     is_null_or_none,
 )
 from ._fit import Fit
-from ._image_inline import (
-    extract_inline__ascii85_decode,
-    extract_inline__ascii_hex_decode,
-    extract_inline__dct_decode,
-    extract_inline__run_length_decode,
-    extract_inline_default,
-)
 from ._utils import StreamParsingBudget, read_hex_string_from_stream, read_string_from_stream
 
 if sys.version_info >= (3, 11):
@@ -1543,7 +1535,9 @@ class ContentStream(DecodedStreamObject):
                     # mechanism is required, of course... thanks buddy...
                     assert operands == []
                     self._check_limits(parsing_budget=parsing_budget, token_decrement=2)
-                    ii = self._read_inline_image(stream, parsing_budget=parsing_budget)
+
+                    from ._image_inline import read_inline_image  # noqa: PLC0415
+                    ii = read_inline_image(content_stream=self, stream=stream, parsing_budget=parsing_budget)
                     self._operations.append((ii, b"INLINE IMAGE"))
                 else:
                     self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
@@ -1560,106 +1554,6 @@ class ContentStream(DecodedStreamObject):
             else:
                 self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
                 operands.append(read_object(stream, None, self.forced_encoding, parsing_budget=parsing_budget))
-
-    def _read_inline_image(self, stream: StreamType, parsing_budget: StreamParsingBudget) -> dict[str, Any]:
-        # begin reading just after the "BI" - begin image
-        # first read the dictionary of settings.
-        settings = DictionaryObject()
-        remaining_count: int | None = get_configuration().dictionary_maximum_element_count
-        while True:
-            tok = read_non_whitespace(stream)
-            if not tok:
-                raise PdfReadError("Unexpected end of stream.")
-            stream.seek(-1, 1)
-            if tok == b"I":
-                # "ID" - begin of image data
-                break
-            remaining_count = self._check_limits(
-                remaining_elements=remaining_count, parsing_budget=parsing_budget, token_decrement=2
-            )
-
-            key = read_object(stream, self.pdf, parsing_budget=parsing_budget)
-            _ = read_non_whitespace(stream)
-            stream.seek(-1, 1)
-            value = read_object(stream, self.pdf, parsing_budget=parsing_budget)
-            settings[key] = value
-        # left at beginning of ID
-        tmp = stream.read(3)
-        assert tmp[:2] == b"ID"
-        filtr = settings.get("/F", settings.get("/Filter", "not set"))
-        savpos = stream.tell()
-        if isinstance(filtr, list):
-            filtr = filtr[0] if filtr else "not set"  # used forencoding
-        if not isinstance(filtr, str):
-            # A valid filter is a name or an array of names; anything else
-            # cannot match the abbreviations below, so treat it as unfiltered.
-            filtr = "not set"
-        if "AHx" in filtr or "ASCIIHexDecode" in filtr:
-            data = extract_inline__ascii_hex_decode(stream)
-        elif "A85" in filtr or "ASCII85Decode" in filtr:
-            data = extract_inline__ascii85_decode(stream)
-        elif "RL" in filtr or "RunLengthDecode" in filtr:
-            data = extract_inline__run_length_decode(stream)
-        elif "DCT" in filtr or "DCTDecode" in filtr:
-            data = extract_inline__dct_decode(stream)
-        elif filtr == "not set":
-            cs = settings.get("/CS", "")
-            if isinstance(cs, list):
-                cs = cs[0] if cs else ""
-            if not isinstance(cs, str):
-                cs = ""
-            if "RGB" in cs:
-                lcs: float = 3
-            elif "CMYK" in cs:
-                lcs = 4
-            else:
-                bits = settings.get(
-                    "/BPC",
-                    8 if cs in {"/I", "/G", "/Indexed", "/DeviceGray"} else -1,
-                )
-                if isinstance(bits, (int, float)) and bits > 0:
-                    lcs = bits / 8.0
-                else:
-                    data = extract_inline_default(stream)
-                    lcs = -1
-            width = settings.get("/W")
-            height = settings.get("/H")
-            if lcs > 0 and isinstance(width, int) and isinstance(height, int):
-                data = stream.read(ceil(width * lcs) * height)
-            elif lcs > 0:
-                # Without usable dimensions the raw sample length is unknown;
-                # fall back to scanning for the `EI` marker.
-                data = extract_inline_default(stream)
-            # Move to the `EI` if possible.
-            ei = read_non_whitespace(stream)
-            stream.seek(-1, 1)
-        else:
-            data = extract_inline_default(stream)
-
-        ei = stream.read(3)
-        # An `EI` at the very end of the stream yields only two bytes; rewinding
-        # unconditionally would step back into the marker (#3468).
-        if len(ei) == 3:
-            stream.seek(-1, 1)
-        ei_trailing = ei[2:3]
-        if ei[:2] != b"EI" or (ei_trailing != b"" and ei_trailing not in WHITESPACES):
-            # Deal with wrong/missing `EI` tags. Example: Wrong dimensions specified above.
-            stream.seek(savpos, 0)
-            data = extract_inline_default(stream)
-            ei = stream.read(3)
-            if len(ei) == 3:
-                stream.seek(-1, 1)
-            ei_trailing = ei[2:3]
-            if ei[:2] != b"EI" or (
-                ei_trailing != b"" and ei_trailing not in WHITESPACES
-            ):  # pragma: no cover
-                # Check the same condition again. This should never fail as
-                # edge cases are covered by `extract_inline_default` above,
-                # but check this to make sure that we are behind the `EI` afterwards.
-                raise PdfStreamError(
-                    f"Could not extract inline image, even using fallback. Expected 'EI', got {ei!r}"
-                )
-        return {"settings": settings, "data": data}
 
     # This overrides the parent method
     def get_data(self) -> bytes:
