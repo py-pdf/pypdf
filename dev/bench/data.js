@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795008342255,
+  "lastUpdate": 1795008415351,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -172069,6 +172069,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.031147496874790306",
             "extra": "mean: 946.1715645999902 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9dec168c33b6e36b40d55dabb3512a059ac16ef1",
+          "message": "BUG: Insert outline items in front of `before` and cover more of PdfWriter (#4415)\n\n* BUG: Insert outline items in front of `before` and cover more of PdfWriter\n\nPdfWriter.add_outline_item(before=item) appended the new item at the\nend unless `item` was the last one of its level, and inserting in front\nof the first item lost the new item: it was counted in /Count, but not\nlinked into the outline, as /First of the parent was not updated\n(ISO 32000-2:2020, 12.3.3, Table 150). Closes #4340.\n\nTreeObject.insert_child() looked for `before` starting at /Last and\nfollowing /Next, so it only found the last child. It now starts at\n/First when `before` is given and updates /First when inserting in\nfront of the first child. Appending without `before` still starts at\n/Last, so it stays O(1). A `before` that is no child of the parent\nstill appends at the end.\n\nAdd tests for PdfWriter branches without coverage so far:\n\n* add_outline_item() with `before` being None, the first, a middle, the\n  last or the only item, without a page (no /A action), and with a\n  PageObject,\n* the page_mode getter, add_annotation() with an invalid page type and\n  clean_page() converting a named destination inside an /A action,\n* merge() with excluded_fields=None and with form fields that are not\n  on any merged page,\n* reset_translation() for a reader the writer never copied from and for\n  an IndirectObject, checked by appending the reader again and comparing\n  the copied /Resources.\n\nWhere the expected behavior comes from ISO 32000-2:2020, the docstring\nnames the section.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Cover the remaining branches of TreeObject.insert_child()\n\n* TST: Satisfy mypy in the insert_child tests\n\n* MAINT: Annotate RTL_CHARACTER_RANGES\n\nWithout the annotation, mypy can report \"Cannot determine type of\nRTL_CHARACTER_RANGES\" in pypdf/_text_extraction/__init__.py, depending on\nthe order in which it processes the import cycle. #4426 contains the\nsame change.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Pass the previous child to _link_child_before() as keyword argument\n\nThe walk from /First already knows the child in front of `before`, so\n_link_child_before() no longer reads /Prev. This removes the check that\nonly existed to satisfy mypy, and links the new child correctly even if\nthe /Prev entry of `before` is wrong.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Annotate `before` of insert_child() as IndirectObject | None\n\nThe children of one outline level are linked through /First, /Last,\n/Prev and /Next, which shall be indirect references (ISO 32000-2:2020,\n12.3.3, Tables 150 and 151). insert_child() compares `before` with\nthese references, so only an IndirectObject can match; None appends\nthe child at the end.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Add excellent test case\n\nCo-authored-by: Rahul Ranjan <11793455+rahul05ranjan@users.noreply.github.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\nCo-authored-by: Rahul Ranjan <11793455+rahul05ranjan@users.noreply.github.com>",
+          "timestamp": "2026-11-18T14:23:46+01:00",
+          "tree_id": "2e129f24c26a6f4c7712871a0d42e83a83f70d16",
+          "url": "https://github.com/py-pdf/pypdf/commit/9dec168c33b6e36b40d55dabb3512a059ac16ef1"
+        },
+        "date": 1795008406667,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 23.745311435596715,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019484375008756",
+            "extra": "mean: 42.113576935482726 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 51.80223173699506,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009659544430736647",
+            "extra": "mean: 19.304187608694097 msec\nrounds: 46"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.82191094591924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023851612093847167",
+            "extra": "mean: 548.8742477999949 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 57.19450855441857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01520284771487475",
+            "extra": "mean: 17.48419604040369 msec\nrounds: 99"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.48300293692601914,
+            "unit": "iter/sec",
+            "range": "stddev: 0.060262114752921946",
+            "extra": "mean: 2.0703807856000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9213933021958862,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023463206860796684",
+            "extra": "mean: 520.4556499999967 msec\nrounds: 5"
           }
         ]
       }
