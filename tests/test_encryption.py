@@ -670,6 +670,19 @@ def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
     assert sum("RC4 is not supported" in message for message in caplog.messages) == 1
 
 
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Requires the cryptography provider")
+def test_read_rc4_pdf_with_48_bit_key(monkeypatch) -> None:
+    monkeypatch.setattr(CryptRC4, "_is_rc4_supported", True)
+    path = RESOURCE_ROOT / "encryption" / "rc4-len48.pdf"
+
+    reader = PdfReader(path, password="pw")
+    metadata = reader.metadata
+
+    assert metadata is not None
+    assert metadata.title == "hello"
+    assert CryptRC4._is_rc4_supported is True
+
+
 @pytest.mark.parametrize(
     ("algorithm", "requires_aes"),
     [
