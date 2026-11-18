@@ -386,6 +386,7 @@ class PdfWriter(PdfDocCommon):
             }
         )
         self.flattened_pages = []
+        self._page_id2num: dict[int, int] = {}
         self._encryption: Encryption | None = None
         self._encrypt_entry: DictionaryObject | None = None
 
@@ -748,10 +749,14 @@ class PdfWriter(PdfDocCommon):
         self, indirect_reference: int | NullObject | IndirectObject | None
     ) -> int | None:
         """
-        Generate _page_id2num.
+        Retrieve the page number from an indirect reference.
+
+        The index of every page is remembered. As pages are added, inserted and
+        removed, an index is only trusted after checking the page at that
+        position; otherwise the index is rebuilt.
 
         Args:
-            indirect_reference:
+            indirect_reference: The indirect reference to locate.
 
         Returns:
             The page number or None
@@ -761,12 +766,36 @@ class PdfWriter(PdfDocCommon):
         if is_null_or_none(indirect_reference):
             return None
         assert indirect_reference is not None, "mypy"
-        if isinstance(indirect_reference, int):
-            indirect_reference = IndirectObject(indirect_reference, 0, self)
-        obj = indirect_reference.get_object()
-        if isinstance(obj, PageObject):
-            return obj.page_number
-        return None
+        if isinstance(indirect_reference, IndirectObject):
+            if indirect_reference.pdf is not self:
+                # A page of another document is not a page of this one.
+                return None
+            idnum = indirect_reference.idnum
+        else:
+            idnum = cast(int, indirect_reference)
+        # A writer starts with an empty page list; only _flatten() sets it to
+        # None, while it rebuilds the list. Every page of a writer is an
+        # indirect object.
+        assert self.flattened_pages is not None, "mypy"
+        pages = self.flattened_pages
+
+        # The remembered number is still right if the page at that position
+        # has this object number.
+        number = self._page_id2num.get(idnum)
+        if (
+            number is not None
+            and number < len(pages)
+            and cast(IndirectObject, pages[number].indirect_reference).idnum == idnum
+        ):
+            return number
+
+        # Pages were added, inserted or removed since the numbers were
+        # remembered, or the object is no page of this writer. A page that
+        # appears twice keeps its first position.
+        self._page_id2num = {}
+        for index, page in enumerate(pages):
+            self._page_id2num.setdefault(cast(IndirectObject, page.indirect_reference).idnum, index)
+        return self._page_id2num.get(idnum)
 
     def add_blank_page(
         self, width: float | None = None, height: float | None = None
