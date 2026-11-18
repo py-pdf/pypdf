@@ -1375,7 +1375,7 @@ class PdfDocCommon(ABC):
              - Show attachments panel
         """
         try:
-            return self.root_object["/PageMode"]  # type: ignore[return-value]
+            return self.root_object[CatalogAttributes.PAGE_MODE]  # type: ignore[return-value]
         except KeyError:
             return None
 

@@ -2487,7 +2487,7 @@ class PdfWriter(PdfDocCommon):
 
     def _get_page_layout(self) -> LayoutType | None:
         try:
-            return cast(LayoutType, self._root_object["/PageLayout"])
+            return cast(LayoutType, self._root_object[CatalogAttributes.PAGE_LAYOUT])
         except KeyError:
             return None
 
@@ -2525,7 +2525,7 @@ class PdfWriter(PdfDocCommon):
                     layouts=", ".join(self._valid_layouts),
                 )
             layout = NameObject(layout)
-        self._root_object.update({NameObject("/PageLayout"): layout})
+        self._root_object.update({NameObject(CatalogAttributes.PAGE_LAYOUT): layout})
 
     def set_page_layout(self, layout: LayoutType) -> None:
         """
@@ -2595,7 +2595,7 @@ class PdfWriter(PdfDocCommon):
 
     def _get_page_mode(self) -> PagemodeType | None:
         try:
-            return cast(PagemodeType, self._root_object["/PageMode"])
+            return cast(PagemodeType, self._root_object[CatalogAttributes.PAGE_MODE])
         except KeyError:
             return None
 
@@ -2634,7 +2634,7 @@ class PdfWriter(PdfDocCommon):
                     modes=", ".join(self._valid_modes),
                 )
             mode_name = NameObject(mode)
-        self._root_object.update({NameObject("/PageMode"): mode_name})
+        self._root_object.update({NameObject(CatalogAttributes.PAGE_MODE): mode_name})
 
     def add_annotation(
         self,
