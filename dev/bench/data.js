@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795008415351,
+  "lastUpdate": 1795009197242,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128705,6 +128705,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018399575982610131",
             "extra": "mean: 468.3370439999976 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "damasiyachiranj@gmail.com",
+            "name": "damasiyachiranj",
+            "username": "damasiyachiranj"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9e2b69d071391948ee9119bd148b1258bb47a845",
+          "message": "ROB: Guard ArrayObject.read_from_stream against uncaught RecursionError (#4430)\n\n* Fix: guard ArrayObject.read_from_stream against uncaught RecursionError\n\nA deeply nested array (e.g. \"[[[[...]]]]\") drives recursion depth in read_from_stream's\r\nrecursive descent, not element count, so array_maximum_element_count never engages and\r\nan uncaught RecursionError escapes to the caller instead of a PdfReadError.\r\n\r\nMirrors the existing guard in DictionaryObject.read_from_stream: catches\r\n(MemoryError, RecursionError) around the recursive read_object() call and re-raises\r\nas PdfReadError, while still letting LimitReachedError (the element-count/token\r\nbudget) propagate unchanged.\r\n\r\nFixes #4427.\n\n* Test: regression test for deeply nested array RecursionError\n\nAdds test_array_object__read_from_stream__deeply_nested_array_raises_pdfreaderror,\r\nverifying a 5000-deep nested array now raises PdfReadError instead of an uncaught\r\nRecursionError.\n\n* Remove comment from ArrayObject recursion guard\n\n* Remove test comment and use sys.getrecursionlimit() as depth\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-18T14:38:11+01:00",
+          "tree_id": "d12025bfe027b776618929ab99c89f46fa9d8a3a",
+          "url": "https://github.com/py-pdf/pypdf/commit/9e2b69d071391948ee9119bd148b1258bb47a845"
+        },
+        "date": 1795009186377,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.845522330198142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007687917520005822",
+            "extra": "mean: 206.37609979997933 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 40.97724492807668,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005816630357114698",
+            "extra": "mean: 24.403788047615244 msec\nrounds: 42"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.48155922798819195,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010336912871132066",
+            "extra": "mean: 2.0765877629999863 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 37.113079085158226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011534757088552125",
+            "extra": "mean: 26.94467892856421 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.23829531477907281,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01938622807435203",
+            "extra": "mean: 4.196473610600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.110093146002058,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036617793693283444",
+            "extra": "mean: 473.91272840001193 msec\nrounds: 5"
           }
         ]
       }
