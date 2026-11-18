@@ -682,7 +682,10 @@ def test_embedded_file__create__nested_kids_based_name_tree() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     writer.add_attachment("a.txt", b"a")
-    files = writer.root_object["/Names"]["/EmbeddedFiles"]
+    names = writer.root_object["/Names"]
+    assert isinstance(names, DictionaryObject)
+    files = names["/EmbeddedFiles"]
+    assert isinstance(files, DictionaryObject)
     leaf = DictionaryObject({NameObject("/Names"): files["/Names"]})
     middle = DictionaryObject({NameObject("/Kids"): ArrayObject([writer._add_object(leaf)])})
     del files["/Names"]
@@ -696,7 +699,10 @@ def test_embedded_file__load__nested_kids_and_cycle() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     writer.add_attachment("a.txt", b"a")
-    files = writer.root_object["/Names"]["/EmbeddedFiles"]
+    names = writer.root_object["/Names"]
+    assert isinstance(names, DictionaryObject)
+    files = names["/EmbeddedFiles"]
+    assert isinstance(files, DictionaryObject)
     files_ref = files.indirect_reference
     leaf = DictionaryObject({NameObject("/Names"): files["/Names"]})
     middle = DictionaryObject({NameObject("/Kids"): ArrayObject([writer._add_object(leaf), files_ref])})
