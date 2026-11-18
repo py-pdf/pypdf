@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794998759899,
+  "lastUpdate": 1794999655710,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128177,6 +128177,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0019341420079437446",
             "extra": "mean: 485.16727940000237 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9535746d3df280f3dea93de4ce43f5c471235936",
+          "message": "SEC: Optimize memory usage of ASCIIHexDecode whitespace removal (#4458)",
+          "timestamp": "2026-11-18T11:58:37+01:00",
+          "tree_id": "f7b6015e1f0b6230c2c9405a84bda44042e26c9b",
+          "url": "https://github.com/py-pdf/pypdf/commit/9535746d3df280f3dea93de4ce43f5c471235936"
+        },
+        "date": 1794999641601,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9147316300171275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007225836460943283",
+            "extra": "mean: 343.08475940000136 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.705916930824902,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002103219252316776",
+            "extra": "mean: 44.04138370833325 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29148608849891267,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014132582244171568",
+            "extra": "mean: 3.4306954584 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.78463540726487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019284184597739157",
+            "extra": "mean: 45.90391261111096 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14564868625127061,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05825089183716892",
+            "extra": "mean: 6.865836045200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.665956899057485,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004897459930578302",
+            "extra": "mean: 600.2556251999977 msec\nrounds: 5"
           }
         ]
       }
