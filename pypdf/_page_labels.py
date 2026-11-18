@@ -167,10 +167,13 @@ def _get_label(value: Any, start_index: Any, index: int) -> str:
             style=value.get("/S"),
         )
         return str(index + 1)  # Fallback
+
     try:
-        return prefix + mapping_function(index - start_index + start)
+        label = prefix + mapping_function(index - start_index + start)
+        if len(label) > MAXIMUM_PAGE_LABEL_LENGTH:
+            raise ValueError("Page label is too long.")
     except (TypeError, ValueError) as exception:
-        # Malformed /St or /P value; fall back to the page position.
+        # Malformed /St or /P value or too large value; fall back to the page position.
         logger_warning(
             "Ignoring malformed page label entry in /Nums (/St=%(start)r, /P=%(prefix)r): %(exception)s",
             source=__name__,
@@ -178,6 +181,9 @@ def _get_label(value: Any, start_index: Any, index: int) -> str:
             prefix=prefix,
             exception=exception,
         )
+    else:
+        return label
+
     return str(index + 1)  # Fallback
 
 

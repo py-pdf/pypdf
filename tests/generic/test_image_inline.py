@@ -1,12 +1,17 @@
 """Test the pypdf.generic._image_inline module."""
+import sys
 from base64 import a85encode
 from collections.abc import Callable
 from io import BytesIO
+from typing import cast
+from unittest import mock
 
 import pytest
 
 from pypdf import PdfReader
-from pypdf.errors import PdfReadError
+from pypdf._utils import StreamType
+from pypdf.errors import LimitReachedError, PdfReadError
+from pypdf.generic._data_structures import ContentStream
 from pypdf.generic._image_inline import (
     BUFFER_SIZE,
     _check_end_image_marker,
@@ -16,7 +21,9 @@ from pypdf.generic._image_inline import (
     extract_inline__run_length_decode,
     extract_inline_default,
     is_followed_by_binary_data,
+    read_inline_image,
 )
+from pypdf.generic._utils import StreamParsingBudget
 from tests import get_data_from_url
 
 
@@ -222,3 +229,69 @@ def test_extract_inline_default__ei_followed_by_binary_data() -> None:
     stream = BytesIO(b"abc EI \x00\x01\x02 EI Q")
     assert extract_inline_default(stream) == b"abc EI \x00\x01\x02 "
     assert stream.read() == b"EI Q"
+
+
+@pytest.mark.timeout(5)
+def test_read_inline_image__end_of_stream() -> None:
+    # Broken content stream, for example due to filter errors.
+    # Specific example:
+    #   Error -3 while decompressing data: invalid distance too far back
+    #   b'q 0.1 0 0 0.1 0 0 cm\n/R7 gs\n0 g\nq 4.8 0 0 -135.6 2155.08 7150.48 cm\nBI\n/IM true\n/W001'
+    content_stream = ContentStream(stream=None, pdf=None)
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
+        read_inline_image(
+            content_stream=content_stream,
+            stream=BytesIO(b"\n/IM true\n/W001"),
+            parsing_budget=StreamParsingBudget(remaining_budget=100)
+        )
+
+
+@pytest.mark.parametrize(
+    "budget",
+    [
+        pytest.param(9, id="list-as-key"),
+        pytest.param(15, id="dictionary1"),
+        pytest.param(16, id="dictionary2"),
+    ]
+)
+def test_read_inline_image__parsing_budget(budget: int) -> None:
+    data = b"<< [ 0 1 2 3 4 5 6 7 8 9 10 ] << /Key1 42 /Key2 1337 >> >>"
+
+    content_stream = ContentStream(stream=None, pdf=None)
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
+        read_inline_image(
+            content_stream=content_stream,
+            stream=BytesIO(data),
+            parsing_budget=StreamParsingBudget(remaining_budget=budget)
+        )
+
+
+def test_read_inline_image__size_limit() -> None:
+    data = b"/W 99999999 /H 1 /CS /G ID x EI"
+
+    content_stream = ContentStream(stream=None, pdf=None)
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Requested image size exceeds total limit\.$"):
+        read_inline_image(
+            content_stream=content_stream,
+            stream=BytesIO(data),
+            parsing_budget=StreamParsingBudget(remaining_budget=sys.maxsize)
+        )
+
+
+def test_read_inline_image__negative_size() -> None:
+    data = b"/W -1 /H 1 /CS /G ID x EI"
+
+    content_stream = ContentStream(stream=None, pdf=None)
+
+    def extract(stream: StreamType) -> bytes:
+        return cast(bytes, stream.read(1))
+
+    # Use default extractor instead of direct stream reading.
+    with mock.patch("pypdf.generic._image_inline.extract_inline_default", side_effect=extract) as extract_mock:
+        read_inline_image(
+            content_stream=content_stream,
+            stream=BytesIO(data),
+            parsing_budget=StreamParsingBudget(remaining_budget=sys.maxsize)
+        )
+    extract_mock.assert_called_once()

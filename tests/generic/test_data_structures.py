@@ -529,21 +529,6 @@ def test_content_stream__parse_content_stream__limits() -> None:
         content_stream._parse_content_stream(stream)
 
 
-@pytest.mark.timeout(5)
-def test_content_stream__read_inline_image__end_of_stream() -> None:
-    # Broken content stream, for example due to filter errors.
-    # Specific example:
-    #   Error -3 while decompressing data: invalid distance too far back
-    #   b'q 0.1 0 0 0.1 0 0 cm\n/R7 gs\n0 g\nq 4.8 0 0 -135.6 2155.08 7150.48 cm\nBI\n/IM true\n/W001'
-    content_stream = ContentStream(stream=None, pdf=None)
-
-    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
-        content_stream._read_inline_image(
-            BytesIO(b"\n/IM true\n/W001"),
-            parsing_budget=StreamParsingBudget(remaining_budget=100)
-        )
-
-
 def test_tree_object__insert_child__cycle() -> None:
     writer = PdfWriter()
 
@@ -866,25 +851,6 @@ def test_content_stream__parse_content_stream__dictionary_limit() -> None:
                 expected_exception=LimitReachedError, match=r"^Reached maximum number of dictionary entries\.$"
         ):
             content_stream._parse_content_stream(BytesIO(data))
-
-
-@pytest.mark.parametrize(
-    "budget",
-    [
-        pytest.param(9, id="list-as-key"),
-        pytest.param(15, id="dictionary1"),
-        pytest.param(16, id="dictionary2"),
-    ]
-)
-def test_content_stream__read_inline_image__parsing_budget(budget: int) -> None:
-    data = b"<< [ 0 1 2 3 4 5 6 7 8 9 10 ] << /Key1 42 /Key2 1337 >> >>"
-
-    content_stream = ContentStream(stream=None, pdf=None)
-    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
-        content_stream._read_inline_image(
-            stream=BytesIO(data),
-            parsing_budget=StreamParsingBudget(remaining_budget=budget)
-        )
 
 
 def test_content_stream__check_limits__read_inline_image_dictionary_limit() -> None:
