@@ -84,13 +84,16 @@ class BaseStreamAppearance(DecodedStreamObject):
         self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
 
     def _new_for_clone(self) -> BaseStreamAppearance:
-        """Create a blank instance of this class to receive cloned entries.
+        """Instantiate a blank object for ``clone()`` without running ``__init__``.
 
-        The constructor adds entries and generates a default content stream,
-        but ``clone()`` only copies the source object into an empty instance.
-        A constructed instance would therefore keep its default entries and
-        content instead of those of the source object, so the instance is
-        created without calling ``__init__``.
+        ``BaseStreamAppearance`` inherits this method from ``DictionaryObject``.
+        ``DictionaryObject._new_for_clone`` checks whether a subclass requires
+        constructor arguments and skips ``__init__`` for those that do.
+        ``TextStreamAppearance.__init__`` can be called without constructor
+        arguments, but running it during ``clone()`` would populate default
+        dictionary entries and a default content stream that pollute the clone.
+        This override calls ``__new__`` directly so cloning starts from an empty
+        object.
         """
         return self.__class__.__new__(self.__class__)
 
