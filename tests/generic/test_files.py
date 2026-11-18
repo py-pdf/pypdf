@@ -692,6 +692,19 @@ def test_embedded_file__create__nested_kids_based_name_tree() -> None:
 
     assert dict(writer.attachments) == {"a.txt": [b"a"], "b.txt": [b"b"]}
 
+def test_embedded_file__load__nested_kids_and_cycle() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.add_attachment("a.txt", b"a")
+    files = writer.root_object["/Names"]["/EmbeddedFiles"]
+    files_ref = files.indirect_reference
+    leaf = DictionaryObject({NameObject("/Names"): files["/Names"]})
+    middle = DictionaryObject({NameObject("/Kids"): ArrayObject([writer._add_object(leaf), files_ref])})
+    del files["/Names"]
+    files[NameObject("/Kids")] = ArrayObject([writer._add_object(middle)])
+
+    assert [attachment.name for attachment in EmbeddedFile._load(writer.root_object, strict=True)] == ["a.txt"]
+
 def test_embedded_file__create__neither_kids_nor_names() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)

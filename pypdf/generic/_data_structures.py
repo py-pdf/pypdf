@@ -33,7 +33,7 @@ import logging
 import os
 import re
 import sys
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import cache
 from io import BytesIO
 from typing import (
@@ -1045,6 +1045,22 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         del child_obj[NameObject("/Prev")]
 
 
+def _iter_name_tree(tree: DictionaryObject) -> Iterator[Any]:
+    """Yield the nodes of a name tree in key order, each object once, without changing it."""
+    pending: list[Any] = [tree]
+    visited: set[int] = set()
+    while pending:
+        node = pending.pop(0).get_object()
+        if id(node) in visited:
+            continue
+        visited.add(id(node))
+        yield node
+        if isinstance(node, DictionaryObject):
+            kids = node.get("/Kids", NullObject()).get_object()
+            if isinstance(kids, ArrayObject):
+                pending[:0] = kids
+
+
 def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
     """
     Turn a name tree into a single node holding all its names, in place.
@@ -1053,15 +1069,11 @@ def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
     next to /Kids would be ignored by readers.
     """
     names = ArrayObject()
-    kids: list[Any] = [tree]
-    visited: set[int] = set()
-    while kids:
-        node = kids.pop(0).get_object()
-        if not isinstance(node, DictionaryObject) or id(node) in visited:
-            continue
-        visited.add(id(node))
-        names.extend(node.get("/Names", ArrayObject()).get_object())
-        kids[:0] = node.get("/Kids", ArrayObject()).get_object()
+    for node in _iter_name_tree(tree):
+        if isinstance(node, DictionaryObject):
+            node_names = node.get("/Names", NullObject()).get_object()
+            if isinstance(node_names, ArrayObject):
+                names.extend(node_names)
     tree.pop(NameObject("/Kids"), None)
     tree.pop(NameObject("/Limits"), None)
     tree[NameObject("/Names")] = names
