@@ -4,6 +4,7 @@ Code related to text extraction.
 Some parts are still in _page.py. In doubt, they will stay there.
 """
 
+import codecs
 import math
 from collections.abc import Mapping
 from typing import Any, Callable, Literal, Optional, Union
@@ -184,6 +185,35 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     return text, output, cm_prev, tm_prev, line_span
 
 
+def _count_codes(operand: Union[str, bytes], text: str, font: Font) -> tuple[int, int]:
+    """
+    Count the character codes of a shown string and the single-byte codes 32 in it.
+
+    Character spacing applies to every character code and word spacing only to
+    the single-byte code 32 (Section 9.3.3 of the PDF 2.0 specification).
+
+    Args:
+        operand: The string operand as found in the content stream.
+        text: The operand decoded with the font encoding.
+        font: The font used to show the string.
+
+    Returns:
+        The number of character codes and the number of single-byte codes 32.
+
+    """
+    if isinstance(operand, str):  # Already decoded, one character per code.
+        return len(text), text.count(" ")
+    if isinstance(font.encoding, dict):  # Simple font, one byte per code.
+        return len(operand), operand.count(b" ")
+    if codecs.lookup(font.encoding).name == "utf-16-be":
+        # Two bytes per code. Counting the decoded characters instead would
+        # merge two codes forming a surrogate pair into one character.
+        return len(operand) // 2, 0
+    # Multi-byte encodings like Shift-JIS decode one character per code and
+    # keep the ASCII range as single-byte codes.
+    return len(text), text.count(" ")
+
+
 def get_text_operands(
     operands: list[Union[str, TextStringObject]],
     cm_matrix: list[float],
@@ -220,14 +250,8 @@ def get_text_operands(
             else:  # Apply dict encoding
                 text = "".join(font.encoding.get(x, chr(x)) for x in tt)
                 raw_characters = "".join(chr(byte) for byte in tt)
-        # Word spacing only applies to the single-byte character code 32
-        # (Section 9.3.3 of the PDF 2.0 specification).
-        if is_str_operands:
-            space_count = text.count(" ")
-        elif raw_characters:
-            space_count = raw_characters.count(" ")
+        glyph_count, space_count = _count_codes(operands[0], text, font)
         for char in (raw_characters or text):
-            glyph_count += 1
             if char == font.space_char:
                 widths += font.space_width
             else:

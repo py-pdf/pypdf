@@ -211,9 +211,10 @@ class TextExtraction:
             )
             self.output += completed
         # Character and word spacing are given in unscaled text space units,
-        # while the widths are kept in thousandths of them.
+        # while the widths are kept in thousandths of them. Horizontal scaling
+        # applies to the whole advance (Section 9.4.4 of the PDF 2.0 specification).
         spacing = self.char_spacing * glyph_count + self.word_spacing * space_count
-        actual_str_size["str_widths"] += font_widths * font_size + spacing * 1000
+        actual_str_size["str_widths"] += (font_widths * font_size + spacing * 1000) * self.char_scale
         actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size
 
