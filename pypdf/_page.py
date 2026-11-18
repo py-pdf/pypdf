@@ -1817,13 +1817,10 @@ class PageObject(DictionaryObject):
         """
         if self.indirect_reference is None:
             return None
-        # Compare the indirect references, not the pages themselves: two pages
-        # with identical contents compare equal, so `list.index` would return
-        # the position of the first match for all of them.
-        for number, page in enumerate(self.indirect_reference.pdf.pages):
-            if page.indirect_reference == self.indirect_reference:
-                return number
-        return None
+        page_number: int | None = self.indirect_reference.pdf._get_page_number_by_indirect(
+            self.indirect_reference
+        )
+        return page_number
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""

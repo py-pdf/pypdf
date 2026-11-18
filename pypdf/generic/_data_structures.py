@@ -292,7 +292,14 @@ class ArrayObject(list[Any], PdfObject):
                 stream.seek(-len(rest), 1)
             stream.seek(-1, 1)
             # read and append object
-            arr.append(read_object(stream, pdf, forced_encoding, parsing_budget=parsing_budget))
+            try:
+                obj = read_object(stream, pdf, forced_encoding, parsing_budget=parsing_budget)
+            except LimitReachedError:
+                # Always propagate security issues.
+                raise
+            except (MemoryError, RecursionError) as exc:
+                raise PdfReadError("Error reading PDF file.") from exc
+            arr.append(obj)
         return arr
 
 
