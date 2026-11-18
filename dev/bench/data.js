@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795001449881,
+  "lastUpdate": 1795001991229,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128375,6 +128375,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008510872792232747",
             "extra": "mean: 642.367182599969 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "f0174823a10baf2a6bf387470c2ecb29f8637ab4",
+          "message": "REL: 7.1.1\n\n## What's new\n\n### Security (SEC)\n- Limit inline image size for known-size fallback path (#4460) by @stefan6419846\n- Optimize memory usage of ASCIIHexDecode whitespace removal (#4458) by @stefan6419846\n- Limit the overall page label size before employing a fallback (#4457) by @stefan6419846\n- Restrict cross-reference stream work/memory (#4456) by @stefan6419846\n\n### Performance Improvements (PI)\n- List image identifiers only once when iterating over page images (#4452) by @prawalpokharel\n- Index named destinations when appending a document (#4360) by @kholdrex\n- Decode PDFDocEncoding strings with str.translate instead of per-character concatenation (#4429) by @MartinThoma\n\n### Bug Fixes (BUG)\n- Reject zero-step slices in PageRange (#4404) by @ainuo-AI\n- Label a page that lies between the /Limits of two page label kids (#4385) by @RavSinghChandan\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.1.0...7.1.1)",
+          "timestamp": "2026-11-18T12:37:31+01:00",
+          "tree_id": "0d5e05e938418d59574df25e35a2b433ce43fcdf",
+          "url": "https://github.com/py-pdf/pypdf/commit/f0174823a10baf2a6bf387470c2ecb29f8637ab4"
+        },
+        "date": 1795001979207,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7391358156266805,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009220273533557902",
+            "extra": "mean: 267.4414755999976 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.71595211135773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007320334940482586",
+            "extra": "mean: 36.08030480000034 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3746028705450412,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013426330997725716",
+            "extra": "mean: 2.6694936921999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 27.997150012298,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014934511406378775",
+            "extra": "mean: 35.71792127272744 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18868969124401108,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025164616982126978",
+            "extra": "mean: 5.299706589200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.110350535056875,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0032245005270916437",
+            "extra": "mean: 473.8549276000015 msec\nrounds: 5"
           }
         ]
       }
