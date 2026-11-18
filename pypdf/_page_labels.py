@@ -70,6 +70,7 @@ from .generic import (
     DictionaryObject,
     NullObject,
     NumberObject,
+    PdfObject,
     is_null_or_none,
 )
 
@@ -152,19 +153,27 @@ _NUMBERING_STYLES: dict[str | None, Callable[[int], str]] = {
 }
 
 
+def _resolve(value: Any) -> Any:
+    # Any of these entries may be an indirect reference, which dict.get hands
+    # back as-is rather than resolving the way __getitem__ does. /Limits is
+    # already read that way below.
+    return value.get_object() if isinstance(value, PdfObject) else value
+
+
 def _get_label(value: Any, start_index: Any, index: int) -> str:
     # if /Nums array is not following the specification or if /Nums is empty
     if not isinstance(value, dict):
         return str(index + 1)  # Fallback
-    start = value.get("/St", 1)
-    prefix = cast(str, value.get("/P", ""))
-    mapping_function = _NUMBERING_STYLES.get(value.get("/S"))
+    start = _resolve(value.get("/St", 1))
+    prefix = cast(str, _resolve(value.get("/P", "")))
+    style = _resolve(value.get("/S"))
+    mapping_function = _NUMBERING_STYLES.get(style)
     if mapping_function is None:
         # Unknown /S numbering style; fall back to the page position.
         logger_warning(
             "Ignoring unknown page label numbering style %(style)r in /Nums.",
             source=__name__,
-            style=value.get("/S"),
+            style=style,
         )
         return str(index + 1)  # Fallback
     try:

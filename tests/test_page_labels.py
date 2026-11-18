@@ -573,6 +573,48 @@ def test_get_label_from_nums__regular__limits(caplog):
     ]
 
 
+@pytest.mark.parametrize(
+    "indirect_keys",
+    [
+        pytest.param(("/S",), id="style"),
+        pytest.param(("/St",), id="start"),
+        pytest.param(("/P",), id="prefix"),
+        pytest.param(("/S", "/St", "/P"), id="all-three"),
+    ],
+)
+def test_index2label__entry_values_stored_as_indirect_objects(indirect_keys, caplog):
+    """Any /Nums entry value may be written as an indirect reference."""
+    writer = PdfWriter()
+    for _ in range(6):
+        writer.add_blank_page(100, 100)
+
+    entry = DictionaryObject()
+    for key, value in (
+        ("/S", NameObject("/D")),
+        ("/St", NumberObject(5)),
+        ("/P", TextStringObject("A-")),
+    ):
+        entry[NameObject(key)] = (
+            writer._add_object(value) if key in indirect_keys else value
+        )
+    writer.root_object[NameObject("/PageLabels")] = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Nums"): ArrayObject(
+                    [NumberObject(0), writer._add_object(entry)]
+                )
+            }
+        )
+    )
+
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+
+    assert reader.page_labels == ["A-5", "A-6", "A-7", "A-8", "A-9", "A-10"]
+    assert caplog.messages == []
+
+
 def _build_label(*, style=None, prefix=None, start=None) -> DictionaryObject:
     entry = DictionaryObject()
     if style is not None:
