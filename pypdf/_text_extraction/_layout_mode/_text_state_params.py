@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Any
 
 from ...generic._font import Font
 from .. import mult, orient
@@ -34,9 +34,9 @@ class TextStateParams:
 
     """
 
-    value: Union[bytes, str]
+    value: bytes | str
     font: Font
-    font_size: Union[int, float]
+    font_size: int | float
     Tc: float = 0.0
     Tw: float = 0.0
     Tz: float = 100.0
@@ -64,7 +64,7 @@ class TextStateParams:
                     self._raw_chars = self.value.decode(self.font.encoding, "surrogatepass")
                 except UnicodeDecodeError:
                     # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
-                    self._raw_chars = self.value.decode(self.font.encoding, "surrogateescape")
+                    self._raw_chars = self.value.decode(self.font.encoding, "replace")
             else:
                 self._raw_chars = "".join(chr(byte) for byte in self.value)
                 decoded_value = "".join(self.font.encoding.get(x, chr(x)) for x in self.value)
@@ -121,7 +121,7 @@ class TextStateParams:
         return mult(self.font_size_matrix(), self.transform)
 
     def displacement_matrix(
-        self, word: Union[bytes, str, None] = None, td_offset: float = 0.0
+        self, word: bytes | str | None = None, td_offset: float = 0.0
     ) -> list[float]:
         """
         Text displacement matrix
@@ -135,7 +135,7 @@ class TextStateParams:
         word = word if word is not None else self.value
         return [1.0, 0.0, 0.0, 1.0, self.word_tx(word, td_offset), 0.0]
 
-    def word_tx(self, word: Union[bytes, str], td_offset: float = 0.0) -> float:
+    def word_tx(self, word: bytes | str, td_offset: float = 0.0) -> float:
         """Horizontal text displacement for any word according this text state"""
         width: float = 0.0
         if isinstance(word, bytes):

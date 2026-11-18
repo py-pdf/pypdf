@@ -195,6 +195,28 @@ MALFORMED_NAME_TREE_CATALOGS = [
         ),
         id="name-list-is-no-array",
     ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Names"): ArrayObject([TextStringObject("a.txt"), NumberObject(1)])}
+                )}
+            )}
+        ),
+        id="file-specification-is-no-dictionary",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Kids"): ArrayObject([DictionaryObject(
+                        {NameObject("/Names"): ArrayObject([TextStringObject("a.txt"), NumberObject(1)])}
+                    )])}
+                )}
+            )}
+        ),
+        id="kid-file-specification-is-no-dictionary",
+    ),
 ]
 
 
@@ -263,6 +285,16 @@ SPEC_CONFORMANT_EMPTY_CATALOGS = [
             )}
         ),
         id="null-name-list",
+    ),
+    pytest.param(
+        DictionaryObject(
+            {NameObject("/Names"): DictionaryObject(
+                {NameObject("/EmbeddedFiles"): DictionaryObject(
+                    {NameObject("/Names"): ArrayObject([TextStringObject("a.txt"), NullObject()])}
+                )}
+            )}
+        ),
+        id="null-file-specification",
     ),
 ]
 

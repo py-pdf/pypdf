@@ -7,10 +7,11 @@ import sys
 import tempfile
 import time
 import urllib.request
+from collections.abc import Callable
 from http.client import HTTPException
 from pathlib import Path
 from types import TracebackType
-from typing import Callable, Optional, cast
+from typing import cast
 from urllib.error import HTTPError
 
 if sys.version_info >= (3, 11):
@@ -88,7 +89,7 @@ def _get_urls_of_example_files() -> dict[str, str]:
     return {pdf["local_filename"]: pdf["url"] for pdf in pdfs}
 
 
-def get_data_from_url(*, url: Optional[str] = None, name: str) -> bytes:
+def get_data_from_url(*, url: str | None = None, name: str) -> bytes:
     """
     Download a File from a URL and return its contents.
 
@@ -216,10 +217,10 @@ class PILContext:
 
     def __exit__(
         self,
-        type_: Optional[type[BaseException]],
-        value: Optional[BaseException],
-        traceback: Optional[TracebackType]
-    ) -> Optional[bool]:
+        type_: type[BaseException] | None,
+        value: BaseException | None,
+        traceback: TracebackType | None
+    ) -> bool | None:
         from PIL import ImageFile  # noqa: PLC0415
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:

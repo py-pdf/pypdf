@@ -33,6 +33,7 @@ from pypdf.generic import (
 from pypdf.generic._font import Font
 
 from . import RESOURCE_ROOT, get_data_from_url
+from .test_text_extraction import _page_with_helvetica
 
 
 @pytest.mark.enable_socket
@@ -275,6 +276,19 @@ def test_unigb_utf16():
 
 
 @pytest.mark.enable_socket
+def test_unigb_utf16_without_tounicode():
+    """Decode the SimSun watermark in #2812 without a ToUnicode map."""
+    url = (
+        "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
+    )
+    name = "iss2812.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    text = reader.pages[1].extract_text()
+    assert "中国石化集团经济技术研究院有限公司" in text
+    assert not any(0xD800 <= ord(char) <= 0xDFFF for char in text)
+
+
+@pytest.mark.enable_socket
 def test_too_many_differences():
     """Cf #2836"""
     url = (
@@ -383,6 +397,67 @@ def test_get_encoding__type1_font_file_truncated_dup_line():
     assert character_map == {"a": "a"}
 
 
+@pytest.mark.parametrize(
+    ("base_font", "expected"),
+    [
+        (
+            "/Symbol",
+            {
+                0x20: " ",  # space
+                0x61: "α",  # alpha
+                0x6D: "μ",  # mu, the Greek letter rather than the micro sign
+                0xA4: "⁄",  # fraction slash
+                0xE5: "∑",  # summation
+            },
+        ),
+        (
+            "/ZapfDingbats",
+            {
+                0x20: " ",  # space
+                0x34: "✔",  # heavy check mark
+                0x80: "❨",  # medium left parenthesis ornament
+                0x8D: "❵",  # medium right curly bracket ornament
+            },
+        ),
+    ],
+)
+def test_get_encoding__builtin_encoding_of_symbolic_core_font(base_font, expected):
+    ft = DictionaryObject()
+    ft[NameObject("/Type")] = NameObject("/Font")
+    ft[NameObject("/Subtype")] = NameObject("/Type1")
+    ft[NameObject("/BaseFont")] = NameObject(base_font)
+    encoding, _character_map = get_encoding(ft)
+    assert isinstance(encoding, dict)
+    assert len(encoding) == 256
+    for code, character in expected.items():
+        assert encoding[code] == character
+
+
+def test_extract_text__symbolic_core_fonts():
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    font_resources = DictionaryObject()
+    for font_name, base_font in (("/F1", "/Symbol"), ("/F2", "/ZapfDingbats")):
+        font = DictionaryObject()
+        font[NameObject("/Type")] = NameObject("/Font")
+        font[NameObject("/Subtype")] = NameObject("/Type1")
+        font[NameObject("/BaseFont")] = NameObject(base_font)
+        font_resources[NameObject(font_name)] = writer._add_object(font)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+    content = DecodedStreamObject()
+    content.set_data(
+        b"BT /F1 12 Tf 10 100 Td (a\\040m\\244b) Tj ET "
+        b"BT /F2 12 Tf 10 50 Td (4\\040\\200\\215) Tj ET"
+    )
+    page[NameObject("/Contents")] = writer._add_object(content)
+    buffer = BytesIO()
+    writer.write(buffer)
+
+    assert PdfReader(buffer).pages[0].extract_text() == "α μ⁄β\n✔ ❨❵"
+
+
 def test_parse_bfchar(caplog):
     map_dict = {}
     int_entry = []
@@ -420,6 +495,24 @@ def test_parse_bfrange__multibyte_source_codes():
     parse_bfrange(line=b"20 22 0061", map_dict=map_dict, int_entry=int_entry, multiline_rg=None)
     assert map_dict == {-1: 1, " ": "a", "!": "b", '"': "c"}
     assert int_entry == [0x20, 0x21, 0x22]
+
+
+def test_parse_bfrange__negative_source_range(caplog):
+    """int(token, 16) accepts a leading "-"; negative bounds are rejected as a
+    broken line instead of leaking an OverflowError from the byte encoding.
+    """
+    with pytest.raises(ValueError, match=r"^Negative bfrange source range: b'-1' b'-1'$"):
+        parse_bfrange(line=b"-1 -1 <FFFF>", map_dict={}, int_entry=[], multiline_rg=None)
+
+    # End to end through text extraction: the broken line is skipped with a
+    # warning and the remaining map keeps applying ("AB" still maps to "ab").
+    reader = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf <4142> Tj ET"))
+    font = reader.pages[0]["/Resources"]["/Font"]["/F1"]
+    to_unicode = StreamObject()
+    to_unicode.set_data(b"beginbfrange\n-1 -1 <FFFF>\n<41> <42> <61>\nendbfrange\n")
+    font[NameObject("/ToUnicode")] = to_unicode
+    assert reader.pages[0].extract_text() == "ab"
+    assert any("Skipping broken line" in message for message in caplog.messages)
 
 
 def test_parse_bfrange__decode_out_of_range_code():
@@ -845,6 +938,23 @@ def test_get_encoding__differences_is_an_array(caplog):
     assert caplog.text == ""
 
 
+@pytest.mark.parametrize(
+    ("glyph_name", "expected"),
+    [
+        ("/u1D6FD", "𝛽"),
+        ("/unknown", "/unknown"),
+        ("/uFFFFFFFFFFFFFFFFFFFF", "/uFFFFFFFFFFFFFFFFFFFF"),
+    ],
+)
+def test_get_encoding__unicode_glyph_names(glyph_name, expected):
+    """Regression test for #2273: decode Unicode glyph names in /Differences."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), NameObject(glyph_name)]))
+    )
+
+    assert encoding[65] == expected
+
+
 def _build_cff_font_program(encoding: dict[int, str]) -> bytes:
     """A minimal CFF font program whose built-in encoding maps the given character codes to glyph names."""
     from fontTools.fontBuilder import FontBuilder  # noqa: PLC0415
@@ -959,3 +1069,46 @@ def test_cff_type1_font_file_is_parsed_again_when_its_data_changes():
         font_file.set_data(_build_cff_font_program({65: "Q"}))
         assert [page.extract_text() for page in writer.pages] == ["QB"] * 2
         assert parse.call_count == 2
+
+
+@pytest.mark.timeout(5)  # Previously: 22 seconds
+def test_parse_bfchar__speed() -> None:
+    count = 50_000
+    pairs = b" ".join(f"{i:04x} 0041".encode() for i in range(count))
+
+    map_dict = {}
+    int_entry = []
+    parse_bfchar(pairs, map_dict, int_entry)
+    assert int_entry == list(range(count))
+    assert len(map_dict) == count + 1
+
+
+def test_get_encoding__unknown_base_encoding_falls_back_to_standard_encoding(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    An unsupported /BaseEncoding name is not an error: pypdf logs it and uses StandardEncoding.
+
+    ISO 32000-2:2020, 9.6.5.2 "Encodings for simple fonts", Table 112 lists the valid
+    /BaseEncoding names; if the entry is absent, StandardEncoding is the default.
+    """
+    font = DictionaryObject({
+        NameObject("/Encoding"): DictionaryObject({
+            NameObject("/BaseEncoding"): NameObject("/UnknownEncoding"),
+        }),
+    })
+    encoding, _ = get_encoding(font)
+    assert encoding == dict(zip(range(256), charset_encoding["/StandardEncoding"]))
+    assert "not implemented yet" in caplog.text
+
+
+def test_get_encoding__to_unicode_stream_with_str_data() -> None:
+    """
+    A /ToUnicode CMap whose stream data is a str instead of bytes is still parsed.
+
+    ISO 32000-2:2020, 9.10.3 "ToUnicode CMaps": the CMap maps character codes to Unicode;
+    here code <01> maps to U+0041.
+    """
+    to_unicode = DecodedStreamObject()
+    to_unicode.set_data("beginbfchar\n<01> <0041>\nendbfchar")
+    font = DictionaryObject({NameObject("/ToUnicode"): to_unicode})
+    _, map_dict = get_encoding(font)
+    assert map_dict["\x01"] == "A"

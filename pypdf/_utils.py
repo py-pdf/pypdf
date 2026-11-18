@@ -30,10 +30,13 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import functools
+import inspect
 import logging
+import os
 import re
 import sys
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import DEFAULT_BUFFER_SIZE
@@ -43,15 +46,11 @@ from typing import (
     IO,
     Any,
     NoReturn,
-    Optional,
-    Union,
+    ParamSpec,
+    TypeAlias,
+    TypeVar,
+    cast,
 )
-
-if sys.version_info[:2] >= (3, 10):
-    # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -74,10 +73,10 @@ CompressedTransformationMatrix: TypeAlias = tuple[
 
 StreamType = IO[Any]
 BinaryStreamType = IO[bytes]
-StrByteType = Union[str, StreamType]
+StrByteType = str | StreamType
 
 
-def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
+def parse_iso8824_date(text: str | None) -> datetime | None:
     orgtext = text
     if not text:
         return None
@@ -158,7 +157,7 @@ WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
 WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
 
-def read_until_whitespace(stream: StreamType, max_bytes: Optional[int] = None, strict: bool = False) -> bytes:
+def read_until_whitespace(stream: StreamType, max_bytes: int | None = None, strict: bool = False) -> bytes:
     """
     Read non-whitespace characters and return them.
 
@@ -285,7 +284,7 @@ def skip_over_comment(stream: StreamType) -> None:
                 raise PdfStreamError("File ended unexpectedly.")
 
 
-def skip_over_comments(stream: StreamType, *, limit: Optional[int] = None) -> None:
+def skip_over_comments(stream: StreamType, *, limit: int | None = None) -> None:
     """
     Skip consecutive leading comments and the whitespace following each one.
 
@@ -490,6 +489,56 @@ def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) 
     )
 
 
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+
+
+def deprecate_positional_arguments(removed_in: str) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
+    """
+    Accept positional arguments for keyword-only parameters, but issue a warning.
+
+    Use it for a function whose parameters became keyword-only. The positional
+    arguments that exceed the positional parameters are passed to the
+    keyword-only parameters in the order of the signature.
+
+    Args:
+        removed_in: The version in which positional arguments will raise an error.
+
+    Returns:
+        The decorator.
+
+    """
+    def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
+        parameters = inspect.signature(func).parameters.values()
+        positional_count = sum(
+            parameter.kind in (parameter.POSITIONAL_ONLY, parameter.POSITIONAL_OR_KEYWORD)
+            for parameter in parameters
+        )
+        keyword_only_names = [parameter.name for parameter in parameters if parameter.kind == parameter.KEYWORD_ONLY]
+
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            extra_args = args[positional_count:]
+            if extra_args:
+                if len(extra_args) > len(keyword_only_names):
+                    raise TypeError(
+                        f"{func.__qualname__}() takes {positional_count + len(keyword_only_names)} "
+                        f"positional arguments but {len(args)} were given"
+                    )
+                for name, value in zip(keyword_only_names, extra_args):
+                    if name in kwargs:
+                        raise TypeError(f"{func.__qualname__}() got multiple values for argument '{name}'")
+                    kwargs[name] = value
+                deprecate_with_replacement(
+                    f"Passing positional arguments to {func.__qualname__}()", "keyword arguments", removed_in
+                )
+            return func(*args[:positional_count], **kwargs)
+
+        return cast(Callable[_P, _R], wrapper)
+
+    return decorator
+
+
 def deprecate_no_replacement(name: str, removed_in: str) -> None:
     """Issue a warning that a feature will be removed without replacement."""
     deprecate(f"{name} is deprecated and will be removed in pypdf {removed_in}.", 4)
@@ -585,6 +634,30 @@ def _human_readable_bytes(bytes: int) -> str:
     return f"{bytes / 10**9:.1f} GB"
 
 
+def get_stream_size(stream: StreamType) -> int:
+    if hasattr(stream, "getbuffer"):
+        with stream.getbuffer() as view:
+            return cast(int, view.nbytes)
+
+    position = stream.tell()
+    stream.seek(0, os.SEEK_END)
+    size = stream.tell()
+    stream.seek(position)
+    return size
+
+
+def get_stream_data(stream: StreamType) -> bytes:
+    if hasattr(stream, "getbuffer"):
+        with stream.getbuffer() as view:
+            return bytes(view)
+
+    position = stream.tell()
+    stream.seek(0, os.SEEK_SET)
+    data = stream.read(-1)
+    stream.seek(position)
+    return cast(bytes, data)
+
+
 # The following class has been copied from Django:
 # https://github.com/django/django/blob/adae619426b6f50046b3daaa744db52989c9d6db/django/utils/functional.py#L51-L65
 # It received some modifications to comply with our own coding standards.
@@ -626,13 +699,13 @@ class classproperty:  # noqa: N801
     that can be accessed directly from the class.
     """
 
-    def __init__(self, method=None) -> None:  # type: ignore  # noqa: ANN001
+    def __init__(self, method=None) -> None:  # type: ignore[no-untyped-def]  # noqa: ANN001
         self.fget = method
 
-    def __get__(self, instance, cls=None) -> Any:  # type: ignore  # noqa: ANN001
+    def __get__(self, instance, cls=None) -> Any:  # type: ignore[no-untyped-def]  # noqa: ANN001
         return self.fget(cls)
 
-    def getter(self, method) -> Self:  # type: ignore  # noqa: ANN001
+    def getter(self, method) -> Self:  # type: ignore[no-untyped-def]  # noqa: ANN001
         self.fget = method
         return self
 
@@ -649,7 +722,7 @@ class File:
     """
     Data as bytes.
     """
-    indirect_reference: Optional[IndirectObject] = None
+    indirect_reference: IndirectObject | None = None
     """
     Reference to the object storing the stream.
     """
@@ -679,8 +752,6 @@ class Version:
                 continue
             integer_prefix = match.group(1)
             suffix = match.group(2)
-            if integer_prefix is None:
-                integer_prefix = 0
             parsed_components.append((int(integer_prefix), suffix))
         return parsed_components
 

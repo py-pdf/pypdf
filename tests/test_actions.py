@@ -1,13 +1,21 @@
 """Test the pypdf.actions submodule."""
 
+from io import BytesIO
 from typing import Any
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript, PageTrigger
-from pypdf.errors import ParseError
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject, is_null_or_none
+from pypdf.errors import DeprecationError, ParseError
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    is_null_or_none,
+)
 
 from . import RESOURCE_ROOT
 
@@ -21,57 +29,14 @@ def pdf_file_writer():
 
 
 def test_add_js(pdf_file_writer):
-    with pytest.warns(
-        DeprecationWarning,
+    with pytest.raises(
+        DeprecationError,
         match=(
-            r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
+            r"^add_js is deprecated and was removed in pypdf 7\.0\.0\. "
             r"Use add_open_action instead\.$"
         )
     ):
         pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-
-    assert (
-        "/Names" in pdf_file_writer.root_object
-    ), "add_js should add a name catalog in the root object."
-    assert (
-        "/JavaScript" in pdf_file_writer.root_object["/Names"]
-    ), "add_js should add a JavaScript name tree under the name catalog."
-
-
-def test_added_js(pdf_file_writer):
-    def get_javascript_name() -> Any:
-        assert "/Names" in pdf_file_writer.root_object
-        assert "/JavaScript" in pdf_file_writer.root_object["/Names"]
-        assert "/Names" in pdf_file_writer.root_object["/Names"]["/JavaScript"]
-        return pdf_file_writer.root_object["/Names"]["/JavaScript"]["/Names"][
-            -2
-        ]  # return -2 in order to get the latest javascript
-
-    with pytest.warns(
-        DeprecationWarning,
-        match=(
-            r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
-            r"Use add_open_action instead\.$"
-        )
-    ):
-        pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-
-    first_js = get_javascript_name()
-
-    with pytest.warns(
-        DeprecationWarning,
-        match=(
-            r"^add_js is deprecated and will be removed in pypdf 7\.0\.0\. "
-            r"Use add_open_action instead\.$"
-        )
-    ):
-        pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-
-    second_js = get_javascript_name()
-
-    assert (
-        first_js != second_js
-    ), "add_js should add to the previous script in the catalog."
 
 
 def test_add_open_action(pdf_file_writer):
@@ -484,6 +449,56 @@ def test_page_add_action__chaining_with_array(pdf_file_writer):
     final_action = intermediate[NameObject("/Next")]
 
     assert final_action[NameObject("/JS")] == "app.alert('Final action');"
+
+
+def test_page_add_action__chaining_with_indirect_action():
+    """
+    This test ensures that a page action stored as an indirect object can be
+    extended after a round-trip through a file, and stays indirect.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    first = JavaScript("app.alert('First action');")
+    page[NameObject("/AA")] = DictionaryObject({NameObject("/O"): writer._add_object(first)})
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    page = PdfReader(buffer).pages[0]
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Second action');"))
+
+    first_action = page["/AA"].get("/O")
+    assert isinstance(first_action, IndirectObject)
+    assert first_action["/Next"]["/JS"] == "app.alert('Second action');"
+
+
+def test_page_add_action__chaining_with_indirect_next():
+    """An indirect /Next entry can be extended and cloned into a writer."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    first_action = JavaScript("app.alert('First action');")
+    second_action = JavaScript("app.alert('Second action');")
+    first_action[NameObject("/Next")] = writer._add_object(second_action)
+    page[NameObject("/AA")] = DictionaryObject({NameObject("/O"): first_action})
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+
+    page = PdfReader(buffer).pages[0]
+    page.add_action(PageTrigger.OPEN, JavaScript("app.alert('Third action');"))
+
+    output = PdfWriter()
+    output.add_page(page)
+    buffer = BytesIO()
+    output.write(buffer)
+    buffer.seek(0)
+
+    chain = PdfReader(buffer).pages[0]["/AA"]["/O"]
+    assert chain["/JS"] == "app.alert('First action');"
+    assert chain["/Next"]["/JS"] == "app.alert('Second action');"
+    assert chain["/Next"]["/Next"]["/JS"] == "app.alert('Third action');"
 
 
 @pytest.mark.parametrize(

@@ -1,9 +1,9 @@
 """Test the pypdf.generic._data_structures module."""
 import subprocess
 import sys
+from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
-from typing import Callable
 from unittest import mock
 
 import pytest
@@ -16,9 +16,11 @@ from pypdf.generic import (
     ContentStream,
     Destination,
     DictionaryObject,
+    Fit,
     NameObject,
     NullObject,
     NumberObject,
+    OutlineItem,
     RectangleObject,
     StreamObject,
     StreamParsingBudget,
@@ -33,6 +35,34 @@ try:
     import resource
 except ImportError:
     resource = None  # type: ignore[assignment]
+
+
+@pytest.mark.parametrize("link", ["/Next", "/Prev", "/N", "/V"])
+def test_dictionary_object__clone_linked_objects_with_constructor_arguments(link: str) -> None:
+    """Linked dictionaries requiring constructor arguments can be cloned."""
+    source = PdfWriter()
+    destination = PdfWriter()
+    first = OutlineItem("First", NumberObject(0), Fit.fit())
+    second = OutlineItem("Second", NumberObject(0), Fit.fit())
+    source._add_object(first)
+    first[NameObject(link)] = source._add_object(second)
+
+    cloned = first.clone(destination)
+    cloned_second = cloned[link]
+
+    assert isinstance(cloned, OutlineItem)
+    assert isinstance(cloned_second, OutlineItem)
+    assert cloned is not first
+    assert cloned_second is not second
+    assert cloned.title == first.title
+    assert cloned_second.items() == second.items()
+    assert cloned.indirect_reference is not None
+    assert cloned.indirect_reference.pdf is destination
+    assert cloned_second.indirect_reference is not None
+    assert cloned_second.indirect_reference.pdf is destination
+    assert first[link] is second
+    assert second.indirect_reference is not None
+    assert second.indirect_reference.pdf is source
 
 
 def test_dictionary_object__get_next_object_position() -> None:
@@ -541,11 +571,11 @@ def _outlined_pdf(nested: bool = False) -> BytesIO:
     writer = PdfWriter()
     for _ in range(4):
         writer.add_blank_page(200, 200)
-    cover = writer.add_outline_item("Cover", 0)
-    writer.add_outline_item("Body", 1)
+    cover = writer.add_outline_item(title="Cover", page_number=0)
+    writer.add_outline_item(title="Body", page_number=1)
     if nested:
-        writer.add_outline_item("Sub", 2, parent=cover)
-    writer.add_outline_item("End", 3)
+        writer.add_outline_item(title="Sub", page_number=2, parent=cover)
+    writer.add_outline_item(title="End", page_number=3)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -586,7 +616,7 @@ def test_remove_from_tree_on_outline_item_without_clone() -> None:
     for _ in range(3):
         writer.add_blank_page(200, 200)
     for page_number, title in enumerate(["Cover", "Body", "End"]):
-        writer.add_outline_item(title, page_number)
+        writer.add_outline_item(title=title, page_number=page_number)
 
     _flat_outline(writer.outline)[0].remove_from_tree()
 
@@ -862,3 +892,55 @@ def test_content_stream__check_limits__read_inline_image_dictionary_limit() -> N
         ContentStream._check_limits(
             remaining_elements=0, parsing_budget=StreamParsingBudget(remaining_budget=10), token_decrement=1
         )
+
+
+def test_dictionary_object__read_from_stream__error_handling() -> None:
+    header = b"%PDF-1.4\n"
+    obj1_offset = len(header)
+    nested = b"<< /A " * 18  # never closed
+    obj1 = b"1 0 obj\n" + nested + b"\nendobj\n"
+    body = header + obj1
+    xref_offset = len(body)
+    xref = (
+        b"xref\n0 2\n"
+        b"0000000000 65535 f \n"
+        + (b"%010d 00000 n \n" % obj1_offset)
+    )
+    trailer = (
+        b"trailer\n<< /Size 2 /Root 1 0 R >>\nstartxref\n"
+        + str(xref_offset).encode() + b"\n%%EOF"
+    )
+    data = body + xref + trailer
+
+    reader = PdfReader(BytesIO(data), strict=True)
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Error reading PDF file\.$"):
+        _ = reader.trailer["/Root"]  # forces resolution of the broken dictionary
+
+
+@pytest.mark.timeout(5)
+def test_dictionary_object__clone__cycle_detection() -> None:
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents [4 0 R] >>",
+        b"<< /Length 0 /N 5 0 R >>\nstream\n\nendstream",
+        b"<< /N 6 0 R /T (alpha) >>",
+        b"<< /N 5 0 R /T (beta) >>",
+    ]
+    object_count = len(objects)
+    out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = []
+    for num, obj in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % num + obj + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n" % (object_count + 1)
+    out += b"0000000000 65535 f \n"
+    for offset in offsets:
+        out += b"%010d 00000 n \n" % offset
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (object_count + 1, xref)
+    data = bytes(out)
+
+    writer = PdfWriter()
+    writer.append(BytesIO(data))
+    assert len(writer.pages) == 1

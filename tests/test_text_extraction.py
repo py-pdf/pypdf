@@ -4,16 +4,19 @@ Testing the text-extraction submodule and ensuring the quality of text extractio
 The tested code might be in _page.py.
 """
 
+import json
 import re
+from collections.abc import Callable
 from dataclasses import asdict
 from io import BytesIO
-from typing import Union
+from pathlib import Path
+from unittest import mock
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration, mult
 from pypdf._page import PageObject
-from pypdf._text_extraction import get_text_operands, set_custom_rtl
+from pypdf._text_extraction import get_display_str, get_text_operands, set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import (
     BTGroup,
     fixed_width_page,
@@ -124,7 +127,6 @@ def test_visitor_text_matrices(file_name, constraints):
         assert constraint(x, y), f'Line "{text}" is wrong at x:{x}, y:{y}'
 
 
-@pytest.mark.xfail(reason="known whitespace issue #2336")
 @pytest.mark.enable_socket
 def test_issue_2336():
     name = "Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf"
@@ -487,12 +489,8 @@ def test_content_stream_is_dictionary_object(caplog):
 
     reader = PdfReader(BytesIO(data), strict=True)
     page = reader.pages[0]
-    with pytest.raises(PdfReadError) as exception:
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
         page.extract_text()
-    assert (
-        "Invalid Elementary Object starting with b\\'\\\\x18\\' @3557: b\\'ateDecode/Length 629\\\\x18ck["
-        in exception.value.args[0]
-    )
 
 
 @pytest.mark.enable_socket
@@ -623,6 +621,35 @@ def test_do_operator_without_operand_is_skipped() -> None:
     assert page.extract_text() == "HelloWorld"
 
 
+def test_tj_positive_offset_is_not_a_word_gap() -> None:
+    """A positive TJ offset is kerning (it moves the next glyph back), not a space."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 12 Tf 40 700 Td [(T) 300 (echnical) -300 (W) 300 (ork)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Technical Work"
+
+
+def test_tj_gap_right_after_a_font_change_is_a_space() -> None:
+    """A word gap at the start of a TJ array is kept when a Tf came just before it."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 9 Tf 40 700 Td [(Programming:)] TJ /F1 9 Tf [-457 (Python)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Programming: Python"
+
+
+@pytest.mark.enable_socket
+def test_surname_in_capital_and_small_capitals_stays_one_word() -> None:
+    """
+    A surname set as a capital followed by small capitals is extracted as one word.
+
+    ISO 32000-2:2020, 9.4.3 (text-showing operators) and 9.4.4 (text space details).
+    """
+    url = "https://github.com/user-attachments/files/22596566/7552c42e9280b4476e59e77acc0bc812.pdf"
+    name = "7552c42e9280b4476e59e77acc0bc812.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "MOREAU (Antoine)" in reader.pages[143].extract_text()
+
+
 def test_tj_operator_without_an_array_is_skipped() -> None:
     """A TJ operator whose operand is not an array is skipped and the text around it is kept."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj 5 TJ (World) Tj ET")).pages[0]
@@ -645,9 +672,51 @@ def test_tj_array_item_that_is_neither_a_string_nor_a_number_is_skipped(item: by
     assert page.extract_text(extraction_mode="layout") == "HelloWorld"
 
 
+@pytest.mark.parametrize(
+    ("operator", "expected"),
+    [
+        (b"5 '", "Hello\nWorld"),
+        (b"'", "Hello\nWorld"),
+        (b'1 2 5 "', "Hello\nWorld"),
+    ],
+)
+def test_quote_operator_without_a_string_shows_no_text(operator: bytes, expected: str) -> None:
+    """A ' or " operator without a string to show still moves to the next line, and the text around it is kept."""
+    content = b"BT /F1 12 Tf 14 TL 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == expected
+    assert page.extract_text(extraction_mode="layout") == expected
+
+
+def test_quote_operator_with_too_few_operands_is_skipped() -> None:
+    """A " operator with fewer than three operands is skipped entirely, as in plain mode, and the text is kept."""
+    content = b'BT /F1 12 Tf 14 TL 72 700 Td (Hello) Tj (x) " (World) Tj ET'
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
 def test_layout_mode_text_with_zero_font_size() -> None:
     """Text drawn with a font size of 0 is extracted in layout mode instead of dividing by a zero width."""
     page = PdfReader(_page_with_helvetica(b"BT /F1 0 Tf (Hello) Tj ET")).pages[0]
+    assert page.extract_text(extraction_mode="layout") == "Hello"
+
+
+def test_layout_mode_tf_with_a_missing_size_keeps_the_previous_size() -> None:
+    """A Tf operator naming a font but missing its size operand keeps the current font size
+    in layout mode, matching plain mode, instead of raising IndexError.
+    """
+    content = b"BT /F1 24 Tf 72 700 Td (Hello) Tj /F1 Tf (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text(extraction_mode="layout") == "HelloWorld"
+
+
+def test_layout_mode_tf_with_no_operands_does_not_crash() -> None:
+    """A Tf operator with no operands at all falls back to an uninterpretable font, the
+    same as an unknown font name, instead of raising IndexError.
+    """
+    content = b"BT /F1 24 Tf 72 700 Td (Hello) Tj Tf (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
     assert page.extract_text(extraction_mode="layout") == "Hello"
 
 
@@ -656,6 +725,85 @@ def test_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
     """A text operator whose operand is not a number is treated as having none, and the text is kept."""
     content = b"BT /F1 12 Tf (Hello) Tj " + operator + b" (World) Tj ET"
     assert PdfReader(_page_with_helvetica(content)).pages[0].extract_text() == "HelloWorld"
+
+
+@pytest.mark.parametrize(
+    "operator",
+    [
+        pytest.param(b"/X /Y TD", id="names"),
+        pytest.param(b"5 /Y TD", id="non-numeric-ty"),
+        pytest.param(b"5 TD", id="one-operand"),
+        pytest.param(b"TD", id="no-operands"),
+    ],
+)
+def test_td_operator_with_missing_or_non_numeric_operands(operator: bytes) -> None:
+    """A TD operator whose ty is missing or not a number leaves the leading unchanged,
+    in plain and layout mode, and the text around it is kept.
+    """
+    content = b"BT /F1 12 Tf 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    text = page.extract_text(extraction_mode="layout")
+    assert "Hello" in text
+    assert "World" in text
+
+
+@pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        pytest.param(b"BT /F1 12 Tf 72 700 Td BT (Hello) Tj ET ET", ["Hello"], id="nested-text-object"),
+        pytest.param(b"BT /F1 12 Tf 72 700 Td (Hello) Tj BT ET", ["Hello"], id="nested-bt-takes-the-et"),
+        pytest.param(
+            b"BT /F1 12 Tf 72 700 Td (Hello) Tj BT 72 650 Td (World) Tj ET ET",
+            ["Hello", "World"],
+            id="text-before-and-after",
+        ),
+    ],
+)
+def test_layout_mode_bt_inside_a_text_object(content: bytes, expected: list[str]) -> None:
+    """A BT inside a text object resets the text matrix and the text object ends at
+    the first ET, so layout mode shows each string once, as plain mode does.
+    """
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    lines = [line.strip() for line in page.extract_text(extraction_mode="layout").splitlines() if line.strip()]
+    assert lines == expected
+    assert page.extract_text().split() == expected
+
+
+@pytest.mark.parametrize(
+    "operator",
+    [b"/X Tz", b"/X Tc", b"/X Ts", b"/X Tw", b"/X TL T*", b"/X /Y Td", b"/X 0 0 1 0 0 Tm"],
+)
+def test_layout_mode_text_operator_with_a_non_numeric_operand(operator: bytes) -> None:
+    """A text or positioning operator whose operand is not a number is treated as having none
+    in layout mode too, matching plain mode, and the text around it is kept.
+    """
+    content = b"BT /F1 12 Tf 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert "Hello" in page.extract_text(extraction_mode="layout")
+    assert "World" in page.extract_text(extraction_mode="layout")
+
+
+@pytest.mark.parametrize(
+    "operator",
+    [
+        pytest.param(b"Tc", id="Tc"),
+        pytest.param(b"Tw", id="Tw"),
+        pytest.param(b"Tz", id="Tz"),
+        pytest.param(b"Ts", id="Ts"),
+        pytest.param(b"TL T*", id="TL"),
+    ],
+)
+def test_layout_mode_text_state_operator_without_operands(operator: bytes) -> None:
+    """A text state operator without an operand leaves the parameter unchanged in layout mode,
+    matching plain mode, and the text around it is kept.
+    """
+    content = b"BT /F1 12 Tf 72 700 Td (Hello) Tj " + operator + b" (World) Tj ET"
+    page = PdfReader(_page_with_helvetica(content)).pages[0]
+    assert page.extract_text() == "HelloWorld"
+    text = page.extract_text(extraction_mode="layout")
+    assert "Hello" in text
+    assert "World" in text
 
 
 def test_process_operation__cm_multiplication_issue():
@@ -877,12 +1025,14 @@ def test_page__extract_text__xform__self_references(caplog):
 @pytest.mark.parametrize(
     ("raw_bytes", "expected_text"),
     [
-        # Truncated 1-byte payload triggers UnicodeDecodeError -> fallback to surrogateescape
-        (b"\xff", "\udcff"),
+        # Truncated 1-byte payload triggers UnicodeDecodeError -> fallback to replace
+        (b"\xff", "\ufffd"),
         # Isolated high surrogate (U+D800) in UTF-16-BE -> decoded directly via surrogatepass
         (b"\xd8\x00", "\ud800"),
+        # Truncated byte below 0x80 -> fallback to replace
+        (b"\x4e\x2d\x41", "中\ufffd"),
     ],
-    ids=["truncated_byte_surrogateescape", "unpaired_surrogatepass"],
+    ids=["truncated_byte_replace", "unpaired_surrogatepass", "truncated_ascii_byte_replace"],
 )
 def test_text_state_params__unicode_decode_error(raw_bytes, expected_text):
     font_dictionary = DictionaryObject({
@@ -905,6 +1055,53 @@ def test_text_state_params__unicode_decode_error(raw_bytes, expected_text):
 
     assert parameters._raw_chars == expected_text
     assert parameters.text == expected_text
+
+
+@pytest.mark.parametrize(
+    ("raw_bytes", "expected_text"),
+    [
+        # Complete UTF-16-BE code units -> decoded directly
+        (b"\x4e\x2d\x65\x87", "中文"),
+        # Isolated high surrogate (U+D800) -> decoded directly via surrogatepass
+        (b"\xd8\x00", "\ud800"),
+        # Odd byte count triggers UnicodeDecodeError -> fallback to replace
+        (b"\x4e\x2d\xc1", "中\ufffd"),
+        # Truncated byte below 0x80 -> fallback to replace
+        (b"\x4e\x2d\x41", "中\ufffd"),
+    ],
+    ids=[
+        "complete_code_units",
+        "unpaired_surrogatepass",
+        "truncated_byte_replace",
+        "truncated_ascii_byte_replace",
+    ],
+)
+def test_get_text_operands__unicode_decode_error(raw_bytes, expected_text):
+    """UniGB-UTF16-H without /ToUnicode decodes through the predefined CMap only."""
+    font_dictionary = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/STSong-Light"),
+        NameObject("/Encoding"): NameObject("/UniGB-UTF16-H"),
+        NameObject("/DescendantFonts"): ArrayObject([
+            DictionaryObject({
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/CIDFontType0"),
+                NameObject("/BaseFont"): NameObject("/STSong-Light"),
+                NameObject("/DW"): NumberObject(1000),
+            })
+        ]),
+    })
+    font = Font.from_font_resource(font_dictionary)
+    assert font.encoding == "utf-16-be"
+
+    identity = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+    text, is_str_operands, *_ = get_text_operands(
+        [raw_bytes], identity, identity, font, (0, 90, 180, 270)
+    )
+
+    assert text == expected_text
+    assert is_str_operands is False
 
 
 @pytest.mark.timeout(5)
@@ -1301,6 +1498,11 @@ def test_line_breaks_with_scaled_current_matrix() -> None:
             id="horizontal-scaling-of-character-spacing",
         ),
         pytest.param(
+            b"300 Tz [(A) -100 (B)] TJ 100 Tz 1 0 0 1 124.124 700 Tm (C) Tj",
+            "ABC",
+            id="horizontal-scaling-of-tj-offset",
+        ),
+        pytest.param(
             b"2 Tw (A B) Tj 0 Tw 1 0 0 1 96.844 700 Tm (C) Tj", "A B C", id="real-gap-after-word-spacing"
         ),
     ],
@@ -1322,7 +1524,7 @@ def test_character_and_word_spacing_count_towards_the_advance(content: bytes, ex
     ],
 )
 def test_get_text_operands__counts_character_codes(
-    encoding: Union[str, dict[int, str]], operand: bytes, expected: tuple[int, int]
+    encoding: str | dict[int, str], operand: bytes, expected: tuple[int, int]
 ) -> None:
     """Character codes and single-byte codes 32 are counted per code, not per byte or decoded character."""
     font = Font(name="Test", encoding=encoding, character_map={}, character_widths={"default": 500})
@@ -1346,7 +1548,29 @@ def test_wrapped_table_cell_line_is_not_split():
             b"1 0 0 1 100 706 Tm (BBB) Tj ET"
         )
     ).pages[0].extract_text()
-    assert [line for line in text.splitlines() if "LBL" in line] == ["LBL AAABBB"]
+    # The invariant from #4130 is that both cell lines stay on the label's line;
+    # the space between the words is the separate #4254 fix.
+    lines = [line for line in text.splitlines() if "LBL" in line]
+    assert len(lines) == 1
+    assert lines[0].split() == ["LBL", "AAA", "BBB"]
+
+
+def test_wrapped_table_cell_lines_are_separated():
+    """Wrapped cell lines must not be glued together. Regression #4254."""
+    # The second line of each cell moved to another baseline but is kept on the
+    # label's line by the line span, so it needs the space the horizontal gap
+    # test alone cannot provide.
+    text = PdfReader(
+        _page_with_helvetica(
+            b"BT /F1 10 Tf "
+            b"1 0 0 1 72 700 Tm (Row) Tj "
+            b"1 0 0 1 160 706 Tm (Alpha) Tj "
+            b"1 0 0 1 160 694 Tm (Beta) Tj "
+            b"1 0 0 1 240 706 Tm (Gamma) Tj "
+            b"1 0 0 1 240 694 Tm (Delta) Tj ET"
+        )
+    ).pages[0].extract_text()
+    assert text == "Row Alpha Beta Gamma Delta"
 
 
 def test_visitor_text_uses_current_text_matrix():
@@ -1507,3 +1731,140 @@ def test_simple_font_character_widths_with_differences_encoding() -> None:
     groups = text_show_operations(ops, page._layout_mode_fonts())
     advance = sum(g["displaced_tx"] - g["tx"] for g in groups)
     assert f"{advance:.1f}" == "25.2"
+
+
+def test_layout_mode_debug_path(tmp_path: Path) -> None:
+    """
+    layout_mode_debug_path is a pypdf feature; the PDF specification does not cover it.
+
+    The page shows "Hello" with the standard font Helvetica (ISO 32000-2:2020, 9.6.2.2),
+    which is not embedded and thus has no font stream that json cannot serialize.
+    """
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf (Hello) Tj ET")).pages[0]
+    assert page.extract_text(extraction_mode="layout", layout_mode_debug_path=tmp_path) == "Hello"
+
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["bt_groups.json", "bts.json", "fonts.json", "tjs.json"]
+    tj_ops = json.loads(tmp_path.joinpath("tjs.json").read_text("utf-8"))
+    assert len(tj_ops) == 1
+    assert "font" not in tj_ops[0]
+    assert tj_ops[0]["text"] == "Hello"
+    assert tj_ops[0]["font_size"] == 12
+
+
+@pytest.mark.parametrize(
+    ("text", "rtl_dir", "text_operands", "character_map", "expected", "expected_visited"),
+    [
+        pytest.param("", False, "abc", {}, ("abc", False, ""), [], id="left-to-right"),
+        pytest.param("", False, "\u05d0\u05d1\u05d2", {}, ("\u05d2\u05d1\u05d0", True, ""), [""], id="right-to-left"),
+        pytest.param(
+            "x",
+            False,
+            "ab \u05d0\u05d1, cd",
+            {},
+            ("cd", False, "xab  ,\u05d1\u05d0"),
+            ["xab ", " ,\u05d1\u05d0"],
+            id="direction-changes",
+        ),
+        pytest.param(
+            "\u05d0",
+            True,
+            "\x01\u05d1.",
+            {"\x01": "XY"},
+            (".\u05d1XY\u05d0", True, ""),
+            [],
+            id="byte-sequence-in-right-to-left-run",
+        ),
+    ],
+)
+def test_get_display_str(text, rtl_dir, text_operands, character_map, expected, expected_visited):
+    visited = []
+    font = Font(name="Test", encoding="charmap", character_map=character_map)
+
+    result = get_display_str(
+        text, [1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 0, 0], None, font, text_operands, 12, rtl_dir,
+        lambda visited_text, *_: visited.append(visited_text),
+    )
+
+    assert result == expected
+    assert visited == expected_visited
+
+
+def test_extract_text__content_without_text_operators_is_not_parsed() -> None:
+    """
+    extract_text() does not parse a content stream that cannot add text.
+
+    Text is only added by the text-showing operators (ISO 32000-2:2020, 9.4.3,
+    Table 107) and by Do, which can paint a form XObject with text (8.8.1,
+    Table 86). Content without them gives an empty string anyway.
+    """
+    # A gray rectangle, as in a figure: only color, path construction and painting.
+    page = PdfReader(_page_with_helvetica(b"0.5 g 10 10 100 100 re f")).pages[0]
+
+    with mock.patch.object(ContentStream, "_parse_content_stream", autospec=True) as parse:
+        assert page.extract_text() == ""
+
+    parse.assert_not_called()
+
+
+@pytest.mark.parametrize("visitor", ["visitor_operand_before", "visitor_operand_after", "visitor_text"])
+def test_extract_text__content_without_text_operators_is_parsed_for_visitors(visitor: str) -> None:
+    """extract_text() parses a content stream that cannot add text if a visitor is given."""
+    page = PdfReader(_page_with_helvetica(b"0.5 g 10 10 100 100 re f")).pages[0]
+
+    with mock.patch.object(
+        ContentStream, "_parse_content_stream", autospec=True, side_effect=ContentStream._parse_content_stream
+    ) as parse:
+        assert page.extract_text(**{visitor: lambda *_: None}) == ""
+
+    parse.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("build_page", "content"),
+    [
+        pytest.param(_page_with_helvetica, b"BT /F1 12 Tf (Hello) Tj ET", id="Tj"),
+        pytest.param(_page_with_helvetica, b"BT /F1 12 Tf [(Hello)] TJ ET", id="TJ"),
+        pytest.param(_page_with_helvetica, b"BT /F1 12 Tf 14 TL (Hello) ' ET", id="'"),
+        pytest.param(_page_with_helvetica, b'BT /F1 12 Tf 14 TL 0 0 (Hello) " ET', id='"'),
+        # The page only contains "/Fx Do"; the text is in the form XObject.
+        pytest.param(
+            lambda content: _page_with_form_xobject(b"/Fx Do", [1, 0, 0, 1, 0, 0], content),
+            b"BT /F1 12 Tf (Hello) Tj ET",
+            id="Do",
+        ),
+    ],
+)
+def test_extract_text__each_text_operator(build_page: Callable[[bytes], BytesIO], content: bytes) -> None:
+    """
+    extract_text() extracts the text of each operator that can add text.
+
+    These are the text-showing operators (ISO 32000-2:2020, 9.4.3, Table 107)
+    and Do with a form XObject (8.8.1, Table 86).
+    """
+    assert PdfReader(build_page(content)).pages[0].extract_text() == "Hello"
+
+
+@pytest.mark.enable_socket
+def test_word_continued_on_a_line_with_character_spacing_stays_one_word() -> None:
+    """
+    A word split over two text-showing operators on a line with character spacing stays one word.
+
+    ISO 32000-2:2020, 9.3.2 (character spacing) and 9.4.4 (text space details).
+    """
+    url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "The channel between the reader" in reader.pages[113].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_word_gap_before_a_symbol_in_another_font_is_a_space() -> None:
+    """
+    A word gap before a symbol set in another font is extracted as a space.
+
+    ISO 32000-2:2020, 9.4.2 (text-positioning operators) and 9.4.4 (text space details).
+    """
+    url = "https://arxiv.org/pdf/1602.06541.pdf"
+    name = "1602.06541.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert "an MRF and C be the set" in reader.pages[7].extract_text()

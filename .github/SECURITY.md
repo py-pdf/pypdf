@@ -30,3 +30,4 @@ Additional aspects to consider:
 * Please remain available for further requests from our side.
 * Issues related to vulnerable OS or third-party libraries, as well as improper library usage
   from our users, are usually not considered security issues on our side.
+* **Pure performance issues** should be reported publicly.

@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from itertools import groupby
 from math import ceil
 from pathlib import Path
-from typing import Any, Literal, Optional, TypedDict
+from typing import Any, Literal, TypedDict
 
 from ..._utils import logger_warning
 from ...generic import ArrayObject
@@ -40,6 +40,25 @@ class BTGroup(TypedDict):
     text: str
     displaced_tx: float
     flip_sort: Literal[-1, 1]
+
+
+def set_font_operation(state_mgr: TextStateManager, fonts: dict[str, Font], operands: list[Any]) -> None:
+    """
+    Apply a Tf (Set font and size) operation to a text state manager.
+
+    A missing font name resolves the same uninterpretable placeholder font as
+    an unknown one (see resolve_font()). A missing or non-numeric size leaves
+    the current size in place, matching the ROB handling of plain-mode Tf.
+
+    Args:
+        state_mgr: the text state manager to update
+        fonts: font dictionary as returned by PageObject._layout_mode_fonts()
+        operands: the Tf operator's operands: [name, size]
+
+    """
+    name = operands[0] if operands else ""
+    size = state_mgr._as_float(operands[1] if len(operands) > 1 else None, state_mgr.font_size)
+    state_mgr.set_font(resolve_font(fonts, name), size)
 
 
 def resolve_font(fonts: dict[str, Font], name: str) -> Font:
@@ -87,6 +106,14 @@ def bt_group(tj_op: TextStateParams, rendered_text: str, displaced_tx: float) ->
         displaced_tx=displaced_tx,
         flip_sort=-1 if tj_op.flip_vertical else 1,
     )
+
+
+def _show_text_operand(
+    operands: list[Any], index: int, text_state_mgr: TextStateManager, tj_ops: list[TextStateParams]
+) -> None:
+    """Show the operand at index like Tj if it is a string. A missing or non-string operand shows no text."""
+    if index < len(operands) and isinstance(text := operands[index], (str, bytes)):
+        tj_ops.append(text_state_mgr.text_state_params(text))
 
 
 def recurse_to_target_op(
@@ -193,20 +220,18 @@ def recurse_to_target_op(
                     bt_groups.append(bt_group(tj_ops[bt_idx], _text, last_displaced_tx))
                 text_state_mgr.reset_tm()
             break
-        if op == b"q":
+        if op == b"q" or (op == b"BT" and end_target == b"Q"):
             bts, tjs = recurse_to_target_op(
-                ops, text_state_mgr, b"Q", fonts, strip_rotated
+                ops, text_state_mgr, b"ET" if op == b"BT" else b"Q", fonts, strip_rotated
             )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
         elif op == b"cm":
             text_state_mgr.add_cm(*operands)
         elif op == b"BT":
-            bts, tjs = recurse_to_target_op(
-                ops, text_state_mgr, b"ET", fonts, strip_rotated
-            )
-            bt_groups.extend(bts)
-            tj_ops.extend(tjs)
+            # text objects cannot be nested and end at the first ET: a BT inside
+            # one only resets the text matrix, as in plain mode
+            text_state_mgr.reset_tm()
         elif op == b"Tj" and operands and isinstance(operands[0], (str, bytes)):
             tj_ops.append(text_state_mgr.text_state_params(operands[0]))
         elif op == b"TJ" and operands and isinstance(operands[0], ArrayObject):
@@ -219,26 +244,29 @@ def recurse_to_target_op(
                 else:
                     text_state_mgr.add_trm(_tj.displacement_matrix(td_offset=tj_op))
         elif op == b"'":
+            # Move to the next line, then show the string if there is one, like Tj
             text_state_mgr.reset_trm()
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            tj_ops.append(text_state_mgr.text_state_params(operands[0]))
-        elif op == b'"':
+            _show_text_operand(operands, 0, text_state_mgr, tj_ops)
+        elif op == b'"' and len(operands) >= 3:
             text_state_mgr.reset_trm()
             text_state_mgr.set_state_param(b"Tw", operands[0])
             text_state_mgr.set_state_param(b"Tc", operands[1])
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
-            tj_ops.append(text_state_mgr.text_state_params(operands[2]))
+            _show_text_operand(operands, 2, text_state_mgr, tj_ops)
         elif op in (b"Td", b"Tm", b"TD", b"T*"):
             text_state_mgr.reset_trm()
             if op == b"Tm":
                 text_state_mgr.reset_tm()
-            elif op == b"TD":
+            elif op == b"TD" and len(operands) >= 2 and isinstance(operands[1], (int, float)):
+                # a missing or non-numeric ty leaves the leading unchanged; the
+                # translation itself is handled like Td below
                 text_state_mgr.set_state_param(b"TL", -operands[1])
             elif op == b"T*":
                 operands = [0, -text_state_mgr.TL]
             text_state_mgr.add_tm(operands)
         elif op == b"Tf":
-            text_state_mgr.set_font(resolve_font(fonts, operands[0]), operands[1])
+            set_font_operation(text_state_mgr, fonts, operands)
         else:  # handle Tc, Tw, Tz, TL, and Ts operators
             text_state_mgr.set_state_param(op, operands)
     else:
@@ -251,7 +279,7 @@ def recurse_to_target_op(
 
 
 def y_coordinate_groups(
-    bt_groups: list[BTGroup], debug_path: Optional[Path] = None
+    bt_groups: list[BTGroup], debug_path: Path | None = None
 ) -> dict[int, list[BTGroup]]:
     """
     Group text operations by rendered y coordinate, i.e. the line number.
@@ -302,7 +330,7 @@ def text_show_operations(
     ops: Iterator[tuple[list[Any], bytes]],
     fonts: dict[str, Font],
     strip_rotated: bool = True,
-    debug_path: Optional[Path] = None,
+    debug_path: Path | None = None,
 ) -> list[BTGroup]:
     """
     Extract text from BT/ET operator pairs.
@@ -328,7 +356,7 @@ def text_show_operations(
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
         elif op == b"Tf":
-            state_mgr.set_font(resolve_font(fonts, operands[0]), operands[1])
+            set_font_operation(state_mgr, fonts, operands)
         else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
             state_mgr.set_state_param(op, operands)
 

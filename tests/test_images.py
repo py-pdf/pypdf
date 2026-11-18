@@ -4,22 +4,22 @@ Tests which ensure that image extraction works properly go here.
 Typically, tests in here should compare the extracted images count, names,
 and/or the actual image data with the expected value.
 """
-
+import zlib
 from io import BytesIO
 from pathlib import Path
-from typing import Union
 from unittest import mock
 from zipfile import ZipFile
 
 import pytest
-from PIL import Image, ImageChops, ImageDraw
+from PIL import Image, ImageChops, ImageDraw, ImageStat
 
 from pypdf import PageObject, PdfReader, PdfWriter, apply_configuration
 from pypdf._page import ImageFile
-from pypdf.errors import LimitReachedError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
     ArrayObject,
+    ByteStringObject,
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
@@ -28,13 +28,13 @@ from pypdf.generic import (
     NumberObject,
     TextStringObject,
 )
-from pypdf.generic._image_xobject import _handle_flate
+from pypdf.generic._image_xobject import _handle_flate, _xobj_to_image
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
-from .utils import get_image_data
+from .generic.test_image_xobject import _create_image
 
 
-def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
+def open_image(path: Path | Image.Image | BytesIO) -> Image.Image:
     if isinstance(path, Image.Image):
         img = path
     else:
@@ -54,7 +54,7 @@ def image_size(image: Image.Image):
 
 
 def image_similarity(
-    path1: Union[Path, Image.Image, BytesIO], path2: Union[Path, Image.Image, BytesIO]
+    path1: Path | Image.Image | BytesIO, path2: Path | Image.Image | BytesIO
 ) -> float:
     """
     Check image similarity.
@@ -78,14 +78,9 @@ def image_similarity(
 
     # Calculate the Mean Squared Error (MSE)
     diff = ImageChops.difference(image1, image2)
-    pixels = get_image_data(diff)
-
-    if isinstance(pixels[0], tuple):
-        mse = sum(sum((c / 255.0) ** 2 for c in p) for p in pixels) / (
-            len(pixels) * len(pixels[0])
-        )
-    else:
-        mse = sum((p / 255.0) ** 2 for p in pixels) / len(pixels)
+    squared_sums = ImageStat.Stat(diff).sum2
+    value_count = diff.width * diff.height * len(squared_sums)
+    mse = sum(squared_sums) / ((255.0 ** 2) * value_count)
 
     return 1 - mse
 
@@ -450,7 +445,7 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
         print(i.name)
         b=BytesIO()
         i.image.save(b,"JPEG")
-        z.writestr(f"image_{p.page_number}_{ii}_{i.name}",b.getbuffer())
+        z.writestr(f"image_{p.page_number}_{ii}_{i.name}", b.getbuffer())
     """
     url = pdf
     name = pdf_name
@@ -472,11 +467,13 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
 @pytest.mark.enable_socket
 @pytest.mark.timeout(30)
 def test_large_compressed_image():
+    """This test ensures that a small stream which expands past the default limit decodes once the limit is raised."""
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
     reader = PdfReader(
         BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))
     )
-    list(reader.pages[0].images)
+    with apply_configuration(image_maximum_buffer_size=80_000_000):
+        list(reader.pages[0].images)
 
 
 @pytest.mark.timeout(timeout=1, method="thread")
@@ -632,9 +629,9 @@ def test_low_bit_devicergb_image_mode():
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
 
-    # A single-component space must still map to a palette image ("P").
+    # A single-component /DeviceGray space decodes to scaled grayscale ("L").
     gray = _handle_flate((2, 2), bytes([0xF0, 0x0F]), "4bits", "/DeviceGray", 1, "")[0]
-    assert gray.mode == "P"
+    assert gray.mode == "L"
 
 
 def test_low_bit_devicergb_image_without_filter():
@@ -902,36 +899,18 @@ def test_is_inline_image_displayed():
 
 
 @pytest.mark.samples
-def test_inline_images_property_deprecation_warning():
-    """Test that inline_images property emits a deprecation warning."""
+def test_inline_images_property_deprecation_error():
+    """Test that inline_images property emits a deprecation error."""
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
+    with pytest.raises(DeprecationError, match=r"PageObject\.inline_images is deprecated.*"):
         _ = page.inline_images
 
 
 @pytest.mark.samples
-def test_inline_images_property_returns_only_inline():
-    """Test that inline_images returns only images with is_inline=True."""
-    reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
-    page = reader.pages[0]
-
-    # Force-populate inline images
-    _ = list(page.images)
-
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
-        inline = page.inline_images
-
-    assert inline is not None, "Document contains exactly 1 inline image"
-    assert len(inline) == 1, "Document contains exactly 1 inline image"
-    for image_name, image_value in inline.items():
-        assert image_value.is_inline is True, f"Image {image_name} should have is_inline=True"
-
-
-@pytest.mark.samples
-def test_inline_images_setter_clears_cache():
-    """Test that setting inline_images to None clears the cache."""
+def test_inline_images_setter_deprecation_error():
+    """Test that setting inline_images raises a deprecation error."""
     reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
     page = reader.pages[0]
 
@@ -940,28 +919,8 @@ def test_inline_images_setter_clears_cache():
     assert page._content_stream_images is not None
 
     # Clear cache via setter
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
+    with pytest.raises(DeprecationError, match=r"PageObject\.inline_images is deprecated.*"):
         page.inline_images = None
-    assert page._content_stream_images is None
-
-
-@pytest.mark.samples
-def test_inline_images_setter_merges():
-    """Test that setting inline_images to a dict merges into the cache."""
-    reader = PdfReader(SAMPLE_ROOT / "008-reportlab-inline-image/inline-image.pdf")
-    page = reader.pages[0]
-
-    # Force cache population by accessing images
-    _ = list(page.images)
-    original_keys = set(page._content_stream_images.keys())
-
-    # Merge new values
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
-        page.inline_images = {"new_key": page.images[0]}
-    assert page._content_stream_images is not None
-    merged_keys = set(page._content_stream_images.keys())
-    assert original_keys.issubset(merged_keys), "Original keys should be preserved"
-    assert "new_key" in merged_keys, "New key should be added"
 
 
 def test_do_images_stored_as_none_in_cache():
@@ -981,25 +940,6 @@ def test_do_images_stored_as_none_in_cache():
     assert len(do_images) == 1, "Document should contain only 1 Do-referenced image."
     do_image_key = next(iter(do_images.keys()))
     assert do_images[do_image_key] is None, f"Image {do_image_key} should be None (lazy placeholder)"
-
-
-def test_inline_images_skips_none_entries():
-    """Test that inline_images property skips None (Do) entries."""
-    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
-    page = reader.pages[0]
-
-    # Force-populate inline images
-    _ = list(page.images)
-
-    # Access inline_images (suppress deprecation warning)
-    with pytest.warns(DeprecationWarning, match=r"PageObject\.inline_images is deprecated.*"):
-        inline = page.inline_images
-
-    assert inline is not None, "inline_images must not be None after accessing images"
-    assert len(list(inline)) == 0, (
-        "inline_images must not contain non-inline images. "
-        "This document only contains one Do-referenced image."
-    )
 
 
 @pytest.mark.enable_socket
@@ -1047,3 +987,167 @@ def test_images__xobject_is_not_a_dictionary(caplog, value, expected):
 
     assert list(PdfReader(stream).pages[0].images) == []
     assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(NumberObject(1), "Resources are not a dictionary: 1", id="number"),
+        pytest.param(ArrayObject(), "Resources are not a dictionary: []", id="array"),
+        pytest.param(
+            TextStringObject("x"), "Resources are not a dictionary: x", id="string"
+        ),
+    ],
+)
+def test_images__resources_are_not_a_dictionary(caplog, value, expected):
+    """Resources which are not a dictionary give no images and a warning."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    writer.pages[0][NameObject("/Resources")] = value
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert list(PdfReader(stream).pages[0].images) == []
+    assert expected in caplog.text
+
+
+def test_images__inline_image_with_resources_not_a_dictionary(caplog):
+    """An inline image does not need the resources, so it is still returned."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Resources")] = NumberObject(1)
+    content = DecodedStreamObject()
+    content.set_data(b"q 10 0 0 10 0 0 cm BI /W 1 /H 1 /BPC 8 /CS /G ID \x80 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    images = PdfReader(stream).pages[0].images
+    assert len(images) == 1
+    assert images[0].image.size == (1, 1)
+    assert "Resources are not a dictionary: 1" in caplog.text
+
+
+def _create_gray_2x2_image_stream(data: bytes, filter_name: str) -> DecodedStreamObject:
+    stream = DecodedStreamObject()
+    stream.set_data(data)
+    stream.update(
+        {
+            NameObject("/Width"): NumberObject(2),
+            NameObject("/Height"): NumberObject(2),
+            NameObject("/ColorSpace"): NameObject("/DeviceGray"),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+            NameObject("/Filter"): NameObject(filter_name),
+        }
+    )
+    return stream
+
+
+@pytest.mark.parametrize(
+    ("filter_name", "container_format", "expected_extension"),
+    [
+        # Data without a TIFF/PNG container: raw samples, the format is guessed from the filter.
+        ("/LZWDecode", None, ".tiff"),
+        ("/ASCII85Decode", None, ".png"),
+        # Data with a container: the format is detected by Pillow, regardless of the filter.
+        ("/LZWDecode", "PNG", ".png"),
+        ("/ASCII85Decode", "TIFF", ".tiff"),
+        ("/LZWDecode", "TIFF", ".tiff"),
+        ("/ASCII85Decode", "PNG", ".png"),
+    ],
+)
+def test_xobj_to_image__lzw_ascii85_image_format(filter_name, container_format, expected_extension):
+    samples = bytes([0, 64, 128, 255])
+    if container_format is None:
+        data = samples
+    else:
+        buffer = BytesIO()
+        Image.frombytes("L", (2, 2), samples).save(buffer, container_format)
+        data = buffer.getvalue()
+
+    extension, image_data, img = _xobj_to_image(_create_gray_2x2_image_stream(data, filter_name))
+
+    assert extension == expected_extension
+    assert img.mode == "L"
+    assert img.size == (2, 2)
+    assert img.tobytes() == samples
+    with Image.open(BytesIO(image_data)) as saved:
+        assert saved.format == expected_extension.lstrip(".").upper()
+        assert saved.tobytes() == samples
+
+
+def test_handle_flate__indexed_cmyk_palette():
+    # CMYK: white, cyan, mid-tone, black
+    lookup = bytes([0, 0, 0, 0,  255, 0, 0, 0,  128, 64, 32, 16,  0, 0, 0, 255])
+    color_space = ArrayObject(
+        [NameObject("/Indexed"), NameObject("/DeviceCMYK"), NumberObject(3), ByteStringObject(lookup)]
+    )
+
+    img = _handle_flate((4, 1), bytes([0, 1, 2, 3]), "P", color_space, 1, "")[0]
+
+    # The palette has to be converted to RGB regardless of the installed Pillow version:
+    # Starting with Pillow 12.2.0, `putpalette(..., rawmode="CMYK")` keeps a CMYK palette.
+    assert img.mode == "RGB"
+    assert [img.getpixel((x, 0)) for x in range(4)] == [
+        (255, 255, 255),
+        (0, 255, 255),
+        (119, 179, 209),
+        (0, 0, 0),
+    ]
+
+
+def test_inline_image__perceptual() -> None:
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=10, height=10)
+
+    image = _create_image(size=(5, 5), mode="RGB")
+    contents = (
+        b"BI\n/BPC 8\n/Intent /Perceptual\n/W 5\n/F /FlateDecode\n/CS /RGB\n/H 5\nID\n"
+        + zlib.compress(image.tobytes())
+        + b"\nEI\n"
+    )
+    stream = ContentStream(stream=None, pdf=writer)
+    stream.set_data(contents)
+
+    page.replace_contents(stream)
+
+    assert len(page.images) == 1
+    assert image_similarity(image, page.images[0].image) > 0.9999
+
+
+def test_inline_image__custom_color_space_resources__not_a_dictionary():
+    """A custom inline-image color space with non-dictionary resources raises the clear input error."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Resources")] = NumberObject(1)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    with pytest.raises(PdfReadError, match=r"^Cannot find resource entry /CS0 for /CS$"):
+        list(PdfReader(stream).pages[0].images)
+
+
+def test_inline_image__custom_color_space__resolved_from_resources():
+    """A custom inline-image color space is resolved through dictionary /Resources."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    resources = DictionaryObject()
+    resources[NameObject("/ColorSpace")] = DictionaryObject(
+        {NameObject("/CS0"): NameObject("/DeviceGray")}
+    )
+    page[NameObject("/Resources")] = resources
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    images = list(PdfReader(stream).pages[0].images)
+    assert len(images) == 1

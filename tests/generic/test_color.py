@@ -1,7 +1,6 @@
 """Test the pypdf.generic.color module"""
 
 from collections.abc import Sequence
-from typing import Optional
 
 import pytest
 
@@ -26,7 +25,7 @@ from pypdf.generic._color import Color
         ((.4,), "gs", ""),
     ]
 )
-def test_color(sequence: Optional[Sequence[float]], operator: Optional[str], outcome: str) -> None:
+def test_color(sequence: Sequence[float] | None, operator: str | None, outcome: str) -> None:
     color = Color.from_normalized_values(sequence, operator)
     if not color:  # This tests the input guards in Color.from_normalized_values()
         assert color is None

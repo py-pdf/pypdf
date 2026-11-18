@@ -6,11 +6,12 @@ Some parts are still in _page.py. In doubt, they will stay there.
 
 import codecs
 import math
-from collections.abc import Mapping
-from typing import Any, Callable, Literal, Optional, Union
+import re
+from collections.abc import Callable, Mapping
+from typing import Any, Literal
 
-from .._utils import is_char_neutral, is_char_rtl
-from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
+from .._utils import RTL_CHARACTER_RANGES, is_char_neutral, is_char_rtl
+from ..generic import ContentStream, DictionaryObject, TextStringObject, encode_pdfdocencoding
 from ..generic._font import Font
 
 CUSTOM_RTL_MIN: str = ""
@@ -19,6 +20,16 @@ CUSTOM_RTL_SPECIAL_CHARS: str = ""
 LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
 UNICODE_LOWER_LIMIT = 0
 UNICODE_UPPER_LIMIT = 0x10FFFF
+RTL_CHARACTER_PATTERN = re.compile("[" + "".join(f"{start}-{end}" for start, end in RTL_CHARACTER_RANGES) + "]")
+
+# The operators that can add text: the text-showing operators (ISO 32000-2:2020,
+# 9.4.3, Table 107) and Do, which can paint a form XObject with text (8.8.1, Table 86).
+# The bytes may also occur in strings, names or inline image data; that only
+# means that the content stream is parsed.
+_TEXT_OPERATORS = (b"Tj", b"TJ", b"Do", b"'", b'"')
+# Searching for their first bytes and comparing the next byte is faster than
+# searching for the alternation Tj|TJ|Do|'|" in content streams with many graphics.
+_TEXT_OPERATOR_START = re.compile(rb"[TD'\"]")
 
 
 class OrientationNotFoundError(Exception):
@@ -26,9 +37,9 @@ class OrientationNotFoundError(Exception):
 
 
 def set_custom_rtl(
-    _min: Union[str, int, None] = "",
-    _max: Union[str, int, None] = "",
-    specials: Union[str, list[int], None] = None,
+    _min: str | int | None = "",
+    _max: str | int | None = "",
+    specials: str | list[int] | None = None,
 ) -> tuple[str, str, str]:
     """
     Change the Right-To-Left and special characters custom parameters.
@@ -75,10 +86,10 @@ def set_custom_rtl(
 
 def mult(
     m: list[float],
-    n: Union[
-        list[float],
-        Mapping[Union[int, Literal["is_text", "is_render"]], Union[float, bool]],
-    ],
+    n: (
+        list[float] |
+        Mapping[int | Literal["is_text", "is_render"], float | bool]
+    ),
 ) -> list[float]:
     return [
         m[0] * n[0] + m[1] * n[2],
@@ -105,16 +116,16 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     cmtm_prev: tuple[list[float], list[float]],
     cmtm_matrix: tuple[list[float], list[float]],
     memo_cmtm: tuple[list[float], list[float]],
-    font_resource: Optional[DictionaryObject],
+    font_resource: DictionaryObject | None,
     orientations: tuple[int, ...],
     output: str,
     font_size: float,
-    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
+    visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None,
     str_widths: float,
     spacewidth: float,
     str_height: float,
-    line_span: Optional[tuple[int, float, float]],
-) -> tuple[str, str, list[float], list[float], Optional[tuple[int, float, float]]]:
+    line_span: tuple[int, float, float] | None,
+) -> tuple[str, str, list[float], list[float], tuple[int, float, float] | None]:
     cm_prev = cmtm_prev[0]
     tm_prev = cmtm_prev[1]
     cm_matrix = cmtm_matrix[0]
@@ -157,7 +168,8 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
         lower, upper = line_span[1], line_span[2]
         distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
     last = (output + text)[-1:]
-    if distance > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
+    threshold = 0.8 * min(str_height * scale_prev_y, font_size * scale_y)
+    if distance > threshold:
         if last not in ("", "\n"):
             output += text + "\n"
             if visitor_text is not None:
@@ -171,8 +183,12 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
             text = ""
         line_span = (axis_index, axis, axis)
     else:
+        # A fragment kept on this line only by the line span moved to another
+        # baseline, so comparing its horizontal gap with the previous fragment
+        # would miss the word separation (#4254).
+        moved_to_other_baseline = abs(moved_height) > threshold
         if (
-            (moved_width >= (spacewidth + str_widths) * scale_prev_x)
+            (moved_to_other_baseline or moved_width >= (spacewidth + str_widths) * scale_prev_x)
             and last not in ("", " ")
         ):
             text += " "
@@ -185,7 +201,7 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     return text, output, cm_prev, tm_prev, line_span
 
 
-def _count_codes(operand: Union[str, bytes], text: str, font: Font) -> tuple[int, int]:
+def _count_codes(operand: str | bytes, text: str, font: Font) -> tuple[int, int]:
     """
     Count the character codes of a shown string and the single-byte codes 32 in it.
 
@@ -215,7 +231,7 @@ def _count_codes(operand: Union[str, bytes], text: str, font: Font) -> tuple[int
 
 
 def get_text_operands(
-    operands: list[Union[str, TextStringObject]],
+    operands: list[str | TextStringObject],
     cm_matrix: list[float],
     tm_matrix: list[float],
     font: Font,
@@ -246,7 +262,7 @@ def get_text_operands(
                     text = tt.decode(font.encoding, "surrogatepass")
                 except UnicodeDecodeError:
                     # Fallback for odd byte counts or unmapped 16-bit GIDs/CIDs
-                    text = tt.decode(font.encoding, "surrogateescape")
+                    text = tt.decode(font.encoding, "replace")
             else:  # Apply dict encoding
                 text = "".join(font.encoding.get(x, chr(x)) for x in tt)
                 raw_characters = "".join(chr(byte) for byte in tt)
@@ -267,12 +283,12 @@ def get_display_str(
     text: str,
     cm_matrix: list[float],
     tm_matrix: list[float],
-    font_resource: Optional[DictionaryObject],
+    font_resource: DictionaryObject | None,
     font: Font,
     text_operands: str,
     font_size: float,
     rtl_dir: bool,
-    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
+    visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None
 ) -> tuple[str, bool, str]:
     """
     Add the characters of ``text_operands`` to ``text`` in display order.
@@ -283,47 +299,79 @@ def get_display_str(
 
     """
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
+    characters = [font.character_map.get(raw_character, raw_character) for raw_character in text_operands]
+    if not rtl_dir and not (CUSTOM_RTL_MIN and CUSTOM_RTL_MAX):
+        # Without a right-to-left character, all characters are appended in order.
+        appended_text = "".join(characters)
+        if RTL_CHARACTER_PATTERN.search(appended_text) is None:
+            return text + appended_text, rtl_dir, ""
+
     completed_text: list[str] = []
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
+    # Characters are only ever prepended in a right-to-left run and appended in a
+    # left-to-right run. Collect them and join once, as building the string one
+    # prepended character at a time takes quadratic time.
+    run_parts = [text]
 
     def clear_character_caches() -> None:
         neutral_cache.clear()
         rtl_cache.clear()
 
-    for raw_character in text_operands:
-        x = font.character_map.get(raw_character, raw_character)
+    def get_run_text() -> str:
+        return "".join(reversed(run_parts)) if rtl_dir else "".join(run_parts)
+
+    for x in characters:
         # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
             if x not in neutral_cache:
                 neutral_cache[x] = is_char_neutral(x, CUSTOM_RTL_SPECIAL_CHARS)
             if neutral_cache[x]:
                 # Cases where the current inserting order is kept
-                text = x + text if rtl_dir else text + x
+                run_parts.append(x)
             else:
                 if x not in rtl_cache:
                     rtl_cache[x] = is_char_rtl(x, CUSTOM_RTL_MIN, CUSTOM_RTL_MAX)
-                if rtl_cache[x]:
-                    # Right-to-left characters
-                    if not rtl_dir:
-                        rtl_dir = True
-                        if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
-                            clear_character_caches()
-                        completed_text.append(text)
-                        text = ""
-                    text = x + text
-                else:
-                    # Left-to-right characters
-                    if rtl_dir:
-                        rtl_dir = False
-                        if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
-                            clear_character_caches()
-                        completed_text.append(text)
-                        text = ""
-                    text = text + x
+                if rtl_cache[x] != rtl_dir:
+                    # The direction changes: right-to-left or left-to-right characters
+                    text = get_run_text()
+                    rtl_dir = rtl_cache[x]
+                    if visitor_text is not None:
+                        visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
+                        clear_character_caches()
+                    completed_text.append(text)
+                    run_parts = []
+                run_parts.append(x)
         else:
             # Treat a sequence of bytes as a neutral character.
-            text = x + text if rtl_dir else text + x
-    return text, rtl_dir, "".join(completed_text)
+            run_parts.append(x)
+    return get_run_text(), rtl_dir, "".join(completed_text)
+
+
+def _has_text_operator(data: bytes) -> bool:
+    """Return whether the bytes contain an operator that can add text."""
+    for match in _TEXT_OPERATOR_START.finditer(data):
+        start = match.start()
+        if data[start : start + 2] in _TEXT_OPERATORS or match[0] in _TEXT_OPERATORS:
+            return True
+    return False
+
+
+def _get_content_stream_for_text(
+    obj: DictionaryObject, pdf: Any, content_key: str | None, *, has_visitor: bool
+) -> ContentStream | None:
+    """
+    Return the content stream to extract text from, or None if it cannot give any text.
+
+    Content without text, e.g. a figure, gives no text either. It is only parsed if
+    a visitor has to see its operators.
+    """
+    try:
+        content = obj[content_key].get_object() if isinstance(content_key, str) else obj
+        if not isinstance(content, ContentStream):
+            content = ContentStream(content, pdf, "bytes")
+    except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
+        return None
+    if not has_visitor and not _has_text_operator(content.get_data()):
+        return None
+    return content

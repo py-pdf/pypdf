@@ -63,6 +63,8 @@ def main() -> None:
 
             try:
                 latest_version = get_latest_version(pkg)
+            except MemoryError:  # pragma: no cover  # TODO: BLE001
+                raise
             except Exception as e:
                 sys.stdout.write(f"  ⚠️  {pkg}: npm lookup failed ({e})\n")
                 continue
@@ -79,6 +81,8 @@ def main() -> None:
             try:
                 latest_bytes = fetch_bytes(latest_url)
                 latest_sri = sri_hash(latest_bytes)
+            except MemoryError:  # pragma: no cover  # TODO: BLE001
+                raise
             except Exception as e:
                 sys.stdout.write(f"  ⚠️  {pkg}: failed to fetch latest file ({e})\n")
                 continue

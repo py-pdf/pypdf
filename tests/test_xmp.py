@@ -7,7 +7,7 @@ import pytest
 import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import LimitReachedError, PdfReadError, XmpDocumentError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError, XmpDocumentError
 from pypdf.generic import ContentStream, NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
@@ -117,6 +117,28 @@ def test_converter_date():
 
     date = pypdf.xmp._converter_date("2021-04-28T12:23:01-03:00")
     assert date == datetime(2021, 4, 28, 15, 23, 1)
+
+
+@pytest.mark.parametrize(
+    ("value", "date_parts"),
+    [
+        ("0000-01-01T00:00:00Z", (0, 1, 1)),
+        ("2024-13-01T00:00:00Z", (2024, 13, 1)),
+        ("2024-02-31T10:00:00Z", (2024, 2, 31, 10)),
+        ("2024-01-01T24:00:00Z", (2024, 1, 1, 24)),
+        ("2024-01-01T00:60:00Z", (2024, 1, 1, 0, 60)),
+        ("2024-01-01T00:00:60.123456Z", (2024, 1, 1, 0, 0, 60, 123456)),
+        ("2024-02-31T10:00:00+00:30", (2024, 2, 31, 10)),
+        ("2024-02-31", (2024, 2, 31)),
+    ],
+)
+def test_converter_date_out_of_range(value, date_parts):
+    """Invalid timestamps retain their value and datetime's specific reason."""
+    with pytest.raises(ValueError) as datetime_exc:
+        datetime(*date_parts)
+    with pytest.raises(ValueError) as exc:
+        pypdf.xmp._converter_date(value)
+    assert str(exc.value) == f"Invalid date {value!r}: {datetime_exc.value}"
 
 
 @pytest.mark.parametrize(
@@ -365,16 +387,14 @@ def test_xmp_information__write_to_stream():
     xmp = writer.xmp_metadata
 
     output = BytesIO()
-    with pytest.warns(
-            DeprecationWarning,
+    with pytest.raises(
+            DeprecationError,
             match=(
-                r"^XmpInformation\.write_to_stream is deprecated and will be removed in pypdf 6\.0\.0\. "
+                r"^XmpInformation\.write_to_stream is deprecated and was removed in pypdf 6\.0\.0\. "
                 r"Use PdfWriter\.xmp_metadata instead\.$"
             )
     ):
         xmp.write_to_stream(output)
-    output_bytes = output.getvalue()
-    assert output_bytes.startswith(b"<<\n/Type /Metadata\n/Subtype /XML\n/Length 2786\n>>\nstream\n<?xpacket begin")
 
 
 def test_pdf_writer__xmp_metadata_setter():
@@ -714,6 +734,43 @@ def test_xmp_information__create_with_writer():
     assert xmp_read.dc_title == {"x-default": "Created with pypdf"}
     assert xmp_read.dc_creator == ["pypdf user"]
     assert xmp_read.pdf_producer == "pypdf library"
+
+
+@pytest.mark.parametrize("packet_end", [None, 'end="r"', 'end="w"', "end='w'", 'end = "w" '])
+def test_xmp_information__update_stream_packet(packet_end):
+    """Metadata updates preserve the packet wrapper without an XML declaration."""
+    original = XmpInformation.create().stream.get_data()
+    if packet_end is None:
+        original = original[original.index(b"<x:xmpmeta"):original.index(b"<?xpacket end")]
+    else:
+        original = original.replace(b'end="r"', packet_end.encode())
+    original = b'<?xml version="1.0" encoding="utf-8"?><!--preserved--><?other value?>' + original
+    stream = StreamObject()
+    stream.set_data(original)
+    xmp = XmpInformation(stream)
+    title = {"x-default": "Title with <markup> & caf\u00e9 \u65e5\u672c\u8a9e"}
+
+    xmp.dc_title = title
+    first_update = xmp.stream.get_data()
+    xmp.dc_title = title
+    assert xmp.stream.get_data() == first_update
+    assert b"<?xml " not in first_update
+    assert first_update.startswith(b"<!--preserved--><?other value?>")
+    if packet_end is None:
+        assert b"<?xpacket" not in first_update
+    else:
+        assert b'<?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>' in first_update
+        assert first_update.endswith(b'<?xpacket end="r"?>')
+
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.xmp_metadata = xmp
+    output = BytesIO()
+    writer.write(output)
+    reread = PdfReader(output).xmp_metadata
+    assert reread is not None
+    assert reread.dc_title == title
+    assert reread.stream.get_data() == first_update
 
 
 def test_xmp_information__namespace_prefix():

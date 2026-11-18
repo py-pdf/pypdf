@@ -7,16 +7,17 @@ import sys
 from io import BytesIO
 from operator import itemgetter
 from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter, apply_configuration
-from pypdf._utils import _TraversalState
-from pypdf.errors import LimitReachedError, PdfReadError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
+    ContentStream,
     DictionaryObject,
     EmbeddedFile,
     EncodedStreamObject,
@@ -1361,8 +1362,8 @@ def test_outline__reads_a_well_formed_outline():
     writer = PdfWriter()
     for _ in range(2):
         writer.add_blank_page(width=72, height=72)
-    writer.add_outline_item("Chapter 1", 0)
-    writer.add_outline_item("Chapter 2", 1)
+    writer.add_outline_item(title="Chapter 1", page_number=0)
+    writer.add_outline_item(title="Chapter 2", page_number=1)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -1597,7 +1598,7 @@ def test_outline__reads_a_well_formed_outlines_entry():
     writer = PdfWriter()
     for _ in range(2):
         writer.add_blank_page(width=72, height=72)
-    writer.add_outline_item("Chapter 1", 0)
+    writer.add_outline_item(title="Chapter 1", page_number=0)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -1802,7 +1803,7 @@ def test_get_fields__speed() -> None:
 
 def test_get_fields__stack_deprecation() -> None:
     writer = PdfWriter()
-    message = r"^stack is deprecated and will be removed in pypdf 7\.0\.0\.$"
+    message = r"^stack is deprecated and was removed in pypdf 7\.0\.0\.$"
 
     fields = [DictionaryObject({NameObject("/Key"): NumberObject(i)}) for i in range(2)]
     tree = DictionaryObject({
@@ -1815,50 +1816,8 @@ def test_get_fields__stack_deprecation() -> None:
     build_mock.assert_not_called()
 
     # Parameter set to `None` and not `retval`.
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
+    with pytest.raises(expected_exception=DeprecationError, match=message):
         writer.get_fields(tree=tree, stack=None)
-    build_mock.assert_not_called()
-
-    # Parameter set to `None` and `retval`.
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
-        writer.get_fields(tree=tree, retval={}, stack=None)
-    build_mock.assert_has_calls(
-        [
-            mock.call(
-                field=fields[0], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=set(), depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-            mock.call(
-                field=fields[1], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=set(), depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-        ],
-        any_order=False
-    )
-    assert build_mock.call_count == 2
-
-    # Parameter set to something meaningful and `retval`.
-    stack = [object(), object()]
-    with pytest.warns(expected_warning=DeprecationWarning, match=message), \
-            mock.patch("pypdf._doc_common.PdfDocCommon._build_field") as build_mock:
-        writer.get_fields(tree=tree, retval={}, stack=stack)
-    expected_visited = {id(entry) for entry in stack}
-    build_mock.assert_has_calls(
-        [
-            mock.call(
-                field=fields[0], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=expected_visited, depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-            mock.call(
-                field=fields[1], retval={}, fileobj=None, field_attributes=mock.ANY,
-                visited=expected_visited, depth=0, traversal_state=_TraversalState(entry_count=2, has_logged=False)
-            ),
-        ],
-        any_order=False
-    )
-    assert build_mock.call_count == 2
 
 
 def test_get_fields__field_count() -> None:
@@ -1933,3 +1892,140 @@ def test_get_fields__nesting_depth() -> None:
     with apply_configuration(form_fields_maximum_depth=1), \
             pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum allowed form field depth\.$"):
         writer.get_fields(retval={}, tree=tree, _visited=set())
+
+
+def _build_deep_named_dest_writer(depth: int) -> PdfWriter:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    leaf = DictionaryObject()
+    leaf[NameObject("/Names")] = ArrayObject(
+        [
+            NameObject("/dest1"),
+            ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")]),
+        ]
+    )
+    current = writer._add_object(leaf)
+    for _ in range(depth - 1):
+        node = DictionaryObject()
+        node[NameObject("/Kids")] = ArrayObject([current])
+        current = writer._add_object(node)
+
+    names = DictionaryObject()
+    names[NameObject("/Dests")] = current
+    writer._root_object[NameObject("/Names")] = writer._add_object(names)
+    return writer
+
+
+def test_named_destinations__maximum_depth() -> None:
+    writer = _build_deep_named_dest_writer(depth=5)
+    with apply_configuration(named_destinations_maximum_depth=2), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^Maximum named destination depth exceeded:",
+            ):
+        _ = writer.named_destinations
+
+
+def test_named_destinations__maximum_entries() -> None:
+    writer = _build_deep_named_dest_writer(depth=10)
+    with apply_configuration(named_destinations_maximum_entries=3), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^Maximum named destination entry limit exceeded:",
+            ):
+        _ = writer.named_destinations
+
+
+def test_named_destinations__within_limits() -> None:
+    writer = _build_deep_named_dest_writer(depth=3)
+    with apply_configuration(
+        named_destinations_maximum_depth=100,
+        named_destinations_maximum_entries=100_000,
+    ):
+        dests = writer.named_destinations
+    assert "dest1" in dests or "/dest1" in dests
+
+
+def test_get_num_pages__forged_count_after_decrypt():
+    """The unvalidated /Pages /Count must not be used once the document is decrypted."""
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    pages = cast(DictionaryObject, writer.root_object["/Pages"])
+    pages[NameObject("/Count")] = NumberObject(42)
+    writer.encrypt("")
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    reader = PdfReader(stream)
+    reader.decrypt("")
+    assert len(reader.pages) == 1
+    assert reader.page_labels == ["1"]
+
+
+@pytest.mark.timeout(5)
+def test_flatten__page_tree_maximum_page_entries() -> None:
+    page_key_count = pages_per_intermediate_node = top_level_child_count = 200
+
+    keys = b"".join(b" /K%d 0" % i for i in range(page_key_count))
+    leaf = b"<< /Type /Page /MediaBox [0 0 9 9]" + keys + b" >>"
+    a_kids = b" ".join(b"4 0 R" for _ in range(pages_per_intermediate_node))
+    a_node = b"<< /Type /Pages /Kids [" + a_kids + b"] /Count %d >>" % pages_per_intermediate_node
+    top_kids = b" ".join(b"3 0 R" for _ in range(top_level_child_count))
+    top_node = b"<< /Type /Pages /Kids [" + top_kids + b"] /Count %d >>" % (
+        top_level_child_count * pages_per_intermediate_node
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        top_node,
+        a_node,
+        leaf,
+    ]
+    buf = bytearray(b"%PDF-1.7\n")
+    offsets = []
+    for index, obj in enumerate(objects, start=1):
+        offsets.append(len(buf))
+        buf += b"%d 0 obj\n" % index + obj + b"\nendobj\n"
+    xref_offset = len(buf)
+    buf += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    for offset in offsets:
+        buf += b"%010d 00000 n \n" % offset
+    buf += (
+        b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n"
+        % (len(objects) + 1, xref_offset)
+    )
+    data = bytes(buf)
+
+    reader = PdfReader(BytesIO(data))
+    with pytest.raises(expected_exception=LimitReachedError, match=r"^Maximum page tree page entry limit exceeded!"):
+        _ = len(reader.pages)  # Trigger flattening
+
+
+def test_xfa__work_limit() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+
+    n_fields = 100
+    field_content = b"A" * 1_000
+    fields = []
+    for _ in range(n_fields):
+        stream = ContentStream(stream=None, pdf=None)
+        stream.set_data(field_content)
+        fields.append(writer._add_object(stream))
+
+    xfa = ArrayObject()
+    for index, field in enumerate(fields):
+        xfa.append(TextStringObject(f"tag{index}"))
+        xfa.append(field)
+
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject({
+        NameObject("/XFA"): xfa,
+    })
+
+    with apply_configuration(xfa_decoding_work_maximum_length=5_000), \
+            pytest.raises(
+                expected_exception=LimitReachedError,
+                match=r"^XFA decoding exceeded the maximum accumulated decoding work of 5000 bytes\.$"
+            ):
+        _ = writer.xfa

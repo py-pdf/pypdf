@@ -1,18 +1,21 @@
 """Test the pypdf.generic._image_xobject module."""
 import zlib
 from io import BytesIO
+from typing import Any
 
 import PIL
 import pytest
-from PIL import Image
+from PIL import Image, features
 
-from pypdf import PdfReader
+from pypdf import PdfReader, apply_configuration
 from pypdf._utils import Version
 from pypdf.constants import ColorSpaces, FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
+    DictionaryObject,
+    EncodedStreamObject,
     NameObject,
     NumberObject,
     PdfObject,
@@ -20,15 +23,52 @@ from pypdf.generic import (
     TextStringObject,
 )
 from pypdf.generic._image_xobject import (
+    _convert_image,
+    _create_image_from_buffer,
+    _create_image_from_bytes,
+    _get_allocated_bytes_per_pixel,
     _get_image_mode,
+    _get_mode_and_invert_color,
+    _get_process_colorant_channels,
     _handle_flate,
-    _image_from_bytes,
+    _handle_jpx,
+    _merge_image,
+    _resize_image,
+    _validate_image_size,
     _xobj_to_image,
     bits2byte,
 )
 
 from .. import RESOURCE_ROOT, get_data_from_url
 from ..utils import get_image_data
+
+_OPENJPEG_VERSION = features.version_codec("jpg_2000")
+requires_jpeg2000 = pytest.mark.skipif(
+    condition=_OPENJPEG_VERSION is None, reason="Saving JPEG 2000 images requires Pillow with OpenJPEG"
+)
+requires_cmyk_jpeg2000_saving = pytest.mark.skipif(
+    condition=(
+        Version(PIL.__version__) < Version("11.1.0")
+        or _OPENJPEG_VERSION is None
+        or Version(_OPENJPEG_VERSION) < Version("2.5.3")
+    ),
+    reason="Saving CMYK JPEG 2000 images requires Pillow 11.1.0+ with OpenJPEG 2.5.3+",
+)
+
+
+# A single band value, or one value per band of an RGB, RGBA or CMYK image.
+PixelColor = int | tuple[int, int, int] | tuple[int, int, int, int]
+
+
+def _create_image(
+    mode: str, size: tuple[int, int], *, color: PixelColor = 0, diagonal_color: PixelColor | None = None
+) -> Image.Image:
+    """Create a solid image, optionally with a diagonal line in ``diagonal_color`` from the top left."""
+    image = Image.new(mode=mode, size=size, color=color)
+    if diagonal_color is not None:
+        for i in range(min(size)):
+            image.putpixel((i, i), diagonal_color)
+    return image
 
 
 def _handle_flate_indexed_image_mode_1(base: str, lookup_data: bytes) -> Image.Image:
@@ -199,13 +239,50 @@ def test_handle_flate__image_mode_1_unsupported_base(caplog: pytest.LogCaptureFi
     ) in caplog.text
 
 
-def test_image_from_bytes__zero_data() -> None:
+def test_create_image_from_bytes__zero_data() -> None:
     mode = "RGB"
     size = (1, 1)
     data = b""
 
     with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
-        _image_from_bytes(mode, size, data)
+        _create_image_from_bytes(mode, size, data)
+
+
+def test_device_rgb_mode_is_not_overwritten() -> None:
+    """8-bit /DeviceRGB stays RGB; sub-byte samples stay on the low-bit path (#3367)."""
+    x_object: dict[str, Any] = {
+        "/ColorSpace": NameObject("/DeviceRGB"),
+        "/BitsPerComponent": NumberObject(8),
+    }
+    # The generic lookup cannot map this name, so a regression cannot pass by accident.
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=1, color_space=NameObject("/UnknownSpace")
+    )
+    assert mode == "RGB"
+    assert invert_color is False
+
+    x_object["/BitsPerComponent"] = NumberObject(4)
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=3, color_space=NameObject("/DeviceRGB")
+    )
+    assert mode == "4bits"
+    assert invert_color is False
+
+    stream = DecodedStreamObject()
+    stream.update(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Image"),
+            NameObject("/Width"): NumberObject(1),
+            NameObject("/Height"): NumberObject(1),
+            NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+        }
+    )
+    stream.set_data(b"\xff\x00\x00")
+    image = _xobj_to_image(stream)[2]
+    assert image.mode == "RGB"
+    assert image.getpixel((0, 0)) == (255, 0, 0)
 
 
 def test_handle_flate__autodesk_indexed() -> None:
@@ -255,10 +332,17 @@ def test_get_imagemode__empty_array() -> None:
 
 
 def test_p_image_with_alpha_mask() -> None:
+    """
+    A palette image with an /SMask is converted to RGB with the mask as its alpha channel.
+
+    ISO 32000-2:2020, 8.9.5.1 (Table 87) and 11.6.5.2: the soft-mask image
+    provides the opacity of each sample. pypdf converts the palette image to
+    RGB before adding the alpha channel, and the result is saved as PNG.
+    """
     # Generate the base image. Use TIFF as this is easy to do on the fly.
-    image = Image.new(mode="P", size=(10, 10), color=0)
+    image = _create_image("P", (10, 10))
     image_data = BytesIO()
-    image.save(image_data, format="tiff")
+    image.save(image_data, format="TIFF")
 
     # Set the common values.
     x_object = StreamObject()
@@ -273,14 +357,12 @@ def test_p_image_with_alpha_mask() -> None:
     x_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("palette")
 
     # Generate the mask image. Will be a diagonal white stripe.
-    image = Image.new(mode="1", size=(image.width, image.height))
-    for i in range(10):
-        image.putpixel((i, i), 1)
-    image_data = BytesIO()
-    image.save(image_data, format="tiff")
+    mask = _create_image("1", image.size, diagonal_color=1)
+    mask_data = BytesIO()
+    mask.save(mask_data, format="TIFF")
 
     # Set the mask data.
-    mask_object.set_data(image_data.getvalue())
+    mask_object.set_data(mask_data.getvalue())
     mask_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("1bit")
 
     # Add the mask to the image.
@@ -317,11 +399,14 @@ def test_handle_flate__icc_based__image_mode_1() -> None:
             assert image.getpixel((x, y)) == 255 * int(not is_black_square)
 
 
-@pytest.mark.skipif(
-    condition=Version(PIL.__version__) < Version("12.1.0"),
-    reason="Unsuitable Pillow version."
-)
+@requires_cmyk_jpeg2000_saving
 def test_handle_jpx__explicit_decode() -> None:
+    """
+    An explicit /Decode array is applied to JPEG 2000 samples.
+
+    ISO 32000-2:2020, 8.9.5.2: [1 0] for a component inverts it. 7.4.9 only
+    ignores /Decode when /ColorSpace is absent.
+    """
     stream = StreamObject()
     stream[NameObject("/BitsPerComponent")] = NumberObject(8)
     stream[NameObject("/ColorSpace")] = NameObject("/DeviceCMYK")
@@ -329,20 +414,15 @@ def test_handle_jpx__explicit_decode() -> None:
     stream[NameObject("/Filter")] = NameObject("/JPXDecode")
     stream[NameObject("/Height")] = NumberObject(16)
     stream[NameObject("/Width")] = NumberObject(16)
-
-    image = Image.new(mode="CMYK", size=(16, 16))
-    for i in range(16):
-        image.putpixel((i, i), 255)
+    # Cyan on the diagonal, no ink elsewhere.
     image_data = BytesIO()
-    image.save(image_data, format="JPEG2000")
+    _create_image("CMYK", (16, 16), diagonal_color=255).save(image_data, format="JPEG2000")
     stream.set_data(image_data.getvalue())
-    image.save(image_data, format="JPEG2000")
 
     result = _xobj_to_image(x_object=stream)[2]
     for y in range(16):
         for x in range(16):
             assert result.getpixel((x, y)) == (255 * (x != y), 255, 255, 255), (x, y)
-            assert image.getpixel((x, y)) == (255 * (x == y), 0, 0, 0), (x, y)
 
 
 def test_bits2byte__limit() -> None:
@@ -444,16 +524,119 @@ def test_xobj_to_image__malformed_decode(
     ("mode", "expected"),
     [
         ("1", "8000000000"),
-        ("RGB", "24000000000"),
+        ("RGB", "32000000000"),
         ("CMYK", "32000000000"),
     ],
 )
-def test_image_from_bytes__limit(mode: str, expected: str) -> None:
+def test_create_image_from_bytes__limit(mode: str, expected: str) -> None:
     with pytest.raises(
             expected_exception=LimitReachedError,
             match=rf"^Requested image buffer size {expected} exceeds limit 75000000\.$"
     ):
-        _ = _image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
+        _ = _create_image_from_bytes(mode=mode, size=(100_000, 80_000), data=b"")
+
+
+@pytest.mark.parametrize("mode", ["I", "F"])
+def test_validate_image_size__four_byte_modes(mode: str) -> None:
+    """``I``/``F`` use four bytes per pixel although their name is one character long."""
+    with pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"^Requested image buffer size 100000000 exceeds limit 75000000\.$",
+    ):
+        _validate_image_size(mode=mode, size=(5_000, 5_000))
+
+
+@pytest.mark.parametrize("mode", ["I;16", "I;16B", "I;16L", "I;16N"])
+def test_validate_image_size__16_bit_modes(mode: str) -> None:
+    """16-bit modes use two bytes per pixel, not the length of their name."""
+    assert _validate_image_size(mode=mode, size=(5_000, 5_000)) == (25_000_000, 50_000_000)
+
+
+@pytest.mark.parametrize("mode", ["LA", "La", "PA", "RGB", "YCbCr", "LAB", "HSV"])
+def test_validate_image_size__padded_modes(mode: str) -> None:
+    """This test ensures that modes Pillow pads to four bytes are counted as four."""
+    with pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"^Requested image buffer size 100000000 exceeds limit 75000000\.$",
+    ):
+        _validate_image_size(mode=mode, size=(5_000, 5_000))
+
+
+def test_create_image_from_bytes__samples_are_expanded_per_band() -> None:
+    """This test ensures that raw data is expanded to the number of bands."""
+    image = _create_image_from_bytes(mode="RGB", size=(2, 2), data=b"\x01\x02\x03\x04")
+    assert image.getpixel((0, 0)) == (1, 1, 1)
+
+
+def test_get_allocated_bytes_per_pixel__matches_pillow() -> None:
+    """This test ensures that the estimate covers every mode Pillow reports.
+
+    The values are the ``pixelsize`` Pillow sets in ``ImagingNewPrologueSubtype()``
+    (``src/libImaging/Storage.c``). Comparing the mode set as well makes a mode
+    that a newer Pillow adds show up as a failure instead of silently taking the
+    fallback of four bytes.
+    """
+    expected = {
+        "1": 1,
+        "I;16": 2,
+        "I;16B": 2,
+        "I;16L": 2,
+        "I;16N": 2,
+        "L": 1,
+        "LA": 4,
+        "La": 4,
+        "P": 1,
+        "PA": 4,
+        "RGB": 4,
+        "RGBA": 4,
+        "RGBX": 4,
+        "RGBa": 4,
+        "CMYK": 4,
+        "F": 4,
+        "HSV": 4,
+        "I": 4,
+        "LAB": 4,
+        "YCbCr": 4,
+    }
+    assert set(expected) == set(Image.MODES)
+    for mode, value in expected.items():
+        assert _get_allocated_bytes_per_pixel(mode) == value, mode
+
+
+def test_validate_image_size__unknown_mode_is_not_rejected() -> None:
+    """This test ensures that a missing color space still reaches Pillow.
+
+    ``_get_mode_and_invert_color()`` returns an empty mode when the color space
+    is missing and ``_handle_flate()`` builds an image from it, so the empty mode
+    must not raise here: the data is malformed and Pillow reports it.
+    """
+    assert _validate_image_size(mode="", size=(10, 10)) == (100, 0)
+
+
+def test_create_image_from_buffer__16_bit_png_is_not_rejected() -> None:
+    """A 16-bit PNG within the limit must not be rejected as four bytes per pixel."""
+    buffer = BytesIO()
+    Image.new("I;16", (1_000, 1_000)).save(buffer, format="PNG")
+    buffer.seek(0)
+
+    with apply_configuration(image_maximum_buffer_size=3_000_000):
+        image = _create_image_from_buffer(buf=buffer, formats=("PNG",))
+
+    assert image.mode == "I;16"
+    assert image.size == (1_000, 1_000)
+
+
+def test_create_image_from_buffer__32_bit_tiff_is_limited() -> None:
+    """A 32-bit TIFF is counted as four bytes per pixel instead of one."""
+    buffer = BytesIO()
+    Image.new("I", (1_000, 1_000)).save(buffer, format="TIFF")
+    buffer.seek(0)
+
+    with apply_configuration(image_maximum_buffer_size=3_000_000), pytest.raises(
+        expected_exception=LimitReachedError,
+        match=r"^Requested image buffer size 4000000 exceeds limit 3000000\.$",
+    ):
+        _create_image_from_buffer(buf=buffer, formats=("TIFF",))
 
 
 def _minimal_image_xobject() -> StreamObject:
@@ -511,6 +694,56 @@ def test_xobj_to_image__acyclic_smask_still_applied() -> None:
     assert img.mode == "LA"
 
 
+def test_xobj_to_image__smask_with_different_size(caplog: pytest.LogCaptureFixture) -> None:
+    """A soft mask with other dimensions than its image is scaled to the image size."""
+    image = _minimal_image_xobject()
+    image[NameObject("/Width")] = NumberObject(2)
+    image.set_data(b"\x00\xff")
+    mask = _minimal_image_xobject()
+    mask[NameObject("/Width")] = NumberObject(4)
+    mask[NameObject("/Height")] = NumberObject(2)
+    mask.set_data(b"\x80" * 8)
+    image[NameObject("/SMask")] = mask
+
+    img = _xobj_to_image(image)[2]
+
+    assert img.mode == "LA"
+    assert [img.getpixel((x, 0)) for x in range(2)] == [(0, 128), (255, 128)]
+    assert caplog.messages == []
+
+
+@pytest.mark.parametrize(
+    ("image_size", "mask_size", "mask_data", "expected_alpha"),
+    [
+        ((2, 2), (4, 1), b"\x00\x00\xff\xff", b"\x15\xea\x15\xea"),
+        ((4, 1), (2, 1), b"\x00\xff", b"\x00\x35\xca\xff"),
+        ((2, 1), (8, 1), b"\x00\x00\x00\xff\x00\x00\x00\x00", b"\x32\x1b"),
+    ],
+    ids=["other-aspect-ratio", "upscale", "downscale-thin-line"],
+)
+def test_xobj_to_image__smask_scaled(
+    image_size: tuple[int, int], mask_size: tuple[int, int], mask_data: bytes, expected_alpha: bytes
+) -> None:
+    """
+    A soft mask is stretched over its image in each direction separately.
+
+    ISO 32000-1:2008, 11.6.5.3 (Table 145): both images are mapped to the unit square.
+    """
+    image = _minimal_image_xobject()
+    image[NameObject("/Width")] = NumberObject(image_size[0])
+    image[NameObject("/Height")] = NumberObject(image_size[1])
+    image.set_data(bytes(image_size[0] * image_size[1]))
+    mask = _minimal_image_xobject()
+    mask[NameObject("/Width")] = NumberObject(mask_size[0])
+    mask[NameObject("/Height")] = NumberObject(mask_size[1])
+    mask.set_data(mask_data)
+    image[NameObject("/SMask")] = mask
+
+    img = _xobj_to_image(image)[2]
+
+    assert img.getchannel("A").tobytes() == expected_alpha
+
+
 def test_xobj_to_image__empty_filter_array() -> None:
     """An empty /Filter array means no filter and must not raise IndexError."""
     image = _minimal_image_xobject()
@@ -530,7 +763,7 @@ def test_xobj_to_image__empty_filter_array() -> None:
 def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
     """/DCTDecode data must not be handed to arbitrary Pillow image plugins."""
     data = BytesIO()
-    Image.new("L", (1, 1)).save(data, format=image_format)
+    _create_image("L", (1, 1)).save(data, format=image_format)
     image = _minimal_image_xobject()
     image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.DCT_DECODE)
     image.set_data(data.getvalue())
@@ -539,10 +772,302 @@ def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
         _xobj_to_image(image)
 
     data = BytesIO()
-    Image.new("L", (1, 1)).save(data, format="JPEG")
+    _create_image("L", (1, 1)).save(data, format="JPEG")
     image.set_data(data.getvalue())
 
     extension, _, img = _xobj_to_image(image)
 
     assert extension == ".jpg"
     assert img.format == "JPEG"
+
+
+def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A single-colorant /DeviceN with a /DeviceCMYK alternate is read as inverted gray.
+
+    ISO 32000-2:2020, 8.6.6.5 maps the colorant to the alternate space with a
+    tint transform. pypdf skips that and treats the colorant as gray, warning
+    when it is not /Black.
+    """
+    color_space = ArrayObject([
+        NameObject("/DeviceN"),
+        ArrayObject([NameObject("/Cyan")]),
+        NameObject("/DeviceCMYK"),
+        DictionaryObject(),
+    ])
+    assert _get_image_mode(color_space, 1, "") == ("L", True)
+    assert caplog.messages == ["Color /Cyan converted to Gray. Please share PDF with pypdf dev team"]
+
+
+def _create_device_n(*colorants: str) -> ArrayObject:
+    return ArrayObject([
+        NameObject("/DeviceN"),
+        ArrayObject([NameObject(colorant) for colorant in colorants]),
+        NameObject("/DeviceCMYK"),
+        DictionaryObject(),
+    ])
+
+
+def test_get_process_colorant_channels() -> None:
+    """Only a /DeviceN space made of process colorants is mapped to CMYK channels."""
+    assert _get_process_colorant_channels(_create_device_n("/Black", "/Cyan")) == [3, 0]
+    assert _get_process_colorant_channels(_create_device_n("/Cyan", "/HKS 44 K")) is None
+    assert _get_process_colorant_channels(_create_device_n()) is None
+    assert _get_process_colorant_channels(NameObject("/DeviceCMYK")) is None
+    assert _get_process_colorant_channels(ArrayObject()) is None
+    assert _get_process_colorant_channels(ArrayObject([NameObject("/DeviceN")])) is None
+    names_not_an_array = DictionaryObject({NameObject("/Cyan"): NumberObject(1)})
+    assert _get_process_colorant_channels(ArrayObject([NameObject("/DeviceN"), names_not_an_array])) is None
+
+
+@pytest.mark.parametrize(
+    ("colorants", "lookup_data", "expected_pixels"),
+    [
+        (["/Cyan"], b"\x00\xff", [(255, 255, 255), (0, 255, 255)]),
+        (["/Magenta", "/Black"], b"\x00\x00\xff\x80", [(255, 255, 255), (127, 0, 127)]),
+    ],
+    ids=["cyan", "magenta-black"],
+)
+def test_xobj_to_image__indexed_device_n_process_colorants(
+    caplog: pytest.LogCaptureFixture, colorants: list[str], lookup_data: bytes, expected_pixels: list[Any]
+) -> None:
+    """
+    An /Indexed lookup over a /DeviceN of process colorants is read as CMYK.
+
+    This test is a regression test for issue #3302.
+    """
+    lookup = DecodedStreamObject()
+    lookup.set_data(lookup_data)
+    x_object = EncodedStreamObject()
+    x_object[NameObject(ImageAttributes.WIDTH)] = NumberObject(2)
+    x_object[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
+    x_object[NameObject(ImageAttributes.BITS_PER_COMPONENT)] = NumberObject(8)
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject(
+        [NameObject("/Indexed"), _create_device_n(*colorants), NumberObject(1), lookup]
+    )
+    x_object[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.FLATE_DECODE)
+    x_object._data = zlib.compress(b"\x00\x01")
+
+    img = _xobj_to_image(x_object)[2]
+
+    assert img.mode == "RGB"
+    assert [img.getpixel((x, 0)) for x in range(2)] == expected_pixels
+    assert caplog.messages == []
+
+
+def test_handle_flate__indexed_lookup_stream_with_str_data() -> None:
+    """
+    An /Indexed color table is applied when the lookup stream holds str data.
+
+    ISO 32000-2:2020, 8.6.6.3 allows the lookup to be a stream or a byte
+    string. pypdf encodes str stream data to bytes before using it.
+    """
+    lookup = DecodedStreamObject()
+    # Pass a str on purpose to test the str handling: set_data() is annotated
+    # with bytes, but does not check its argument, so callers can store str.
+    lookup.set_data("abcdef")  # type: ignore[arg-type]
+    color_space = ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup])
+    image = _handle_flate(
+        size=(2, 1), data=b"\x00\x01", mode="P", color_space=color_space, colors=1, obj_as_text="dummy"
+    )[0]
+    assert image.mode == "RGB"
+    assert [image.getpixel((x, 0)) for x in range(2)] == [(97, 98, 99), (100, 101, 102)]
+
+
+def test_handle_flate__icc_based_with_different_component_count() -> None:
+    """
+    An /ICCBased /N that disagrees with the image does not change how its samples are read.
+
+    ISO 32000-2:2020, 8.6.5.5 (Table 65) requires /N to match the profile.
+    pypdf keeps the mode it derived from the image dictionary.
+    """
+    icc_profile = DecodedStreamObject()
+    icc_profile[NameObject("/N")] = NumberObject(1)
+    color_space = ArrayObject([NameObject("/ICCBased"), icc_profile])
+    image = _handle_flate(
+        size=(2, 2), data=bytes(range(12)), mode="RGB", color_space=color_space, colors=3, obj_as_text="dummy"
+    )[0]
+    assert image.size == (2, 2)
+    assert image.tobytes() == bytes(range(12))
+
+
+@requires_cmyk_jpeg2000_saving
+def test_xobj_to_image__jpx_rgba_data_with_cmyk_color_space() -> None:
+    """
+    Four-channel JPEG 2000 data is reinterpreted as CMYK without conversion.
+
+    ISO 32000-2:2020, 7.4.9: a present /ColorSpace determines how the samples
+    are interpreted, and the color space in the JPEG 2000 data is ignored.
+    Pillow decodes this data as RGBA; its bytes are reused as C, M, Y, K. The
+    fourth channel is black, not opacity, even though /SMaskInData defaults to 0.
+    """
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_CMYK)
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
+    data = BytesIO()
+    _create_image("RGBA", (4, 4), color=(1, 2, 3, 4)).save(data, format="JPEG2000")
+    image.set_data(data.getvalue())
+
+    extension, _, img = _xobj_to_image(image)
+
+    assert extension == ".jp2"
+    assert img.mode == "CMYK"
+    assert img.getpixel((0, 0)) == (1, 2, 3, 4)
+
+
+@requires_cmyk_jpeg2000_saving
+def test_handle_jpx__cmyk_image_with_icc_based_color_space() -> None:
+    """
+    CMYK JPEG 2000 data with the color space /ICCBased is converted to RGB.
+
+    The color space is the name /ICCBased on its own, without the ICC profile
+    stream that a well-formed [/ICCBased profile] array carries. _xobj_to_image
+    passes this name on for a malformed one-element [/ICCBased] array.
+
+    pypdf-specific, not from ISO 32000-2:2020: Pillow's naive CMYK to RGB
+    formula is used; no ICC profile is applied.
+    """
+    data = BytesIO()
+    _create_image("CMYK", (4, 4)).save(data, format="JPEG2000")
+    image = _handle_jpx(size=(4, 4), data=data.getvalue(), mode="", color_space="/ICCBased", colors=4)[0]
+    assert image.mode == "RGB"
+    assert image.getpixel((0, 0)) == (255, 255, 255)
+
+
+@requires_cmyk_jpeg2000_saving
+@pytest.mark.xfail(
+    reason="Only the name /ICCBased on its own, not an [/ICCBased profile] array, triggers the CMYK to RGB conversion",
+    raises=AssertionError,
+    strict=True,
+)
+def test_xobj_to_image__jpx_cmyk_image_with_icc_based_color_space_array() -> None:
+    """
+    CMYK JPEG 2000 data with an [/ICCBased profile] color space is converted to RGB.
+
+    This is how the color space appears in a well-formed PDF (ISO 32000-2:2020,
+    8.6.5.5), so it should be handled like the name /ICCBased on its own.
+    """
+    icc_profile = DecodedStreamObject()
+    icc_profile[NameObject("/N")] = NumberObject(4)
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = ArrayObject([NameObject("/ICCBased"), icc_profile])
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
+    data = BytesIO()
+    _create_image("CMYK", (4, 4)).save(data, format="JPEG2000")
+    image.set_data(data.getvalue())
+
+    _, _, img = _xobj_to_image(image)
+
+    assert img.mode == "RGB"
+    assert img.getpixel((0, 0)) == (255, 255, 255)
+
+
+_SMASK_IN_DATA_NOT_READ = pytest.mark.xfail(
+    reason="/SMaskInData is not read: the opacity channel is always kept as is", raises=AssertionError, strict=True
+)
+
+
+@requires_jpeg2000
+@pytest.mark.parametrize(
+    ("smask_in_data", "expected_mode", "expected_pixel"),
+    [
+        pytest.param(None, "RGB", (10, 20, 30), marks=_SMASK_IN_DATA_NOT_READ, id="absent-defaults-to-0"),
+        pytest.param(0, "RGB", (10, 20, 30), marks=_SMASK_IN_DATA_NOT_READ, id="0-ignore-opacity"),
+        pytest.param(1, "RGBA", (10, 20, 30, 51), id="1-opacity"),
+        pytest.param(2, "RGBA", (50, 100, 150, 51), marks=_SMASK_IN_DATA_NOT_READ, id="2-premultiplied-opacity"),
+    ],
+)
+def test_xobj_to_image__jpx_smask_in_data(
+    smask_in_data: int | None, expected_mode: str, expected_pixel: tuple[int, ...]
+) -> None:
+    """
+    /SMaskInData decides how an opacity channel in the JPEG 2000 data is used.
+
+    ISO 32000-2:2020, 7.4.9 and 8.9.5.1 (Table 87): 0, the default, ignores it;
+    1 uses it as the soft mask; 2 also uses it, but the color channels have been
+    premultiplied with it. The alpha of 51 = 255 / 5 un-premultiplies (10, 20, 30)
+    exactly to (50, 100, 150).
+    """
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(4)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(4)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_RGB)
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.JPX_DECODE)
+    if smask_in_data is not None:
+        image[NameObject("/SMaskInData")] = NumberObject(smask_in_data)
+    data = BytesIO()
+    _create_image("RGBA", (4, 4), color=(10, 20, 30, 51)).save(data, format="JPEG2000")
+    image.set_data(data.getvalue())
+
+    _, _, img = _xobj_to_image(image)
+
+    assert img.mode == expected_mode
+    assert img.getpixel((0, 0)) == expected_pixel
+
+
+def test_xobj_to_image__jpx_size_limit() -> None:
+    side = 70
+    image = _create_image(mode="RGB", size=(side, side))
+    encoded = BytesIO()
+    image.save(
+        encoded,
+        format="JPEG2000",
+        quality_mode="rates",
+        quality_layers=[100],
+    )
+    image.close()
+
+    x_object = DecodedStreamObject()
+    x_object.set_data(encoded.getvalue())
+    x_object[NameObject("/Type")] = NameObject("/XObject")
+    x_object[NameObject("/Subtype")] = NameObject("/Image")
+    x_object[NameObject("/Width")] = NumberObject(side)
+    x_object[NameObject("/Height")] = NumberObject(side)
+    x_object[NameObject("/ColorSpace")] = NameObject("/DeviceRGB")
+    x_object[NameObject("/BitsPerComponent")] = NumberObject(8)
+    x_object[NameObject("/Filter")] = NameObject("/JPXDecode")
+
+    with apply_configuration(image_maximum_buffer_size=100), \
+            pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 19600 exceeds limit 100\.$"
+            ):
+        _xobj_to_image(x_object=x_object)
+
+
+def test_convert_image() -> None:
+    image = _create_image(mode="RGB", size=(20, 20))
+
+    with apply_configuration(image_maximum_buffer_size=500):
+        _convert_image(image=image, mode="P")
+
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 1600 exceeds limit 500\.$"
+        ):
+            _convert_image(image=image, mode="CMYK")
+
+
+def test_resize_image() -> None:
+    image = _create_image(mode="L", size=(10, 10))
+
+    with apply_configuration(image_maximum_buffer_size=500):
+        _resize_image(image=image, size=(20, 20))
+
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 900 exceeds limit 500\.$"
+        ):
+            _resize_image(image=image, size=(30, 30))
+
+
+def test_merge_image() -> None:
+    with pytest.raises(expected_exception=ValueError, match=r"^wrong number of bands$"):
+        _merge_image(mode="RGB", bands=[])
+
+    with apply_configuration(image_maximum_buffer_size=100), \
+            pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Requested image buffer size 6400 exceeds limit 100\.$"
+            ):
+        _merge_image(mode="RGB", bands=[_create_image(mode="L", size=(40, 40)) for _ in range(3)])

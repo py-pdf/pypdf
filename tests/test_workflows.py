@@ -16,9 +16,9 @@ from PIL import Image, ImageChops
 from PIL import __version__ as pil_version
 
 from pypdf import PdfReader, PdfWriter, Transformation
-from pypdf._utils import Version
+from pypdf._utils import Version, get_stream_data
 from pypdf.actions import JavaScript
-from pypdf.constants import PageAttributes as PG
+from pypdf.constants import PageAttributes
 from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
     ArrayObject,
@@ -130,7 +130,7 @@ def test_pdfreader_jpeg_image():
             imagetext = pdftext_file.read()
 
         page = reader.pages[0]
-        x_object = page[PG.RESOURCES]["/XObject"].get_object()
+        x_object = page[PageAttributes.RESOURCES]["/XObject"].get_object()
         data = x_object["/Im4"].get_data()
 
         # Compare the text of the PDF to a known source
@@ -775,22 +775,24 @@ def test_get_outline(url, name):
 
 @pytest.mark.enable_socket
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "expected_keys"),
     [
         (
             "https://github.com/user-attachments/files/18381707/tika-935981.pdf",
             "tika-935981.pdf",
+            set(),
         ),
         (
             "https://github.com/user-attachments/files/18381709/tika-937334.pdf",
             "tika-937334.pdf",
+            {"PDFSecurity", "config", "datasets", "localeSet", "postamble", "preamble", "template"}
         ),
     ],
 )
-def test_get_xfa(url, name):
+def test_get_xfa(url, name, expected_keys: set[str]):
     data = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(data)
-    reader.xfa
+    assert set(reader.xfa.keys()) == expected_keys
 
 
 @pytest.mark.enable_socket
@@ -940,12 +942,14 @@ def test_extra_test_iss1541():
     stream.seek(0)
     ContentStream(read_object(stream, None, None), None, None).operations
 
-    b = BytesIO(data.getbuffer())
     reader = PdfReader(
-        BytesIO(bytes(b.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
+        BytesIO(get_stream_data(data).replace(b"EI \n", b"E! \n")), strict=False
     )
+    # The page only shows an inline image, so extract_text() does not need to parse it.
+    assert reader.pages[0].extract_text() == ""
+    content_stream = ContentStream(reader.pages[0]["/Contents"], None, None)
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
-        reader.pages[0].extract_text()
+        content_stream.operations
 
 
 @pytest.mark.enable_socket
@@ -1150,7 +1154,7 @@ def test_text_extraction_invalid_mode():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     with pytest.raises(ValueError, match="Invalid text extraction mode"):
-        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
+        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore[arg-type]
 
 
 @pytest.mark.enable_socket

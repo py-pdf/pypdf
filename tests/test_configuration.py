@@ -6,10 +6,10 @@ import pytest
 from pypdf import Configuration, PdfReader, apply_configuration, get_configuration, overwrite_configuration
 from pypdf._configuration import (
     CURRENT_CONFIGURATION,
-    WARNED_LEGACY_OVERWRITES,
     _determine_jbig2dec_binary,
     apply_legacy_configuration,
 )
+from pypdf.errors import DeprecationError
 from tests import RESOURCE_ROOT
 
 
@@ -193,74 +193,56 @@ def test_apply_configuration__nested_exception() -> None:
 
 
 def test_apply_legacy_configuration() -> None:
-    WARNED_LEGACY_OVERWRITES.clear()
-    try:
-        # Nothing changed.
-        with mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock:
-            apply_legacy_configuration()
-        overwrite_mock.assert_not_called()
+    # Nothing changed.
+    with mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock:
+        apply_legacy_configuration()
+    overwrite_mock.assert_not_called()
 
-        # JBIG2 binary changed.
-        with mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/path/to/my/binary"), \
-                pytest.warns(
-                    expected_warning=DeprecationWarning,
-                    match=(
-                            r"^JBIG2DEC_BINARY is deprecated and will be removed in pypdf 7\.0\.0\. "
-                            r"Use Configuration\.jbig2dec_binary instead\.$"
-                    )
-                ), \
-                mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock:
-            apply_legacy_configuration()
-        overwrite_mock.assert_called_once_with(jbig2dec_binary="/path/to/my/binary")
+    # JBIG2 binary changed.
+    with mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/path/to/my/binary"), \
+            pytest.raises(
+                expected_exception=DeprecationError,
+                match=(
+                        r"^JBIG2DEC_BINARY is deprecated and was removed in pypdf 7\.0\.0\. "
+                        r"Use Configuration\.jbig2dec_binary instead\.$"
+                )
+            ), \
+            mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock:
+        apply_legacy_configuration()
+    overwrite_mock.assert_not_called()
 
-        # Second call should not warn.
-        with mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/path2/to/my/binary"), \
-                mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock:
-            apply_legacy_configuration()
-        overwrite_mock.assert_called_once_with(jbig2dec_binary="/path2/to/my/binary")
-
-        # Regular value changed.
-        with mock.patch("pypdf.filters.MAX_DECLARED_STREAM_LENGTH", 42), \
-                pytest.warns(
-                    expected_warning=DeprecationWarning,
-                    match=(
-                            r"^MAX_DECLARED_STREAM_LENGTH is deprecated and will be removed in pypdf 7\.0\.0\. "
-                            r"Use Configuration\.maximum_declared_stream_length instead\.$"
-                    )
-                ), \
-                mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock:
-            apply_legacy_configuration()
-        overwrite_mock.assert_called_once_with(maximum_declared_stream_length=42)
-    finally:
-        WARNED_LEGACY_OVERWRITES.clear()
+    # Regular value changed.
+    with mock.patch("pypdf.filters.MAX_DECLARED_STREAM_LENGTH", 42), \
+            pytest.raises(
+                expected_exception=DeprecationError,
+                match=(
+                        r"^MAX_DECLARED_STREAM_LENGTH is deprecated and was removed in pypdf 7\.0\.0\. "
+                        r"Use Configuration\.maximum_declared_stream_length instead\.$"
+                )
+            ), \
+            mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock:
+        apply_legacy_configuration()
+    overwrite_mock.assert_not_called()
 
 
 def test_apply_legacy_configuration__multiple_overrides(caplog) -> None:
-    WARNED_LEGACY_OVERWRITES.clear()
-    try:
-        with mock.patch("pypdf.filters.MAX_DECLARED_STREAM_LENGTH", 42), \
-                mock.patch("pypdf.filters.LZW_MAX_OUTPUT_LENGTH", 43), \
-                mock.patch("pypdf._page.MERGE_CROP_BOX", "trimbox"), \
-                mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock, \
-                pytest.warns(expected_warning=DeprecationWarning, match=r"^\S+ is deprecated and will be removed .+$"):
-            apply_legacy_configuration()
+    with mock.patch("pypdf.filters.MAX_DECLARED_STREAM_LENGTH", 42), \
+            mock.patch("pypdf.filters.LZW_MAX_OUTPUT_LENGTH", 43), \
+            mock.patch("pypdf._page.MERGE_CROP_BOX", "trimbox"), \
+            mock.patch("pypdf._configuration.overwrite_configuration") as overwrite_mock, \
+            pytest.raises(expected_exception=DeprecationError, match=r"^\S+ is deprecated and was removed .+$"):
+        apply_legacy_configuration()
 
-        overwrite_mock.assert_called_once_with(
-            maximum_declared_stream_length=42,
-            lzw_maximum_output_length=43,
-            page_merge_box="trimbox",
-        )
-    finally:
-        WARNED_LEGACY_OVERWRITES.clear()
+    overwrite_mock.assert_not_called()
 
 
 def test_apply_legacy_configuration__from_reader() -> None:
     with mock.patch(
             "pypdf.filters.MAX_DECLARED_STREAM_LENGTH", get_configuration().maximum_declared_stream_length // 2
-    ), pytest.warns(
-            expected_warning=DeprecationWarning,
+    ), pytest.raises(
+            expected_exception=DeprecationError,
             match=(
-                r"^MAX_DECLARED_STREAM_LENGTH is deprecated and will be removed in pypdf 7\.0\.0\. "
+                r"^MAX_DECLARED_STREAM_LENGTH is deprecated and was removed in pypdf 7\.0\.0\. "
                 r"Use Configuration\.maximum_declared_stream_length instead\.$"
             )
     ):

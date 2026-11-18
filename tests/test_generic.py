@@ -8,13 +8,14 @@ import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
-from typing import Union
+from types import CodeType
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
+from pypdf._utils import get_stream_data
 from pypdf.constants import CheckboxRadioButtonAttributes, OutlineFontFlag
-from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
+from pypdf.errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -36,6 +37,7 @@ from pypdf.generic import (
     TextStringObject,
     TreeObject,
     create_string_object,
+    decode_pdfdocencoding,
     encode_pdfdocencoding,
     is_null_or_none,
     read_hex_string_from_stream,
@@ -202,15 +204,8 @@ def test_read_string_from_stream_escape_digit2():
 
 def test_name_object(caplog):
     stream = BytesIO(b"x")
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(PdfReadError, match=r"^Name read error$"):
         NameObject.read_from_stream(stream, None)
-    assert exc.value.args[0] == "Name read error"
-
-    with pytest.raises(
-        DeprecationError,
-        match=r"surfix is deprecated and was removed in pypdf 5\.0\.0\. Use prefix instead\.",
-    ):
-        _ = NameObject.surfix
 
     assert (
         NameObject.read_from_stream(
@@ -250,32 +245,32 @@ def test_name_object(caplog):
     # test write
     b = BytesIO()
     NameObject("/hello").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/hello"
+    assert get_stream_data(b) == b"/hello"
 
     caplog.clear()
     b = BytesIO()
     with pytest.raises(
-            expected_exception=DeprecationError,
-            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and was"
+            expected_exception=PdfStreamError,
+            match=r"^Incorrect first char in NameObject, should start with '/': \(hello\)$"
     ):
         NameObject("hello").write_to_stream(b)
 
     caplog.clear()
     b = BytesIO()
     NameObject("/DIJMAC+Arial Black#1").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
+    assert get_stream_data(b) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
     caplog.clear()
     b = BytesIO()
     NameObject("/你好世界 (%)").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
+    assert get_stream_data(b) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
     assert caplog.text == ""
 
     caplog.clear()
     b = BytesIO()
     NameObject("/{foo}<bar>(baz)[qux]#/%").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#7Bfoo#7D#3Cbar#3E#28baz#29#5Bqux#5D#23#2F#25"
+    assert get_stream_data(b) == b"/#7Bfoo#7D#3Cbar#3E#28baz#29#5Bqux#5D#23#2F#25"
     assert caplog.text == ""
 
 
@@ -900,7 +895,7 @@ def test_remove_child_in_tree():
     writer = PdfWriter()
     writer._add_object(tree)
     writer.add_page(reader.pages[0])
-    writer.add_outline_item("foo", page_number=0)
+    writer.add_outline_item(title="foo", page_number=0)
     obj = writer._objects[-1]
     tree.add_child(obj, writer)
     tree.remove_child(obj)
@@ -1127,10 +1122,8 @@ def test_create_string_object_force():
         ("1.0", "1"),
         ("0.123000", "0.123"),
         ("0.000123000", "0.000123"),
-        ("0.0", "0.0"),
         ("0", "0.0"),
         ("1", "1"),
-        ("1.0", "1"),
         ("1.01", "1.01"),
         ("1.010", "1.01"),
         ("0000.0000", "0.0"),
@@ -1258,7 +1251,7 @@ def test_cloning_null_obj_keeps_hard_reference():
     assert obj_weakref() is not None
 
 
-def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayObject, DictionaryObject]:
+def _create_direct_objects_container(as_array: bool, size: int) -> ArrayObject | DictionaryObject:
     elements = [NullObject(), BooleanObject(True), NumberObject(1), FloatObject(1.5), NameObject("/A")]
     elements = elements * (size // len(elements))
     if as_array:
@@ -1266,7 +1259,7 @@ def _create_direct_objects_container(as_array: bool, size: int) -> Union[ArrayOb
     return DictionaryObject({NameObject(f"/K{i}"): element for i, element in enumerate(elements)})
 
 
-def _clone_and_count(container: Union[ArrayObject, DictionaryObject], writer: PdfWriter) -> tuple[int, int]:
+def _clone_and_count(container: ArrayObject | DictionaryObject, writer: PdfWriter) -> tuple[int, int]:
     """Clone the container and return the number of Python function calls and raised exceptions."""
     calls = 0
     exceptions = 0
@@ -1762,3 +1755,141 @@ def test_dictionaryobject__length_0_stream():
     output = BytesIO()
     writer.write(output)
     assert b"\n8 0 obj\n<<\n/Length 0\n>>\nstream\n\nendstream\nendobj\n" in output.getvalue()
+
+
+def test_get_inherited_malformed_parent():
+    """A malformed /Parent that is not a dictionary ends the walk with default.
+
+    Regression test for issue #4202: previously a NumberObject parent made
+    get_inherited raise TypeError ("argument of type 'NumberObject' is not
+    iterable"), which surfaced as a crash in extract_text().
+    """
+    parent = DictionaryObject({NameObject("/Rotate"): NumberObject(90)})
+    child = DictionaryObject({NameObject("/Parent"): parent})
+    assert child.get_inherited("/Rotate") == 90
+    assert child.get_inherited("/Missing", "dflt") == "dflt"
+
+    number_parent = DictionaryObject({NameObject("/Parent"): NumberObject(42)})
+    assert number_parent.get_inherited("/Rotate", "dflt") == "dflt"
+    assert number_parent.get_inherited("/Rotate") is None
+
+
+def test_content_stream_replicate__parsed_operations():
+    """The replica of a content stream whose operations were parsed has the same operations."""
+    writer = PdfWriter()
+    content = ContentStream(None, None)
+    content.set_data(b"BT /F1 12 Tf (Hello) Tj ET")
+    operations = list(content.operations)
+    assert operations
+
+    replica = content.replicate(writer)
+
+    assert replica is not content
+    assert replica.operations == operations
+    assert replica.get_data() == content.get_data()
+    assert b"Hello" in replica.get_data()
+
+
+def test_content_stream_replicate__raw_data():
+    """The replica of a content stream that was never parsed has the same data."""
+    writer = PdfWriter()
+    content = ContentStream(None, None)
+    content.set_data(b"q 1 0 0 1 10 10 cm Q")
+
+    replica = content.replicate(writer)
+
+    assert replica.get_data() == b"q 1 0 0 1 10 10 cm Q"
+
+
+@pytest.mark.parametrize(
+    ("input_bytes", "expected_output"),
+    [
+        (b"Hello", "Hello"),
+        (b"", ""),
+        (b"PDF 1.7 Specification", "PDF 1.7 Specification"),
+        (b"Test 123", "Test 123"),
+        (b"\x18\x19\x80\x84\xa0", "\u02d8\u02c7\u2022\u2014\u20ac"),
+    ],
+)
+def test_decode_pdfdocencoding_success(input_bytes, expected_output):
+    """
+    Bytes assigned in PDFDocEncoding decode to their Unicode characters.
+
+    ISO 32000-2:2020, Annex D.3 "PDFDocEncoding character set".
+    """
+    assert decode_pdfdocencoding(input_bytes) == expected_output
+
+
+@pytest.mark.parametrize(
+    ("input_bytes", "expected_start"),
+    [
+        (b"He\x7flo", 2),
+        (b"\x7f", 0),
+        (b"Start\x7fEnd", 5),
+        (b"ABC\x00XYZ", 3),
+        (b"A\x9fB\xadC", 1),
+    ],
+)
+def test_decode_pdfdocencoding_raises_error(input_bytes, expected_start):
+    """
+    An unassigned byte raises a UnicodeDecodeError pointing at the first such byte.
+
+    ISO 32000-2:2020, Annex D.3 "PDFDocEncoding character set".
+    """
+    with pytest.raises(UnicodeDecodeError) as exc_info:
+        decode_pdfdocencoding(input_bytes)
+
+    err = exc_info.value
+    assert err.encoding == "pdfdocencoding"
+    assert err.object == input_bytes
+    assert "does not exist" in err.reason
+    assert (err.start, err.end) == (expected_start, expected_start + 1)
+
+
+def test_decode_pdfdocencoding_performance():
+    """
+    Decoding runs in C, not in a Python loop over the bytes.
+
+    The test counts the executed Python bytecode instructions with sys.monitoring.
+    A loop over the bytes would run more than 100,000 instructions for 10 KB.
+    """
+    if not hasattr(sys, "monitoring"):
+        pytest.skip("sys.monitoring requires Python 3.12+")
+
+    free_tool_ids = [i for i in range(6) if sys.monitoring.get_tool(i) is None]
+    if not free_tool_ids:
+        pytest.skip("No free sys.monitoring tool ID")
+    tool_id = free_tool_ids[-1]
+
+    test_payload = b"A" * 10_000
+    instruction_count = 0
+
+    def instruction_callback(code: CodeType, instruction_offset: int) -> None:
+        nonlocal instruction_count
+        instruction_count += 1
+
+    sys.monitoring.use_tool_id(tool_id, "pypdf-test-instruction-counter")
+    try:
+        sys.monitoring.register_callback(
+            tool_id, sys.monitoring.events.INSTRUCTION, instruction_callback
+        )
+        sys.monitoring.set_events(tool_id, sys.monitoring.events.INSTRUCTION)
+        decode_pdfdocencoding(test_payload)
+    finally:
+        sys.monitoring.set_events(tool_id, sys.monitoring.events.NO_EVENTS)
+        sys.monitoring.register_callback(
+            tool_id, sys.monitoring.events.INSTRUCTION, None
+        )
+        sys.monitoring.free_tool_id(tool_id)
+
+    # Only Python bytecode is counted. decode(), translate() and find() are
+    # implemented in C, so their loops over the characters do not count, and
+    # the number of instructions does not depend on the length of the input.
+    # Python 3.12 to 3.15 count 35 instructions: 21 in decode_pdfdocencoding
+    # and 14 in this test between the set_events() calls. The bytecode can
+    # change in future Python versions, so the limit leaves some headroom.
+    max_allowed_instructions = 100
+    assert instruction_count < max_allowed_instructions, (
+        f"Executed {instruction_count:,} bytecode instructions, "
+        f"expected fewer than {max_allowed_instructions:,}"
+    )

@@ -1,5 +1,122 @@
 # CHANGELOG
 
+## Version 7.1.0, 2026-11-13
+
+### Deprecations (DEP)
+- Deprecate passing a boolean to remove_images (#4412)
+- Make add_outline_item keyword-only (#4401)
+
+### New Features (ENH)
+- Scale a soft mask to the size of its image (#4391)
+
+### Performance Improvements (PI)
+- Do not decode streams to find identical objects (#4424)
+- Speed up the pure-Python RC4 used without a crypto library (#4396)
+- Skip per-character direction checks for left-to-right text in extract_text() (#4395)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.1...7.1.0)
+
+## Version 7.0.1, 2026-11-10
+
+### Security (SEC)
+- Determine image buffer sizes using the actual bytes per pixel (#4374)
+
+### Performance Improvements (PI)
+- Don't parse content streams without text operators in extract_text() (#4346)
+
+### Bug Fixes (BUG)
+- Decode UTF-8 text strings (#4348)
+- Fix page reference lookup for hierarchical page trees in PdfWriter (#4356)
+- Copy the operations in ContentStream.replicate() (#4372)
+- Deal with more rendering intents for inline images (#4383)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.0...7.0.1)
+
+## Version 7.0.0, 2026-11-06
+
+### Security (SEC)
+- Make file identifiers non-deterministic (#4366)
+- Block not strictly increasing offsets in object streams (#4364)
+- Limit XFA form decoding work (#4363)
+- Apply image size limits more strictly (#4361)
+
+### Deprecations (DEP)
+- Cleanup deprecations for the next major release (#4306)
+- Remove support for cryptography<43 (#4304)
+- Drop support for Python 3.9 (#4292)
+
+### New Features (ENH)
+- Allow setting border color for rectangle annotations (#4297)
+
+### Performance Improvements (PI)
+- Speed up LZW decoding for clear table markers (#4354)
+- Build right-to-left text runs with a single join (#4344)
+- Read every page label number tree once for all pages (#4321)
+- Decode the PNG Up predictor a row at a time (#4312)
+
+### Bug Fixes (BUG)
+- Fix cloning of objects that require constructor arguments (#4262)
+- Serialize XMP packets without an XML declaration (#4296)
+
+### Maintenance (MAINT)
+- Generate Symbol and ZapfDingbats encodings from Adobe sources (#4333)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.4...7.0.0)
+
+## Version 6.21.4, 2026-10-28
+
+### Security (SEC)
+- Limit the number of copied page attributes during flattening (#4290)
+- Detect EOF when reading standard xref table trailer (#4289)
+- Fix loop detection when cloning DictionaryObject (#4288)
+
+### Documentation (DOC)
+- Exclude performance issues from security reports (#4280)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.3...6.21.4)
+
+## Version 6.21.3, 2026-10-27
+
+### Security (SEC)
+- Use the validated page count after decrypting a document (#4270)
+- Limit total number of cross-reference stream entries (#4269)
+- Avoid excessive error messages (#4265)
+
+### Performance Improvements (PI)
+- Read flat page label number trees once for all pages (#4251)
+- Collect the named destinations once when resolving links (#4249)
+- Avoid scanning all objects in get_outline_root (#4245)
+
+### Bug Fixes (BUG)
+- Resolve indirect widths in CID font /W arrays (#4267)
+
+### Documentation (DOC)
+- Block incremental writes of encrypted documents (#4246)
+
+### Developer Experience (DEV)
+- Update to PyPy 3.12 and pinned requirements (#4244)
+
+### Maintenance (MAINT)
+- Revert: Reject unsupported key lengths in the /Encrypt dictionary
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.2...6.21.3)
+
+## Version 6.21.2, 2026-10-21
+
+### Security (SEC)
+- Avoid repeated full file loads (#4240)
+- Limit size of standard xref table (#4239)
+
+### Bug Fixes (BUG)
+- Decode UniGB-UTF16 CMaps as UTF-16BE (#4231)
+- Keep 8-bit DeviceRGB image mode (#4230)
+- Preserve all annotation quadrilaterals when merging pages (#4223)
+
+### Robustness (ROB)
+- Multiple fixes
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.1...6.21.2)
+
 ## Version 6.21.1, 2026-10-17
 
 ### Security (SEC)
