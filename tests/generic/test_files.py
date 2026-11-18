@@ -678,6 +678,20 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     ]
 
 
+def test_embedded_file__create__nested_kids_based_name_tree() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.add_attachment("a.txt", b"a")
+    files = writer.root_object["/Names"]["/EmbeddedFiles"]
+    leaf = DictionaryObject({NameObject("/Names"): files["/Names"]})
+    middle = DictionaryObject({NameObject("/Kids"): ArrayObject([writer._add_object(leaf)])})
+    del files["/Names"]
+    files[NameObject("/Kids")] = ArrayObject([writer._add_object(middle)])
+
+    writer.add_attachment("b.txt", b"b")
+
+    assert dict(writer.attachments) == {"a.txt": [b"a"], "b.txt": [b"b"]}
+
 def test_embedded_file__create__neither_kids_nor_names() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)

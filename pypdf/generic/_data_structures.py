@@ -1053,6 +1053,29 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         del child_obj[NameObject("/Prev")]
 
 
+def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
+    """
+    Turn a name tree into a single node holding all its names, in place.
+
+    A node holds either /Kids or /Names (ISO 32000-2, 7.9.6), so a name added
+    next to /Kids would be ignored by readers.
+    """
+    names = ArrayObject()
+    kids: list[Any] = [tree]
+    visited: set[int] = set()
+    while kids:
+        node = kids.pop(0).get_object()
+        if not isinstance(node, DictionaryObject) or id(node) in visited:
+            continue
+        visited.add(id(node))
+        names.extend(node.get("/Names", ArrayObject()).get_object())
+        kids[:0] = node.get("/Kids", ArrayObject()).get_object()
+    tree.pop(NameObject("/Kids"), None)
+    tree.pop(NameObject("/Limits"), None)
+    tree[NameObject("/Names")] = names
+    return names
+
+
 class _FontFileCharacterMap(NamedTuple):
     """The character map pypdf._cmap derived from an embedded font program. See #4156."""
 

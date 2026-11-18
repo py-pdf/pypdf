@@ -19,6 +19,7 @@ from pypdf.generic import (
     TextStringObject,
     is_null_or_none,
 )
+from pypdf.generic._data_structures import _flatten_name_tree
 
 if TYPE_CHECKING:
     import datetime
@@ -134,23 +135,7 @@ class EmbeddedFile:
             # Invalid case: This is no name tree.
             raise PdfReadError("Got neither Names nor Kids in embedded files tree.")
 
-        # Complex case: Convert a /Kids-based name tree to a /Names-based one.
-        # /Name-based ones are much easier to handle and allow us to simplify the
-        # actual insertion logic by only having to consider one case.
-        names = ArrayObject()
-        kids = cast(ArrayObject, embedded_files_names_tree["/Kids"].get_object())
-        embedded_files_names_dictionary = DictionaryObject(
-            {NameObject(CatalogAttributes.NAMES): names}
-        )
-        names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
-        for kid in kids:
-            # Write the flattened file entries. As we do not change the actual files,
-            # this should not have any impact on references to them.
-            # There might be further (nested) kids here.
-            # Wait for an example before evaluating an implementation.
-            for name in kid.get_object().get("/Names", []):
-                names.append(name)
-        return names
+        return _flatten_name_tree(embedded_files_names_tree)
 
     @classmethod
     def _get_insertion_index(cls, names_array: ArrayObject, name: str) -> int:

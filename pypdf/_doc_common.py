@@ -80,6 +80,7 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
+from .generic._data_structures import _flatten_name_tree
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
@@ -463,20 +464,7 @@ class PdfDocCommon(ABC):
                     # §7.9.6, entries in a name tree node dictionary
                     named_dest = cast(ArrayObject, dests[CatalogAttributes.NAMES])
                 else:
-                    # A node has either /Kids or /Names, so flatten the tree into
-                    # the root. Otherwise new names end up hidden next to /Kids.
-                    named_dest = ArrayObject()
-                    kids, visited = [dests], set()
-                    while kids:
-                        node = kids.pop(0).get_object()
-                        if not isinstance(node, DictionaryObject) or id(node) in visited:
-                            continue
-                        visited.add(id(node))
-                        named_dest.extend(node.get(CatalogAttributes.NAMES, ArrayObject()).get_object())
-                        kids[:0] = node.get("/Kids", ArrayObject()).get_object()
-                    dests.pop(NameObject("/Kids"), None)
-                    dests.pop(NameObject("/Limits"), None)
-                    dests[NameObject(CatalogAttributes.NAMES)] = named_dest
+                    named_dest = _flatten_name_tree(dests)
             elif hasattr(self, "_add_object"):
                 dests = DictionaryObject()
                 dests_ref = self._add_object(dests)
