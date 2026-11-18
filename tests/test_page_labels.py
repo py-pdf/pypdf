@@ -5,9 +5,11 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._page_labels import (
+    _get_label,
     get_label_from_nums,
     index2label,
     index2labels,
+    number2decimal_arabic_numeral,
     number2lowercase_letter,
     number2lowercase_roman_numeral,
     number2uppercase_letter,
@@ -206,12 +208,76 @@ def test_index2label_kids__recursive(caplog):
         "N",
         "O",
         "P",
-        "17",
-        "18",
-        "19",
+        # The only labelling range starts at page 0, so it also covers the pages
+        # beyond the /Limits of the kids, which bound the keys, not the pages.
+        "Q",
+        "R",
+        "S",
     ]
     assert r.page_labels == expected
-    assert caplog.text != ""
+    assert caplog.text == ""
+
+
+def _make_kid(limits: list[int], nums: list[object]) -> DictionaryObject:
+    kid = DictionaryObject()
+    kid[NameObject("/Limits")] = ArrayObject([NumberObject(n) for n in limits])
+    kid[NameObject("/Nums")] = ArrayObject(nums)
+    return kid
+
+
+def _make_label(prefix: str) -> DictionaryObject:
+    label = DictionaryObject()
+    label[NameObject("/S")] = NameObject("/D")
+    label[NameObject("/P")] = TextStringObject(prefix)
+    return label
+
+
+@pytest.mark.parametrize(
+    ("kids", "expected"),
+    [
+        pytest.param(
+            [
+                _make_kid([0, 2], [NumberObject(0), _make_label("a-"), NumberObject(2), _make_label("b-")]),
+                _make_kid([4, 4], [NumberObject(4), _make_label("c-")]),
+            ],
+            # Page 3 is between the /Limits of the two kids, pages 5 and 6 after the
+            # /Limits of the last one.
+            ["a-1", "a-2", "b-1", "b-2", "c-1", "c-2", "c-3"],
+            id="between-and-after-kids",
+        ),
+        pytest.param(
+            [_make_kid([2, 2], [NumberObject(2), _make_label("a-")])],
+            ["1", "2", "a-1", "a-2", "a-3", "a-4", "a-5"],
+            id="before-first-kid",
+        ),
+    ],
+)
+def test_index2label__page_between_kids(caplog, kids, expected):
+    """
+    Each key starts a labelling range which lasts until the next key, so a page
+    beyond the /Limits of a kid is labelled by the last range of that kid.
+    """
+    writer = PdfWriter()
+    for _ in range(7):
+        writer.add_blank_page(width=72, height=72)
+    number_tree = DictionaryObject()
+    number_tree[NameObject("/Kids")] = ArrayObject(kids)
+    writer.root_object[NameObject("/PageLabels")] = number_tree
+
+    assert [index2label(writer, index) for index in range(7)] == expected
+    assert writer.page_labels == expected
+    if expected[0] == "1":
+        assert "Could not reliably determine page label for 0." in caplog.text
+    else:
+        assert caplog.text == ""
+
+
+@pytest.mark.enable_socket
+def test_index2label__page_between_kids__real_file():
+    """Page 59 lies between the kids with /Limits [0 58] and [60 154]."""
+    url = "https://github.com/user-attachments/files/18381759/tika-982336.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name="tika-982336.pdf")))
+    assert reader.page_labels[58:61] == ["4-5-1", "4-5-2", "4-6-1"]
 
 
 def test_get_label_from_nums__empty_nums_list():
@@ -754,3 +820,91 @@ def test_index2labels__kid_which_cannot_be_read():
         index2label(writer, 0)
     with pytest.raises(IndexError):
         index2labels(writer, 30)
+
+
+@pytest.mark.parametrize(
+    ("number", "expected"),
+    [
+        (1, "1"),
+        (2, "2"),
+        (10, "10"),
+        (4_000, "4000"),
+    ],
+)
+def test_number2decimal_arabic_numeral(number, expected):
+    assert number2decimal_arabic_numeral(number) == expected
+
+
+@pytest.mark.parametrize("number", [0, -1, -4_000])
+def test_number2decimal_arabic_numeral__rejects_non_positive_numbers(number):
+    """A page label is a page number, as the Roman and letter styles already require."""
+    with pytest.raises(expected_exception=ValueError, match=r"^Expecting a positive number\.$"):
+        number2decimal_arabic_numeral(number)
+
+
+@pytest.mark.parametrize(
+    ("style", "expected"),
+    [
+        pytest.param("/D", ["1", "2", "1", "2", "3"], id="decimal"),
+        pytest.param("/r", ["1", "2", "i", "ii", "iii"], id="lowercase-roman"),
+        pytest.param("/A", ["1", "2", "A", "B", "C"], id="uppercase-letter"),
+    ],
+)
+def test_page_labels__nums_range_starting_after_the_first_page(caplog, style, expected):
+    """Pages before the first /Nums key fall back to their position, whatever the style."""
+    writer = PdfWriter()
+    for _ in range(5):
+        writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {
+            NameObject("/Nums"): ArrayObject(
+                [NumberObject(2), DictionaryObject({NameObject("/S"): NameObject(style)})]
+            )
+        }
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == expected
+    assert "Ignoring malformed page label entry in /Nums" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("start", "expected"),
+    [
+        pytest.param(0, ["1", "1", "2"], id="zero"),
+        pytest.param(-1, ["1", "2", "1"], id="negative"),
+    ],
+)
+def test_page_labels__non_positive_start(caplog, start, expected):
+    """/St below 1 is out of range, so those pages fall back to their position."""
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(width=72, height=72)
+    writer.root_object[NameObject("/PageLabels")] = DictionaryObject(
+        {
+            NameObject("/Nums"): ArrayObject(
+                [
+                    NumberObject(0),
+                    DictionaryObject(
+                        {
+                            NameObject("/S"): NameObject("/D"),
+                            NameObject("/St"): NumberObject(start),
+                        }
+                    ),
+                ]
+            )
+        }
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert PdfReader(stream).page_labels == expected
+    assert "Ignoring malformed page label entry in /Nums" in caplog.text
+
+
+def test_get_label__accumulated_limit() -> None:
+    label = _build_label(style="/D", start=20, prefix="A" * 510)
+    assert _get_label(value=label, start_index=1, index=420) == "421"

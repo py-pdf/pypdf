@@ -5,9 +5,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
 from pypdf._utils import format_iso8824_date, logger_warning, parse_iso8824_date
-from pypdf.constants import CatalogAttributes as CA
-from pypdf.constants import FileSpecificationDictionaryEntries
-from pypdf.constants import PageAttributes as PG
+from pypdf.constants import CatalogAttributes, FileSpecificationDictionaryEntries, PageAttributes
 from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -80,7 +78,7 @@ class EmbeddedFile:
         # Create the file entry (the actual embedded file stream)
         file_entry = DecodedStreamObject()
         file_entry.set_data(content)
-        file_entry.update({NameObject(PG.TYPE): NameObject("/EmbeddedFile")})
+        file_entry.update({NameObject(PageAttributes.TYPE): NameObject("/EmbeddedFile")})
 
         # Create the /EF entry
         ef_entry = DictionaryObject()
@@ -93,7 +91,7 @@ class EmbeddedFile:
         name_object = cast(TextStringObject, create_string_object(name))
         filespec.update(
             {
-                NameObject(PG.TYPE): NameObject("/Filespec"),
+                NameObject(PageAttributes.TYPE): NameObject("/Filespec"),
                 NameObject(FileSpecificationDictionaryEntries.F): name_object,
                 NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
             }
@@ -113,16 +111,16 @@ class EmbeddedFile:
     @classmethod
     def _get_names_array(cls, writer: PdfWriter) -> ArrayObject:
         """Get the names array for embedded files, possibly creating and flattening it."""
-        if CA.NAMES not in writer.root_object:
+        if CatalogAttributes.NAMES not in writer.root_object:
             # Add the /Names entry to the catalog.
-            writer.root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
+            writer.root_object[NameObject(CatalogAttributes.NAMES)] = writer._add_object(DictionaryObject())
 
-        names_dict = cast(DictionaryObject, writer.root_object[CA.NAMES])
+        names_dict = cast(DictionaryObject, writer.root_object[CatalogAttributes.NAMES])
         if "/EmbeddedFiles" not in names_dict:
             # We do not yet have an entry for embedded files. Create and return it.
             names = ArrayObject()
             embedded_files_names_dictionary = DictionaryObject(
-                {NameObject(CA.NAMES): names}
+                {NameObject(CatalogAttributes.NAMES): names}
             )
             names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
             return names
@@ -131,7 +129,7 @@ class EmbeddedFile:
         embedded_files_names_tree = cast(DictionaryObject, names_dict["/EmbeddedFiles"])
         if "/Names" in embedded_files_names_tree:
             # Simple case: We already have a flat list.
-            return cast(ArrayObject, embedded_files_names_tree[NameObject(CA.NAMES)])
+            return cast(ArrayObject, embedded_files_names_tree[NameObject(CatalogAttributes.NAMES)])
         if "/Kids" not in embedded_files_names_tree:
             # Invalid case: This is no name tree.
             raise PdfReadError("Got neither Names nor Kids in embedded files tree.")
@@ -142,7 +140,7 @@ class EmbeddedFile:
         names = ArrayObject()
         kids = cast(ArrayObject, embedded_files_names_tree["/Kids"].get_object())
         embedded_files_names_dictionary = DictionaryObject(
-            {NameObject(CA.NAMES): names}
+            {NameObject(CatalogAttributes.NAMES): names}
         )
         names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
         for kid in kids:

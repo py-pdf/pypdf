@@ -13,9 +13,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
-from pypdf.constants import ImageAttributes
-from pypdf.constants import PageAttributes as PG
-from pypdf.constants import UserAccessPermissions as UAP
+from pypdf.constants import ImageAttributes, PageAttributes, UserAccessPermissions
 from pypdf.errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -195,11 +193,11 @@ def test_broken_meta_data(pdf_path):
 def test_get_annotations(src):
     with PdfReader(src) as reader:
         for page in reader.pages:
-            if PG.ANNOTS in page:
-                for annot in page[PG.ANNOTS]:
+            if PageAttributes.ANNOTS in page:
+                for annot in page[PageAttributes.ANNOTS]:
                     subtype = annot.get_object()[ImageAttributes.SUBTYPE]
                     if subtype == "/Text":
-                        annot.get_object()[PG.CONTENTS]
+                        annot.get_object()[PageAttributes.CONTENTS]
 
 
 @pytest.mark.parametrize(
@@ -214,8 +212,8 @@ def test_get_attachments(src, nb_attachments):
 
     attachments = {}
     for page in reader.pages:
-        if PG.ANNOTS in page:
-            for annotation in page[PG.ANNOTS]:
+        if PageAttributes.ANNOTS in page:
+            for annotation in page[PageAttributes.ANNOTS]:
                 annotobj = annotation.get_object()
                 if annotobj[ImageAttributes.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
@@ -1141,31 +1139,31 @@ def test_user_access_permissions():
 
     # Encrypted.
     reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
-    assert reader.user_access_permissions == UAP.all()
+    assert reader.user_access_permissions == UserAccessPermissions.all()
 
     # Custom writer permissions.
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer.encrypt(
         user_password="",
         owner_password="abc",
-        permissions_flag=UAP.PRINT | UAP.FILL_FORM_FIELDS,
+        permissions_flag=UserAccessPermissions.PRINT | UserAccessPermissions.FILL_FORM_FIELDS,
     )
     output = BytesIO()
     writer.write(output)
     reader = PdfReader(output)
-    assert reader.user_access_permissions == (UAP.PRINT | UAP.FILL_FORM_FIELDS)
+    assert reader.user_access_permissions == (UserAccessPermissions.PRINT | UserAccessPermissions.FILL_FORM_FIELDS)
 
     # All writer permissions.
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer.encrypt(
         user_password="",
         owner_password="abc",
-        permissions_flag=UAP.all(),
+        permissions_flag=UserAccessPermissions.all(),
     )
     output = BytesIO()
     writer.write(output)
     reader = PdfReader(output)
-    assert reader.user_access_permissions == UAP.all()
+    assert reader.user_access_permissions == UserAccessPermissions.all()
 
 
 def test_pages_attribute():
@@ -3652,3 +3650,75 @@ def test_get_object_from_stream__duplicate_offsets() -> None:
 
     with pytest.raises(PdfReadError, match=r"^Invalid offset 0 in object stream 1\.$"):
         _ = reader.root_object
+
+
+@pytest.mark.timeout(5)
+def test_read_pdf15_xref_stream__decoded_data_not_retained():
+    pdf = bytearray(b"%PDF-1.7\n")
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+    encoded = FlateDecode.encode(b"\x02" + b"\x00" * 1000)
+    prev_offset = None
+    for object_number in range(10, 15):
+        offset = len(pdf)
+        prev_entry = f"/Prev {prev_offset} " if prev_offset is not None else ""
+        pdf += (
+            f"{object_number} 0 obj\n<< /Type /XRef /Size {object_number + 1} /Index [{object_number} 1] "
+            f"/W [1 0 0] /Root 1 0 R {prev_entry}/Filter /FlateDecode /Length {len(encoded)} >>\nstream\n"
+        ).encode()
+        pdf += encoded + b"\nendstream\nendobj\n"
+        prev_offset = offset
+    pdf += f"startxref\n{prev_offset}\n%%EOF\n".encode()
+
+    reader = PdfReader(BytesIO(pdf))
+    xref_streams = [
+        obj for obj in reader.resolved_objects.values()
+        if isinstance(obj, StreamObject) and obj.get("/Type") == "/XRef"
+    ]
+
+    assert len(xref_streams) == 5
+    assert all(stream.decoded_self is None for stream in xref_streams)
+    assert sorted(reader.xref_objStm) == [10, 11, 12, 13, 14]
+
+
+def test_read_xref__hybrid_pdf__limit():
+    pdf = bytearray(b"%PDF-1.5\n")
+
+    # Cross-reference stream (object 1)
+    xref_stream_offset = len(pdf)
+    xref_stream_data = b"\x00\x00\xff\xff\x01\x00"
+    pdf.extend(
+        (
+            b"1 0 obj\n"
+            b"<< /Type /XRef"
+            b" /Size 2"
+            b" /W [1 1 1]"
+            b" /Index [0 2]"
+            b" /Length 6"
+            b" >>\n"
+            b"stream\n"
+        ) + xref_stream_data
+        + b"\nendstream\n"
+        + b"endobj\n"
+    )
+
+    # Traditional cross-reference table
+    xref_offset = len(pdf)
+    pdf.extend(
+        (
+            "xref\n"
+            "0 2\n"
+            "0000000000 65535 f \n"
+            f"{xref_stream_offset:010d} 00000 n \n"
+            "trailer\n"
+            f"<< /Size 2 /Root 2 0 R /XRefStm {xref_stream_offset} >>\n"
+            "startxref\n"
+            f"{xref_offset}\n"
+            "%%EOF\n"
+        ).encode("ascii")
+    )
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum XRef stream entry limit reached: 2 > 1\.$"
+    ):
+        PdfReader(BytesIO(pdf), xref_stream_maximum_entries=1)
