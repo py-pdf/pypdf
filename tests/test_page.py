@@ -2312,6 +2312,26 @@ def test_delete_page__inconsistent_count_falls_back_to_search():
     assert _get_kid_widths(reader.trailer["/Root"]["/Pages"].get_object()) == [300, 100]
 
 
+@pytest.mark.parametrize("broken", ["missing", "without-kids", "not-listing-the-node"])
+def test_delete_page__broken_grandparent_falls_back_to_search(broken):
+    def break_root_parent(root: DictionaryObject, child: DictionaryObject) -> None:
+        writer = root.indirect_reference.pdf
+        parent = {
+            "missing": IndirectObject(999, 0, writer),
+            "without-kids": writer._add_object(DictionaryObject()),
+            "not-listing-the-node": writer._add_object(
+                DictionaryObject({NameObject("/Kids"): ArrayObject([root["/Kids"][0]])})
+            ),
+        }[broken]
+        root[NameObject("/Parent")] = parent
+
+    reader = _nested_reader(break_root_parent)
+
+    del reader.pages[1]
+
+    assert _get_kid_widths(reader.trailer["/Root"]["/Pages"].get_object()) == [300, 200]
+
+
 def test_delete_page__parent_cycle_falls_back_to_search():
     def root_parent_is_child(root: DictionaryObject, child: DictionaryObject) -> None:
         root[NameObject("/Parent")] = child.indirect_reference
@@ -2359,3 +2379,53 @@ def test_delete_page__page_referenced_twice(root_kids, child_kids, index, expect
 
     assert [int(page.mediabox.width) for page in reader.pages] == expected
     assert _get_kid_widths(reader.trailer["/Root"]["/Pages"].get_object()) == expected
+
+
+@pytest.mark.parametrize(
+    "sibling",
+    [
+        pytest.param("indirect-count", id="count-is-indirect-reference"),
+        pytest.param("name-count", id="count-is-a-name"),
+        pytest.param("fractional-count", id="count-is-fractional"),
+        pytest.param("missing", id="sibling-is-missing"),
+    ],
+)
+def test_delete_page__unusual_sibling_before_parent(sibling):
+    """Deleting a page works when a node before its parent has an unusual or missing /Count."""
+    writer = PdfWriter()
+    for width in (100, 200, 300):
+        writer.add_blank_page(width, 10)
+    root = cast(DictionaryObject, writer.root_object["/Pages"].get_object())
+    a, b, c = cast(ArrayObject, root["/Kids"])
+    child = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Pages"),
+        NameObject("/Kids"): ArrayObject([a, b]),
+        NameObject("/Count"): NumberObject(2),
+        NameObject("/Parent"): root.indirect_reference,
+    }))
+    a.get_object()[NameObject("/Parent")] = child
+    b.get_object()[NameObject("/Parent")] = child
+    if sibling == "missing":
+        kids = ArrayObject([IndirectObject(999, 0, writer), c, child])
+    else:
+        count = {
+            "indirect-count": writer._add_object(NumberObject(1)),
+            "name-count": NameObject("/One"),
+            "fractional-count": FloatObject(1.5),
+        }[sibling]
+        node = writer._add_object(DictionaryObject({
+            NameObject("/Type"): NameObject("/Pages"),
+            NameObject("/Kids"): ArrayObject([c]),
+            NameObject("/Count"): count,
+            NameObject("/Parent"): root.indirect_reference,
+        }))
+        c.get_object()[NameObject("/Parent")] = node
+        kids = ArrayObject([node, child])
+    root[NameObject("/Kids")] = kids
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+
+    del reader.pages[2]
+
+    assert [int(page.mediabox.width) for page in reader.pages] == [300, 100]

@@ -2508,14 +2508,26 @@ def _kid_position(
     node = parent
     visited = {id(node)}
     while (grandparent := node.get("/Parent")) is not None:
-        grandparent = cast(DictionaryObject, grandparent.get_object())
-        if id(grandparent) in visited:  # /Parent cycle: fall back to the search
-            break
+        grandparent = grandparent.get_object()
+        if not isinstance(grandparent, DictionaryObject) or id(grandparent) in visited:
+            return kids.index(ind)  # broken /Parent or a /Parent cycle
         visited.add(id(grandparent))
-        for kid in cast(ArrayObject, grandparent["/Kids"]):
+        siblings = grandparent.get("/Kids", NullObject()).get_object()
+        if not isinstance(siblings, ArrayObject):
+            return kids.index(ind)
+        for kid in siblings:
             if kid == node.indirect_reference:
                 break
-            offset += cast(int, cast(DictionaryObject, kid.get_object()).get("/Count", 1))
+            kid_obj = kid.get_object()
+            if not isinstance(kid_obj, DictionaryObject):  # missing node
+                return kids.index(ind)
+            # /Kids and /Count may be indirect (ISO 32000-2, 7.3.10)
+            count = kid_obj.get("/Count", NumberObject(1)).get_object()
+            if not isinstance(count, int):
+                return kids.index(ind)
+            offset += count
+        else:  # node is not among its /Parent's /Kids
+            return kids.index(ind)
         node = grandparent
     i = index - offset
     if 0 <= i < len(kids) and kids[i] == ind:
