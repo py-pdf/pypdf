@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794998587304,
+  "lastUpdate": 1794998759899,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -171013,6 +171013,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03023326607925764",
             "extra": "mean: 670.2088604000039 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8eaa409ebb51757de818485dfa23875e5eeb6af8",
+          "message": "SEC: Limit the overall page label size before employing a fallback (#4457)",
+          "timestamp": "2026-11-18T11:41:16+01:00",
+          "tree_id": "95931ef9c23324ed89efaec49b70889f06576975",
+          "url": "https://github.com/py-pdf/pypdf/commit/8eaa409ebb51757de818485dfa23875e5eeb6af8"
+        },
+        "date": 1794998745981,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.433142693938276,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018369694901829155",
+            "extra": "mean: 69.28497979999786 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.93962718690457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007996699091408684",
+            "extra": "mean: 43.592687529414825 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0680490746539517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02728686546851085",
+            "extra": "mean: 936.286565599994 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 37.49888885167771,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015456072315607824",
+            "extra": "mean: 26.667456839998067 msec\nrounds: 50"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3169727906472635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04707210554041847",
+            "extra": "mean: 3.1548449251999955 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0735624310465073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02970862917505148",
+            "extra": "mean: 931.4781992000235 msec\nrounds: 5"
           }
         ]
       }
