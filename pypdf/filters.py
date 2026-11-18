@@ -411,7 +411,7 @@ class ASCIIHexDecode:
             hex_data = data[:eod]
 
         # Remove whitespace
-        hex_data = b"".join(hex_data.split())
+        hex_data = hex_data.translate(None, WHITESPACES_AS_BYTES)
 
         # Pad if odd length
         if len(hex_data) % 2 == 1:
