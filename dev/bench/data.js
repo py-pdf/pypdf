@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795007131892,
+  "lastUpdate": 1795007728921,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128573,6 +128573,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0011513376910857887",
             "extra": "mean: 477.93082300000265 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8de3108398bf8b2faddfcce6eb68e44afd109cf9",
+          "message": "BUG: Remove objects which only unreferenced objects use (#4426)\n\nCloses #3418.\n\ncompress_identical_objects(remove_unreferenced=True) kept every object\nthat another object referred to, even if that other object was itself\nunreferenced. So unreferenced chains and cycles were never removed,\nsuch as the pages, contents and resources left behind by remove_page(),\nwhich still refer to each other through /Parent. It also did not count\nthe encryption dictionary as used, so after encrypt(),\ncompress_identical_objects() removed /Encrypt and the written file\ncould not be opened (\"/Encrypt entry of the trailer is not a\ndictionary\").\n\nCollect the objects reachable from the trailer (/Root, /Info, /ID and\n/Encrypt, ISO 32000-2:2020, 7.5.5) with _find_reachable_objects() and\nremove all others in a single pass.\n\nThe scenario of #3418, appending a document twice and removing the\nsecond copy, now keeps no more objects than one copy. Output sizes in\nbytes:\n\n| File                    | 1 copy | main   | now    |\n|-------------------------|--------|--------|--------|\n| minimal-document.pdf    | 17,387 | 18,077 | 17,547 |\n| google-doc-document.pdf | 80,356 | 94,343 | 81,102 |\n\nFor minimal-document.pdf, the remaining 160 bytes are 8 free entries\nin the cross-reference table for the removed object numbers.\n\nGeoTopo.pdf with 10 of 117 pages kept (remove_page(clean=True), then\ncompress_identical_objects()): 4.92 MB -> 0.78 MB.\n\nThe regression test for #3418 is based on the one in #3440 by luis-cd.\n\nAnnotate RTL_CHARACTER_RANGES, so that mypy no longer reports\n\"Cannot determine type\" in _text_extraction, depending on which files\nit checks.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* len(self._objects) -> object_count\n\n* _root_object -> root_object\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-18T14:13:38+01:00",
+          "tree_id": "5da9c00e96315b6dd0dbcaa018f7f877a3830b80",
+          "url": "https://github.com/py-pdf/pypdf/commit/8de3108398bf8b2faddfcce6eb68e44afd109cf9"
+        },
+        "date": 1795007717504,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7723027640089226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006750494554482802",
+            "extra": "mean: 265.09006899999576 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 24.564998563270443,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021659144462877953",
+            "extra": "mean: 40.708327233334295 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3817518138974653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02457186878485494",
+            "extra": "mean: 2.619502943000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 28.26943622775815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001309092375782072",
+            "extra": "mean: 35.37389256521806 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18932190406600885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03303768538471576",
+            "extra": "mean: 5.2820089938000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.126960522192314,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003345843247113856",
+            "extra": "mean: 470.1544714000022 msec\nrounds: 5"
           }
         ]
       }
