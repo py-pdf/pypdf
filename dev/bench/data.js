@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795006984979,
+  "lastUpdate": 1795007131892,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -171805,6 +171805,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04063597796744397",
             "extra": "mean: 566.0221907999926 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "patrick@immometrica.com",
+            "name": "Patrick Hintermayer",
+            "username": "patrick-immometrica"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a6d540725e43fb8c8b95d01d8f9cde1c06a51163",
+          "message": "PI: Use a set for the AcroForm field check in merge() (#4447)\n\n* PI: Use a set for the AcroForm field check in merge()\n\nEvery appended field was checked with `ind not in arr` against the whole\n/Fields array, so appending many forms was quadratic. Appending a\n50-field form 400 times went from 13.3 s to 0.9 s.\n\n* TST: Keep test_append__keeps_existing_acroform_fields in one piece\n\n* MAINT: Drop unneeded comment",
+          "timestamp": "2026-11-18T14:01:04+01:00",
+          "tree_id": "2bc0a380b526a6a32ad9b2d6e061ad8e8aa72790",
+          "url": "https://github.com/py-pdf/pypdf/commit/a6d540725e43fb8c8b95d01d8f9cde1c06a51163"
+        },
+        "date": 1795007117446,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.250237349857759,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019526127872348756",
+            "extra": "mean: 70.17426976470547 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 32.54243419150008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0039192750378136835",
+            "extra": "mean: 30.729108772729575 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1117405934583389,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028332584266758935",
+            "extra": "mean: 899.4904079999969 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 37.11970356036097,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016341012358391024",
+            "extra": "mean: 26.939870313723905 msec\nrounds: 51"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3304769433398074,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06859522334726843",
+            "extra": "mean: 3.0259297059999937 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.151803251629699,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040007300499156614",
+            "extra": "mean: 868.2038347999878 msec\nrounds: 5"
           }
         ]
       }
