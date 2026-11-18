@@ -4679,6 +4679,31 @@ def test_add_outline_item__page_object() -> None:
     assert item["/A"]["/D"] == [page.indirect_reference, "/Fit"]
 
 
+def test_add_outline_item__before_nested_sibling():
+    """Issue #4340: `before` must also work below the outline root."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    parent = writer.add_outline_item(title="parent", page_number=0)
+    first_child = writer.add_outline_item(title="c1", page_number=0, parent=parent)
+    writer.add_outline_item(title="c2", page_number=0, parent=parent)
+    writer.add_outline_item(title="c1b", page_number=0, parent=parent, before=first_child)
+
+    output = BytesIO()
+    writer.write(output)
+
+    def flatten(outline) -> list[str]:
+        titles = []
+        for entry in outline:
+            if isinstance(entry, list):
+                titles.extend(flatten(entry))
+            else:
+                titles.append(entry["/Title"])
+        return titles
+
+    assert flatten(PdfReader(output).outline) == ["parent", "c1b", "c1", "c2"]
+
+
+
 def test_add_outline_item__positional_arguments() -> None:
     """
     add_outline_item() warns about, but still accepts, positional arguments in the order of its signature.
