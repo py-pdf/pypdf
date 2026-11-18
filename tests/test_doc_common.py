@@ -2039,10 +2039,43 @@ def test_get_named_dest_root__dests_without_names_array():
     (ISO 32000-2:2020, 7.7.4, Table 32, and 7.9.6). get_named_dest_root()
     returns an empty array and stores it as /Names of that root, so a
     destination added afterwards is written and read back.
+
+    /Names means two different things at two levels of the same structure.
+    /Dests sits between those two levels.
+
+    Catalog
+    └── /Names  → the name dictionary                (7.7.4, Table 32)
+        ├── /Dests       → root of a name tree       (7.9.6, Table 36)
+        │   └── /Names   → [(first) dest1 (second) dest2 …]
+        ├── /EmbeddedFiles → another name tree
+        └── /JavaScript    → another name tree
+
+    1. Catalog /Names is the name dictionary.
+       It holds one name tree per category:
+        /Dests for named destinations,
+        /EmbeddedFiles for attachments,
+        /JavaScript, and so on.
+    2. /Dests is the root node of the name tree for destinations.
+    3. /Names inside a tree node is the flat key/value array of that tree:
+        [key1 value1 key2 value2 …].
+        A large tree uses /Kids in its place, pointing to child nodes
+        that hold the /Names arrays.
+
+    Per Table 36, the root node has *exactly one* of the two:
+    /Kids is "present in the root node if and only if Names is not present".
+    So a root with neither is invalid.
+
+    What the test builds is exactly that invalid case.
+    It then checks two things:
+    1. get_named_dest_root() repairs the root by adding
+       an empty key/value array: dests["/Names"] == [].
+    2. add_named_destination("first", 0) puts "first" into that array,
+       and the name is still there after writing the file and reading it back.
     """
     writer = PdfWriter()
     writer.add_blank_page(72, 72)
-    dests = DictionaryObject()
+    dests = DictionaryObject()  # tree root with neither /Names nor /Kids
+    # catalog /Names → name dictionary → /Dests:
     writer.root_object[NameObject("/Names")] = DictionaryObject({NameObject("/Dests"): dests})
 
     assert writer.get_named_dest_root() == []
