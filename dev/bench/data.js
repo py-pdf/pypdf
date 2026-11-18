@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795009386500,
+  "lastUpdate": 1795010545239,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128771,6 +128771,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0036617793693283444",
             "extra": "mean: 473.91272840001193 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6353efee8f37fe7344096cc4b265ff64fa651942",
+          "message": "PI: Look up PageObject.page_number in constant time (#4439)\n\n* PI: Look up PageObject.page_number in constant time\n\nCode that asks for the page number of many pages, such as patching the\nnamed destinations when a page is merged, got slow for long documents.\nA single page.page_number call took O(n) time in the worst case and now\ntakes O(1), plus one O(n) rebuild after the pages changed; asking for\nthe number of every page went from O(n²) to O(n), n = number of pages.\n\n## Problem\n\npage.page_number compared the indirect references of the pages of the\ndocument, starting with the first page, until it found its own. A call\nfor the page at position k took O(k) time, so asking for the number of\nevery page took O(n²) time. Everything that asks for page_number once\nper page or once per destination paid this, for example\nNamedReferenceLink.patch_reference().\n\n## Solution\n\npage.page_number now asks the document, which keeps a dictionary from\nobject number to page number, O(n) memory. PdfReader already had one;\nPdfWriter now keeps one as well. As pages can be added, inserted and\nremoved, an entry is only used after checking that the page at that\nposition still has that object number. Otherwise the dictionary is\nrebuilt, which takes O(n) time once after the pages changed.\n\n## Benchmark\n\npage_number of every page, CPU time in ms, best of 3, Python 3.13:\n\n| Scenario                     |  Pages |      main |   PR | Speedup |\n|------------------------------|-------:|----------:|-----:|--------:|\n| PdfWriter, blank pages       |  1,000 |     658.9 |  2.0 |    329× |\n| PdfWriter, blank pages       | 10,000 |  81,986.1 | 21.6 |  3,796× |\n| irbookonlinereading, writer  |    581 |     277.0 |  1.0 |    277× |\n| irbookonlinereading, reader  |    581 |     282.2 |  3.5 |     81× |\n| GeoTopo-book, writer         |    117 |       9.5 |  0.2 |     48× |\n| GeoTopo-book, reader         |    117 |      11.0 |  0.7 |     16× |\n\nCreated via:\n\n    import time\n    from pypdf import PdfReader, PdfWriter\n\n    def best_of_3(make_pages):\n        times = []\n        for _ in range(3):\n            pages = make_pages()\n            start = time.process_time()\n            [page.page_number for page in pages]\n            times.append(time.process_time() - start)\n        return min(times) * 1000  # ms\n\n    def blank_writer(n):\n        writer = PdfWriter()\n        for _ in range(n):\n            writer.add_blank_page(100, 100)\n        return list(writer.pages)\n\n    print(best_of_3(lambda: blank_writer(10_000)))\n    print(best_of_3(lambda: list(PdfWriter(clone_from=\"GeoTopo-book.pdf\").pages)))\n    print(best_of_3(lambda: list(PdfReader(\"GeoTopo-book.pdf\").pages)))\n\n## Behavior\n\nWhat stays the same:\n\n- page.page_number returns the same values as on main.\n- A page that is not in the document still gives None. That lookup\n  still takes O(n) time, as it rebuilds the dictionary.\n\nWhat changed:\n\n- PdfReader.get_page_number() follows reader.remove_page(). On main it\n  kept the numbers from before the removal: after removing the first of\n  four pages, the remaining pages gave 1, 2, 3 instead of 0, 1, 2, and\n  the removed page gave 0 instead of None.\n- PdfWriter.get_page_number() gives None for a page of another\n  document. On main, a page of another writer gave its page number in\n  that writer.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Annotate the result of _get_page_number_by_indirect() in page_number\n\nIndirectObject.pdf is typed Any, so mypy reported \"Returning Any from\nfunction declared to return int | None\" for PageObject.page_number.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-18T15:00:25+01:00",
+          "tree_id": "5b61e01551ef97c6acbec050c0d5c531bdff7aed",
+          "url": "https://github.com/py-pdf/pypdf/commit/6353efee8f37fe7344096cc4b265ff64fa651942"
+        },
+        "date": 1795010532988,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.694595595071136,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006078872662459601",
+            "extra": "mean: 270.6656179999982 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.944220259243743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011961458038336509",
+            "extra": "mean: 38.544230275862965 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.36676269378327137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01630361136453437",
+            "extra": "mean: 2.7265586630000143 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 28.144357645218,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015014079663374057",
+            "extra": "mean: 35.53110049999346 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18928112983374612,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022599596176829412",
+            "extra": "mean: 5.283146824400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.086893529347895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012037921835206904",
+            "extra": "mean: 479.1811302000042 msec\nrounds: 5"
           }
         ]
       }
