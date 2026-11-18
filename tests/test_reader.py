@@ -3591,6 +3591,39 @@ def test_read_pdf15_xref_stream__negative_count(caplog):
     assert caplog.messages == ["Negative XRef count -5, using 0."]
 
 
+def test_process_xref_stream__xrefstm():
+    """An /XRefStm entry in a cross-reference stream dictionary is followed."""
+    pdf = bytearray(b"%PDF-1.5\n")
+    offset_catalog = len(pdf)
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    offset_pages = len(pdf)
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+    offset_page = len(pdf)
+    pdf += b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>\nendobj\n"
+
+    # The page is only listed in the cross-reference stream referenced by /XRefStm.
+    offset_xrefstm = len(pdf)
+    entries = b"\x01" + offset_page.to_bytes(2, "big")
+    pdf += b"4 0 obj\n<< /Type /XRef /Size 4 /Index [3 1] /W [1 2 0] /Length %d >>\nstream\n" % len(entries)
+    pdf += entries + b"\nendstream\nendobj\n"
+
+    startxref = len(pdf)
+    entries = b"\x00\x00\x00"
+    entries += b"\x01" + offset_catalog.to_bytes(2, "big")
+    entries += b"\x01" + offset_pages.to_bytes(2, "big")
+    pdf += (
+        b"5 0 obj\n<< /Type /XRef /Size 6 /Index [0 3] /W [1 2 0] /Root 1 0 R /XRefStm %d /Length %d >>\nstream\n"
+    ) % (offset_xrefstm, len(entries))
+    pdf += entries + b"\nendstream\nendobj\n"
+    pdf += b"startxref\n%d\n%%%%EOF\n" % startxref
+
+    reader = PdfReader(BytesIO(pdf), strict=True)
+
+    assert reader.xref[0] == {1: offset_catalog, 2: offset_pages, 3: offset_page}
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox == [0, 0, 72, 72]
+
+
 def test_read_standard_xref_table__end_of_file__trailer() -> None:
     data = b"%PDF-1.4\nstartxref\n28\n%%EOF\nxref\n1 0\naaa"
 
