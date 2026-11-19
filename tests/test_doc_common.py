@@ -1262,6 +1262,26 @@ def test_get_outline__entry_count():
         writer._get_outline()
 
 
+@pytest.mark.slow
+@pytest.mark.timeout(10)  # Previously 75 seconds.
+def test_get_outline__speed():
+    writer = PdfWriter()
+    inner = writer._add_object(DictionaryObject({NameObject("/Title"): TextStringObject("Inner")}))
+    outlines = [
+        DictionaryObject({NameObject("/Title"): TextStringObject(f"Title{i}"), NameObject("/First"): inner})
+        for i in range(50_000)
+    ]
+    references = [writer._add_object(outline) for outline in outlines]
+    for outline, reference in zip(outlines, references[1:]):
+        outline[NameObject("/Next")] = reference
+    writer.root_object[NameObject("/Outlines")] = DictionaryObject({NameObject("/First"): references[0]})
+
+    outline = writer._get_outline()
+    assert len(outline) == 100_000
+    assert outline[-2]["/Title"] == "Title49999"
+    assert outline[-1][0]["/Title"] == "Inner"
+
+
 @pytest.mark.parametrize(
     ("fields", "expected"),
     [
