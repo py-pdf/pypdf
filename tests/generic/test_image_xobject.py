@@ -318,6 +318,18 @@ def test_get_mode_and_invert_color() -> None:
         image.image.load()
 
 
+@pytest.mark.enable_socket
+def test_xobj_to_image__icc_based_without_components() -> None:
+    """A real-world PDF with an /ICCBased profile without /N, from the unstructured repository."""
+    url = "https://raw.githubusercontent.com/Unstructured-IO/unstructured/main/example-docs/pdf/pdf-bad-color-space.pdf"
+    name = "pdf-bad-color-space.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    image = reader.pages[0].images[0].image
+    assert image is not None
+    image.load()
+    assert (image.mode, image.size) == ("RGB", (1142, 507))
+
+
 @pytest.mark.parametrize(
     ("profile", "colors", "expected"),
     [
