@@ -231,7 +231,11 @@ class PILContext:
 
 def get_subprocess_environment() -> dict[str, str]:
     environment = os.environ.copy()
-    environment["COVERAGE_PROCESS_START"] = "pyproject.toml"
+    # Measuring the coverage of a subprocess adds more than a second to its runtime,
+    # thus only do so if the coverage of the tests themselves is measured.
+    coverage = sys.modules.get("coverage")
+    if coverage is not None and coverage.Coverage.current() is not None:
+        environment["COVERAGE_PROCESS_START"] = "pyproject.toml"
 
     if "PYTHONPATH" in environment:
         environment["PYTHONPATH"] = "." + os.pathsep + environment["PYTHONPATH"]
