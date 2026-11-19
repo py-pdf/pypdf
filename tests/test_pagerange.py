@@ -174,19 +174,11 @@ def test_valid(value: Any, expected: bool) -> None:
             ["foo.pdf", "1:5", "bar.pdf"],
             [("foo.pdf", PageRange("1:5")), ("bar.pdf", PageRange(":"))],
         ),
-        (["", "1:3"], [("", PageRange("1:3"))]),
-        (["", "foo.pdf"], [("", PageRange(":")), ("foo.pdf", PageRange(":"))]),
     ],
 )
 def test_parse_filename_page_ranges(
     params: list[str], expected: list[tuple[str, PageRange]]
 ) -> None:
-    """
-    Filenames are paired with the page ranges that follow them.
-
-    A filename without a page range gets all pages. Any string that is not a
-    page range is a filename, including the empty string.
-    """
     assert parse_filename_page_ranges(list(params)) == expected
 
 

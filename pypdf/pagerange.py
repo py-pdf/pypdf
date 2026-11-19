@@ -6,7 +6,6 @@ All rights reserved. This software is available under a BSD license;
 see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 """
 
-import math
 import re
 from typing import Any, Union
 
@@ -164,10 +163,10 @@ class PageRange:
 
         # None start means "beginning" (-inf for ordering); None stop means "end" (+inf).
         def _start_key(v: int | None) -> float:
-            return -math.inf if v is None else v
+            return float("-inf") if v is None else v
 
         def _stop_key(v: int | None) -> float:
-            return math.inf if v is None else v
+            return float("inf") if v is None else v
 
         # Order by start, and on equal starts put the larger stop first, so that
         # an empty range such as 2:0 does not decide whether there is a gap.
@@ -202,27 +201,25 @@ def parse_filename_page_ranges(
     """
     pairs: list[tuple[str, PageRange]] = []
     pdf_filename: str | None = None
-    # True while pdf_filename has not been followed by a page range yet.
-    needs_all_pages = False
+    did_page_range = False
     for arg in [*args, None]:
         if PageRange.valid(arg):
-            if pdf_filename is None:
+            if not pdf_filename:
                 raise ValueError(
                     "The first argument must be a filename, not a page range."
                 )
 
             assert arg is not None
             pairs.append((pdf_filename, PageRange(arg)))
-            needs_all_pages = False
+            did_page_range = True
         else:
             # New filename or end of list - use the complete previous file?
-            if needs_all_pages:
-                assert pdf_filename is not None
+            if pdf_filename and not did_page_range:
                 pairs.append((pdf_filename, PAGE_RANGE_ALL))
 
             assert not isinstance(arg, PageRange), arg
             pdf_filename = arg
-            needs_all_pages = arg is not None
+            did_page_range = False
     return pairs
 
 
