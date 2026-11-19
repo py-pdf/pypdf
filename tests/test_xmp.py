@@ -1146,6 +1146,7 @@ def test_custom_properties__malformed_escape(local_name, expected):
     )
     assert XmpInformation(stream).custom_properties == expected
 
+
 @pytest.mark.timeout(5)
 def test_xmp_missing_properties_cache():
     """
