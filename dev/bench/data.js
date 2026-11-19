@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795089600507,
+  "lastUpdate": 1795092726689,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -128969,6 +128969,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002623866791560347",
             "extra": "mean: 349.794974200006 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "backgmila@outlook.com",
+            "name": "1x98",
+            "username": "1x98"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "212c465774d9a6a87c1985e3a8fc3423b147ca36",
+          "message": "PI: Fix cache evaluation for XMP data retrieval (#4380)\n\n* fix(xmp): resolve O(N²) CPU exhaustion by fixing falsy cache evaluation\n\n- Changed cache validation from `if cached:` to `if name in ns_cache:` in `_get_single_value`, `_getter_bag`, `_get_seq_values`, and `_get_langalt_values`.\r\n- This fixes the logic flaw where empty or None values were treated as cache misses, forcing unnecessary O(N) tree traversals on every call.\r\n- Benchmark on a 4.5MB malicious PDF (40,000 nodes): Execution time reduced from 11.04s to 1.14s.\n\n* style(xmp): translate comments to English for CI compliance\n\n- Replaced all Chinese inline comments with English equivalents in `xmp.py`.\r\n- This resolves the `RUF003` (ambiguous full-width colon) error raised by the Ruff linter.\r\n- The core performance optimization and logic remain unchanged.\n\n* style: remove redundant 'Fix:' prefixes from comments\n\nAs suggested by @stefan6419846, the 'Fix:' prefixes in the code comments are superfluous and have been removed for better readability.\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\n\n* style: remove redundant 'Fix:' prefixes from comments\n\nAs suggested by the maintainer, the 'Fix:' prefixes in the comments are redundant for the implementation.\n\n* test: add regression test for XMP O(N²) cache fix\n\nAdded `test_xmp_cache_fix.py` to verify that querying missing properties in XMP metadata does not trigger an O(N²) tree traversal. The test creates a stream with 1,000 empty nodes and asserts that repeated queries complete in under 1 second, proving the cache mechanism works.\n\n* test: add regression test for XMP cache O(N^2) fix\n\n- Added test_xmp_missing_properties_cache to verify the O(1) cache behavior.\r\n- Fixed Ruff formatting issues (imports, quotes, trailing whitespace).\r\n- Updated assertions to handle empty dicts.\n\n* Address review feedback:fix empty list cache check in xmp.py\n\n- Check key existence instead of truthy value, so empty lists can be cached correctly\r\n- Remove stale \"Fix:\" comment\r\n- Prepare the fix for the slow parsing / DoS issue\n\n* test: add regression test for XMP missing property O(n²) DoS\n\nAdd a regression test for the algorithmic complexity vulnerability in XMP metadata parsing.\r\nWhen accessing non-existent XMP properties repeatedly, the original implementation traversed the entire RDF node list every lookup, resulting in O(N²) time complexity.\r\nThe test constructs an XMP blob with 1000 rdf:Description nodes and repeatedly reads missing metadata fields.\r\nThe pytest timeout marker ensures the issue cannot regress: without the cache fix, the test will time out; after applying the negative-cache patch, it completes quickly.\n\n* Delete tests/test_xmp_cache_fix.py\n\n* Apply suggestion from @stefan6419846\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-19T13:50:13+01:00",
+          "tree_id": "db6dd326b3ee6e7f4f7fd1578479e4421fe0c750",
+          "url": "https://github.com/py-pdf/pypdf/commit/212c465774d9a6a87c1985e3a8fc3423b147ca36"
+        },
+        "date": 1795092714494,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7792401177887895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007217459349614874",
+            "extra": "mean: 264.60345699999976 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.30889922554403,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007506987178642128",
+            "extra": "mean: 36.618099899999855 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3830249485892577,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016217886183931725",
+            "extra": "mean: 2.6107959903999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 28.954620499439052,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011199149480386706",
+            "extra": "mean: 34.53680216666536 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18632030541698968,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029564258401484956",
+            "extra": "mean: 5.367101550000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1417889085047146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035528918972139983",
+            "extra": "mean: 466.89942040000005 msec\nrounds: 5"
           }
         ]
       }
