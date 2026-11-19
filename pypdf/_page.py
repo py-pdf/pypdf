@@ -2683,6 +2683,8 @@ def _get_fonts_walk(
     if "/AP" in obj:
         # /N is optional, and may refer to a missing object
         normal = cast(DictionaryObject, obj["/AP"]).get("/N")
+        if normal is not None:
+            normal = normal.get_object()
         if isinstance(normal, StreamObject):
             # /Type is optional in an appearance stream
             _get_fonts_walk(normal, fnt, emb)

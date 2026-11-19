@@ -842,6 +842,34 @@ def test_get_fonts__appearance_stream():
     assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
 
 
+@pytest.mark.parametrize("state_dictionary", [False, True], ids=["stream", "state-dictionary"])
+def test_get_fonts__indirect_normal_appearance(caplog, state_dictionary):
+    """
+    The fonts of a normal appearance /N given as an indirect reference are collected.
+
+    The normal appearance is a stream or a dictionary of streams per state
+    (ISO 32000-2:2020, 12.5.5), and any dictionary value may be an indirect
+    reference (ISO 32000-2:2020, 7.3.10).
+    """
+    writer = PdfWriter()
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    stream = DecodedStreamObject()
+    stream[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})
+    })
+    normal = writer._add_object(stream)
+    if state_dictionary:
+        normal = writer._add_object(DictionaryObject({NameObject("/Yes"): normal}))
+    widget = DictionaryObject({NameObject("/AP"): DictionaryObject({NameObject("/N"): normal})})
+
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
+    assert caplog.text == ""
+
+
 def test_annotation_getter():
     pdf_path = RESOURCE_ROOT / "commented.pdf"
     reader = PdfReader(pdf_path)
