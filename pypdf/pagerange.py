@@ -58,6 +58,8 @@ class PageRange:
             However PageRange(slice(3)) means the first three pages.
         """
         if isinstance(arg, slice):
+            if arg.step == 0:
+                raise ParseError(arg)
             self._slice = arg
             return
 
@@ -88,15 +90,15 @@ class PageRange:
         True if input is a valid initializer for a PageRange.
 
         Args:
-            input: A possible PageRange string or a PageRange object.
+            input: A possible PageRange string, slice, or PageRange object.
 
         Returns:
             True, if the ``input`` is a valid PageRange.
 
         """
-        if isinstance(input, (slice, PageRange)):
+        if isinstance(input, PageRange):
             return True
-        if not isinstance(input, str):
+        if not isinstance(input, (str, slice)):
             return False
         try:
             PageRange(input)
