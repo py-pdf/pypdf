@@ -3687,3 +3687,142 @@ def test_get_object_from_stream__duplicate_offsets() -> None:
 
     with pytest.raises(PdfReadError, match=r"^Invalid offset 0 in object stream 1\.$"):
         _ = reader.root_object
+
+
+@pytest.mark.timeout(5)
+def test_read_pdf15_xref_stream__decoded_data_not_retained():
+    pdf = bytearray(b"%PDF-1.7\n")
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+    encoded = FlateDecode.encode(b"\x02" + b"\x00" * 1000)
+    prev_offset = None
+    for object_number in range(10, 15):
+        offset = len(pdf)
+        prev_entry = f"/Prev {prev_offset} " if prev_offset is not None else ""
+        pdf += (
+            f"{object_number} 0 obj\n<< /Type /XRef /Size {object_number + 1} /Index [{object_number} 1] "
+            f"/W [1 0 0] /Root 1 0 R {prev_entry}/Filter /FlateDecode /Length {len(encoded)} >>\nstream\n"
+        ).encode()
+        pdf += encoded + b"\nendstream\nendobj\n"
+        prev_offset = offset
+    pdf += f"startxref\n{prev_offset}\n%%EOF\n".encode()
+
+    reader = PdfReader(BytesIO(pdf))
+    xref_streams = [
+        obj for obj in reader.resolved_objects.values()
+        if isinstance(obj, StreamObject) and obj.get("/Type") == "/XRef"
+    ]
+
+    assert len(xref_streams) == 5
+    assert all(stream.decoded_self is None for stream in xref_streams)
+    assert sorted(reader.xref_objStm) == [10, 11, 12, 13, 14]
+
+
+def test_read_xref__hybrid_pdf__limit():
+    pdf = bytearray(b"%PDF-1.5\n")
+
+    # Cross-reference stream (object 1)
+    xref_stream_offset = len(pdf)
+    xref_stream_data = b"\x00\x00\xff\xff\x01\x00"
+    pdf.extend(
+        (
+            b"1 0 obj\n"
+            b"<< /Type /XRef"
+            b" /Size 2"
+            b" /W [1 1 1]"
+            b" /Index [0 2]"
+            b" /Length 6"
+            b" >>\n"
+            b"stream\n"
+        ) + xref_stream_data
+        + b"\nendstream\n"
+        + b"endobj\n"
+    )
+
+    # Traditional cross-reference table
+    xref_offset = len(pdf)
+    pdf.extend(
+        (
+            "xref\n"
+            "0 2\n"
+            "0000000000 65535 f \n"
+            f"{xref_stream_offset:010d} 00000 n \n"
+            "trailer\n"
+            f"<< /Size 2 /Root 2 0 R /XRefStm {xref_stream_offset} >>\n"
+            "startxref\n"
+            f"{xref_offset}\n"
+            "%%EOF\n"
+        ).encode("ascii")
+    )
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum XRef stream entry limit reached: 2 > 1\.$"
+    ):
+        PdfReader(BytesIO(pdf), xref_stream_maximum_entries=1)
+
+
+def _build_pdf_with_resources_in_objstm(objstm_num: int) -> bytes:
+    """
+    One page whose /Resources (object 4) is, according to the xref stream,
+    stored in object stream ``objstm_num``.
+
+    Pointing ``objstm_num`` at a number that is not in the file simulates a
+    missing object stream; pointing it at object 5 (the xref stream, whose
+    /Type is /XRef) simulates a stream that is not an object stream.
+    """
+    pdf = bytearray(b"%PDF-1.5\n")
+    offsets = {}
+    for num, body in (
+        (1, b"<< /Type /Catalog /Pages 2 0 R >>"),
+        (2, b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+        (3, b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources 4 0 R >>"),
+    ):
+        offsets[num] = len(pdf)
+        pdf += b"%d 0 obj\n" % num + body + b"\nendobj\n"
+    xref_offset = len(pdf)
+    rows = [
+        (0, 0, 0xFFFF),
+        (1, offsets[1], 0),
+        (1, offsets[2], 0),
+        (1, offsets[3], 0),
+        (2, objstm_num, 0),
+        (1, xref_offset, 0),
+    ]
+    data = b"".join(struct.pack(">BIH", *row) for row in rows)
+    pdf += (
+        b"5 0 obj\n<< /Type /XRef /Size 6 /W [1 4 2] /Root 1 0 R /Length %d >>\nstream\n"
+        % len(data)
+    )
+    pdf += data + b"\nendstream\nendobj\n"
+    pdf += b"startxref\n%d\n%%%%EOF\n" % xref_offset
+    return bytes(pdf)
+
+
+@pytest.mark.parametrize(
+    ("objstm_num", "strict_message"),
+    [
+        pytest.param(9, r"^Could not find object\.$", id="missing-object-stream"),
+        pytest.param(
+            5,
+            r"^Object stream 5 referenced by object 4 is missing or is not an object stream\.$",
+            id="not-an-object-stream",
+        ),
+    ],
+)
+def test_get_object_from_stream__invalid_object_stream(objstm_num, strict_message, caplog):
+    """An object stream that is missing or is not an /ObjStm does not leak a TypeError or AssertionError."""
+    data = _build_pdf_with_resources_in_objstm(objstm_num)
+
+    reader = PdfReader(BytesIO(data))
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+    writer.write(BytesIO())
+    assert isinstance(reader.get_object(4), NullObject)
+    assert (
+        f"Object stream {objstm_num} referenced by object 4 is missing or is not "
+        "an object stream; ignoring it."
+    ) in caplog.text
+
+    reader = PdfReader(BytesIO(data), strict=True)
+    with pytest.raises(PdfReadError, match=strict_message):
+        reader.get_object(4)

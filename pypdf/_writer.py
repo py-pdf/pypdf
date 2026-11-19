@@ -35,7 +35,7 @@ import struct
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
-from itertools import compress
+from itertools import pairwise
 from pathlib import Path
 from re import Pattern
 from types import TracebackType
@@ -137,6 +137,84 @@ class ObjectDeletionFlag(enum.IntFlag):
     INLINE_IMAGES = enum.auto()
     DRAWING_IMAGES = enum.auto()
     IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
+
+
+# Building the index reads the whole /Names array, which costs more than it saves
+# when a document adds only a few named destinations.
+_NAMED_DESTINATION_INDEX_MINIMUM = 32
+
+
+class _NamedDestinationIndex:
+    """
+    Look up and insert named destinations in a ``/Names`` array without scanning it.
+
+    ``PdfWriter.merge`` adds the named destinations of a document one by one, and both
+    looking each one up in the growing array and inserting it there take quadratic time.
+    The string entries are kept in a set instead, as only strings compare equal to a title.
+    If the keys are sorted strings, the new destinations are collected and sorted into the
+    array once by ``flush``: inserting each one before the first greater key gives the same
+    order as this stable sort. Other arrays are scanned as before.
+    """
+
+    def __init__(self, *, is_enabled: bool) -> None:
+        self._is_enabled = is_enabled
+        self._names: list[Any] | None = None
+        self._length = 0
+        self._strings: set[str] = set()
+        self._is_sorted = False
+        self._pending: list[tuple[str, Any]] = []
+
+    def _update(self, names: list[Any]) -> None:
+        if names is self._names and len(names) == self._length:
+            return
+        self.flush()
+        self._names = names
+        self._length = len(names)
+        self._strings = {entry for entry in names if isinstance(entry, str)}
+        keys = names[::2]
+        self._is_sorted = (
+            self._length % 2 == 0
+            and all(isinstance(key, str) for key in keys)
+            and all(previous <= key for previous, key in pairwise(keys))
+        )
+
+    def contains(self, container: Any, title: Any) -> bool:
+        if isinstance(container, IndirectObject):
+            container = container.get_object()
+        if not self._is_enabled or not isinstance(container, list) or not isinstance(title, str):
+            return title in container
+        self._update(container)
+        return title in self._strings
+
+    def insert(self, names: list[Any], title: Any, destination: Any) -> bool:
+        """Insert like ``PdfWriter.add_named_destination_array``; return False if the array has to be scanned."""
+        if not self._is_enabled:
+            return False
+        self._update(names)
+        if not self._is_sorted or not isinstance(title, str):
+            self.flush()
+            return False
+        self._pending.append((title, destination))
+        self._strings.add(title)
+        return True
+
+    def record_insertion(self, names: list[Any], title: Any) -> None:
+        """Update the index after ``add_named_destination_array`` inserted ``title`` into ``names``."""
+        if names is self._names and isinstance(title, str):
+            self._strings.add(title)
+            self._length = len(names)
+
+    def flush(self) -> None:
+        if not self._pending:
+            return
+        names = self._names
+        assert names is not None, "mypy"
+        pairs = [(names[i], names[i + 1]) for i in range(0, len(names), 2)]
+        pairs += [(TextStringObject(title), destination) for title, destination in self._pending]
+        pairs.sort(key=lambda pair: pair[0])
+        names[:] = [entry for pair in pairs for entry in pair]
+        self._pending = []
+        self._length = len(names)
 
 
 class PdfWriter(PdfDocCommon):
@@ -308,6 +386,7 @@ class PdfWriter(PdfDocCommon):
             }
         )
         self.flattened_pages = []
+        self._page_id2num: dict[int, int] = {}
         self._encryption: Encryption | None = None
         self._encrypt_entry: DictionaryObject | None = None
 
@@ -670,10 +749,14 @@ class PdfWriter(PdfDocCommon):
         self, indirect_reference: int | NullObject | IndirectObject | None
     ) -> int | None:
         """
-        Generate _page_id2num.
+        Retrieve the page number from an indirect reference.
+
+        The index of every page is remembered. As pages are added, inserted and
+        removed, an index is only trusted after checking the page at that
+        position; otherwise the index is rebuilt.
 
         Args:
-            indirect_reference:
+            indirect_reference: The indirect reference to locate.
 
         Returns:
             The page number or None
@@ -683,12 +766,36 @@ class PdfWriter(PdfDocCommon):
         if is_null_or_none(indirect_reference):
             return None
         assert indirect_reference is not None, "mypy"
-        if isinstance(indirect_reference, int):
-            indirect_reference = IndirectObject(indirect_reference, 0, self)
-        obj = indirect_reference.get_object()
-        if isinstance(obj, PageObject):
-            return obj.page_number
-        return None
+        if isinstance(indirect_reference, IndirectObject):
+            if indirect_reference.pdf is not self:
+                # A page of another document is not a page of this one.
+                return None
+            idnum = indirect_reference.idnum
+        else:
+            idnum = cast(int, indirect_reference)
+        # A writer starts with an empty page list; only _flatten() sets it to
+        # None, while it rebuilds the list. Every page of a writer is an
+        # indirect object.
+        assert self.flattened_pages is not None, "mypy"
+        pages = self.flattened_pages
+
+        # The remembered number is still right if the page at that position
+        # has this object number.
+        number = self._page_id2num.get(idnum)
+        if (
+            number is not None
+            and number < len(pages)
+            and cast(IndirectObject, pages[number].indirect_reference).idnum == idnum
+        ):
+            return number
+
+        # Pages were added, inserted or removed since the numbers were
+        # remembered, or the object is no page of this writer. A page that
+        # appears twice keeps its first position.
+        self._page_id2num = {}
+        for index, page in enumerate(pages):
+            self._page_id2num.setdefault(cast(IndirectObject, page.indirect_reference).idnum, index)
+        return self._page_id2num.get(idnum)
 
     def add_blank_page(
         self, width: float | None = None, height: float | None = None
@@ -1658,7 +1765,6 @@ class PdfWriter(PdfDocCommon):
             assert isinstance(obj, (DictionaryObject, ArrayObject))
             for k, v in key_val:
                 if isinstance(v, IndirectObject):
-                    unreferenced[v.idnum - 1] = False
                     if v in crossref:
                         obj[k] = crossref[v]
                 else:
@@ -1668,7 +1774,6 @@ class PdfWriter(PdfDocCommon):
 
         # _idnum_hash: dict[hash] = (1st_ind_obj, [2nd_ind_obj,...])
         self._idnum_hash = {}
-        unreferenced = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
             if is_null_or_none(obj):
@@ -1694,18 +1799,30 @@ class PdfWriter(PdfDocCommon):
                 replace_in_obj(obj, cnv_rev)
 
         if remove_unreferenced:
-            unreferenced[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
+            reachable = self._find_reachable_objects()
+            for idnum in range(1, len(self._objects) + 1):
+                if idnum not in reachable:
+                    self._objects[idnum - 1] = None
 
-            if not is_null_or_none(self._info):
-                unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
-
-            try:
-                unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
-            except AttributeError:
-                pass
-
-            for i in compress(range(len(self._objects)), unreferenced):
-                self._objects[i] = None
+    def _find_reachable_objects(self) -> set[int]:
+        """Get the numbers of all objects which the trailer leads to."""
+        reachable: set[int] = set()
+        object_count = len(self._objects)
+        objects_to_visit: list[Any] = []
+        for obj in (self.root_object, self._info, self._ID, self._encrypt_entry):
+            reference = getattr(obj, "indirect_reference", None)
+            objects_to_visit.append(obj if reference is None else reference)
+        while objects_to_visit:
+            obj = objects_to_visit.pop()
+            if isinstance(obj, IndirectObject):
+                if obj.pdf is self and obj.idnum not in reachable and 0 < obj.idnum <= object_count:
+                    reachable.add(obj.idnum)
+                    objects_to_visit.append(self._objects[obj.idnum - 1])
+            elif isinstance(obj, DictionaryObject):
+                objects_to_visit.extend(obj.values())
+            elif isinstance(obj, ArrayObject):
+                objects_to_visit.extend(obj)
+        return reachable
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
@@ -2824,8 +2941,17 @@ class PdfWriter(PdfDocCommon):
 
         arr: Any
 
-        for dest in reader._named_destinations.values():
-            self._merge__process_named_dests(dest=dest, reader=reader, srcpages=srcpages)
+        named_destinations = _NamedDestinationIndex(
+            is_enabled=len(reader._named_destinations) >= _NAMED_DESTINATION_INDEX_MINIMUM
+        )
+        # Keep the destinations added before an error, as adding them one by one did.
+        try:
+            for dest in reader._named_destinations.values():
+                self._merge__process_named_dests(
+                    dest=dest, reader=reader, srcpages=srcpages, named_destinations=named_destinations
+                )
+        finally:
+            named_destinations.flush()
 
         outline_item_typ: TreeObject
         if outline_item is not None:
@@ -2893,12 +3019,14 @@ class PdfWriter(PdfDocCommon):
                 )
                 fields = ArrayObject()
             trslat = self._id_translated[id(reader)]
+            known = {
+                x.idnum for x in arr if isinstance(x, IndirectObject) and x.generation == 0 and x.pdf is self
+            }
             for f in fields:
                 # trslat only knows the fields which have been copied through the pages
-                if isinstance(f, IndirectObject) and f.idnum in trslat:
-                    ind = IndirectObject(trslat[f.idnum], 0, self)
-                    if ind not in arr:
-                        arr.append(ind)
+                if isinstance(f, IndirectObject) and f.idnum in trslat and trslat[f.idnum] not in known:
+                    known.add(trslat[f.idnum])
+                    arr.append(IndirectObject(trslat[f.idnum], 0, self))
             cast(DictionaryObject, self._root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr
@@ -2906,14 +3034,20 @@ class PdfWriter(PdfDocCommon):
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)
 
-    def _merge__process_named_dests(self, dest: Any, reader: PdfDocCommon, srcpages: dict[int, PageObject]) -> None:
+    def _merge__process_named_dests(
+        self,
+        dest: Any,
+        reader: PdfDocCommon,
+        srcpages: dict[int, PageObject],
+        named_destinations: _NamedDestinationIndex,
+    ) -> None:
         arr: Any = dest.dest_array
-        if "/Names" in self._root_object and dest["/Title"] in cast(
-            list[Any],
+        if "/Names" in self._root_object and named_destinations.contains(
             cast(
                 DictionaryObject,
                 cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
             ).get("/Names", DictionaryObject()),
+            dest["/Title"],
         ):
             # already exists: should not duplicate it
             pass
@@ -2931,14 +3065,22 @@ class PdfWriter(PdfDocCommon):
                 arr[NumberObject(0)] = NumberObject(
                     srcpages[p.indirect_reference.idnum].page_number
                 )
-                self.add_named_destination_array(dest["/Title"], arr)
+                self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
             except KeyError:
                 pass
         elif dest["/Page"].indirect_reference.idnum in srcpages:
             arr[NumberObject(0)] = srcpages[
                 dest["/Page"].indirect_reference.idnum
             ].indirect_reference
-            self.add_named_destination_array(dest["/Title"], arr)
+            self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
+
+    def _add_named_destination_array_indexed(
+        self, title: Any, destination: Any, named_destinations: _NamedDestinationIndex
+    ) -> None:
+        names = self.get_named_dest_root()
+        if not named_destinations.insert(names, title, destination):
+            self.add_named_destination_array(title, destination)
+            named_destinations.record_insertion(names, title)
 
     def _add_articles_thread(
         self,
@@ -3288,7 +3430,7 @@ class PdfWriter(PdfDocCommon):
         self,
         outlines: list[Destination],
         parent: TreeObject | IndirectObject,
-        before: TreeObject | IndirectObject | None = None,
+        before: IndirectObject | None = None,
     ) -> None:
         for dest in outlines:
             # TODO: can be improved to keep A and SE entries (ignored for the moment)
