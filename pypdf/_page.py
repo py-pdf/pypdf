@@ -68,7 +68,7 @@ from .constants import (
     PageAttributes,
     Resources,
 )
-from .errors import PageSizeNotDefinedError, PdfReadError
+from .errors import LimitReachedError, PageSizeNotDefinedError, PdfReadError
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -1429,9 +1429,16 @@ class PageObject(DictionaryObject):
                 trsf = Transformation()
             else:
                 trsf = Transformation(ctm)
+            page2_annots = cast(ArrayObject, page2[PageAttributes.ANNOTS])
+            configuration = get_configuration()
+            if len(page2_annots) > configuration.annotations_maximum_per_page:
+                raise LimitReachedError(
+                    f"Maximum annotations per page exceeded: "
+                    f"{len(page2_annots)} > {configuration.annotations_maximum_per_page}."
+                )
             # Ensure we are working on a copy of the list. Otherwise, if both pages
             # are the same object, we might run into an infinite loop.
-            for a in cast(ArrayObject, deepcopy(page2[PageAttributes.ANNOTS])):
+            for a in deepcopy(page2_annots):
                 a = a.get_object()
                 aa = a.clone(
                     pdf,
