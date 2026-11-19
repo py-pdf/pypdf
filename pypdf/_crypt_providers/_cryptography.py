@@ -40,11 +40,27 @@ from pypdf._utils import logger_warning
 from pypdf.errors import PdfStreamError
 
 crypt_provider = ("cryptography", __version__)
+_warned_rc4_key_sizes: set[int] = set()
 
 
 def _needs_rc4_key_length_fallback(key: bytes) -> bool:
-    """Return whether a PDF RC4 key needs the pure-Python implementation."""
-    return 5 <= len(key) <= 16 and len(key) * 8 not in ARC4.key_sizes
+    """Detect and warn about PDF RC4 keys that cryptography cannot handle."""
+    key_size = len(key) * 8
+    # ISO 32000-1:2008, Table 20: RC4 file keys are 40 to 128 bits in steps of 8.
+    # Section 7.6.2, Algorithm 1(d), caps the derived object key at 16 bytes.
+    if not 40 <= key_size <= 128 or key_size in ARC4.key_sizes:
+        return False
+
+    if key_size not in _warned_rc4_key_sizes:
+        _warned_rc4_key_sizes.add(key_size)
+        logger_warning(
+            "cryptography does not support %(key_size)d-bit RC4 keys; "
+            "falling back to the pure-Python RC4 implementation.",
+            source=__name__,
+            key_size=key_size,
+        )
+    return True
+
 
 class CryptRC4(CryptBase):
     # Assume OpenSSL provides RC4; flipped to False the first time it rejects
