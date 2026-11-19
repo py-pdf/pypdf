@@ -166,7 +166,8 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     else:
         lower, upper = line_span[1], line_span[2]
         distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
-    last = (output + text)[-1:]
+    # The last character of output + text, without copying both strings.
+    last = (text or output)[-1:]
     threshold = 0.8 * min(str_height * scale_prev_y, font_size * scale_y)
     if distance > threshold:
         if last not in ("", "\n"):
