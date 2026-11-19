@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795108365769,
+  "lastUpdate": 1795108540439,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -173257,6 +173257,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005769399599338493",
             "extra": "mean: 527.3476421999931 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7fe9267f9bed062d289e25937db7f4e4c48be3b4",
+          "message": "TST: Only measure the coverage of subprocesses when measuring coverage (#4465)\n\nget_subprocess_environment() set COVERAGE_PROCESS_START for the\nsubprocesses some tests start, also in test runs without coverage.\nCoverage installs a .pth file that starts measuring whenever this\nvariable is set, so each of these subprocesses measured its coverage\nand wrote a .coverage.* file into the working directory, which nothing\ncombined or removed. The variable is now only set if the coverage of\nthe test process itself is measured.\n\nWhere the speed comes from\n--------------------------\n\nStarting coverage in a subprocess and writing its data file takes about\n1.3 s on CPython, while the subprocesses of these tests run for 0.2 to\n0.3 s. On PyPy, where coverage uses its Python tracer, it takes about\n11 s per subprocess.\n\nBenchmark\n---------\n\nThe 6 tests starting such subprocesses, without --cov, best of 3 serial\nruns, CPython 3.15.0, AMD Ryzen 7 PRO 4750U:\n\n| Test                                                                               |   main | this change |\n|------------------------------------------------------------------------------------|-------:|------------:|\n| test_filters.py::test_image_without_pillow                                         | 1.86 s |      0.30 s |\n| test_page.py::test_importing_without_pillow                                        | 1.51 s |      0.17 s |\n| test_utils.py::test_rename_kwargs__stacklevel                                      | 1.46 s |      0.19 s |\n| test_appearance_stream.py::test_appearance_stream__no_rtl_support[bidi]            | 1.54 s |      0.29 s |\n| test_appearance_stream.py::test_appearance_stream__no_rtl_support[arabic_reshaper] | 1.54 s |      0.29 s |\n| test_font.py::test_font_from_font_file_no_fonttools                                | 1.52 s |      0.28 s |\n| Total                                                                              |  9.4 s |       1.5 s |\n\nOn PyPy 3.11 (PyPy 8.0.1) with coverage installed but without --cov, as\nin the PyPy job of the CI: 71.8 s instead of 2.9 s for these 6 tests.\n\nWith --cov, as in the CPython jobs of the CI, nothing changes: 11.1 s\non main, 11.4 s with this change.\n\nBehavior\n--------\n\nWith --cov, the coverage of the subprocesses is measured and combined\nas before. Without it, the tests no longer leave .coverage.* files in\nthe working directory.\n\nVerification\n------------\n\n* The full test suite passes; ruff and mypy report no issues.\n* With --cov, line 97 of pypdf/_page.py, which only the subprocess of\n  test_importing_without_pillow executes, is covered on main and with\n  this change.\n* Without --cov, these 6 tests leave 6 .coverage.* files in the working\n  directory per run on main, and none with this change.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-19T18:10:51+01:00",
+          "tree_id": "48cc31e5d7664ef355c45809a49e904896ddcacc",
+          "url": "https://github.com/py-pdf/pypdf/commit/7fe9267f9bed062d289e25937db7f4e4c48be3b4"
+        },
+        "date": 1795108525443,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.03936532801925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0042419673973132085",
+            "extra": "mean: 90.584917727279 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.14268812549435,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003339602752371342",
+            "extra": "mean: 28.45542140740644 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0216722881871958,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00837273084274719",
+            "extra": "mean: 978.7874365999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 47.448313876277034,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005351377153589309",
+            "extra": "mean: 21.07556451020644 msec\nrounds: 49"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3956515580944671,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03339254791126143",
+            "extra": "mean: 2.527476461399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.355223924960995,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043183600485889026",
+            "extra": "mean: 737.8854383999908 msec\nrounds: 5"
           }
         ]
       }
