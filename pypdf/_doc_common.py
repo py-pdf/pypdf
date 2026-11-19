@@ -28,6 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import struct
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -1287,10 +1288,8 @@ class PdfDocCommon(ABC):
                 node.get("/Count", 0) >= 0
             )
         outline_item.node = node
-        try:
+        with contextlib.suppress(AttributeError):
             outline_item.indirect_reference = node.indirect_reference
-        except AttributeError:
-            pass
         return outline_item
 
     @property
