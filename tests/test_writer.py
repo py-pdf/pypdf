@@ -598,6 +598,26 @@ def test_remove_objects_from_page__list_keeps_text_filters():
     assert b"(keep)" in data
 
 
+def test_remove_objects_from_page__text_filters_only_narrow_text():
+    """text_filters select which text goes, not which drawing operators go."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(200, 200)
+    writer._merge_content_stream_to_page(
+        page, b"BT /F1 12 Tf (drop) Tj /F2 12 Tf (keep) Tj ET 0 0 50 50 re f"
+    )
+
+    writer.remove_objects_from_page(
+        writer.pages[0],
+        ObjectDeletionFlag.TEXT | ObjectDeletionFlag.DRAWING_IMAGES,
+        text_filters={"font_ids": ["/F1"]},
+    )
+
+    data = writer.pages[0].get_contents().get_data()
+    assert b"(drop)" not in data
+    assert b"(keep)" in data
+    assert b"re" not in data
+
+
 def test_remove_text_all_operators(pdf_file_path):
     stream = (
         b"BT "

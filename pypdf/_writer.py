@@ -139,6 +139,9 @@ class ObjectDeletionFlag(enum.IntFlag):
     IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
 
 
+_TEXT_SHOWING_OPERATORS = (b"Tj", b"TJ", b"'", b'"')
+
+
 class PdfWriter(PdfDocCommon):
     """
     Write a PDF file out, given pages produced by another class or through
@@ -2063,39 +2066,24 @@ class PdfWriter(PdfDocCommon):
         if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
                 self.remove_objects_from_page(page, to_d, text_filters)
-            return None
+            return
         assert isinstance(to_delete, ObjectDeletionFlag)
-        # Handle combined flags one kind at a time: the annotation branches
-        # return early and TEXT must not share a pass with the image operators.
-        kinds = [
-            kind & to_delete
-            for kind in (
-                ObjectDeletionFlag.TEXT,
-                ObjectDeletionFlag.LINKS,
-                ObjectDeletionFlag.ATTACHMENTS,
-                ObjectDeletionFlag.OBJECTS_3D,
-                ObjectDeletionFlag.ALL_ANNOTATIONS,
-                ObjectDeletionFlag.IMAGES,
-            )
-            if kind & to_delete
-        ]
-        if len(kinds) > 1:
-            return self.remove_objects_from_page(page, kinds, text_filters)
-
         if to_delete & ObjectDeletionFlag.LINKS:
-            return self._remove_annots_from_page(page, ("/Link",))
+            self._remove_annots_from_page(page, ("/Link",))
         if to_delete & ObjectDeletionFlag.ATTACHMENTS:
-            return self._remove_annots_from_page(
+            self._remove_annots_from_page(
                 page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
             )
         if to_delete & ObjectDeletionFlag.OBJECTS_3D:
-            return self._remove_annots_from_page(page, ("/3D",))
+            self._remove_annots_from_page(page, ("/3D",))
         if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
-            return self._remove_annots_from_page(page, None)
+            self._remove_annots_from_page(page, None)
+        if not to_delete & (ObjectDeletionFlag.TEXT | ObjectDeletionFlag.IMAGES):
+            return
 
         jump_operators = []
         if to_delete & ObjectDeletionFlag.DRAWING_IMAGES:
-            jump_operators = [
+            jump_operators += [
                 b"w", b"J", b"j", b"M", b"d", b"i",
                 b"W", b"W*",
                 b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n",
@@ -2103,7 +2091,7 @@ class PdfWriter(PdfDocCommon):
                 b"sh"
             ]
         if to_delete & ObjectDeletionFlag.TEXT:
-            jump_operators = [b"Tj", b"TJ", b"'", b'"']
+            jump_operators += list(_TEXT_SHOWING_OPERATORS)
 
         if not isinstance(page, PageObject):
             page = PageObject(self, page.indirect_reference)  # pragma: no cover
@@ -2120,7 +2108,7 @@ class PdfWriter(PdfDocCommon):
                 text_filters=text_filters
             )
             page.replace_contents(content)
-        return None
+        return
 
     def _remove_objects_from_page__clean(
             self,
@@ -2154,13 +2142,13 @@ class PdfWriter(PdfDocCommon):
                 )
             ):
                 if (
-                    not to_delete & ObjectDeletionFlag.TEXT
-                    or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
-                    or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
+                    operator in _TEXT_SHOWING_OPERATORS
+                    and text_filters
+                    and font_id not in font_ids_to_delete
                 ):
-                    del content.operations[i]
-                else:
                     i += 1
+                else:
+                    del content.operations[i]
             else:
                 i += 1
         content.get_data()  # this ensures ._data is rebuilt from the .operations
