@@ -153,12 +153,7 @@ class DocumentInformation(DictionaryObject):
         Returns a ``TextStringObject`` or ``None`` if the title is not
         specified.
         """
-        return (
-            self._get_text(DocumentInformationAttributes.TITLE)
-            or self.get(DocumentInformationAttributes.TITLE).get_object()  # type: ignore[union-attr]
-            if self.get(DocumentInformationAttributes.TITLE)
-            else None
-        )
+        return self._get_text(DocumentInformationAttributes.TITLE)
 
     @property
     def title_raw(self) -> str | None:
@@ -332,7 +327,10 @@ class PdfDocCommon(ABC):
         retval = DocumentInformation()
         if self._info is None:
             return None
-        retval.update(self._info)
+        # Text entries of the /Info dictionary may be indirect references;
+        # resolve them so every property sees the value, not the reference.
+        for key, value in self._info.items():
+            retval[key] = value.get_object()
         return retval
 
     @property

@@ -4,6 +4,7 @@ import struct
 import sys
 import time
 import zlib
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from unittest import mock
@@ -123,6 +124,85 @@ def test_read_metadata_title_is_utf8():
         title = reader.metadata.title
         # Should be a str.
         assert title == "Microsoft Word - トランスバース社買収電話会議英語Final.docx"
+
+
+def _indirect_info_pdf() -> bytes:
+    """A minimal PDF whose /Info text entries are indirect references."""
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [] /Count 0 >>",
+        (
+            b"<< /Title (Direct Title) /Author 4 0 R /Subject 5 0 R"
+            b" /Creator 6 0 R /Producer 7 0 R /Keywords 8 0 R"
+            b" /CreationDate 9 0 R /ModDate 10 0 R >>"
+        ),
+        b"(Indirect Author)",
+        b"(Indirect Subject)",
+        b"(Indirect Creator)",
+        b"(Indirect Producer)",
+        b"(Indirect Keywords)",
+        b"(D:20240102030405)",
+        b"(D:20240102030406)",
+    ]
+    out = bytearray(b"%PDF-1.4\n")
+    offsets = {}
+    for number, body in enumerate(objects, start=1):
+        offsets[number] = len(out)
+        out += b"%d 0 obj\n" % number + body + b"\nendobj\n"
+    xref_pos = len(out)
+    out += b"xref\n0 %d\n" % (len(objects) + 1)
+    out += b"0000000000 65535 f \n"
+    for number in range(1, len(objects) + 1):
+        out += b"%010d 00000 n \n" % offsets[number]
+    out += b"trailer\n<< /Root 1 0 R /Info 3 0 R /Size %d >>\n" % (len(objects) + 1)
+    out += b"startxref\n%d\n%%%%EOF\n" % xref_pos
+    return bytes(out)
+
+
+@pytest.mark.parametrize(
+    ("prop", "expected"),
+    [
+        ("title", "Direct Title"),
+        ("author", "Indirect Author"),
+        ("subject", "Indirect Subject"),
+        ("creator", "Indirect Creator"),
+        ("producer", "Indirect Producer"),
+        ("keywords", "Indirect Keywords"),
+        ("creation_date", datetime(2024, 1, 2, 3, 4, 5)),
+        ("modification_date", datetime(2024, 1, 2, 3, 4, 6)),
+    ],
+)
+def test_metadata_properties_resolve_indirect_entries(prop, expected):
+    """Every metadata property sees through indirect /Info entries.
+
+    The specification allows text strings in the /Info dictionary to be
+    indirect references; only ``title`` used to handle them.
+    """
+    reader = PdfReader(BytesIO(_indirect_info_pdf()))
+    docinfo = reader.metadata
+    assert docinfo is not None
+    assert getattr(docinfo, prop) == expected
+
+
+@pytest.mark.parametrize(
+    ("prop", "expected"),
+    [
+        ("title_raw", "Direct Title"),
+        ("author_raw", "Indirect Author"),
+        ("subject_raw", "Indirect Subject"),
+        ("creator_raw", "Indirect Creator"),
+        ("producer_raw", "Indirect Producer"),
+        ("keywords_raw", "Indirect Keywords"),
+        ("creation_date_raw", "D:20240102030405"),
+        ("modification_date_raw", "D:20240102030406"),
+    ],
+)
+def test_metadata_raw_properties_resolve_indirect_entries(prop, expected):
+    """The raw metadata properties must not leak unresolved references."""
+    reader = PdfReader(BytesIO(_indirect_info_pdf()))
+    docinfo = reader.metadata
+    assert docinfo is not None
+    assert getattr(docinfo, prop) == expected
 
 
 @pytest.mark.enable_socket
