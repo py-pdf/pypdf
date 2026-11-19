@@ -6,6 +6,7 @@ All rights reserved. This software is available under a BSD license;
 see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 """
 
+import math
 import re
 from typing import Any, Union
 
@@ -163,15 +164,17 @@ class PageRange:
 
         # None start means "beginning" (-inf for ordering); None stop means "end" (+inf).
         def _start_key(v: int | None) -> float:
-            return float("-inf") if v is None else v
+            return -math.inf if v is None else v
 
         def _stop_key(v: int | None) -> float:
-            return float("inf") if v is None else v
+            return math.inf if v is None else v
 
-        if _start_key(a[0]) > _start_key(b[0]):
+        # Order by start, and on equal starts put the larger stop first, so that
+        # an empty range such as 2:0 does not decide whether there is a gap.
+        if (_start_key(a[0]), -_stop_key(a[1])) > (_start_key(b[0]), -_stop_key(b[1])):
             a, b = b, a
 
-        # Now `a` has the smaller (or equal) start.
+        # Now `a` has the smaller start (and the larger stop on equal starts).
         if _start_key(b[0]) > _stop_key(a[1]):
             # There is a gap between a and b.
             raise ValueError("Can't add PageRanges with gap")
@@ -199,25 +202,27 @@ def parse_filename_page_ranges(
     """
     pairs: list[tuple[str, PageRange]] = []
     pdf_filename: str | None = None
-    did_page_range = False
+    # True while pdf_filename has not been followed by a page range yet.
+    needs_all_pages = False
     for arg in [*args, None]:
         if PageRange.valid(arg):
-            if not pdf_filename:
+            if pdf_filename is None:
                 raise ValueError(
                     "The first argument must be a filename, not a page range."
                 )
 
             assert arg is not None
             pairs.append((pdf_filename, PageRange(arg)))
-            did_page_range = True
+            needs_all_pages = False
         else:
             # New filename or end of list - use the complete previous file?
-            if pdf_filename and not did_page_range:
+            if needs_all_pages:
+                assert pdf_filename is not None
                 pairs.append((pdf_filename, PAGE_RANGE_ALL))
 
             assert not isinstance(arg, PageRange), arg
             pdf_filename = arg
-            did_page_range = False
+            needs_all_pages = arg is not None
     return pairs
 
 
