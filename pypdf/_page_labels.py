@@ -70,7 +70,7 @@ from .generic import (
     DictionaryObject,
     NullObject,
     NumberObject,
-    PdfObject,
+    TextStringObject,
     is_null_or_none,
 )
 
@@ -153,21 +153,21 @@ _NUMBERING_STYLES: dict[str | None, Callable[[int], str]] = {
 }
 
 
-def _resolve(value: Any) -> Any:
-    # Any of these entries may be an indirect reference, which dict.get hands
-    # back as-is rather than resolving the way __getitem__ does. /Limits is
-    # already read that way below.
-    return value.get_object() if isinstance(value, PdfObject) else value
-
-
 def _get_label(value: Any, start_index: Any, index: int) -> str:
     # if /Nums array is not following the specification or if /Nums is empty
     if not isinstance(value, dict):
         return str(index + 1)  # Fallback
-    start = _resolve(value.get("/St", 1))
-    prefix = cast(str, _resolve(value.get("/P", "")))
-    style = _resolve(value.get("/S"))
-    mapping_function = _NUMBERING_STYLES.get(style)
+    # Any of these entries may be an indirect reference, which dict.get hands
+    # back as-is rather than resolving the way __getitem__ does. /Limits is
+    # already read that way below. The fallbacks are PdfObjects themselves so
+    # that every value can be resolved the same way.
+    start = value.get("/St", NumberObject(1)).get_object()
+    prefix = cast(str, value.get("/P", TextStringObject("")).get_object())
+    style = value.get("/S", NullObject()).get_object()
+    # A null /S is equivalent to omitting it (ISO 32000-1, 7.3.9).
+    mapping_function = _NUMBERING_STYLES.get(
+        None if isinstance(style, NullObject) else style
+    )
     if mapping_function is None:
         # Unknown /S numbering style; fall back to the page position.
         logger_warning(

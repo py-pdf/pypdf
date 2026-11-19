@@ -328,6 +328,17 @@ def test_get_label_from_nums__unknown_style(caplog):
     assert "Ignoring unknown page label numbering style '/X' in /Nums." in caplog.text
 
 
+def test_get_label_from_nums__null_style(caplog):
+    # A null /S means the same as no /S at all, so only the prefix is used.
+    value = DictionaryObject()
+    value[NameObject("/S")] = NullObject()
+    value[NameObject("/P")] = TextStringObject("Cover")
+    dictionary_object = DictionaryObject()
+    dictionary_object[NameObject("/Nums")] = ArrayObject([NumberObject(0), value])
+    assert get_label_from_nums(dictionary_object, 0) == "Cover"
+    assert caplog.messages == []
+
+
 def test_get_label_from_nums__malformed_start(caplog):
     # /St is not an integer, so the label arithmetic cannot be performed.
     value = DictionaryObject()
