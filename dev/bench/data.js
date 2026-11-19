@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795094727628,
+  "lastUpdate": 1795094867168,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -172861,6 +172861,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03711303880862713",
             "extra": "mean: 661.9175502000189 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "158475962+Krushil-Dhankecha@users.noreply.github.com",
+            "name": "Krushil Dhankecha",
+            "username": "Krushil-Dhankecha"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "92a209fae4b80dae6a55ab0b481724e3745ba04c",
+          "message": "BUG: Resolve a viewer preference stored as an indirect object (#4422)\n\n* BUG: Resolve a viewer preference stored as an indirect object\n\n* BUG: Address review feedback on the indirect viewer preference",
+          "timestamp": "2026-11-19T14:23:13+01:00",
+          "tree_id": "a6adf92ee99b9946f6b5fea5c946675932f16727",
+          "url": "https://github.com/py-pdf/pypdf/commit/92a209fae4b80dae6a55ab0b481724e3745ba04c"
+        },
+        "date": 1795094853174,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.788755348182066,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018752992793170768",
+            "extra": "mean: 67.61894266666104 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.92438892758487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004732473164869746",
+            "extra": "mean: 33.41755791304333 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1191238989588923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04162614352317025",
+            "extra": "mean: 893.5561120000102 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 35.70638909330415,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015818781396787107",
+            "extra": "mean: 28.006192320004857 msec\nrounds: 50"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.31675297717133843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08210198467409499",
+            "extra": "mean: 3.1570342571999843 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0737415180325571,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0527360581595712",
+            "extra": "mean: 931.3228400000071 msec\nrounds: 5"
           }
         ]
       }
