@@ -18,7 +18,6 @@ from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject, _get_fonts_walk
 from pypdf.annotations import Highlight, Polygon
 from pypdf.constants import PageAttributes
-from pypdf.constants import PageAttributes as PG
 from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -184,12 +183,12 @@ def test_transformation_equivalence():
     page_base2.merge_page(page_box2)
 
     # Should be the same
-    assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
+    assert page_base1[NameObject(PageAttributes.CONTENTS)] == page_base2[NameObject(PageAttributes.CONTENTS)]
     assert page_base1.mediabox == page_base2.mediabox
     assert page_base1.trimbox == page_base2.trimbox
-    assert page_base1.get(NameObject(PG.ANNOTS)) == page_base2.get(NameObject(PG.ANNOTS))
+    assert page_base1.get(NameObject(PageAttributes.ANNOTS)) == page_base2.get(NameObject(PageAttributes.ANNOTS))
     compare_dict_objects(
-        page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
+        page_base1[NameObject(PageAttributes.RESOURCES)], page_base2[NameObject(PageAttributes.RESOURCES)]
     )
 
 
@@ -344,6 +343,68 @@ def test_page_number_of_identical_pages():
         assert number == page.page_number
 
 
+def test_page_number_follows_inserted_and_removed_pages():
+    """
+    The page number of every page must stay right when pages are inserted
+    in front of it, removed in front of it, or removed completely
+    (ISO 32000-2:2020, 7.7.3.2, page tree nodes: the order of the leaf
+    nodes defines the page numbers).
+    """
+    writer = PdfWriter()
+    pages = [writer.add_blank_page(width=100 + i, height=200) for i in range(4)]
+    assert [page.page_number for page in pages] == [0, 1, 2, 3]
+
+    writer.insert_blank_page(width=300, height=300, index=0)
+    assert writer.pages[0].page_number == 0
+    assert [page.page_number for page in pages] == [1, 2, 3, 4]
+
+    writer.remove_page(1)  # the first of the original pages
+    assert [page.page_number for page in pages[1:]] == [1, 2, 3]
+    assert pages[0].page_number is None
+    assert writer.get_page_number(pages[2]) == 2
+
+    last = writer.add_blank_page(width=50, height=50)
+    assert last.page_number == 4
+    assert [page.page_number for page in writer.pages] == [0, 1, 2, 3, 4]
+
+
+def test_page_number_of_a_reader_follows_removed_pages():
+    """After a page of a reader is removed, the pages behind it move up (ISO 32000-2:2020, 7.7.3.2)."""
+    writer = PdfWriter()
+    for i in range(4):
+        writer.add_blank_page(width=100 + i, height=200)
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    pages = list(reader.pages)
+    assert [page.page_number for page in pages] == [0, 1, 2, 3]
+
+    reader.remove_page(0)
+    assert [page.page_number for page in pages[1:]] == [0, 1, 2]
+    assert [reader.get_page_number(page) for page in pages[1:]] == [0, 1, 2]
+
+
+def test_page_number_of_a_page_of_another_document():
+    """
+    A page that is not in the page tree of a writer has no page number in it
+    (ISO 32000-2:2020, 7.7.3.2), even if the writer has a page at the same
+    position or with the same object number.
+    """
+    first = PdfWriter()
+    second = PdfWriter()
+    for writer in (first, second):
+        for i in range(4):
+            writer.add_blank_page(width=100 + i, height=200)
+    output = BytesIO()
+    first.write(output)
+    reader = PdfReader(output)
+
+    assert second.get_page_number(first.pages[2]) is None
+    assert second.get_page_number(reader.pages[2]) is None
+    assert first.pages[2].page_number == 2
+    assert second.get_page_number(second.pages[2]) == 2
+
+
 def test_page_number_of_named_destination():
     """A named destination has to resolve to the page it points at."""
     writer = PdfWriter()
@@ -372,11 +433,11 @@ def test_compress_content_streams_releases_replaced_streams():
     writer = create_stamped_writer()
     # Merging makes `/Contents` an indirect reference to an array, which is what
     # `replace_contents()` failed to resolve before checking its type.
-    contents = writer.pages[0].raw_get(PG.CONTENTS)
+    contents = writer.pages[0].raw_get(PageAttributes.CONTENTS)
     assert isinstance(contents, IndirectObject)
     assert isinstance(contents.get_object(), ArrayObject)
     replaced = [
-        reference.idnum for page in writer.pages for reference in page[PG.CONTENTS]
+        reference.idnum for page in writer.pages for reference in page[PageAttributes.CONTENTS]
     ]
 
     for page in writer.pages:
@@ -406,7 +467,7 @@ def test_replace_contents_skips_direct_array_entries():
     released = writer._add_object(ContentStream(None, writer))
     direct = ContentStream(None, writer)
     assert not isinstance(direct, IndirectObject)
-    page[NameObject(PG.CONTENTS)] = ArrayObject([direct, released])
+    page[NameObject(PageAttributes.CONTENTS)] = ArrayObject([direct, released])
 
     page.replace_contents(ContentStream(None, writer))
 
@@ -776,6 +837,25 @@ def test_get_fonts__acroform_default_resources():
     assert _get_fonts_walk(acro_form, set(), set()) == ({"/Helvetica"}, set())
 
 
+@pytest.mark.enable_socket
+def test_get_fonts__appearance_stream_without_type():
+    url = "https://github.com/py-pdf/pypdf/files/12194195/test.pdf"
+    name = "germanfields.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert reader.pages[0]._get_fonts() == ({"(/Type3)"}, {"/Helvetica"})
+
+
+def test_get_fonts__appearance_states():
+    """The fonts of the appearance stream of each state of a check box are collected."""
+    reader = PdfReader(RESOURCE_ROOT / "FormTestFromOo.pdf")
+    check_box = reader.get_fields()["CheckBox1"].indirect_reference.get_object()
+    embedded = {"/BAAAAA+LiberationSerif", "/CAAAAA+LiberationSans", "/EAAAAA+SegoeUI"}
+    assert _get_fonts_walk(check_box, set(), set()) == (
+        embedded | {"/LiberationSans", "/ZapfDingbats"},
+        embedded,
+    )
+
+
 def test_annotation_getter():
     pdf_path = RESOURCE_ROOT / "commented.pdf"
     reader = PdfReader(pdf_path)
@@ -1121,17 +1201,17 @@ def test_merge_resources(apage1, apage2, expected_result, expected_renames):
     for new_res in (False, True):
         # Arrange
         page1 = PageObject()
-        page1[NameObject(PG.RESOURCES)] = DictionaryObject()
+        page1[NameObject(PageAttributes.RESOURCES)] = DictionaryObject()
         for k, v in apage1.items():
-            page1[PG.RESOURCES][NameObject(k)] = NameObject(v)
+            page1[PageAttributes.RESOURCES][NameObject(k)] = NameObject(v)
 
         page2 = PageObject()
-        page2[NameObject(PG.RESOURCES)] = DictionaryObject()
+        page2[NameObject(PageAttributes.RESOURCES)] = DictionaryObject()
         for k, v in apage2.items():
-            page2[PG.RESOURCES][NameObject(k)] = NameObject(v)
+            page2[PageAttributes.RESOURCES][NameObject(k)] = NameObject(v)
 
         # Act
-        result, renames = page1._merge_resources(page1, page2, PG.RESOURCES, new_res)
+        result, renames = page1._merge_resources(page1, page2, PageAttributes.RESOURCES, new_res)
 
         # Assert
         assert result == expected_result
