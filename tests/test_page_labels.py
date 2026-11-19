@@ -5,6 +5,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._page_labels import (
+    _get_label,
     get_label_from_nums,
     index2label,
     index2labels,
@@ -902,3 +903,8 @@ def test_page_labels__non_positive_start(caplog, start, expected):
 
     assert PdfReader(stream).page_labels == expected
     assert "Ignoring malformed page label entry in /Nums" in caplog.text
+
+
+def test_get_label__accumulated_limit() -> None:
+    label = _build_label(style="/D", start=20, prefix="A" * 510)
+    assert _get_label(value=label, start_index=1, index=420) == "421"

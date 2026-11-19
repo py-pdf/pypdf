@@ -1626,3 +1626,22 @@ def test_decode_stream_data__data_limit() -> None:
             match=r"^Stream decoding exceeded the maximum accumulated decoding work of 300000000 bytes\.$"
     ):
         decode_stream_data(content_stream)
+
+
+@pytest.mark.timeout(2)
+def test_asciihexdecode__memory() -> None:
+    # "ModuleNotFoundError: No module named '_tracemalloc'" on PyPy.
+    tracemalloc = pytest.importorskip("tracemalloc", "Needs to measure memory usage")
+
+    data = b"0123456789ABCDEF \n\t" * 99_999 + b">"
+
+    tracemalloc.start()
+    try:
+        ASCIIHexDecode.decode(data)
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    # Allow some overhead, but prevent excessive allocations.
+    # The old implementation consumed 17_202_330, which is about `9 * len(data)`.
+    assert peak < len(data) * 3
