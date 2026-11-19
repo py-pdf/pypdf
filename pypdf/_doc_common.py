@@ -1071,14 +1071,14 @@ class PdfDocCommon(ABC):
         # see if there are any more outline items
         if visited is None:
             visited = set()
-        added: list[int] = []
+        added: set[int] = set()
         while True:
             node_id = id(node)
             if node_id in visited:
                 logger_warning("Detected cycle in outline structure for %(node)s", source=__name__, node=node)
                 break
             visited.add(node_id)
-            added.append(node_id)
+            added.add(node_id)
             traversal_state.entry_count += 1
             if traversal_state.entry_count > configuration.outline_maximum_entries:
                 raise LimitReachedError(
