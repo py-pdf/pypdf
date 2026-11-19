@@ -3722,3 +3722,70 @@ def test_read_xref__hybrid_pdf__limit():
             expected_exception=LimitReachedError, match=r"^Maximum XRef stream entry limit reached: 2 > 1\.$"
     ):
         PdfReader(BytesIO(pdf), xref_stream_maximum_entries=1)
+
+
+def _build_pdf_with_resources_in_objstm(objstm_num: int) -> bytes:
+    """
+    One page whose /Resources (object 4) is, according to the xref stream,
+    stored in object stream ``objstm_num``.
+
+    Pointing ``objstm_num`` at a number that is not in the file simulates a
+    missing object stream; pointing it at object 5 (the xref stream, whose
+    /Type is /XRef) simulates a stream that is not an object stream.
+    """
+    pdf = bytearray(b"%PDF-1.5\n")
+    offsets = {}
+    for num, body in (
+        (1, b"<< /Type /Catalog /Pages 2 0 R >>"),
+        (2, b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+        (3, b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources 4 0 R >>"),
+    ):
+        offsets[num] = len(pdf)
+        pdf += b"%d 0 obj\n" % num + body + b"\nendobj\n"
+    xref_offset = len(pdf)
+    rows = [
+        (0, 0, 0xFFFF),
+        (1, offsets[1], 0),
+        (1, offsets[2], 0),
+        (1, offsets[3], 0),
+        (2, objstm_num, 0),
+        (1, xref_offset, 0),
+    ]
+    data = b"".join(struct.pack(">BIH", *row) for row in rows)
+    pdf += (
+        b"5 0 obj\n<< /Type /XRef /Size 6 /W [1 4 2] /Root 1 0 R /Length %d >>\nstream\n"
+        % len(data)
+    )
+    pdf += data + b"\nendstream\nendobj\n"
+    pdf += b"startxref\n%d\n%%%%EOF\n" % xref_offset
+    return bytes(pdf)
+
+
+@pytest.mark.parametrize(
+    ("objstm_num", "strict_message"),
+    [
+        pytest.param(9, r"^Could not find object\.$", id="missing-object-stream"),
+        pytest.param(
+            5,
+            r"^Object stream 5 referenced by object 4 is missing or is not an object stream\.$",
+            id="not-an-object-stream",
+        ),
+    ],
+)
+def test_get_object_from_stream__invalid_object_stream(objstm_num, strict_message, caplog):
+    """An object stream that is missing or is not an /ObjStm does not leak a TypeError or AssertionError."""
+    data = _build_pdf_with_resources_in_objstm(objstm_num)
+
+    reader = PdfReader(BytesIO(data))
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+    writer.write(BytesIO())
+    assert isinstance(reader.get_object(4), NullObject)
+    assert (
+        f"Object stream {objstm_num} referenced by object 4 is missing or is not "
+        "an object stream; ignoring it."
+    ) in caplog.text
+
+    reader = PdfReader(BytesIO(data), strict=True)
+    with pytest.raises(PdfReadError, match=strict_message):
+        reader.get_object(4)
