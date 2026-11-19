@@ -1,9 +1,10 @@
+import re
 import uuid
 from abc import ABC
 from typing import Any, Literal, TypeAlias
 
 from ..constants import AnnotationFlag
-from ..generic import ArrayObject, DictionaryObject
+from ..generic import ArrayObject, DecodedStreamObject, DictionaryObject
 from ..generic._base import (
     BooleanObject,
     FloatObject,
@@ -28,6 +29,81 @@ def _get_bounding_rectangle(vertices: list[Vertex]) -> RectangleObject:
         x_max = max(x_max, x)
         y_max = max(y_max, y)
     return RectangleObject((x_min, y_min, x_max, y_max))
+
+
+def _free_text_appearance_stream(
+    *,
+    width: float,
+    height: float,
+    text: str,
+    font_size: float,
+    bold: bool,
+    italic: bool,
+    font_color: str,
+    border_color: str | None,
+    background_color: str | None,
+) -> DecodedStreamObject:
+    """
+    Create the normal appearance stream (``/AP /N``) of a FreeText annotation.
+
+    Viewers such as Chrome do not generate an appearance for FreeText annotations
+    that lack one, so the annotation would not be shown. The text is drawn with one
+    of the standard Helvetica fonts and is not wrapped.
+    """
+    base_font = "Helvetica"
+    if bold and italic:
+        base_font = "Helvetica-BoldOblique"
+    elif bold:
+        base_font = "Helvetica-Bold"
+    elif italic:
+        base_font = "Helvetica-Oblique"
+
+    operations: list[bytes] = []
+    if background_color is not None:
+        red, green, blue = hex_to_rgb(background_color)
+        operations.append(f"{red:.4f} {green:.4f} {blue:.4f} rg 0 0 {width:.4f} {height:.4f} re f".encode("ascii"))
+    if border_color is not None:
+        red, green, blue = hex_to_rgb(border_color) if border_color else (0.0, 0.0, 0.0)
+        operations.append(
+            f"{red:.4f} {green:.4f} {blue:.4f} RG 1 w 0.5 0.5 {width - 1:.4f} {height - 1:.4f} re S".encode("ascii")
+        )
+    red, green, blue = hex_to_rgb(font_color) if font_color else (0.0, 0.0, 0.0)
+    operations.append(f"BT /Helv {font_size:.4f} Tf {red:.4f} {green:.4f} {blue:.4f} rg".encode("ascii"))
+    leading = font_size * 1.2
+    for index, line in enumerate(text.splitlines() or [""]):
+        y = height - font_size - index * leading
+        # Escape the PDF literal string; unencodable characters are replaced.
+        escaped = line.encode("cp1252", errors="replace")
+        escaped = escaped.replace(b"\\", b"\\\\").replace(b"(", b"\\(").replace(b")", b"\\)")
+        operations.append(f"1 0 0 1 2 {y:.4f} Tm".encode("ascii") + b" (" + escaped + b") Tj")
+    operations.append(b"ET")
+
+    stream = DecodedStreamObject()
+    stream.set_data(b"\n".join(operations))
+    stream.update(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Form"),
+            NameObject("/BBox"): RectangleObject((0, 0, width, height)),
+            NameObject("/Resources"): DictionaryObject(
+                {
+                    NameObject("/Font"): DictionaryObject(
+                        {
+                            NameObject("/Helv"): DictionaryObject(
+                                {
+                                    NameObject("/Type"): NameObject("/Font"),
+                                    NameObject("/Subtype"): NameObject("/Type1"),
+                                    NameObject("/BaseFont"): NameObject(f"/{base_font}"),
+                                    NameObject("/Encoding"): NameObject("/WinAnsiEncoding"),
+                                }
+                            )
+                        }
+                    )
+                }
+            ),
+        }
+    )
+    return stream
 
 
 class MarkupAnnotation(AnnotationDictionary, ABC):
@@ -181,6 +257,24 @@ class FreeText(MarkupAnnotation):
             self[NameObject("/C")] = ArrayObject(
                 [FloatObject(n) for n in hex_to_rgb(background_color)]
             )
+
+        rectangle = RectangleObject(rect)
+        size_match = re.match(r"\s*(\d+(?:\.\d+)?)", font_size)
+        self[NameObject("/AP")] = DictionaryObject(
+            {
+                NameObject("/N"): _free_text_appearance_stream(
+                    width=rectangle.width,
+                    height=rectangle.height,
+                    text=text,
+                    font_size=float(size_match.group(1)) if size_match else 14.0,
+                    bold=bold,
+                    italic=italic,
+                    font_color=font_color,
+                    border_color=border_color,
+                    background_color=background_color,
+                )
+            }
+        )
 
 
 class Line(MarkupAnnotation):
