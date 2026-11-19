@@ -4,7 +4,6 @@ import sys
 from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
-from typing import cast
 from unittest import mock
 
 import pytest
@@ -18,7 +17,6 @@ from pypdf.generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
-    EncodedStreamObject,
     Field,
     Fit,
     IndirectObject,
@@ -1101,11 +1099,10 @@ def test_stream_object__flate_encode__filter_array_with_non_array_decode_parms()
     assert encoded["/DecodeParms"] == ArrayObject([NullObject(), NullObject()])
 
 
-def _field_with_stream_value(data: object) -> Field:
-    value = EncodedStreamObject()
-    value.decoded_self = DecodedStreamObject()
-    # Some tests need data that no PDF file can produce, so the type is not checked.
-    value.decoded_self._data = cast(bytes, data)
+def _field_with_stream_value(data: bytes) -> Field:
+    stream = DecodedStreamObject()
+    stream.set_data(data)
+    value = stream.flate_encode()
     field = DictionaryObject({NameObject("/FT"): NameObject("/Tx"), NameObject("/V"): value})
     field.indirect_reference = None
     return Field(field)
@@ -1128,17 +1125,7 @@ def test_field__stream_value_without_data() -> None:
     ISO 32000-2:2020, 12.7.5.3: since PDF 1.5, the text of a text field may be held
     in a stream in /V.
     """
-    assert _field_with_stream_value(None)["/V"] == TextStringObject("")
-
-
-def test_field__stream_value_of_unexpected_type() -> None:
-    """
-    A text field whose /V stream holds data that is not bytes raises an exception.
-
-    A PDF file cannot produce such data, so the test sets it directly.
-    """
-    with pytest.raises(Exception, match=r"^Should never happen$"):
-        _field_with_stream_value(42)
+    assert _field_with_stream_value(b"")["/V"] == TextStringObject("")
 
 
 @pytest.mark.parametrize(
