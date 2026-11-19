@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795108936221,
+  "lastUpdate": 1795109086971,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -173389,6 +173389,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.043183600485889026",
             "extra": "mean: 737.8854383999908 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d7f50bf1e9bdd3828d368e85538e26786a737385",
+          "message": "TST: Cover link extraction and named destination edge cases (#4464)\n\n* TST: Cover link extraction and named destination edge cases\n\nAdd tests for:\n\n* extract_links() with /Annots that is not an array (warning) and with a\n  link annotation without /A and /Dest,\n* get_named_dest_root() for a /Dests dictionary without /Names, which is\n  created, and a round trip of add_named_destination() through it,\n* named destinations without a destination array (/D), both in the\n  /Names tree and in the /Dests dictionary of the catalog (PDF 1.1).\n\npypdf/generic/_link.py and pypdf/_doc_common.py are fully covered\nafterwards.\n\nextract_links() and its checks come from #3298 and #3659; the handling\nof named destinations is also touched by #3400 and #4249.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Explain the link and named destination tests in docstrings\n\nEach of the four tests added for extract_links() and the named\ndestinations now has a docstring. Its first line names the capability\nthe test checks; the rest gives the ISO 32000-2:2020 section the\nexpected behavior comes from.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* MAINT: Say which page's links are ignored when /Annots is not an array\n\nWhen a page added to a writer has an /Annots entry that is not an\narray, extract_links() warned with\n\n    Expected annotation arrays: [] {}. Ignoring annotations.\n\nThe message printed both objects, which can be large, without saying\nwhich page they belong to or which of them is wrong. It now names the\npage by its index in its document and the type found instead of an\narray:\n\n    Ignoring the links on the page with index 1: its /Annots is a\n    DictionaryObject, not an array.\n\nA page that is not part of a document is called \"a page\". The links of\nsuch a page are still ignored, as before.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* PDF spec details\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-19T18:20:15+01:00",
+          "tree_id": "00543e3266e2795f8b89f3fc37c79b9d1d3353cd",
+          "url": "https://github.com/py-pdf/pypdf/commit/d7f50bf1e9bdd3828d368e85538e26786a737385"
+        },
+        "date": 1795109073145,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 15.338931871543148,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01752751477189886",
+            "extra": "mean: 65.19358768749761 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.134563417039107,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009113229757620567",
+            "extra": "mean: 32.11864533333161 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1607411257800864,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02680938536325426",
+            "extra": "mean: 861.5185399999859 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 37.29232309566806,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016731145189893423",
+            "extra": "mean: 26.815170442309118 msec\nrounds: 52"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.32488701521069163,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09345526824396681",
+            "extra": "mean: 3.077993127399975 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0797767572179604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04145049540978382",
+            "extra": "mean: 926.1173601999872 msec\nrounds: 5"
           }
         ]
       }
