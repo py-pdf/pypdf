@@ -641,19 +641,25 @@ def test_tj_gap_right_after_a_font_change_is_a_space() -> None:
     ("content_stream", "expected"),
     [
         # ReportLab ends each drawString with T* (move to the next line) right before ET
-        (
+        pytest.param(
             (
                 b"BT /F1 12 Tf 14.4 TL 1 0 0 1 40 700 Tm (Hel) Tj T* ET "
                 b"BT /F1 12 Tf 14.4 TL 1 0 0 1 58 700 Tm (lo world) Tj T* ET"
             ),
             "Hello world",
+            id="t-star-before-et-inside-a-word",
         ),
-        (
+        pytest.param(
             b"BT /F1 12 Tf 40 700 Td (Invoice:) Tj 0 -14 Td ET BT /F1 12 Tf 100 700 Td (12345) Tj ET",
             "Invoice: 12345",
+            id="td-before-et-between-label-and-value",
         ),
         # A move followed by text still starts a new line
-        (b"BT /F1 12 Tf 14.4 TL 40 700 Td (Hello) Tj T* (World) Tj ET", "Hello\nWorld"),
+        pytest.param(
+            b"BT /F1 12 Tf 14.4 TL 40 700 Td (Hello) Tj T* (World) Tj ET",
+            "Hello\nWorld",
+            id="t-star-followed-by-text-breaks-the-line",
+        ),
     ],
 )
 def test_move_without_text_after_it_does_not_break_the_line(content_stream: bytes, expected: str) -> None:
