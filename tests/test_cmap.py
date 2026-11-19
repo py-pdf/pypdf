@@ -9,6 +9,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import (
     __parse_bfrange__decode,
     _check_token_length,
+    _codespace_code_length,
     _derive_character_map_from_cff_type1_font_file,
     _parse_to_unicode,
     get_encoding,
@@ -1112,3 +1113,174 @@ def test_get_encoding__to_unicode_stream_with_str_data() -> None:
     font = DictionaryObject({NameObject("/ToUnicode"): to_unicode})
     _, map_dict = get_encoding(font)
     assert map_dict["\x01"] == "A"
+
+
+_TWO_BYTE_TEXT = "The court held"
+
+# The CMap of #4379: what /Identity-H does, written out as a stream
+# (ISO 32000-2:2020, 9.7.6.1). It maps every two-byte code to one CID.
+_IDENTITY_CMAP = (
+    b"/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n"
+    b"/CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> def\n"
+    b"/CMapName /Custom-Identity def\n/CMapType 1 def\n"
+    b"1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n"
+    b"1 begincidrange\n<0000> <FFFF> 0\nendcidrange\n"
+    b"endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n"
+)
+
+
+def _stream(data: bytes, **entries: PdfObject) -> DecodedStreamObject:
+    stream = DecodedStreamObject()
+    stream.set_data(data)
+    for key, value in entries.items():
+        stream[NameObject(f"/{key}")] = value
+    return stream
+
+
+def _identity_cmap_stream() -> DecodedStreamObject:
+    return _stream(
+        _IDENTITY_CMAP,
+        Type=NameObject("/CMap"),
+        CMapName=NameObject("/Custom-Identity"),
+    )
+
+
+def _text_of_type0_page(encoding: PdfObject) -> str:
+    """
+    The text of a page drawn with a Type0 font whose /Encoding is ``encoding``.
+
+    The font uses two-byte character codes and maps them to Unicode through
+    /ToUnicode, as the CID fonts of #4379 do; only /Encoding varies.
+    """
+    codes = {char: 0x20 + i for i, char in enumerate(sorted(set(_TWO_BYTE_TEXT)))}
+    system_info = DictionaryObject(
+        {
+            NameObject("/Registry"): TextStringObject("Adobe"),
+            NameObject("/Ordering"): TextStringObject("Identity"),
+            NameObject("/Supplement"): NumberObject(0),
+        }
+    )
+    to_unicode = _stream(
+        b"/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n"
+        b"/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n"
+        b"1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n"
+        + f"{len(codes)} beginbfchar\n".encode()
+        + b"".join(f"<{code:04X}> <{ord(char):04X}>\n".encode() for char, code in codes.items())
+        + b"endbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n"
+    )
+    writer = PdfWriter()
+    page = writer.add_blank_page(612, 792)
+    descendant = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/CIDFontType2"),
+            NameObject("/BaseFont"): NameObject("/Example"),
+            NameObject("/CIDSystemInfo"): system_info,
+            NameObject("/CIDToGIDMap"): NameObject("/Identity"),
+            NameObject("/DW"): NumberObject(500),
+        }
+    )
+    font = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type0"),
+            NameObject("/BaseFont"): NameObject("/Example"),
+            NameObject("/Encoding"): encoding,
+            NameObject("/DescendantFonts"): ArrayObject([writer._add_object(descendant)]),
+            NameObject("/ToUnicode"): writer._add_object(to_unicode),
+        }
+    )
+    page[NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/Font"): DictionaryObject({NameObject("/F1"): writer._add_object(font)})}
+    )
+    character_codes = "".join(f"{codes[char]:04X}" for char in _TWO_BYTE_TEXT)
+    page[NameObject("/Contents")] = _stream(f"BT /F1 12 Tf 72 720 Td <{character_codes}> Tj ET".encode())
+    file_object = BytesIO()
+    writer.write(file_object)
+    return PdfReader(file_object).pages[0].extract_text()
+
+
+def test_extract_text_type0_embedded_cmap_encoding() -> None:
+    """
+    A composite font with an embedded CMap reads like the predefined one it copies.
+
+    ISO 32000-2:2020, 9.7.6 "Type 0 font dictionaries": /Encoding is either the name
+    of a predefined CMap or a stream containing a CMap. Resolves #4379.
+    """
+    assert _text_of_type0_page(NameObject("/Identity-H")) == _TWO_BYTE_TEXT
+    assert _text_of_type0_page(_identity_cmap_stream()) == _TWO_BYTE_TEXT
+
+
+def test_get_encoding_type0_embedded_cmap_stream() -> None:
+    """An embedded CMap of two-byte code spaces is the /Identity-H encoding."""
+    font = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/Type0"),
+            NameObject("/Encoding"): _identity_cmap_stream(),
+        }
+    )
+    encoding, _ = get_encoding(font)
+    assert encoding == "utf-16-be"
+
+
+def test_get_encoding_type0_embedded_cmap_mixed_code_spaces_is_ignored() -> None:
+    """
+    Code spaces of mixed width are not split: the font keeps the old fallback.
+
+    Splitting one string across code spaces of different lengths is not
+    implemented, so a CMap stream that mixes one-byte and two-byte codes still
+    decodes the way StandardEncoding did before.
+    """
+    font = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/Type0"),
+            NameObject("/Encoding"): _stream(
+                b"2 begincodespacerange\n<00> <FF>\n<0000> <FFFF>\nendcodespacerange",
+                Type=NameObject("/CMap"),
+            ),
+        }
+    )
+    encoding, _ = get_encoding(font)
+    assert encoding == dict(zip(range(256), charset_encoding["/StandardEncoding"]))
+
+
+def test_get_encoding_two_byte_cmap_stream_for_simple_font_is_ignored() -> None:
+    """Only composite fonts get a code length from a CMap stream.
+
+    A simple font reads one byte per character code, so a stray CMap stream in its
+    /Encoding must not turn the codes into pairs; ISO 32000-2:2020, 9.6.5 "Simple
+    fonts and composite fonts".
+    """
+    font = DictionaryObject(
+        {
+            NameObject("/Subtype"): NameObject("/TrueType"),
+            NameObject("/Encoding"): _identity_cmap_stream(),
+        }
+    )
+    encoding, _ = get_encoding(font)
+    assert encoding == dict(zip(range(256), charset_encoding["/StandardEncoding"]))
+
+
+# Code spaces in two blocks of different widths: no length is claimed.
+_TWO_CODESPACE_BLOCKS = (
+    b"1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n"
+    b"1 begincodespacerange\n<00> <FF>\nendcodespacerange"
+)
+
+
+@pytest.mark.parametrize(
+    ("cmap", "expected"),
+    [
+        (b"1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange", 2),
+        (b"1 begincodespacerange <0 0 0 0> <F F F F> endcodespacerange", 2),
+        (b"2 begincodespacerange\n<01> <02>\n<A0> <DF>\nendcodespacerange", 1),
+        (_TWO_CODESPACE_BLOCKS, None),
+        (b"1 begincodespacerange\n<000> <FFF>\nendcodespacerange", None),
+        (b"1 begincodespacerange\n<0000> <FFFF>\n", None),
+        (b"begincodespacerange\n<00000000> <FFFFFFFF>\nendcodespacerange", None),
+        (b"", None),
+    ],
+)
+def test_codespace_code_length(cmap: bytes, expected: int | None) -> None:
+    """The code length comes from the code spaces, or nothing is claimed."""
+    assert _codespace_code_length(_stream(cmap)) == expected
