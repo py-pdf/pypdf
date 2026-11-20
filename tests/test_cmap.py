@@ -19,9 +19,11 @@ from pypdf._codecs import charset_encoding
 from pypdf.errors import LimitReachedError
 from pypdf.generic import (
     ArrayObject,
+    BooleanObject,
     DecodedStreamObject,
     DictionaryObject,
     EncodedStreamObject,
+    FloatObject,
     IndirectObject,
     NameObject,
     NullObject,
@@ -935,6 +937,63 @@ def test_get_encoding__differences_is_an_array(caplog):
     )
 
     assert encoding[65] == "'"
+    assert caplog.text == ""
+
+
+@pytest.mark.parametrize(
+    ("entry", "expected"),
+    [
+        pytest.param(
+            NullObject(),
+            "Ignoring invalid font encoding difference: NullObject",
+            id="null",
+        ),
+        pytest.param(
+            FloatObject(1.5),
+            "Ignoring invalid font encoding difference: 1.5",
+            id="float",
+        ),
+        pytest.param(
+            BooleanObject(True),
+            "Ignoring invalid font encoding difference: True",
+            id="boolean",
+        ),
+        pytest.param(
+            ArrayObject([NameObject("/B")]),
+            "Ignoring invalid font encoding difference: ['/B']",
+            id="array",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Ignoring invalid font encoding difference: {}",
+            id="dictionary",
+        ),
+    ],
+)
+def test_get_encoding__differences_with_invalid_entry(
+    caplog: pytest.LogCaptureFixture, entry: PdfObject, expected: str
+) -> None:
+    """An entry that is neither a character code nor a glyph name is skipped without consuming a code."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), entry, NameObject("/quotesingle")]))
+    )
+
+    assert encoding[65] == "'"
+    assert encoding[66] == "B"
+    assert expected in caplog.text
+
+
+def test_get_encoding__differences_with_indirect_entries(caplog: pytest.LogCaptureFixture) -> None:
+    """Character codes and glyph names given as indirect references are resolved."""
+    writer = PdfWriter()
+    differences = ArrayObject(
+        [writer._add_object(NumberObject(65)), writer._add_object(NameObject("/quotesingle"))]
+    )
+
+    encoding, _ = get_encoding(_generate_font_with_differences(differences))
+
+    assert encoding[65] == "'"
+    assert encoding[66] == "B"
     assert caplog.text == ""
 
 
