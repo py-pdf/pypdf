@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795109086971,
+  "lastUpdate": 1795172700629,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -129365,6 +129365,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003512140180986907",
             "extra": "mean: 470.6422162000024 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "57414987+prawalpokharel@users.noreply.github.com",
+            "name": "Prawal Pokharel",
+            "username": "prawalpokharel"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e2940a559bd0b37e8735fb520ec104adf7a59b72",
+          "message": "BUG: Fix AttributeError for /XRefStm in a cross-reference stream (#4451)\n\nPdfReader could not open a file whose cross-reference stream dictionary\ncontains /XRefStm. _process_xref_stream used self.stream, which is only\nassigned after read() has returned. Use the stream that is being read,\nas the code did before #2847.\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-11-20T12:03:26+01:00",
+          "tree_id": "e303c69049765798ae8c451279683332bbd8b54e",
+          "url": "https://github.com/py-pdf/pypdf/commit/e2940a559bd0b37e8735fb520ec104adf7a59b72"
+        },
+        "date": 1795172692116,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.493633998896677,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00938490302878132",
+            "extra": "mean: 182.02887199999793 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 38.76069803774192,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004844231753639845",
+            "extra": "mean: 25.799328975610393 msec\nrounds: 41"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.5253035433141994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014370482727755223",
+            "extra": "mean: 1.9036612502000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 44.3799706319923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007767719349055098",
+            "extra": "mean: 22.532687285717298 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.26305979946071856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03975348289449505",
+            "extra": "mean: 3.8014170239999943 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.8742502550544704,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005840018494540791",
+            "extra": "mean: 347.9168170000037 msec\nrounds: 5"
           }
         ]
       }
