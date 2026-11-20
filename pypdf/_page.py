@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import math
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from copy import deepcopy
@@ -1086,10 +1087,8 @@ class PageObject(DictionaryObject):
             if not same_value:
                 if is_pdf_writer:
                     new_res[newname] = page2res.raw_get(key).clone(pdf)
-                    try:
+                    with contextlib.suppress(AttributeError):
                         new_res[newname] = new_res[newname].indirect_reference
-                    except AttributeError:
-                        pass
                 else:
                     new_res[newname] = page2res.raw_get(key)
             lst = sorted(new_res.items())
@@ -1471,10 +1470,8 @@ class PageObject(DictionaryObject):
                     transform_annotation_appearance,
                 )
                 transform_annotation_appearance(aa, trsf)
-                try:
+                with contextlib.suppress(KeyError):
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
-                except KeyError:
-                    pass
                 aa[NameObject("/P")] = self.indirect_reference
                 annots.append(aa.indirect_reference)
 

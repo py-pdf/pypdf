@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import decimal
 import enum
 import re
@@ -454,10 +455,8 @@ class PdfWriter(PdfDocCommon):
     @_info.setter
     def _info(self, value: IndirectObject | DictionaryObject | None) -> None:
         if value is None:
-            try:
+            with contextlib.suppress(KeyError, AttributeError):
                 self._objects[self._info_obj.indirect_reference.idnum - 1] = None  # type: ignore[union-attr]
-            except (KeyError, AttributeError):
-                pass
             self._info_obj = None
         else:
             if self._info_obj is None:
@@ -872,10 +871,8 @@ class PdfWriter(PdfDocCommon):
     @open_destination.setter
     def open_destination(self, dest: str | Destination | PageObject | None) -> None:
         if dest is None:
-            try:
+            with contextlib.suppress(KeyError):
                 del self._root_object["/OpenAction"]
-            except KeyError:
-                pass
         elif isinstance(dest, str):
             self._root_object[NameObject("/OpenAction")] = TextStringObject(dest)
         elif isinstance(dest, Destination):
@@ -1351,10 +1348,8 @@ class PdfWriter(PdfDocCommon):
             self._info_obj = self._add_object(inf.clone(self))
         # else: _info_obj = None done in clone_reader_document_root()
 
-        try:
+        with contextlib.suppress(AttributeError):
             self._ID = cast(ArrayObject, reader._ID).clone(self)
-        except AttributeError:
-            pass
 
         if callable(after_page_append):
             for page in cast(
@@ -2326,10 +2321,8 @@ class PdfWriter(PdfDocCommon):
                                 if k1 not in ["/Length", "/Filter", "/DecodeParms"]
                             }
                         )
-                        try:
+                        with contextlib.suppress(AttributeError):
                             content.indirect_reference = o.indirect_reference
-                        except AttributeError:  # pragma: no cover
-                            pass
                     stack.append(elt)
 
                     # clean subforms
