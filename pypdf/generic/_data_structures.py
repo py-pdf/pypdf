@@ -1088,10 +1088,11 @@ def _iter_name_tree(tree: DictionaryObject) -> Iterator[Any]:
             continue
         visited.add(id(node))
         yield node
-        if isinstance(node, DictionaryObject):
-            kids = node.get("/Kids", NullObject()).get_object()
-            if isinstance(kids, ArrayObject):
-                pending[:0] = kids
+        if not isinstance(node, DictionaryObject):
+            continue
+        kids = node.get("/Kids", NullObject()).get_object()
+        if isinstance(kids, ArrayObject):
+            pending[:0] = kids
 
 
 def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
@@ -1103,10 +1104,11 @@ def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
     """
     names = ArrayObject()
     for node in _iter_name_tree(tree):
-        if isinstance(node, DictionaryObject):
-            node_names = node.get("/Names", NullObject()).get_object()
-            if isinstance(node_names, ArrayObject):
-                names.extend(node_names)
+        if not isinstance(node, DictionaryObject):
+            continue
+        node_names = node.get("/Names", NullObject()).get_object()
+        if isinstance(node_names, ArrayObject):
+            names.extend(node_names)
     tree.pop(NameObject("/Kids"), None)
     tree.pop(NameObject("/Limits"), None)
     tree[NameObject("/Names")] = names
