@@ -2836,6 +2836,51 @@ def test_no_i_in_articles():
     writer.append(reader)
 
 
+def test_no_p_in_articles():
+    """A bead without the required /P entry names no page, so it is dropped."""
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_blank_page(100, 100)
+    thread = source._add_object(
+        DictionaryObject({NameObject("/I"): DictionaryObject({NameObject("/T"): TextStringObject("A")})})
+    )
+    rectangle = ArrayObject([NumberObject(0), NumberObject(0), NumberObject(100), NumberObject(100)])
+    first = source._add_object(
+        DictionaryObject({
+            NameObject("/T"): thread,
+            NameObject("/R"): rectangle,
+            NameObject("/P"): source.pages[0].indirect_reference,
+        })
+    )
+    second = source._add_object(
+        DictionaryObject({
+            NameObject("/T"): thread,
+            NameObject("/R"): rectangle,
+            NameObject("/V"): first,
+            NameObject("/N"): first,
+        })
+    )
+    first.get_object()[NameObject("/N")] = second
+    first.get_object()[NameObject("/V")] = second
+    thread.get_object()[NameObject("/F")] = first
+    source.pages[0][NameObject("/B")] = ArrayObject([first])
+    source.pages[1][NameObject("/B")] = ArrayObject([second])
+    stream = BytesIO()
+    source.write(stream)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(stream))
+
+    assert len(writer.pages) == 2
+    assert len(writer.threads) == 1
+    beads = writer.threads[0].get_object()["/F"]
+    assert beads["/P"] == writer.pages[0]
+    # The second bead names no page, so it is not carried over and the chain
+    # closes on the one bead that could be remapped.
+    assert beads["/N"] == beads
+    assert "/B" not in writer.pages[1]
+
+
 @pytest.mark.enable_socket
 def test_damaged_pdf_length_returning_none():
     """
