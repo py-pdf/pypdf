@@ -258,7 +258,7 @@ def test_alg_v5_generate_values():
         owner_password=b"bar",
         key=key,
         permissions=0,
-        metadata_encrypted=True,
+        encrypt_metadata=True,
     )
     assert values == {
         "/U": values["/U"],
@@ -856,12 +856,12 @@ def test_read_non_boolean_encrypt_metadata(caplog):
     """A non-boolean /EncryptMetadata falls back to the default, a null one is treated as absent."""
     entry = _build_minimal_encryption_dictionary()
     entry[NameObject("/EncryptMetadata")] = NameObject("/Yes")
-    assert Encryption.read(entry, b"").metadata_encrypted is True
+    assert Encryption.read(entry, b"").encrypt_metadata is True
     assert "Ignoring non-boolean /EncryptMetadata entry of the encryption dictionary" in caplog.messages
 
     caplog.clear()
     entry[NameObject("/EncryptMetadata")] = NullObject()
-    assert Encryption.read(entry, b"").metadata_encrypted is True
+    assert Encryption.read(entry, b"").encrypt_metadata is True
     assert caplog.messages == []
 
 

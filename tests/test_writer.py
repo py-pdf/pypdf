@@ -2739,7 +2739,7 @@ def test_clone_from__tolerate_dangling_info_reference():
 )
 def test_clone_from__keep_file_identifier_bytes(file_identifier):
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
-    writer._ID = ArrayObject([ByteStringObject(file_identifier), ByteStringObject(file_identifier)])
+    writer._file_identifiers = ArrayObject([ByteStringObject(file_identifier), ByteStringObject(file_identifier)])
     source = BytesIO()
     writer.write(source)
     assert isinstance(PdfReader(source).trailer["/ID"][0], TextStringObject)
@@ -4649,13 +4649,13 @@ def test_generate_file_identifiers__non_deterministic() -> None:
     writer1 = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer2 = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
 
-    assert writer1._ID == writer2._ID
+    assert writer1._file_identifiers == writer2._file_identifiers
 
     writer1.generate_file_identifiers()
     writer2.generate_file_identifiers()
 
-    assert writer1._ID[0] == writer2._ID[0]
-    assert writer1._ID[1] != writer2._ID[1]
+    assert writer1._file_identifiers[0] == writer2._file_identifiers[0]
+    assert writer1._file_identifiers[1] != writer2._file_identifiers[1]
 
 
 def test_generate_file_identifiers__initially_identical() -> None:
@@ -4663,7 +4663,7 @@ def test_generate_file_identifiers__initially_identical() -> None:
     writer.add_blank_page(width=10, height=10)
 
     writer.generate_file_identifiers()
-    assert writer._ID[0] == writer._ID[1]
+    assert writer._file_identifiers[0] == writer._file_identifiers[1]
 
 
 def test_generate_file_identifiers__update() -> None:
@@ -4671,11 +4671,11 @@ def test_generate_file_identifiers__update() -> None:
     writer.add_blank_page(width=10, height=10)
 
     writer.generate_file_identifiers()
-    id_permanent, id_changing = writer._ID[:2]
+    id_permanent, id_changing = writer._file_identifiers[:2]
 
     writer.generate_file_identifiers()
-    assert writer._ID[0] == id_permanent
-    assert writer._ID[1] != id_changing
+    assert writer._file_identifiers[0] == id_permanent
+    assert writer._file_identifiers[1] != id_changing
 
 
 def _get_outline_titles(writer: PdfWriter) -> list[str]:

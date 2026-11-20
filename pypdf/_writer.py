@@ -311,7 +311,7 @@ class PdfWriter(PdfDocCommon):
 
         self._reader = None
 
-        self._ID: ArrayObject | None = None
+        self._file_identifiers: ArrayObject | None = None
         """The PDF file identifier,
         defined by the ID in the PDF file's trailer dictionary."""
 
@@ -408,11 +408,11 @@ class PdfWriter(PdfDocCommon):
             self._add_object(self._root_object)
         if full and not incremental:
             self.incremental = False
-        if isinstance(self._ID, list):
-            if isinstance(self._ID[0], TextStringObject):
-                self._ID[0] = ByteStringObject(self._ID[0].original_bytes)
-            if isinstance(self._ID[1], TextStringObject):
-                self._ID[1] = ByteStringObject(self._ID[1].original_bytes)
+        if isinstance(self._file_identifiers, list):
+            if isinstance(self._file_identifiers[0], TextStringObject):
+                self._file_identifiers[0] = ByteStringObject(self._file_identifiers[0].original_bytes)
+            if isinstance(self._file_identifiers[1], TextStringObject):
+                self._file_identifiers[1] = ByteStringObject(self._file_identifiers[1].original_bytes)
 
     # for commonality
     @property
@@ -1352,7 +1352,7 @@ class PdfWriter(PdfDocCommon):
         # else: _info_obj = None done in clone_reader_document_root()
 
         try:
-            self._ID = cast(ArrayObject, reader._ID).clone(self)
+            self._file_identifiers = cast(ArrayObject, reader._file_identifiers).clone(self)
         except AttributeError:
             pass
 
@@ -1374,13 +1374,13 @@ class PdfWriter(PdfDocCommon):
         identifier matches, a different version of the correct file has been found.
         see §14.4 "File Identifiers".
         """
-        if self._ID:
-            id1 = self._ID[0]
+        if self._file_identifiers:
+            id1 = self._file_identifiers[0]
             id2 = ByteStringObject(secrets.token_bytes(16))
         else:
             id1 = ByteStringObject(secrets.token_bytes(16))
             id2 = id1
-        self._ID = ArrayObject((id1, id2))
+        self._file_identifiers = ArrayObject((id1, id2))
 
     def encrypt(
         self,
@@ -1431,8 +1431,8 @@ class PdfWriter(PdfDocCommon):
             if not use_128bit:
                 alg = EncryptAlgorithm.RC4_40
         self.generate_file_identifiers()
-        assert self._ID
-        self._encryption = Encryption.make(alg, permissions_flag, self._ID[0])
+        assert self._file_identifiers
+        self._encryption = Encryption.make(alg, permissions_flag, self._file_identifiers[0])
         # in case call `encrypt` again
         entry = self._encryption.write_entry(user_password, owner_password, strict=self.strict)
         if self._encrypt_entry:
@@ -1607,8 +1607,8 @@ class PdfWriter(PdfDocCommon):
         ):
             init_data[NameObject(TrailerKeys.INFO)] = self._info.indirect_reference
         init_data[NameObject(TrailerKeys.PREV)] = NumberObject(self._reader._startxref)
-        if self._ID:
-            init_data[NameObject(TrailerKeys.ID)] = self._ID
+        if self._file_identifiers:
+            init_data[NameObject(TrailerKeys.ID)] = self._file_identifiers
         xr = StreamObject.initialize_from_dictionary(init_data)
         xr.set_data(
             b"".join(
@@ -1671,8 +1671,8 @@ class PdfWriter(PdfDocCommon):
         )
         if self._info is not None:
             trailer[NameObject(TrailerKeys.INFO)] = self._info.indirect_reference
-        if self._ID is not None:
-            trailer[NameObject(TrailerKeys.ID)] = self._ID
+        if self._file_identifiers is not None:
+            trailer[NameObject(TrailerKeys.ID)] = self._file_identifiers
         if self._encrypt_entry:
             trailer[NameObject(TrailerKeys.ENCRYPT)] = self._encrypt_entry.indirect_reference
         trailer.write_to_stream(stream)
@@ -1809,7 +1809,7 @@ class PdfWriter(PdfDocCommon):
         reachable: set[int] = set()
         object_count = len(self._objects)
         objects_to_visit: list[Any] = []
-        for obj in (self.root_object, self._info, self._ID, self._encrypt_entry):
+        for obj in (self.root_object, self._info, self._file_identifiers, self._encrypt_entry):
             reference = getattr(obj, "indirect_reference", None)
             objects_to_visit.append(obj if reference is None else reference)
         while objects_to_visit:
