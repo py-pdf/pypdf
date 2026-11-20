@@ -12,6 +12,7 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    PdfObject,
     StreamObject,
     is_null_or_none,
 )
@@ -72,10 +73,9 @@ def _parse_encoding(
     encoding: str | list[str] | dict[int, str] = []
     embedded_font_encoding: dict[int, str] = {}
 
+    enc: PdfObject | None = None
     if "/Encoding" in ft:
-        enc = ft["/Encoding"]  # Returns one of string, DictionaryObject, or NullObject
-    else:
-        enc = None
+        enc = ft["/Encoding"]  # Returns one of NameObject, DictionaryObject, or NullObject
 
     has_no_encoding = is_null_or_none(enc)
     has_no_base_encoding = isinstance(enc, DictionaryObject) and "/BaseEncoding" not in enc
