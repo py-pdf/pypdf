@@ -3636,36 +3636,11 @@ class PdfWriter(PdfDocCommon):
         page_labels[NameObject("/Nums")] = nums
         self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)] = page_labels
 
-    def _repr_mimebundle_(
-        self,
-        include: Iterable[str] | None = None,
-        exclude: Iterable[str] | None = None,
-    ) -> dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        .. seealso::
-
-           https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
+    def _get_pdf_bytes(self) -> bytes:
+        """Write the document into memory and return its bytes."""
         pdf_data = BytesIO()
         self.write(pdf_data)
-        data = {
-            "application/pdf": pdf_data.getvalue(),
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
+        return pdf_data.getvalue()
 
 
 def _pdf_objectify(obj: dict[str, Any] | str | float | list[Any]) -> PdfObject:

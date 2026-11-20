@@ -1864,36 +1864,10 @@ class PdfReader(PdfDocCommon):
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
 
-    def _repr_mimebundle_(
-        self,
-        include: Iterable[str] | None = None,
-        exclude: Iterable[str] | None = None,
-    ) -> dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        .. seealso::
-
-            https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
+    def _get_pdf_bytes(self) -> bytes:
+        """Return the bytes of the stream the document was read from."""
         self.stream.seek(0)
-        pdf_data = self.stream.read()
-        data = {
-            "application/pdf": pdf_data,
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
+        return self.stream.read()
 
     def _get_named_destinations(
         self,
