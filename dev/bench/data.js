@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795174424897,
+  "lastUpdate": 1795174513503,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -173851,6 +173851,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0020399759045358666",
             "extra": "mean: 534.1387195999971 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47625583+Pranjalitem189@users.noreply.github.com",
+            "name": "Pranjali Tembhurnikar",
+            "username": "Pranjalitem189"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68ab6167bb6faade7df52413f3dde4d3346cd2cd",
+          "message": "BUG: Count Tc and Tw in the advance used for space detection (#4227)\n\n* fix for bug : Count Tc and Tw in the advance used for space detection\n\nCharacter and word spacing were ignored, so text shown with them got\na synthetic space, e.g. \"WO RD\" instead of \"WORD\".\n\n* BUG: Apply Tz and count spacing per character code\n\nHorizontal scaling now applies to the whole advance, as defined in the\nPDF specification. Character and word spacing are counted per character\ncode instead of per decoded character, so two-byte codes forming a\nsurrogate pair are no longer merged, and word spacing applies to the\nsingle-byte code 32 in multi-byte encodings like Shift-JIS.\n\nAlso use meaningful test IDs.",
+          "timestamp": "2026-11-20T12:31:25+01:00",
+          "tree_id": "48f3bdfc038897e10a2bedecfaa87f53f6d21a2f",
+          "url": "https://github.com/py-pdf/pypdf/commit/68ab6167bb6faade7df52413f3dde4d3346cd2cd"
+        },
+        "date": 1795174502013,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 17.081915102926157,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019230576350785095",
+            "extra": "mean: 58.54144538095137 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 36.459388547134175,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008141140445702482",
+            "extra": "mean: 27.42777758620977 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3437489142760608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029973521861858077",
+            "extra": "mean: 744.1866478000065 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 43.0016342645423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01542077944933375",
+            "extra": "mean: 23.254930123075958 msec\nrounds: 65"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3915365228114567,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022652197271963888",
+            "extra": "mean: 2.554040151399994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4355323128620767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030111940152265967",
+            "extra": "mean: 696.6057058000047 msec\nrounds: 5"
           }
         ]
       }
