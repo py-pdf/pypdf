@@ -415,7 +415,8 @@ class TextStreamAppearance(BaseStreamAppearance):
             y_offset = margin + (
                 (field_height - font.font_descriptor.ascent * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR) / 2
             )
-        default_appearance = f"{font_name} {font_size} Tf {font_color.as_operator()}"
+        escaped_font_name = NameObject(font_name).renumber().decode()
+        default_appearance = f"{escaped_font_name} {font_size} Tf {font_color.as_operator()}"
 
         ap_stream = bytearray()
         ap_stream += (
