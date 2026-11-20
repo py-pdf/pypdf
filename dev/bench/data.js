@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795172828835,
+  "lastUpdate": 1795173339297,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -129431,6 +129431,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005840018494540791",
             "extra": "mean: 347.9168170000037 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "vuthanhdat.toank19@gmail.com",
+            "name": "iamdatvt94",
+            "username": "iamdatvt94"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0da94608f11fd40d361b6174cf3a805d481f63f1",
+          "message": "MAINT: Use catalog constants for page view keys (#4454)\n\nReplace literal /PageMode and /PageLayout keys with the existing CatalogAttributes constants in the shared reader and writer paths.\n\nKeep the PDF keys and public behavior unchanged while making these catalog accesses consistent with the rest of pypdf. This addresses part of #3653.\n\nVerified with six focused pytest cases, Ruff lint, and a write/read round trip.",
+          "timestamp": "2026-11-20T12:13:18+01:00",
+          "tree_id": "5674d4bc836762220cb57acf86825c4d9b43424e",
+          "url": "https://github.com/py-pdf/pypdf/commit/0da94608f11fd40d361b6174cf3a805d481f63f1"
+        },
+        "date": 1795173325017,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8546951697291414,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00732288290951028",
+            "extra": "mean: 350.30009879999966 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.337051500654955,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018937161254523333",
+            "extra": "mean: 44.76866608695774 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27874252690978757,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014485884809615808",
+            "extra": "mean: 3.5875401255999977 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.795770855642523,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019270938481510936",
+            "extra": "mean: 43.86778610526676 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14731545692551187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.057039182966897146",
+            "extra": "mean: 6.788153944399989 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.557318244971074,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007588749250342263",
+            "extra": "mean: 642.1295089999887 msec\nrounds: 5"
           }
         ]
       }
