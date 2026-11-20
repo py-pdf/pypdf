@@ -13,7 +13,6 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
-    IndirectObject,
     NullObject,
     StreamObject,
 )
@@ -134,8 +133,7 @@ def _parse_encoding(
             )
             differences = ArrayObject()
         for entry in differences:
-            if isinstance(entry, IndirectObject):
-                entry = entry.get_object()
+            entry = entry.get_object()
             if isinstance(entry, int):
                 code = entry
             elif isinstance(entry, str):
