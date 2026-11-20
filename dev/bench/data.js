@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795178257512,
+  "lastUpdate": 1795208727360,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -129761,6 +129761,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004441113950612784",
             "extra": "mean: 469.59857080000234 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8ffe8f2e3dda1fc34c312b71e1112ad9a361de6e",
+          "message": "BUG: Refactor parsing encoding from embedded font files to fix #4343 and #2290 (#4392)\n\n* BUG: Rank the CFF built-in encoding below the font dictionary's /Encoding\n\nFor a Type1 font that embeds a CFF program, ISO 32000-2:2020, 9.6.6.1 makes\nthe program's built-in encoding only the default base encoding: a named\n/Encoding or a /BaseEncoding replaces it, and /Differences override the codes\nthey list.\n\nThe map derived with fontTools was handed to get_encoding() as if it came from\na /ToUnicode CMap. Every code the program defines became chr(code) and was\nthen mapped through the program's glyph names, so the font dictionary's own\n/Encoding was ignored and documents relying on /BaseEncoding + /Differences\nwere extracted as garbage.\n\nThis tests for #4343.\n\nWas:\n    Signed-off-by: Ak4shh <akashposa40@gmail.com>\nIs:\n    Cherry-picked from: Ak4shh <akashposa40@gmail.com>\n\n* MAINT: _cmap.py: Move parsing embedded font encoding to _parse_encoding()\n\nThis patch refactors the code that parses embedded font encodings.\nThe reason that this code exists is that, for simple fonts, the\nencoding of an embedded font resource itself can be used as an\nencoding in the PDF. Previously, this code was called in the\n_parse_to_unicode() method, when an actual \"/ToUnicode\" CMap was\nmissing from the font resource. This is incorrect in various ways.\n\nFirst, conceptually, an encoding is not the same as a ToUnicode\nCMap. The _encoding_ describes the relation between a character\ncode and an actual glyph, while the a ToUnicode CMap describes\nthe relation between PDF byte code and the unicode code points\nit represents.\n\nSecond, because the embedded font was only parsed _after_ the\nencoding dictionary of a font dictionary was parsed, and applied\nafterwards to both encoding and character_map / map_dict, it\noverwrote a differences encoding, where really it should be the\nother way around - the differences should outrank the embedded\nfont encoding. This is described in https://github.com/py-pdf/pypdf/issues/4343\n\nThis patch refactors the code for deriving an encoding from an\nembedded font. It moves that code to a separate method, which\nthen is only called when a font dictionary with an embedded\nfont file:\n- Does not define a usable \"/Encoding\" field; or\n- Defines an \"/Encoding\" field with \"/Differences\" but without\n\"/BaseEncoding\".\n\nThis is in line with Paragraph 9.6.6 of the PDF Specification\nversion 1.7, which deals with simple font encoding. To quote\nsome of the pertinent sentences:\n\n\"[E]every font program shall have a built-in encoding. Under\ncertain circumstances, a PDF font dictionary may change the\nencoding used with the font program to match the requirements of\nthe conforming writer generating the text being shown\" (p. 262).\n\nAnd:\n\n\"A font program’s built-in encoding may be overridden by\nincluding an Encoding entry in the PDF font dictionary. The\npossible encoding modifications depend on the font type. The\nvalue of the Encoding entry shall be either a named encoding\n(the name of one of the predefined encodings MacRomanEncoding,\nMacExpertEncoding, or WinAnsiEncoding) or an encoding dictionary\"\n(p. 263).\n\nThe specification names StandardEncoding, MacRomanEncoding, and\nWinAnsiEncoding as encoding names that a font dictionary can\nstate and that have precedence over the encoding in the\nembedded font file.\n\nFor the case of an encoding _dictionary_, the specification\nnotes that such may contain a \"/BaseEncoding\" field, which can\nname one of the named encodings, and a \"/Differences\" field\nthat denotes all character codes that are different in the\nfont dictionary in question.\n\nIn the absence of the \"/BaseEncoding\" field, the specification\nsays:\n\n\"[...] the Differences entry shall describe differences from an\nimplicit base encoding. For a font program that is embedded in\nthe PDF file, the implicit base encoding shall be the font\nprogram’s built-in encoding. [...] Otherwise, for a nonsymbolic\nfont, it shall be StandardEncoding, and for a symbolic font,\nit shall be the font’s built-in encoding\" (Table 114, p. 263).\n\n* MAINT: test_cmap.py: Adapt tests after _cmap.py refactoring\n\n* MAINT: _cmap.py: Improve coverage\n\nWhen we derive an encoding from an embedded font file, this\nalways happens only for simple fonts, which means that character\ncodes should not exceed 255. Enforce this limit and remove\nassociated checks that were never false elsewhere.\n\n* MAINT: _cmap.py: Merge _parse_encoding_from_embedded_font and _derive_character_map_from_font_file\n\nThe names of these methods are nearly the same, and the added lines\nto define them greatly exceed the number of lines in the merged method.\n\n* MAINT: _cmap.py / _data_structures.py: Rename character_map / map_dict -> encoding\n\nNow that we have moved parsing the encoding from an embedded font\nfile to _parse_encoding(), reflect this also in the names of\nall associated variables, comments and doc-strings.\n\nAlso, don't speak specifically about CFF programs. Later on, we might\nalso use fonttools to parse truetype fonts, and there's no need to\nexplicitly mention CFF font programs here anyway.\n\n* MAINT: test_cmap.py: Extend test_get_encoding__type1_font_file_truncated_dup_line\n\nThis test was designed to test that a \"dup\" entry missing\nthe glyph name must be skipped, not crash. Change it so that\nit also tests for issue 2290, and that it doesn't crash\nwhen raising a ValueError, and that it verifies the \"put\"\nelement.\n\n* MAINT: _cmap.py: Move correcting an encoding to a separate method\n\nMypy complained that we redefined x in parse_encoding. This variable\noccurred twice in the exact same procedure that overwrote encoding\nvalues with values from the embedded font encoding where applicable.\nMove this code to a separate method to make prevent redefining x.\n\n* MAINT: _cmap.py: Simplify _parse_encoding_from_embedded_font\n\nSimplify the method signature for _parse_encoding_from_embedded_font,\nand add early returns to improve readability.\n\nWe were passing around embedded_encoding and int_entry at various places\nfrom _parse_encoding. Don't do this. Also more strictly type\nembedded_encoding as dict[int, str] (was dict[Any, Any]).\n\nWhen parsing an encoding from an embedded font file, we returned\nencoding as dict[str, str], where the first str was a chr() called\non a character code. The list of character codes was returned\nseparately as the variable int_entry. Later on, when we then\ncorrect the font dictionary encoding, we used the int_entry to\ndecide which character codes to overwrite.\n\nThis patch instead immediately returns encoding as dict[int, str],\nwhere the int is the character code, negating the need to pass\nint_entry separately and the need to call chr(i) on the character\ncode at all.\n\nAlso, _parse_encoding_from_embedded_font tries to read a font\nfile to derive its encoding. For a CFF font, it is possible\nthat this is a CID (Type0) font or a Type 1 font, as indicated\nby the Subtype field in the FontFile3 stream, hence the reason\nthat we checked for the value of Type1C in this field. However,\nwe only get to this check after we have checked that the font\nresource itself is Type1, meaning that we can never encounter\na CID-type CFF font here anyway. Drop the check tor Type1C.\n\nAlso make sure that \"/FontDescriptor\" is an instance of\nDictionaryObject.\n\n* MAINT: _cmap.py: Don't call get_object when accessing DictionaryObject by key\n\nTo get the enc variable in get_encoding(), we called ft[\"/Encoding\"].get_object().\nHowever, we already assume at that point that ft is a DictionaryObject, and\nDictionaryObject's __getitem__ method automatically resolves indirect objects,\nmaking the get_object() call here redundant.\n\nRemoves the need for two casts and two type: ignore pragmas.\n\nEstablishing that ft itself is a DictionaryObject is outside the sope of this\npatch, and if needs be, it should be done whenever Font.from_font_resource()\nis called, and not here.\n\n* BUG: _cmap.py: Actually fix #2290\n\nBug 2290 occurred as follows:\n        if words[3] != b\"put\":\nIndexError: list index out of range\n\nThis was then fixed by checking len(words) > 3. However, this\ndid only work around the actual bug and it led to a failure to\ndevode the embedded font file.\n\nHere's the actual bug. According to p. 27 of the PostSript\nLanguage Reference third edition (Chapter 3):\n\n\"The characters (, ), <, >, [, ], {, }, /, and % are special.\nThey delimit syntactic entities such as strings, procedure bodies,\nname literals, and comments. Any of these characters terminates the\nentity preceding it and is not included in the entity.\"\n\nSo, when the character encoding lines are as follows, as is the\ncase in this issue:\n\n    'dup 61/equal put',\n    'dup 62/greater put',\n    'dup 63/question put',\n    'dup 64/at put',\n    'dup 65/A put',\n    'dup 66/B put',\n    'dup 67/C put',\n    'dup 68/D put',\n    'dup 69/E put',\n    'dup 70/F put',\n    'dup 71/G put',\n    'dup 72/H put',\n\nthen the slash should be seen as a starting a new entity. However,\nwe only split on space here:\n\n    txt = encoding_part[1]  # To get the encoding part\n    lines = txt.replace(b\"\\r\", b\"\\n\").split(b\"\\n\")\n    for li in lines:\n        if li.startswith(b\"dup\"):\n            words = [_w for _w in li.split(b\" \") if _w != b\"\"]  <-----\n            if len(words) < 3 or (len(words) > 3 and words[3] != b\"put\"):\n                continue\n\nThis patch makes that:\nwords = li.replace(b\"/\", b\" /\").split()\n\nThe original fix for #2290 was here:\n\n            if len(words) > 3 and words[3] != b\"put\":\n                continue\n\nThis replaced the first line originally added to pypdf, in #2016:\n\n            if words[3] != b\"put\":\n                continue\n\nThen it was later elaborated for robustness reasons here #3835:\n\nif len(words) < 3 or (len(words) > 3 and words[3] != b\"put\"):\n                continue\n\nReplace most of this by expanding the try, except loop to also\ncheck for IndexError.\n￼\n\n* MAINT: test_cmap.py: Adapt test_get_encoding__type1_font_file_truncated_dup_line\n\n* MAINT: test_cmap.py: Rename and specify the test for #2290\n\nWith recent changes, the test for issue #2290 does not actually\nrun across the method that derives a font from the embedded\nType1 font anymore, nor does it actually check the result.\nAlso, that method is no longer covered since these changes.\n\nRename the test, make sure it covers the associated method as\nintended, make it more specific by checking that the encoding\nwe derived actually is correct, and make the docstring more\nspecific.\n\n* MAINT: _cmap.py: More explicit typing of enc\n\n---------\n\nCo-authored-by: Ak4shh <akashposa40@gmail.com>",
+          "timestamp": "2026-11-20T22:03:05+01:00",
+          "tree_id": "cdf5dab128bd2ff1dfd263d6ae44b87d2b0c26e6",
+          "url": "https://github.com/py-pdf/pypdf/commit/8ffe8f2e3dda1fc34c312b71e1112ad9a361de6e"
+        },
+        "date": 1795208712917,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9023585281701925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007038109174656568",
+            "extra": "mean: 344.54737080000086 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.003399192170644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019363970621166337",
+            "extra": "mean: 43.47183612500002 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2897961297285572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026288832901465716",
+            "extra": "mean: 3.450701708600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.28348595878747,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017547690223609236",
+            "extra": "mean: 46.98478444444495 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14692387462900777,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011286176169357974",
+            "extra": "mean: 6.806245768599993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.764226587443924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015155076436316438",
+            "extra": "mean: 566.8206153999961 msec\nrounds: 5"
           }
         ]
       }
