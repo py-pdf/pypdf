@@ -3042,13 +3042,7 @@ class PdfWriter(PdfDocCommon):
         named_destinations: _NamedDestinationIndex,
     ) -> None:
         arr: Any = dest.dest_array
-        if "/Names" in self._root_object and named_destinations.contains(
-            cast(
-                DictionaryObject,
-                cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
-            ).get("/Names", DictionaryObject()),
-            dest["/Title"],
-        ):
+        if "/Names" in self._root_object and named_destinations.contains(self.get_named_dest_root(), dest["/Title"]):
             # already exists: should not duplicate it
             pass
         elif dest["/Page"] is None or isinstance(dest["/Page"], NullObject):

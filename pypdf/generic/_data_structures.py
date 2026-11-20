@@ -33,7 +33,7 @@ import logging
 import os
 import re
 import sys
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import cache
 from io import BytesIO
 from typing import (
@@ -1076,6 +1076,43 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         del child_obj[NameObject("/Next")]
     if NameObject("/Prev") in child_obj:
         del child_obj[NameObject("/Prev")]
+
+
+def _iter_name_tree(tree: DictionaryObject) -> Iterator[Any]:
+    """Yield the nodes of a name tree in key order, each object once, without changing it."""
+    pending: list[Any] = [tree]
+    visited: set[int] = set()
+    while pending:
+        node = pending.pop(0).get_object()
+        if id(node) in visited:
+            continue
+        visited.add(id(node))
+        yield node
+        if not isinstance(node, DictionaryObject):
+            continue
+        kids = node.get("/Kids", NullObject()).get_object()
+        if isinstance(kids, ArrayObject):
+            pending[:0] = kids
+
+
+def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
+    """
+    Turn a name tree into a single node holding all its names, in place.
+
+    A node holds either /Kids or /Names (ISO 32000-2, 7.9.6), so a name added
+    next to /Kids would be ignored by readers.
+    """
+    names = ArrayObject()
+    for node in _iter_name_tree(tree):
+        if not isinstance(node, DictionaryObject):
+            continue
+        node_names = node.get("/Names", NullObject()).get_object()
+        if isinstance(node_names, ArrayObject):
+            names.extend(node_names)
+    tree.pop(NameObject("/Kids"), None)
+    tree.pop(NameObject("/Limits"), None)
+    tree[NameObject("/Names")] = names
+    return names
 
 
 class _FontFileCharacterMap(NamedTuple):

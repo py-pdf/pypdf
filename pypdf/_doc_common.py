@@ -80,6 +80,7 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
+from .generic._data_structures import _flatten_name_tree
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
@@ -463,8 +464,7 @@ class PdfDocCommon(ABC):
                     # §7.9.6, entries in a name tree node dictionary
                     named_dest = cast(ArrayObject, dests[CatalogAttributes.NAMES])
                 else:
-                    named_dest = ArrayObject()
-                    dests[NameObject(CatalogAttributes.NAMES)] = named_dest
+                    named_dest = _flatten_name_tree(dests)
             elif hasattr(self, "_add_object"):
                 dests = DictionaryObject()
                 dests_ref = self._add_object(dests)
