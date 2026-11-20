@@ -6,6 +6,10 @@ import pytest
 from pypdf.errors import ParseError
 from pypdf.pagerange import PageRange, parse_filename_page_ranges
 
+PARSE_FILENAME_PAGE_RANGES_DEPRECATION = (
+    r"^parse_filename_page_ranges is deprecated and will be removed in pypdf 8\.0\.0\.$"
+)
+
 
 def test_equality() -> None:
     pr1 = PageRange(slice(0, 5))
@@ -159,11 +163,16 @@ def test_valid(value: Any, expected: bool) -> None:
 def test_parse_filename_page_ranges(
     params: list[str], expected: list[tuple[str, PageRange]]
 ) -> None:
-    assert parse_filename_page_ranges(list(params)) == expected
+    """parse_filename_page_ranges() warns that it is deprecated, but still pairs filenames with page ranges."""
+    with pytest.warns(DeprecationWarning, match=PARSE_FILENAME_PAGE_RANGES_DEPRECATION):
+        assert parse_filename_page_ranges(list(params)) == expected
 
 
 def test_parse_filename_page_ranges_err() -> None:
-    with pytest.raises(ValueError) as exc:
+    """parse_filename_page_ranges() warns that it is deprecated, but still rejects a leading page range."""
+    with pytest.raises(ValueError) as exc, pytest.warns(
+        DeprecationWarning, match=PARSE_FILENAME_PAGE_RANGES_DEPRECATION
+    ):
         parse_filename_page_ranges(["1:5", "foo.pdf"])
     assert (
         exc.value.args[0] == "The first argument must be a filename, not a page range."

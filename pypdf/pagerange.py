@@ -9,6 +9,7 @@ see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 import re
 from typing import Any, Union
 
+from ._utils import deprecate_no_replacement
 from .errors import ParseError
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
@@ -196,7 +197,12 @@ def parse_filename_page_ranges(
     Returns:
         A list of (filename, page_range) pairs.
 
+    .. deprecated:: 7.2.0
+        ``parse_filename_page_ranges`` is deprecated and will be removed in
+        pypdf 8.0.0. pypdf does not use it since the ``pdfcat`` script was removed.
+
     """
+    deprecate_no_replacement("parse_filename_page_ranges", "8.0.0")
     pairs: list[tuple[str, PageRange]] = []
     pdf_filename: str | None = None
     did_page_range = False
