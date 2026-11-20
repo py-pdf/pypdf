@@ -5,7 +5,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
 from pypdf._utils import format_iso8824_date, logger_warning, parse_iso8824_date
-from pypdf.constants import CatalogAttributes, FileSpecificationDictionaryEntries, PageAttributes
+from pypdf.constants import AFRelationship, CatalogAttributes, FileSpecificationDictionaryEntries, PageAttributes
 from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -83,7 +83,7 @@ class EmbeddedFile:
 
         # Create the /EF entry
         ef_entry = DictionaryObject()
-        ef_entry.update({NameObject("/F"): writer._add_object(file_entry)})
+        ef_entry.update({NameObject(FileSpecificationDictionaryEntries.F): writer._add_object(file_entry)})
 
         # Create the filespec dictionary
         from pypdf.generic import create_string_object  # noqa: PLC0415
@@ -205,7 +205,7 @@ class EmbeddedFile:
         """Retrieve the relationship of the referring document to this embedded file."""
         return cast(
             NameObject,
-            self.pdf_object.get("/AFRelationship", NameObject("/Unspecified")),
+            self.pdf_object.get("/AFRelationship", NameObject(AFRelationship.UNSPECIFIED)),
         )
 
     @associated_file_relationship.setter
@@ -216,9 +216,9 @@ class EmbeddedFile:
     @property
     def _embedded_file(self) -> StreamObject:
         """Retrieve the actual embedded file stream."""
-        if "/EF" not in self.pdf_object:
+        if FileSpecificationDictionaryEntries.EF not in self.pdf_object:
             raise PdfReadError(f"/EF entry not found: {self.pdf_object}")
-        ef = cast(DictionaryObject, self.pdf_object["/EF"])
+        ef = cast(DictionaryObject, self.pdf_object[FileSpecificationDictionaryEntries.EF])
         for key in [FileSpecificationDictionaryEntries.UF, FileSpecificationDictionaryEntries.F]:
             if key in ef:
                 return cast(StreamObject, ef[key].get_object())
@@ -407,9 +407,9 @@ class EmbeddedFile:
         Returns:
             Iterable of class instances for the files found.
         """
-        if "/Names" not in catalog:
+        if CatalogAttributes.NAMES not in catalog:
             return
-        names = catalog["/Names"]
+        names = catalog[CatalogAttributes.NAMES]
         if isinstance(names, NullObject):
             # A null value is equivalent to an omitted entry.
             return
