@@ -806,10 +806,12 @@ def _xobj_to_image(
             x_object, color_space
         ):
             # The decoded stream data already is the JPEG file, so return it
-            # unchanged; Image.open() only reads the header, and no pixel
-            # buffer is allocated, so the image buffer size limit of
-            # _create_image_from_buffer() does not apply either.
-            return ".jpg", data, Image.open(BytesIO(data), formats=("JPEG",))
+            # unchanged. Pillow only reads the header and allocates no pixel
+            # buffer, but the size limit the user configured still has to be
+            # respected, hence _create_image_from_buffer().
+            return ".jpg", data, _create_image_from_buffer(
+                buf=BytesIO(data), formats=("JPEG",)
+            )
         img, image_format, extension = _create_image_from_buffer(buf=BytesIO(data), formats=("JPEG",)), "JPEG", ".jpg"
         # invert_color kept unchanged
     elif last_filter == FilterTypes.JPX_DECODE:
