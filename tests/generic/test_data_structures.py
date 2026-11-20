@@ -4,6 +4,7 @@ import sys
 from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -861,6 +862,14 @@ def test_array_object__read_from_stream__maximum_element_count() -> None:
             ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
 
 
+def test_array_object__read_from_stream__deeply_nested_array_raises_pdfreaderror() -> None:
+    pdf = ReaderDummy()
+    depth = sys.getrecursionlimit()
+    data = b"[" * depth + b"]" * depth
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
+        ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
+
+
 def test_dictionary_object__read_from_stream__token_limit() -> None:
     pdf = ReaderDummy()
     data = b"<< /Key1 << /Key2 << /Key3 << /Key4 << /SomeName 42 >> >> >> >> /Key5 13 >>"
@@ -979,3 +988,104 @@ def test_dictionary_object__clone__cycle_detection() -> None:
     writer = PdfWriter()
     writer.append(BytesIO(data))
     assert len(writer.pages) == 1
+
+
+@pytest.mark.parametrize(
+    ("annotation_objects", "cycle"),
+    [
+        # The direct appearance dictionary links back to the annotation.
+        (
+            [b"<< /Type /Annot /Subtype /Widget /Rect [0 0 10 10] /AP << /N 4 0 R >> >>"],
+            ["/AP", "/N"],
+        ),
+        # The same, but going through another dictionary first.
+        (
+            [
+                b"<< /Type /Annot /Subtype /Widget /Rect [0 0 10 10] /AP << /N 5 0 R >> >>",
+                b"<< /N 4 0 R >>",
+            ],
+            ["/AP", "/N", "/N"],
+        ),
+    ],
+    ids=["self-reference", "two-node-cycle"],
+)
+def test_dictionary_object__clone__cycle_through_direct_dictionary(
+    annotation_objects: list[bytes], cycle: list[str]
+) -> None:
+    """A cycle of /N links through a direct dictionary is cloned without recursing endlessly."""
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Annots [4 0 R] >>",
+        *annotation_objects,
+    ]
+    object_count = len(objects)
+    out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = []
+    for num, obj in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % num + obj + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n" % (object_count + 1)
+    out += b"0000000000 65535 f \n"
+    for offset in offsets:
+        out += b"%010d 00000 n \n" % offset
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (object_count + 1, xref)
+    data = bytes(out)
+
+    def get_annotation(page: DictionaryObject) -> DictionaryObject:
+        annotations = cast(ArrayObject, page["/Annots"])
+        assert len(annotations) == 1
+        return cast(DictionaryObject, annotations[0].get_object())
+
+    def follow_cycle(start: DictionaryObject) -> DictionaryObject:
+        target = start
+        for key in cycle:
+            target = cast(DictionaryObject, target[key])
+        return target
+
+    writer = PdfWriter()
+    writer.append(BytesIO(data))
+    assert len(writer.pages) == 1
+    # The cycle is kept: following it leads back to the annotation itself.
+    annotation = get_annotation(writer.pages[0])
+    assert follow_cycle(annotation) is annotation
+
+    # Merging a page clones its annotations with force_duplicate=True. The
+    # annotation of the page may then be another copy than the one within the
+    # cycle, but the cycle itself is kept within the destination writer.
+    destination = PdfWriter()
+    page = destination.add_blank_page(200, 200)
+    page.merge_page(PdfReader(BytesIO(data)).pages[0])
+    target = follow_cycle(get_annotation(page))
+    assert target["/Subtype"] == NameObject("/Widget")
+    assert target.indirect_reference is not None
+    assert target.indirect_reference.pdf is destination
+    assert follow_cycle(target) is target
+
+
+def test_dictionary_object__clone__chain_with_direct_dictionary() -> None:
+    """A chain of /Next links can continue with a direct dictionary and end with any object."""
+    source = PdfWriter()
+    last = DictionaryObject({NameObject("/Title"): TextStringObject("last"), NameObject("/Next"): NullObject()})
+    middle = source._add_object(
+        DictionaryObject({NameObject("/Title"): TextStringObject("middle"), NameObject("/Next"): last})
+    )
+    first = source._add_object(
+        DictionaryObject({NameObject("/Title"): TextStringObject("first"), NameObject("/Next"): middle})
+    )
+
+    destination = PdfWriter()
+    clone = cast(DictionaryObject, first.get_object()).clone(destination)
+
+    assert clone["/Title"] == TextStringObject("first")
+    assert clone.indirect_reference is not None
+    assert clone.indirect_reference.pdf is destination
+    middle_clone = cast(DictionaryObject, clone["/Next"])
+    assert middle_clone["/Title"] == TextStringObject("middle")
+    assert middle_clone.indirect_reference is not None
+    assert middle_clone.indirect_reference.pdf is destination
+    last_clone = cast(DictionaryObject, middle_clone["/Next"])
+    assert last_clone == last
+    assert last_clone is not last
+    assert getattr(last_clone, "indirect_reference", None) is None

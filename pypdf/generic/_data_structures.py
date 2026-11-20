@@ -292,7 +292,14 @@ class ArrayObject(list[Any], PdfObject):
                 stream.seek(-len(rest), 1)
             stream.seek(-1, 1)
             # read and append object
-            arr.append(read_object(stream, pdf, forced_encoding, parsing_budget=parsing_budget))
+            try:
+                obj = read_object(stream, pdf, forced_encoding, parsing_budget=parsing_budget)
+            except LimitReachedError:
+                # Always propagate security issues.
+                raise
+            except (MemoryError, RecursionError) as exc:
+                raise PdfReadError("Error reading PDF file.") from exc
+            arr.append(obj)
         return arr
 
 
@@ -397,8 +404,11 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     continue
                 ignore_fields[x] -= 1  # type: ignore[operator]
             x += 1
-        #  Check if this is a chain list, we need to loop to prevent recur
-        if any(
+        #  Check if this is a chain list, we need to loop to prevent recur.
+        #  Only indirect objects are chain nodes: a direct dictionary has no
+        #  object number for the cycle detection below, so its links are
+        #  cloned by the generic loop at the end.
+        if getattr(src, "indirect_reference", None) is not None and any(
             field not in ignore_fields
             and field in src
             and isinstance(src.raw_get(field), IndirectObject)

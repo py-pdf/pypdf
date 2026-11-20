@@ -3591,6 +3591,39 @@ def test_read_pdf15_xref_stream__negative_count(caplog):
     assert caplog.messages == ["Negative XRef count -5, using 0."]
 
 
+def test_process_xref_stream__xrefstm():
+    """An /XRefStm entry in a cross-reference stream dictionary is followed."""
+    pdf = bytearray(b"%PDF-1.5\n")
+    offset_catalog = len(pdf)
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    offset_pages = len(pdf)
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+    offset_page = len(pdf)
+    pdf += b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>\nendobj\n"
+
+    # The page is only listed in the cross-reference stream referenced by /XRefStm.
+    offset_xrefstm = len(pdf)
+    entries = b"\x01" + offset_page.to_bytes(2, "big")
+    pdf += b"4 0 obj\n<< /Type /XRef /Size 4 /Index [3 1] /W [1 2 0] /Length %d >>\nstream\n" % len(entries)
+    pdf += entries + b"\nendstream\nendobj\n"
+
+    startxref = len(pdf)
+    entries = b"\x00\x00\x00"
+    entries += b"\x01" + offset_catalog.to_bytes(2, "big")
+    entries += b"\x01" + offset_pages.to_bytes(2, "big")
+    pdf += (
+        b"5 0 obj\n<< /Type /XRef /Size 6 /Index [0 3] /W [1 2 0] /Root 1 0 R /XRefStm %d /Length %d >>\nstream\n"
+    ) % (offset_xrefstm, len(entries))
+    pdf += entries + b"\nendstream\nendobj\n"
+    pdf += b"startxref\n%d\n%%%%EOF\n" % startxref
+
+    reader = PdfReader(BytesIO(pdf), strict=True)
+
+    assert reader.xref[0] == {1: offset_catalog, 2: offset_pages, 3: offset_page}
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox == [0, 0, 72, 72]
+
+
 def test_read_standard_xref_table__end_of_file__trailer() -> None:
     data = b"%PDF-1.4\nstartxref\n28\n%%EOF\nxref\n1 0\naaa"
 
@@ -3722,3 +3755,70 @@ def test_read_xref__hybrid_pdf__limit():
             expected_exception=LimitReachedError, match=r"^Maximum XRef stream entry limit reached: 2 > 1\.$"
     ):
         PdfReader(BytesIO(pdf), xref_stream_maximum_entries=1)
+
+
+def _build_pdf_with_resources_in_objstm(objstm_num: int) -> bytes:
+    """
+    One page whose /Resources (object 4) is, according to the xref stream,
+    stored in object stream ``objstm_num``.
+
+    Pointing ``objstm_num`` at a number that is not in the file simulates a
+    missing object stream; pointing it at object 5 (the xref stream, whose
+    /Type is /XRef) simulates a stream that is not an object stream.
+    """
+    pdf = bytearray(b"%PDF-1.5\n")
+    offsets = {}
+    for num, body in (
+        (1, b"<< /Type /Catalog /Pages 2 0 R >>"),
+        (2, b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+        (3, b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources 4 0 R >>"),
+    ):
+        offsets[num] = len(pdf)
+        pdf += b"%d 0 obj\n" % num + body + b"\nendobj\n"
+    xref_offset = len(pdf)
+    rows = [
+        (0, 0, 0xFFFF),
+        (1, offsets[1], 0),
+        (1, offsets[2], 0),
+        (1, offsets[3], 0),
+        (2, objstm_num, 0),
+        (1, xref_offset, 0),
+    ]
+    data = b"".join(struct.pack(">BIH", *row) for row in rows)
+    pdf += (
+        b"5 0 obj\n<< /Type /XRef /Size 6 /W [1 4 2] /Root 1 0 R /Length %d >>\nstream\n"
+        % len(data)
+    )
+    pdf += data + b"\nendstream\nendobj\n"
+    pdf += b"startxref\n%d\n%%%%EOF\n" % xref_offset
+    return bytes(pdf)
+
+
+@pytest.mark.parametrize(
+    ("objstm_num", "strict_message"),
+    [
+        pytest.param(9, r"^Could not find object\.$", id="missing-object-stream"),
+        pytest.param(
+            5,
+            r"^Object stream 5 referenced by object 4 is missing or is not an object stream\.$",
+            id="not-an-object-stream",
+        ),
+    ],
+)
+def test_get_object_from_stream__invalid_object_stream(objstm_num, strict_message, caplog):
+    """An object stream that is missing or is not an /ObjStm does not leak a TypeError or AssertionError."""
+    data = _build_pdf_with_resources_in_objstm(objstm_num)
+
+    reader = PdfReader(BytesIO(data))
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+    writer.write(BytesIO())
+    assert isinstance(reader.get_object(4), NullObject)
+    assert (
+        f"Object stream {objstm_num} referenced by object 4 is missing or is not "
+        "an object stream; ignoring it."
+    ) in caplog.text
+
+    reader = PdfReader(BytesIO(data), strict=True)
+    with pytest.raises(PdfReadError, match=strict_message):
+        reader.get_object(4)
