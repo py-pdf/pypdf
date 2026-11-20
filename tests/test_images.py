@@ -1151,3 +1151,20 @@ def test_inline_image__custom_color_space__resolved_from_resources():
 
     images = list(PdfReader(stream).pages[0].images)
     assert len(images) == 1
+
+
+def test_images__identifiers_are_listed_once():
+    """Iterating over the images of a page or getting its items lists the image identifiers only once."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /G /W 1 /H 1 /BPC 8 ID 00 EI Q\n" * 3)
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    with mock.patch.object(page, "_get_ids_image", wraps=page._get_ids_image) as ids_function:
+        assert [image.name for image in page.images] == ["~0~.png", "~1~.png", "~2~.png"]
+        assert ids_function.call_count == 1
+
+        ids_function.reset_mock()
+        assert [identifier for identifier, _ in page.images.items()] == ["~0~", "~1~", "~2~"]
+        assert ids_function.call_count == 1

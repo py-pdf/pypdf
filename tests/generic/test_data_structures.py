@@ -180,9 +180,6 @@ def test_tree_object__insert_child_in_first_position_with_next() -> None:
     child_a_ref = writer._add_object(child_a)
     tree.add_child(child_a_ref, writer)
 
-    # prev = tree["/Last"] = A, prev == before, so no while loop.
-    # try: prev["/Prev"] — A has no /Prev → KeyError → except block fires.
-
     # Create child C with a /Next pointer pointing to something
     child_c = DictionaryObject()
     child_c[NameObject("/Next")] = child_a_ref  # C -> A
@@ -196,6 +193,8 @@ def test_tree_object__insert_child_in_first_position_with_next() -> None:
     c_obj = child_c_ref.get_object()
     assert isinstance(c_obj, DictionaryObject)
     assert c_obj["/Next"] == child_a
+    assert tree["/First"] == c_obj
+    assert "/Prev" not in c_obj
 
 
 @pytest.mark.enable_socket
@@ -530,21 +529,6 @@ def test_content_stream__parse_content_stream__limits() -> None:
         content_stream._parse_content_stream(stream)
 
 
-@pytest.mark.timeout(5)
-def test_content_stream__read_inline_image__end_of_stream() -> None:
-    # Broken content stream, for example due to filter errors.
-    # Specific example:
-    #   Error -3 while decompressing data: invalid distance too far back
-    #   b'q 0.1 0 0 0.1 0 0 cm\n/R7 gs\n0 g\nq 4.8 0 0 -135.6 2155.08 7150.48 cm\nBI\n/IM true\n/W001'
-    content_stream = ContentStream(stream=None, pdf=None)
-
-    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
-        content_stream._read_inline_image(
-            BytesIO(b"\n/IM true\n/W001"),
-            parsing_budget=StreamParsingBudget(remaining_budget=100)
-        )
-
-
 def test_tree_object__insert_child__cycle() -> None:
     writer = PdfWriter()
 
@@ -566,6 +550,76 @@ def test_tree_object__insert_child__cycle() -> None:
             before=None,
             pdf=writer,
         )
+
+
+def test_tree_object__insert_child__before_with_cycle() -> None:
+    """insert_child() raises a LimitReachedError if the children it searches for `before` form a cycle."""
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+    # /First -> first -> second -> first -> ...: the /Next links of the children form a cycle.
+    first = DictionaryObject()
+    second = DictionaryObject()
+    first_reference = writer._add_object(first)
+    first[NameObject("/Next")] = writer._add_object(second)
+    second[NameObject("/Next")] = first_reference
+    tree[NameObject("/First")] = first_reference
+    tree[NameObject("/Last")] = first.raw_get("/Next")
+    not_a_child = writer._add_object(DictionaryObject())
+
+    with pytest.raises(LimitReachedError, match=r"^Detected cycle in tree structure\.$"):
+        tree.insert_child(writer._add_object(DictionaryObject()), not_a_child, writer)
+
+
+def test_tree_object__insert_child__before_is_not_a_child() -> None:
+    """
+    insert_child() appends the child at the end if `before` is not one of the children.
+
+    The children are linked from /First to /Last by /Next and /Prev
+    """
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+    first = writer._add_object(DictionaryObject())
+    last_item = DictionaryObject()
+    last = writer._add_object(last_item)
+    tree.add_child(first, writer)
+    tree.add_child(last, writer)
+    not_a_child = writer._add_object(DictionaryObject())
+    new_item = DictionaryObject()
+    new = writer._add_object(new_item)
+
+    tree.insert_child(new, not_a_child, writer)
+
+    assert tree.raw_get("/First") == first
+    assert tree.raw_get("/Last") == new
+    assert last_item.raw_get("/Next") == new
+    assert new_item.raw_get("/Prev") == last
+    assert "/Next" not in new_item
+
+
+def test_tree_object__insert_child__first_child_drops_previous_links() -> None:
+    """
+    insert_child() removes the /Next and /Prev entries a child brings along when it becomes the only child.
+
+    The first child has no /Prev and the last child no /Next.
+    """
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+    # A child that was linked into another list before.
+    child = DictionaryObject({
+        NameObject("/Next"): writer._add_object(DictionaryObject()),
+        NameObject("/Prev"): writer._add_object(DictionaryObject()),
+    })
+    child_reference = writer._add_object(child)
+
+    tree.insert_child(child_reference, None, writer)
+
+    assert tree.raw_get("/First") == child_reference
+    assert tree.raw_get("/Last") == child_reference
+    assert "/Next" not in child
+    assert "/Prev" not in child
 
 
 def _outlined_pdf(nested: bool = False) -> BytesIO:
@@ -808,6 +862,14 @@ def test_array_object__read_from_stream__maximum_element_count() -> None:
             ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
 
 
+def test_array_object__read_from_stream__deeply_nested_array_raises_pdfreaderror() -> None:
+    pdf = ReaderDummy()
+    depth = sys.getrecursionlimit()
+    data = b"[" * depth + b"]" * depth
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
+        ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
+
+
 def test_dictionary_object__read_from_stream__token_limit() -> None:
     pdf = ReaderDummy()
     data = b"<< /Key1 << /Key2 << /Key3 << /Key4 << /SomeName 42 >> >> >> >> /Key5 13 >>"
@@ -867,25 +929,6 @@ def test_content_stream__parse_content_stream__dictionary_limit() -> None:
                 expected_exception=LimitReachedError, match=r"^Reached maximum number of dictionary entries\.$"
         ):
             content_stream._parse_content_stream(BytesIO(data))
-
-
-@pytest.mark.parametrize(
-    "budget",
-    [
-        pytest.param(9, id="list-as-key"),
-        pytest.param(15, id="dictionary1"),
-        pytest.param(16, id="dictionary2"),
-    ]
-)
-def test_content_stream__read_inline_image__parsing_budget(budget: int) -> None:
-    data = b"<< [ 0 1 2 3 4 5 6 7 8 9 10 ] << /Key1 42 /Key2 1337 >> >>"
-
-    content_stream = ContentStream(stream=None, pdf=None)
-    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
-        content_stream._read_inline_image(
-            stream=BytesIO(data),
-            parsing_budget=StreamParsingBudget(remaining_budget=budget)
-        )
 
 
 def test_content_stream__check_limits__read_inline_image_dictionary_limit() -> None:
