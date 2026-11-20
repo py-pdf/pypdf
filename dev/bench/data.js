@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795175901513,
+  "lastUpdate": 1795176882344,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -129629,6 +129629,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0053421881663256125",
             "extra": "mean: 659.9576535999972 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "patrick@immometrica.com",
+            "name": "Patrick Hintermayer",
+            "username": "patrick-immometrica"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b48b43f690c4f46208b3656e16216b2a82ea0f21",
+          "message": "BUG: Keep named destinations added to a /Kids name tree (#4445)\n\n* BUG: Keep named destinations added to a /Kids name tree\n\nget_named_dest_root() put a new /Names array next to the existing /Kids\nof the /Dests root. A name tree node holds either /Kids or /Names, so\nreaders ignored the new entries. Flatten the tree into the root instead,\nas done for embedded files.\n\n* TST: Cover duplicate names and cycles in /Kids name trees\n\n* MAINT: Share the name tree flattening with embedded files\n\nMove the flattening into one helper used for named destinations and\nembedded files. Embedded files thereby also keep names from nested /Kids.\n\n* BUG: Read embedded files from nested /Kids name trees\n\nWalk name trees with one helper when reading embedded files and when\nflattening them, so attachments below the first /Kids level are listed\nand /Kids cycles are skipped.\n\n* TST: Narrow name tree types for mypy\n\n* Apply batched suggestions from code review\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\n\n* Reduce nesting depth\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-20T13:13:13+01:00",
+          "tree_id": "b8db546cee546cacd673f1b31be24fe0bab888cc",
+          "url": "https://github.com/py-pdf/pypdf/commit/b48b43f690c4f46208b3656e16216b2a82ea0f21"
+        },
+        "date": 1795176873407,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.2545080673639335,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008767976086876132",
+            "extra": "mean: 190.31277280000012 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.19063665497695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06207730331320846",
+            "extra": "mean: 43.120851526315896 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4921911719207167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05245069809621312",
+            "extra": "mean: 2.0317308741999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 41.598171023717846,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007876557682043149",
+            "extra": "mean: 24.03951845454538 msec\nrounds: 33"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.26697638320650885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06699568855216886",
+            "extra": "mean: 3.7456496638000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.7473241006939086,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00904875302941268",
+            "extra": "mean: 363.99054620000015 msec\nrounds: 5"
           }
         ]
       }
