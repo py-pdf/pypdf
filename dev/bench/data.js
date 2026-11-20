@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795208858346,
+  "lastUpdate": 1795209156146,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -129827,6 +129827,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015155076436316438",
             "extra": "mean: 566.8206153999961 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d0620116c87df3dcb97365ae3d631af2f8c8dfa9",
+          "message": "BUG: Make PageRange addition commutative for equal starts (#4468)\n\n* BUG: Make PageRange addition commutative for equal starts\n\nPageRange.__add__ ordered its operands by start only. With equal starts,\nthe operand with the smaller stop could end up first, so\nPageRange(\"2:0\") + PageRange(\"2:5\") raised \"Can't add PageRanges with gap\"\nwhile PageRange(\"2:5\") + PageRange(\"2:0\") returned PageRange(\"2:5\").\nThe operands are now ordered by start and then by descending stop.\n\nparse_filename_page_ranges() checked the filename by truthiness, so an\nempty-string filename was dropped when it had no page range and made\n[\"\", \"1:3\"] raise \"The first argument must be a filename, not a page\nrange.\" It now checks for None, so every string that is not a page range\nis a filename.\n\nTests:\n* Cover PageRange.indices() directly.\n* test_din_a0_paper_size compared dim.width with the A0 height and\n  had no abs(), so the height check always passed. It now compares\n  abs(dim.height - ...).\n* Check that A(n).width == A(n+1).height and cover the C4 envelope size.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* MAINT: Keep parse_filename_page_ranges as on main\n\nRevert the parse_filename_page_ranges changes and their tests, and use\nfloat(\"inf\") again in PageRange.__add__. This PR now only fixes the\nPageRange addition order and the paper size tests.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-20T22:10:14+01:00",
+          "tree_id": "c9360d3def938b21d338d3e223299fee942c606a",
+          "url": "https://github.com/py-pdf/pypdf/commit/d0620116c87df3dcb97365ae3d631af2f8c8dfa9"
+        },
+        "date": 1795209141362,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.859886450805213,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008097973210808873",
+            "extra": "mean: 349.6642322000042 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.833253880587918,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018159236309763117",
+            "extra": "mean: 43.795772833330915 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29231836807670686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034733712456433384",
+            "extra": "mean: 3.420927691199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.375895201917913,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017136625573776984",
+            "extra": "mean: 44.6909493888891 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1437667032916359,
+            "unit": "iter/sec",
+            "range": "stddev: 0.047310212009125704",
+            "extra": "mean: 6.9557135074000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7536504273140074,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018845167782908883",
+            "extra": "mean: 570.2390763999972 msec\nrounds: 5"
           }
         ]
       }
