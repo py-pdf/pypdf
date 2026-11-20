@@ -1120,6 +1120,44 @@ def test_get_pages_showing_field__cyclic() -> None:
 
 
 @pytest.mark.timeout(5)
+def test_get_pages_showing_field__orphan_page() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    orphan_page = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Page"),
+            NameObject("/MediaBox"): ArrayObject(),
+        }
+    )
+    orphan_ref = writer._add_object(orphan_page)
+    widget = DictionaryObject(
+        {
+            NameObject("/FT"): NameObject("/Tx"),
+            NameObject("/T"): TextStringObject("field"),
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/P"): orphan_ref,
+        }
+    )
+    widget_ref = writer._add_object(widget)
+    acroform = DictionaryObject({NameObject("/Fields"): ArrayObject([widget_ref])})
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acroform)
+
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    reader = PdfReader(stream, strict=False)
+    field = reader.root_object["/AcroForm"]["/Fields"][0]
+    assert reader.get_pages_showing_field(field) == []
+
+    stream.seek(0)
+    strict_reader = PdfReader(stream, strict=True)
+    strict_field = strict_reader.root_object["/AcroForm"]["/Fields"][0]
+    with pytest.raises(PdfReadError, match="not in the page tree"):
+        strict_reader.get_pages_showing_field(strict_field)
+
+
+@pytest.mark.timeout(5)
 def test_get_named_destinations__cyclic(caplog) -> None:
     writer = PdfWriter()
 
