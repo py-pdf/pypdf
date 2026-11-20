@@ -3913,6 +3913,31 @@ def test_flatten_form_field_without_font_in_resources():
     assert form_text_fields["Unique reference numberRow1"] == "test"
 
 
+@pytest.mark.enable_socket
+def test_incremental__keeps_generation_of_updated_objects():
+    """The appearance streams of these two fields are stored as `325 1 obj` and `326 1 obj`."""
+    data = get_data_from_url(name="issue-3553.pdf")
+    writer = PdfWriter(BytesIO(data), incremental=True)
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Who is protectedPSC": "Jane Doe", "What is protectedPSC": "Flight"},
+        auto_regenerate=False,
+    )
+    b = BytesIO()
+    writer.write(b)
+    increment = b.getvalue()[len(data):]
+    assert b"\n325 1 obj\n" in increment
+    assert b"\n326 1 obj\n" in increment
+
+    reader = PdfReader(b)
+    annotations = reader.pages[0]["/Annots"]
+    for index, idnum, value in ((2, 325, b"(Jane Doe) Tj"), (3, 326, b"(Flight) Tj")):
+        appearance = annotations[index]["/AP"]["/N"]
+        assert appearance.indirect_reference.idnum == idnum
+        assert appearance.indirect_reference.generation == 1
+        assert value in appearance.get_data()
+
+
 def test_merge_with_null_acroform_does_not_raise_typeerror():
     """
     Source PDFs may contain '/AcroForm null'.

@@ -1177,8 +1177,7 @@ class PdfWriter(PdfDocCommon):
                         ] = self._add_object(appearance_stream_obj)
                     else:  # [/AP][/N] exists
                         n = annotation[AnnotationDictionaryAttributes.AP]["/N"].indirect_reference.idnum  # type: ignore[index]
-                        self._objects[n - 1] = appearance_stream_obj
-                        appearance_stream_obj.indirect_reference = IndirectObject(n, 0, self)
+                        self._replace_object(n, appearance_stream_obj)
                 elif (
                     annotation.get(FieldDictionaryAttributes.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
@@ -1274,7 +1273,13 @@ class PdfWriter(PdfDocCommon):
             object_ids = self._collect_incremental_clone_object_ids(reader)
             self._objects = [None] * (object_ids[-1] if object_ids else 0)
             for object_id in object_ids:
-                reader_object = reader.get_object(object_id)
+                # Generation numbers only increase when an object number is reused,
+                # thus the highest one is the version the references point to.
+                generation = max(
+                    (generation for generation, entries in reader.xref.items() if object_id in entries),
+                    default=0,
+                )
+                reader_object = reader.get_object(IndirectObject(object_id, generation, reader))
                 if reader_object is not None:
                     self._objects[object_id - 1] = reader_object.replicate(self)
         else:
@@ -1564,9 +1569,11 @@ class PdfWriter(PdfDocCommon):
             ):
                 idnum = i + 1
                 assert isinstance(obj, PdfObject), "mypy"
+                reference = getattr(obj, "indirect_reference", None)
+                generation = reference.generation if isinstance(reference, IndirectObject) else 0
                 # first write new/modified object
-                object_positions[idnum] = stream.tell()
-                stream.write(f"{idnum} 0 obj\n".encode())
+                object_positions[idnum] = (stream.tell(), generation)
+                stream.write(f"{idnum} {generation} obj\n".encode())
                 obj.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
 
@@ -1593,7 +1600,7 @@ class PdfWriter(PdfDocCommon):
                 [NumberObject(_it) for _su in object_blocks for _it in _su]
             ),
             NameObject("/W"): ArrayObject(
-                [NumberObject(1), NumberObject(4), NumberObject(1)]
+                [NumberObject(1), NumberObject(4), NumberObject(2)]
             ),
             "__streamdata__": b"",
         }
@@ -1612,7 +1619,7 @@ class PdfWriter(PdfDocCommon):
         xr = StreamObject.initialize_from_dictionary(init_data)
         xr.set_data(
             b"".join(
-                [struct.pack(b">BIB", 1, _pos, 0) for _pos in object_positions.values()]
+                [struct.pack(b">BIH", 1, _pos, _gen) for _pos, _gen in object_positions.values()]
             )
         )
         xr.write_to_stream(stream)
