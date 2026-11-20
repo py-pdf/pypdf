@@ -169,10 +169,12 @@ class PageRange:
         def _stop_key(v: int | None) -> float:
             return float("inf") if v is None else v
 
-        if _start_key(a[0]) > _start_key(b[0]):
+        # Order by start, and on equal starts put the larger stop first, so that
+        # an empty range such as 2:0 does not decide whether there is a gap.
+        if (_start_key(a[0]), -_stop_key(a[1])) > (_start_key(b[0]), -_stop_key(b[1])):
             a, b = b, a
 
-        # Now `a` has the smaller (or equal) start.
+        # Now `a` has the smaller start (and the larger stop on equal starts).
         if _start_key(b[0]) > _stop_key(a[1]):
             # There is a gap between a and b.
             raise ValueError("Can't add PageRanges with gap")
