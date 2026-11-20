@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795176882344,
+  "lastUpdate": 1795177105856,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -174115,6 +174115,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.054622749188637666",
             "extra": "mean: 900.0266868000153 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "patrick@immometrica.com",
+            "name": "Patrick Hintermayer",
+            "username": "patrick-immometrica"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b48b43f690c4f46208b3656e16216b2a82ea0f21",
+          "message": "BUG: Keep named destinations added to a /Kids name tree (#4445)\n\n* BUG: Keep named destinations added to a /Kids name tree\n\nget_named_dest_root() put a new /Names array next to the existing /Kids\nof the /Dests root. A name tree node holds either /Kids or /Names, so\nreaders ignored the new entries. Flatten the tree into the root instead,\nas done for embedded files.\n\n* TST: Cover duplicate names and cycles in /Kids name trees\n\n* MAINT: Share the name tree flattening with embedded files\n\nMove the flattening into one helper used for named destinations and\nembedded files. Embedded files thereby also keep names from nested /Kids.\n\n* BUG: Read embedded files from nested /Kids name trees\n\nWalk name trees with one helper when reading embedded files and when\nflattening them, so attachments below the first /Kids level are listed\nand /Kids cycles are skipped.\n\n* TST: Narrow name tree types for mypy\n\n* Apply batched suggestions from code review\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\n\n* Reduce nesting depth\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-20T13:13:13+01:00",
+          "tree_id": "b8db546cee546cacd673f1b31be24fe0bab888cc",
+          "url": "https://github.com/py-pdf/pypdf/commit/b48b43f690c4f46208b3656e16216b2a82ea0f21"
+        },
+        "date": 1795177091031,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.429990303035641,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009379180604538889",
+            "extra": "mean: 87.48913809090584 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 37.20683322574695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0056805348747645795",
+            "extra": "mean: 26.876783464280557 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.04453640815025,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03002413545507097",
+            "extra": "mean: 957.3625124000046 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 47.52472457398969,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000648919983689544",
+            "extra": "mean: 21.041679020004267 msec\nrounds: 50"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4022655845517534,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06918500532738647",
+            "extra": "mean: 2.485919846000013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4044745327732768,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04848635473799077",
+            "extra": "mean: 712.0100625999953 msec\nrounds: 5"
           }
         ]
       }
