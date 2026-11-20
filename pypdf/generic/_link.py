@@ -111,11 +111,13 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
     if is_null_or_none(old_annotations):
         old_annotations = ArrayObject()
     if not isinstance(new_annotations, ArrayObject) or not isinstance(old_annotations, ArrayObject):
+        malformed = new_annotations if isinstance(old_annotations, ArrayObject) else old_annotations
+        page_index = old_page.page_number
         logger_warning(
-            "Expected annotation arrays: %(old_annotations)s %(new_annotations)s. Ignoring annotations.",
+            "Ignoring the links on %(page)s: its /Annots is a %(annotations_type)s, not an array.",
             source=__name__,
-            old_annotations=old_annotations,
-            new_annotations=new_annotations,
+            page="a page" if page_index is None else f"the page with index {page_index}",
+            annotations_type=type(malformed).__name__,
         )
         return []
     new_links = [
