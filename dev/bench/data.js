@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795174513503,
+  "lastUpdate": 1795175751458,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -129563,6 +129563,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010339781523119346",
             "extra": "mean: 645.2994564000278 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "6367575+kmz@users.noreply.github.com",
+            "name": "kmz",
+            "username": "kmz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "09b79f3036e7a250ed845343d59b171c0f72b63d",
+          "message": "BUG: Fix RecursionError when cloning a cycle through a direct dictionary (#4441)\n\n* BUG: Copy the entries and content when cloning a TextStreamAppearance\n\nTextStreamAppearance can be constructed without arguments, so\nDictionaryObject._new_for_clone() called its constructor to create the\ninstance receiving the clone. The constructor adds entries and generates\na default content stream, but clone() only copies the source object into\nan empty instance. The clone was thus returned as constructed: an empty\nappearance with a /BBox of [0 0 0 0] instead of a copy of the source.\n\nOnly clones created by the chain handling in DictionaryObject._clone(),\nthat is, appearance streams reached through an indirect /N link,\nreceived the content of the source. They still kept the default entries\nof the constructor, like /BBox.\n\nCreate the instance without calling __init__ instead, as already done\nfor dictionary classes whose constructor requires arguments.\n\n* BUG: Fix RecursionError when cloning a cycle through a direct dictionary\n\nThe chain handling in DictionaryObject._clone() ran _clone() again on\nobjects which had already been translated into the destination writer.\nIf such an object is reached through a direct dictionary, for example\n/AP << /N 4 0 R >> inside object 4, every pass starts with a fresh\nvisited set, so the cycle is never detected.\n\nOnly treat indirect objects as chain nodes. The links of a direct\ndictionary are cloned by the generic loop instead, which resolves\nalready translated objects. Stopping at already translated objects did\nnot help when cloning with force_duplicate=True, as done by\nPageObject.merge_page() for annotations: each pass created a new clone,\nso the recursion remained.\n\nThis is the change of #4408 again, which was reverted in #4438 because\ntests/test_writer.py::test_update_form_fields2 failed. The chain\nhandling had hidden that cloning a TextStreamAppearance did not copy\nits content, which is fixed by the previous commit.\n\n* STY: Remove quotes from the return annotation of _new_for_clone\n\nThe module uses postponed evaluation of annotations, so the quotes are\nnot needed (ruff UP037).\n\n* DOC: Explain why BaseStreamAppearance overrides _new_for_clone",
+          "timestamp": "2026-11-20T12:53:33+01:00",
+          "tree_id": "a624ffb8a0176f1536b781e978cbb6635966109b",
+          "url": "https://github.com/py-pdf/pypdf/commit/09b79f3036e7a250ed845343d59b171c0f72b63d"
+        },
+        "date": 1795175737398,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8162812966285715,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007864305094692287",
+            "extra": "mean: 355.0781667999999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.32678656053078,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016993903342291394",
+            "extra": "mean: 42.86917091666679 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.276924924917232,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012572771523987612",
+            "extra": "mean: 3.6110870131999944 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.37577075728061,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019431580136622043",
+            "extra": "mean: 44.691197941175766 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14760856627622412,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07797207873763125",
+            "extra": "mean: 6.774674568200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5152487353470465,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0053421881663256125",
+            "extra": "mean: 659.9576535999972 msec\nrounds: 5"
           }
         ]
       }
