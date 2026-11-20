@@ -30,7 +30,7 @@ import hashlib
 import re
 import sys
 from collections.abc import Callable, Sequence
-from math import log10
+from math import isfinite, log10
 from struct import iter_unpack
 from typing import Any, ClassVar, Optional, TypeGuard, Union, cast
 
@@ -514,6 +514,12 @@ class FloatObject(float, PdfObject):
         return hash((self.__class__, self.as_numeric()))
 
     def myrepr(self) -> str:
+        if not isfinite(self):
+            # NaN and +/-Infinity have no representation as PDF numbers
+            # and would crash the precision computation below with a
+            # ValueError or OverflowError; use the same 0.0 fallback as
+            # for other invalid FloatObject values.
+            return "0.0"
         if self == 0:  # type: ignore[comparison-overlap]
             return "0.0"
         nb = FLOAT_WRITE_PRECISION - int(log10(abs(self)))

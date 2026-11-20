@@ -1149,6 +1149,29 @@ def test_float_object_decimal_to_string(value, expected):
     assert repr(FloatObject(value)) == expected
 
 
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf", float("nan"), float("inf"), float("-inf")])
+def test_float_object_non_finite(value):
+    # Non-finite values have no representation as PDF numbers. They used
+    # to crash myrepr() (and thus repr() and write_to_stream()) with an
+    # unhandled ValueError for NaN and OverflowError for +/-Infinity.
+    # They now fall back to 0.0 like other invalid FloatObject values.
+    obj = FloatObject(value)
+    assert repr(obj) == "0.0"
+    stream = BytesIO()
+    obj.write_to_stream(stream)
+    assert stream.getvalue() == b"0.0"
+
+
+def test_float_object_non_finite_in_dictionary():
+    # Serializing a structure containing a non-finite FloatObject must
+    # not crash either.
+    d = DictionaryObject()
+    d[NameObject("/Key")] = FloatObject(float("nan"))
+    stream = BytesIO()
+    d.write_to_stream(stream)
+    assert stream.getvalue() == b"<<\n/Key 0.0\n>>"
+
+
 def test_cloning(caplog):
     writer = PdfWriter()
     with pytest.raises(Exception) as exc:
