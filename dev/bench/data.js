@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795178102671,
+  "lastUpdate": 1795178257512,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -174247,6 +174247,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04848635473799077",
             "extra": "mean: 712.0100625999953 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "adbe81c0c66483ef66aa71db3fecce6b068bd916",
+          "message": "DEP: Deprecate parse_filename_page_ranges (#4472)\n\nparse_filename_page_ranges() now issues a DeprecationWarning and will be\nremoved in pypdf 8.0.0. There is no replacement.\n\nIt was added in 2014 for the pdfcat script, which turned command-line\narguments such as \"a.pdf 0:3 b.pdf\" into (filename, PageRange) pairs.\npypdf removed that script in #845 (2022), and nothing in pypdf calls the\nfunction since then. The functionality is now in the pdfly package.\n\nThe docstring has a `.. deprecated:: 7.2.0` note, as remove_images() and\nadd_outline_item() have since #4412 and #4401.\n\nCloses #4471\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-20T13:33:10+01:00",
+          "tree_id": "84a3785079490f5e997e6e81e5e55614f6f0a2fb",
+          "url": "https://github.com/py-pdf/pypdf/commit/adbe81c0c66483ef66aa71db3fecce6b068bd916"
+        },
+        "date": 1795178239973,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.631877121253586,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019731133671577087",
+            "extra": "mean: 85.97064683333144 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 33.85202477676947,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004525818678749",
+            "extra": "mean: 29.540330500001215 msec\nrounds: 26"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0331773501543196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01003703515176905",
+            "extra": "mean: 967.8880396000125 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 41.57495603623401,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007883018834685025",
+            "extra": "mean: 24.0529418510621 msec\nrounds: 47"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3419089547854624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006357809861070839",
+            "extra": "mean: 2.924755219200006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2716244645487849,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002237625580715963",
+            "extra": "mean: 786.3956914000028 msec\nrounds: 5"
           }
         ]
       }
