@@ -408,9 +408,26 @@ class PdfReader(PdfDocCommon):
             # indirect reference to object in object stream
             # read the entire object stream into memory
             stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
-            obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
-            # This is an xref to a stream, so its type better be a stream
-            assert cast(str, obj_stm["/Type"]) == "/ObjStm"
+            obj_stm = IndirectObject(stmnum, 0, self).get_object()
+            # This is an xref to a stream, so its type better be a stream.
+            # A missing or wrongly typed object stream (e.g. in a truncated
+            # file) is ignored in non-strict mode.
+            if not isinstance(obj_stm, StreamObject) or obj_stm.get("/Type") != "/ObjStm":
+                if self.strict:
+                    raise PdfReadError(
+                        f"Object stream {stmnum} referenced by object {obj_id} "
+                        "is missing or is not an object stream."
+                    )
+                logger_warning(
+                    (
+                        "Object stream %(stmnum)d referenced by object %(obj_id)d "
+                        "is missing or is not an object stream; ignoring it."
+                    ),
+                    source=__name__,
+                    stmnum=stmnum,
+                    obj_id=obj_id,
+                )
+                return NullObject()
             # Parse ALL objects in this stream in one pass and cache them.
             # This avoids O(N²) behavior when many objects from the same stream
             # are resolved individually (each call would re-parse the header).
@@ -1263,7 +1280,7 @@ class PdfReader(PdfDocCommon):
                         )
                         break
                     raise PdfReadError(f"Trailer cannot be read: {exception!s}") from exception  # pragma: no cover
-                self._process_xref_stream(xrefstream)
+                self._process_xref_stream(xrefstream, stream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
                 else:
@@ -1277,16 +1294,16 @@ class PdfReader(PdfDocCommon):
         TrailerKeys.ROOT, TrailerKeys.ENCRYPT, TrailerKeys.INFO, TrailerKeys.ID, TrailerKeys.SIZE
     )
 
-    def _process_xref_stream(self, xrefstream: DictionaryObject) -> None:
+    def _process_xref_stream(self, xrefstream: DictionaryObject, stream: StreamType) -> None:
         """Process and handle the xref stream."""
         for key in self._XREF_STREAM_TRAILER_KEYS:
             if key in xrefstream and key not in self.trailer:
                 self.trailer[NameObject(key)] = xrefstream.raw_get(key)
         if "/XRefStm" in xrefstream:
-            p = self.stream.tell()
-            self.stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
-            self._read_pdf15_xref_stream(self.stream)
-            self.stream.seek(p, 0)
+            p = stream.tell()
+            stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
+            self._read_pdf15_xref_stream(stream)
+            stream.seek(p, 0)
 
     def _read_xref(self, stream: StreamType) -> int | None:
         self._read_standard_xref_table(stream)
