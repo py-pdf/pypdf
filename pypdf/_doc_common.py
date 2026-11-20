@@ -330,7 +330,15 @@ class PdfDocCommon(ABC):
         # Text entries of the /Info dictionary may be indirect references;
         # resolve them so every property sees the value, not the reference.
         for key, value in self._info.items():
-            retval[key] = value.get_object()
+            try:
+                resolved = value.get_object()
+            except Exception:
+                resolved = None
+            if resolved is None:
+                # ISO 32000-2:2020, 7.3.10: a reference to an undefined object
+                # is not an error; treat it as a reference to the null object.
+                resolved = NullObject()
+            retval[key] = resolved
         return retval
 
     @property
