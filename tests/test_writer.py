@@ -3198,6 +3198,22 @@ def test_mime_jupyter():
     assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
 
 
+def test_mime_jupyter__bytes():
+    """
+    Reader and writer both show a document in Jupyter as the bytes of a PDF file.
+
+    The bytes start with the file header of ISO 32000-2:2020, 7.5.2.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(clone_from=reader)
+
+    for document in (reader, writer):
+        pdf_data = document._repr_mimebundle_()["application/pdf"]
+        assert isinstance(pdf_data, bytes)
+        assert pdf_data.startswith(b"%PDF-")
+        assert len(PdfReader(BytesIO(pdf_data)).pages) == 1
+
+
 def test_init_without_named_arg():
     """Test to use file_obj argument and not clone_from"""
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
