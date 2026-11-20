@@ -31,6 +31,7 @@ from pypdf.generic import (
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
@@ -843,6 +844,16 @@ def test_extract_text__none_objects():
 
     reader.pages[0].extract_text()
     reader.pages[8].extract_text()
+
+
+def test_extract_text_layout__dangling_font_reference():
+    # iss #4480: a /Font entry pointing at an object the file does not hold
+    # resolves to None; layout-mode extraction must skip it instead of
+    # raising AttributeError, as plain extraction already does.
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    page["/Resources"]["/Font"][NameObject("/F9")] = IndirectObject(9999, 0, reader)
+    assert page.extract_text(extraction_mode="layout") != ""
 
 
 @pytest.mark.enable_socket
