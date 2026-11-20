@@ -3116,7 +3116,9 @@ class PdfWriter(PdfDocCommon):
             visited.add(article_id)
 
             page = self._get_cloned_page(
-                cast("PageObject", current_article["/P"]), pages, reader
+                cast("PageObject", current_article.get("/P", NullObject()).get_object()),
+                pages,
+                reader,
             )
             if page is not None:
                 if new_article is None:
