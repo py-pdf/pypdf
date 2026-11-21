@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795261092718,
+  "lastUpdate": 1795285058432,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130289,6 +130289,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00415810292083579",
             "extra": "mean: 588.6359169999992 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hwzhao761@gmail.com",
+            "name": "Zephyr761",
+            "username": "Zephyr761"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ac04ae11cb4d6ab1a49cf1ab7b8bf1ee5b8a6363",
+          "message": "ROB: Fall back for unsupported RC4 key lengths (#4461)\n\n* BUG: Fall back for unsupported RC4 key lengths\n\n* BUG: Warn when falling back for RC4 key lengths\n\n* MAINT: Retry CI after sample download timed out\n\n* MAINT: Parenthesize multiline RC4 warning",
+          "timestamp": "2026-11-21T19:16:08+01:00",
+          "tree_id": "1444bde66e4bcdcfaf2d01bbd71278b6caf0a72d",
+          "url": "https://github.com/py-pdf/pypdf/commit/ac04ae11cb4d6ab1a49cf1ab7b8bf1ee5b8a6363"
+        },
+        "date": 1795285049614,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.387081828950029,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00869203475044474",
+            "extra": "mean: 185.62925750004902 msec\nrounds: 6"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 37.406263853021095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0058699599483633905",
+            "extra": "mean: 26.733490517236877 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.47585973495753103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.051190656494332",
+            "extra": "mean: 2.1014595826000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 42.02586132032132,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013124747861952514",
+            "extra": "mean: 23.794872218751095 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.26744823613873986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06286504062594496",
+            "extra": "mean: 3.7390412979999836 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.834646760295533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004692984548360276",
+            "extra": "mean: 352.7776420000009 msec\nrounds: 5"
           }
         ]
       }
