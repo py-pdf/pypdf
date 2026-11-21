@@ -329,6 +329,17 @@ def test_get_label_from_nums__unknown_style(caplog):
     assert "Ignoring unknown page label numbering style '/X' in /Nums." in caplog.text
 
 
+def test_get_label_from_nums__null_style(caplog):
+    # A null /S means the same as no /S at all, so only the prefix is used.
+    value = DictionaryObject()
+    value[NameObject("/S")] = NullObject()
+    value[NameObject("/P")] = TextStringObject("Cover")
+    dictionary_object = DictionaryObject()
+    dictionary_object[NameObject("/Nums")] = ArrayObject([NumberObject(0), value])
+    assert get_label_from_nums(dictionary_object, 0) == "Cover"
+    assert caplog.messages == []
+
+
 def test_get_label_from_nums__malformed_start(caplog):
     # /St is not an integer, so the label arithmetic cannot be performed.
     value = DictionaryObject()
@@ -572,6 +583,48 @@ def test_get_label_from_nums__regular__limits(caplog):
     assert caplog.messages == [
         "Ignoring malformed page label entry in /Nums (/St=15000, /P=''): Number is too large."
     ]
+
+
+@pytest.mark.parametrize(
+    "indirect_keys",
+    [
+        pytest.param(("/S",), id="style"),
+        pytest.param(("/St",), id="start"),
+        pytest.param(("/P",), id="prefix"),
+        pytest.param(("/S", "/St", "/P"), id="all-three"),
+    ],
+)
+def test_index2label__entry_values_stored_as_indirect_objects(indirect_keys, caplog):
+    """Any /Nums entry value may be written as an indirect reference."""
+    writer = PdfWriter()
+    for _ in range(6):
+        writer.add_blank_page(100, 100)
+
+    entry = DictionaryObject()
+    for key, value in (
+        ("/S", NameObject("/D")),
+        ("/St", NumberObject(5)),
+        ("/P", TextStringObject("A-")),
+    ):
+        entry[NameObject(key)] = (
+            writer._add_object(value) if key in indirect_keys else value
+        )
+    writer.root_object[NameObject("/PageLabels")] = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Nums"): ArrayObject(
+                    [NumberObject(0), writer._add_object(entry)]
+                )
+            }
+        )
+    )
+
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+
+    assert reader.page_labels == ["A-5", "A-6", "A-7", "A-8", "A-9", "A-10"]
+    assert caplog.messages == []
 
 
 def _build_label(*, style=None, prefix=None, start=None) -> DictionaryObject:
