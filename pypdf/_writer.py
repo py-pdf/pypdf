@@ -35,7 +35,7 @@ import struct
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from io import BytesIO, FileIO, IOBase
-from itertools import compress, pairwise
+from itertools import pairwise
 from pathlib import Path
 from re import Pattern
 from types import TracebackType
@@ -137,6 +137,9 @@ class ObjectDeletionFlag(enum.IntFlag):
     INLINE_IMAGES = enum.auto()
     DRAWING_IMAGES = enum.auto()
     IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
+
+
+_TEXT_SHOWING_OPERATORS = (b"Tj", b"TJ", b"'", b'"')
 
 
 # Building the index reads the whole /Names array, which costs more than it saves
@@ -386,6 +389,7 @@ class PdfWriter(PdfDocCommon):
             }
         )
         self.flattened_pages = []
+        self._page_id2num: dict[int, int] = {}
         self._encryption: Encryption | None = None
         self._encrypt_entry: DictionaryObject | None = None
 
@@ -748,10 +752,14 @@ class PdfWriter(PdfDocCommon):
         self, indirect_reference: int | NullObject | IndirectObject | None
     ) -> int | None:
         """
-        Generate _page_id2num.
+        Retrieve the page number from an indirect reference.
+
+        The index of every page is remembered. As pages are added, inserted and
+        removed, an index is only trusted after checking the page at that
+        position; otherwise the index is rebuilt.
 
         Args:
-            indirect_reference:
+            indirect_reference: The indirect reference to locate.
 
         Returns:
             The page number or None
@@ -761,12 +769,36 @@ class PdfWriter(PdfDocCommon):
         if is_null_or_none(indirect_reference):
             return None
         assert indirect_reference is not None, "mypy"
-        if isinstance(indirect_reference, int):
-            indirect_reference = IndirectObject(indirect_reference, 0, self)
-        obj = indirect_reference.get_object()
-        if isinstance(obj, PageObject):
-            return obj.page_number
-        return None
+        if isinstance(indirect_reference, IndirectObject):
+            if indirect_reference.pdf is not self:
+                # A page of another document is not a page of this one.
+                return None
+            idnum = indirect_reference.idnum
+        else:
+            idnum = cast(int, indirect_reference)
+        # A writer starts with an empty page list; only _flatten() sets it to
+        # None, while it rebuilds the list. Every page of a writer is an
+        # indirect object.
+        assert self.flattened_pages is not None, "mypy"
+        pages = self.flattened_pages
+
+        # The remembered number is still right if the page at that position
+        # has this object number.
+        number = self._page_id2num.get(idnum)
+        if (
+            number is not None
+            and number < len(pages)
+            and cast(IndirectObject, pages[number].indirect_reference).idnum == idnum
+        ):
+            return number
+
+        # Pages were added, inserted or removed since the numbers were
+        # remembered, or the object is no page of this writer. A page that
+        # appears twice keeps its first position.
+        self._page_id2num = {}
+        for index, page in enumerate(pages):
+            self._page_id2num.setdefault(cast(IndirectObject, page.indirect_reference).idnum, index)
+        return self._page_id2num.get(idnum)
 
     def add_blank_page(
         self, width: float | None = None, height: float | None = None
@@ -1736,7 +1768,6 @@ class PdfWriter(PdfDocCommon):
             assert isinstance(obj, (DictionaryObject, ArrayObject))
             for k, v in key_val:
                 if isinstance(v, IndirectObject):
-                    unreferenced[v.idnum - 1] = False
                     if v in crossref:
                         obj[k] = crossref[v]
                 else:
@@ -1746,7 +1777,6 @@ class PdfWriter(PdfDocCommon):
 
         # _idnum_hash: dict[hash] = (1st_ind_obj, [2nd_ind_obj,...])
         self._idnum_hash = {}
-        unreferenced = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
             if is_null_or_none(obj):
@@ -1772,18 +1802,30 @@ class PdfWriter(PdfDocCommon):
                 replace_in_obj(obj, cnv_rev)
 
         if remove_unreferenced:
-            unreferenced[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
+            reachable = self._find_reachable_objects()
+            for idnum in range(1, len(self._objects) + 1):
+                if idnum not in reachable:
+                    self._objects[idnum - 1] = None
 
-            if not is_null_or_none(self._info):
-                unreferenced[self._info.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
-
-            try:
-                unreferenced[self._ID.indirect_reference.idnum - 1] = False  # type: ignore[union-attr]
-            except AttributeError:
-                pass
-
-            for i in compress(range(len(self._objects)), unreferenced):
-                self._objects[i] = None
+    def _find_reachable_objects(self) -> set[int]:
+        """Get the numbers of all objects which the trailer leads to."""
+        reachable: set[int] = set()
+        object_count = len(self._objects)
+        objects_to_visit: list[Any] = []
+        for obj in (self.root_object, self._info, self._ID, self._encrypt_entry):
+            reference = getattr(obj, "indirect_reference", None)
+            objects_to_visit.append(obj if reference is None else reference)
+        while objects_to_visit:
+            obj = objects_to_visit.pop()
+            if isinstance(obj, IndirectObject):
+                if obj.pdf is self and obj.idnum not in reachable and 0 < obj.idnum <= object_count:
+                    reachable.add(obj.idnum)
+                    objects_to_visit.append(self._objects[obj.idnum - 1])
+            elif isinstance(obj, DictionaryObject):
+                objects_to_visit.extend(obj.values())
+            elif isinstance(obj, ArrayObject):
+                objects_to_visit.extend(obj)
+        return reachable
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
@@ -2140,24 +2182,25 @@ class PdfWriter(PdfDocCommon):
         """
         if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
-                self.remove_objects_from_page(page, to_d)
-            return None
+                self.remove_objects_from_page(page, to_d, text_filters)
+            return
         assert isinstance(to_delete, ObjectDeletionFlag)
-
         if to_delete & ObjectDeletionFlag.LINKS:
-            return self._remove_annots_from_page(page, ("/Link",))
+            self._remove_annots_from_page(page, ("/Link",))
         if to_delete & ObjectDeletionFlag.ATTACHMENTS:
-            return self._remove_annots_from_page(
+            self._remove_annots_from_page(
                 page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
             )
         if to_delete & ObjectDeletionFlag.OBJECTS_3D:
-            return self._remove_annots_from_page(page, ("/3D",))
+            self._remove_annots_from_page(page, ("/3D",))
         if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
-            return self._remove_annots_from_page(page, None)
+            self._remove_annots_from_page(page, None)
+        if not to_delete & (ObjectDeletionFlag.TEXT | ObjectDeletionFlag.IMAGES):
+            return
 
         jump_operators = []
         if to_delete & ObjectDeletionFlag.DRAWING_IMAGES:
-            jump_operators = [
+            jump_operators += [
                 b"w", b"J", b"j", b"M", b"d", b"i",
                 b"W", b"W*",
                 b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n",
@@ -2165,7 +2208,7 @@ class PdfWriter(PdfDocCommon):
                 b"sh"
             ]
         if to_delete & ObjectDeletionFlag.TEXT:
-            jump_operators = [b"Tj", b"TJ", b"'", b'"']
+            jump_operators += list(_TEXT_SHOWING_OPERATORS)
 
         if not isinstance(page, PageObject):
             page = PageObject(self, page.indirect_reference)  # pragma: no cover
@@ -2182,7 +2225,7 @@ class PdfWriter(PdfDocCommon):
                 text_filters=text_filters
             )
             page.replace_contents(content)
-        return None
+        return
 
     def _remove_objects_from_page__clean(
             self,
@@ -2216,13 +2259,13 @@ class PdfWriter(PdfDocCommon):
                 )
             ):
                 if (
-                    not to_delete & ObjectDeletionFlag.TEXT
-                    or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
-                    or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
+                    operator in _TEXT_SHOWING_OPERATORS
+                    and text_filters
+                    and font_id not in font_ids_to_delete
                 ):
-                    del content.operations[i]
-                else:
                     i += 1
+                else:
+                    del content.operations[i]
             else:
                 i += 1
         content.get_data()  # this ensures ._data is rebuilt from the .operations
@@ -2487,7 +2530,7 @@ class PdfWriter(PdfDocCommon):
 
     def _get_page_layout(self) -> LayoutType | None:
         try:
-            return cast(LayoutType, self._root_object["/PageLayout"])
+            return cast(LayoutType, self._root_object[CatalogAttributes.PAGE_LAYOUT])
         except KeyError:
             return None
 
@@ -2525,7 +2568,7 @@ class PdfWriter(PdfDocCommon):
                     layouts=", ".join(self._valid_layouts),
                 )
             layout = NameObject(layout)
-        self._root_object.update({NameObject("/PageLayout"): layout})
+        self._root_object.update({NameObject(CatalogAttributes.PAGE_LAYOUT): layout})
 
     def set_page_layout(self, layout: LayoutType) -> None:
         """
@@ -2595,7 +2638,7 @@ class PdfWriter(PdfDocCommon):
 
     def _get_page_mode(self) -> PagemodeType | None:
         try:
-            return cast(PagemodeType, self._root_object["/PageMode"])
+            return cast(PagemodeType, self._root_object[CatalogAttributes.PAGE_MODE])
         except KeyError:
             return None
 
@@ -2634,7 +2677,7 @@ class PdfWriter(PdfDocCommon):
                     modes=", ".join(self._valid_modes),
                 )
             mode_name = NameObject(mode)
-        self._root_object.update({NameObject("/PageMode"): mode_name})
+        self._root_object.update({NameObject(CatalogAttributes.PAGE_MODE): mode_name})
 
     def add_annotation(
         self,
@@ -2980,12 +3023,14 @@ class PdfWriter(PdfDocCommon):
                 )
                 fields = ArrayObject()
             trslat = self._id_translated[id(reader)]
+            known = {
+                x.idnum for x in arr if isinstance(x, IndirectObject) and x.generation == 0 and x.pdf is self
+            }
             for f in fields:
                 # trslat only knows the fields which have been copied through the pages
-                if isinstance(f, IndirectObject) and f.idnum in trslat:
-                    ind = IndirectObject(trslat[f.idnum], 0, self)
-                    if ind not in arr:
-                        arr.append(ind)
+                if isinstance(f, IndirectObject) and f.idnum in trslat and trslat[f.idnum] not in known:
+                    known.add(trslat[f.idnum])
+                    arr.append(IndirectObject(trslat[f.idnum], 0, self))
             cast(DictionaryObject, self._root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr
@@ -3001,13 +3046,7 @@ class PdfWriter(PdfDocCommon):
         named_destinations: _NamedDestinationIndex,
     ) -> None:
         arr: Any = dest.dest_array
-        if "/Names" in self._root_object and named_destinations.contains(
-            cast(
-                DictionaryObject,
-                cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
-            ).get("/Names", DictionaryObject()),
-            dest["/Title"],
-        ):
+        if "/Names" in self._root_object and named_destinations.contains(self.get_named_dest_root(), dest["/Title"]):
             # already exists: should not duplicate it
             pass
         elif dest["/Page"] is None or isinstance(dest["/Page"], NullObject):
@@ -3389,7 +3428,7 @@ class PdfWriter(PdfDocCommon):
         self,
         outlines: list[Destination],
         parent: TreeObject | IndirectObject,
-        before: TreeObject | IndirectObject | None = None,
+        before: IndirectObject | None = None,
     ) -> None:
         for dest in outlines:
             # TODO: can be improved to keep A and SE entries (ignored for the moment)

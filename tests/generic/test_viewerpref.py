@@ -5,7 +5,14 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import NameObject
+from pypdf.generic import (
+    ArrayObject,
+    BooleanObject,
+    IndirectObject,
+    NameObject,
+    NumberObject,
+    PdfObject,
+)
 
 NAME_PREFERENCES = [
     ("non_fullscreen_pagemode", "/NonFullScreenPageMode", "/UseOutlines"),
@@ -58,3 +65,34 @@ def test_viewer_preference_name_rejects_invalid_value(
         setattr(preferences, preference, value_type(value))
 
     assert key not in preferences
+
+
+INDIRECT_PREFERENCES = [
+    ("hide_toolbar", "/HideToolbar", BooleanObject(False)),
+    ("pick_tray_by_pdfsize", "/PickTrayByPDFSize", BooleanObject(True)),
+    ("direction", "/Direction", NameObject("/R2L")),
+    ("print_scaling", "/PrintScaling", NameObject("/None")),
+    ("num_copies", "/NumCopies", NumberObject(3)),
+    (
+        "print_pagerange",
+        "/PrintPageRange",
+        ArrayObject([NumberObject(1), NumberObject(2)]),
+    ),
+    ("enforce", "/Enforce", ArrayObject([NameObject("/PrintScaling")])),
+]
+
+
+@pytest.mark.parametrize(
+    ("preference", "key", "value"),
+    INDIRECT_PREFERENCES,
+)
+def test_viewer_preference__resolves_an_indirect_value(
+    preference: str, key: str, value: PdfObject,
+) -> None:
+    """A preference held as an indirect object reads back as the value it points at."""
+    writer = PdfWriter()
+    preferences = writer.create_viewer_preferences()
+    preferences[NameObject(key)] = writer._add_object(value)
+    assert isinstance(preferences.raw_get(key), IndirectObject)
+
+    assert getattr(preferences, preference) == value

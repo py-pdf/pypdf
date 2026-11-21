@@ -80,6 +80,7 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
+from .generic._data_structures import _flatten_name_tree
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
@@ -110,6 +111,16 @@ class _PageTreeItem(NamedTuple):
     inherit: dict[str, Any]
     indirect_reference: IndirectObject | None
     depth: int
+
+
+class _DottedNameNode:
+    """Counts the field names which continue with "." after one part of a dotted name."""
+
+    __slots__ = ("children", "count")
+
+    def __init__(self) -> None:
+        self.count = 0
+        self.children: dict[str, _DottedNameNode] = {}
 
 
 #: A ``/Pages`` node currently being walked: the node - carrying the attributes its
@@ -463,8 +474,7 @@ class PdfDocCommon(ABC):
                     # §7.9.6, entries in a name tree node dictionary
                     named_dest = cast(ArrayObject, dests[CatalogAttributes.NAMES])
                 else:
-                    named_dest = ArrayObject()
-                    dests[NameObject(CatalogAttributes.NAMES)] = named_dest
+                    named_dest = _flatten_name_tree(dests)
             elif hasattr(self, "_add_object"):
                 dests = DictionaryObject()
                 dests_ref = self._add_object(dests)
@@ -797,16 +807,22 @@ class PdfDocCommon(ABC):
             and obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Radio != 0
         ):
             states: list[str] = []
-            retval[key][NameObject("/_States_")] = ArrayObject(states)
+            seen_states: set[str] = set()
+            # Widgets often share one /N dictionary, whose states only need to be read once.
+            seen_appearances: set[int] = set()
             for k in obj.get(FieldDictionaryAttributes.Kids, {}):
                 k = k.get_object()
                 if "/AP" not in k:
                     raise PdfReadError(f"Button field kid missing /AP: {k!r}")
                 normal = self._normal_appearance(k["/AP"])
+                if id(normal) in seen_appearances:
+                    continue
+                seen_appearances.add(id(normal))
                 for s in list(normal.keys()):
-                    if s not in states:
+                    if s not in seen_states:
+                        seen_states.add(s)
                         states.append(s)
-                retval[key][NameObject("/_States_")] = ArrayObject(states)
+            retval[key][NameObject("/_States_")] = ArrayObject(states)
             if (
                 obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.NoToggleToOff != 0
                 and "/Off" in retval[key]["/_States_"]
@@ -897,15 +913,30 @@ class PdfDocCommon(ABC):
             second and following will get the suffix .2, .3, ...
 
         """
+        # The keys as a tree of their dot-separated parts, so that numbering a duplicate
+        # name does not scan all keys collected so far.
+        dotted_names = _DottedNameNode()
 
         def indexed_key(k: str, fields: dict[Any, Any]) -> str:
             if k not in fields:
                 return k
-            return (
-                k
-                + "."
-                + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
-            )
+            return k + "." + str(get_prefix_count(k) + 2)
+
+        def get_prefix_count(k: str) -> int:
+            node = dotted_names
+            for part in k.split("."):
+                if part not in node.children:
+                    return 0
+                node = node.children[part]
+            return node.count
+
+        def count_prefixes(k: Any) -> None:
+            if not isinstance(k, str):
+                return
+            node = dotted_names
+            for part in k.split(".")[:-1]:
+                node = node.children.setdefault(part, _DottedNameNode())
+                node.count += 1
 
         # Retrieve document form fields
         form_fields = self.get_fields()
@@ -917,7 +948,10 @@ class PdfDocCommon(ABC):
                 if full_qualified_name:
                     ff[field] = value.get("/V")
                 else:
-                    ff[indexed_key(cast(str, value.get("/T", field)), ff)] = value.get("/V")
+                    key = indexed_key(cast(str, value.get("/T", field)), ff)
+                    if key not in ff:
+                        count_prefixes(key)
+                    ff[key] = value.get("/V")
         return ff
 
     def get_pages_showing_field(
@@ -1071,12 +1105,14 @@ class PdfDocCommon(ABC):
         # see if there are any more outline items
         if visited is None:
             visited = set()
+        added: set[int] = set()
         while True:
             node_id = id(node)
             if node_id in visited:
                 logger_warning("Detected cycle in outline structure for %(node)s", source=__name__, node=node)
                 break
             visited.add(node_id)
+            added.add(node_id)
             traversal_state.entry_count += 1
             if traversal_state.entry_count > configuration.outline_maximum_entries:
                 raise LimitReachedError(
@@ -1099,12 +1135,12 @@ class PdfDocCommon(ABC):
             # check for sub-outline
             if "/First" in node:
                 sub_outline: list[Any] = []
-                # Pass a copy to allow multiple outer entries to reference the same inner one.
-                inner_visited = visited.copy()
+                # The inner call forgets its entries on return to allow multiple
+                # outer entries to reference the same inner one.
                 self._get_outline(
                     node=cast(DictionaryObject, node["/First"]),
                     outline=sub_outline,
-                    visited=inner_visited,
+                    visited=visited,
                     depth=depth + 1,
                     traversal_state=traversal_state,
                 )
@@ -1115,6 +1151,7 @@ class PdfDocCommon(ABC):
                 break
             node = cast(DictionaryObject, node["/Next"])
 
+        visited.difference_update(added)
         return outline
 
     @property
@@ -1375,7 +1412,7 @@ class PdfDocCommon(ABC):
              - Show attachments panel
         """
         try:
-            return self.root_object["/PageMode"]  # type: ignore[return-value]
+            return self.root_object[CatalogAttributes.PAGE_MODE]  # type: ignore[return-value]
         except KeyError:
             return None
 
