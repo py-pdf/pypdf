@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795257351327,
+  "lastUpdate": 1795257476143,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -174907,6 +174907,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04240030115104387",
             "extra": "mean: 711.173386400003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "57414987+prawalpokharel@users.noreply.github.com",
+            "name": "Prawal Pokharel",
+            "username": "prawalpokharel"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "76e95306c50b1f809f17f223b5bd18572dcfe321",
+          "message": "PI: Check inline image names against a set when listing page images (#4467)\n\n_get_ids_image checked every inline image name against the list of\nidentifiers collected so far. On a page with XObject resources one\nlisting was quadratic in the number of inline images, and index access\nlists the identifiers once per image.\n\nThe patch and the timeout test are from Martin Thoma's review of #4452.\n\nCo-authored-by: Martin Thoma <info@martin-thoma.de>\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-11-21T11:33:29+01:00",
+          "tree_id": "adf9e1a5e08a5e597baf71976e78424b6fb6b54c",
+          "url": "https://github.com/py-pdf/pypdf/commit/76e95306c50b1f809f17f223b5bd18572dcfe321"
+        },
+        "date": 1795257461563,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.7229140942176,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018149139030636308",
+            "extra": "mean: 67.92133633332469 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.517221717218984,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010507096529985709",
+            "extra": "mean: 35.06652961905437 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1764637658527004,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025720493101708566",
+            "extra": "mean: 850.0049292000085 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 35.47969913882608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015183781115400396",
+            "extra": "mean: 28.18513189999635 msec\nrounds: 50"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3301866490210287,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06614570025614339",
+            "extra": "mean: 3.0285900503999867 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0676221248096167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04406534294482102",
+            "extra": "mean: 936.6609934000053 msec\nrounds: 5"
           }
         ]
       }
