@@ -2380,6 +2380,99 @@ def test_scale__viewport_bounding_box(as_array: bool) -> None:
     assert scaled_viewport["/BBox"] == RectangleObject((0, 0, 20, 60))
 
 
+def _viewport(*box: float) -> DictionaryObject:
+    return DictionaryObject({NameObject("/BBox"): RectangleObject(box)})
+
+
+@pytest.mark.parametrize(
+    ("viewports", "expected", "warns"),
+    [
+        pytest.param(lambda _writer: ArrayObject(), [], False, id="empty-array"),
+        pytest.param(
+            lambda writer: ArrayObject([writer._add_object(_viewport(0, 0, 10, 20))]),
+            [(0, 0, 20, 60)],
+            False,
+            id="indirect-viewport",
+        ),
+        pytest.param(
+            lambda writer: writer._add_object(ArrayObject([_viewport(0, 0, 10, 20)])),
+            [(0, 0, 20, 60)],
+            False,
+            id="indirect-array",
+        ),
+        pytest.param(
+            lambda writer: ArrayObject(
+                [DictionaryObject({NameObject("/BBox"): writer._add_object(RectangleObject((0, 0, 10, 20)))})]
+            ),
+            [(0, 0, 20, 60)],
+            False,
+            id="indirect-bbox",
+        ),
+        pytest.param(
+            lambda _writer: ArrayObject([_viewport(0, 0, 10, 20), _viewport(5, 5, 15, 25)]),
+            [(0, 0, 20, 60), (10, 15, 30, 75)],
+            False,
+            id="two-viewports",
+        ),
+        pytest.param(
+            lambda _writer: ArrayObject([DictionaryObject(), _viewport(0, 0, 10, 20)]),
+            [(0, 0, 20, 60)],
+            True,
+            id="viewport-without-bbox",
+        ),
+        pytest.param(
+            lambda _writer: ArrayObject(
+                [DictionaryObject({NameObject("/BBox"): ArrayObject([NumberObject(1), NumberObject(2)])})]
+            ),
+            [(1, 2)],
+            True,
+            id="bbox-with-two-values",
+        ),
+        pytest.param(
+            lambda _writer: ArrayObject([NullObject(), _viewport(0, 0, 10, 20)]),
+            [(0, 0, 20, 60)],
+            True,
+            id="null-viewport",
+        ),
+    ],
+)
+def test_scale__viewports(caplog, viewports, expected, warns) -> None:
+    """
+    scale() scales the /BBox of every viewport and leaves other viewports alone.
+
+    Bluebeam Revu writes an empty /VP array on every page; the viewports of
+    other writers are indirect objects, and a page can have several of them.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    page[NameObject("/VP")] = viewports(writer)
+
+    page.scale(2, 3)
+
+    boxes = [
+        tuple(entry.get_object()["/BBox"])
+        for entry in page["/VP"]
+        if isinstance(entry.get_object(), DictionaryObject) and "/BBox" in entry.get_object()
+    ]
+    assert boxes == expected
+    assert ("Not scaling the viewport without a valid /BBox" in caplog.text) is warns
+
+
+@pytest.mark.enable_socket
+def test_scale__page_with_empty_viewport_array() -> None:
+    """A plan set page with /VP [] (see #2958) can be scaled."""
+    url = "https://github.com/user-attachments/files/17822279/C0.00.-.COVER.SHEET.pdf"
+    name = "iss2958.pdf"
+    page = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name))).pages[0]
+    assert page["/VP"] == []
+    width = page.mediabox.width
+
+    page.scale_by(0.5)
+
+    assert page.mediabox.width == width / 2
+    assert page["/VP"] == []
+
+
 def test_extract_text__visitor_receives_text_without_end_operator() -> None:
     """
     visitor_text receives the text of a text object that is not closed.
