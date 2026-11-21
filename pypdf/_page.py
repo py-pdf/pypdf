@@ -2498,6 +2498,47 @@ class PageObject(DictionaryObject):
         return Action._delete(self, trigger)
 
 
+def _kid_position(
+    parent: DictionaryObject, kids: ArrayObject, ind: IndirectObject | None, index: int
+) -> int:
+    """
+    Position in ``kids`` of the reference to the page at document ``index``.
+
+    A page can be referenced more than once, so ``kids.index()`` may find the
+    wrong reference. Counting the pages before ``parent`` gives the right slot,
+    in constant time for a flat page tree.
+    """
+    offset = 0
+    node = parent
+    visited = {id(node)}
+    while (grandparent := node.get("/Parent")) is not None:
+        grandparent = grandparent.get_object()
+        if not isinstance(grandparent, DictionaryObject) or id(grandparent) in visited:
+            return kids.index(ind)  # broken /Parent or a /Parent cycle
+        visited.add(id(grandparent))
+        siblings = grandparent.get("/Kids", NullObject()).get_object()
+        if not isinstance(siblings, ArrayObject):
+            return kids.index(ind)
+        for kid in siblings:
+            if kid == node.indirect_reference:
+                break
+            kid_obj = kid.get_object()
+            if not isinstance(kid_obj, DictionaryObject):  # missing node
+                return kids.index(ind)
+            # /Kids and /Count may be indirect (ISO 32000-2, 7.3.10)
+            count = kid_obj.get("/Count", NumberObject(1)).get_object()
+            if not isinstance(count, int):
+                return kids.index(ind)
+            offset += count
+        else:  # node is not among its /Parent's /Kids
+            return kids.index(ind)
+        node = grandparent
+    i = index - offset
+    if 0 <= i < len(kids) and kids[i] == ind:
+        return i
+    return kids.index(ind)  # inconsistent /Count values
+
+
 class _VirtualList(Sequence[PageObject]):
     def __init__(
         self,
@@ -2562,8 +2603,9 @@ class _VirtualList(Sequence[PageObject]):
         while parent is not None:
             parent = cast(DictionaryObject, parent.get_object())
             try:
-                i = cast(ArrayObject, parent["/Kids"]).index(ind)
-                del cast(ArrayObject, parent["/Kids"])[i]
+                kids = cast(ArrayObject, parent["/Kids"])
+                i = _kid_position(parent, kids, ind, index) if first else kids.index(ind)
+                del kids[i]
                 first = False
                 try:
                     assert ind is not None
