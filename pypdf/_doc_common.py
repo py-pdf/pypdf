@@ -80,6 +80,7 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
+from .generic._data_structures import _flatten_name_tree
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
@@ -463,8 +464,7 @@ class PdfDocCommon(ABC):
                     # §7.9.6, entries in a name tree node dictionary
                     named_dest = cast(ArrayObject, dests[CatalogAttributes.NAMES])
                 else:
-                    named_dest = ArrayObject()
-                    dests[NameObject(CatalogAttributes.NAMES)] = named_dest
+                    named_dest = _flatten_name_tree(dests)
             elif hasattr(self, "_add_object"):
                 dests = DictionaryObject()
                 dests_ref = self._add_object(dests)
@@ -1071,12 +1071,14 @@ class PdfDocCommon(ABC):
         # see if there are any more outline items
         if visited is None:
             visited = set()
+        added: set[int] = set()
         while True:
             node_id = id(node)
             if node_id in visited:
                 logger_warning("Detected cycle in outline structure for %(node)s", source=__name__, node=node)
                 break
             visited.add(node_id)
+            added.add(node_id)
             traversal_state.entry_count += 1
             if traversal_state.entry_count > configuration.outline_maximum_entries:
                 raise LimitReachedError(
@@ -1099,12 +1101,12 @@ class PdfDocCommon(ABC):
             # check for sub-outline
             if "/First" in node:
                 sub_outline: list[Any] = []
-                # Pass a copy to allow multiple outer entries to reference the same inner one.
-                inner_visited = visited.copy()
+                # The inner call forgets its entries on return to allow multiple
+                # outer entries to reference the same inner one.
                 self._get_outline(
                     node=cast(DictionaryObject, node["/First"]),
                     outline=sub_outline,
-                    visited=inner_visited,
+                    visited=visited,
                     depth=depth + 1,
                     traversal_state=traversal_state,
                 )
@@ -1115,6 +1117,7 @@ class PdfDocCommon(ABC):
                 break
             node = cast(DictionaryObject, node["/Next"])
 
+        visited.difference_update(added)
         return outline
 
     @property
@@ -1375,7 +1378,7 @@ class PdfDocCommon(ABC):
              - Show attachments panel
         """
         try:
-            return self.root_object["/PageMode"]  # type: ignore[return-value]
+            return self.root_object[CatalogAttributes.PAGE_MODE]  # type: ignore[return-value]
         except KeyError:
             return None
 
