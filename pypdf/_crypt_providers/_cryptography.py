@@ -54,8 +54,10 @@ def _needs_rc4_key_length_fallback(key: bytes) -> bool:
     if key_size not in _warned_rc4_key_sizes:
         _warned_rc4_key_sizes.add(key_size)
         logger_warning(
-            "cryptography does not support %(key_size)d-bit RC4 keys; "
-            "falling back to the pure-Python RC4 implementation.",
+            (
+                "cryptography does not support %(key_size)d-bit RC4 keys; "
+                "falling back to the pure-Python RC4 implementation."
+            ),
             source=__name__,
             key_size=key_size,
         )
