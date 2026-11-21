@@ -3208,6 +3208,78 @@ def test_reattach_fields():
     assert len(writer.reattach_fields(writer.pages[1])) == 0
 
 
+def _null(_writer) -> NullObject:
+    return NullObject()
+
+
+def _empty_form(_writer) -> DictionaryObject:
+    return DictionaryObject()
+
+
+def _reference_to_null(writer) -> IndirectObject:
+    return writer._add_object(NullObject())
+
+
+@pytest.mark.parametrize(
+    ("acro_form", "fields", "annotations"),
+    [
+        pytest.param(_null, None, None, id="acroform-null"),
+        pytest.param(_reference_to_null, None, None, id="acroform-reference-to-null"),
+        pytest.param(_empty_form, _null, None, id="fields-null"),
+        pytest.param(_empty_form, _reference_to_null, None, id="fields-reference-to-null"),
+        pytest.param(None, None, _null, id="annots-null"),
+        pytest.param(None, None, _reference_to_null, id="annots-reference-to-null"),
+    ],
+)
+def test_reattach_fields__null_entries(acro_form, fields, annotations):
+    """
+    A null /AcroForm, /Fields or /Annots, or a reference to the null object,
+    is read as missing.
+
+    The widget of the second page is reattached in all cases.
+    """
+    writer = PdfWriter()
+    first_page = writer.add_blank_page(100, 100)
+    second_page = writer.add_blank_page(100, 100)
+    widget = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/FT"): NameObject("/Tx"),
+        }
+    )
+    second_page[NameObject("/Annots")] = ArrayObject([writer._add_object(widget)])
+    if acro_form is not None:
+        form = acro_form(writer)
+        if fields is not None:
+            form[NameObject("/Fields")] = fields(writer)
+        writer.root_object[NameObject("/AcroForm")] = form
+    if annotations is not None:
+        first_page[NameObject("/Annots")] = annotations(writer)
+
+    assert writer.reattach_fields() == [widget]
+
+    assert writer.root_object["/AcroForm"]["/Fields"] == [widget.indirect_reference]
+
+
+@pytest.mark.enable_socket
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        # /AcroForm refers to an object that does not exist
+        ("https://github.com/user-attachments/files/18381733/tika-961883.pdf", "tika-961883.pdf"),
+        # /Annots of a page is null
+        ("https://github.com/user-attachments/files/25507697/sample.pdf", "issue3656.pdf"),
+    ],
+)
+def test_reattach_fields__real_files(url, name):
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
+
+    assert writer.reattach_fields() == []
+
+    assert writer.root_object["/AcroForm"]["/Fields"] == []
+
+
 def test_get_pagenumber_from_indirectobject():
     """Test test_get_pagenumber_from_indirectobject"""
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
