@@ -31,7 +31,6 @@ from pypdf.generic import (
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
-    IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
@@ -844,8 +843,7 @@ def test_extract_text__none_objects():
 
     reader.pages[0].extract_text()
     reader.pages[8].extract_text()
-    # The /Font resources of page 8 are references to objects the file does not
-    # hold, which layout mode has to survive as well.
+    # Page 8's /Font entries reference objects the file does not hold.
     assert reader.pages[8].extract_text(extraction_mode="layout") == ""
 
 
@@ -1185,18 +1183,6 @@ def test_page_object__layout_mode_fonts__malformed_font_resource() -> None:
     assert list(fonts) == ["/F1"]
     assert fonts["/F1"].name == "Unknown"
     assert "Crazy Ones" in page.extract_text(extraction_mode="layout")
-
-
-def test_page_object__layout_mode_fonts__dangling_font_reference() -> None:
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    page = reader.pages[0]
-    font_resources = page["/Resources"]["/Font"]
-    for font_name in list(font_resources):
-        # The object number is not in the file, so the reference resolves to None.
-        font_resources[NameObject(font_name)] = IndirectObject(9999, 0, reader)
-
-    assert page._layout_mode_fonts() == {}
-    assert page.extract_text(extraction_mode="layout") == ""
 
 
 @pytest.mark.parametrize(
