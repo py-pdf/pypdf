@@ -5,9 +5,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
 from pypdf._utils import format_iso8824_date, logger_warning, parse_iso8824_date
-from pypdf.constants import CatalogAttributes as CA
-from pypdf.constants import FileSpecificationDictionaryEntries
-from pypdf.constants import PageAttributes as PG
+from pypdf.constants import CatalogAttributes, FileSpecificationDictionaryEntries, PageAttributes
 from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -21,6 +19,7 @@ from pypdf.generic import (
     TextStringObject,
     is_null_or_none,
 )
+from pypdf.generic._data_structures import _flatten_name_tree, _iter_name_tree
 
 if TYPE_CHECKING:
     import datetime
@@ -80,7 +79,7 @@ class EmbeddedFile:
         # Create the file entry (the actual embedded file stream)
         file_entry = DecodedStreamObject()
         file_entry.set_data(content)
-        file_entry.update({NameObject(PG.TYPE): NameObject("/EmbeddedFile")})
+        file_entry.update({NameObject(PageAttributes.TYPE): NameObject("/EmbeddedFile")})
 
         # Create the /EF entry
         ef_entry = DictionaryObject()
@@ -93,7 +92,7 @@ class EmbeddedFile:
         name_object = cast(TextStringObject, create_string_object(name))
         filespec.update(
             {
-                NameObject(PG.TYPE): NameObject("/Filespec"),
+                NameObject(PageAttributes.TYPE): NameObject("/Filespec"),
                 NameObject(FileSpecificationDictionaryEntries.F): name_object,
                 NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
             }
@@ -113,16 +112,16 @@ class EmbeddedFile:
     @classmethod
     def _get_names_array(cls, writer: PdfWriter) -> ArrayObject:
         """Get the names array for embedded files, possibly creating and flattening it."""
-        if CA.NAMES not in writer.root_object:
+        if CatalogAttributes.NAMES not in writer.root_object:
             # Add the /Names entry to the catalog.
-            writer.root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
+            writer.root_object[NameObject(CatalogAttributes.NAMES)] = writer._add_object(DictionaryObject())
 
-        names_dict = cast(DictionaryObject, writer.root_object[CA.NAMES])
+        names_dict = cast(DictionaryObject, writer.root_object[CatalogAttributes.NAMES])
         if "/EmbeddedFiles" not in names_dict:
             # We do not yet have an entry for embedded files. Create and return it.
             names = ArrayObject()
             embedded_files_names_dictionary = DictionaryObject(
-                {NameObject(CA.NAMES): names}
+                {NameObject(CatalogAttributes.NAMES): names}
             )
             names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
             return names
@@ -131,28 +130,12 @@ class EmbeddedFile:
         embedded_files_names_tree = cast(DictionaryObject, names_dict["/EmbeddedFiles"])
         if "/Names" in embedded_files_names_tree:
             # Simple case: We already have a flat list.
-            return cast(ArrayObject, embedded_files_names_tree[NameObject(CA.NAMES)])
+            return cast(ArrayObject, embedded_files_names_tree[NameObject(CatalogAttributes.NAMES)])
         if "/Kids" not in embedded_files_names_tree:
             # Invalid case: This is no name tree.
             raise PdfReadError("Got neither Names nor Kids in embedded files tree.")
 
-        # Complex case: Convert a /Kids-based name tree to a /Names-based one.
-        # /Name-based ones are much easier to handle and allow us to simplify the
-        # actual insertion logic by only having to consider one case.
-        names = ArrayObject()
-        kids = cast(ArrayObject, embedded_files_names_tree["/Kids"].get_object())
-        embedded_files_names_dictionary = DictionaryObject(
-            {NameObject(CA.NAMES): names}
-        )
-        names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
-        for kid in kids:
-            # Write the flattened file entries. As we do not change the actual files,
-            # this should not have any impact on references to them.
-            # There might be further (nested) kids here.
-            # Wait for an example before evaluating an implementation.
-            for name in kid.get_object().get("/Names", []):
-                names.append(name)
-        return names
+        return _flatten_name_tree(embedded_files_names_tree)
 
     @classmethod
     def _get_insertion_index(cls, names_array: ArrayObject, name: str) -> int:
@@ -442,34 +425,17 @@ class EmbeddedFile:
             cls._report_malformed(f"Embedded files entry is not a dictionary: {container}", strict=strict)
             return
 
-        if "/Kids" in container:
-            kids = container["/Kids"].get_object()
-            if isinstance(kids, NullObject):
-                kids = ArrayObject()
-            elif not isinstance(kids, ArrayObject):
+        for node in _iter_name_tree(container):
+            if not isinstance(node, DictionaryObject):
+                cls._report_malformed(f"Embedded files kid is not a dictionary: {node}", strict=strict)
+                continue
+            kids = node.get("/Kids", NullObject()).get_object()
+            if not isinstance(kids, (ArrayObject, NullObject)):
                 cls._report_malformed(f"Embedded files /Kids is not an array: {kids}", strict=strict)
-                return
-            for kid in kids:
-                # There might be further (nested) kids here.
-                # Wait for an example before evaluating an implementation.
-                kid = kid.get_object()
-                if not isinstance(kid, DictionaryObject):
-                    cls._report_malformed(f"Embedded files kid is not a dictionary: {kid}", strict=strict)
-                    continue
-                if "/Names" not in kid:
-                    continue
-                kid_names = kid["/Names"].get_object()
-                if isinstance(kid_names, NullObject):
-                    continue
-                if not isinstance(kid_names, ArrayObject):
-                    cls._report_malformed(f"Embedded files name list is not an array: {kid_names}", strict=strict)
-                    continue
-                yield from cls._load_from_names(kid_names, strict=strict)
-        if "/Names" in container:
-            container_names = container["/Names"].get_object()
-            if isinstance(container_names, NullObject):
-                return
-            if not isinstance(container_names, ArrayObject):
-                cls._report_malformed(f"Embedded files name list is not an array: {container_names}", strict=strict)
-                return
-            yield from cls._load_from_names(container_names, strict=strict)
+            node_names = node.get("/Names", NullObject()).get_object()
+            if isinstance(node_names, NullObject):
+                continue
+            if not isinstance(node_names, ArrayObject):
+                cls._report_malformed(f"Embedded files name list is not an array: {node_names}", strict=strict)
+                continue
+            yield from cls._load_from_names(node_names, strict=strict)

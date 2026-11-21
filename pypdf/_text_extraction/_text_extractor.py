@@ -96,8 +96,8 @@ class TextExtraction:
         self.memo_tm: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
 
         self.char_scale = 1.0
-        self.space_scale = 1.0
         self.char_spacing = 0.0
+        self.word_spacing = 0.0
         self._space_width: float = 500.0  # will be set correctly at first Tf
         # Right after a Tf, a word gap is a gap in either the previous or the new font.
         self._previous_font_space: float | None = None
@@ -194,7 +194,8 @@ class TextExtraction:
     def process_tj_offset(self, offset: float, space_width: float) -> None:
         """Add a space for a word gap in a TJ array and count the offset in the text width."""
         # The offset moved the pen, so it counts towards the width and the added space does not.
-        str_widths = self._actual_str_size["str_widths"] - offset * self.font_size
+        # Like the glyph widths, it is scaled horizontally.
+        str_widths = self._actual_str_size["str_widths"] - offset * self.font_size * self.char_scale
         # A Tf just before this TJ has already moved the text to the output.
         previous = self.text or self.output
         # A positive offset moves the next glyph back (kerning), so only a negative one can be a gap.
@@ -250,7 +251,7 @@ class TextExtraction:
         visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None,
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
-        text_operands, is_str_operands, font_widths = get_text_operands(
+        text_operands, is_str_operands, font_widths, glyph_count, space_count = get_text_operands(
             operands, cm_matrix, tm_matrix, font, orientations
         )
         if is_str_operands:
@@ -268,8 +269,11 @@ class TextExtraction:
                 visitor_text,
             )
             self.output += completed
-        # Tc is in text space units and applies to every glyph.
-        actual_str_size["str_widths"] += font_widths * font_size + 1000 * self.char_spacing * len(text_operands)
+        # Character and word spacing are given in unscaled text space units,
+        # while the widths are kept in thousandths of them. Horizontal scaling
+        # applies to the whole advance (Section 9.4.4 of the PDF 2.0 specification).
+        spacing = self.char_spacing * glyph_count + self.word_spacing * space_count
+        actual_str_size["str_widths"] += (font_widths * font_size + spacing * 1000) * self.char_scale
         actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size
 
@@ -302,8 +306,8 @@ class TextExtraction:
                 self.font,
                 self.font_size,
                 self.char_scale,
-                self.space_scale,
                 self.char_spacing,
+                self.word_spacing,
                 self.TL,
             )
         )
@@ -317,8 +321,8 @@ class TextExtraction:
                 self.font,
                 self.font_size,
                 self.char_scale,
-                self.space_scale,
                 self.char_spacing,
+                self.word_spacing,
                 self.TL,
             ) = self.cm_stack.pop()
         except MemoryError:  # pragma: no cover  # TODO: BLE001
@@ -351,7 +355,7 @@ class TextExtraction:
 
     def _handle_tw(self, operands: list[Any]) -> None:
         """Handle Tw (Set word spacing) operation - Table 5.2 page 398."""
-        self.space_scale = 1.0 + _get_number_operand(operands, 0, 0.0)
+        self.word_spacing = _get_number_operand(operands, 0, 0.0)
 
     def _handle_tl(self, operands: list[Any]) -> None:
         """Handle TL (Set Text Leading) operation - Table 5.2 page 398."""

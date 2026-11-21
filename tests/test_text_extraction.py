@@ -502,7 +502,7 @@ def test_tz_with_no_operands():
 
     reader = PdfReader(BytesIO(data))
     page = reader.pages[1]
-    assert "\nThankyouforyourattentiontothismatter.\n" in page.extract_text()
+    assert "\nThank you for your attention to this matter.\n" in page.extract_text()
 
 
 @pytest.mark.enable_socket
@@ -1144,7 +1144,7 @@ def test_get_text_operands__unicode_decode_error(raw_bytes, expected_text):
     assert font.encoding == "utf-16-be"
 
     identity = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-    text, is_str_operands, _ = get_text_operands(
+    text, is_str_operands, *_ = get_text_operands(
         [raw_bytes], identity, identity, font, (0, 90, 180, 270)
     )
 
@@ -1525,6 +1525,63 @@ def test_line_breaks_with_scaled_current_matrix() -> None:
     )
 
     assert PdfReader(buffer).pages[0].extract_text() == "Line one\nLine two"
+
+
+@pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        # Helvetica at 12 pt: "A B" is 19.344 wide, "AB" is 16.008 wide and half a space is 1.668.
+        pytest.param(
+            b"2 Tw (A B) Tj 0 Tw 1 0 0 1 93.344 700 Tm (C) Tj", "A BC", id="word-spacing"
+        ),
+        pytest.param(
+            b"1 Tc (AB) Tj 0 Tc 1 0 0 1 90.008 700 Tm (C) Tj", "ABC", id="character-spacing"
+        ),
+        pytest.param(
+            b"200 Tz (AB) Tj 100 Tz 1 0 0 1 104.516 700 Tm (C) Tj", "ABC", id="horizontal-scaling"
+        ),
+        pytest.param(
+            b"200 Tz 1 Tc (AB) Tj 100 Tz 0 Tc 1 0 0 1 108.516 700 Tm (C) Tj",
+            "ABC",
+            id="horizontal-scaling-of-character-spacing",
+        ),
+        pytest.param(
+            b"300 Tz [(A) -100 (B)] TJ 100 Tz 1 0 0 1 124.124 700 Tm (C) Tj",
+            "ABC",
+            id="horizontal-scaling-of-tj-offset",
+        ),
+        pytest.param(
+            b"2 Tw (A B) Tj 0 Tw 1 0 0 1 96.844 700 Tm (C) Tj", "A B C", id="real-gap-after-word-spacing"
+        ),
+    ],
+)
+def test_character_and_word_spacing_count_towards_the_advance(content: bytes, expected: str) -> None:
+    """Text shown with Tc, Tw or Tz is not followed by a synthetic space. Regression test for #3219."""
+    buffer = _page_with_helvetica(b"BT /F1 12 Tf 1 0 0 1 72 700 Tm " + content + b" ET")
+
+    assert PdfReader(buffer).pages[0].extract_text() == expected
+
+
+@pytest.mark.parametrize(
+    ("encoding", "operand", "expected"),
+    [
+        pytest.param({65: "A", 32: " "}, b"A A", (3, 1), id="simple-font"),
+        pytest.param("utf-16-be", b"\x00\x01\x00\x20", (2, 0), id="two-byte-codes-without-word-spacing"),
+        pytest.param("utf-16-be", b"\xd8\x00\xdc\x00", (2, 0), id="two-byte-codes-forming-a-surrogate-pair"),
+        pytest.param("cp932", b"\x82\xa0 A", (3, 1), id="mixed-single-and-two-byte-codes"),
+    ],
+)
+def test_get_text_operands__counts_character_codes(
+    encoding: str | dict[int, str], operand: bytes, expected: tuple[int, int]
+) -> None:
+    """Character codes and single-byte codes 32 are counted per code, not per byte or decoded character."""
+    font = Font(name="Test", encoding=encoding, character_map={}, character_widths={"default": 500})
+
+    _, _, _, glyph_count, space_count = get_text_operands(
+        [operand], [1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 0, 0], font, (0,)
+    )
+
+    assert (glyph_count, space_count) == expected
 
 
 def test_wrapped_table_cell_line_is_not_split():

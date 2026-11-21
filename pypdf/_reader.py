@@ -63,7 +63,7 @@ from ._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from .constants import TrailerKeys as TK
+from .constants import TrailerKeys
 from .errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -190,7 +190,7 @@ class PdfReader(PdfDocCommon):
         # Some documents may not have a /ID, use two empty
         # byte strings instead. Solves
         # https://github.com/py-pdf/pypdf/issues/608
-        id_entry = self.trailer.get(TK.ID, NullObject()).get_object()
+        id_entry = self.trailer.get(TrailerKeys.ID, NullObject()).get_object()
         id1_entry = b""
         if isinstance(id_entry, ArrayObject) and id_entry:
             first_id_entry = id_entry[0].get_object()
@@ -200,7 +200,7 @@ class PdfReader(PdfDocCommon):
                 logger_warning("Ignoring non-string first /ID entry of the trailer", source=__name__)
         elif not isinstance(id_entry, NullObject):
             logger_warning("Ignoring malformed /ID entry of the trailer", source=__name__)
-        encrypt_entry = self.trailer[TK.ENCRYPT]
+        encrypt_entry = self.trailer[TrailerKeys.ENCRYPT]
         if not isinstance(encrypt_entry, DictionaryObject):
             raise PdfReadError("/Encrypt entry of the trailer is not a dictionary")
         self._encryption = Encryption.read(encrypt_entry, id1_entry)
@@ -242,7 +242,7 @@ class PdfReader(PdfDocCommon):
         """Provide access to "/Root". Standardized with PdfWriter."""
         if self._validated_root:
             return self._validated_root
-        root = self.trailer.get(TK.ROOT, NullObject()).get_object()
+        root = self.trailer.get(TrailerKeys.ROOT, NullObject()).get_object()
         root_dictionary: DictionaryObject
         if isinstance(root, DictionaryObject):
             root_dictionary = root
@@ -302,7 +302,7 @@ class PdfReader(PdfDocCommon):
             /Info Dictionary; None if the entry does not exist
 
         """
-        info = self.trailer.get(TK.INFO, None)
+        info = self.trailer.get(TrailerKeys.INFO, None)
         if is_null_or_none(info):
             return None
         assert info is not None, "mypy"
@@ -322,7 +322,7 @@ class PdfReader(PdfDocCommon):
             /ID array; None if the entry does not exist
 
         """
-        file_identifiers = self.trailer.get(TK.ID, None)
+        file_identifiers = self.trailer.get(TrailerKeys.ID, None)
         if is_null_or_none(file_identifiers):
             return None
         assert file_identifiers is not None, "mypy"
@@ -335,9 +335,9 @@ class PdfReader(PdfDocCommon):
 
         This is typically something like ``'%PDF-1.6'`` and can be used to
         detect if the file is actually a PDF file and which version it is.
+
+        Returns a str and not bytes, see issue #4275.
         """
-        # TODO: Make this return a bytes object for consistency
-        #       but that needs a deprecation
         loc = self.stream.tell()
         self.stream.seek(0, 0)
         pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace")
@@ -383,7 +383,14 @@ class PdfReader(PdfDocCommon):
         else:
             idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
-        return self._page_id2num.get(idnum, None)
+        number: int | None = self._page_id2num.get(idnum, None)
+        if number is not None and not (
+            number < len(self.pages) and getattr(self.pages[number].indirect_reference, "idnum", None) == idnum
+        ):
+            # The pages changed since the map was built, for example by remove_page().
+            self._page_id2num = None
+            return self._get_page_number_by_indirect(indirect_reference)
+        return number
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
@@ -401,9 +408,26 @@ class PdfReader(PdfDocCommon):
             # indirect reference to object in object stream
             # read the entire object stream into memory
             stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
-            obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
-            # This is an xref to a stream, so its type better be a stream
-            assert cast(str, obj_stm["/Type"]) == "/ObjStm"
+            obj_stm = IndirectObject(stmnum, 0, self).get_object()
+            # This is an xref to a stream, so its type better be a stream.
+            # A missing or wrongly typed object stream (e.g. in a truncated
+            # file) is ignored in non-strict mode.
+            if not isinstance(obj_stm, StreamObject) or obj_stm.get("/Type") != "/ObjStm":
+                if self.strict:
+                    raise PdfReadError(
+                        f"Object stream {stmnum} referenced by object {obj_id} "
+                        "is missing or is not an object stream."
+                    )
+                logger_warning(
+                    (
+                        "Object stream %(stmnum)d referenced by object %(obj_id)d "
+                        "is missing or is not an object stream; ignoring it."
+                    ),
+                    source=__name__,
+                    stmnum=stmnum,
+                    obj_id=obj_id,
+                )
+                return NullObject()
             # Parse ALL objects in this stream in one pass and cache them.
             # This avoids O(N²) behavior when many objects from the same stream
             # are resolved individually (each call would re-parse the header).
@@ -1248,7 +1272,7 @@ class PdfReader(PdfDocCommon):
                 try:
                     xrefstream = self._read_pdf15_xref_stream(stream)
                 except Exception as exception:  # pragma: no cover
-                    if TK.ROOT in self.trailer:
+                    if TrailerKeys.ROOT in self.trailer:
                         logger_warning(
                             "Previous trailer cannot be read: %(args)s",
                             source=__name__,
@@ -1256,7 +1280,7 @@ class PdfReader(PdfDocCommon):
                         )
                         break
                     raise PdfReadError(f"Trailer cannot be read: {exception!s}") from exception  # pragma: no cover
-                self._process_xref_stream(xrefstream)
+                self._process_xref_stream(xrefstream, stream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
                 else:
@@ -1266,18 +1290,20 @@ class PdfReader(PdfDocCommon):
 
     # The trailer keys a PDF 1.5+ cross-reference stream carries in place of a
     # `trailer` keyword (PDF 2.0 specification, table 17).
-    _XREF_STREAM_TRAILER_KEYS = (TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE)
+    _XREF_STREAM_TRAILER_KEYS = (
+        TrailerKeys.ROOT, TrailerKeys.ENCRYPT, TrailerKeys.INFO, TrailerKeys.ID, TrailerKeys.SIZE
+    )
 
-    def _process_xref_stream(self, xrefstream: DictionaryObject) -> None:
+    def _process_xref_stream(self, xrefstream: DictionaryObject, stream: StreamType) -> None:
         """Process and handle the xref stream."""
         for key in self._XREF_STREAM_TRAILER_KEYS:
             if key in xrefstream and key not in self.trailer:
                 self.trailer[NameObject(key)] = xrefstream.raw_get(key)
         if "/XRefStm" in xrefstream:
-            p = self.stream.tell()
-            self.stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
-            self._read_pdf15_xref_stream(self.stream)
-            self.stream.seek(p, 0)
+            p = stream.tell()
+            stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
+            self._read_pdf15_xref_stream(stream)
+            stream.seek(p, 0)
 
     def _read_xref(self, stream: StreamType) -> int | None:
         self._read_standard_xref_table(stream)
@@ -1296,6 +1322,9 @@ class PdfReader(PdfDocCommon):
             try:
                 self._read_pdf15_xref_stream(stream)
             except MemoryError:  # pragma: no cover  # TODO: BLE001
+                raise
+            except LimitReachedError:
+                # Do not continue on reaching the resource limits.
                 raise
             except Exception:
                 logger_warning(
@@ -1436,6 +1465,9 @@ class PdfReader(PdfDocCommon):
             )
 
         stream_data = BytesIO(xref_stream.get_data())
+        # Do not keep the decoded data cached, as the stream remains in resolved_objects.
+        if isinstance(xref_stream, EncodedStreamObject):
+            xref_stream.decoded_self = None
 
         def get_entry(i: int) -> int | tuple[int, ...]:
             # Reads the correct number of bytes for each entry. See the
@@ -1720,7 +1752,7 @@ class PdfReader(PdfDocCommon):
         Note that this property, if true, will remain true even after the
         :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
         """
-        return TK.ENCRYPT in self.trailer
+        return TrailerKeys.ENCRYPT in self.trailer
 
     def add_form_topname(self, name: str) -> DictionaryObject | None:
         """

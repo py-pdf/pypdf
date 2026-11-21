@@ -6,6 +6,10 @@ import pytest
 from pypdf.errors import ParseError
 from pypdf.pagerange import PageRange, parse_filename_page_ranges
 
+PARSE_FILENAME_PAGE_RANGES_DEPRECATION = (
+    r"^parse_filename_page_ranges is deprecated and will be removed in pypdf 8\.0\.0\.$"
+)
+
 
 def test_equality() -> None:
     pr1 = PageRange(slice(0, 5))
@@ -52,6 +56,26 @@ def test_idempotency() -> None:
     assert pr == pr2
 
 
+@pytest.mark.parametrize(
+    ("page_range", "n", "expected"),
+    [
+        (PageRange(":"), 10, (0, 10, 1)),
+        (PageRange("2:5"), 10, (2, 5, 1)),
+        (PageRange("-2:"), 10, (8, 10, 1)),
+        (PageRange("::-1"), 10, (9, -1, -1)),
+        (PageRange("1:20:2"), 10, (1, 10, 2)),
+    ],
+)
+def test_indices(page_range: PageRange, n: int, expected: tuple[int, int, int]) -> None:
+    """
+    A page range resolves to the range() arguments for a document of n pages.
+
+    Negative bounds count from the end, and bounds past the end are clipped to n.
+    """
+    assert page_range.indices(n) == expected
+    assert list(range(*page_range.indices(n))) == list(range(n))[page_range.to_slice()]
+
+
 def test_str_of_the_empty_range_before_the_last_page() -> None:
     """slice(-1, 0) selects nothing, but "-1" means the last page."""
     page_range = PageRange(slice(-1, 0))
@@ -95,7 +119,14 @@ def test_str_init_error() -> None:
     assert exc.value.args[0] == "1-2"
 
 
-@pytest.mark.parametrize("init_str", ["::0", "1:5:0", "0:0:0"])
+@pytest.mark.parametrize(
+    "init_str",
+    [
+        pytest.param("::0", id="open-range"),
+        pytest.param("1:5:0", id="bounded-range"),
+        pytest.param("0:0:0", id="empty-range"),
+    ],
+)
 def test_str_init_zero_step(init_str: str) -> None:
     """A zero stride selects nothing and only raised once the range was applied."""
     assert PageRange.valid(init_str) is False
@@ -105,14 +136,34 @@ def test_str_init_zero_step(init_str: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "init_slice",
+    [
+        pytest.param(slice(None, None, 0), id="open-slice"),
+        pytest.param(slice(1, 5, 0), id="bounded-slice"),
+        pytest.param(slice(0, 0, 0), id="empty-slice"),
+    ],
+)
+def test_slice_init_zero_step(init_slice: slice) -> None:
+    """A zero-step slice is rejected at construction, like a zero-step string."""
+    with pytest.raises(ParseError) as exc:
+        PageRange(init_slice)
+    assert exc.value.args[0] == init_slice
+
+
+@pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (slice(1, 5), True),
-        (PageRange("1:5"), True),
-        ("1:5", True),
-        (5, False),
-        (None, False),
-        (["1:5"], False),
+        pytest.param(slice(1, 5), True, id="slice-default-step"),
+        pytest.param(slice(1, 5, 2), True, id="slice-positive-step"),
+        pytest.param(slice(None, None, -1), True, id="slice-reverse"),
+        pytest.param(slice(None, None, 0), False, id="slice-open-zero-step"),
+        pytest.param(slice(1, 5, 0), False, id="slice-bounded-zero-step"),
+        pytest.param(slice(0, 0, 0), False, id="slice-empty-zero-step"),
+        pytest.param(PageRange("1:5"), True, id="page-range"),
+        pytest.param("1:5", True, id="range-string"),
+        pytest.param(5, False, id="integer"),
+        pytest.param(None, False, id="none"),
+        pytest.param(["1:5"], False, id="list"),
     ],
 )
 def test_valid(value: Any, expected: bool) -> None:
@@ -132,11 +183,16 @@ def test_valid(value: Any, expected: bool) -> None:
 def test_parse_filename_page_ranges(
     params: list[str], expected: list[tuple[str, PageRange]]
 ) -> None:
-    assert parse_filename_page_ranges(list(params)) == expected
+    """parse_filename_page_ranges() warns that it is deprecated, but still pairs filenames with page ranges."""
+    with pytest.warns(DeprecationWarning, match=PARSE_FILENAME_PAGE_RANGES_DEPRECATION):
+        assert parse_filename_page_ranges(list(params)) == expected
 
 
 def test_parse_filename_page_ranges_err() -> None:
-    with pytest.raises(ValueError) as exc:
+    """parse_filename_page_ranges() warns that it is deprecated, but still rejects a leading page range."""
+    with pytest.raises(ValueError) as exc, pytest.warns(
+        DeprecationWarning, match=PARSE_FILENAME_PAGE_RANGES_DEPRECATION
+    ):
         parse_filename_page_ranges(["1:5", "foo.pdf"])
     assert (
         exc.value.args[0] == "The first argument must be a filename, not a page range."
@@ -149,9 +205,15 @@ def test_parse_filename_page_ranges_err() -> None:
         (PageRange(slice(0, 5)), PageRange(slice(2, 10)), slice(0, 10)),
         (PageRange(slice(0, 5)), PageRange(slice(2, 3)), slice(0, 5)),
         (PageRange(slice(0, 5)), PageRange(slice(5, 10)), slice(0, 10)),
+        (PageRange(slice(2, 0)), PageRange(slice(2, 5)), slice(2, 5)),
     ],
 )
 def test_addition(a: PageRange, b: PageRange, expected: slice) -> None:
+    """
+    Adding two touching or overlapping page ranges gives their union in either order.
+
+    This includes an empty range such as 2:0 that starts where the other range starts.
+    """
     pr1 = PageRange(a)
     pr2 = PageRange(b)
     assert pr1 + pr2 == PageRange(expected)
@@ -166,6 +228,7 @@ def test_addition(a: PageRange, b: PageRange, expected: slice) -> None:
     ],
 )
 def test_addition_gap(a: PageRange, b: PageRange) -> None:
+    """Adding two page ranges with a gap between them raises a ValueError."""
     with pytest.raises(ValueError) as exc:
         a + b
     assert exc.value.args[0] == "Can't add PageRanges with gap"
