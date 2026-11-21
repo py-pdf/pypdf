@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795255115634,
+  "lastUpdate": 1795255244119,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -174775,6 +174775,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.040533109000948274",
             "extra": "mean: 886.9225852000113 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alexandrkholodniak@gmail.com",
+            "name": "Alex Kholodniak",
+            "username": "kholdrex"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "03f323beb48dc684c8a58fbffe66c64899a3d401",
+          "message": "PI: Count duplicate form field names and radio states without rescanning (#4478)",
+          "timestamp": "2026-11-21T10:56:35+01:00",
+          "tree_id": "dcc85f189fa335ba7df73ff032065e9ce6f846a7",
+          "url": "https://github.com/py-pdf/pypdf/commit/03f323beb48dc684c8a58fbffe66c64899a3d401"
+        },
+        "date": 1795255229124,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.235743807363658,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004571005547769314",
+            "extra": "mean: 89.00167333333304 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.2841306237855,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004127230914773133",
+            "extra": "mean: 28.341352962963096 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0750640214385458,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008553000479306476",
+            "extra": "mean: 930.177161600011 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 46.44095751813384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033161239744982185",
+            "extra": "mean: 21.532717098038493 msec\nrounds: 51"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.400455202650791,
+            "unit": "iter/sec",
+            "range": "stddev: 0.064296127540621",
+            "extra": "mean: 2.4971582173999876 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4061268589676177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04240030115104387",
+            "extra": "mean: 711.173386400003 msec\nrounds: 5"
           }
         ]
       }
