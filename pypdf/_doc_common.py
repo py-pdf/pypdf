@@ -113,6 +113,16 @@ class _PageTreeItem(NamedTuple):
     depth: int
 
 
+class _DottedNameNode:
+    """Counts the field names which continue with "." after one part of a dotted name."""
+
+    __slots__ = ("children", "count")
+
+    def __init__(self) -> None:
+        self.count = 0
+        self.children: dict[str, _DottedNameNode] = {}
+
+
 #: A ``/Pages`` node currently being walked: the node - carrying the attributes its
 #: kids inherit - and the part of its ``/Kids`` which has not been reached yet.
 _PageTreeFrame = tuple[_PageTreeItem, Iterator[PdfObject]]
@@ -797,16 +807,22 @@ class PdfDocCommon(ABC):
             and obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Radio != 0
         ):
             states: list[str] = []
-            retval[key][NameObject("/_States_")] = ArrayObject(states)
+            seen_states: set[str] = set()
+            # Widgets often share one /N dictionary, whose states only need to be read once.
+            seen_appearances: set[int] = set()
             for k in obj.get(FieldDictionaryAttributes.Kids, {}):
                 k = k.get_object()
                 if "/AP" not in k:
                     raise PdfReadError(f"Button field kid missing /AP: {k!r}")
                 normal = self._normal_appearance(k["/AP"])
+                if id(normal) in seen_appearances:
+                    continue
+                seen_appearances.add(id(normal))
                 for s in list(normal.keys()):
-                    if s not in states:
+                    if s not in seen_states:
+                        seen_states.add(s)
                         states.append(s)
-                retval[key][NameObject("/_States_")] = ArrayObject(states)
+            retval[key][NameObject("/_States_")] = ArrayObject(states)
             if (
                 obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.NoToggleToOff != 0
                 and "/Off" in retval[key]["/_States_"]
@@ -897,15 +913,30 @@ class PdfDocCommon(ABC):
             second and following will get the suffix .2, .3, ...
 
         """
+        # The keys as a tree of their dot-separated parts, so that numbering a duplicate
+        # name does not scan all keys collected so far.
+        dotted_names = _DottedNameNode()
 
         def indexed_key(k: str, fields: dict[Any, Any]) -> str:
             if k not in fields:
                 return k
-            return (
-                k
-                + "."
-                + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
-            )
+            return k + "." + str(get_prefix_count(k) + 2)
+
+        def get_prefix_count(k: str) -> int:
+            node = dotted_names
+            for part in k.split("."):
+                if part not in node.children:
+                    return 0
+                node = node.children[part]
+            return node.count
+
+        def count_prefixes(k: Any) -> None:
+            if not isinstance(k, str):
+                return
+            node = dotted_names
+            for part in k.split(".")[:-1]:
+                node = node.children.setdefault(part, _DottedNameNode())
+                node.count += 1
 
         # Retrieve document form fields
         form_fields = self.get_fields()
@@ -917,7 +948,10 @@ class PdfDocCommon(ABC):
                 if full_qualified_name:
                     ff[field] = value.get("/V")
                 else:
-                    ff[indexed_key(cast(str, value.get("/T", field)), ff)] = value.get("/V")
+                    key = indexed_key(cast(str, value.get("/T", field)), ff)
+                    if key not in ff:
+                        count_prefixes(key)
+                    ff[key] = value.get("/V")
         return ff
 
     def get_pages_showing_field(

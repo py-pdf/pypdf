@@ -18,6 +18,7 @@ from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    DecodedStreamObject,
     DictionaryObject,
     EmbeddedFile,
     EncodedStreamObject,
@@ -1097,6 +1098,99 @@ def test_get_form_text_fields__mapping_name_without_partial_name():
 
     reader = PdfReader(data)
     assert reader.get_form_text_fields() == {"mappingname": "hello"}
+
+
+def _build_reader_with_text_fields(*, top_level_titles=(), child_titles=()) -> PdfReader:
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    fields = ArrayObject()
+    for index, title in enumerate(top_level_titles):
+        fields.append(writer._add_object(DictionaryObject({
+            NameObject("/T"): title,
+            NameObject("/FT"): NameObject("/Tx"),
+            NameObject("/V"): TextStringObject(f"t{index}"),
+        })))
+    # Same partial names below different parents give the same short name.
+    for index, title in enumerate(child_titles):
+        parent = writer._add_object(DictionaryObject({NameObject("/T"): TextStringObject(f"p{index}")}))
+        child = writer._add_object(DictionaryObject({
+            NameObject("/T"): TextStringObject(title),
+            NameObject("/FT"): NameObject("/Tx"),
+            NameObject("/V"): TextStringObject(str(index)),
+            NameObject("/Parent"): parent,
+        }))
+        parent.get_object()[NameObject("/Kids")] = ArrayObject([child])
+        fields.append(parent)
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(DictionaryObject({NameObject("/Fields"): fields}))
+    data = BytesIO()
+    writer.write(data)
+    return PdfReader(data)
+
+
+@pytest.mark.parametrize(
+    ("child_titles", "expected"),
+    [
+        pytest.param(
+            ["x", "x", "x.2", "x", "a.b", "a", "a", "a.b", "x."],
+            [
+                ("x", "0"), ("x.2", "1"), ("x.2.2", "2"), ("x.4", "3"), ("a.b", "4"),
+                ("a", "5"), ("a.3", "6"), ("a.b.2", "7"), ("x.", "8"),
+            ],
+            id="numbered-duplicates",
+        ),
+        pytest.param(["x", "x.3", "x", "x"], [("x", "0"), ("x.3", "3")], id="numbered-duplicate-overwrites-name"),
+    ],
+)
+def test_get_form_text_fields__duplicate_names(child_titles, expected):
+    reader = _build_reader_with_text_fields(child_titles=child_titles)
+
+    assert list(reader.get_form_text_fields().items()) == expected
+
+
+def test_get_form_text_fields__name_which_is_not_a_string():
+    reader = _build_reader_with_text_fields(top_level_titles=[NumberObject(5)], child_titles=["x", "x"])
+
+    assert reader.get_form_text_fields() == {5: "t0", "x": "0", "x.2": "1"}
+
+
+@pytest.mark.parametrize(
+    ("flags", "expected"),
+    [
+        pytest.param(32768, ["/A", "/Off", "/B", "/C"], id="radio"),
+        pytest.param(32768 | 16384, ["/A", "/B", "/C"], id="radio-no-toggle-to-off"),
+    ],
+)
+def test_get_fields__radio_states_in_order_of_first_appearance(flags, expected):
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    appearance = DecodedStreamObject()
+    appearance.set_data(b"")
+    appearance_reference = writer._add_object(appearance)
+    kids = ArrayObject()
+    field = writer._add_object(DictionaryObject({
+        NameObject("/T"): TextStringObject("radio"),
+        NameObject("/FT"): NameObject("/Btn"),
+        NameObject("/Ff"): NumberObject(flags),
+        NameObject("/Kids"): kids,
+    }))
+    shared_normal_appearance = writer._add_object(
+        DictionaryObject({NameObject(state): appearance_reference for state in ("/A", "/C")})
+    )
+    for states in (["/A", "/Off"], ["/B", "/Off"], ["/A", "/C"], None, None):
+        normal_appearance = (
+            shared_normal_appearance
+            if states is None
+            else DictionaryObject({NameObject(state): appearance_reference for state in states})
+        )
+        kids.append(writer._add_object(DictionaryObject({
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/Parent"): field,
+            NameObject("/AP"): DictionaryObject({NameObject("/N"): normal_appearance}),
+        })))
+    acro_form = DictionaryObject({NameObject("/Fields"): ArrayObject([field])})
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acro_form)
+
+    assert list(writer.get_fields()["radio"]["/_States_"]) == expected
 
 
 @pytest.mark.timeout(5)
