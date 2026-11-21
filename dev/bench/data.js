@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795259381713,
+  "lastUpdate": 1795259996171,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130157,6 +130157,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016250220768208104",
             "extra": "mean: 565.3521412000032 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "patrick@immometrica.com",
+            "name": "Patrick Hintermayer",
+            "username": "patrick-immometrica"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c1294374251cd59b6315350e61316a429499b341",
+          "message": "BUG: Remove every part of a combined ObjectDeletionFlag (#4446)\n\n* BUG: Remove every part of a combined ObjectDeletionFlag\n\nremove_objects_from_page() returned after the first annotation flag and\nTEXT replaced the drawing operators, so e.g. TEXT | LINKS kept the text.\nHandle each kind in its own pass. Also pass text_filters on when\nto_delete is a list.\n\n* BUG: Join deletion operators instead of splitting combined flags\n\nDrop the early returns for annotation flags and add the text operators to\nthe drawing ones. text_filters now only decide which text operators are\nkept, so they no longer protect drawing operators in the same pass.",
+          "timestamp": "2026-11-21T12:18:25+01:00",
+          "tree_id": "b7e5c3db2d64352b577381b47a1e6947949cd26b",
+          "url": "https://github.com/py-pdf/pypdf/commit/c1294374251cd59b6315350e61316a429499b341"
+        },
+        "date": 1795259986702,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.980506809340423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007242590819534439",
+            "extra": "mean: 200.78277940000078 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.77441127697588,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0066572169206841",
+            "extra": "mean: 27.952940783782843 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4699143019373976,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030371505601502122",
+            "extra": "mean: 2.1280475948000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 42.80993888245983,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012547594493746111",
+            "extra": "mean: 23.35906161290321 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.25466247867008446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04435991362669126",
+            "extra": "mean: 3.926766146400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.4579670212382148,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04807635462942887",
+            "extra": "mean: 406.840283599999 msec\nrounds: 5"
           }
         ]
       }
