@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795254287069,
+  "lastUpdate": 1795254436727,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -174643,6 +174643,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04718540267884308",
             "extra": "mean: 726.6647338000041 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8266fc352390219e21ba97d7416ea5e9183e6bf5",
+          "message": "ROB: Read an ICC profile without /N with the known number of components (#4443)\n\n* ROB: Read an ICC profile without /N with the known number of components\n\n* TST: Cover the real-world file with an ICC profile without /N",
+          "timestamp": "2026-11-21T10:42:48+01:00",
+          "tree_id": "f70ea9ed9b39db3b0bfcb2b871018bc76bcbaff7",
+          "url": "https://github.com/py-pdf/pypdf/commit/8266fc352390219e21ba97d7416ea5e9183e6bf5"
+        },
+        "date": 1795254422288,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 15.051544786512563,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01802034088521422",
+            "extra": "mean: 66.4383632500023 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.82009774472732,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010848130904889914",
+            "extra": "mean: 37.28547186956447 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1845786416102269,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024671811077716915",
+            "extra": "mean: 844.1820279999945 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 35.918126727742106,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0177426465780753",
+            "extra": "mean: 27.84109560000047 msec\nrounds: 50"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3171499546757641,
+            "unit": "iter/sec",
+            "range": "stddev: 0.051413604339977034",
+            "extra": "mean: 3.1530825883999967 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1274941203289894,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040533109000948274",
+            "extra": "mean: 886.9225852000113 msec\nrounds: 5"
           }
         ]
       }
