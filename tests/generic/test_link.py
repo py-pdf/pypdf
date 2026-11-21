@@ -175,3 +175,49 @@ def test_named_reference_link_patch_reference() -> None:
     )
     assert known_names == {"second", "third"}
     assert list(writer.named_destinations) == ["first", "third"]
+
+
+def test_extract_links__non_array_annotations(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Links of a page whose /Annots is not an array are skipped with a warning.
+
+    /Annots of a page must be an array (ISO 32000-2:2020, 7.7.3.3, Table 31).
+    If one of the two pages has a dictionary there instead, extract_links()
+    returns no pairs instead of raising.
+    """
+    old_page = PageObject()
+    new_page = PageObject()
+    new_page[NameObject("/Annots")] = DictionaryObject()
+
+    assert extract_links(new_page, old_page) == []
+    assert caplog.messages == ["Ignoring the links on a page: its /Annots is a DictionaryObject, not an array."]
+    caplog.clear()
+
+    # A page of a document is named by its index.
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    source_page = writer.add_blank_page(72, 72)
+    source_page[NameObject("/Annots")] = DictionaryObject()
+
+    assert extract_links(PageObject(), source_page) == []
+    assert caplog.messages == [
+        "Ignoring the links on the page with index 1: its /Annots is a DictionaryObject, not an array."
+    ]
+
+
+def test_extract_links__link_without_action_or_destination(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A link annotation without /A and /Dest is skipped without a warning.
+
+    Both entries are optional (ISO 32000-2:2020, 12.5.6.5), so such a link
+    points nowhere and there is nothing to pair. Both pages have the same
+    annotations, so there is no warning about differing link counts.
+    """
+    old_page = PageObject()
+    new_page = PageObject()
+    link = DictionaryObject({NameObject("/Subtype"): NameObject("/Link")})
+    old_page[NameObject("/Annots")] = ArrayObject([link])
+    new_page[NameObject("/Annots")] = ArrayObject([link])
+
+    assert extract_links(new_page, old_page) == []
+    assert caplog.messages == []

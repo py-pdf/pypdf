@@ -16,8 +16,8 @@ def test_din_a0_paper_size() -> None:
     area_square_mm = area_square_inch * (25.4) ** 2
     assert abs(area_square_mm - 999949) < 100
     conversion_factor = 72 / 25.4
-    assert (dim.width - 841 * conversion_factor) < 1
-    assert (dim.width - 1189 * conversion_factor) < 1
+    assert abs(dim.width - 841 * conversion_factor) < 1
+    assert abs(dim.height - 1189 * conversion_factor) < 1
 
 
 @pytest.mark.parametrize("dimensions", papersizes._din_a)
@@ -33,5 +33,23 @@ def test_din_a_aspect_ratio(dimensions: papersizes.Dimensions) -> None:
 def test_din_a_size_doubling(
     dimensions_a: papersizes.Dimensions, dimensions_b: papersizes.Dimensions
 ) -> None:
-    """The height of a DIN A paper size doubles when moving to the next size."""
+    """
+    Each DIN A paper size is the next smaller size doubled.
+
+    Halving A(n) across its height gives A(n+1), so the width of A(n) is the
+    height of A(n+1) and the height of A(n) is about twice the width of A(n+1).
+    """
+    assert dimensions_a.width == dimensions_b.height
     assert abs(dimensions_a.height - 2 * dimensions_b.width) <= 4
+
+
+def test_c4_envelope_paper_size() -> None:
+    """
+    The C4 envelope paper size is 229 mm x 324 mm.
+
+    ISO 269 defines C4 as 229 mm x 324 mm, which is 649 x 918 at 72 ppi.
+    """
+    conversion_factor = 72 / 25.4
+    dim = papersizes.PaperSize.C4
+    assert abs(dim.width - 229 * conversion_factor) < 1
+    assert abs(dim.height - 324 * conversion_factor) < 1
