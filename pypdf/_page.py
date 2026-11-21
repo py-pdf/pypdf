@@ -727,12 +727,19 @@ class PageObject(DictionaryObject):
 
         # Removes duplicates and preserves order
         deduplicated = lst.copy()
+        # A set for the membership check below; a list makes it O(n) per image.
+        # lst can already hold inline image names: a form XObject with its own
+        # /XObject resources returns them from the recursive call.
+        # The lists in lst are images inside forms. They are unhashable and
+        # never equal an inline image name, so they are left out.
+        seen = {name for name in lst if isinstance(name, str)}
 
         # Add inline images from _content_stream_images
         for object_name, object_value in self._content_stream_images.items():
             # inline images have cache populated
-            if object_name not in deduplicated and object_value:
+            if object_name not in seen and object_value:
                 deduplicated.append(object_name)
+                seen.add(object_name)
 
         return deduplicated
 
