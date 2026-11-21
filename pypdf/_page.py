@@ -518,7 +518,7 @@ class VirtualListImages(Sequence[ImageFile]):
         return self.ids_function()
 
     def items(self) -> list[tuple[str | list[str], ImageFile]]:
-        return [(x, self[x]) for x in self.ids_function()]
+        return [(x, self.get_function(x)) for x in self.ids_function()]
 
     @overload
     def __getitem__(self, index: int | str | list[str]) -> ImageFile:
@@ -550,8 +550,8 @@ class VirtualListImages(Sequence[ImageFile]):
         return self.get_function(lst[index])
 
     def __iter__(self) -> Iterator[ImageFile]:
-        for i in range(len(self)):
-            yield self[i]
+        for image_id in self.ids_function():
+            yield self.get_function(image_id)
 
     def __str__(self) -> str:
         p = [f"Image_{i}={n}" for i, n in enumerate(self.ids_function())]
@@ -727,12 +727,19 @@ class PageObject(DictionaryObject):
 
         # Removes duplicates and preserves order
         deduplicated = lst.copy()
+        # A set for the membership check below; a list makes it O(n) per image.
+        # lst can already hold inline image names: a form XObject with its own
+        # /XObject resources returns them from the recursive call.
+        # The lists in lst are images inside forms. They are unhashable and
+        # never equal an inline image name, so they are left out.
+        seen = {name for name in lst if isinstance(name, str)}
 
         # Add inline images from _content_stream_images
         for object_name, object_value in self._content_stream_images.items():
             # inline images have cache populated
-            if object_name not in deduplicated and object_value:
+            if object_name not in seen and object_value:
                 deduplicated.append(object_name)
+                seen.add(object_name)
 
         return deduplicated
 
@@ -1439,14 +1446,21 @@ class PageObject(DictionaryObject):
                     force_duplicate=True,
                 )
                 r = cast(ArrayObject, a["/Rect"])
-                pt1 = trsf.apply_on((r[0], r[1]), True)
-                pt2 = trsf.apply_on((r[2], r[3]), True)
+                # Rotation and shear can move the other corners beyond this diagonal.
+                points = [
+                    trsf.apply_on((r[0], r[1]), True),  # Original lower-left corner.
+                    trsf.apply_on((r[2], r[1]), True),  # Original lower-right corner.
+                    trsf.apply_on((r[0], r[3]), True),  # Original upper-left corner.
+                    trsf.apply_on((r[2], r[3]), True),  # Original upper-right corner.
+                ]
+                x_coordinates = [point[0] for point in points]
+                y_coordinates = [point[1] for point in points]
                 aa[NameObject("/Rect")] = ArrayObject(
                     (
-                        min(pt1[0], pt2[0]),
-                        min(pt1[1], pt2[1]),
-                        max(pt1[0], pt2[0]),
-                        max(pt1[1], pt2[1]),
+                        min(x_coordinates),
+                        min(y_coordinates),
+                        max(x_coordinates),
+                        max(y_coordinates),
                     )
                 )
                 if "/QuadPoints" in a:
@@ -1817,13 +1831,10 @@ class PageObject(DictionaryObject):
         """
         if self.indirect_reference is None:
             return None
-        # Compare the indirect references, not the pages themselves: two pages
-        # with identical contents compare equal, so `list.index` would return
-        # the position of the first match for all of them.
-        for number, page in enumerate(self.indirect_reference.pdf.pages):
-            if page.indirect_reference == self.indirect_reference:
-                return number
-        return None
+        page_number: int | None = self.indirect_reference.pdf._get_page_number_by_indirect(
+            self.indirect_reference
+        )
+        return page_number
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""

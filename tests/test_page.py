@@ -16,7 +16,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject, _get_fonts_walk
-from pypdf.annotations import Highlight, Polygon
+from pypdf.annotations import Highlight, Link, Polygon
 from pypdf.constants import PageAttributes
 from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
@@ -342,6 +342,68 @@ def test_page_number_of_identical_pages():
     output.seek(0)
     for number, page in enumerate(PdfReader(output).pages):
         assert number == page.page_number
+
+
+def test_page_number_follows_inserted_and_removed_pages():
+    """
+    The page number of every page must stay right when pages are inserted
+    in front of it, removed in front of it, or removed completely
+    (ISO 32000-2:2020, 7.7.3.2, page tree nodes: the order of the leaf
+    nodes defines the page numbers).
+    """
+    writer = PdfWriter()
+    pages = [writer.add_blank_page(width=100 + i, height=200) for i in range(4)]
+    assert [page.page_number for page in pages] == [0, 1, 2, 3]
+
+    writer.insert_blank_page(width=300, height=300, index=0)
+    assert writer.pages[0].page_number == 0
+    assert [page.page_number for page in pages] == [1, 2, 3, 4]
+
+    writer.remove_page(1)  # the first of the original pages
+    assert [page.page_number for page in pages[1:]] == [1, 2, 3]
+    assert pages[0].page_number is None
+    assert writer.get_page_number(pages[2]) == 2
+
+    last = writer.add_blank_page(width=50, height=50)
+    assert last.page_number == 4
+    assert [page.page_number for page in writer.pages] == [0, 1, 2, 3, 4]
+
+
+def test_page_number_of_a_reader_follows_removed_pages():
+    """After a page of a reader is removed, the pages behind it move up (ISO 32000-2:2020, 7.7.3.2)."""
+    writer = PdfWriter()
+    for i in range(4):
+        writer.add_blank_page(width=100 + i, height=200)
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    pages = list(reader.pages)
+    assert [page.page_number for page in pages] == [0, 1, 2, 3]
+
+    reader.remove_page(0)
+    assert [page.page_number for page in pages[1:]] == [0, 1, 2]
+    assert [reader.get_page_number(page) for page in pages[1:]] == [0, 1, 2]
+
+
+def test_page_number_of_a_page_of_another_document():
+    """
+    A page that is not in the page tree of a writer has no page number in it
+    (ISO 32000-2:2020, 7.7.3.2), even if the writer has a page at the same
+    position or with the same object number.
+    """
+    first = PdfWriter()
+    second = PdfWriter()
+    for writer in (first, second):
+        for i in range(4):
+            writer.add_blank_page(width=100 + i, height=200)
+    output = BytesIO()
+    first.write(output)
+    reader = PdfReader(output)
+
+    assert second.get_page_number(first.pages[2]) is None
+    assert second.get_page_number(reader.pages[2]) is None
+    assert first.pages[2].page_number == 2
+    assert second.get_page_number(second.pages[2]) == 2
 
 
 def test_page_number_of_named_destination():
@@ -1134,6 +1196,112 @@ def test_merge_page_preserves_annotation_quad_points(quad_count, transformation,
     annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
     assert annotation["/QuadPoints"] == pytest.approx(expected)
     assert source_page["/Annots"][0].get_object()["/QuadPoints"] == quad_points
+
+
+@pytest.mark.parametrize("read_source", [False, True], ids=["writer-source", "reader-source"])
+@pytest.mark.parametrize(
+    ("ctm", "expected"),
+    [
+        pytest.param(None, (0, 0, 10, 10), id="identity"),
+        pytest.param((1, 0, 0, 1, 10, 20), (10, 20, 20, 30), id="translation"),
+        pytest.param((2, 0, 0, 3, 0, 0), (0, 0, 20, 30), id="scaling"),
+        pytest.param((-1, 0, 0, 1, 10, 0), (0, 0, 10, 10), id="reflection"),
+        pytest.param((0, 1, -1, 0, 10, 0), (0, 0, 10, 10), id="quarter-turn"),
+        # These integer matrices rotate by 45 degrees and scale by sqrt(2).
+        pytest.param((1, 1, -1, 1, 10, 20), (0, 20, 20, 40), id="positive-45-degree-rotation"),
+        pytest.param((1, -1, 1, 1, 10, 20), (10, 10, 30, 30), id="negative-45-degree-rotation"),
+        pytest.param((1, 0, -1, 1, 10, 20), (0, 20, 20, 30), id="negative-x-shear"),
+        pytest.param((1, -1, 0, 1, 10, 20), (10, 10, 20, 30), id="negative-y-shear"),
+        pytest.param((1, 2, -3, 4, 10, 20), (-20, 20, 20, 80), id="combined-affine-transform"),
+    ],
+)
+def test_merge_page__annotation__rectangle_bounds(read_source, ctm, expected) -> None:
+    """The transformed rectangle must enclose all four corners, including after writing."""
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    if read_source:
+        stream = BytesIO()
+        source.write(stream)
+        source_page = PdfReader(stream).pages[0]
+    else:
+        source_page = source.pages[0]
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    if ctm is None:
+        page.merge_page(source_page)
+    else:
+        page.merge_transformed_page(source_page, ctm)
+
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    annotations = reader.pages[0]["/Annots"]
+    assert len(annotations) == 1
+    annotation = annotations[0].get_object()
+    assert annotation["/Rect"] == pytest.approx(expected)
+    assert annotation["/A"]["/URI"] == "https://example.org"
+    assert annotation.raw_get("/P") == reader.pages[0].indirect_reference
+    assert source_page["/Annots"][0].get_object()["/Rect"] == [0, 0, 10, 10]
+
+
+def test_merge_rotated_page__annotation__rectangle_bounds() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_rotated_page(source.pages[0], 45)
+
+    output = BytesIO()
+    writer.write(output)
+    annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
+    diagonal = math.sqrt(50)
+    assert annotation["/Rect"] == pytest.approx((-diagonal, 0, diagonal, 2 * diagonal))
+
+
+def test_merge_page__annotation__rectangle_encloses_quad_points() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(
+        0,
+        Highlight(
+            rect=(0, 0, 10, 10),
+            quad_points=ArrayObject(FloatObject(value) for value in (0, 10, 10, 10, 0, 0, 10, 0)),
+        ),
+    )
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_transformed_page(source.pages[0], (1, 1, -1, 1, 10, 20))
+
+    output = BytesIO()
+    writer.write(output)
+    annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
+    assert annotation["/Rect"] == [0, 20, 20, 40]
+    assert annotation["/QuadPoints"] == [0, 30, 10, 40, 10, 20, 20, 30]
+    left, bottom, right, top = annotation["/Rect"]
+    quads = annotation["/QuadPoints"]
+    assert all(left <= x <= right and bottom <= y <= top for x, y in zip(quads[::2], quads[1::2]))
+
+
+def test_merge_page__annotation__rectangle_repeated_merge() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_transformed_page(source.pages[0], (1, 1, -1, 1, 10, 20))
+    page.merge_transformed_page(source.pages[0], Transformation().translate(50, 60))
+
+    output = BytesIO()
+    writer.write(output)
+    annotations = PdfReader(output).pages[0]["/Annots"]
+    assert len(annotations) == 2
+    assert annotations[0].get_object()["/Rect"] == [0, 20, 20, 40]
+    assert annotations[1].get_object()["/Rect"] == [50, 60, 60, 70]
+    assert annotations[0] != annotations[1]
+    assert source.pages[0]["/Annots"][0].get_object()["/Rect"] == [0, 0, 10, 10]
 
 
 def test_merge_page_reproducible_with_proc_set():

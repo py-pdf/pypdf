@@ -9,6 +9,7 @@ see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 import re
 from typing import Any, Union
 
+from ._utils import deprecate_no_replacement
 from .errors import ParseError
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
@@ -168,10 +169,12 @@ class PageRange:
         def _stop_key(v: int | None) -> float:
             return float("inf") if v is None else v
 
-        if _start_key(a[0]) > _start_key(b[0]):
+        # Order by start, and on equal starts put the larger stop first, so that
+        # an empty range such as 2:0 does not decide whether there is a gap.
+        if (_start_key(a[0]), -_stop_key(a[1])) > (_start_key(b[0]), -_stop_key(b[1])):
             a, b = b, a
 
-        # Now `a` has the smaller (or equal) start.
+        # Now `a` has the smaller start (and the larger stop on equal starts).
         if _start_key(b[0]) > _stop_key(a[1]):
             # There is a gap between a and b.
             raise ValueError("Can't add PageRanges with gap")
@@ -196,7 +199,12 @@ def parse_filename_page_ranges(
     Returns:
         A list of (filename, page_range) pairs.
 
+    .. deprecated:: 7.2.0
+        ``parse_filename_page_ranges`` is deprecated and will be removed in
+        pypdf 8.0.0. pypdf does not use it since the ``pdfcat`` script was removed.
+
     """
+    deprecate_no_replacement("parse_filename_page_ranges", "8.0.0")
     pairs: list[tuple[str, PageRange]] = []
     pdf_filename: str | None = None
     did_page_range = False

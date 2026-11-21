@@ -27,8 +27,10 @@
 
 import logging
 from io import BytesIO
-from typing import IO
+from math import ceil
+from typing import IO, Any
 
+from .._configuration import get_configuration
 from .._utils import (
     WHITESPACES,
     WHITESPACES_AS_BYTES,
@@ -37,7 +39,9 @@ from .._utils import (
     logger_warning,
     read_non_whitespace,
 )
-from ..errors import PdfReadError
+from ..errors import LimitReachedError, PdfReadError, PdfStreamError
+from ._data_structures import ContentStream, DictionaryObject, read_object
+from ._utils import StreamParsingBudget
 
 logger = logging.getLogger(__name__)
 
@@ -363,3 +367,174 @@ def is_followed_by_binary_data(stream: IO[bytes], length: int = 10) -> bool:
         # especially after an inline image.
         return True
     return False
+
+
+def _read_settings_dictionary(
+        *,
+        content_stream: ContentStream,
+        stream: StreamType,
+        parsing_budget: StreamParsingBudget,
+        remaining_count: int | None
+) -> DictionaryObject:
+    settings = DictionaryObject()
+
+    while True:
+        tok = read_non_whitespace(stream)
+        if not tok:
+            raise PdfReadError("Unexpected end of stream.")
+        stream.seek(-1, 1)
+        if tok == b"I":
+            # "ID" - begin of image data
+            break
+        remaining_count = ContentStream._check_limits(
+            remaining_elements=remaining_count, parsing_budget=parsing_budget, token_decrement=2
+        )
+
+        key = read_object(stream, content_stream.pdf, parsing_budget=parsing_budget)
+        _ = read_non_whitespace(stream)
+        stream.seek(-1, 1)
+        value = read_object(stream, content_stream.pdf, parsing_budget=parsing_budget)
+        settings[key] = value
+
+    return settings
+
+
+def extract_inline__not_set(
+        *,
+        content_stream: ContentStream,
+        saved_position: int,
+        settings: DictionaryObject,
+        stream: StreamType
+) -> bytes:
+    color_space = settings.get("/CS", "")
+    if isinstance(color_space, list):
+        color_space = color_space[0] if color_space else ""
+    if not isinstance(color_space, str):
+        color_space = ""
+
+    if "RGB" in color_space:
+        bytes_per_pixel: float = 3
+    elif "CMYK" in color_space:
+        bytes_per_pixel = 4
+    else:
+        bits_per_pixel = settings.get(
+            "/BPC",
+            8 if color_space in {"/I", "/G", "/Indexed", "/DeviceGray"} else -1,
+        )
+        if isinstance(bits_per_pixel, (int, float)) and bits_per_pixel > 0:
+            bytes_per_pixel = bits_per_pixel / 8.0
+        else:
+            data = extract_inline_default(stream)
+
+            # Move to the `EI` if possible.
+            _ei = read_non_whitespace(stream)
+            stream.seek(-1, 1)
+
+            return data
+
+    width = settings.get("/W")
+    height = settings.get("/H")
+    if not isinstance(width, int) or not isinstance(height, int) or not bytes_per_pixel:
+        sample_length = -1
+    else:
+        sample_length = ceil(width * bytes_per_pixel) * height
+    remaining_bytes = len(content_stream._data) - saved_position
+    if sample_length > get_configuration().image_maximum_buffer_size:
+        # TODO: Replace by general inline image limit and employ everywhere.
+        raise LimitReachedError("Requested image size exceeds total limit.")
+
+    if 0 < sample_length < remaining_bytes:
+        data = stream.read(sample_length)
+    else:
+        # Without usable dimensions the raw sample length is unknown;
+        # fall back to scanning for the `EI` marker.
+        data = extract_inline_default(stream)
+
+    # Move to the `EI` if possible.
+    _ei = read_non_whitespace(stream)
+    stream.seek(-1, 1)
+
+    return data
+
+
+def _handle_filters(
+        *,
+        filters: Any,
+        stream: StreamType,
+        settings: DictionaryObject,
+        content_stream: ContentStream,
+        saved_position: int
+) -> bytes:
+    filter_to_use = filters
+    if isinstance(filters, list):
+        filter_to_use = filter_to_use[0] if filter_to_use else "not set"
+    if not isinstance(filter_to_use, str):
+        # A valid filter is a name or an array of names; anything else
+        # cannot match the abbreviations below, so treat it as unfiltered.
+        filter_to_use = "not set"
+
+    if "AHx" in filter_to_use or "ASCIIHexDecode" in filter_to_use:
+        return extract_inline__ascii_hex_decode(stream)
+    if "A85" in filter_to_use or "ASCII85Decode" in filter_to_use:
+        return extract_inline__ascii85_decode(stream)
+    if "RL" in filter_to_use or "RunLengthDecode" in filter_to_use:
+        return extract_inline__run_length_decode(stream)
+    if "DCT" in filter_to_use or "DCTDecode" in filter_to_use:
+        return extract_inline__dct_decode(stream)
+    if filter_to_use == "not set":
+        return extract_inline__not_set(
+            settings=settings, stream=stream, content_stream=content_stream, saved_position=saved_position
+        )
+    return extract_inline_default(stream)
+
+
+def read_inline_image(
+        *,
+        content_stream: ContentStream,
+        stream: StreamType,
+        parsing_budget: StreamParsingBudget
+) -> dict[str, DictionaryObject | bytes]:
+    """Begin reading the inline image just after the "BI" - begin image."""
+    remaining_count: int | None = get_configuration().dictionary_maximum_element_count
+
+    # First read the dictionary of settings.
+    settings = _read_settings_dictionary(
+        content_stream=content_stream, stream=stream, parsing_budget=parsing_budget, remaining_count=remaining_count
+    )
+
+    # We are at the beginning of ID now.
+    read = stream.read(3)
+    assert read[:2] == b"ID"
+
+    filters = settings.get("/F", settings.get("/Filter", "not set"))
+    saved_position = stream.tell()
+
+    data = _handle_filters(
+        filters=filters, stream=stream, settings=settings, content_stream=content_stream, saved_position=saved_position
+    )
+
+    ei = stream.read(3)
+    # An `EI` at the very end of the stream yields only two bytes; rewinding
+    # unconditionally would step back into the marker (#3468).
+    if len(ei) == 3:
+        stream.seek(-1, 1)
+    ei_trailing = ei[2:3]
+    if ei[:2] != b"EI" or (ei_trailing != b"" and ei_trailing not in WHITESPACES):
+        # Deal with wrong/missing `EI` tags. Example: Wrong dimensions.
+        stream.seek(saved_position, 0)
+        data = extract_inline_default(stream)
+        ei = stream.read(3)
+        if len(ei) == 3:
+            stream.seek(-1, 1)
+        ei_trailing = ei[2:3]
+        if ei[:2] != b"EI" or (
+            ei_trailing != b"" and ei_trailing not in WHITESPACES
+        ):  # pragma: no cover
+            # Check the same condition again. This should never fail as
+            # edge cases are covered by `extract_inline_default` above,
+            # but check this to make sure that we are behind the `EI` afterwards.
+            raise PdfStreamError(
+                f"Could not extract inline image, even using fallback. Expected 'EI', got {ei!r}"
+            )
+
+    return {"settings": settings, "data": data}
