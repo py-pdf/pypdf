@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795257476143,
+  "lastUpdate": 1795259292720,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130091,6 +130091,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024115991087407508",
             "extra": "mean: 647.5759833999973 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "33f29dc968ed04b42e3a97d4bcd1f3fd8379596e",
+          "message": "BUG: Ignore a missing or null normal appearance when collecting fonts (#4442)\n\n* BUG: Ignore a missing or null normal appearance when collecting fonts\n\n* TST: Cover the normal appearance stream without the network\n\n* BUG: Resolve an indirect normal appearance when collecting fonts",
+          "timestamp": "2026-11-21T12:06:12+01:00",
+          "tree_id": "4dc1351ce7280c1edb42ca8fa25984f10219798e",
+          "url": "https://github.com/py-pdf/pypdf/commit/33f29dc968ed04b42e3a97d4bcd1f3fd8379596e"
+        },
+        "date": 1795259277835,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7091770560363746,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006855200703259725",
+            "extra": "mean: 269.6015813999992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.95330710749641,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007926503984520354",
+            "extra": "mean: 33.385295199999135 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3657630684719169,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01092078339092498",
+            "extra": "mean: 2.734010309400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 28.38813156737523,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015525410370715047",
+            "extra": "mean: 35.225988636365194 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18334311340930992,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020497480907942754",
+            "extra": "mean: 5.4542544926000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7688090786698418,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016250220768208104",
+            "extra": "mean: 565.3521412000032 msec\nrounds: 5"
           }
         ]
       }
