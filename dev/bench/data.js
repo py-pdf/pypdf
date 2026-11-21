@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795260951961,
+  "lastUpdate": 1795261092718,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -175303,6 +175303,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03871311532402193",
             "extra": "mean: 654.3973022000046 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "71480025+Harshil26202@users.noreply.github.com",
+            "name": "Harshil Kaneria",
+            "username": "Harshil26202"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b33ac277362955c37a80bd6e33169ef866938535",
+          "message": "BUG: Do not break the line for a text move that no text follows (#4432)\n\n* BUG: Do not break the line for a text move that no text follows\n\n* BUG: Use the font values of the move for the deferred line check\n\nAdd tests with the SF-424 form and the PDFKit sample.\n\n* MAINT: Use named types for the pending move and its font values\n\nReplace the plain tuples with a _FontState named tuple and a _PendingMove\ndataclass, and give the parametrized test cases readable IDs.",
+          "timestamp": "2026-11-21T12:33:48+01:00",
+          "tree_id": "849d09f4e224a51a10d38bef8f1fc97955c524da",
+          "url": "https://github.com/py-pdf/pypdf/commit/b33ac277362955c37a80bd6e33169ef866938535"
+        },
+        "date": 1795261075141,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 12.04414217854144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01807967840360091",
+            "extra": "mean: 83.02791391666393 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.03519360172429,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004145642472827536",
+            "extra": "mean: 28.542727960001457 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1427660196089413,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01290122612645699",
+            "extra": "mean: 875.0697718000083 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 43.47919164061305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0077928182231013395",
+            "extra": "mean: 22.999507632656165 msec\nrounds: 49"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3453203332688853,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017247051898219293",
+            "extra": "mean: 2.8958619104000034 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.280330516523906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008670593135850094",
+            "extra": "mean: 781.0483208000051 msec\nrounds: 5"
           }
         ]
       }
