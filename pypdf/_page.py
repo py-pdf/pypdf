@@ -2122,7 +2122,7 @@ class PageObject(DictionaryObject):
                 resources_dict = DictionaryObject()
             if self.pdf is not None and (font_resources := _get_font_resources(resources_dict)):
                 for font_name in font_resources:
-                    font_object = font_resources[font_name].get_object()
+                    font_object = font_resources[font_name]
                     if isinstance(font_object, DictionaryObject):
                         fonts[font_name] = Font.from_font_resource(font_object)
 

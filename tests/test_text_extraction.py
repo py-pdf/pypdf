@@ -843,6 +843,8 @@ def test_extract_text__none_objects():
 
     reader.pages[0].extract_text()
     reader.pages[8].extract_text()
+    # Page 8's /Font entries reference objects the file does not hold.
+    assert reader.pages[8].extract_text(extraction_mode="layout") == ""
 
 
 @pytest.mark.enable_socket
