@@ -1028,7 +1028,7 @@ def test_add_named_destination(pdf_file_path):
 
     # test get_object
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^PDF must be self$") as exc:
         writer.get_object(reader.pages[0].indirect_reference)
     assert exc.value.args[0] == "PDF must be self"
 
@@ -1776,7 +1776,7 @@ def test_write_empty_stream():
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Output\(stream=''\) is empty\.$") as exc:
         writer.write("")
     assert exc.value.args[0] == "Output(stream='') is empty."
 
@@ -1800,7 +1800,7 @@ def test_startup_dest():
     # irrelevant, just for coverage
     pdf_file_writer.root_object[NameObject("/OpenAction")][0] = NumberObject(0)
     pdf_file_writer.open_destination
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(Exception, match=r"^Invalid Destination \['/Fit'\]: ") as exc:
         del pdf_file_writer.root_object[NameObject("/OpenAction")][0]
         pdf_file_writer.open_destination
     assert "Invalid Destination" in str(exc.value)
@@ -2921,9 +2921,9 @@ def test_viewerpreferences():
         writer.root_object["/ViewerPreferences"]["/CenterWindow"] == False  # noqa: E712
     )
     assert v.print_area == "/CropBox"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^toto is an unacceptable value$"):
         v.non_fullscreen_pagemode = "toto"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^/toto is an unacceptable value$"):
         v.non_fullscreen_pagemode = "/toto"
     v.non_fullscreen_pagemode = "/UseOutlines"
     assert (
@@ -2950,7 +2950,7 @@ def test_viewerpreferences():
     v.num_copies = 1
     assert v.num_copies == 1
     assert v.print_pagerange is None
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^ArrayObject is expected$"):
         v.print_pagerange = "toto"
     v.print_pagerange = ArrayObject()
     assert len(v.print_pagerange) == 0
@@ -3225,7 +3225,7 @@ def test_replace_object():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     writer = PdfWriter(clone_from=reader)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^PDF must be self$"):
         writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     writer._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
@@ -3233,9 +3233,9 @@ def test_replace_object():
 
     # mainly for coverage
     reader = PdfReader(pdf_path)  # reload a new instance
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Cannot update PdfReader with external object$"):
         reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Cannot find referenced object$"):
         reader._replace_object(IndirectObject(9999, 9999, reader), reader.pages[0])
     reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)

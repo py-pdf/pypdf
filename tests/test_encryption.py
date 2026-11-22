@@ -293,7 +293,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
 
     # test with invalid algorithm name
     if alg == "ABCD":
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match=r"^Algorithm 'ABCD' NOT supported$") as exc:
             writer.encrypt(
                 user_password=user_password,
                 owner_password=owner_password,

@@ -592,7 +592,7 @@ def test_bytestringobject():
 
 def test_dictionaryobject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Key must be a PdfObject$") as exc:
         do["foo"] = NameObject("/GoTo")
     assert exc.value.args[0] == "Key must be a PdfObject"
 
@@ -604,21 +604,21 @@ def test_dictionaryobject_xmp_meta():
 
 def test_dictionaryobject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Value must be a PdfObject$") as exc:
         do[NameObject("/S")] = "/GoTo"
     assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Key must be a PdfObject$") as exc:
         do.setdefault("foo", NameObject("/GoTo"))
     assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Value must be a PdfObject$") as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
     assert exc.value.args[0] == "Value must be a PdfObject"
 
@@ -785,7 +785,7 @@ def test_textstringobject__numbers_as_input():
 
 def test_remove_child_not_in_tree():
     tree = TreeObject()
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Removed child does not appear to be a tree item$") as exc:
         tree.remove_child(ChildDummy())
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
 
@@ -795,11 +795,11 @@ def test_remove_child_not_in_that_tree():
     tree.indirect_reference = NullObject()
     child = TreeObject()
     child.indirect_reference = NullObject()
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Removed child does not appear to be a tree item$") as exc:
         child.remove_from_tree()
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
     tree.add_child(child, ReaderDummy())
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Removed child is not a member of this tree$") as exc:
         tree.remove_child(child)
     assert exc.value.args[0] == "Removed child is not a member of this tree"
 
@@ -816,7 +816,7 @@ def test_remove_child_not_found_in_tree():
     tree.add_child(child, ReaderDummy())
     child2 = ChildDummy(TreeObject())
     child2[NameObject("/Parent")] = tree
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Removal couldn't find item in tree$") as exc:
         tree.remove_child(child2)
     assert exc.value.args[0] == "Removal couldn't find item in tree"
 
@@ -1151,7 +1151,7 @@ def test_float_object_decimal_to_string(value, expected):
 
 def test_cloning(caplog):
     writer = PdfWriter()
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(Exception, match=r"^PdfObject does not implement \.clone so far$") as exc:
         PdfObject().clone(writer)
     assert "PdfObject does not implement .clone so far" in exc.value.args[0]
 
