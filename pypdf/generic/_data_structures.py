@@ -28,6 +28,7 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import contextlib
 import inspect
 import logging
 import os
@@ -1750,10 +1751,8 @@ class Field(TreeObject):
         )
         self.indirect_reference = data.indirect_reference
         for attr in field_attributes:
-            try:
+            with contextlib.suppress(KeyError):
                 self[NameObject(attr)] = data[attr]
-            except KeyError:
-                pass
         if isinstance(self.get("/V"), EncodedStreamObject):
             d = cast(EncodedStreamObject, self[NameObject("/V")]).get_data()
             if isinstance(d, bytes):
