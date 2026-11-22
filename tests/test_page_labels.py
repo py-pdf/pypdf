@@ -5,6 +5,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._page_labels import (
+    _get_label,
     get_label_from_nums,
     index2label,
     index2labels,
@@ -93,7 +94,7 @@ def test_number2uppercase_letter__repeats_the_same_letter(number, expected):
 
 
 def test_number2uppercase_letter():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Expecting a positive number\.$"):
         number2uppercase_letter(-1)
 
 
@@ -126,18 +127,18 @@ def test_index2label(caplog):
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(NullObject())
     assert index2label(r, 9) == "10"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^page_index_to must be greater or equal than key$"):
         nums_clear_range(
             NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"]
         )
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(8)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^A nums like array must have an even number of elements$"):
         nums_next(NumberObject(10), r.trailer["/Root"]["/PageLabels"]["/Nums"])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^A nums like array must have an even number of elements$"):
         nums_clear_range(
             NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"]
         )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^A nums like array must have an even number of elements$"):
         nums_insert(
             NumberObject(10),
             DictionaryObject(),
@@ -955,3 +956,8 @@ def test_page_labels__non_positive_start(caplog, start, expected):
 
     assert PdfReader(stream).page_labels == expected
     assert "Ignoring malformed page label entry in /Nums" in caplog.text
+
+
+def test_get_label__accumulated_limit() -> None:
+    label = _build_label(style="/D", start=20, prefix="A" * 510)
+    assert _get_label(value=label, start_index=1, index=420) == "421"

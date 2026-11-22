@@ -28,7 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from collections.abc import Callable
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, NamedTuple
 
 from .._codecs import encoding_dict_from_named_encoding
 from ..generic import DictionaryObject, TextStringObject
@@ -41,6 +42,23 @@ def _get_number_operand(operands: list[Any], index: int, default: float) -> floa
     if index < len(operands) and isinstance(operands[index], (int, float)):
         return float(operands[index])
     return default
+
+
+class _FontState(NamedTuple):
+    """Font values the line and word-gap checks use for the text shown before a move."""
+
+    font_resource: DictionaryObject | None
+    font_size: float
+    space_width: float
+    str_height: float
+
+
+@dataclass
+class _PendingMove:
+    """A Td, Tm or T* that no text has been shown after yet."""
+
+    str_widths: float  # Width of the text shown before the first of the moves
+    font_state: _FontState  # Font values at the first of the moves
 
 
 class TextExtraction:
@@ -78,8 +96,8 @@ class TextExtraction:
         self.memo_tm: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
 
         self.char_scale = 1.0
-        self.space_scale = 1.0
         self.char_spacing = 0.0
+        self.word_spacing = 0.0
         self._space_width: float = 500.0  # will be set correctly at first Tf
         # Right after a Tf, a word gap is a gap in either the previous or the new font.
         self._previous_font_space: float | None = None
@@ -91,6 +109,8 @@ class TextExtraction:
         self.font_size = 12.0  # init just in case of
         # (axis index, min, max) of baselines kept on the current extracted line.
         self._line_span: tuple[int, float, float] | None = None
+        # A Td, Tm or T* that no text has been shown after yet, see process_operation.
+        self._pending_move: _PendingMove | None = None
 
         # Text extraction variables
         self.text: str = ""
@@ -143,6 +163,7 @@ class TextExtraction:
         self.output = ""
         self.rtl_dir = False
         self._line_span = None
+        self._pending_move = None
 
     def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
@@ -150,16 +171,31 @@ class TextExtraction:
     def process_operation(self, operator: bytes, operands: list[Any]) -> None:
         if operator in self.operation_handlers:
             handler = self.operation_handlers[operator]
+            if operator == b"Tj" and self._pending_move is not None:
+                pending_move = self._pending_move
+                self._pending_move = None
+                self._post_process_text_operation(pending_move.str_widths, pending_move.font_state)
             str_widths = handler(operands)
 
-            # Post-process operations that affect text positioning
-            if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
+            # Post-process operations that affect text positioning. A move only matters once
+            # text is shown from the new position, so it is compared then: a move that is not
+            # followed by text, like the T* that ends each text object written by ReportLab,
+            # must not break the line when the next text object continues on it.
+            # The font values are taken at the first move, as when moves were compared right away,
+            # so a smaller font set before a superscript does not make its rise a line break.
+            if operator in {b"Td", b"Tm", b"T*"}:
+                if self._pending_move is None:
+                    self._pending_move = _PendingMove(str_widths or 0.0, self._font_state())
+                else:
+                    self._pending_move.str_widths += str_widths or 0.0
+            elif operator == b"Tj":
                 self._post_process_text_operation(str_widths or 0.0)
 
     def process_tj_offset(self, offset: float, space_width: float) -> None:
         """Add a space for a word gap in a TJ array and count the offset in the text width."""
         # The offset moved the pen, so it counts towards the width and the added space does not.
-        str_widths = self._actual_str_size["str_widths"] - offset * self.font_size
+        # Like the glyph widths, it is scaled horizontally.
+        str_widths = self._actual_str_size["str_widths"] - offset * self.font_size * self.char_scale
         # A Tf just before this TJ has already moved the text to the output.
         previous = self.text or self.output
         # A positive offset moves the next glyph back (kerning), so only a negative one can be a gap.
@@ -167,26 +203,32 @@ class TextExtraction:
             self.process_operation(b"Tj", [" "])
         self._actual_str_size["str_widths"] = str_widths
 
-    def _post_process_text_operation(self, str_widths: float) -> None:
-        """Handle common post-processing for text positioning operations."""
-        text_was_empty = self.text == ""
+    def _font_state(self) -> _FontState:
+        """Return the font values the line and word-gap checks use for the current text."""
         space_width = self.font_size * self._space_width
         if self._previous_font_space is not None:
             space_width = min(space_width, self._previous_font_space)
+        return _FontState(self.font_resource, self.font_size, space_width, self._actual_str_size["str_height"])
+
+    def _post_process_text_operation(self, str_widths: float, font_state: _FontState | None = None) -> None:
+        """Handle common post-processing for text positioning operations."""
+        text_was_empty = self.text == ""
+        if font_state is None:
+            font_state = self._font_state()
         try:
             self.text, self.output, self.cm_prev, self.tm_prev, self._line_span = crlf_space_check(
                 self.text,
                 (self.cm_prev, self.tm_prev),
                 (self.cm_matrix, self.tm_matrix),
                 (self.memo_cm, self.memo_tm),
-                self.font_resource,
+                font_state.font_resource,
                 self.orientations,
                 self.output,
-                self.font_size,
+                font_state.font_size,
                 self.visitor_text,
                 str_widths,
-                self.compute_str_widths(space_width),
-                self._actual_str_size["str_height"],
+                self.compute_str_widths(font_state.space_width),
+                font_state.str_height,
                 self._line_span,
             )
             if text_was_empty or self.text == "":
@@ -209,7 +251,7 @@ class TextExtraction:
         visitor_text: Callable[[Any, Any, Any, Any, Any], None] | None,
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
-        text_operands, is_str_operands, font_widths = get_text_operands(
+        text_operands, is_str_operands, font_widths, glyph_count, space_count = get_text_operands(
             operands, cm_matrix, tm_matrix, font, orientations
         )
         if is_str_operands:
@@ -227,8 +269,11 @@ class TextExtraction:
                 visitor_text,
             )
             self.output += completed
-        # Tc is in text space units and applies to every glyph.
-        actual_str_size["str_widths"] += font_widths * font_size + 1000 * self.char_spacing * len(text_operands)
+        # Character and word spacing are given in unscaled text space units,
+        # while the widths are kept in thousandths of them. Horizontal scaling
+        # applies to the whole advance (Section 9.4.4 of the PDF 2.0 specification).
+        spacing = self.char_spacing * glyph_count + self.word_spacing * space_count
+        actual_str_size["str_widths"] += (font_widths * font_size + spacing * 1000) * self.char_scale
         actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size
 
@@ -261,8 +306,8 @@ class TextExtraction:
                 self.font,
                 self.font_size,
                 self.char_scale,
-                self.space_scale,
                 self.char_spacing,
+                self.word_spacing,
                 self.TL,
             )
         )
@@ -276,8 +321,8 @@ class TextExtraction:
                 self.font,
                 self.font_size,
                 self.char_scale,
-                self.space_scale,
                 self.char_spacing,
+                self.word_spacing,
                 self.TL,
             ) = self.cm_stack.pop()
         except MemoryError:  # pragma: no cover  # TODO: BLE001
@@ -310,7 +355,7 @@ class TextExtraction:
 
     def _handle_tw(self, operands: list[Any]) -> None:
         """Handle Tw (Set word spacing) operation - Table 5.2 page 398."""
-        self.space_scale = 1.0 + _get_number_operand(operands, 0, 0.0)
+        self.word_spacing = _get_number_operand(operands, 0, 0.0)
 
     def _handle_tl(self, operands: list[Any]) -> None:
         """Handle TL (Set Text Leading) operation - Table 5.2 page 398."""

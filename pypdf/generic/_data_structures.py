@@ -28,15 +28,15 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import contextlib
 import inspect
 import logging
 import os
 import re
 import sys
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import cache
 from io import BytesIO
-from math import ceil
 from typing import (
     Any,
     NamedTuple,
@@ -81,13 +81,6 @@ from ._base import (
     is_null_or_none,
 )
 from ._fit import Fit
-from ._image_inline import (
-    extract_inline__ascii85_decode,
-    extract_inline__ascii_hex_decode,
-    extract_inline__dct_decode,
-    extract_inline__run_length_decode,
-    extract_inline_default,
-)
 from ._utils import StreamParsingBudget, read_hex_string_from_stream, read_string_from_stream
 
 if sys.version_info >= (3, 11):
@@ -300,7 +293,14 @@ class ArrayObject(list[Any], PdfObject):
                 stream.seek(-len(rest), 1)
             stream.seek(-1, 1)
             # read and append object
-            arr.append(read_object(stream, pdf, forced_encoding, parsing_budget=parsing_budget))
+            try:
+                obj = read_object(stream, pdf, forced_encoding, parsing_budget=parsing_budget)
+            except LimitReachedError:
+                # Always propagate security issues.
+                raise
+            except (MemoryError, RecursionError) as exc:
+                raise PdfReadError("Error reading PDF file.") from exc
+            arr.append(obj)
         return arr
 
 
@@ -405,8 +405,11 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     continue
                 ignore_fields[x] -= 1  # type: ignore[operator]
             x += 1
-        #  Check if this is a chain list, we need to loop to prevent recur
-        if any(
+        #  Check if this is a chain list, we need to loop to prevent recur.
+        #  Only indirect objects are chain nodes: a direct dictionary has no
+        #  object number for the cycle detection below, so its links are
+        #  cloned by the generic loop at the end.
+        if getattr(src, "indirect_reference", None) is not None and any(
             field not in ignore_fields
             and field in src
             and isinstance(src.raw_get(field), IndirectObject)
@@ -885,7 +888,7 @@ class TreeObject(DictionaryObject):
     def insert_child(
         self,
         child: Any,
-        before: Any,
+        before: IndirectObject | None,
         pdf: PdfWriterProtocol,
         inc_parent_counter: Callable[..., Any] | None = None,
     ) -> IndirectObject:
@@ -895,7 +898,6 @@ class TreeObject(DictionaryObject):
         assert child.indirect_reference is not None, "mypy"
         child_reference: IndirectObject = child.indirect_reference
 
-        prev: DictionaryObject | None
         if "/First" not in self:  # no child yet
             self[NameObject("/First")] = child_reference
             self[NameObject("/Count")] = NumberObject(0)
@@ -907,40 +909,64 @@ class TreeObject(DictionaryObject):
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
             return child_reference
-        prev = cast("DictionaryObject", self["/Last"])
-
-        visited: set[int] = set()
-        while prev.indirect_reference != before:
-            prev_id = id(prev)
-            if prev_id in visited:
-                raise LimitReachedError("Detected cycle in tree structure.")
-            visited.add(prev_id)
-            if "/Next" in prev:
-                prev = cast("TreeObject", prev["/Next"])
-                continue
-
-            # append at the end
-            prev[NameObject("/Next")] = cast("TreeObject", child_reference)
-            child_obj[NameObject("/Prev")] = prev.indirect_reference
-            child_obj[NameObject("/Parent")] = self.indirect_reference
-            if "/Next" in child_obj:
-                del child_obj["/Next"]
-            self[NameObject("/Last")] = child_reference
-            inc_parent_counter(self, child_obj.get("/Count", 1))
-            return child_reference
-        try:  # insert as first or in the middle
-            assert isinstance(prev["/Prev"], DictionaryObject)
-            prev["/Prev"][NameObject("/Next")] = child_reference
-            child_obj[NameObject("/Prev")] = prev["/Prev"]
-        except MemoryError:  # pragma: no cover  # TODO: BLE001
-            raise
-        except Exception:  # it means we are inserting in first position
-            child_obj.pop("/Next", None)
-        child_obj[NameObject("/Next")] = prev
-        prev[NameObject("/Prev")] = child_reference
         child_obj[NameObject("/Parent")] = self.indirect_reference
+
+        if before is not None:
+            # The children are linked from /First to /Last by /Next (ISO 32000-2:2020, 12.3.3).
+            previous: DictionaryObject | None = None
+            node = cast("DictionaryObject", self["/First"])
+            visited: set[int] = set()
+            while True:
+                if id(node) in visited:
+                    raise LimitReachedError("Detected cycle in tree structure.")
+                visited.add(id(node))
+                if node.indirect_reference == before:
+                    self._link_child_before(
+                        child_obj=child_obj, child_reference=child_reference, previous=previous, node=node
+                    )
+                    inc_parent_counter(self, child_obj.get("/Count", 1))
+                    return child_reference
+                if "/Next" not in node:
+                    break
+                previous = node
+                node = cast("DictionaryObject", node["/Next"])
+            # `before` is no child of this node: append at the end.
+
+        last = cast("DictionaryObject", self["/Last"])
+        visited = set()
+        while "/Next" in last:
+            if id(last) in visited:
+                raise LimitReachedError("Detected cycle in tree structure.")
+            visited.add(id(last))
+            last = cast("DictionaryObject", last["/Next"])
+        last[NameObject("/Next")] = child_reference
+        child_obj[NameObject("/Prev")] = last.indirect_reference
+        child_obj.pop("/Next", None)
+        self[NameObject("/Last")] = child_reference
         inc_parent_counter(self, child_obj.get("/Count", 1))
         return child_reference
+
+    def _link_child_before(
+        self,
+        *,
+        child_obj: DictionaryObject,
+        child_reference: IndirectObject,
+        previous: DictionaryObject | None,
+        node: DictionaryObject,
+    ) -> None:
+        """
+        Link ``child_obj`` into the list of children directly in front of ``node``.
+
+        ``previous`` is the child in front of ``node``, or None if ``node`` is the first child.
+        """
+        if previous is None:
+            self[NameObject("/First")] = child_reference
+            child_obj.pop("/Prev", None)
+        else:
+            previous[NameObject("/Next")] = child_reference
+            child_obj[NameObject("/Prev")] = previous.indirect_reference
+        child_obj[NameObject("/Next")] = node.indirect_reference
+        node[NameObject("/Prev")] = child_reference
 
     def _remove_node_from_tree(
         self, *, previous: Any, previous_reference: Any, current: Any, last: Any
@@ -1053,20 +1079,54 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         del child_obj[NameObject("/Prev")]
 
 
-class _FontFileCharacterMap(NamedTuple):
-    """The character map pypdf._cmap derived from an embedded font program. See #4156."""
+def _iter_name_tree(tree: DictionaryObject) -> Iterator[Any]:
+    """Yield the nodes of a name tree in key order, each object once, without changing it."""
+    pending: list[Any] = [tree]
+    visited: set[int] = set()
+    while pending:
+        node = pending.pop(0).get_object()
+        if id(node) in visited:
+            continue
+        visited.add(id(node))
+        yield node
+        if not isinstance(node, DictionaryObject):
+            continue
+        kids = node.get("/Kids", NullObject()).get_object()
+        if isinstance(kids, ArrayObject):
+            pending[:0] = kids
 
-    digest: bytes
-    """SHA-256 digest of the decoded font data the map was derived from."""
-    map_dict: dict[Any, Any]
-    int_entry: list[int]
+
+def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
+    """
+    Turn a name tree into a single node holding all its names, in place.
+
+    A node holds either /Kids or /Names (ISO 32000-2, 7.9.6), so a name added
+    next to /Kids would be ignored by readers.
+    """
+    names = ArrayObject()
+    for node in _iter_name_tree(tree):
+        if not isinstance(node, DictionaryObject):
+            continue
+        node_names = node.get("/Names", NullObject()).get_object()
+        if isinstance(node_names, ArrayObject):
+            names.extend(node_names)
+    tree.pop(NameObject("/Kids"), None)
+    tree.pop(NameObject("/Limits"), None)
+    tree[NameObject("/Names")] = names
+    return names
+
+
+class _FontFileEncoding(NamedTuple):
+    """The encoding pypdf._cmap derived from an embedded font program. See #4156."""
+    digest: bytes  # SHA-256 digest of the decoded font data the encoding was derived from
+    embedded_font_encoding: dict[int, str]
 
 
 class StreamObject(DictionaryObject):
-    _font_file_character_map: _FontFileCharacterMap | None = None
+    _font_file_encoding: _FontFileEncoding | None = None
     """
-    The character map pypdf._cmap derived from this stream as an embedded font program. Parsing a CFF font
-    program with fontTools is expensive, and the same program is reached from every font resource and page
+    The encoding pypdf._cmap derived from this stream as an embedded font program. Parsing a font program
+    with fontTools is expensive, and the same program is reached from every font resource and page
     referencing it. See #4156.
     """
 
@@ -1520,7 +1580,9 @@ class ContentStream(DecodedStreamObject):
                     # mechanism is required, of course... thanks buddy...
                     assert operands == []
                     self._check_limits(parsing_budget=parsing_budget, token_decrement=2)
-                    ii = self._read_inline_image(stream, parsing_budget=parsing_budget)
+
+                    from ._image_inline import read_inline_image  # noqa: PLC0415
+                    ii = read_inline_image(content_stream=self, stream=stream, parsing_budget=parsing_budget)
                     self._operations.append((ii, b"INLINE IMAGE"))
                 else:
                     self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
@@ -1537,106 +1599,6 @@ class ContentStream(DecodedStreamObject):
             else:
                 self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
                 operands.append(read_object(stream, None, self.forced_encoding, parsing_budget=parsing_budget))
-
-    def _read_inline_image(self, stream: StreamType, parsing_budget: StreamParsingBudget) -> dict[str, Any]:
-        # begin reading just after the "BI" - begin image
-        # first read the dictionary of settings.
-        settings = DictionaryObject()
-        remaining_count: int | None = get_configuration().dictionary_maximum_element_count
-        while True:
-            tok = read_non_whitespace(stream)
-            if not tok:
-                raise PdfReadError("Unexpected end of stream.")
-            stream.seek(-1, 1)
-            if tok == b"I":
-                # "ID" - begin of image data
-                break
-            remaining_count = self._check_limits(
-                remaining_elements=remaining_count, parsing_budget=parsing_budget, token_decrement=2
-            )
-
-            key = read_object(stream, self.pdf, parsing_budget=parsing_budget)
-            _ = read_non_whitespace(stream)
-            stream.seek(-1, 1)
-            value = read_object(stream, self.pdf, parsing_budget=parsing_budget)
-            settings[key] = value
-        # left at beginning of ID
-        tmp = stream.read(3)
-        assert tmp[:2] == b"ID"
-        filtr = settings.get("/F", settings.get("/Filter", "not set"))
-        savpos = stream.tell()
-        if isinstance(filtr, list):
-            filtr = filtr[0] if filtr else "not set"  # used forencoding
-        if not isinstance(filtr, str):
-            # A valid filter is a name or an array of names; anything else
-            # cannot match the abbreviations below, so treat it as unfiltered.
-            filtr = "not set"
-        if "AHx" in filtr or "ASCIIHexDecode" in filtr:
-            data = extract_inline__ascii_hex_decode(stream)
-        elif "A85" in filtr or "ASCII85Decode" in filtr:
-            data = extract_inline__ascii85_decode(stream)
-        elif "RL" in filtr or "RunLengthDecode" in filtr:
-            data = extract_inline__run_length_decode(stream)
-        elif "DCT" in filtr or "DCTDecode" in filtr:
-            data = extract_inline__dct_decode(stream)
-        elif filtr == "not set":
-            cs = settings.get("/CS", "")
-            if isinstance(cs, list):
-                cs = cs[0] if cs else ""
-            if not isinstance(cs, str):
-                cs = ""
-            if "RGB" in cs:
-                lcs: float = 3
-            elif "CMYK" in cs:
-                lcs = 4
-            else:
-                bits = settings.get(
-                    "/BPC",
-                    8 if cs in {"/I", "/G", "/Indexed", "/DeviceGray"} else -1,
-                )
-                if isinstance(bits, (int, float)) and bits > 0:
-                    lcs = bits / 8.0
-                else:
-                    data = extract_inline_default(stream)
-                    lcs = -1
-            width = settings.get("/W")
-            height = settings.get("/H")
-            if lcs > 0 and isinstance(width, int) and isinstance(height, int):
-                data = stream.read(ceil(width * lcs) * height)
-            elif lcs > 0:
-                # Without usable dimensions the raw sample length is unknown;
-                # fall back to scanning for the `EI` marker.
-                data = extract_inline_default(stream)
-            # Move to the `EI` if possible.
-            ei = read_non_whitespace(stream)
-            stream.seek(-1, 1)
-        else:
-            data = extract_inline_default(stream)
-
-        ei = stream.read(3)
-        # An `EI` at the very end of the stream yields only two bytes; rewinding
-        # unconditionally would step back into the marker (#3468).
-        if len(ei) == 3:
-            stream.seek(-1, 1)
-        ei_trailing = ei[2:3]
-        if ei[:2] != b"EI" or (ei_trailing != b"" and ei_trailing not in WHITESPACES):
-            # Deal with wrong/missing `EI` tags. Example: Wrong dimensions specified above.
-            stream.seek(savpos, 0)
-            data = extract_inline_default(stream)
-            ei = stream.read(3)
-            if len(ei) == 3:
-                stream.seek(-1, 1)
-            ei_trailing = ei[2:3]
-            if ei[:2] != b"EI" or (
-                ei_trailing != b"" and ei_trailing not in WHITESPACES
-            ):  # pragma: no cover
-                # Check the same condition again. This should never fail as
-                # edge cases are covered by `extract_inline_default` above,
-                # but check this to make sure that we are behind the `EI` afterwards.
-                raise PdfStreamError(
-                    f"Could not extract inline image, even using fallback. Expected 'EI', got {ei!r}"
-                )
-        return {"settings": settings, "data": data}
 
     # This overrides the parent method
     def get_data(self) -> bytes:
@@ -1789,10 +1751,8 @@ class Field(TreeObject):
         )
         self.indirect_reference = data.indirect_reference
         for attr in field_attributes:
-            try:
+            with contextlib.suppress(KeyError):
                 self[NameObject(attr)] = data[attr]
-            except KeyError:
-                pass
         if isinstance(self.get("/V"), EncodedStreamObject):
             d = cast(EncodedStreamObject, self[NameObject("/V")]).get_data()
             if isinstance(d, bytes):
