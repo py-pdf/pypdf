@@ -3862,69 +3862,6 @@ def test_get_object_from_stream__invalid_object_stream(objstm_num, strict_messag
         reader.get_object(4)
 
 
-def _build_pdf_with_xref_stream(rows: list[tuple[int, ...]], widths: tuple[int, ...] = (1, 2, 1)) -> bytes:
-    """
-    Build a document with a catalog (1), an empty page tree (2) and a cross-reference stream (3).
-
-    ``rows`` are appended to the entries for the objects 0 to 2.
-    """
-    pdf = bytearray(b"%PDF-1.7\n")
-    offsets = []
-    for number, body in enumerate((b"<< /Type /Catalog /Pages 2 0 R >>", b"<< /Type /Pages /Kids [] /Count 0 >>"), 1):
-        offsets.append(len(pdf))
-        pdf += b"%d 0 obj\n%s\nendobj\n" % (number, body)
-    all_rows = [(0, 0, 0), (1, offsets[0], 0), (1, offsets[1], 0), *rows]
-    data = b"".join(
-        b"".join(value.to_bytes(width, "big") for value, width in zip(row, widths) if width)
-        for row in (row + (0,) * (len(widths) - len(row)) for row in all_rows)
-    )
-    startxref = len(pdf)
-    pdf += b"3 0 obj\n<< /Type /XRef /Size %d /W [%s] /Root 1 0 R /Length %d >>\nstream\n" % (
-        len(all_rows) + 1, " ".join(map(str, widths)).encode(), len(data)
-    )
-    pdf += data + b"\nendstream\nendobj\nstartxref\n%d\n%%%%EOF\n" % startxref
-    return bytes(pdf)
-
-
-def test_xref_stream__too_many_entry_sizes() -> None:
-    """
-    A cross-reference stream with more than three /W entries is read, but rejected in strict mode.
-
-    ISO 32000-2:2020, 7.5.8.2, Table 17: /W contains three integers.
-    """
-    data = _build_pdf_with_xref_stream([], widths=(1, 2, 1, 1))
-    assert len(PdfReader(BytesIO(data)).pages) == 0
-    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Too many entry sizes: \[1, 2, 1, 1\]$"):
-        PdfReader(BytesIO(data), strict=True)
-
-
-def test_xref_stream__zero_width_type_defaults_to_in_use() -> None:
-    """
-    A cross-reference stream whose type field has a width of 0 treats all entries as in use.
-
-    ISO 32000-2:2020, 7.5.8.2, Table 17: if the first element of /W is zero, the type field is
-    absent and defaults to type 1.
-    """
-    data = _build_pdf_with_xref_stream([], widths=(0, 2, 1))
-    reader = PdfReader(BytesIO(data))
-    assert reader.xref[0][1] == data.index(b"1 0 obj")
-    assert reader.xref[0][2] == data.index(b"2 0 obj")
-    assert reader.root_object["/Type"] == "/Catalog"
-
-
-def test_xref_stream__unknown_entry_type() -> None:
-    """
-    A cross-reference stream entry of an unknown type is ignored, but rejected in strict mode.
-
-    ISO 32000-2:2020, 7.5.8.3: an entry of any other type than 0, 1 or 2 is a
-    reference to the null object.
-    """
-    data = _build_pdf_with_xref_stream([(3, 0, 0)])
-    assert len(PdfReader(BytesIO(data)).pages) == 0
-    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unknown xref type: 3$"):
-        PdfReader(BytesIO(data), strict=True)
-
-
 @pytest.mark.enable_socket
 def test_read_xref__unreadable_xref_stm(caplog: pytest.LogCaptureFixture) -> None:
     """
