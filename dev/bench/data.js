@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795372592629,
+  "lastUpdate": 1795372742068,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -176755,6 +176755,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035139364683030715",
             "extra": "mean: 689.1001351999989 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "54c6b01eaef8760796d81916e56717674ee64c04",
+          "message": "TST: Cover parsing and tree edge cases of the generic data structures (#4473)\n\n* TST: Cover parsing and tree edge cases of the generic data structures\n\nAdd tests for branches of pypdf/generic/_data_structures.py without\ncoverage so far:\n\n* DictionaryObject.read_from_stream(): a RecursionError while reading a\n  value becomes a PdfReadError; NUL bytes between entries are whitespace;\n  spaces between the `stream` keyword and the line break are accepted,\n* TreeObject.insert_child() removes stale /Next and /Prev entries of the\n  inserted child,\n* StreamObject.flate_encode() with a /Filter array and a /DecodeParms\n  value that is not an array,\n* Field with a stream as /V value (bytes, no data, unexpected type),\n* Destination with an unexpected number of fit arguments for /FitH,\n  /FitBH, /FitV, /FitBV, /Fit and /FitB.\n\nTogether with \"MAINT: Remove unreachable code\", which removes the\nunreachable NUL check, pypdf/generic/_data_structures.py is fully\ncovered afterwards.\n\nThe NUL test complements #4189, which fixed the NUL handling of\nArrayObject.read_from_stream.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* MAINT: Remove unreachable branches of Field.__init__\n\nField.__init__() decoded a /V stream with branches for get_data()\nreturning None and for any other type, which raised\nException(\"Should never happen\"). EncodedStreamObject.get_data() and\ndecode_stream_data() are annotated to return bytes, and both only ever\npass bytes on, so neither branch could run; mypy now checks that\nassumption instead of a runtime check. The branches came from #1636\nand #2100, when one variable held first bytes and then str.\n\nThe tests now build the /V stream with flate_encode() instead of\nsetting its decoded data directly, so they only use data a PDF file\ncan have: the test for data that is not bytes is removed, and the test\nfor a stream without data uses an empty stream.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Start function name with verb - sorry about that\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-22T19:34:42+01:00",
+          "tree_id": "3a6b38be829f2e57604c14fa837689f90efae54b",
+          "url": "https://github.com/py-pdf/pypdf/commit/54c6b01eaef8760796d81916e56717674ee64c04"
+        },
+        "date": 1795372726159,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.037570034083668,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036562660161214293",
+            "extra": "mean: 90.59965163636848 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 34.80971870637857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005301711096256703",
+            "extra": "mean: 28.727609333331355 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0438005555483143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018693741632992047",
+            "extra": "mean: 958.0374284000015 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 45.60470230541684,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005210788580327847",
+            "extra": "mean: 21.9275633749992 msec\nrounds: 48"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.38835909446951206,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06047958442532779",
+            "extra": "mean: 2.5749364807999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3465997413238389,
+            "unit": "iter/sec",
+            "range": "stddev: 0.046696434789613134",
+            "extra": "mean: 742.6111630000037 msec\nrounds: 5"
           }
         ]
       }
