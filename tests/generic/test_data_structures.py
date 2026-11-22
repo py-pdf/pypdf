@@ -1029,14 +1029,14 @@ def test_dictionary_object__read_from_stream__spaces_after_stream_keyword() -> N
     assert result.get_data() == b"abc"
 
 
-def _tree_with_writer() -> tuple[PdfWriter, TreeObject]:
+def _create_tree_with_writer() -> tuple[PdfWriter, TreeObject]:
     writer = PdfWriter()
     tree = TreeObject()
     writer._add_object(tree)
     return writer, tree
 
 
-def _tree_node(writer: PdfWriter, **links: IndirectObject) -> DictionaryObject:
+def _create_tree_node(writer: PdfWriter, **links: IndirectObject) -> DictionaryObject:
     node = DictionaryObject({NameObject(f"/{key}"): value for key, value in links.items()})
     writer._add_object(node)
     return node
@@ -1049,9 +1049,9 @@ def test_tree_object__insert_first_child_drops_stale_siblings() -> None:
     The child has /Next and /Prev entries pointing to a node that is not in the tree.
     ISO 32000-2:2020, 12.3.3, Table 151: /Prev and /Next link the items of one level.
     """
-    writer, tree = _tree_with_writer()
+    writer, tree = _create_tree_with_writer()
     stale = writer._add_object(DictionaryObject())
-    child = _tree_node(writer, Next=stale, Prev=stale)
+    child = _create_tree_node(writer, Next=stale, Prev=stale)
 
     tree.insert_child(child, None, writer)
 
@@ -1068,11 +1068,11 @@ def test_tree_object__append_child_drops_stale_next() -> None:
     The child has a /Next entry pointing to a node that is not in the tree.
     ISO 32000-2:2020, 12.3.3, Table 151: /Next is absent for the last item of a level.
     """
-    writer, tree = _tree_with_writer()
-    first = _tree_node(writer)
+    writer, tree = _create_tree_with_writer()
+    first = _create_tree_node(writer)
     tree.insert_child(first, None, writer)
     stale = writer._add_object(DictionaryObject())
-    second = _tree_node(writer, Next=stale)
+    second = _create_tree_node(writer, Next=stale)
 
     tree.insert_child(second, None, writer)
 
@@ -1100,7 +1100,7 @@ def test_stream_object__flate_encode__filter_array_with_non_array_decode_parms()
     assert encoded["/DecodeParms"] == ArrayObject([NullObject(), NullObject()])
 
 
-def _field_with_stream_value(data: bytes) -> Field:
+def _create_field_with_stream_value(data: bytes) -> Field:
     stream = DecodedStreamObject()
     stream.set_data(data)
     value = stream.flate_encode()
@@ -1116,7 +1116,7 @@ def test_field__stream_value() -> None:
     ISO 32000-2:2020, 12.7.5.3: since PDF 1.5, the text of a text field may be held
     in a stream in /V.
     """
-    assert _field_with_stream_value(b"text")["/V"] == TextStringObject("text")
+    assert _create_field_with_stream_value(b"text")["/V"] == TextStringObject("text")
 
 
 def test_field__stream_value_without_data() -> None:
@@ -1126,7 +1126,7 @@ def test_field__stream_value_without_data() -> None:
     ISO 32000-2:2020, 12.7.5.3: since PDF 1.5, the text of a text field may be held
     in a stream in /V.
     """
-    assert _field_with_stream_value(b"")["/V"] == TextStringObject("")
+    assert _create_field_with_stream_value(b"")["/V"] == TextStringObject("")
 
 
 @pytest.mark.parametrize(
