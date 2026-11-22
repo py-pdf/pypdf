@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795372742068,
+  "lastUpdate": 1795373202341,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131015,6 +131015,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0021176444312893277",
             "extra": "mean: 485.8379054000068 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "deea9f4be85583360747c57af90e4f0337c090ae",
+          "message": "BUG: Keep the writer's state when used as a context manager (#4488)\n\nCloses #2912\n\n__enter__() ran __init__() again without arguments and only carried the\n_cloned flag over, so `with PdfWriter(...) as writer:` threw away\neverything the constructor had done:\n\n    with PdfWriter(clone_from=reader) as writer:\n        len(writer.pages)  # 0, the clone was discarded\n    with PdfWriter(strict=True) as writer:\n        writer.strict      # False\n    with PdfWriter(\"out.pdf\", clone_from=\"in.pdf\") as writer:\n        ...                # out.pdf was never written\n\n__enter__() now only records that the writer is used with 'with'.\n__exit__() skips writing only when the document was cloned from fileobj\nitself, so a file the writer read from is still not overwritten, but an\noutput file given next to clone_from is written.\n\nA writer given a non-empty file now has that file's pages inside the\n'with' block (it was empty before), as the docstring of fileobj says.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-22T19:44:53+01:00",
+          "tree_id": "d4e81c961adb452693077e5f7cbce298cbc0c15f",
+          "url": "https://github.com/py-pdf/pypdf/commit/deea9f4be85583360747c57af90e4f0337c090ae"
+        },
+        "date": 1795373189786,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.392258502431706,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010926472425835044",
+            "extra": "mean: 227.6733027999981 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 34.85759006619085,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008421513933797928",
+            "extra": "mean: 28.68815652777792 msec\nrounds: 36"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.41393376833980167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025419628254579645",
+            "extra": "mean: 2.415845423800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 30.07599945205092,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008538652801874844",
+            "extra": "mean: 33.24910287999785 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.21551977690445825,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022596854873802433",
+            "extra": "mean: 4.639945411799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.855896940077157,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0061561867784377736",
+            "extra": "mean: 538.8230231999984 msec\nrounds: 5"
           }
         ]
       }
