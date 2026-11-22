@@ -319,11 +319,13 @@ class Font:
         space (ISO 32000-2:2020, 9.6.4), while the widths of the other simple fonts are always
         in thousandths of a text space unit. A font matrix of [0.001 0 0 0.001 0 0] gives 1.
         """
-        font_matrix = pdf_font_dict.get("/FontMatrix")
-        if font_matrix is not None:
-            font_matrix = font_matrix.get_object()
-        if isinstance(font_matrix, ArrayObject) and font_matrix and isinstance(font_matrix[0], (int, float)):
-            scale = abs(float(font_matrix[0])) * 1000
+        font_matrix = pdf_font_dict.get("/FontMatrix", ArrayObject()).get_object()
+        if (
+            isinstance(font_matrix, ArrayObject)
+            and len(font_matrix) == 6
+            and isinstance(horizontal_scale := font_matrix[0], (int, float))
+        ):
+            scale = abs(float(horizontal_scale)) * 1000
             if math.isfinite(scale) and scale > 0:
                 return scale
         return 1.0

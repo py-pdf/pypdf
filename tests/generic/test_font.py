@@ -193,9 +193,11 @@ def test_type3_font_widths_follow_the_font_matrix(font_matrix: list[float] | Non
 @pytest.mark.parametrize(
     "font_matrix",
     [
-        pytest.param(ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0), FloatObject(1)]), id="zero-scale"),
-        pytest.param(ArrayObject([NameObject("/x"), NumberObject(0)]), id="non-numeric"),
-        pytest.param(ArrayObject(), id="empty"),
+        pytest.param(ArrayObject(NumberObject(value) for value in [0, 0, 0, 1, 0, 0]), id="zero-scale"),
+        pytest.param(
+            ArrayObject([NameObject("/x"), *(NumberObject(value) for value in [0, 0, 1, 0, 0])]), id="non-numeric"
+        ),
+        pytest.param(ArrayObject([FloatObject(0.001)]), id="too-short"),
         pytest.param(NumberObject(1), id="not-an-array"),
     ],
 )
