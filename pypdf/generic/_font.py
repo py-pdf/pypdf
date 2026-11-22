@@ -471,7 +471,6 @@ class Font:
             if descendant_fonts:
                 d_font = descendant_fonts[0].get_object()
                 if isinstance(d_font, DictionaryObject):
-                    descendant_fonts[0] = d_font
                     cls._collect_cid_character_widths(d_font=d_font, current_widths=character_widths)
                     if "/DW" in d_font:
                         character_widths["default"] = cast(int, d_font["/DW"].get_object())
