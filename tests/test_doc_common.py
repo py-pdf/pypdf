@@ -1357,8 +1357,22 @@ def test_get_outline__entry_count():
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(10)  # Previously 75 seconds.
+@pytest.mark.timeout(30)
 def test_get_outline__speed():
+    """
+    An outline of 50,000 items that share one child is read in linear time.
+
+    Before #4455, every item copied the set of visited items, which is quadratic.
+    Measured with Python 3.13 on an Intel i7-6700HQ:
+
+    * before #4455: 45.6 s, and 53.1 s with --cov=pypdf
+    * after #4455: 2.9 s, and 7.9 s with --cov=pypdf (best of 3)
+
+    Coverage makes the linear version 2.7 times slower, and CI runs the tests with
+    coverage and with one worker per core, so the timeout leaves room above 7.9 s.
+    The quadratic part runs in C (set.copy()), which coverage hardly slows down.
+    ISO 32000-2:2020, 12.3.3: outline items are linked by /First and /Next.
+    """
     writer = PdfWriter()
     inner = writer._add_object(DictionaryObject({NameObject("/Title"): TextStringObject("Inner")}))
     outlines = [
