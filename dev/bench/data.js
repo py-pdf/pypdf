@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795357225888,
+  "lastUpdate": 1795357373337,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -175567,6 +175567,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.057519564138622685",
             "extra": "mean: 942.0920072000058 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "81588100+zeyadrabie@users.noreply.github.com",
+            "name": "Zeyad Rabie",
+            "username": "zeyadrabie"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bf927ab58b1be7cf23614210d349c7ecb5665d42",
+          "message": "MAINT: Remove Ruff ignore PT011 (#4493)\n\nAdd match= to the 57 pytest.raises() calls that Ruff PT011 flags in tests/ and stop ignoring PT011.\n\nPart of #3327.\n\nCo-authored-by: Zeyad <81588100+Corencas@users.noreply.github.com>",
+          "timestamp": "2026-11-22T15:18:27+01:00",
+          "tree_id": "ccc6320b2f8b80252cd3ded8c3270643134a9e7b",
+          "url": "https://github.com/py-pdf/pypdf/commit/bf927ab58b1be7cf23614210d349c7ecb5665d42"
+        },
+        "date": 1795357359085,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.317680706677505,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01950767046019909",
+            "extra": "mean: 69.84371425000546 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.271337142884565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010610042674330232",
+            "extra": "mean: 36.668535714278775 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1070194886058295,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026743961222262018",
+            "extra": "mean: 903.3264638000105 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 37.36066563376579,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016512250845248187",
+            "extra": "mean: 26.76611840384934 msec\nrounds: 52"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.3223300230874159,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1114845394026219",
+            "extra": "mean: 3.102410350799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0865428118239446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05378278766701422",
+            "extra": "mean: 920.3502974000003 msec\nrounds: 5"
           }
         ]
       }
