@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795362180318,
+  "lastUpdate": 1795371498306,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130817,6 +130817,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0034631553905634686",
             "extra": "mean: 386.91202820000683 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "158475962+Krushil-Dhankecha@users.noreply.github.com",
+            "name": "Krushil Dhankecha",
+            "username": "Krushil-Dhankecha"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "260ea1b0104395cb18d14d1215722fd12dcb6484",
+          "message": "ROB: Skip a font resource whose reference resolves to nothing (#4481)\n\n* ROB: Skip a font resource whose reference resolves to nothing\n\nPageObject._layout_mode_fonts() called get_object() on every entry of the\n/Font resources. A reference to an object the file does not hold resolves\nto None, so extract_text(extraction_mode=\"layout\") raised AttributeError\ninstead of skipping the font, while the plain mode already tolerated it.\ntika-957721.pdf fails this way on 92 of its 104 pages; its page 8 is the\none test_extract_text__none_objects already covers for plain extraction.\n\n* Drop the redundant get_object() call instead of guarding its result\n\nReviewer's suggestion: DictionaryObject.__getitem__ already resolves, so\nthe second call is what met the None. Removing it leaves the existing\nisinstance check to skip the entry. One test instead of two.",
+          "timestamp": "2026-11-22T19:15:55+01:00",
+          "tree_id": "a8851022dad9fc8d7af4fbfadc9a4c1f9e41f8a7",
+          "url": "https://github.com/py-pdf/pypdf/commit/260ea1b0104395cb18d14d1215722fd12dcb6484"
+        },
+        "date": 1795371483930,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7349029653255528,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00854567359074961",
+            "extra": "mean: 365.6436855999985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.728395244982856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001761772908253144",
+            "extra": "mean: 43.99782691304365 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24260054409183646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04915402489503693",
+            "extra": "mean: 4.122002297000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.96019753724831,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017786182250625914",
+            "extra": "mean: 45.5369309999979 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14656417054443419,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0230522225249829",
+            "extra": "mean: 6.822949949399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5433635102827734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017827811414383964",
+            "extra": "mean: 647.9354949999959 msec\nrounds: 5"
           }
         ]
       }
