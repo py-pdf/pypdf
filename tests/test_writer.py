@@ -3768,6 +3768,43 @@ def test_auto_write(tmp_path):
     assert target.stat().st_size > 0
 
 
+def test_context_manager_keeps_cloned_document():
+    """A writer used with 'with' keeps the document given as clone_from."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    with PdfWriter(clone_from=reader) as writer:
+        assert len(writer.pages) == 1
+        assert writer.pages[0].extract_text() == reader.pages[0].extract_text()
+
+
+def test_context_manager_keeps_constructor_arguments():
+    """A writer used with 'with' keeps its constructor arguments."""
+    with PdfWriter(strict=True) as writer:
+        assert writer.strict
+
+    with PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True) as writer:
+        assert writer.incremental
+        assert len(writer.pages) == 1
+
+
+def test_context_manager_writes_output_when_cloning_another_file(tmp_path):
+    """With an output file and clone_from, leaving 'with' writes the clone to the output file."""
+    target = tmp_path / "out.pdf"
+    with PdfWriter(target, clone_from=RESOURCE_ROOT / "crazyones.pdf") as writer:
+        writer.add_blank_page(100, 100)
+    assert len(PdfReader(target).pages) == 2
+
+
+def test_context_manager_keeps_file_it_cloned_from(tmp_path):
+    """A writer that cloned a non-empty file has its pages and does not overwrite that file when leaving 'with'."""
+    source = tmp_path / "source.pdf"
+    shutil.copy(RESOURCE_ROOT / "crazyones.pdf", source)
+    original = source.read_bytes()
+    with PdfWriter(source) as writer:
+        assert len(writer.pages) == 1
+        writer.add_blank_page(100, 100)
+    assert source.read_bytes() == original
+
+
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
 @pytest.mark.enable_socket
 def test_inline_image_q_operator_handling(tmp_path):
