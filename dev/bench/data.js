@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795357964466,
+  "lastUpdate": 1795358101232,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -175699,6 +175699,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05378278766701422",
             "extra": "mean: 920.3502974000003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "vuthanhdat.toank19@gmail.com",
+            "name": "iamdatvt94",
+            "username": "iamdatvt94"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9b6a17d0dfdc2c95160f84b0e60f03058fd016e0",
+          "message": "MAINT: Enable Ruff SIM105 (#4470)\n\nCo-authored-by: iamdatvt94 <18534522+iamdatvt94@users.noreply.github.com>",
+          "timestamp": "2026-11-22T15:30:25+01:00",
+          "tree_id": "c279ac15f43d18a918b6ec411f57ec3d6a162294",
+          "url": "https://github.com/py-pdf/pypdf/commit/9b6a17d0dfdc2c95160f84b0e60f03058fd016e0"
+        },
+        "date": 1795358085004,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 15.265634442630128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01732945434400972",
+            "extra": "mean: 65.50661249999834 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 29.189704441432788,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009107238869056882",
+            "extra": "mean: 34.25865452000153 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1345905629550939,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03087032933491024",
+            "extra": "mean: 881.3752137999927 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 36.468213088884305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014978535465830356",
+            "extra": "mean: 27.421140640005888 msec\nrounds: 50"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.32569829127718797,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09356712997867749",
+            "extra": "mean: 3.070326209199982 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1191598966964655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03407488543590902",
+            "extra": "mean: 893.5273708000068 msec\nrounds: 5"
           }
         ]
       }
