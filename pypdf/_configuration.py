@@ -121,6 +121,12 @@ class Configuration:
     named_destinations_maximum_depth: int = 100
     """The maximum allowed depth for a named destination name tree."""
 
+    annotations_maximum_per_page: int = 100_000
+    """
+    The maximum allowed number of annotations processed per page when merging
+    or appending pages.
+    """
+
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
 

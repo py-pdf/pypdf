@@ -19,10 +19,11 @@ from pypdf import (
     PdfReader,
     PdfWriter,
     Transformation,
+    apply_configuration,
 )
 from pypdf._utils import get_stream_data
 from pypdf._writer import _NamedDestinationIndex
-from pypdf.annotations import Link
+from pypdf.annotations import Link, Text
 from pypdf.constants import FieldDictionaryAttributes
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -5050,3 +5051,35 @@ def test_reset_translation__indirect_object() -> None:
     writer.append(reader)
 
     assert writer.pages[0].raw_get("/Resources") != writer.pages[1].raw_get("/Resources")
+
+
+def test_append__annotations_maximum_per_page() -> None:
+    """Appending a page with too many annotations must fail closed."""
+    source = PdfWriter()
+    source.add_blank_page(200, 200)
+    for i in range(20):
+        source.add_annotation(0, Text(rect=(0, 0, 10, 10), text=f"a{i}"))
+    reader = PdfReader(_write_to_bytes(source))
+
+    dest = PdfWriter()
+    with apply_configuration(annotations_maximum_per_page=5), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum annotations per page exceeded: 20 > 5\.$",
+    ):
+        dest.append(reader)
+
+
+def test_merge_page__annotations_maximum_per_page() -> None:
+    """Page.merge_page must honor the annotations-per-page budget."""
+    left = PdfWriter()
+    left_page = left.add_blank_page(200, 200)
+    right = PdfWriter()
+    right.add_blank_page(200, 200)
+    for i in range(15):
+        right.add_annotation(0, Text(rect=(0, 0, 10, 10), text=f"a{i}"))
+
+    with apply_configuration(annotations_maximum_per_page=5), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum annotations per page exceeded: 15 > 5\.$",
+    ):
+        left_page.merge_page(right.pages[0])
