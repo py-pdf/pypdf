@@ -390,7 +390,7 @@ def test_read_previous_line2():
 
 
 def test_get_max_pdf_version_header():
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Neither b'' nor b'PDF-1\.2' are proper headers$") as exc:
         _get_max_pdf_version_header(b"", b"PDF-1.2")
     assert exc.value.args[0] == "Neither b'' nor b'PDF-1.2' are proper headers"
 
@@ -634,7 +634,7 @@ def test_parse_datetime_edge_cases(text, expected):
 
 
 def test_parse_datetime_err():
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(ValueError, match=r"^Can not convert date: D:20210408T054711Z$") as ex:
         parse_iso8824_date("D:20210408T054711Z")
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
@@ -738,7 +738,7 @@ def test_version_compare_equal_str():
 
 def test_version_compare_lt_str():
     a = Version("1.0")
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Version cannot be compared against <class 'str'>$") as exc:
         a < "1.0"  # noqa: B015
     assert exc.value.args[0] == "Version cannot be compared against <class 'str'>"
 

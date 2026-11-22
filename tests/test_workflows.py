@@ -177,7 +177,7 @@ def test_rotate_45():
     with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match=r"^Rotation angle must be a multiple of 90$") as exc:
             page.rotate(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
@@ -289,14 +289,14 @@ def test_orientations():
     p.extract_text("", "", 0, 200)
     p.extract_text()
     assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^Invalid positional parameter None$"):
         p.extract_text(None)
     p.extract_text("", 0)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^Invalid positional parameter None$"):
         p.extract_text("", "", None)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^Invalid positional parameter $"):
         p.extract_text("", "", 0, "")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^Invalid positional parameter $"):
         p.extract_text(0, "")
 
     p.extract_text(0, 0)
@@ -1219,20 +1219,20 @@ def test_get_page_showing_field():
 
     # Exceptions:
     # Invalid Object
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field type is invalid$") as exc:
         reader.get_pages_showing_field(None)
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field type is invalid$") as exc:
         writer.get_pages_showing_field(None)
     assert "Field type is invalid" in exc.value.args[0]
 
     # Damage Field
     del reader.trailer["/Root"]["/AcroForm"]["/Fields"][1].get_object()["/FT"]
     del writer._root_object["/AcroForm"]["/Fields"][1].get_object()["/FT"]
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field is not valid$") as exc:
         reader.get_pages_showing_field(
             reader.trailer["/Root"]["/AcroForm"]["/Fields"][1]
         )
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field is not valid$") as exc:
         writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
     assert "Field is not valid" in exc.value.args[0]
 
@@ -1243,11 +1243,11 @@ def test_get_page_showing_field():
     del writer._root_object["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()[
         "/Parent"
     ]
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field is not valid$") as exc:
         reader.get_pages_showing_field(
             reader.trailer["/Root"]["/AcroForm"]["/Fields"][1]
         )
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field is not valid$") as exc:
         writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
 
     # remove "/P" (optional)

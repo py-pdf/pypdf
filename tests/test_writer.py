@@ -19,10 +19,11 @@ from pypdf import (
     PdfReader,
     PdfWriter,
     Transformation,
+    apply_configuration,
 )
 from pypdf._utils import get_stream_data
 from pypdf._writer import _NamedDestinationIndex
-from pypdf.annotations import Link
+from pypdf.annotations import Link, Text
 from pypdf.constants import FieldDictionaryAttributes
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -563,6 +564,62 @@ def test_remove_text(input_path, pdf_file_path):
         writer.write(output_stream)
 
 
+@pytest.mark.parametrize(
+    ("to_delete", "expected"),
+    [
+        (ObjectDeletionFlag.TEXT | ObjectDeletionFlag.DRAWING_IMAGES, (False, False, 1)),
+        (ObjectDeletionFlag.TEXT | ObjectDeletionFlag.LINKS, (False, True, 0)),
+        (ObjectDeletionFlag.ALL_ANNOTATIONS | ObjectDeletionFlag.IMAGES, (True, False, 0)),
+    ],
+)
+def test_remove_objects_from_page__combined_flags(to_delete, expected):
+    """Every part of a combined ObjectDeletionFlag is removed."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(200, 200)
+    writer._merge_content_stream_to_page(page, b"BT /F1 12 Tf (hello) Tj ET 0 0 50 50 re f")
+    writer.add_annotation(0, Link(rect=(0, 0, 20, 20), url="https://example.com"))
+
+    writer.remove_objects_from_page(writer.pages[0], to_delete)
+
+    data = writer.pages[0].get_contents().get_data()
+    assert (b"Tj" in data, b"re" in data, len(writer.pages[0].get("/Annots", []))) == expected
+
+
+def test_remove_objects_from_page__list_keeps_text_filters():
+    """text_filters also apply when to_delete is a list."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(200, 200)
+    writer._merge_content_stream_to_page(page, b"BT /F1 12 Tf (drop) Tj /F2 12 Tf (keep) Tj ET")
+
+    writer.remove_objects_from_page(
+        writer.pages[0], [ObjectDeletionFlag.TEXT], text_filters={"font_ids": ["/F1"]}
+    )
+
+    data = writer.pages[0].get_contents().get_data()
+    assert b"(drop)" not in data
+    assert b"(keep)" in data
+
+
+def test_remove_objects_from_page__text_filters_only_narrow_text():
+    """text_filters select which text goes, not which drawing operators go."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(200, 200)
+    writer._merge_content_stream_to_page(
+        page, b"BT /F1 12 Tf (drop) Tj /F2 12 Tf (keep) Tj ET 0 0 50 50 re f"
+    )
+
+    writer.remove_objects_from_page(
+        writer.pages[0],
+        ObjectDeletionFlag.TEXT | ObjectDeletionFlag.DRAWING_IMAGES,
+        text_filters={"font_ids": ["/F1"]},
+    )
+
+    data = writer.pages[0].get_contents().get_data()
+    assert b"(drop)" not in data
+    assert b"(keep)" in data
+    assert b"re" not in data
+
+
 def test_remove_text_all_operators(pdf_file_path):
     stream = (
         b"BT "
@@ -972,13 +1029,54 @@ def test_add_named_destination(pdf_file_path):
 
     # test get_object
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^PDF must be self$") as exc:
         writer.get_object(reader.pages[0].indirect_reference)
     assert exc.value.args[0] == "PDF must be self"
 
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
+
+
+def test_add_named_destination__kids_name_tree():
+    """Named destinations added to a /Kids-based name tree are kept."""
+    other = PdfWriter()
+    other.add_blank_page(100, 100)
+    other.add_named_destination("chapter-b", 0)
+    other_stream = BytesIO()
+    other.write(other_stream)
+
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "pdflatex-outline.pdf")
+    existing = set(writer.named_destinations)
+    writer.add_named_destination("appendix", 1)
+    writer.append(other_stream)
+
+    output = BytesIO()
+    writer.write(output)
+    assert set(PdfReader(output).named_destinations) == existing | {"appendix", "chapter-b"}
+    dests = writer.root_object["/Names"]["/Dests"]
+    assert "/Kids" not in dests
+    assert dests["/Names"].count("chapter-b") == 1
+
+
+def test_get_named_dest_root__kids_cycle():
+    """A /Kids cycle or a non-dictionary kid in the name tree is skipped."""
+    writer = PdfWriter()
+    dests = DictionaryObject()
+    dests_ref = writer._add_object(dests)
+    dests[NameObject("/Kids")] = ArrayObject([dests_ref, NullObject()])
+    writer.root_object[NameObject("/Names")] = DictionaryObject({NameObject("/Dests"): dests_ref})
+    assert writer.get_named_dest_root() == []
+    assert "/Kids" not in dests
+
+
+def test_append__kids_name_tree_does_not_duplicate_names():
+    """Appending names which already exist in a /Kids-based name tree does not duplicate them."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "pdflatex-outline.pdf")
+    existing = list(writer.named_destinations)
+    writer.append(RESOURCE_ROOT / "pdflatex-outline.pdf")
+    keys = writer.get_named_dest_root()[::2]
+    assert sorted(keys) == sorted(existing)
 
 
 @pytest.mark.parametrize(
@@ -1679,7 +1777,7 @@ def test_write_empty_stream():
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Output\(stream=''\) is empty\.$") as exc:
         writer.write("")
     assert exc.value.args[0] == "Output(stream='') is empty."
 
@@ -1703,7 +1801,7 @@ def test_startup_dest():
     # irrelevant, just for coverage
     pdf_file_writer.root_object[NameObject("/OpenAction")][0] = NumberObject(0)
     pdf_file_writer.open_destination
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(Exception, match=r"^Invalid Destination \['/Fit'\]: ") as exc:
         del pdf_file_writer.root_object[NameObject("/OpenAction")][0]
         pdf_file_writer.open_destination
     assert "Invalid Destination" in str(exc.value)
@@ -2824,9 +2922,9 @@ def test_viewerpreferences():
         writer.root_object["/ViewerPreferences"]["/CenterWindow"] == False  # noqa: E712
     )
     assert v.print_area == "/CropBox"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^toto is an unacceptable value$"):
         v.non_fullscreen_pagemode = "toto"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^/toto is an unacceptable value$"):
         v.non_fullscreen_pagemode = "/toto"
     v.non_fullscreen_pagemode = "/UseOutlines"
     assert (
@@ -2853,7 +2951,7 @@ def test_viewerpreferences():
     v.num_copies = 1
     assert v.num_copies == 1
     assert v.print_pagerange is None
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^ArrayObject is expected$"):
         v.print_pagerange = "toto"
     v.print_pagerange = ArrayObject()
     assert len(v.print_pagerange) == 0
@@ -3128,7 +3226,7 @@ def test_replace_object():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     writer = PdfWriter(clone_from=reader)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^PDF must be self$"):
         writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     writer._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
@@ -3136,9 +3234,9 @@ def test_replace_object():
 
     # mainly for coverage
     reader = PdfReader(pdf_path)  # reload a new instance
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Cannot update PdfReader with external object$"):
         reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Cannot find referenced object$"):
         reader._replace_object(IndirectObject(9999, 9999, reader), reader.pages[0])
     reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
@@ -4953,3 +5051,35 @@ def test_reset_translation__indirect_object() -> None:
     writer.append(reader)
 
     assert writer.pages[0].raw_get("/Resources") != writer.pages[1].raw_get("/Resources")
+
+
+def test_append__annotations_maximum_per_page() -> None:
+    """Appending a page with too many annotations must fail closed."""
+    source = PdfWriter()
+    source.add_blank_page(200, 200)
+    for i in range(20):
+        source.add_annotation(0, Text(rect=(0, 0, 10, 10), text=f"a{i}"))
+    reader = PdfReader(_write_to_bytes(source))
+
+    dest = PdfWriter()
+    with apply_configuration(annotations_maximum_per_page=5), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum annotations per page exceeded: 20 > 5\.$",
+    ):
+        dest.append(reader)
+
+
+def test_merge_page__annotations_maximum_per_page() -> None:
+    """Page.merge_page must honor the annotations-per-page budget."""
+    left = PdfWriter()
+    left_page = left.add_blank_page(200, 200)
+    right = PdfWriter()
+    right.add_blank_page(200, 200)
+    for i in range(15):
+        right.add_annotation(0, Text(rect=(0, 0, 10, 10), text=f"a{i}"))
+
+    with apply_configuration(annotations_maximum_per_page=5), pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum annotations per page exceeded: 15 > 5\.$",
+    ):
+        left_page.merge_page(right.pages[0])

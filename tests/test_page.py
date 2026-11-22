@@ -22,6 +22,7 @@ from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfEr
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    DecodedStreamObject,
     DictionaryObject,
     FloatObject,
     IndirectObject,
@@ -314,7 +315,7 @@ def test_compress_content_streams(pdf_path, password):
 
     # test from reader should fail as adding_object out of
     # PdfWriter not possible
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Page must be part of a PdfWriter$"):
         reader.pages[0].compress_content_streams()
 
 
@@ -491,7 +492,7 @@ def test_page_properties():
 def test_page_rotation():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     page = writer.pages[0]
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Rotation angle must be a multiple of 90$") as exc:
         page.rotate(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
@@ -521,7 +522,7 @@ def test_page_indirect_rotation():
 
 def test_page_scale():
     op = Transformation()
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Either sx or sy must be specified$") as exc:
         op.scale()
     assert exc.value.args[0] == "Either sx or sy must be specified"
 
@@ -856,6 +857,81 @@ def test_get_fonts__appearance_states():
     )
 
 
+@pytest.mark.parametrize(
+    ("appearance", "expected"),
+    [
+        pytest.param(DictionaryObject(), None, id="no-normal-appearance"),
+        pytest.param(DictionaryObject({NameObject("/D"): DictionaryObject()}), None, id="down-appearance-only"),
+        pytest.param(DictionaryObject({NameObject("/N"): NullObject()}), None, id="null"),
+        pytest.param(
+            DictionaryObject({NameObject("/N"): NumberObject(3)}),
+            "The normal appearance is not a stream or a dictionary: 3",
+            id="number",
+        ),
+    ],
+)
+def test_get_fonts__malformed_appearance(caplog, appearance, expected):
+    """A missing, null or malformed normal appearance /N collects no font."""
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    resources = DictionaryObject({NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})})
+    widget = DictionaryObject({NameObject("/Resources"): resources, NameObject("/AP"): appearance})
+
+    # The font of the annotation itself is still collected
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
+    if expected is None:
+        assert caplog.text == ""
+    else:
+        assert expected in caplog.text
+
+
+def test_get_fonts__appearance_stream():
+    """The fonts of the normal appearance stream of an annotation are collected."""
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    stream = DecodedStreamObject()
+    stream[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})
+    })
+    widget = DictionaryObject({NameObject("/AP"): DictionaryObject({NameObject("/N"): stream})})
+
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
+
+
+@pytest.mark.parametrize("state_dictionary", [False, True], ids=["stream", "state-dictionary"])
+def test_get_fonts__indirect_normal_appearance(caplog, state_dictionary):
+    """
+    The fonts of a normal appearance /N given as an indirect reference are collected.
+
+    The normal appearance is a stream or a dictionary of streams per state
+    (ISO 32000-2:2020, 12.5.5), and any dictionary value may be an indirect
+    reference (ISO 32000-2:2020, 7.3.10).
+    """
+    writer = PdfWriter()
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    stream = DecodedStreamObject()
+    stream[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})
+    })
+    normal = writer._add_object(stream)
+    if state_dictionary:
+        normal = writer._add_object(DictionaryObject({NameObject("/Yes"): normal}))
+    widget = DictionaryObject({NameObject("/AP"): DictionaryObject({NameObject("/N"): normal})})
+
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
+    assert caplog.text == ""
+
+
 def test_annotation_getter():
     pdf_path = RESOURCE_ROOT / "commented.pdf"
     reader = PdfReader(pdf_path)
@@ -904,7 +980,7 @@ def test_annotation_setter(pdf_file_path):
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Invalid page object$"):
         writer.add_page(DictionaryObject())
 
     # Act
@@ -1745,7 +1821,7 @@ def test_recursive_get_page_from_node():
         writer.add_page(writer.pages[0])
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
     writer.insert_page(writer.pages[0], -1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Invalid index value$"):
         writer.insert_page(writer.pages[0], -10)
 
 

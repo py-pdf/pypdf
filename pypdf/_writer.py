@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import decimal
 import enum
 import re
@@ -52,6 +53,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+from ._configuration import get_configuration
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject, Transformation
@@ -137,6 +139,9 @@ class ObjectDeletionFlag(enum.IntFlag):
     INLINE_IMAGES = enum.auto()
     DRAWING_IMAGES = enum.auto()
     IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
+
+
+_TEXT_SHOWING_OPERATORS = (b"Tj", b"TJ", b"'", b'"')
 
 
 # Building the index reads the whole /Names array, which costs more than it saves
@@ -454,10 +459,8 @@ class PdfWriter(PdfDocCommon):
     @_info.setter
     def _info(self, value: IndirectObject | DictionaryObject | None) -> None:
         if value is None:
-            try:
+            with contextlib.suppress(KeyError, AttributeError):
                 self._objects[self._info_obj.indirect_reference.idnum - 1] = None  # type: ignore[union-attr]
-            except (KeyError, AttributeError):
-                pass
             self._info_obj = None
         else:
             if self._info_obj is None:
@@ -872,10 +875,8 @@ class PdfWriter(PdfDocCommon):
     @open_destination.setter
     def open_destination(self, dest: str | Destination | PageObject | None) -> None:
         if dest is None:
-            try:
+            with contextlib.suppress(KeyError):
                 del self._root_object["/OpenAction"]
-            except KeyError:
-                pass
         elif isinstance(dest, str):
             self._root_object[NameObject("/OpenAction")] = TextStringObject(dest)
         elif isinstance(dest, Destination):
@@ -1351,10 +1352,8 @@ class PdfWriter(PdfDocCommon):
             self._info_obj = self._add_object(inf.clone(self))
         # else: _info_obj = None done in clone_reader_document_root()
 
-        try:
+        with contextlib.suppress(AttributeError):
             self._ID = cast(ArrayObject, reader._ID).clone(self)
-        except AttributeError:
-            pass
 
         if callable(after_page_append):
             for page in cast(
@@ -2179,24 +2178,25 @@ class PdfWriter(PdfDocCommon):
         """
         if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
-                self.remove_objects_from_page(page, to_d)
-            return None
+                self.remove_objects_from_page(page, to_d, text_filters)
+            return
         assert isinstance(to_delete, ObjectDeletionFlag)
-
         if to_delete & ObjectDeletionFlag.LINKS:
-            return self._remove_annots_from_page(page, ("/Link",))
+            self._remove_annots_from_page(page, ("/Link",))
         if to_delete & ObjectDeletionFlag.ATTACHMENTS:
-            return self._remove_annots_from_page(
+            self._remove_annots_from_page(
                 page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
             )
         if to_delete & ObjectDeletionFlag.OBJECTS_3D:
-            return self._remove_annots_from_page(page, ("/3D",))
+            self._remove_annots_from_page(page, ("/3D",))
         if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
-            return self._remove_annots_from_page(page, None)
+            self._remove_annots_from_page(page, None)
+        if not to_delete & (ObjectDeletionFlag.TEXT | ObjectDeletionFlag.IMAGES):
+            return
 
         jump_operators = []
         if to_delete & ObjectDeletionFlag.DRAWING_IMAGES:
-            jump_operators = [
+            jump_operators += [
                 b"w", b"J", b"j", b"M", b"d", b"i",
                 b"W", b"W*",
                 b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n",
@@ -2204,7 +2204,7 @@ class PdfWriter(PdfDocCommon):
                 b"sh"
             ]
         if to_delete & ObjectDeletionFlag.TEXT:
-            jump_operators = [b"Tj", b"TJ", b"'", b'"']
+            jump_operators += list(_TEXT_SHOWING_OPERATORS)
 
         if not isinstance(page, PageObject):
             page = PageObject(self, page.indirect_reference)  # pragma: no cover
@@ -2221,7 +2221,7 @@ class PdfWriter(PdfDocCommon):
                 text_filters=text_filters
             )
             page.replace_contents(content)
-        return None
+        return
 
     def _remove_objects_from_page__clean(
             self,
@@ -2255,13 +2255,13 @@ class PdfWriter(PdfDocCommon):
                 )
             ):
                 if (
-                    not to_delete & ObjectDeletionFlag.TEXT
-                    or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
-                    or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
+                    operator in _TEXT_SHOWING_OPERATORS
+                    and text_filters
+                    and font_id not in font_ids_to_delete
                 ):
-                    del content.operations[i]
-                else:
                     i += 1
+                else:
+                    del content.operations[i]
             else:
                 i += 1
         content.get_data()  # this ensures ._data is rebuilt from the .operations
@@ -2326,10 +2326,8 @@ class PdfWriter(PdfDocCommon):
                                 if k1 not in ["/Length", "/Filter", "/DecodeParms"]
                             }
                         )
-                        try:
+                        with contextlib.suppress(AttributeError):
                             content.indirect_reference = o.indirect_reference
-                        except AttributeError:  # pragma: no cover
-                            pass
                     stack.append(elt)
 
                     # clean subforms
@@ -2526,7 +2524,7 @@ class PdfWriter(PdfDocCommon):
 
     def _get_page_layout(self) -> LayoutType | None:
         try:
-            return cast(LayoutType, self._root_object["/PageLayout"])
+            return cast(LayoutType, self._root_object[CatalogAttributes.PAGE_LAYOUT])
         except KeyError:
             return None
 
@@ -2564,7 +2562,7 @@ class PdfWriter(PdfDocCommon):
                     layouts=", ".join(self._valid_layouts),
                 )
             layout = NameObject(layout)
-        self._root_object.update({NameObject("/PageLayout"): layout})
+        self._root_object.update({NameObject(CatalogAttributes.PAGE_LAYOUT): layout})
 
     def set_page_layout(self, layout: LayoutType) -> None:
         """
@@ -2634,7 +2632,7 @@ class PdfWriter(PdfDocCommon):
 
     def _get_page_mode(self) -> PagemodeType | None:
         try:
-            return cast(PagemodeType, self._root_object["/PageMode"])
+            return cast(PagemodeType, self._root_object[CatalogAttributes.PAGE_MODE])
         except KeyError:
             return None
 
@@ -2673,7 +2671,7 @@ class PdfWriter(PdfDocCommon):
                     modes=", ".join(self._valid_modes),
                 )
             mode_name = NameObject(mode)
-        self._root_object.update({NameObject("/PageMode"): mode_name})
+        self._root_object.update({NameObject(CatalogAttributes.PAGE_MODE): mode_name})
 
     def add_annotation(
         self,
@@ -3042,13 +3040,7 @@ class PdfWriter(PdfDocCommon):
         named_destinations: _NamedDestinationIndex,
     ) -> None:
         arr: Any = dest.dest_array
-        if "/Names" in self._root_object and named_destinations.contains(
-            cast(
-                DictionaryObject,
-                cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
-            ).get("/Names", DictionaryObject()),
-            dest["/Title"],
-        ):
+        if "/Names" in self._root_object and named_destinations.contains(self.get_named_dest_root(), dest["/Title"]):
             # already exists: should not duplicate it
             pass
         elif dest["/Page"] is None or isinstance(dest["/Page"], NullObject):
@@ -3244,6 +3236,12 @@ class PdfWriter(PdfDocCommon):
                 annots_type=annots.__class__.__name__,
             )
             return outlist
+        configuration = get_configuration()
+        if len(annots) > configuration.annotations_maximum_per_page:
+            raise LimitReachedError(
+                f"Maximum annotations per page exceeded: "
+                f"{len(annots)} > {configuration.annotations_maximum_per_page}."
+            )
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
