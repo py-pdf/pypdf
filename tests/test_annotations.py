@@ -196,7 +196,7 @@ def test_polygon(pdf_file_path):
     writer = PdfWriter()
     writer.add_page(page)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^A polygon needs at least 1 vertex with two coordinates$"):
         Polygon(
             vertices=[],
         )
@@ -355,7 +355,13 @@ def test_link(pdf_file_path):
 
     # Act
     # Part 1: Too many args
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"^Either 'url' or 'target_page_index' have to be provided\. "
+            r"url='https://martin-thoma\.com/', target_page_index=3$"
+        ),
+    ):
         Link(
             rect=(50, 550, 200, 650),
             url="https://martin-thoma.com/",
@@ -363,7 +369,10 @@ def test_link(pdf_file_path):
         )
 
     # Part 2: Too few args
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=r"^Either 'url' or 'target_page_index' have to be provided\. Both were None\.$",
+    ):
         Link(
             rect=(50, 550, 200, 650),
         )

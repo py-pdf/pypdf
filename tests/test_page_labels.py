@@ -94,7 +94,7 @@ def test_number2uppercase_letter__repeats_the_same_letter(number, expected):
 
 
 def test_number2uppercase_letter():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Expecting a positive number\.$"):
         number2uppercase_letter(-1)
 
 
@@ -127,18 +127,18 @@ def test_index2label(caplog):
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(NullObject())
     assert index2label(r, 9) == "10"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^page_index_to must be greater or equal than key$"):
         nums_clear_range(
             NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"]
         )
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(8)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^A nums like array must have an even number of elements$"):
         nums_next(NumberObject(10), r.trailer["/Root"]["/PageLabels"]["/Nums"])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^A nums like array must have an even number of elements$"):
         nums_clear_range(
             NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"]
         )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^A nums like array must have an even number of elements$"):
         nums_insert(
             NumberObject(10),
             DictionaryObject(),

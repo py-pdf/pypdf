@@ -40,6 +40,28 @@ from pypdf._utils import logger_warning
 from pypdf.errors import PdfStreamError
 
 crypt_provider = ("cryptography", __version__)
+_warned_rc4_key_sizes: set[int] = set()
+
+
+def _needs_rc4_key_length_fallback(key: bytes) -> bool:
+    """Detect and warn about PDF RC4 keys that cryptography cannot handle."""
+    key_size = len(key) * 8
+    # ISO 32000-1:2008, Table 20: RC4 file keys are 40 to 128 bits in steps of 8.
+    # Section 7.6.2, Algorithm 1(d), caps the derived object key at 16 bytes.
+    if not 40 <= key_size <= 128 or key_size in ARC4.key_sizes:
+        return False
+
+    if key_size not in _warned_rc4_key_sizes:
+        _warned_rc4_key_sizes.add(key_size)
+        logger_warning(
+            (
+                "cryptography does not support %(key_size)d-bit RC4 keys; "
+                "falling back to the pure-Python RC4 implementation."
+            ),
+            source=__name__,
+            key_size=key_size,
+        )
+    return True
 
 
 class CryptRC4(CryptBase):
@@ -51,7 +73,7 @@ class CryptRC4(CryptBase):
     def __init__(self, key: bytes) -> None:
         self._key = key
         self._fallback = None
-        if CryptRC4._is_rc4_supported:
+        if CryptRC4._is_rc4_supported and not _needs_rc4_key_length_fallback(key):
             self.cipher = Cipher(ARC4(key), mode=None)
         else:
             self._fallback = self._pure_python_rc4(key)
@@ -140,7 +162,7 @@ class CryptAES(CryptBase):
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:
-    if CryptRC4._is_rc4_supported:
+    if CryptRC4._is_rc4_supported and not _needs_rc4_key_length_fallback(key):
         try:
             encryptor = Cipher(ARC4(key), mode=None).encryptor()
             return encryptor.update(data) + encryptor.finalize()
@@ -150,7 +172,7 @@ def rc4_encrypt(key: bytes, data: bytes) -> bytes:
 
 
 def rc4_decrypt(key: bytes, data: bytes) -> bytes:
-    if CryptRC4._is_rc4_supported:
+    if CryptRC4._is_rc4_supported and not _needs_rc4_key_length_fallback(key):
         try:
             decryptor = Cipher(ARC4(key), mode=None).decryptor()
             return decryptor.update(data) + decryptor.finalize()
