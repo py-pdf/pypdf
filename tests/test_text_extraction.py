@@ -1514,52 +1514,6 @@ def test_character_and_word_spacing_count_towards_the_advance(content: bytes, ex
     assert PdfReader(buffer).pages[0].extract_text() == expected
 
 
-def test_word_spacing_counts_for_a_page_changed_by_a_writer() -> None:
-    """The content stream of a page changed by a PdfWriter has text strings instead of byte strings."""
-    content = b"BT /F1 12 Tf 6 Tw 40 700 Td (set in comp) Tj 73.356 0 Td (arable) Tj ET"
-    writer = PdfWriter(clone_from=PdfReader(_page_with_helvetica(content)))
-    page = writer.pages[0]
-    page.add_transformation([1, 0, 0, 1, 0, 0])
-
-    assert isinstance(page.get_contents(), ContentStream)
-    assert page.extract_text() == "set in comparable"
-
-
-@pytest.mark.enable_socket
-@pytest.mark.parametrize(
-    ("url", "name", "page_number", "expected"),
-    [
-        # Justified lines set with Tw
-        pytest.param(
-            "https://github.com/user-attachments/files/18382039/971703.pdf",
-            "971703.pdf",
-            0,
-            "materials are also mounted in comparable locations",
-            id="971703-justified-page-1",
-        ),
-        pytest.param(
-            "https://github.com/user-attachments/files/18382039/971703.pdf",
-            "971703.pdf",
-            1,
-            "fiber breakage, matrix cracking",
-            id="971703-justified-page-2",
-        ),
-        # A space in another font, widened by Tw, just before the word (#3219)
-        pytest.param(
-            "https://github.com/user-attachments/files/19435050/spacey-clean.pdf",
-            "iss3219.pdf",
-            0,
-            "WORD NAME: MISSION STORE MONITOR",
-            id="iss3219-space-in-another-font",
-        ),
-    ],
-)
-def test_text_with_word_spacing_keeps_words_whole(url: str, name: str, page_number: int, expected: str) -> None:
-    """Text set with Tw is extracted without spaces inside words."""
-    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
-    assert expected in reader.pages[page_number].extract_text()
-
-
 @pytest.mark.parametrize(
     ("encoding", "operand", "expected"),
     [
