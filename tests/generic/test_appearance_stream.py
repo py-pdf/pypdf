@@ -609,3 +609,25 @@ def test_text_stream_appearance__clone(force_duplicate: bool) -> None:
     assert clone.get_data() == source.get_data()
     assert clone["/BBox"] == source["/BBox"]
     assert clone == source
+
+
+def test_text_stream_appearance__replicate() -> None:
+    """
+    The replica of an appearance stream has the entries and the content of its source, and no decoded stream.
+
+    The replica is created without running __init__, as for clone(), so the decoded
+    stream has to be set by replicate() itself.
+    ISO 32000-2:2020, 12.5.5: an appearance stream is a form XObject.
+    """
+    source = TextStreamAppearance(
+        BaseStreamConfig(rectangle=RectangleObject((0, 0, 100, 20))),
+        text="Hello",
+    )
+
+    replica = source.replicate(PdfWriter())
+
+    assert isinstance(replica, TextStreamAppearance)
+    assert replica is not source
+    assert replica.get_data() == source.get_data()
+    assert replica == source
+    assert replica.decoded_self is None

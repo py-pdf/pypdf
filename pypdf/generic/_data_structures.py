@@ -1138,27 +1138,20 @@ class StreamObject(DictionaryObject):
         self,
         pdf_dest: PdfWriterProtocol,
     ) -> "StreamObject":
-        d__ = cast(
-            "StreamObject",
-            self._reference_clone(self.__class__(), pdf_dest, False),
-        )
+        d__ = cast("StreamObject", super().replicate(pdf_dest))
         d__._data = self._data
         try:
             decoded_self = self.decoded_self
             if decoded_self is None:
-                self.decoded_self = None
+                d__.decoded_self = None
             else:
-                self.decoded_self = cast(
+                d__.decoded_self = cast(
                     "DecodedStreamObject", decoded_self.replicate(pdf_dest)
                 )
         except MemoryError:  # pragma: no cover  # TODO: BLE001
             raise
         except Exception:
             pass
-        for k, v in self.items():
-            d__[k.replicate(pdf_dest)] = (
-                v.replicate(pdf_dest) if hasattr(v, "replicate") else v
-            )
         return d__
 
     def _clone(
@@ -1451,31 +1444,20 @@ class ContentStream(DecodedStreamObject):
                 super().set_data(stream_data)
         self.forced_encoding = forced_encoding
 
+    def _new_for_clone(self) -> "ContentStream":
+        """
+        Create a blank content stream to receive cloned or replicated entries.
+
+        ``__init__`` requires ``stream`` and ``pdf``, so ``DictionaryObject._new_for_clone``
+        would skip it, and the blank object would have neither ``pdf`` nor ``_operations``.
+        """
+        return self.__class__(None, None)
+
     def replicate(
         self,
         pdf_dest: PdfWriterProtocol,
     ) -> "ContentStream":
-        d__ = cast(
-            "ContentStream",
-            self._reference_clone(self.__class__(None, None), pdf_dest, False),
-        )
-        d__._data = self._data
-        try:
-            decoded_self = self.decoded_self
-            if decoded_self is None:
-                self.decoded_self = None
-            else:
-                self.decoded_self = cast(
-                    "DecodedStreamObject", decoded_self.replicate(pdf_dest)
-                )
-        except MemoryError:  # pragma: no cover  # TODO: BLE001
-            raise
-        except Exception:
-            pass
-        for k, v in self.items():
-            d__[k.replicate(pdf_dest)] = (
-                v.replicate(pdf_dest) if hasattr(v, "replicate") else v
-            )
+        d__ = cast("ContentStream", super().replicate(pdf_dest))
         d__.pdf = pdf_dest
         d__._operations = list(self._operations)
         d__.forced_encoding = self.forced_encoding
@@ -1511,7 +1493,7 @@ class ContentStream(DecodedStreamObject):
         d__ = cast(
             "ContentStream",
             self._reference_clone(
-                self.__class__(None, None), pdf_dest, force_duplicate
+                self._new_for_clone(), pdf_dest, force_duplicate
             ),
         )
         if ignore_fields is None:

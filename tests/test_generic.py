@@ -24,6 +24,7 @@ from pypdf.generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    EncodedStreamObject,
     Fit,
     FloatObject,
     IndirectObject,
@@ -1799,6 +1800,47 @@ def test_content_stream_replicate__raw_data():
     replica = content.replicate(writer)
 
     assert replica.get_data() == b"q 1 0 0 1 10 10 cm Q"
+
+
+def test_stream_replicate__decoded_stream():
+    """
+    The replica of an encoded stream gets its own copy of the decoded stream, and the source keeps its own.
+
+    The decoded stream is the cache pypdf keeps of the stream data after its filters
+    were applied (ISO 32000-2:2020, 7.3.8).
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    stream = reader.pages[0][NameObject("/Contents")][0].get_object()
+    assert isinstance(stream, EncodedStreamObject)
+    data = stream.get_data()
+    decoded = stream.decoded_self
+    assert decoded is not None
+
+    replica = stream.replicate(PdfWriter())
+
+    assert stream.decoded_self is decoded
+    assert replica.decoded_self is not None
+    assert replica.decoded_self is not decoded
+    assert replica.get_data() == data
+
+
+def test_content_stream_replicate__decoded_stream():
+    """
+    The replica of a content stream with a decoded stream gets its own copy of it, and the source keeps its own.
+
+    See ISO 32000-2:2020, 7.8.2 for content streams.
+    """
+    content = ContentStream(None, None)
+    decoded = DecodedStreamObject()
+    decoded.set_data(b"q Q")
+    content.decoded_self = decoded
+
+    replica = content.replicate(PdfWriter())
+
+    assert content.decoded_self is decoded
+    assert replica.decoded_self is not None
+    assert replica.decoded_self is not decoded
+    assert replica.decoded_self.get_data() == b"q Q"
 
 
 @pytest.mark.parametrize(
