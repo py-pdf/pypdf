@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795359277857,
+  "lastUpdate": 1795359410130,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -175831,6 +175831,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03407488543590902",
             "extra": "mean: 893.5273708000068 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ayushkumarsaha32@gmail.com",
+            "name": "ayush",
+            "username": "AP24110011695"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "41c04f6aee1729598e8ed66306a1005fafa8bcc7",
+          "message": "ROB: Raise PdfReadError for a non-array trailer /ID (#4420)\n\n* ROB: Raise PdfReadError for a non-array trailer /ID\n\nPdfReader._ID blind-cast whatever the trailer carried, so a corrupted\n/ID of a non-array type (a NameObject, a number, a string) flowed\nsilently into PdfWriter clones and later ID-rotation paths, where a\nstring subclass yields its first character as the identifier and a\nnumber raises a bare TypeError. _info already raises the standard\nPdfReadError for a wrong-typed entry; _ID now mirrors that.\n\nFixes #4418\n\n* MNT: drop the redundant cast after the isinstance check\n\n* MNT: Apply the review suggestions\n\nHouse test naming, docstrings trimmed to the desired behavior, and the\nwriter test now names what actually gets copied: the non-array /ID\nentry itself lands in the output trailer.\n\n* TST: Match the exact PdfReadError message in the non-array /ID tests\n\nReview feedback on #4420.\n\n---------\n\nCo-authored-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>",
+          "timestamp": "2026-11-22T15:52:18+01:00",
+          "tree_id": "5b4adc2a194fc51293b9caa2adf6605b5bb053be",
+          "url": "https://github.com/py-pdf/pypdf/commit/41c04f6aee1729598e8ed66306a1005fafa8bcc7"
+        },
+        "date": 1795359393860,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 15.292553974418851,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015109793377516945",
+            "extra": "mean: 65.391301000002 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 24.701637412877776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011821370597034215",
+            "extra": "mean: 40.48314624999989 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0990621180232993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04335151517398843",
+            "extra": "mean: 909.8666795999975 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 36.95055809825309,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016703340194510315",
+            "extra": "mean: 27.063190692301802 msec\nrounds: 52"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.31336482925001613,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0415748678857899",
+            "extra": "mean: 3.191168589 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0478391329163679,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05419584197079296",
+            "extra": "mean: 954.344964400002 msec\nrounds: 5"
           }
         ]
       }
