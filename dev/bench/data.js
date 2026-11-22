@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795361517619,
+  "lastUpdate": 1795362005984,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130751,6 +130751,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00301946971325854",
             "extra": "mean: 590.9137201999954 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5d7738f45d89cabe73cc088bafc02b486c2bee8d",
+          "message": "BUG: Return bytes from PdfWriter._repr_mimebundle_ (#4487)\n\nJupyter calls _repr_mimebundle_() to show an object and expects the\n\"application/pdf\" entry to be bytes. PdfReader returns bytes, but PdfWriter\nreturned the BytesIO object it had written into, so a writer could not be\nshown as a PDF in a notebook. The writer copy of the method came with #2497.\n\nThe writer now returns pdf_data.getvalue().\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-22T16:38:30+01:00",
+          "tree_id": "f76cb062853a72b08446060a3286ebdc4efd3a31",
+          "url": "https://github.com/py-pdf/pypdf/commit/5d7738f45d89cabe73cc088bafc02b486c2bee8d"
+        },
+        "date": 1795361995757,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.4907899838745555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01765506318319578",
+            "extra": "mean: 222.67797060000163 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.86607876263139,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009043137724949891",
+            "extra": "mean: 31.381332088235368 msec\nrounds: 34"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.42534053055084814,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06346082995642091",
+            "extra": "mean: 2.3510573956000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 41.20483857147618,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010407629340624801",
+            "extra": "mean: 24.268994483872206 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.2531785838247192,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03550674050125913",
+            "extra": "mean: 3.9497811580000017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.584566844954918,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0034631553905634686",
+            "extra": "mean: 386.91202820000683 msec\nrounds: 5"
           }
         ]
       }
