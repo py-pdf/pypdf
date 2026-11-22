@@ -1754,14 +1754,8 @@ class Field(TreeObject):
             with contextlib.suppress(KeyError):
                 self[NameObject(attr)] = data[attr]
         if isinstance(self.get("/V"), EncodedStreamObject):
-            d = cast(EncodedStreamObject, self[NameObject("/V")]).get_data()
-            if isinstance(d, bytes):
-                d_str = d.decode()
-            elif d is None:
-                d_str = ""
-            else:
-                raise Exception("Should never happen")
-            self[NameObject("/V")] = TextStringObject(d_str)
+            value = cast(EncodedStreamObject, self[NameObject("/V")]).get_data()
+            self[NameObject("/V")] = TextStringObject(value.decode())
 
     # TABLE 8.69 Entries common to all field dictionaries
     @property
