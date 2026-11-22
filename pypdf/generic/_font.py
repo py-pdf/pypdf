@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -149,9 +150,21 @@ class Font:
         pdf_font_dict: DictionaryObject,
         char_map: dict[Any, Any],
         encoding: str | dict[int, str],
-        current_widths: dict[str, float]
+        current_widths: dict[str, float],
+        width_scale: float | None = None,
     ) -> None:
-        """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
+        """
+        Parses a simple font's /Widths array from a font dictionary and updates character widths.
+
+        Args:
+            pdf_font_dict: The font dictionary.
+            char_map: The character map of the font.
+            encoding: The encoding of the font.
+            current_widths: The character widths to update.
+            width_scale: For a Type3 font, the factor that converts its glyph space widths
+                to thousandths of a text space unit, see _type3_width_scale.
+
+        """
         widths_array = pdf_font_dict["/Widths"].get_object()
         if not isinstance(widths_array, ArrayObject):
             logger_warning(
@@ -184,7 +197,9 @@ class Font:
                     limit=MAX_SIMPLE_FONT_CHARACTER_CODE
                 )
                 break
-            current_widths[chr(character_code)] = int(width)
+            current_widths[chr(character_code)] = (
+                int(width) if width_scale is None else float(width) * width_scale
+            )
 
     @staticmethod
     def __check_range_length(start: int, end: int) -> None:
@@ -294,6 +309,24 @@ class Font:
                     return chr(char_code)
 
         return space_char
+
+    @staticmethod
+    def _type3_width_scale(pdf_font_dict: DictionaryObject) -> float:
+        """
+        Return the factor from a Type3 font's glyph space to thousandths of a text space unit.
+
+        The /Widths of a Type3 font are in its glyph space, which /FontMatrix maps to text
+        space (ISO 32000-2:2020, 9.6.4), while the widths of the other simple fonts are always
+        in thousandths of a text space unit. A font matrix of [0.001 0 0 0.001 0 0] gives 1.
+        """
+        font_matrix = pdf_font_dict.get("/FontMatrix")
+        if font_matrix is not None:
+            font_matrix = font_matrix.get_object()
+        if isinstance(font_matrix, ArrayObject) and font_matrix and isinstance(font_matrix[0], (int, float)):
+            scale = abs(float(font_matrix[0])) * 1000
+            if math.isfinite(scale) and scale > 0:
+                return scale
+        return 1.0
 
     @staticmethod
     def _add_default_width(current_widths: dict[str, float], flags: int, space_char: str) -> None:
@@ -426,9 +459,10 @@ class Font:
                     for cname in pdf_font_dict.get("/CharProcs") or []
                 )
             if interpretable:  # Save some overhead if font is not interpretable
+                width_scale = cls._type3_width_scale(pdf_font_dict) if sub_type == "Type3" else None
                 if "/Widths" in pdf_font_dict:
                     cls._collect_tt_t1_character_widths(
-                        pdf_font_dict, character_map, encoding, character_widths
+                        pdf_font_dict, character_map, encoding, character_widths, width_scale
                     )
 
                 elif name in CORE_FONT_METRICS:
@@ -440,7 +474,10 @@ class Font:
                 if "/FontDescriptor" in pdf_font_dict:
                     font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
                     if "/MissingWidth" in font_descriptor_obj:
-                        character_widths["default"] = cast(int, font_descriptor_obj["/MissingWidth"].get_object())
+                        missing_width = cast(int, font_descriptor_obj["/MissingWidth"].get_object())
+                        character_widths["default"] = (
+                            missing_width if width_scale is None else float(missing_width) * width_scale
+                        )
                     font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
                 elif "/FontBBox" in pdf_font_dict:
                     # For Type3 without Font Descriptor but with FontBBox, see Table 110 in the PDF specification 2.0
