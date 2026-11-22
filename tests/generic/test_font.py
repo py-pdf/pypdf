@@ -15,6 +15,7 @@ from fontTools.ttLib import TTFont
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import _parse_to_unicode
+from pypdf._utils import _TraversalState
 from pypdf.errors import LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
@@ -406,6 +407,73 @@ def test_font__collect_cid_character_widths__limits() -> None:
     ):
         Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths)
     assert current_widths == {}
+
+
+def test_font__collect_cid_character_widths__traversal_state() -> None:
+    """The entry count is shared between calls using the same traversal state."""
+    d_font = DictionaryObject({
+        NameObject("/W"): ArrayObject([
+            NumberObject(1), ArrayObject([NumberObject(42)] * 3),
+            NumberObject(10), NumberObject(14), NumberObject(13),
+        ])
+    })
+    current_widths: dict[str, float] = {}
+    traversal_state = _TraversalState()
+
+    Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths, traversal_state=traversal_state)
+    assert traversal_state.entry_count == 8
+    Font._collect_cid_character_widths(d_font=d_font, current_widths=current_widths, traversal_state=traversal_state)
+    assert traversal_state.entry_count == 16
+
+    traversal_state.entry_count = 99_999
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Too many character widths: 100002 > 100000\.$"
+    ):
+        Font._collect_cid_character_widths(
+            d_font=d_font, current_widths=current_widths, traversal_state=traversal_state
+        )
+
+
+def _get_type0_font_resource(descendant_fonts: list[DictionaryObject]) -> DictionaryObject:
+    return DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Test"),
+        NameObject("/Encoding"): NameObject("/Identity-H"),
+        NameObject("/DescendantFonts"): ArrayObject(descendant_fonts),
+    })
+
+
+def _get_descendant_font() -> DictionaryObject:
+    return DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/CIDFontType2"),
+        NameObject("/W"): ArrayObject([NumberObject(0), NumberObject(49_999), NumberObject(500)]),
+    })
+
+
+def test_font__from_font_resource__repeated_descendant_font() -> None:
+    """The widths of a descendant font which is listed multiple times are only read once."""
+    font_resource = _get_type0_font_resource([_get_descendant_font()] * 1000)
+
+    with mock.patch.object(
+        Font, "_collect_cid_character_widths", wraps=Font._collect_cid_character_widths
+    ) as collect_mock:
+        font = Font.from_font_resource(font_resource)
+
+    assert collect_mock.call_count == 1
+    assert font.character_widths["A"] == 500
+
+
+def test_font__from_font_resource__descendant_fonts__limit() -> None:
+    """The width entry limit applies to all descendant fonts of a font together."""
+    font = Font.from_font_resource(_get_type0_font_resource([_get_descendant_font() for _ in range(2)]))
+    assert font.character_widths["A"] == 500
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Too many character widths: 150000 > 100000\.$"
+    ):
+        Font.from_font_resource(_get_type0_font_resource([_get_descendant_font() for _ in range(3)]))
 
 
 def test_font__collect_cid_character_widths__indirect_widths() -> None:

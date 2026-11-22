@@ -20,7 +20,7 @@ from pypdf.generic import (
 from .._cmap import get_encoding
 from .._codecs import encoding_dict_from_named_encoding
 from .._codecs.adobe_glyphs import adobe_glyphs
-from .._utils import logger_warning
+from .._utils import _TraversalState, logger_warning
 from ..constants import FontFlags
 from ..errors import LimitReachedError, PdfReadError
 
@@ -203,15 +203,27 @@ class Font:
             raise LimitReachedError(f"Too many character widths: {count} > {limit}.")
 
     @staticmethod
-    def _collect_cid_character_widths(d_font: DictionaryObject, current_widths: dict[str, float]) -> None:
-        """Parses the /W array from a DescendantFont dictionary and updates character widths."""
+    def _collect_cid_character_widths(
+        d_font: DictionaryObject, current_widths: dict[str, float], traversal_state: _TraversalState | None = None
+    ) -> None:
+        """
+        Parses the /W array from a DescendantFont dictionary and updates character widths.
+
+        Args:
+            d_font: The DescendantFont dictionary.
+            current_widths: The character widths to update.
+            traversal_state: Counts the width entries. Sharing it between calls makes the limit apply
+                to all descendant fonts of a font together.
+
+        """
+        if traversal_state is None:
+            traversal_state = _TraversalState()
         # /W width definitions have two valid formats which can be mixed and matched:
         #   (1) A character start index followed by a list of widths, e.g.
         #       `45 [500 600 700]` applies widths 500, 600, 700 to characters 45-47.
         #   (2) A character start index, a character stop index, and a width, e.g.
         #       `45 65 500` applies width 500 to characters 45-65.
         skip_count = 0
-        entry_count = 0
         _w = d_font.get("/W", ArrayObject()).get_object()
         _w_length = len(_w)
         for idx, w_entry in enumerate(_w):
@@ -234,8 +246,8 @@ class Font:
                 start_idx, width_list = int(w_entry), w_next_entry
                 stop_idx = start_idx + len(width_list)
                 Font.__check_range_length(start_idx, stop_idx)
-                entry_count += (stop_idx - start_idx)
-                Font.__check_entry_count(entry_count)
+                traversal_state.entry_count += (stop_idx - start_idx)
+                Font.__check_entry_count(traversal_state.entry_count)
                 current_widths.update(
                     {
                         chr(_cidx): _width.get_object()
@@ -258,8 +270,8 @@ class Font:
                     _w[idx + 2].get_object(),
                 )
                 Font.__check_range_length(start_idx, stop_idx + 1)
-                entry_count += (stop_idx - start_idx + 1)
-                Font.__check_entry_count(entry_count)
+                traversal_state.entry_count += (stop_idx - start_idx + 1)
+                Font.__check_entry_count(traversal_state.entry_count)
                 current_widths.update(
                     {
                         chr(_cidx): const_width
@@ -462,10 +474,18 @@ class Font:
                 )
                 descendant_fonts = ArrayObject()
             d_font: DictionaryObject
+            # The width entry limit applies to all descendant fonts together.
+            traversal_state = _TraversalState()
+            # The same descendant font can be listed multiple times. Its widths are only read once.
+            processed_ids: set[int] = set()
             for d_font_idx, d_font in enumerate(descendant_fonts):
                 d_font = cast(DictionaryObject, d_font.get_object())
                 descendant_fonts[d_font_idx] = d_font
-                cls._collect_cid_character_widths(d_font=d_font, current_widths=character_widths)
+                if id(d_font) not in processed_ids:
+                    processed_ids.add(id(d_font))
+                    cls._collect_cid_character_widths(
+                        d_font=d_font, current_widths=character_widths, traversal_state=traversal_state
+                    )
                 if "/DW" in d_font:
                     character_widths["default"] = cast(int, d_font["/DW"].get_object())
                 font_descriptor_obj = d_font.get("/FontDescriptor", DictionaryObject()).get_object()
