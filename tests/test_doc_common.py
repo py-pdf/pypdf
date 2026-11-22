@@ -1370,8 +1370,6 @@ def test_get_outline__speed():
 
     Coverage makes the linear version 2.7 times slower, and CI runs the tests with
     coverage and with one worker per core, so the timeout leaves room above 7.9 s.
-    The quadratic part runs in C (set.copy()), which coverage hardly slows down.
-    ISO 32000-2:2020, 12.3.3: outline items are linked by /First and /Next.
     """
     writer = PdfWriter()
     inner = writer._add_object(DictionaryObject({NameObject("/Title"): TextStringObject("Inner")}))
