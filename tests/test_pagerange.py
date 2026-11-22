@@ -190,7 +190,9 @@ def test_parse_filename_page_ranges(
 
 def test_parse_filename_page_ranges_err() -> None:
     """parse_filename_page_ranges() warns that it is deprecated, but still rejects a leading page range."""
-    with pytest.raises(ValueError) as exc, pytest.warns(
+    with pytest.raises(
+        ValueError, match=r"^The first argument must be a filename, not a page range\.$"
+    ) as exc, pytest.warns(
         DeprecationWarning, match=PARSE_FILENAME_PAGE_RANGES_DEPRECATION
     ):
         parse_filename_page_ranges(["1:5", "foo.pdf"])
@@ -229,7 +231,7 @@ def test_addition(a: PageRange, b: PageRange, expected: slice) -> None:
 )
 def test_addition_gap(a: PageRange, b: PageRange) -> None:
     """Adding two page ranges with a gap between them raises a ValueError."""
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Can't add PageRanges with gap$") as exc:
         a + b
     assert exc.value.args[0] == "Can't add PageRanges with gap"
 
@@ -259,7 +261,7 @@ def test_addition_gap_with_none_start() -> None:
     # range: the stop is still finite, so a real gap past it must still raise.
     a = PageRange(slice(None, 5))
     b = PageRange(slice(20, 30))
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Can't add PageRanges with gap$") as exc:
         a + b
     assert exc.value.args[0] == "Can't add PageRanges with gap"
 
@@ -273,6 +275,6 @@ def test_addition_non_page_range() -> None:
 def test_addition_stride() -> None:
     a = PageRange(slice(0, 5, 2))
     b = PageRange(slice(7, 9))
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Can't add PageRange with stride$") as exc:
         a + b
     assert exc.value.args[0] == "Can't add PageRange with stride"

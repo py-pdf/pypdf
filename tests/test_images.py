@@ -387,7 +387,7 @@ def test_separation_1byte_to_rgb_inverted():
     assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
     obj = reader.pages[0].images[0].indirect_reference.get_object()
     obj.set_data(obj.get_data() + b"\x00")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^not enough image data$"):
         reader.pages[0].images[0]
 
 
@@ -583,13 +583,13 @@ def test_extract_image_from_object(caplog):
         "/X1"
     ].decode_as_image()
     assert isinstance(image, Image.Image)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^'/Width'$"):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
     assert "does not seem to be an Image" in caplog.text
     caplog.clear()
     co.indirect_reference = "for_test"
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^'/Width'$"):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
     assert "does not seem to be an Image" in caplog.text
