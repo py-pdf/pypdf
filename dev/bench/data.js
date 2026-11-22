@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795359410130,
+  "lastUpdate": 1795359845822,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130553,6 +130553,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029907796354216257",
             "extra": "mean: 675.3408992000004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "149895554+Giriprasada@users.noreply.github.com",
+            "name": "GIRI PRASAD A",
+            "username": "Giriprasada"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "423eb5e14892c99f03e86d0ffbe0989a8f8c8764",
+          "message": "ROB: Bound annotations processed per page on append / merge (#4466)\n\n* ROB: Bound annotations processed per page on append / merge\n\nAddress review feedback: use add_annotation/Text in tests, match full LimitReachedError messages, and rebase onto current main.\n\n* CI: Re-trigger after flaky Windows test_iss1689",
+          "timestamp": "2026-11-22T16:02:30+01:00",
+          "tree_id": "9a92ab9334b1ad761ffebff6edcd41cd16f7aa6e",
+          "url": "https://github.com/py-pdf/pypdf/commit/423eb5e14892c99f03e86d0ffbe0989a8f8c8764"
+        },
+        "date": 1795359836086,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.726534979787008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013279130755951822",
+            "extra": "mean: 211.5714797999999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 32.57848996223138,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010035742500160818",
+            "extra": "mean: 30.695099777777045 msec\nrounds: 36"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.44783153085112976,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08546221101706297",
+            "extra": "mean: 2.232982563999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 43.0447086476837,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015289337351822132",
+            "extra": "mean: 23.23165916128954 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.2621424901335589,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06581022420464559",
+            "extra": "mean: 3.8147192372000065 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.85873799046888,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005555243932047516",
+            "extra": "mean: 349.80470519999756 msec\nrounds: 5"
           }
         ]
       }
