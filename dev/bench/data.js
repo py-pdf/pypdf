@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795360541731,
+  "lastUpdate": 1795361411612,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -130685,6 +130685,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009641788481759513",
             "extra": "mean: 415.22500319999835 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "158475962+Krushil-Dhankecha@users.noreply.github.com",
+            "name": "Krushil Dhankecha",
+            "username": "Krushil-Dhankecha"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c75761fac7b64e464ae8c1bee25d9b8cd12ea7f6",
+          "message": "ROB: Resolve page label entry values stored as indirect objects (#4453)\n\n`_get_label` read /St, /P and /S with `dict.get`, which returns an indirect\nreference as-is instead of resolving it the way `DictionaryObject.__getitem__`\nwould. Any of the three may legally be written indirectly, and then the label\ncannot be built from it: an indirect /St or /P makes the arithmetic or the\nconcatenation raise TypeError, and an indirect /S misses `_NUMBERING_STYLES`\nand is reported as an unknown numbering style. Each case falls back to the\npage position, so a document whose labels are \"A-5\" through \"A-10\" reads back\nas \"1\" through \"6\" with a warning.\n\nThe two /Limits reads in this module already call `.get_object()` after\n`dict.get` for the same reason; these three did not.\n\n* BUG: Build the page label fallbacks as PdfObjects\n\nThe three /Nums entry values now share one read: take the value, default to\na PdfObject, resolve it. That drops the isinstance dance of the previous\nrevision. /S falls back to a null object, and a null /S is treated as an\nomitted one, which is what ISO 32000-1 7.3.9 asks for; before this it was\nreported as an unknown numbering style.",
+          "timestamp": "2026-11-22T16:28:09+01:00",
+          "tree_id": "d8e180bddec70d87ea8133b89782482c9177379e",
+          "url": "https://github.com/py-pdf/pypdf/commit/c75761fac7b64e464ae8c1bee25d9b8cd12ea7f6"
+        },
+        "date": 1795361396545,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.56143304073707,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009439299970510637",
+            "extra": "mean: 280.78584899999726 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.828037829695422,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008699244985093434",
+            "extra": "mean: 34.68845177419296 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3406698012430459,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018395518467457815",
+            "extra": "mean: 2.935393734200011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 26.576036039269727,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015183658434082465",
+            "extra": "mean: 37.627883952383385 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.17989297565747772,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03921314272150904",
+            "extra": "mean: 5.558860741199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6922944345606816,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00301946971325854",
+            "extra": "mean: 590.9137201999954 msec\nrounds: 5"
           }
         ]
       }
