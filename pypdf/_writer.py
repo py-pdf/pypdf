@@ -3656,7 +3656,7 @@ class PdfWriter(PdfDocCommon):
         pdf_data = BytesIO()
         self.write(pdf_data)
         data = {
-            "application/pdf": pdf_data,
+            "application/pdf": pdf_data.getvalue(),
         }
 
         if include is not None:
