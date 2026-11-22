@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795371966255,
+  "lastUpdate": 1795372089109,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -176623,6 +176623,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03562767578475143",
             "extra": "mean: 956.8350715999941 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alex-sc@users.noreply.github.com",
+            "name": "Alex P",
+            "username": "alex-sc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4c71b6432f79a68bebc72285373989592031ec93",
+          "message": "ROB: Only read the first descendant font of a composite font (#4496)\n\n* PI: Read the widths of a repeated descendant font only once\n\n* ROB: Only read the first descendant font of a composite font\n\n* MAINT: Remove unneeded write-back of the descendant font",
+          "timestamp": "2026-11-22T19:24:24+01:00",
+          "tree_id": "5bcc6d5e96ce482a22aad32f54c9fd0ca6708e31",
+          "url": "https://github.com/py-pdf/pypdf/commit/4c71b6432f79a68bebc72285373989592031ec93"
+        },
+        "date": 1795372076899,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 17.557681959914756,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018919845026686536",
+            "extra": "mean: 56.955126666667056 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 36.80990713367249,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010148116197924752",
+            "extra": "mean: 27.166599371429356 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.4163351038227465,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02642803902709945",
+            "extra": "mean: 706.0475994000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 43.9980819322548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01572113890352997",
+            "extra": "mean: 22.728263507934976 msec\nrounds: 63"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.39546803174311346,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05139247212315846",
+            "extra": "mean: 2.528649396999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.451167905677116,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035139364683030715",
+            "extra": "mean: 689.1001351999989 msec\nrounds: 5"
           }
         ]
       }
