@@ -190,6 +190,29 @@ def test_type3_font_widths_follow_the_font_matrix(font_matrix: list[float] | Non
     assert font.character_widths["A"] == pytest.approx(500)
 
 
+@pytest.mark.parametrize(
+    "font_matrix",
+    [
+        pytest.param(ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0), FloatObject(1)]), id="zero-scale"),
+        pytest.param(ArrayObject([NameObject("/x"), NumberObject(0)]), id="non-numeric"),
+        pytest.param(ArrayObject(), id="empty"),
+        pytest.param(NumberObject(1), id="not-an-array"),
+    ],
+)
+def test_type3_font_with_an_invalid_font_matrix_keeps_its_widths(font_matrix: PdfObject) -> None:
+    """A /FontMatrix that cannot scale the widths is treated like the usual [0.001 0 0 0.001 0 0]."""
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type3"),
+        NameObject("/ToUnicode"): NumberObject(0),
+        NameObject("/FirstChar"): NumberObject(65),
+        NameObject("/LastChar"): NumberObject(65),
+        NameObject("/Widths"): ArrayObject([NumberObject(500)]),
+        NameObject("/FontMatrix"): font_matrix,
+    })
+
+    assert Font.from_font_resource(font_res).character_widths["A"] == pytest.approx(500)
+
+
 def test_font_file() -> None:
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
 
