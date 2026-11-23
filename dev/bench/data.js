@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795459413014,
+  "lastUpdate": 1795459485497,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -177547,6 +177547,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026415265469078675",
             "extra": "mean: 685.965780600003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f7c3742848ab4db6c2016ec454b3567950bd4ac6",
+          "message": "TST: Improve stability of test_get_outline__speed (#4499)\n\n* TST: Give test_get_outline__speed room for coverage in CI\n\n#4455 made reading an outline whose items share one child linear and\nadded test_get_outline__speed with a timeout of 10 s. It often fails in\nCI with \"Timeout (>10.0s) from pytest-timeout\".\n\nThe CI runs the tests with --cov=pypdf and -n auto. Coverage slows the\nlinear version down by a factor of 2.7, and the workers share the\nrunner, so 10 s is too close. The quadratic version stays far above, as\nits extra work is set.copy() in C, which coverage hardly slows down.\n\nRaise the timeout to 30 s and document the measurements in the\ndocstring. Counting bytecode instructions, as test_generic.py does,\nwould not catch the regression: set.copy() is a single instruction.\n\nMeasured with pytest --durations, Python 3.13, Intel i7-6700HQ:\n\n| Code          | Plain  | --cov=pypdf |\n| ------------- | ------ | ----------- |\n| before #4455  | 45.6 s | 53.1 s      |\n| main          |  2.9 s |  7.9 s      |\n\nmain is the best of 3 runs, before #4455 one run each.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* docstring\n\n* TST: Check that outline reading scales linearly instead of timing it\n\ntest_get_outline__speed read an outline of 50,000 items against a\nfixed timeout. CI with coverage and one worker per core was close to\nthe timeout and failed randomly. Shrinking the outline alone would\nweaken the check, because the gap between the old quadratic code and\nthe linear code shrinks with the outline.\n\nThe test now compares the CPU time of reading outlines of 2,500 and\n20,000 items. Linear time gives a ratio of about 8, quadratic time\nabout 64, and the test asserts a ratio below 16. The speed of the\nmachine cancels out.\n\nRatios measured with Python 3.13 on an Intel i7-6700HQ:\n\n| Code          | No coverage | --cov=pypdf |\n|---------------|-------------|-------------|\n| before #4455  | 51 to 53    | 24          |\n| after #4455   | 9.4 to 10.2 | 7.5 to 8.8  |\n\nWith 8 parallel runs and coverage, the ratio stayed between 8.3 and\n10.5. The test takes 1.3 s instead of 2.9 s (3.8 s instead of 7.9 s\nwith coverage) and needs about 145 MB instead of 300 MB.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Relax time\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-23T19:41:09+01:00",
+          "tree_id": "acba3c438bebb1ec45d28cfa5441d0fd9fc1173b",
+          "url": "https://github.com/py-pdf/pypdf/commit/f7c3742848ab4db6c2016ec454b3567950bd4ac6"
+        },
+        "date": 1795459474520,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.943971129442007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037554647168845665",
+            "extra": "mean: 66.91661750000577 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 58.969149061792706,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027843244318289558",
+            "extra": "mean: 16.958019844446426 msec\nrounds: 45"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3017325184535666,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014237466992675713",
+            "extra": "mean: 768.2069748000004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 55.76522470550554,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008663962976214145",
+            "extra": "mean: 17.932322612900236 msec\nrounds: 62"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5322308525758952,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03212930219291196",
+            "extra": "mean: 1.8788839375999942 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.837877525581041,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023218187309097072",
+            "extra": "mean: 544.1058972000064 msec\nrounds: 5"
           }
         ]
       }
