@@ -199,7 +199,12 @@ class TextExtraction:
         # A Tf just before this TJ has already moved the text to the output.
         previous = self.text or self.output
         # A positive offset moves the next glyph back (kerning), so only a negative one can be a gap.
-        if -offset >= space_width and previous and previous[-1] not in " \n":
+        # Straight after a Tf the current run is empty, so only a gap of about
+        # a full space counts as a word gap there: a smaller offset is kerning
+        # inside a word (#4502). Within a run the usual threshold still applies,
+        # so the smaller word gaps producers emit (#1328) keep working.
+        threshold = space_width * 2 if self.text == "" else space_width
+        if -offset >= threshold and previous and previous[-1] not in " \n":
             self.process_operation(b"Tj", [" "])
         self._actual_str_size["str_widths"] = str_widths
 

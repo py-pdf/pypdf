@@ -637,6 +637,14 @@ def test_tj_gap_right_after_a_font_change_is_a_space() -> None:
     assert page.extract_text() == "Programming: Python"
 
 
+def test_tj_offset_right_after_a_font_change_inside_a_word_is_not_a_space() -> None:
+    """A sub-space TJ offset right after a mid-word Tf is kerning, not a word gap (#4502)."""
+    page = PdfReader(
+        _page_with_helvetica(b"BT /F1 12 Tf 72 700 Td (Comp) Tj /F1 12 Tf [-150 (laint)] TJ ET")
+    ).pages[0]
+    assert page.extract_text() == "Complaint"
+
+
 @pytest.mark.parametrize(
     ("content_stream", "expected"),
     [
