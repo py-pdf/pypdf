@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795465925572,
+  "lastUpdate": 1795468035533,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131543,6 +131543,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005358803285852546",
             "extra": "mean: 660.1449951999939 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0d5f323faa5c5f2cde2eeaa60b7e3d0e23a3b908",
+          "message": "MAINT: Keep one implementation of _repr_mimebundle_ (#4507)\n\nPdfReader and PdfWriter each had a copy of _repr_mimebundle_, and\nPdfDocCommon declared it as abstract. The copies differed only in how they\ngot the bytes of the document, and that difference is where the writer's\ncopy went wrong before (it returned a BytesIO object instead of bytes).\n\nPdfDocCommon now implements _repr_mimebundle_, including the include and\nexclude filtering. PdfReader and PdfWriter only implement the new abstract\nmethod _get_pdf_bytes(): the reader returns the stream it was read from, the\nwriter writes the document into memory and returns the bytes.\n\nBehavior: same for both classes.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-23T22:05:24+01:00",
+          "tree_id": "26676a3c8e6d5600ca45758b695c420e0d515646",
+          "url": "https://github.com/py-pdf/pypdf/commit/0d5f323faa5c5f2cde2eeaa60b7e3d0e23a3b908"
+        },
+        "date": 1795468024071,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.675380142091587,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008606767010275325",
+            "extra": "mean: 213.8863514000036 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 40.18034861640508,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0063941340286403645",
+            "extra": "mean: 24.887788046510725 msec\nrounds: 43"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4542086966201073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015072245960982226",
+            "extra": "mean: 2.2016311168000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 32.94086967124063,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008968327039103409",
+            "extra": "mean: 30.357425592593284 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.23378515897361168,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01814750332748062",
+            "extra": "mean: 4.277431486200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.0599169544150393,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004752285582108836",
+            "extra": "mean: 485.45646359999637 msec\nrounds: 5"
           }
         ]
       }
