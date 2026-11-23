@@ -10,7 +10,7 @@ from unittest import mock
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
 from pypdf.constants import ImageAttributes, PageAttributes, UserAccessPermissions
@@ -3859,3 +3859,72 @@ def test_get_object_from_stream__invalid_object_stream(objstm_num, strict_messag
     reader = PdfReader(BytesIO(data), strict=True)
     with pytest.raises(PdfReadError, match=strict_message):
         reader.get_object(4)
+
+
+def test_rebuild_xref_table__maximum_entries() -> None:
+    """Rebuilding a broken xref must honor the discovered-object budget."""
+    objects = {
+        1: b"<< /Type /Catalog /Pages 2 0 R >>",
+        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        3: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        4: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        5: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+    }
+    pdf_data = bytearray(b"%PDF-1.7\n")
+    for number, obj in objects.items():
+        pdf_data += b"%d 0 obj\n" % number + obj + b"\nendobj\n"
+    pdf_data += b"startxref\n0\n%%%%EOF\n"
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()), xref_rebuild_maximum_entries=2)
+    with pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild entry limit exceeded: 3 > 2\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))
+
+
+def test_rebuild_xref_table__maximum_input_length() -> None:
+    """Rebuilding must refuse oversized inputs before loading the whole file."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()))
+
+    oversized = b"%PDF-1.7\n" + (b"%xxxxxxxx\n" * 5) + b"startxref\n0\n%%%%EOF\n"
+    assert len(oversized) > 10
+    with apply_configuration(maximum_declared_stream_length=10), pytest.raises(
+        LimitReachedError,
+        match=rf"^Maximum xref rebuild input length exceeded: {len(oversized)} > 10\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(oversized))
+
+
+def test_rebuild_xref_table__maximum_entries_from_objstm() -> None:
+    """ObjStm members must also consume the xref rebuild entry budget."""
+    # Two top-level objects stay under the budget; the first ObjStm member
+    # pushes entry_count over the limit during the second recovery pass.
+    payload = b"10 0\n<< /Type /Page >>"
+    objstm = (
+        b"<< /Type /ObjStm /N 1 /First 4 /Length %d >>\nstream\n%s\nendstream"
+        % (len(payload), payload)
+    )
+    pdf_data = bytearray(b"%PDF-1.7\n")
+    pdf_data += b"1 0 obj\n<< /Type /Catalog >>\nendobj\n"
+    pdf_data += b"2 0 obj\n" + objstm + b"\nendobj\n"
+    pdf_data += b"startxref\n0\n%%%%EOF\n"
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()), xref_rebuild_maximum_entries=2)
+    with pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild entry limit exceeded: 3 > 2\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))
