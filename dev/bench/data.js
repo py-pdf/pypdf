@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795465874535,
+  "lastUpdate": 1795465925572,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -177811,6 +177811,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035316542631922576",
             "extra": "mean: 682.3553817999993 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "71480025+Harshil26202@users.noreply.github.com",
+            "name": "Harshil Kaneria",
+            "username": "Harshil26202"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "57d86cd3b65b777a40f6c5ecb6bedc416b1eefd6",
+          "message": "MAINT: Count the codes of text strings, not the TJ gap space (#4469)\n\n* MAINT: Count the codes of text strings, not the TJ gap space\n\nFollow-up to #4227. _count_codes counted every str operand as decoded\ntext, which includes the space that process_tj_offset adds for a gap in\na TJ array, although no code 32 was shown there. Count nothing for that\nspace, and count a TextStringObject (from a content stream that was not\nparsed as bytes) by the bytes it was read from.\n\nAdd the real-world files from #4469 as regression tests for the word\nspacing fix, and a writer-changed page.\n\n* TST: Keep only the tests of this change\n\nThe real files and the page changed by a writer give the same text on\nmain, so they only tested #4227. The TJ gap space and the text string are\ncovered in test_get_text_operands__counts_character_codes.",
+          "timestamp": "2026-11-23T21:28:47+01:00",
+          "tree_id": "f86e2fb832107e50851b7ae69f9b3b730c46b050",
+          "url": "https://github.com/py-pdf/pypdf/commit/57d86cd3b65b777a40f6c5ecb6bedc416b1eefd6"
+        },
+        "date": 1795465914845,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 22.306146211134074,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017830821031472287",
+            "extra": "mean: 44.83069332258083 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 44.36775688761097,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008291027534874361",
+            "extra": "mean: 22.53889017948606 msec\nrounds: 39"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.644628940380844,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05336833280945949",
+            "extra": "mean: 608.0398900000091 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 54.43556453277904,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016115972987990126",
+            "extra": "mean: 18.370343149428308 msec\nrounds: 87"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.47179677294520794,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06721702089303976",
+            "extra": "mean: 2.1195566764000207 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.693069716992133,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044603405207234985",
+            "extra": "mean: 590.6431318000159 msec\nrounds: 5"
           }
         ]
       }
