@@ -4012,6 +4012,8 @@ def test_rebuild_xref_table__maximum_entries_from_objstm() -> None:
 
 def test_reader_does_not_copy_the_stream() -> None:
     """This test is a regression test for issue #4369."""
+    # tracemalloc is not available on PyPy (its `_tracemalloc` C module is
+    # missing), so this test is skipped there.
     tracemalloc = pytest.importorskip("tracemalloc", reason="Requires tracemalloc")
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
