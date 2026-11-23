@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795427105358,
+  "lastUpdate": 1795427175582,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -177019,6 +177019,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04197385134313337",
             "extra": "mean: 732.0422497999971 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "81588100+zeyadrabie@users.noreply.github.com",
+            "name": "Zeyad Rabie",
+            "username": "zeyadrabie"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "90a3575ce6fc1d0846a9f227a42419f3c21f4e73",
+          "message": "MAINT: Use PEP 8 names in the encryption module (#4436)\n\n* MAINT: Use PEP 8 names in the encryption module\n\nRename the uppercase functions, arguments and attributes in pypdf/_encryption.py and stop ignoring Ruff N802 and N803 for pypdf/.\n\nPart of #3231.\n\n* Use full names from the review\n\nRename the remaining short names, make EncryptionValues a dataclass, keep encrypt_metadata and rename _ID to _file_identifiers.\n\n* Rename _ID in the new reader test\n\ntest_trailer_id__non_array_raises from #4420 still used reader._ID.\n\n---------\n\nCo-authored-by: Zeyad <81588100+Corencas@users.noreply.github.com>",
+          "timestamp": "2026-11-23T10:42:41+01:00",
+          "tree_id": "e558308524522684822881f097aa719e8f843131",
+          "url": "https://github.com/py-pdf/pypdf/commit/90a3575ce6fc1d0846a9f227a42419f3c21f4e73"
+        },
+        "date": 1795427165169,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 21.4166100139164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017967269325563015",
+            "extra": "mean: 46.692730518518346 msec\nrounds: 27"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 47.469609651478514,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007216446627554932",
+            "extra": "mean: 21.06610960869474 msec\nrounds: 46"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.698560663677291,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029498176173913607",
+            "extra": "mean: 588.733756399995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 50.48388948302089,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016101541330962497",
+            "extra": "mean: 19.808299444446078 msec\nrounds: 81"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4405863470967898,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044772924454639915",
+            "extra": "mean: 2.269702651000023 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5631993993477593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04520082578475425",
+            "extra": "mean: 639.7136541999998 msec\nrounds: 5"
           }
         ]
       }
