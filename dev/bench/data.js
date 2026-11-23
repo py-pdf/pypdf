@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795427175582,
+  "lastUpdate": 1795437966931,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131147,6 +131147,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004133133722130626",
             "extra": "mean: 667.3114889999965 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "149895554+Giriprasada@users.noreply.github.com",
+            "name": "GIRI PRASAD A",
+            "username": "Giriprasada"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d567809523ec715356d8e410be8dcdb6ee4b36c2",
+          "message": "ROB: Bound xref rebuild input size and discovered object count (#4450)\n\nMove the rebuild entry budget onto PdfReader like other reading limits, reuse maximum_declared_stream_length for the full-file load check, and centralize the entry limit assertion.",
+          "timestamp": "2026-11-23T13:44:18+01:00",
+          "tree_id": "1981340b0dd12946af7c142c5ee51f148e9dfbd9",
+          "url": "https://github.com/py-pdf/pypdf/commit/d567809523ec715356d8e410be8dcdb6ee4b36c2"
+        },
+        "date": 1795437957094,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 5.057153071551786,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008126136667471973",
+            "extra": "mean: 197.7397135999979 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 34.1322480303621,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00809585505364006",
+            "extra": "mean: 29.297806552631897 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.46361251384332713,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031129458867556196",
+            "extra": "mean: 2.1569737013999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 43.75508029811905,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013128624723810346",
+            "extra": "mean: 22.854488968746978 msec\nrounds: 32"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.25846104647958507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049715013147091563",
+            "extra": "mean: 3.8690549837999924 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.677017291919088,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0047707233314546104",
+            "extra": "mean: 373.55007119999755 msec\nrounds: 5"
           }
         ]
       }
