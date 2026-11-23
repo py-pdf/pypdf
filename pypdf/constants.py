@@ -334,6 +334,7 @@ class ImageAttributes:
     IMAGE_MASK = "/ImageMask"  # boolean, optional
     MASK = "/Mask"  # 1-bit image mask stream
     S_MASK = "/SMask"  # dictionary or name, optional
+    MATTE = "/Matte"  # array of floats, optional (soft-mask image dictionary, §11.6.5.3)
 
 
 class ColorSpaces:
