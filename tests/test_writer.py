@@ -2837,7 +2837,7 @@ def test_clone_from__tolerate_dangling_info_reference():
 )
 def test_clone_from__keep_file_identifier_bytes(file_identifier):
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
-    writer._ID = ArrayObject([ByteStringObject(file_identifier), ByteStringObject(file_identifier)])
+    writer._file_identifiers = ArrayObject([ByteStringObject(file_identifier), ByteStringObject(file_identifier)])
     source = BytesIO()
     writer.write(source)
     assert isinstance(PdfReader(source).trailer["/ID"][0], TextStringObject)
@@ -2891,6 +2891,51 @@ def test_no_i_in_articles():
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
+
+
+def test_no_p_in_articles():
+    """A bead without the required /P entry names no page, so it is dropped."""
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_blank_page(100, 100)
+    thread = source._add_object(
+        DictionaryObject({NameObject("/I"): DictionaryObject({NameObject("/T"): TextStringObject("A")})})
+    )
+    rectangle = ArrayObject([NumberObject(0), NumberObject(0), NumberObject(100), NumberObject(100)])
+    first = source._add_object(
+        DictionaryObject({
+            NameObject("/T"): thread,
+            NameObject("/R"): rectangle,
+            NameObject("/P"): source.pages[0].indirect_reference,
+        })
+    )
+    second = source._add_object(
+        DictionaryObject({
+            NameObject("/T"): thread,
+            NameObject("/R"): rectangle,
+            NameObject("/V"): first,
+            NameObject("/N"): first,
+        })
+    )
+    first.get_object()[NameObject("/N")] = second
+    first.get_object()[NameObject("/V")] = second
+    thread.get_object()[NameObject("/F")] = first
+    source.pages[0][NameObject("/B")] = ArrayObject([first])
+    source.pages[1][NameObject("/B")] = ArrayObject([second])
+    stream = BytesIO()
+    source.write(stream)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(stream))
+
+    assert len(writer.pages) == 2
+    assert len(writer.threads) == 1
+    beads = writer.threads[0].get_object()["/F"]
+    assert beads["/P"] == writer.pages[0]
+    # The second bead names no page, so it is not carried over and the chain
+    # closes on the one bead that could be remapped.
+    assert beads["/N"] == beads
+    assert "/B" not in writer.pages[1]
 
 
 @pytest.mark.enable_socket
@@ -4800,13 +4845,13 @@ def test_generate_file_identifiers__non_deterministic() -> None:
     writer1 = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer2 = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
 
-    assert writer1._ID == writer2._ID
+    assert writer1._file_identifiers == writer2._file_identifiers
 
     writer1.generate_file_identifiers()
     writer2.generate_file_identifiers()
 
-    assert writer1._ID[0] == writer2._ID[0]
-    assert writer1._ID[1] != writer2._ID[1]
+    assert writer1._file_identifiers[0] == writer2._file_identifiers[0]
+    assert writer1._file_identifiers[1] != writer2._file_identifiers[1]
 
 
 def test_generate_file_identifiers__initially_identical() -> None:
@@ -4814,7 +4859,7 @@ def test_generate_file_identifiers__initially_identical() -> None:
     writer.add_blank_page(width=10, height=10)
 
     writer.generate_file_identifiers()
-    assert writer._ID[0] == writer._ID[1]
+    assert writer._file_identifiers[0] == writer._file_identifiers[1]
 
 
 def test_generate_file_identifiers__update() -> None:
@@ -4822,11 +4867,11 @@ def test_generate_file_identifiers__update() -> None:
     writer.add_blank_page(width=10, height=10)
 
     writer.generate_file_identifiers()
-    id_permanent, id_changing = writer._ID[:2]
+    id_permanent, id_changing = writer._file_identifiers[:2]
 
     writer.generate_file_identifiers()
-    assert writer._ID[0] == id_permanent
-    assert writer._ID[1] != id_changing
+    assert writer._file_identifiers[0] == id_permanent
+    assert writer._file_identifiers[1] != id_changing
 
 
 def _get_outline_titles(writer: PdfWriter) -> list[str]:

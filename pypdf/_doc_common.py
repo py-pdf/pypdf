@@ -1685,7 +1685,7 @@ class PdfDocCommon(ABC):
         """
         if self._encryption is None:
             return None
-        return UserAccessPermissions(self._encryption.P)
+        return UserAccessPermissions(self._encryption.permissions)
 
     @property
     def are_permissions_valid(self) -> bool | None:
