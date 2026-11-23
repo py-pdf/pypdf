@@ -222,6 +222,62 @@ class _NamedDestinationIndex:
         self._length = len(names)
 
 
+class _RootPagePrefix:
+    """
+    Track how many of the first kids of the root ``/Pages`` node are pages, each of them once.
+
+    For a page number below that count, the tree walk in ``PdfDocCommon._get_page_in_node``
+    stops at the root's kid with the same index, so ``PdfWriter`` can skip it. The kids are
+    checked only as far as needed and only once while the same ``/Kids`` array keeps its
+    length. ``PdfWriter._add_page`` reports the pages it inserts; any other change to the
+    length of the array makes the next lookup check the kids again.
+    """
+
+    def __init__(self) -> None:
+        self._kids: ArrayObject | None = None
+        self._length = 0
+        self._page_numbers: set[int] = set()
+        self._has_other_kid = False
+
+    def reset(self) -> None:
+        self._kids = None
+
+    def _update(self, kids: ArrayObject) -> None:
+        if kids is self._kids and len(kids) == self._length:
+            return
+        self._kids = kids
+        self._length = len(kids)
+        self._page_numbers = set()
+        self._has_other_kid = False
+
+    def _add_kid(self, kid: PdfObject) -> bool:
+        """Add the kid if it is a page that is not in the prefix yet."""
+        # Same checks as in the tree walk, which also rejects an object seen before.
+        # The writer resolves a reference by its object number only.
+        if not isinstance(kid, IndirectObject) or kid.idnum in self._page_numbers:
+            return False
+        page = kid.get_object()
+        if not isinstance(page, DictionaryObject) or page.get("/Type") != "/Page":
+            return False
+        self._page_numbers.add(kid.idnum)
+        return True
+
+    def contains(self, kids: ArrayObject, page_number: int) -> bool:
+        self._update(kids)
+        while not self._has_other_kid and len(self._page_numbers) <= page_number < len(kids):
+            self._has_other_kid = not self._add_kid(kids[len(self._page_numbers)])
+        return page_number < len(self._page_numbers)
+
+    def record_insertion(self, kids: ArrayObject, index: int) -> None:
+        """Update the count after ``PdfWriter._add_page`` inserted a page at this index of the kids."""
+        if kids is not self._kids or len(kids) != self._length + 1:
+            self.reset()
+            return
+        self._length += 1
+        if index <= len(self._page_numbers) and not self._add_kid(kids[index]):
+            self.reset()
+
+
 class PdfWriter(PdfDocCommon):
     """
     Write a PDF file out, given pages produced by another class or through
@@ -392,6 +448,7 @@ class PdfWriter(PdfDocCommon):
             }
         )
         self.flattened_pages = []
+        self._root_page_prefix = _RootPagePrefix()
         self._page_id2num: dict[int, int] = {}
         self._encryption: Encryption | None = None
         self._encrypt_entry: DictionaryObject | None = None
@@ -611,6 +668,9 @@ class PdfWriter(PdfDocCommon):
         page = cast(
             "PageObject", page_org.clone(self, False, excluded_keys).get_object()
         )
+        if self.incremental and page_org.pdf == self._reader:
+            # Cloning reuses the object numbers of the reader, which can replace pages of the tree.
+            self._root_page_prefix.reset()
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
@@ -618,12 +678,15 @@ class PdfWriter(PdfDocCommon):
         node, idx = self._get_page_in_node(index)
         page[NameObject(PagesAttributes.PARENT)] = node.indirect_reference
 
+        kids = cast(ArrayObject, node[PagesAttributes.KIDS])
         if idx >= 0:
-            cast(ArrayObject, node[PagesAttributes.KIDS]).insert(idx, page.indirect_reference)
+            kids.insert(idx, page.indirect_reference)
             self.flattened_pages.insert(index, page)
         else:
-            cast(ArrayObject, node[PagesAttributes.KIDS]).append(page.indirect_reference)
+            idx = len(kids)
+            kids.append(page.indirect_reference)
             self.flattened_pages.append(page)
+        self._root_page_prefix.record_insertion(kids, idx)
         current: PdfObject | None = node
         recurse = 0
         while not is_null_or_none(current):
@@ -645,6 +708,21 @@ class PdfWriter(PdfDocCommon):
             self._merged_in_pages[page_org.indirect_reference] = page.indirect_reference
 
         return page
+
+    def _get_page_in_node(self, page_number: int) -> tuple[DictionaryObject, int]:
+        top = cast(DictionaryObject, self.root_object["/Pages"])
+        count = top.get("/Count", 1)
+        kids = top.get("/Kids")
+        # Below the root's /Count, the tree walk returns the root and the page number
+        # if all kids up to that index are pages.
+        if (
+            isinstance(count, int)
+            and 0 <= page_number < count
+            and isinstance(kids, ArrayObject)
+            and self._root_page_prefix.contains(kids, page_number)
+        ):
+            return top, page_number
+        return super()._get_page_in_node(page_number)
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
         """
