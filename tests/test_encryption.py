@@ -253,12 +253,12 @@ def test_alg_v5_generate_values():
     """
     key = b"0123456789123451"
     values = AlgV5.generate_values(
-        R=5,
+        revision=5,
         user_password=b"foo",
         owner_password=b"bar",
         key=key,
-        p=0,
-        metadata_encrypted=True,
+        permissions=0,
+        encrypt_metadata=True,
     )
     assert values == {
         "/U": values["/U"],
@@ -293,7 +293,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
 
     # test with invalid algorithm name
     if alg == "ABCD":
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match=r"^Algorithm 'ABCD' NOT supported$") as exc:
             writer.encrypt(
                 user_password=user_password,
                 owner_password=owner_password,
@@ -670,6 +670,26 @@ def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
     assert sum("RC4 is not supported" in message for message in caplog.messages) == 1
 
 
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Requires the cryptography provider")
+def test_read_rc4_pdf_with_48_bit_key(caplog, monkeypatch) -> None:
+    from pypdf._crypt_providers import _cryptography  # noqa: PLC0415
+
+    monkeypatch.setattr(CryptRC4, "_is_rc4_supported", True)
+    monkeypatch.setattr(_cryptography, "_warned_rc4_key_sizes", set())
+    path = RESOURCE_ROOT / "encryption" / "rc4-len48.pdf"
+
+    reader = PdfReader(path, password="pw")
+    metadata = reader.metadata
+
+    assert metadata is not None
+    assert metadata.title == "hello"
+    assert CryptRC4._is_rc4_supported is True
+    assert caplog.messages.count(
+        "cryptography does not support 48-bit RC4 keys; "
+        "falling back to the pure-Python RC4 implementation."
+    ) == 1
+
+
 @pytest.mark.parametrize(
     ("algorithm", "requires_aes"),
     [
@@ -856,12 +876,12 @@ def test_read_non_boolean_encrypt_metadata(caplog):
     """A non-boolean /EncryptMetadata falls back to the default, a null one is treated as absent."""
     entry = _build_minimal_encryption_dictionary()
     entry[NameObject("/EncryptMetadata")] = NameObject("/Yes")
-    assert Encryption.read(entry, b"").EncryptMetadata is True
+    assert Encryption.read(entry, b"").encrypt_metadata is True
     assert "Ignoring non-boolean /EncryptMetadata entry of the encryption dictionary" in caplog.messages
 
     caplog.clear()
     entry[NameObject("/EncryptMetadata")] = NullObject()
-    assert Encryption.read(entry, b"").EncryptMetadata is True
+    assert Encryption.read(entry, b"").encrypt_metadata is True
     assert caplog.messages == []
 
 
@@ -886,6 +906,30 @@ def test_fallback_provider__aes_requires_dependency(function_name, args):
     function = getattr(pypdf._crypt_providers._fallback, function_name)
     with pytest.raises(DependencyError, match=rf"^{re.escape(_DEPENDENCY_ERROR_STR)}$"):
         function(*args)
+
+
+@pytest.mark.parametrize(
+    ("key", "plaintext", "ciphertext"),
+    [
+        (b"Key", b"Plaintext", "bbf316e8d940af0ad3"),
+        (b"Wiki", b"pedia", "1021bf0420"),
+        (b"Secret", b"Attack at dawn", "45a01f645fc35b383552544b9bf5"),
+        (b"mykey", b"", ""),
+    ],
+)
+def test_fallback_provider__rc4_known_values(key, plaintext, ciphertext):
+    """The pure-Python RC4 gives the published test vectors."""
+    crypt = pypdf._crypt_providers._fallback.CryptRC4(key)
+    assert crypt.encrypt(plaintext).hex() == ciphertext
+    assert crypt.decrypt(bytes.fromhex(ciphertext)) == plaintext
+
+
+def test_fallback_provider__rc4_keeps_leading_zero_bytes():
+    """Data that encrypts to leading zero bytes keeps its length."""
+    key = b"mykey"
+    keystream = pypdf._crypt_providers._fallback.rc4_encrypt(key, bytes(1000))
+    assert pypdf._crypt_providers._fallback.rc4_encrypt(key, keystream) == bytes(1000)
+    assert pypdf._crypt_providers._fallback.rc4_decrypt(key, bytes(1000)) == keystream
 
 
 def test_encrypt__empty_owner_password_uses_user_password():

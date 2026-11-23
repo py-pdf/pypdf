@@ -4,6 +4,7 @@ import sys
 from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -14,9 +15,12 @@ from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
     ContentStream,
+    DecodedStreamObject,
     Destination,
     DictionaryObject,
+    Field,
     Fit,
+    IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
@@ -179,9 +183,6 @@ def test_tree_object__insert_child_in_first_position_with_next() -> None:
     child_a_ref = writer._add_object(child_a)
     tree.add_child(child_a_ref, writer)
 
-    # prev = tree["/Last"] = A, prev == before, so no while loop.
-    # try: prev["/Prev"] — A has no /Prev → KeyError → except block fires.
-
     # Create child C with a /Next pointer pointing to something
     child_c = DictionaryObject()
     child_c[NameObject("/Next")] = child_a_ref  # C -> A
@@ -195,6 +196,8 @@ def test_tree_object__insert_child_in_first_position_with_next() -> None:
     c_obj = child_c_ref.get_object()
     assert isinstance(c_obj, DictionaryObject)
     assert c_obj["/Next"] == child_a
+    assert tree["/First"] == c_obj
+    assert "/Prev" not in c_obj
 
 
 @pytest.mark.enable_socket
@@ -529,21 +532,6 @@ def test_content_stream__parse_content_stream__limits() -> None:
         content_stream._parse_content_stream(stream)
 
 
-@pytest.mark.timeout(5)
-def test_content_stream__read_inline_image__end_of_stream() -> None:
-    # Broken content stream, for example due to filter errors.
-    # Specific example:
-    #   Error -3 while decompressing data: invalid distance too far back
-    #   b'q 0.1 0 0 0.1 0 0 cm\n/R7 gs\n0 g\nq 4.8 0 0 -135.6 2155.08 7150.48 cm\nBI\n/IM true\n/W001'
-    content_stream = ContentStream(stream=None, pdf=None)
-
-    with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
-        content_stream._read_inline_image(
-            BytesIO(b"\n/IM true\n/W001"),
-            parsing_budget=StreamParsingBudget(remaining_budget=100)
-        )
-
-
 def test_tree_object__insert_child__cycle() -> None:
     writer = PdfWriter()
 
@@ -567,15 +555,85 @@ def test_tree_object__insert_child__cycle() -> None:
         )
 
 
+def test_tree_object__insert_child__before_with_cycle() -> None:
+    """insert_child() raises a LimitReachedError if the children it searches for `before` form a cycle."""
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+    # /First -> first -> second -> first -> ...: the /Next links of the children form a cycle.
+    first = DictionaryObject()
+    second = DictionaryObject()
+    first_reference = writer._add_object(first)
+    first[NameObject("/Next")] = writer._add_object(second)
+    second[NameObject("/Next")] = first_reference
+    tree[NameObject("/First")] = first_reference
+    tree[NameObject("/Last")] = first.raw_get("/Next")
+    not_a_child = writer._add_object(DictionaryObject())
+
+    with pytest.raises(LimitReachedError, match=r"^Detected cycle in tree structure\.$"):
+        tree.insert_child(writer._add_object(DictionaryObject()), not_a_child, writer)
+
+
+def test_tree_object__insert_child__before_is_not_a_child() -> None:
+    """
+    insert_child() appends the child at the end if `before` is not one of the children.
+
+    The children are linked from /First to /Last by /Next and /Prev
+    """
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+    first = writer._add_object(DictionaryObject())
+    last_item = DictionaryObject()
+    last = writer._add_object(last_item)
+    tree.add_child(first, writer)
+    tree.add_child(last, writer)
+    not_a_child = writer._add_object(DictionaryObject())
+    new_item = DictionaryObject()
+    new = writer._add_object(new_item)
+
+    tree.insert_child(new, not_a_child, writer)
+
+    assert tree.raw_get("/First") == first
+    assert tree.raw_get("/Last") == new
+    assert last_item.raw_get("/Next") == new
+    assert new_item.raw_get("/Prev") == last
+    assert "/Next" not in new_item
+
+
+def test_tree_object__insert_child__first_child_drops_previous_links() -> None:
+    """
+    insert_child() removes the /Next and /Prev entries a child brings along when it becomes the only child.
+
+    The first child has no /Prev and the last child no /Next.
+    """
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+    # A child that was linked into another list before.
+    child = DictionaryObject({
+        NameObject("/Next"): writer._add_object(DictionaryObject()),
+        NameObject("/Prev"): writer._add_object(DictionaryObject()),
+    })
+    child_reference = writer._add_object(child)
+
+    tree.insert_child(child_reference, None, writer)
+
+    assert tree.raw_get("/First") == child_reference
+    assert tree.raw_get("/Last") == child_reference
+    assert "/Next" not in child
+    assert "/Prev" not in child
+
+
 def _outlined_pdf(nested: bool = False) -> BytesIO:
     writer = PdfWriter()
     for _ in range(4):
         writer.add_blank_page(200, 200)
-    cover = writer.add_outline_item("Cover", 0)
-    writer.add_outline_item("Body", 1)
+    cover = writer.add_outline_item(title="Cover", page_number=0)
+    writer.add_outline_item(title="Body", page_number=1)
     if nested:
-        writer.add_outline_item("Sub", 2, parent=cover)
-    writer.add_outline_item("End", 3)
+        writer.add_outline_item(title="Sub", page_number=2, parent=cover)
+    writer.add_outline_item(title="End", page_number=3)
     stream = BytesIO()
     writer.write(stream)
     stream.seek(0)
@@ -616,7 +674,7 @@ def test_remove_from_tree_on_outline_item_without_clone() -> None:
     for _ in range(3):
         writer.add_blank_page(200, 200)
     for page_number, title in enumerate(["Cover", "Body", "End"]):
-        writer.add_outline_item(title, page_number)
+        writer.add_outline_item(title=title, page_number=page_number)
 
     _flat_outline(writer.outline)[0].remove_from_tree()
 
@@ -807,6 +865,14 @@ def test_array_object__read_from_stream__maximum_element_count() -> None:
             ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
 
 
+def test_array_object__read_from_stream__deeply_nested_array_raises_pdfreaderror() -> None:
+    pdf = ReaderDummy()
+    depth = sys.getrecursionlimit()
+    data = b"[" * depth + b"]" * depth
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
+        ArrayObject.read_from_stream(BytesIO(data), pdf=pdf)  # type: ignore[arg-type]
+
+
 def test_dictionary_object__read_from_stream__token_limit() -> None:
     pdf = ReaderDummy()
     data = b"<< /Key1 << /Key2 << /Key3 << /Key4 << /SomeName 42 >> >> >> >> /Key5 13 >>"
@@ -868,25 +934,6 @@ def test_content_stream__parse_content_stream__dictionary_limit() -> None:
             content_stream._parse_content_stream(BytesIO(data))
 
 
-@pytest.mark.parametrize(
-    "budget",
-    [
-        pytest.param(9, id="list-as-key"),
-        pytest.param(15, id="dictionary1"),
-        pytest.param(16, id="dictionary2"),
-    ]
-)
-def test_content_stream__read_inline_image__parsing_budget(budget: int) -> None:
-    data = b"<< [ 0 1 2 3 4 5 6 7 8 9 10 ] << /Key1 42 /Key2 1337 >> >>"
-
-    content_stream = ContentStream(stream=None, pdf=None)
-    with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
-        content_stream._read_inline_image(
-            stream=BytesIO(data),
-            parsing_budget=StreamParsingBudget(remaining_budget=budget)
-        )
-
-
 def test_content_stream__check_limits__read_inline_image_dictionary_limit() -> None:
     with pytest.raises(expected_exception=LimitReachedError, match=r"^Reached maximum number of tokens\.$"):
         ContentStream._check_limits(
@@ -944,3 +991,263 @@ def test_dictionary_object__clone__cycle_detection() -> None:
     writer = PdfWriter()
     writer.append(BytesIO(data))
     assert len(writer.pages) == 1
+
+
+def test_dictionary_object__read_from_stream__deeply_nested_dictionary_raises_pdfreaderror() -> None:
+    """
+    A dictionary nested deeper than Python's recursion limit raises a PdfReadError in strict mode.
+
+    ISO 32000-2 sets no limit for the nesting of objects, so this checks how pypdf handles
+    a malformed or hostile file.
+    """
+    depth = sys.getrecursionlimit()
+    data = b"<</A " * depth + b"1" + b">>" * depth
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
+        DictionaryObject.read_from_stream(BytesIO(data), ReaderDummy(strict=True))  # type: ignore[arg-type]
+
+
+def test_dictionary_object__read_from_stream__nul_bytes_are_whitespace() -> None:
+    """
+    A dictionary with NUL bytes between its entries is read.
+
+    ISO 32000-2:2020, 7.2.3, Table 1: NUL is a white-space character.
+    """
+    stream = BytesIO(b"<<\x00/Key (Value)\x00>>")
+    assert DictionaryObject.read_from_stream(stream, None) == {"/Key": "Value"}
+
+
+def test_dictionary_object__read_from_stream__spaces_after_stream_keyword() -> None:
+    """
+    A stream whose keyword stream is followed by spaces before the line feed is read.
+
+    ISO 32000-2:2020, 7.3.8.1: the keyword stream shall be followed by CR LF or LF.
+    The spaces break that rule, and the stream data is read anyway.
+    """
+    stream = BytesIO(b"<< /Length 3 >>stream   \nabc\nendstream")
+    result = DictionaryObject.read_from_stream(stream, None)
+    assert isinstance(result, StreamObject)
+    assert result.get_data() == b"abc"
+
+
+def _create_tree_with_writer() -> tuple[PdfWriter, TreeObject]:
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+    return writer, tree
+
+
+def _create_tree_node(writer: PdfWriter, **links: IndirectObject) -> DictionaryObject:
+    node = DictionaryObject({NameObject(f"/{key}"): value for key, value in links.items()})
+    writer._add_object(node)
+    return node
+
+
+def test_tree_object__insert_first_child_drops_stale_siblings() -> None:
+    """
+    The first child inserted into an empty tree has no /Next and /Prev entries.
+
+    The child has /Next and /Prev entries pointing to a node that is not in the tree.
+    ISO 32000-2:2020, 12.3.3, Table 151: /Prev and /Next link the items of one level.
+    """
+    writer, tree = _create_tree_with_writer()
+    stale = writer._add_object(DictionaryObject())
+    child = _create_tree_node(writer, Next=stale, Prev=stale)
+
+    tree.insert_child(child, None, writer)
+
+    assert tree["/First"] == child
+    assert tree["/Last"] == child
+    assert "/Next" not in child
+    assert "/Prev" not in child
+
+
+def test_tree_object__append_child_drops_stale_next() -> None:
+    """
+    A child appended as the last item of a tree has no /Next entry.
+
+    The child has a /Next entry pointing to a node that is not in the tree.
+    ISO 32000-2:2020, 12.3.3, Table 151: /Next is absent for the last item of a level.
+    """
+    writer, tree = _create_tree_with_writer()
+    first = _create_tree_node(writer)
+    tree.insert_child(first, None, writer)
+    stale = writer._add_object(DictionaryObject())
+    second = _create_tree_node(writer, Next=stale)
+
+    tree.insert_child(second, None, writer)
+
+    assert tree["/Last"] == second
+    assert first["/Next"] == second
+    assert second["/Prev"] == first
+    assert "/Next" not in second
+
+
+def test_stream_object__flate_encode__filter_array_with_non_array_decode_parms() -> None:
+    """
+    Flate encoding a stream with a /Filter array and a null /DecodeParms gives one null per filter.
+
+    ISO 32000-2:2020, 7.3.8.2, Table 5: with several filters, /DecodeParms is an array
+    with one entry per filter, null for a filter without parameters.
+    """
+    stream = DecodedStreamObject()
+    stream.set_data(b"abc")
+    stream[NameObject("/Filter")] = ArrayObject([NameObject("/ASCIIHexDecode")])
+    stream[NameObject("/DecodeParms")] = NullObject()
+
+    encoded = stream.flate_encode()
+
+    assert encoded["/Filter"] == ArrayObject([NameObject("/FlateDecode"), NameObject("/ASCIIHexDecode")])
+    assert encoded["/DecodeParms"] == ArrayObject([NullObject(), NullObject()])
+
+
+def _create_field_with_stream_value(data: bytes) -> Field:
+    stream = DecodedStreamObject()
+    stream.set_data(data)
+    value = stream.flate_encode()
+    field = DictionaryObject({NameObject("/FT"): NameObject("/Tx"), NameObject("/V"): value})
+    field.indirect_reference = None
+    return Field(field)
+
+
+def test_field__stream_value() -> None:
+    """
+    A text field whose /V is a stream has the text of the stream as its value.
+
+    ISO 32000-2:2020, 12.7.5.3: since PDF 1.5, the text of a text field may be held
+    in a stream in /V.
+    """
+    assert _create_field_with_stream_value(b"text")["/V"] == TextStringObject("text")
+
+
+def test_field__stream_value_without_data() -> None:
+    """
+    A text field whose /V is a stream without data has an empty value.
+
+    ISO 32000-2:2020, 12.7.5.3: since PDF 1.5, the text of a text field may be held
+    in a stream in /V.
+    """
+    assert _create_field_with_stream_value(b"")["/V"] == TextStringObject("")
+
+
+@pytest.mark.parametrize(
+    ("fit", "expected"),
+    [
+        (Fit(fit_type="/FitH", fit_args=(1, 2)), {"/Top": NullObject()}),
+        (Fit(fit_type="/FitBH", fit_args=(1, 2)), {"/Top": NullObject()}),
+        (Fit(fit_type="/FitV", fit_args=(1, 2)), {"/Left": NullObject()}),
+        (Fit(fit_type="/FitBV", fit_args=(1, 2)), {"/Left": NullObject()}),
+        (Fit(fit_type="/Fit", fit_args=(1,)), {}),
+        (Fit(fit_type="/FitB", fit_args=(1,)), {}),
+    ],
+)
+def test_destination__unexpected_number_of_fit_arguments(fit: Fit, expected: dict[str, NullObject]) -> None:
+    """
+    A destination with too many fit arguments has a null coordinate instead of a wrong one.
+
+    /FitH and /FitBH take one top coordinate and /FitV and /FitBV one left coordinate;
+    given two, the coordinate is null, which keeps the current one. /Fit and /FitB take
+    none, so they get no coordinate. ISO 32000-2:2020, 12.3.2.2, Table 149.
+    """
+    destination = Destination("title", NumberObject(0), fit)
+    assert {key: destination[key] for key in ("/Left", "/Top") if key in destination} == expected
+
+
+@pytest.mark.parametrize(
+    ("annotation_objects", "cycle"),
+    [
+        # The direct appearance dictionary links back to the annotation.
+        (
+            [b"<< /Type /Annot /Subtype /Widget /Rect [0 0 10 10] /AP << /N 4 0 R >> >>"],
+            ["/AP", "/N"],
+        ),
+        # The same, but going through another dictionary first.
+        (
+            [
+                b"<< /Type /Annot /Subtype /Widget /Rect [0 0 10 10] /AP << /N 5 0 R >> >>",
+                b"<< /N 4 0 R >>",
+            ],
+            ["/AP", "/N", "/N"],
+        ),
+    ],
+    ids=["self-reference", "two-node-cycle"],
+)
+def test_dictionary_object__clone__cycle_through_direct_dictionary(
+    annotation_objects: list[bytes], cycle: list[str]
+) -> None:
+    """A cycle of /N links through a direct dictionary is cloned without recursing endlessly."""
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Annots [4 0 R] >>",
+        *annotation_objects,
+    ]
+    object_count = len(objects)
+    out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = []
+    for num, obj in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % num + obj + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n" % (object_count + 1)
+    out += b"0000000000 65535 f \n"
+    for offset in offsets:
+        out += b"%010d 00000 n \n" % offset
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (object_count + 1, xref)
+    data = bytes(out)
+
+    def get_annotation(page: DictionaryObject) -> DictionaryObject:
+        annotations = cast(ArrayObject, page["/Annots"])
+        assert len(annotations) == 1
+        return cast(DictionaryObject, annotations[0].get_object())
+
+    def follow_cycle(start: DictionaryObject) -> DictionaryObject:
+        target = start
+        for key in cycle:
+            target = cast(DictionaryObject, target[key])
+        return target
+
+    writer = PdfWriter()
+    writer.append(BytesIO(data))
+    assert len(writer.pages) == 1
+    # The cycle is kept: following it leads back to the annotation itself.
+    annotation = get_annotation(writer.pages[0])
+    assert follow_cycle(annotation) is annotation
+
+    # Merging a page clones its annotations with force_duplicate=True. The
+    # annotation of the page may then be another copy than the one within the
+    # cycle, but the cycle itself is kept within the destination writer.
+    destination = PdfWriter()
+    page = destination.add_blank_page(200, 200)
+    page.merge_page(PdfReader(BytesIO(data)).pages[0])
+    target = follow_cycle(get_annotation(page))
+    assert target["/Subtype"] == NameObject("/Widget")
+    assert target.indirect_reference is not None
+    assert target.indirect_reference.pdf is destination
+    assert follow_cycle(target) is target
+
+
+def test_dictionary_object__clone__chain_with_direct_dictionary() -> None:
+    """A chain of /Next links can continue with a direct dictionary and end with any object."""
+    source = PdfWriter()
+    last = DictionaryObject({NameObject("/Title"): TextStringObject("last"), NameObject("/Next"): NullObject()})
+    middle = source._add_object(
+        DictionaryObject({NameObject("/Title"): TextStringObject("middle"), NameObject("/Next"): last})
+    )
+    first = source._add_object(
+        DictionaryObject({NameObject("/Title"): TextStringObject("first"), NameObject("/Next"): middle})
+    )
+
+    destination = PdfWriter()
+    clone = cast(DictionaryObject, first.get_object()).clone(destination)
+
+    assert clone["/Title"] == TextStringObject("first")
+    assert clone.indirect_reference is not None
+    assert clone.indirect_reference.pdf is destination
+    middle_clone = cast(DictionaryObject, clone["/Next"])
+    assert middle_clone["/Title"] == TextStringObject("middle")
+    assert middle_clone.indirect_reference is not None
+    assert middle_clone.indirect_reference.pdf is destination
+    last_clone = cast(DictionaryObject, middle_clone["/Next"])
+    assert last_clone == last
+    assert last_clone is not last
+    assert getattr(last_clone, "indirect_reference", None) is None

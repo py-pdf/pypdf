@@ -35,7 +35,8 @@ def test_get_display_str_caches_repeated_character_lookups(monkeypatch) -> None:
     monkeypatch.setattr(text_extraction, "is_char_neutral", counted_neutral)
     monkeypatch.setattr(text_extraction, "is_char_rtl", counted_rtl)
 
-    operands = "A" * 10_000
+    # Right-to-left characters are looked up one by one
+    operands = "\u05d0" * 10_000
     text, rtl_dir, _ = text_extraction.get_display_str(
         text="",
         cm_matrix=[1, 0, 0, 1, 0, 0],
@@ -49,9 +50,43 @@ def test_get_display_str_caches_repeated_character_lookups(monkeypatch) -> None:
     )
 
     assert text == operands
-    assert rtl_dir is False
+    assert rtl_dir is True
     assert neutral_calls == 1
     assert rtl_calls == 1
+
+
+def test_get_display_str_skips_character_lookups_without_rtl_characters(monkeypatch) -> None:
+    font = _create_test_font()
+    font.character_map = {"B": "\u05d1"}
+    calls = 0
+    original_neutral = text_extraction.is_char_neutral
+
+    def counted_neutral(char: str, custom_special_characters: str = "") -> bool:
+        nonlocal calls
+        calls += 1
+        return original_neutral(char, custom_special_characters)
+
+    monkeypatch.setattr(text_extraction, "is_char_neutral", counted_neutral)
+
+    def get_display_str(text_operands: str) -> tuple[str, bool, str]:
+        return text_extraction.get_display_str(
+            text="x",
+            cm_matrix=[1, 0, 0, 1, 0, 0],
+            tm_matrix=[1, 0, 0, 1, 0, 0],
+            font_resource=None,
+            font=font,
+            text_operands=text_operands,
+            font_size=12,
+            rtl_dir=False,
+            visitor_text=None,
+        )
+
+    assert get_display_str("A 1.") == ("xA 1.", False, "")
+    assert calls == 0
+
+    # The character map turns "B" into a right-to-left character
+    assert get_display_str("A B") == ("\u05d1", True, "xA ")
+    assert calls == 3
 
 
 def test_get_text_operands_cache_is_scoped_to_each_call(monkeypatch) -> None:
@@ -124,7 +159,7 @@ def test_get_text_operands_caches_repeated_character_lookups(monkeypatch) -> Non
     monkeypatch.setattr(font, "get_text_width", counted_width)
 
     operands = ["A" * 10_000]
-    text, is_str_operands, widths = text_extraction.get_text_operands(
+    text, is_str_operands, widths, glyph_count, space_count = text_extraction.get_text_operands(
         operands=operands,
         cm_matrix=[1, 0, 0, 1, 0, 0],
         tm_matrix=[1, 0, 0, 1, 0, 0],
@@ -135,6 +170,8 @@ def test_get_text_operands_caches_repeated_character_lookups(monkeypatch) -> Non
     assert text == operands[0]
     assert is_str_operands is True
     assert widths == 6_000_000.0  # 10,000 * 600
+    assert glyph_count == 10_000
+    assert space_count == 0
     assert width_calls == 1  # Standard character "A" is cached after first lookup
 
 
@@ -154,7 +191,7 @@ def test_get_text_operands_dict_encoding_byte_caching(monkeypatch) -> None:
 
     # Byte 65 is 'A' (100 repetitions)
     operands = [b"A" * 100]
-    text, is_str_operands, widths = text_extraction.get_text_operands(
+    text, is_str_operands, widths, glyph_count, space_count = text_extraction.get_text_operands(
         operands=operands,
         cm_matrix=[1, 0, 0, 1, 0, 0],
         tm_matrix=[1, 0, 0, 1, 0, 0],
@@ -165,4 +202,6 @@ def test_get_text_operands_dict_encoding_byte_caching(monkeypatch) -> None:
     assert text == "A" * 100
     assert is_str_operands is False
     assert widths == 60_000.0  # 100 * 600
+    assert glyph_count == 100
+    assert space_count == 0
     assert width_calls == 1  # Raw byte character chr(65) cached after 1st byte

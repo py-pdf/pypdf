@@ -590,3 +590,22 @@ def test_text_annotation_default_appearance_with_other_operators(
     assert b"gs" not in appearance.get_data()
     assert list(cast(DictionaryObject, appearance["/Resources"])) == ["/Font"]
     assert expected_warning in caplog.text
+
+
+@pytest.mark.parametrize("force_duplicate", [False, True])
+def test_text_stream_appearance__clone(force_duplicate: bool) -> None:
+    """The clone of an appearance stream has the entries and the content of its source."""
+    source = TextStreamAppearance(
+        BaseStreamConfig(rectangle=RectangleObject((0, 0, 100, 20))),
+        text="Hello",
+    )
+    PdfWriter()._add_object(source)
+
+    clone = source.clone(PdfWriter(), force_duplicate)
+
+    assert isinstance(clone, TextStreamAppearance)
+    assert clone is not source
+    assert b"(Hello) Tj" in clone.get_data()
+    assert clone.get_data() == source.get_data()
+    assert clone["/BBox"] == source["/BBox"]
+    assert clone == source

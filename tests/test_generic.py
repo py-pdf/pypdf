@@ -8,6 +8,7 @@ import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
+from types import CodeType
 
 import pytest
 
@@ -36,6 +37,7 @@ from pypdf.generic import (
     TextStringObject,
     TreeObject,
     create_string_object,
+    decode_pdfdocencoding,
     encode_pdfdocencoding,
     is_null_or_none,
     read_hex_string_from_stream,
@@ -590,7 +592,7 @@ def test_bytestringobject():
 
 def test_dictionaryobject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Key must be a PdfObject$") as exc:
         do["foo"] = NameObject("/GoTo")
     assert exc.value.args[0] == "Key must be a PdfObject"
 
@@ -602,21 +604,21 @@ def test_dictionaryobject_xmp_meta():
 
 def test_dictionaryobject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Value must be a PdfObject$") as exc:
         do[NameObject("/S")] = "/GoTo"
     assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Key must be a PdfObject$") as exc:
         do.setdefault("foo", NameObject("/GoTo"))
     assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Value must be a PdfObject$") as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
     assert exc.value.args[0] == "Value must be a PdfObject"
 
@@ -783,7 +785,7 @@ def test_textstringobject__numbers_as_input():
 
 def test_remove_child_not_in_tree():
     tree = TreeObject()
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Removed child does not appear to be a tree item$") as exc:
         tree.remove_child(ChildDummy())
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
 
@@ -793,11 +795,11 @@ def test_remove_child_not_in_that_tree():
     tree.indirect_reference = NullObject()
     child = TreeObject()
     child.indirect_reference = NullObject()
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Removed child does not appear to be a tree item$") as exc:
         child.remove_from_tree()
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
     tree.add_child(child, ReaderDummy())
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Removed child is not a member of this tree$") as exc:
         tree.remove_child(child)
     assert exc.value.args[0] == "Removed child is not a member of this tree"
 
@@ -814,7 +816,7 @@ def test_remove_child_not_found_in_tree():
     tree.add_child(child, ReaderDummy())
     child2 = ChildDummy(TreeObject())
     child2[NameObject("/Parent")] = tree
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Removal couldn't find item in tree$") as exc:
         tree.remove_child(child2)
     assert exc.value.args[0] == "Removal couldn't find item in tree"
 
@@ -893,7 +895,7 @@ def test_remove_child_in_tree():
     writer = PdfWriter()
     writer._add_object(tree)
     writer.add_page(reader.pages[0])
-    writer.add_outline_item("foo", page_number=0)
+    writer.add_outline_item(title="foo", page_number=0)
     obj = writer._objects[-1]
     tree.add_child(obj, writer)
     tree.remove_child(obj)
@@ -1149,7 +1151,7 @@ def test_float_object_decimal_to_string(value, expected):
 
 def test_cloning(caplog):
     writer = PdfWriter()
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(Exception, match=r"^PdfObject does not implement \.clone so far$") as exc:
         PdfObject().clone(writer)
     assert "PdfObject does not implement .clone so far" in exc.value.args[0]
 
@@ -1770,3 +1772,124 @@ def test_get_inherited_malformed_parent():
     number_parent = DictionaryObject({NameObject("/Parent"): NumberObject(42)})
     assert number_parent.get_inherited("/Rotate", "dflt") == "dflt"
     assert number_parent.get_inherited("/Rotate") is None
+
+
+def test_content_stream_replicate__parsed_operations():
+    """The replica of a content stream whose operations were parsed has the same operations."""
+    writer = PdfWriter()
+    content = ContentStream(None, None)
+    content.set_data(b"BT /F1 12 Tf (Hello) Tj ET")
+    operations = list(content.operations)
+    assert operations
+
+    replica = content.replicate(writer)
+
+    assert replica is not content
+    assert replica.operations == operations
+    assert replica.get_data() == content.get_data()
+    assert b"Hello" in replica.get_data()
+
+
+def test_content_stream_replicate__raw_data():
+    """The replica of a content stream that was never parsed has the same data."""
+    writer = PdfWriter()
+    content = ContentStream(None, None)
+    content.set_data(b"q 1 0 0 1 10 10 cm Q")
+
+    replica = content.replicate(writer)
+
+    assert replica.get_data() == b"q 1 0 0 1 10 10 cm Q"
+
+
+@pytest.mark.parametrize(
+    ("input_bytes", "expected_output"),
+    [
+        (b"Hello", "Hello"),
+        (b"", ""),
+        (b"PDF 1.7 Specification", "PDF 1.7 Specification"),
+        (b"Test 123", "Test 123"),
+        (b"\x18\x19\x80\x84\xa0", "\u02d8\u02c7\u2022\u2014\u20ac"),
+    ],
+)
+def test_decode_pdfdocencoding_success(input_bytes, expected_output):
+    """
+    Bytes assigned in PDFDocEncoding decode to their Unicode characters.
+
+    ISO 32000-2:2020, Annex D.3 "PDFDocEncoding character set".
+    """
+    assert decode_pdfdocencoding(input_bytes) == expected_output
+
+
+@pytest.mark.parametrize(
+    ("input_bytes", "expected_start"),
+    [
+        (b"He\x7flo", 2),
+        (b"\x7f", 0),
+        (b"Start\x7fEnd", 5),
+        (b"ABC\x00XYZ", 3),
+        (b"A\x9fB\xadC", 1),
+    ],
+)
+def test_decode_pdfdocencoding_raises_error(input_bytes, expected_start):
+    """
+    An unassigned byte raises a UnicodeDecodeError pointing at the first such byte.
+
+    ISO 32000-2:2020, Annex D.3 "PDFDocEncoding character set".
+    """
+    with pytest.raises(UnicodeDecodeError) as exc_info:
+        decode_pdfdocencoding(input_bytes)
+
+    err = exc_info.value
+    assert err.encoding == "pdfdocencoding"
+    assert err.object == input_bytes
+    assert "does not exist" in err.reason
+    assert (err.start, err.end) == (expected_start, expected_start + 1)
+
+
+def test_decode_pdfdocencoding_performance():
+    """
+    Decoding runs in C, not in a Python loop over the bytes.
+
+    The test counts the executed Python bytecode instructions with sys.monitoring.
+    A loop over the bytes would run more than 100,000 instructions for 10 KB.
+    """
+    if not hasattr(sys, "monitoring"):
+        pytest.skip("sys.monitoring requires Python 3.12+")
+
+    free_tool_ids = [i for i in range(6) if sys.monitoring.get_tool(i) is None]
+    if not free_tool_ids:
+        pytest.skip("No free sys.monitoring tool ID")
+    tool_id = free_tool_ids[-1]
+
+    test_payload = b"A" * 10_000
+    instruction_count = 0
+
+    def instruction_callback(code: CodeType, instruction_offset: int) -> None:
+        nonlocal instruction_count
+        instruction_count += 1
+
+    sys.monitoring.use_tool_id(tool_id, "pypdf-test-instruction-counter")
+    try:
+        sys.monitoring.register_callback(
+            tool_id, sys.monitoring.events.INSTRUCTION, instruction_callback
+        )
+        sys.monitoring.set_events(tool_id, sys.monitoring.events.INSTRUCTION)
+        decode_pdfdocencoding(test_payload)
+    finally:
+        sys.monitoring.set_events(tool_id, sys.monitoring.events.NO_EVENTS)
+        sys.monitoring.register_callback(
+            tool_id, sys.monitoring.events.INSTRUCTION, None
+        )
+        sys.monitoring.free_tool_id(tool_id)
+
+    # Only Python bytecode is counted. decode(), translate() and find() are
+    # implemented in C, so their loops over the characters do not count, and
+    # the number of instructions does not depend on the length of the input.
+    # Python 3.12 to 3.15 count 35 instructions: 21 in decode_pdfdocencoding
+    # and 14 in this test between the set_events() calls. The bytecode can
+    # change in future Python versions, so the limit leaves some headroom.
+    max_allowed_instructions = 100
+    assert instruction_count < max_allowed_instructions, (
+        f"Executed {instruction_count:,} bytecode instructions, "
+        f"expected fewer than {max_allowed_instructions:,}"
+    )

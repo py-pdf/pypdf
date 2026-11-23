@@ -70,6 +70,7 @@ from .generic import (
     DictionaryObject,
     NullObject,
     NumberObject,
+    TextStringObject,
     is_null_or_none,
 )
 
@@ -83,6 +84,15 @@ MAXIMUM_ROMAN_NUMERAL = 3_999
 # between rather restrictive <= 256 output bytes per label and the possibly
 # unrealistic 1000 output bytes per label.
 MAXIMUM_PAGE_LABEL_LENGTH = 512
+
+
+def number2decimal_arabic_numeral(number: int) -> str:
+    # A page label is a page *number*, so reject the non-positive values the
+    # other styles already reject. Without this, a malformed /St or a /Nums
+    # range which does not start at the first page gives labels like "0".
+    if number <= 0:
+        raise ValueError("Expecting a positive number.")
+    return str(number)
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
@@ -135,7 +145,7 @@ def number2lowercase_letter(number: int) -> str:
 
 _NUMBERING_STYLES: dict[str | None, Callable[[int], str]] = {
     None: lambda _: "",
-    "/D": str,
+    "/D": number2decimal_arabic_numeral,
     "/R": number2uppercase_roman_numeral,
     "/r": number2lowercase_roman_numeral,
     "/A": number2uppercase_letter,
@@ -147,21 +157,32 @@ def _get_label(value: Any, start_index: Any, index: int) -> str:
     # if /Nums array is not following the specification or if /Nums is empty
     if not isinstance(value, dict):
         return str(index + 1)  # Fallback
-    start = value.get("/St", 1)
-    prefix = cast(str, value.get("/P", ""))
-    mapping_function = _NUMBERING_STYLES.get(value.get("/S"))
+    # Any of these entries may be an indirect reference, which dict.get hands
+    # back as-is rather than resolving the way __getitem__ does. /Limits is
+    # already read that way below. The fallbacks are PdfObjects themselves so
+    # that every value can be resolved the same way.
+    start = value.get("/St", NumberObject(1)).get_object()
+    prefix = cast(str, value.get("/P", TextStringObject("")).get_object())
+    style = value.get("/S", NullObject()).get_object()
+    # A null /S is equivalent to omitting it (ISO 32000-1, 7.3.9).
+    mapping_function = _NUMBERING_STYLES.get(
+        None if isinstance(style, NullObject) else style
+    )
     if mapping_function is None:
         # Unknown /S numbering style; fall back to the page position.
         logger_warning(
             "Ignoring unknown page label numbering style %(style)r in /Nums.",
             source=__name__,
-            style=value.get("/S"),
+            style=style,
         )
         return str(index + 1)  # Fallback
+
     try:
-        return prefix + mapping_function(index - start_index + start)
+        label = prefix + mapping_function(index - start_index + start)
+        if len(label) > MAXIMUM_PAGE_LABEL_LENGTH:
+            raise ValueError("Page label is too long.")
     except (TypeError, ValueError) as exception:
-        # Malformed /St or /P value; fall back to the page position.
+        # Malformed /St or /P value or too large value; fall back to the page position.
         logger_warning(
             "Ignoring malformed page label entry in /Nums (/St=%(start)r, /P=%(prefix)r): %(exception)s",
             source=__name__,
@@ -169,6 +190,9 @@ def _get_label(value: Any, start_index: Any, index: int) -> str:
             prefix=prefix,
             exception=exception,
         )
+    else:
+        return label
+
     return str(index + 1)  # Fallback
 
 
@@ -254,6 +278,10 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
                     kids=kids,
                 )
                 break
+            # The keys are page indices where a labelling range starts, so a page
+            # between the /Limits of two kids belongs to the range started by the
+            # largest key before it, the last key of the preceding kid.
+            preceding_kid = None
             for kid in kids:
                 # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
                 kid = kid.get_object()
@@ -272,22 +300,24 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
                     )
                     continue
                 if limits[0] <= index <= limits[1]:
-                    if not is_null_or_none(kid.get("/Kids", None)):
-                        # Recursive definition.
-                        level += 1
-                        if level == 100:  # pragma: no cover
-                            raise NotImplementedError(
-                                "Too deep nesting is not supported."
-                            )
-                        number_tree = kid
-                        # Exit the inner `for` loop and continue at the next level with the
-                        # next iteration of the `while` loop.
-                        break
-                    return get_label_from_nums(kid, index)
+                    break
+                if limits[0] <= index:
+                    preceding_kid = kid
             else:
-                # When there are no kids, make sure to exit the `while` loop directly
-                # and continue with the fallback.
-                break
+                if preceding_kid is None:
+                    # When no kid starts at or before the index, make sure to exit the
+                    # `while` loop directly and continue with the fallback.
+                    break
+                kid = preceding_kid
+            if not is_null_or_none(kid.get("/Kids", None)):
+                # Recursive definition.
+                level += 1
+                if level == 100:  # pragma: no cover
+                    raise NotImplementedError("Too deep nesting is not supported.")
+                number_tree = kid
+                # Continue at the next level with the next iteration of the `while` loop.
+                continue
+            return get_label_from_nums(kid, index)
 
     logger_warning("Could not reliably determine page label for %(index)d.", source=__name__, index=index)
     return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
@@ -370,6 +400,9 @@ class _FirstKidFinder:
         self._starts: list[int] = []
         self._ends: list[int] = []
         self._first_kids: list[DictionaryObject | Exception] = []
+        # Kids read so far with valid /Limits and their lower limits, in order.
+        self._read_kids: list[DictionaryObject] = []
+        self._read_lows: list[float] = []
 
     def find(self, index: int) -> DictionaryObject | Exception | None:
         while True:
@@ -382,6 +415,17 @@ class _FirstKidFinder:
             self._next_kid += 1
             if kid_range is not None:
                 self._cover(*kid_range)
+
+    def find_preceding(self, index: int) -> DictionaryObject | None:
+        """
+        Find the kid ``index2label`` picks for a page index no kid contains: the last
+        kid in order whose ``/Limits`` start before it. Only valid once ``find`` has
+        returned ``None`` for the index, which means that all kids have been read.
+        """
+        position = bisect_right(self._read_lows, index) - 1
+        if position < 0:
+            return None
+        return self._read_kids[position]
 
     def _read_kid(self, kid: Any) -> tuple[int, int, DictionaryObject | Exception] | None:
         try:
@@ -401,6 +445,8 @@ class _FirstKidFinder:
         ):
             logger_warning("Ignoring kid with missing or malformed /Limits in /PageLabels.", source=__name__)
             return None
+        self._read_kids.append(kid)
+        self._read_lows.append(limits[0])
         page_range = _get_page_range(limits, self._page_count)
         return None if page_range is None else (*page_range, kid)
 
@@ -479,6 +525,8 @@ def _get_labels_from_kids(number_tree: DictionaryObject, page_count: int) -> lis
             kid = finder.find(index)
             if isinstance(kid, Exception):
                 raise kid
+            if kid is None:
+                kid = finder.find_preceding(index)
             if kid is None:
                 unmatched.append(index)
             else:

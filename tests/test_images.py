@@ -4,7 +4,7 @@ Tests which ensure that image extraction works properly go here.
 Typically, tests in here should compare the extracted images count, names,
 and/or the actual image data with the expected value.
 """
-
+import zlib
 from io import BytesIO
 from pathlib import Path
 from unittest import mock
@@ -15,7 +15,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageStat
 
 from pypdf import PageObject, PdfReader, PdfWriter, apply_configuration
 from pypdf._page import ImageFile
-from pypdf.errors import DeprecationError, LimitReachedError
+from pypdf.errors import DeprecationError, LimitReachedError, PdfReadError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import (
     ArrayObject,
@@ -23,6 +23,7 @@ from pypdf.generic import (
     ContentStream,
     DecodedStreamObject,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
@@ -31,6 +32,7 @@ from pypdf.generic import (
 from pypdf.generic._image_xobject import _handle_flate, _xobj_to_image
 
 from . import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
+from .generic.test_image_xobject import _create_image
 
 
 def open_image(path: Path | Image.Image | BytesIO) -> Image.Image:
@@ -385,7 +387,7 @@ def test_separation_1byte_to_rgb_inverted():
     assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
     obj = reader.pages[0].images[0].indirect_reference.get_object()
     obj.set_data(obj.get_data() + b"\x00")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^not enough image data$"):
         reader.pages[0].images[0]
 
 
@@ -466,11 +468,13 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
 @pytest.mark.enable_socket
 @pytest.mark.timeout(30)
 def test_large_compressed_image():
+    """This test ensures that a small stream which expands past the default limit decodes once the limit is raised."""
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
     reader = PdfReader(
         BytesIO(get_data_from_url(url=url, name="file_with_large_compressed_image.pdf"))
     )
-    list(reader.pages[0].images)
+    with apply_configuration(image_maximum_buffer_size=80_000_000):
+        list(reader.pages[0].images)
 
 
 @pytest.mark.timeout(timeout=1, method="thread")
@@ -579,13 +583,13 @@ def test_extract_image_from_object(caplog):
         "/X1"
     ].decode_as_image()
     assert isinstance(image, Image.Image)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^'/Width'$"):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
     assert "does not seem to be an Image" in caplog.text
     caplog.clear()
     co.indirect_reference = "for_test"
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^'/Width'$"):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
     assert "does not seem to be an Image" in caplog.text
@@ -626,9 +630,9 @@ def test_low_bit_devicergb_image_mode():
         [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255]
     )
 
-    # A single-component space must still map to a palette image ("P").
+    # A single-component /DeviceGray space decodes to scaled grayscale ("L").
     gray = _handle_flate((2, 2), bytes([0xF0, 0x0F]), "4bits", "/DeviceGray", 1, "")[0]
-    assert gray.mode == "P"
+    assert gray.mode == "L"
 
 
 def test_low_bit_devicergb_image_without_filter():
@@ -1093,3 +1097,197 @@ def test_handle_flate__indexed_cmyk_palette():
         (119, 179, 209),
         (0, 0, 0),
     ]
+
+
+def test_inline_image__perceptual() -> None:
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=10, height=10)
+
+    image = _create_image(size=(5, 5), mode="RGB")
+    contents = (
+        b"BI\n/BPC 8\n/Intent /Perceptual\n/W 5\n/F /FlateDecode\n/CS /RGB\n/H 5\nID\n"
+        + zlib.compress(image.tobytes())
+        + b"\nEI\n"
+    )
+    stream = ContentStream(stream=None, pdf=writer)
+    stream.set_data(contents)
+
+    page.replace_contents(stream)
+
+    assert len(page.images) == 1
+    assert image_similarity(image, page.images[0].image) > 0.9999
+
+
+def test_inline_image__custom_color_space_resources__not_a_dictionary():
+    """A custom inline-image color space with non-dictionary resources raises the clear input error."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    page[NameObject("/Resources")] = NumberObject(1)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    with pytest.raises(PdfReadError, match=r"^Cannot find resource entry /CS0 for /CS$"):
+        list(PdfReader(stream).pages[0].images)
+
+
+def test_inline_image__custom_color_space__resolved_from_resources():
+    """A custom inline-image color space is resolved through dictionary /Resources."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    resources = DictionaryObject()
+    resources[NameObject("/ColorSpace")] = DictionaryObject(
+        {NameObject("/CS0"): NameObject("/DeviceGray")}
+    )
+    page[NameObject("/Resources")] = resources
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /CS0 /W 1 /H 1 /BPC 8 ID 00 EI Q")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    images = list(PdfReader(stream).pages[0].images)
+    assert len(images) == 1
+
+
+def test_images__identifiers_are_listed_once():
+    """Iterating over the images of a page or getting its items lists the image identifiers only once."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /G /W 1 /H 1 /BPC 8 ID 00 EI Q\n" * 3)
+    page[NameObject("/Contents")] = writer._add_object(content)
+
+    with mock.patch.object(page, "_get_ids_image", wraps=page._get_ids_image) as ids_function:
+        assert [image.name for image in page.images] == ["~0~.png", "~1~.png", "~2~.png"]
+        assert ids_function.call_count == 1
+
+        ids_function.reset_mock()
+        assert [identifier for identifier, _ in page.images.items()] == ["~0~", "~1~", "~2~"]
+        assert ids_function.call_count == 1
+
+
+@pytest.mark.timeout(10)
+def test_images__index_access_on_page_with_many_inline_images():
+    """Accessing every image by index on a page with thousands of inline images is fast."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /G /W 1 /H 1 /BPC 8 ID 00 EI Q\n" * 2000)
+    page[NameObject("/Contents")] = writer._add_object(content)
+    image = DecodedStreamObject()
+    image.set_data(b"\x00")
+    image.update({
+        NameObject("/Type"): NameObject("/XObject"),
+        NameObject("/Subtype"): NameObject("/Image"),
+        NameObject("/Width"): NumberObject(1),
+        NameObject("/Height"): NumberObject(1),
+        NameObject("/ColorSpace"): NameObject("/DeviceGray"),
+        NameObject("/BitsPerComponent"): NumberObject(8),
+    })
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({NameObject("/Im0"): writer._add_object(image)})
+    })
+
+    images = [page.images[i] for i in range(len(page.images))]
+
+    assert len(images) == 2001
+    assert images[0].name == "Im0.png"
+    assert images[-1].name == "~1999~.png"
+
+
+def _add_gray_image(writer: PdfWriter, value: int) -> IndirectObject:
+    image = DecodedStreamObject()
+    image.set_data(bytes([value]))
+    image.update({
+        NameObject("/Type"): NameObject("/XObject"),
+        NameObject("/Subtype"): NameObject("/Image"),
+        NameObject("/Width"): NumberObject(1),
+        NameObject("/Height"): NumberObject(1),
+        NameObject("/ColorSpace"): NameObject("/DeviceGray"),
+        NameObject("/BitsPerComponent"): NumberObject(8),
+    })
+    return writer._add_object(image)
+
+
+def _add_form(writer: PdfWriter, content: bytes, x_objects: DictionaryObject | None = None) -> IndirectObject:
+    form = DecodedStreamObject()
+    form.set_data(content)
+    form.update({
+        NameObject("/Type"): NameObject("/XObject"),
+        NameObject("/Subtype"): NameObject("/Form"),
+    })
+    if x_objects is not None:
+        form[NameObject("/Resources")] = DictionaryObject({NameObject("/XObject"): x_objects})
+    return writer._add_object(form)
+
+
+def test_images__identifiers_of_xobject_form_and_inline_images():
+    """
+    The image identifiers of a page keep their order when XObject, form and inline images are mixed.
+
+    The form /Fm0 has its own /XObject resources, so listing its images also returns
+    the inline images of the page. They must not be listed a second time.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    content = DecodedStreamObject()
+    content.set_data(
+        b"q /Im0 Do Q q /Fm0 Do Q q /Fm1 Do Q\n"
+        b"q BI /CS /G /W 1 /H 1 /BPC 8 ID A EI Q\n"
+        b"q BI /CS /G /W 1 /H 1 /BPC 8 ID B EI Q\n"
+    )
+    page[NameObject("/Contents")] = writer._add_object(content)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/Im0"): _add_gray_image(writer, 0x10),
+            NameObject("/Fm0"): _add_form(
+                writer, b"q /Im1 Do Q", DictionaryObject({NameObject("/Im1"): _add_gray_image(writer, 0x20)})
+            ),
+            NameObject("/Fm1"): _add_form(writer, b""),
+        })
+    })
+    expected = [("Im0.png", b"\x10"), ("Im1.png", b"\x20"), ("~0~.png", b"A"), ("~1~.png", b"B")]
+
+    assert page.images.keys() == ["/Im0", ["/Fm0", "/Im1"], "~0~", "~1~"]
+    assert [(image.name, image.image.tobytes()) for image in page.images] == expected
+    assert [
+        (page.images[i].name, page.images[i].image.tobytes()) for i in range(len(page.images))
+    ] == expected
+    assert [(image.name, image.image.tobytes()) for _, image in page.images.items()] == expected
+
+
+def test_images__inline_image_names_are_not_compared_one_by_one():
+    """Listing the image identifiers does not compare each inline image name with every name before it."""
+    comparisons = 0
+
+    class CountingName(str):
+        __slots__ = ()
+        __hash__ = str.__hash__
+
+        def __eq__(self, other: object) -> bool:
+            nonlocal comparisons
+            comparisons += 1
+            return str.__eq__(self, other)
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    content = DecodedStreamObject()
+    content.set_data(b"q BI /CS /G /W 1 /H 1 /BPC 8 ID 00 EI Q\n" * 200)
+    page[NameObject("/Contents")] = writer._add_object(content)
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({NameObject("/Im0"): _add_gray_image(writer, 0x00)})
+    })
+    parsed = page._parse_images_from_content_stream()
+    page._content_stream_images = {CountingName(name): image for name, image in parsed.items()}
+
+    identifiers = page._get_ids_image()
+    comparisons_while_listing = comparisons
+
+    assert identifiers == ["/Im0", *(f"~{i}~" for i in range(200))]
+    # Comparing each name with all names before it takes 200 * 199 / 2 = 19,900 comparisons.
+    assert comparisons_while_listing < 200

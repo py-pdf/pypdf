@@ -10,12 +10,10 @@ from unittest import mock
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
-from pypdf.constants import ImageAttributes
-from pypdf.constants import PageAttributes as PG
-from pypdf.constants import UserAccessPermissions as UAP
+from pypdf.constants import ImageAttributes, PageAttributes, UserAccessPermissions
 from pypdf.errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -127,6 +125,28 @@ def test_read_metadata_title_is_utf8():
         assert title == "Microsoft Word - トランスバース社買収電話会議英語Final.docx"
 
 
+@pytest.mark.enable_socket
+def test_read_utf8_text_strings():
+    """UTF-8 text strings with a byte order mark, see ISO 32000-2:2020, 7.9.2.2.1."""
+    # PDF 2.0 example file provided by the PDF Association under CC BY-SA 4.0.
+    url = (
+        "https://raw.githubusercontent.com/pdf-association/pdf20examples/"
+        "c20f2c17bfcc4baab7cfe62e70fae64caf14d5fa/pdf20-utf8-test.pdf"
+    )
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name="pdf20-utf8-test.pdf")))
+
+    assert reader.metadata.title == "表ポあA鷗ŒéＢ逍Üßªąñ丂㐀𠀀"
+    assert reader.metadata.author == "Peter Wyatt"
+    assert [item.title for item in reader.outline] == [
+        "PDF 2.0 with UTF-8 test file",
+        "\u202a\u202atest\u202a",
+        "\U0001f308\ufe0f\n",
+    ]
+    ocgs = reader.root_object["/OCProperties"]["/OCGs"]
+    assert [ocg.get_object()["/Name"] for ocg in ocgs] == ["Layer 1", "گچپژ"]
+    assert reader.page_labels == ["Prefixi"]
+
+
 def test_iss1943():
     with PdfReader(RESOURCE_ROOT / "crazyones.pdf") as reader:
         docinfo = reader.metadata
@@ -173,11 +193,11 @@ def test_broken_meta_data(pdf_path):
 def test_get_annotations(src):
     with PdfReader(src) as reader:
         for page in reader.pages:
-            if PG.ANNOTS in page:
-                for annot in page[PG.ANNOTS]:
+            if PageAttributes.ANNOTS in page:
+                for annot in page[PageAttributes.ANNOTS]:
                     subtype = annot.get_object()[ImageAttributes.SUBTYPE]
                     if subtype == "/Text":
-                        annot.get_object()[PG.CONTENTS]
+                        annot.get_object()[PageAttributes.CONTENTS]
 
 
 @pytest.mark.parametrize(
@@ -192,8 +212,8 @@ def test_get_attachments(src, nb_attachments):
 
     attachments = {}
     for page in reader.pages:
-        if PG.ANNOTS in page:
-            for annotation in page[PG.ANNOTS]:
+        if PageAttributes.ANNOTS in page:
+            for annotation in page[PageAttributes.ANNOTS]:
                 annotobj = annotation.get_object()
                 if annotobj[ImageAttributes.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
@@ -1119,31 +1139,31 @@ def test_user_access_permissions():
 
     # Encrypted.
     reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
-    assert reader.user_access_permissions == UAP.all()
+    assert reader.user_access_permissions == UserAccessPermissions.all()
 
     # Custom writer permissions.
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer.encrypt(
         user_password="",
         owner_password="abc",
-        permissions_flag=UAP.PRINT | UAP.FILL_FORM_FIELDS,
+        permissions_flag=UserAccessPermissions.PRINT | UserAccessPermissions.FILL_FORM_FIELDS,
     )
     output = BytesIO()
     writer.write(output)
     reader = PdfReader(output)
-    assert reader.user_access_permissions == (UAP.PRINT | UAP.FILL_FORM_FIELDS)
+    assert reader.user_access_permissions == (UserAccessPermissions.PRINT | UserAccessPermissions.FILL_FORM_FIELDS)
 
     # All writer permissions.
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     writer.encrypt(
         user_password="",
         owner_password="abc",
-        permissions_flag=UAP.all(),
+        permissions_flag=UserAccessPermissions.all(),
     )
     output = BytesIO()
     writer.write(output)
     reader = PdfReader(output)
-    assert reader.user_access_permissions == UAP.all()
+    assert reader.user_access_permissions == UserAccessPermissions.all()
 
 
 def test_pages_attribute():
@@ -1767,6 +1787,106 @@ def test_outline_with_invalid_destinations():
     # contains 9 outline items, 6 with invalid destinations
     # caused by different malformations
     assert len(reader.outline) == 9
+
+
+def _build_minimal_pdf(objects: list[tuple[str, str]]) -> bytes:
+    """Build a minimal, xref-valid PDF from literal object bodies."""
+    out = BytesIO()
+    out.write(b"%PDF-1.7\n")
+    offsets = [0]
+    for num, body in objects:
+        offsets.append(out.tell())
+        out.write(f"{num} 0 obj\n{body}\nendobj\n".encode())
+    xref_pos = out.tell()
+    n = len(objects) + 1
+    out.write(f"xref\n0 {n}\n".encode())
+    out.write(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        out.write(f"{offset:010d} 00000 n \n".encode())
+    out.write(f"trailer\n<< /Size {n - 1} /Root 1 0 R >>\n".encode())
+    out.write(f"startxref\n{xref_pos}\n%%EOF".encode())
+    return out.getvalue()
+
+
+def test_root_recovery_with_non_integer_size(caplog):
+    """Cf #4387: a non-integer /Size in a corrupted trailer must not crash
+    the root recovery loop with a TypeError.
+    """
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R >>"),
+            ("2", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            ("3", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>"),
+        ]
+    )
+    data = data.replace(b"/Size 3 /Root 1 0 R", b"/Size /Bogus /Root 3 0 R")
+    reader = PdfReader(BytesIO(data), strict=False)
+    with pytest.raises(PdfReadError):
+        len(reader.pages)
+    assert all(
+        msg in caplog.text
+        for msg in (
+            "Invalid Root object in trailer",
+            'Searching object with "/Catalog" key',
+        )
+    )
+
+
+def test_named_destination__fallback_without_pages(caplog):
+    """Cf #4386: an unknown fit type must degrade to the missing-destination
+    fallback even when the document has no pages.
+    """
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R /Names << /Dests << /Dest1 3 0 R >> >> >>"),
+            ("2", "<< /Type /Pages /Kids [] /Count 0 >>"),
+            ("3", "[ 2 0 R (junk) 0 ]"),  # unknown fit type with an argument
+        ]
+    )
+    reader = PdfReader(BytesIO(data), strict=False)
+    destinations = reader.named_destinations
+    assert len(destinations) == 1
+    destination = destinations["/Dest1"]
+    assert destination["/Type"] == "/Fit"
+    assert isinstance(destination["/Page"], NullObject)
+    assert "Unknown destination: '/Dest1'" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "corrupt_id",
+    [b"/ID /Bogus", b"/ID 42", b"/ID (bare-string)"],
+)
+def test_trailer_id__non_array_raises(corrupt_id):
+    """A non-array trailer /ID must fail with the standard PdfReadError."""
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R >>"),
+            ("2", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            ("3", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>"),
+        ]
+    )
+    data = data.replace(b"<< /Size 3 /Root", b"<< /Size 3 " + corrupt_id + b" /Root")
+    reader = PdfReader(BytesIO(data))
+    with pytest.raises(PdfReadError, match=r"^Trailer /ID entry does not point to an array$"):
+        reader._file_identifiers
+
+
+def test_writer__clone_from__non_array_id_raises():
+    """Cloning from a document with a non-array trailer /ID must fail with
+    the standard PdfReadError instead of copying the non-array entry into
+    the output trailer.
+    """
+    data = _build_minimal_pdf(
+        [
+            ("1", "<< /Type /Catalog /Pages 2 0 R >>"),
+            ("2", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            ("3", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>"),
+        ]
+    )
+    data = data.replace(b"<< /Size 3 /Root", b"<< /Size 3 /ID 42 /Root")
+    reader = PdfReader(BytesIO(data))
+    with pytest.raises(PdfReadError, match=r"^Trailer /ID entry does not point to an array$"):
+        PdfWriter(clone_from=reader)
 
 
 @pytest.mark.enable_socket
@@ -3508,6 +3628,39 @@ def test_read_pdf15_xref_stream__negative_count(caplog):
     assert caplog.messages == ["Negative XRef count -5, using 0."]
 
 
+def test_process_xref_stream__xrefstm():
+    """An /XRefStm entry in a cross-reference stream dictionary is followed."""
+    pdf = bytearray(b"%PDF-1.5\n")
+    offset_catalog = len(pdf)
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    offset_pages = len(pdf)
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+    offset_page = len(pdf)
+    pdf += b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>\nendobj\n"
+
+    # The page is only listed in the cross-reference stream referenced by /XRefStm.
+    offset_xrefstm = len(pdf)
+    entries = b"\x01" + offset_page.to_bytes(2, "big")
+    pdf += b"4 0 obj\n<< /Type /XRef /Size 4 /Index [3 1] /W [1 2 0] /Length %d >>\nstream\n" % len(entries)
+    pdf += entries + b"\nendstream\nendobj\n"
+
+    startxref = len(pdf)
+    entries = b"\x00\x00\x00"
+    entries += b"\x01" + offset_catalog.to_bytes(2, "big")
+    entries += b"\x01" + offset_pages.to_bytes(2, "big")
+    pdf += (
+        b"5 0 obj\n<< /Type /XRef /Size 6 /Index [0 3] /W [1 2 0] /Root 1 0 R /XRefStm %d /Length %d >>\nstream\n"
+    ) % (offset_xrefstm, len(entries))
+    pdf += entries + b"\nendstream\nendobj\n"
+    pdf += b"startxref\n%d\n%%%%EOF\n" % startxref
+
+    reader = PdfReader(BytesIO(pdf), strict=True)
+
+    assert reader.xref[0] == {1: offset_catalog, 2: offset_pages, 3: offset_page}
+    assert len(reader.pages) == 1
+    assert reader.pages[0].mediabox == [0, 0, 72, 72]
+
+
 def test_read_standard_xref_table__end_of_file__trailer() -> None:
     data = b"%PDF-1.4\nstartxref\n28\n%%EOF\nxref\n1 0\naaa"
 
@@ -3567,6 +3720,294 @@ def test_get_object_from_stream__duplicate_offsets() -> None:
 
     with pytest.raises(PdfReadError, match=r"^Invalid offset 0 in object stream 1\.$"):
         _ = reader.root_object
+
+
+@pytest.mark.timeout(5)
+def test_read_pdf15_xref_stream__decoded_data_not_retained():
+    pdf = bytearray(b"%PDF-1.7\n")
+    pdf += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    pdf += b"2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+    encoded = FlateDecode.encode(b"\x02" + b"\x00" * 1000)
+    prev_offset = None
+    for object_number in range(10, 15):
+        offset = len(pdf)
+        prev_entry = f"/Prev {prev_offset} " if prev_offset is not None else ""
+        pdf += (
+            f"{object_number} 0 obj\n<< /Type /XRef /Size {object_number + 1} /Index [{object_number} 1] "
+            f"/W [1 0 0] /Root 1 0 R {prev_entry}/Filter /FlateDecode /Length {len(encoded)} >>\nstream\n"
+        ).encode()
+        pdf += encoded + b"\nendstream\nendobj\n"
+        prev_offset = offset
+    pdf += f"startxref\n{prev_offset}\n%%EOF\n".encode()
+
+    reader = PdfReader(BytesIO(pdf))
+    xref_streams = [
+        obj for obj in reader.resolved_objects.values()
+        if isinstance(obj, StreamObject) and obj.get("/Type") == "/XRef"
+    ]
+
+    assert len(xref_streams) == 5
+    assert all(stream.decoded_self is None for stream in xref_streams)
+    assert sorted(reader.xref_objStm) == [10, 11, 12, 13, 14]
+
+
+def test_read_xref__hybrid_pdf__limit():
+    pdf = bytearray(b"%PDF-1.5\n")
+
+    # Cross-reference stream (object 1)
+    xref_stream_offset = len(pdf)
+    xref_stream_data = b"\x00\x00\xff\xff\x01\x00"
+    pdf.extend(
+        (
+            b"1 0 obj\n"
+            b"<< /Type /XRef"
+            b" /Size 2"
+            b" /W [1 1 1]"
+            b" /Index [0 2]"
+            b" /Length 6"
+            b" >>\n"
+            b"stream\n"
+        ) + xref_stream_data
+        + b"\nendstream\n"
+        + b"endobj\n"
+    )
+
+    # Traditional cross-reference table
+    xref_offset = len(pdf)
+    pdf.extend(
+        (
+            "xref\n"
+            "0 2\n"
+            "0000000000 65535 f \n"
+            f"{xref_stream_offset:010d} 00000 n \n"
+            "trailer\n"
+            f"<< /Size 2 /Root 2 0 R /XRefStm {xref_stream_offset} >>\n"
+            "startxref\n"
+            f"{xref_offset}\n"
+            "%%EOF\n"
+        ).encode("ascii")
+    )
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Maximum XRef stream entry limit reached: 2 > 1\.$"
+    ):
+        PdfReader(BytesIO(pdf), xref_stream_maximum_entries=1)
+
+
+def _build_pdf_with_resources_in_objstm(objstm_num: int) -> bytes:
+    """
+    One page whose /Resources (object 4) is, according to the xref stream,
+    stored in object stream ``objstm_num``.
+
+    Pointing ``objstm_num`` at a number that is not in the file simulates a
+    missing object stream; pointing it at object 5 (the xref stream, whose
+    /Type is /XRef) simulates a stream that is not an object stream.
+    """
+    pdf = bytearray(b"%PDF-1.5\n")
+    offsets = {}
+    for num, body in (
+        (1, b"<< /Type /Catalog /Pages 2 0 R >>"),
+        (2, b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+        (3, b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources 4 0 R >>"),
+    ):
+        offsets[num] = len(pdf)
+        pdf += b"%d 0 obj\n" % num + body + b"\nendobj\n"
+    xref_offset = len(pdf)
+    rows = [
+        (0, 0, 0xFFFF),
+        (1, offsets[1], 0),
+        (1, offsets[2], 0),
+        (1, offsets[3], 0),
+        (2, objstm_num, 0),
+        (1, xref_offset, 0),
+    ]
+    data = b"".join(struct.pack(">BIH", *row) for row in rows)
+    pdf += (
+        b"5 0 obj\n<< /Type /XRef /Size 6 /W [1 4 2] /Root 1 0 R /Length %d >>\nstream\n"
+        % len(data)
+    )
+    pdf += data + b"\nendstream\nendobj\n"
+    pdf += b"startxref\n%d\n%%%%EOF\n" % xref_offset
+    return bytes(pdf)
+
+
+@pytest.mark.parametrize(
+    ("objstm_num", "strict_message"),
+    [
+        pytest.param(9, r"^Could not find object\.$", id="missing-object-stream"),
+        pytest.param(
+            5,
+            r"^Object stream 5 referenced by object 4 is missing or is not an object stream\.$",
+            id="not-an-object-stream",
+        ),
+    ],
+)
+def test_get_object_from_stream__invalid_object_stream(objstm_num, strict_message, caplog):
+    """An object stream that is missing or is not an /ObjStm does not leak a TypeError or AssertionError."""
+    data = _build_pdf_with_resources_in_objstm(objstm_num)
+
+    reader = PdfReader(BytesIO(data))
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+    writer.write(BytesIO())
+    assert isinstance(reader.get_object(4), NullObject)
+    assert (
+        f"Object stream {objstm_num} referenced by object 4 is missing or is not "
+        "an object stream; ignoring it."
+    ) in caplog.text
+
+    reader = PdfReader(BytesIO(data), strict=True)
+    with pytest.raises(PdfReadError, match=strict_message):
+        reader.get_object(4)
+
+
+@pytest.mark.enable_socket
+def test_read_xref__unreadable_xref_stm(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A trailer whose /XRefStm points to an unreadable cross-reference stream is read with a warning.
+
+    The stream at offset 1008 has a damaged /Length key.
+    ISO 32000-2:2020, 7.5.8.4, Table 19: /XRefStm is the offset of a cross-reference
+    stream in a hybrid-reference file.
+    """
+    url = "https://github.com/py-pdf/pypdf/files/5536984/test.pdf"
+    name = "pypdf-5536984.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)), strict=True)
+    assert len(reader.pages) == 5
+    assert "XRef object at 1008 can not be read, some object may be missing" in caplog.messages
+
+
+@pytest.mark.samples
+def test_read_xref__prev_pointing_to_nowhere() -> None:
+    """
+    A /Prev offset that points to no cross-reference table raises a PdfReadError in strict mode.
+
+    The /Prev offset 2815238 points into the middle of an object.
+    ISO 32000-2:2020, 7.5.5, Table 15: /Prev is the offset of the previous cross-reference section.
+    """
+    with pytest.raises(PdfReadError, match=r"^Could not find xref table at specified location$"):
+        PdfReader(SAMPLE_ROOT / "017-unreadable-meta-data" / "unreadablemetadata.pdf", strict=True)
+
+
+@pytest.mark.enable_socket
+def test_get_object__expected_object_not_found_with_non_zero_indexed_xref(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    An object whose cross-reference entry points to another object raises a PdfReadError in strict mode.
+
+    The cross-reference table starts at object 1 instead of 0, and object 8 is not found.
+    ISO 32000-2:2020, 7.5.4: the first subsection starts with object number 0.
+    """
+    url = "https://github.com/py-pdf/pypdf/files/14628314/iss2516.pdf"
+    name = "iss2516.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)), strict=True)
+    assert caplog.messages == ["Xref table not zero-indexed. ID numbers for objects will be corrected."]
+    with pytest.raises(
+        PdfReadError,
+        match=(
+            r"^Expected object ID \(8 0\) does not match actual \(-1 -1\); "
+            r"xref table not zero-indexed\.$"
+        ),
+    ):
+        reader.get_object(8)
+
+
+def test_decrypt__not_encrypted() -> None:
+    """
+    Decrypting a document that is not encrypted raises a PdfReadError.
+
+    ISO 32000-2:2020, 7.6.2: without an /Encrypt entry in the trailer, the document is not encrypted.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    with pytest.raises(PdfReadError, match=r"^Not encrypted file$"):
+        reader.decrypt("password")
+
+
+@pytest.mark.xfail(
+    reason="An object that a newer cross-reference section marks as free is read from an older section.",
+    strict=True,
+)
+@pytest.mark.enable_socket
+def test_get_object__object_deleted_in_incremental_update() -> None:
+    """
+    An object deleted by an incremental update is read as the null object.
+
+    The stamp annotation 17 is marked free by a later update of the file, and no object refers to it any more.
+    ISO 32000-2:2020, 7.5.6: an incremental update deletes an object by marking it free.
+    """
+    url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
+    name = "graph_letter.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert reader.get_object(17) == NullObject()
+
+
+def test_rebuild_xref_table__maximum_entries() -> None:
+    """Rebuilding a broken xref must honor the discovered-object budget."""
+    objects = {
+        1: b"<< /Type /Catalog /Pages 2 0 R >>",
+        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        3: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        4: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        5: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+    }
+    pdf_data = bytearray(b"%PDF-1.7\n")
+    for number, obj in objects.items():
+        pdf_data += b"%d 0 obj\n" % number + obj + b"\nendobj\n"
+    pdf_data += b"startxref\n0\n%%%%EOF\n"
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()), xref_rebuild_maximum_entries=2)
+    with pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild entry limit exceeded: 3 > 2\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))
+
+
+def test_rebuild_xref_table__maximum_input_length() -> None:
+    """Rebuilding must refuse oversized inputs before loading the whole file."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()))
+
+    oversized = b"%PDF-1.7\n" + (b"%xxxxxxxx\n" * 5) + b"startxref\n0\n%%%%EOF\n"
+    assert len(oversized) > 10
+    with apply_configuration(maximum_declared_stream_length=10), pytest.raises(
+        LimitReachedError,
+        match=rf"^Maximum xref rebuild input length exceeded: {len(oversized)} > 10\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(oversized))
+
+
+def test_rebuild_xref_table__maximum_entries_from_objstm() -> None:
+    """ObjStm members must also consume the xref rebuild entry budget."""
+    # Two top-level objects stay under the budget; the first ObjStm member
+    # pushes entry_count over the limit during the second recovery pass.
+    payload = b"10 0\n<< /Type /Page >>"
+    objstm = (
+        b"<< /Type /ObjStm /N 1 /First 4 /Length %d >>\nstream\n%s\nendstream"
+        % (len(payload), payload)
+    )
+    pdf_data = bytearray(b"%PDF-1.7\n")
+    pdf_data += b"1 0 obj\n<< /Type /Catalog >>\nendobj\n"
+    pdf_data += b"2 0 obj\n" + objstm + b"\nendobj\n"
+    pdf_data += b"startxref\n0\n%%%%EOF\n"
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()), xref_rebuild_maximum_entries=2)
+    with pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild entry limit exceeded: 3 > 2\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))
+
 
 
 def test_reader_does_not_copy_the_stream() -> None:
