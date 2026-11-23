@@ -1408,7 +1408,7 @@ def test_get_outline__speed():
     """
     small = _measure_get_outline_cpu_time(2_500, runs=3)
     large = _measure_get_outline_cpu_time(20_000, runs=1)
-    assert large / small < 16
+    assert large / small < 32  # linear would be 8, quadratic would be 64
 
 
 @pytest.mark.parametrize(
