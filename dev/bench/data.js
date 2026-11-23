@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795459485497,
+  "lastUpdate": 1795464891019,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131411,6 +131411,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009481535908615522",
             "extra": "mean: 651.2701304000188 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9722a7b382e0d7498a2a831051906a321973033d",
+          "message": "BUG: Keep the generation number of objects in incremental updates (#4484)\n\nIn incremental mode every object of the source was fetched and written\nback as generation 0. An object stored as `N 1 obj` was then missing from\nthe writer or replaced by an older generation 0 version, and changes to it\nwere written as `N 0 obj`, which references to `N 1 R` never reach.\n\nFetch each object with the highest generation listed for its number, keep\nthat generation for objects taken from the incremental source and write it\nin the object header and the xref stream entry of the increment.",
+          "timestamp": "2026-11-23T21:12:44+01:00",
+          "tree_id": "286304850968711276705860734b45cc651fb464",
+          "url": "https://github.com/py-pdf/pypdf/commit/9722a7b382e0d7498a2a831051906a321973033d"
+        },
+        "date": 1795464878018,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5740574719549487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0073470364659723635",
+            "extra": "mean: 279.79404580000136 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.910539495849093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018447701878460725",
+            "extra": "mean: 43.6480336999999 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3565592333237297,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0340627462271062",
+            "extra": "mean: 2.8045831001999972 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 28.363199770358946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013540937980173113",
+            "extra": "mean: 35.25695295652267 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18568855244345844,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033373434686057434",
+            "extra": "mean: 5.385361600599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.122905003501778,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004922803996419282",
+            "extra": "mean: 471.0526369999968 msec\nrounds: 5"
           }
         ]
       }
