@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import math
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from copy import deepcopy
@@ -68,7 +69,7 @@ from .constants import (
     PageAttributes,
     Resources,
 )
-from .errors import PageSizeNotDefinedError, PdfReadError
+from .errors import LimitReachedError, PageSizeNotDefinedError, PdfReadError
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -727,12 +728,19 @@ class PageObject(DictionaryObject):
 
         # Removes duplicates and preserves order
         deduplicated = lst.copy()
+        # A set for the membership check below; a list makes it O(n) per image.
+        # lst can already hold inline image names: a form XObject with its own
+        # /XObject resources returns them from the recursive call.
+        # The lists in lst are images inside forms. They are unhashable and
+        # never equal an inline image name, so they are left out.
+        seen = {name for name in lst if isinstance(name, str)}
 
         # Add inline images from _content_stream_images
         for object_name, object_value in self._content_stream_images.items():
             # inline images have cache populated
-            if object_name not in deduplicated and object_value:
+            if object_name not in seen and object_value:
                 deduplicated.append(object_name)
+                seen.add(object_name)
 
         return deduplicated
 
@@ -1086,10 +1094,8 @@ class PageObject(DictionaryObject):
             if not same_value:
                 if is_pdf_writer:
                     new_res[newname] = page2res.raw_get(key).clone(pdf)
-                    try:
+                    with contextlib.suppress(AttributeError):
                         new_res[newname] = new_res[newname].indirect_reference
-                    except AttributeError:
-                        pass
                 else:
                     new_res[newname] = page2res.raw_get(key)
             lst = sorted(new_res.items())
@@ -1429,9 +1435,16 @@ class PageObject(DictionaryObject):
                 trsf = Transformation()
             else:
                 trsf = Transformation(ctm)
+            page2_annots = cast(ArrayObject, page2[PageAttributes.ANNOTS])
+            configuration = get_configuration()
+            if len(page2_annots) > configuration.annotations_maximum_per_page:
+                raise LimitReachedError(
+                    f"Maximum annotations per page exceeded: "
+                    f"{len(page2_annots)} > {configuration.annotations_maximum_per_page}."
+                )
             # Ensure we are working on a copy of the list. Otherwise, if both pages
             # are the same object, we might run into an infinite loop.
-            for a in cast(ArrayObject, deepcopy(page2[PageAttributes.ANNOTS])):
+            for a in deepcopy(page2_annots):
                 a = a.get_object()
                 aa = a.clone(
                     pdf,
@@ -1471,10 +1484,8 @@ class PageObject(DictionaryObject):
                     transform_annotation_appearance,
                 )
                 transform_annotation_appearance(aa, trsf)
-                try:
+                with contextlib.suppress(KeyError):
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
-                except KeyError:
-                    pass
                 aa[NameObject("/P")] = self.indirect_reference
                 annots.append(aa.indirect_reference)
 
@@ -2122,7 +2133,7 @@ class PageObject(DictionaryObject):
                 resources_dict = DictionaryObject()
             if self.pdf is not None and (font_resources := _get_font_resources(resources_dict)):
                 for font_name in font_resources:
-                    font_object = font_resources[font_name].get_object()
+                    font_object = font_resources[font_name]
                     if isinstance(font_object, DictionaryObject):
                         fonts[font_name] = Font.from_font_resource(font_object)
 
@@ -2685,12 +2696,21 @@ def _get_fonts_walk(
         for a in cast(ArrayObject, obj["/Annots"]):
             _get_fonts_walk(cast(DictionaryObject, a.get_object()), fnt, emb)
     if "/AP" in obj:
-        normal = cast(DictionaryObject, obj["/AP"])["/N"].get_object()
+        # /N is optional, and may refer to a missing object
+        normal = cast(DictionaryObject, obj["/AP"]).get("/N")
+        if normal is not None:
+            normal = normal.get_object()
         if isinstance(normal, StreamObject):
             # /Type is optional in an appearance stream
             _get_fonts_walk(normal, fnt, emb)
-        else:
+        elif isinstance(normal, DictionaryObject):
             # One appearance stream per state, e.g. /Off and /Yes of a check box
-            for a in cast(DictionaryObject, normal).values():
+            for a in normal.values():
                 _get_fonts_walk(cast(DictionaryObject, a.get_object()), fnt, emb)
+        elif not is_null_or_none(normal):
+            logger_warning(
+                "The normal appearance is not a stream or a dictionary: %(normal)s",
+                source=__name__,
+                normal=normal,
+            )
     return fnt, emb  # return the sets for each page

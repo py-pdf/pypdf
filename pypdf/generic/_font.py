@@ -461,15 +461,27 @@ class Font:
                     descendant_fonts=descendant_fonts,
                 )
                 descendant_fonts = ArrayObject()
-            d_font: DictionaryObject
-            for d_font_idx, d_font in enumerate(descendant_fonts):
-                d_font = cast(DictionaryObject, d_font.get_object())
-                descendant_fonts[d_font_idx] = d_font
-                cls._collect_cid_character_widths(d_font=d_font, current_widths=character_widths)
-                if "/DW" in d_font:
-                    character_widths["default"] = cast(int, d_font["/DW"].get_object())
-                font_descriptor_obj = d_font.get("/FontDescriptor", DictionaryObject()).get_object()
-                font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
+            elif len(descendant_fonts) > 1:
+                # A composite font has a single descendant font (ISO 32000-2:2020, 9.7.1).
+                logger_warning(
+                    "Expected a single entry in /DescendantFonts, got %(count)d. Ignoring all but the first one.",
+                    source=__name__,
+                    count=len(descendant_fonts),
+                )
+            if descendant_fonts:
+                d_font = descendant_fonts[0].get_object()
+                if isinstance(d_font, DictionaryObject):
+                    cls._collect_cid_character_widths(d_font=d_font, current_widths=character_widths)
+                    if "/DW" in d_font:
+                        character_widths["default"] = cast(int, d_font["/DW"].get_object())
+                    font_descriptor_obj = d_font.get("/FontDescriptor", DictionaryObject()).get_object()
+                    font_descriptor = FontDescriptor(**cls._parse_font_descriptor(font_descriptor_obj))
+                else:
+                    logger_warning(
+                        "Expected a dictionary for the descendant font, got %(d_font)s. Ignoring it.",
+                        source=__name__,
+                        d_font=d_font,
+                    )
 
         if not font_descriptor:
             font_descriptor = FontDescriptor(name=name)

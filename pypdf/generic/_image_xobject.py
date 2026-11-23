@@ -82,7 +82,8 @@ def _get_image_mode(
         color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
-        color_components = cast(int, icc_profile["/N"])
+        # /N is required, but a profile without it is read with the components known
+        color_components = cast(int, icc_profile.get("/N", color_components))
         color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space_str = color_space[1].get_object()

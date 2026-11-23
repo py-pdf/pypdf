@@ -293,7 +293,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
 
     # test with invalid algorithm name
     if alg == "ABCD":
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match=r"^Algorithm 'ABCD' NOT supported$") as exc:
             writer.encrypt(
                 user_password=user_password,
                 owner_password=owner_password,
@@ -668,6 +668,26 @@ def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
     assert second.decrypt(ciphertext) == plaintext  # already latched: no second warning
     assert CryptRC4._is_rc4_supported is False
     assert sum("RC4 is not supported" in message for message in caplog.messages) == 1
+
+
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Requires the cryptography provider")
+def test_read_rc4_pdf_with_48_bit_key(caplog, monkeypatch) -> None:
+    from pypdf._crypt_providers import _cryptography  # noqa: PLC0415
+
+    monkeypatch.setattr(CryptRC4, "_is_rc4_supported", True)
+    monkeypatch.setattr(_cryptography, "_warned_rc4_key_sizes", set())
+    path = RESOURCE_ROOT / "encryption" / "rc4-len48.pdf"
+
+    reader = PdfReader(path, password="pw")
+    metadata = reader.metadata
+
+    assert metadata is not None
+    assert metadata.title == "hello"
+    assert CryptRC4._is_rc4_supported is True
+    assert caplog.messages.count(
+        "cryptography does not support 48-bit RC4 keys; "
+        "falling back to the pure-Python RC4 implementation."
+    ) == 1
 
 
 @pytest.mark.parametrize(

@@ -1,4 +1,5 @@
 """Test the pypdf.xmp module."""
+import re
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
@@ -111,7 +112,7 @@ def test_converter_date():
     date = pypdf.xmp._converter_date("2021-04-28T12:23:34.123Z")
     assert date == datetime(2021, 4, 28, 12, 23, 34, 123000)
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Invalid date format: today$") as exc:
         pypdf.xmp._converter_date("today")
     assert exc.value.args[0].startswith("Invalid date format")
 
@@ -134,9 +135,9 @@ def test_converter_date():
 )
 def test_converter_date_out_of_range(value, date_parts):
     """Invalid timestamps retain their value and datetime's specific reason."""
-    with pytest.raises(ValueError) as datetime_exc:
+    with pytest.raises(ValueError, match=r"(year|month|day|hour|minute|second) ") as datetime_exc:
         datetime(*date_parts)
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=rf"^Invalid date {re.escape(repr(value))}: ") as exc:
         pypdf.xmp._converter_date(value)
     assert str(exc.value) == f"Invalid date {value!r}: {datetime_exc.value}"
 
