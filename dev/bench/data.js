@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795451351328,
+  "lastUpdate": 1795451481455,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -177415,6 +177415,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023674329497369872",
             "extra": "mean: 536.2539421999941 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3c315f45c152524ee78870afa3e5c963defbf54c",
+          "message": "TST: Cover cross-reference edge cases of PdfReader (#4498)\n\n* TST: Cover cross-reference edge cases of PdfReader\n\nThe recovery paths of the cross-reference parsing are what keeps pypdf\nworking on damaged files, but many of them had no test. Add tests built\nfrom small, generated documents (no downloads) for:\n\n* cross-reference streams with more than three /W entries and with\n  unknown entry types (accepted, rejected in strict mode), and with a\n  /W width of 0 for the type field (defaults to type 1),\n* an unreadable /XRefStm in a trailer,\n* a /Prev pointer a few bytes before the previous table (repaired) and\n  one that points nowhere (PdfReadError in strict mode),\n* an object id mismatch in a table that is not zero-indexed (strict),\n* an encrypted object missing from the table: found by scanning the file\n  and decrypted, or FileNotDecryptedError without the password,\n* decrypt() on an unencrypted document.\n\nThree strict xfail tests document bugs found while doing this; they fail\nas soon as the bug is fixed, so the fix can simply drop the marker:\n\n* the retry after a failed _rebuild_xref_table() is stopped by the\n  circular-chain detection (its offset is already marked as visited),\n* in hybrid-reference files, objects that the table marks as free but\n  /XRefStm lists as in use resolve to null,\n* objects deleted by an incremental update are read from the older\n  revision, because free entries are not recorded in `xref`.\n\nThe stopped retry is a regression from #3655, which added the\ncircular-chain check for #3654. The free-entry bugs are related to\n#4176/#4177.\n\nWith the whole test suite, pypdf/_reader.py has two uncovered spots left:\nthe import for Python < 3.11 and the non-strict path for a table that is\nnot zero-indexed.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\n\n* TST: Use real files for cross-reference tests where the corpus has one\n\nFour of the new cross-reference tests built a synthetic document for a\ncase that files of the test corpus already have. Use those files, so the\ntests check what pypdf does with real damaged PDFs:\n\n* an unreadable /XRefStm in a trailer: pypdf-5536984.pdf, whose\n  /XRefStm 1008 points to a stream with a damaged /Length key (strict\n  mode, as only it reaches this path),\n* a /Prev that points to no cross-reference table:\n  sample-files/017-unreadable-meta-data/unreadablemetadata.pdf,\n* an object id mismatch in a table that is not zero-indexed:\n  iss2516.pdf, object 8,\n* an object deleted by an incremental update (strict xfail):\n  graph_letter.pdf, whose stamp annotation 17 is marked free by a later\n  update and is still returned.\n\nThe downloaded files are the ones other tests already use, with the same\nURL and name. The other tests stay synthetic: no file of resources/,\nsample-files/ or the downloaded files reaches their code paths.\n\nAlso correct the spec references of the docstrings: /W and its zero\nwidth are in 7.5.8.2, Table 17; /XRefStm is in Table 19; a missing\n/Encrypt entry is in 7.6.2. The hybrid-file test now explains 7.5.8.4 as\nthe spec states it, and the xfail reason of the rebuild retry describes\nthe wrong behavior, as the other two do.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Remove the cross-reference stream tests that pass on wrong results\n\nThe tests for a /W with more than three entries, a /W width of 0 for\nthe type field and an unknown entry type only checked that the empty\npage tree of the generated document has no pages. They passed while\npypdf lost the entries: with /W [1 2 1 1] no object is read at all,\nand after an entry of an unknown type the next entry is misread,\nbecause the extra fields are not skipped.\n\nRemove them with their helper. A fix of the decoder will come with a\ntest that checks that the entries are read.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Remove artificial tests\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-23T17:27:26+01:00",
+          "tree_id": "af14c493249393048a55fd609b7c4234783a19d6",
+          "url": "https://github.com/py-pdf/pypdf/commit/3c315f45c152524ee78870afa3e5c963defbf54c"
+        },
+        "date": 1795451468692,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 17.749159821334402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019399641550054143",
+            "extra": "mean: 56.34069499999685 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 35.67837975743231,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008518231868323739",
+            "extra": "mean: 28.028178600001752 msec\nrounds: 30"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3905622103366815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03150496220199938",
+            "extra": "mean: 719.1335939999988 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 42.7664584837512,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015877182653492014",
+            "extra": "mean: 23.382810629034026 msec\nrounds: 62"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.39436478115358714,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06854634230072426",
+            "extra": "mean: 2.5357233905999976 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4577986661744504,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026415265469078675",
+            "extra": "mean: 685.965780600003 msec\nrounds: 5"
           }
         ]
       }
