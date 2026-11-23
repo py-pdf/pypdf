@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795438129162,
+  "lastUpdate": 1795440245188,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131213,6 +131213,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0047707233314546104",
             "extra": "mean: 373.55007119999755 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "158475962+Krushil-Dhankecha@users.noreply.github.com",
+            "name": "Krushil Dhankecha",
+            "username": "Krushil-Dhankecha"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "24e25d39ce15f92345de7b2806c72e556d2998df",
+          "message": "ROB: Drop an article bead that names no page when appending (#4483)\n\n_add_articles_thread() read every bead's /P through __getitem__, so a bead\nwithout that entry ended PdfWriter.append() with KeyError: '/P'. The page\nis now read as an absent value, which _get_cloned_page() already answers\nwith None, and the bead is skipped like any other that cannot be remapped.\nredp5110_sampled.pdf of docling's test data carries beads of this shape on\n17 of its 18 pages.",
+          "timestamp": "2026-11-23T14:22:05+01:00",
+          "tree_id": "eb942c38978aa473665cf955bafac02c0b87a7c5",
+          "url": "https://github.com/py-pdf/pypdf/commit/24e25d39ce15f92345de7b2806c72e556d2998df"
+        },
+        "date": 1795440232323,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6677548538323945,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008626393627428824",
+            "extra": "mean: 272.6463571999943 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.46173254229686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006852777938441357",
+            "extra": "mean: 35.13489554839658 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3637524129046153,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030766427115509202",
+            "extra": "mean: 2.7491226574000054 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 27.839115047699373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014629888329787683",
+            "extra": "mean: 35.92068204347035 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18396767832093125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052406017218119806",
+            "extra": "mean: 5.4357374574 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.1355515597819625,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0032101428997913014",
+            "extra": "mean: 468.26310300000387 msec\nrounds: 5"
           }
         ]
       }
