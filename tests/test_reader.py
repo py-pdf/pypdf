@@ -1868,7 +1868,7 @@ def test_trailer_id__non_array_raises(corrupt_id):
     data = data.replace(b"<< /Size 3 /Root", b"<< /Size 3 " + corrupt_id + b" /Root")
     reader = PdfReader(BytesIO(data))
     with pytest.raises(PdfReadError, match=r"^Trailer /ID entry does not point to an array$"):
-        reader._ID
+        reader._file_identifiers
 
 
 def test_writer__clone_from__non_array_id_raises():
