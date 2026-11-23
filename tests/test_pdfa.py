@@ -9,7 +9,7 @@ from pypdf import PdfReader, PdfWriter
 from tests import SAMPLE_ROOT
 
 
-def is_pdfa1b_compliant(src: BytesIO):
+def is_pdfa1b_compliant(src: BytesIO) -> bool:
     """Check if a PDF is PDF/A-1b compliant."""
 
     def document_information_has_analogous_xml(src: BytesIO) -> bool:
@@ -20,9 +20,7 @@ def is_pdfa1b_compliant(src: BytesIO):
             return True
         if not xmp:
             return False
-        if meta.title and not xmp.dc_title:
-            return meta.title == xmp.dc_title
-        return True
+        return not meta.title or bool(xmp.dc_title)
 
     return document_information_has_analogous_xml(src)
 
@@ -34,7 +32,7 @@ def is_pdfa1b_compliant(src: BytesIO):
         (SAMPLE_ROOT / "021-pdfa/crazyones-pdfa.pdf", None),
     ],
 )
-def test_pdfa(src: Path, diagnostic_write_name: str | None):
+def test_pdfa(src: Path, diagnostic_write_name: str | None) -> None:
     with open(src, "rb") as fp:
         data = BytesIO(fp.read())
     reader = PdfReader(src)

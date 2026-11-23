@@ -1,6 +1,5 @@
 """Test the pypdf.constants module."""
 import re
-from collections.abc import Callable
 
 import pytest
 
@@ -13,7 +12,7 @@ from pypdf.constants import (
 from pypdf.errors import DeprecationError
 
 
-def test_slash_prefix():
+def test_slash_prefix() -> None:
     """
     Naming conventions of PDF_KEYS (constant names) are followed.
 
@@ -34,7 +33,7 @@ def test_slash_prefix():
 
             # Skip methods
             constant_value = getattr(cls, attr)
-            if isinstance(constant_value, Callable):
+            if callable(constant_value):
                 continue
 
             assert constant_value.startswith("/")
@@ -47,7 +46,7 @@ def test_slash_prefix():
             assert pattern.match(constant_value)
 
 
-def test_user_access_permissions__dict_handling():
+def test_user_access_permissions__dict_handling() -> None:
     # Value is mix of configurable and reserved bits.
     # Reserved bits should not be part of the dictionary.
     as_dict = UserAccessPermissions(512 + 64 + 8).to_dict()
@@ -110,7 +109,7 @@ def test_user_access_permissions__dict_handling():
         UserAccessPermissions.from_dict(data)
 
 
-def test_user_access_permissions__all():
+def test_user_access_permissions__all() -> None:
     all_permissions = UserAccessPermissions.all()
     all_int = int(all_permissions)
     all_string = bin(all_permissions)
@@ -125,7 +124,7 @@ def test_user_access_permissions__all():
     assert all_int & UserAccessPermissions.R31 == UserAccessPermissions.R31
 
 
-def test_catalog_dictionary():
+def test_catalog_dictionary() -> None:
     with pytest.raises(
         DeprecationError,
         match=(
