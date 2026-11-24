@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795551700454,
+  "lastUpdate": 1795551978602,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -178273,6 +178273,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038797144354174584",
             "extra": "mean: 706.1721146000082 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "metsw24@gmail.com",
+            "name": "metsw24-max",
+            "username": "metsw24-max"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8e68ce89e9912e5f8807c088bc246fba7f3929d9",
+          "message": "ROB: Skip invalid entries in font encoding /Differences (#4433)\n\n* ROB: Skip invalid entries in font encoding /Differences\n\nA /Differences entry that is neither an integer code nor a glyph name\n(null, float, boolean, array, dictionary) was stored as the mapping of the\ncurrent character code and made extract_text() fail with a TypeError in\nboth extraction modes. Indirect references inside the array were never\nresolved, so a referenced code was treated as a glyph for code 0 and the\nfollowing names were shifted by one.\n\nResolve indirect entries, apply only integers and strings, and warn and\nskip anything else without consuming a code, as poppler and MuPDF do.\n\n* MAINT: Use descriptive names in the /Differences loop\n\n* Call get_object() on /Differences entries unconditionally",
+          "timestamp": "2026-11-24T21:17:30+01:00",
+          "tree_id": "44dca6a6d307678fee1ba88fe62d78f179ff174b",
+          "url": "https://github.com/py-pdf/pypdf/commit/8e68ce89e9912e5f8807c088bc246fba7f3929d9"
+        },
+        "date": 1795551965590,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.49802085182581,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017300403496042782",
+            "extra": "mean: 54.059837428569935 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 41.28642396108919,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006902247044442913",
+            "extra": "mean: 24.221036942857058 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.4186969101644038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02760535363556524",
+            "extra": "mean: 704.8721914000055 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 41.99108054791699,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015463683390819742",
+            "extra": "mean: 23.814581262296333 msec\nrounds: 61"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.40130637949543224,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04343661178743188",
+            "extra": "mean: 2.4918617073999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.418542052149015,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03947427235676831",
+            "extra": "mean: 704.9491402000058 msec\nrounds: 5"
           }
         ]
       }
