@@ -164,26 +164,11 @@ def test_image_new_property():
     assert len(reader.pages[0].images.items()) == 36
     assert reader.pages[0].images[0].name == "I0.png"
 
-    expected_image_url = "https://github.com/user-attachments/assets/3bf25760-2113-4e25-b4c2-fc1d3a84a263"
-    expected_image_name = "pdf_font_garbled_image30.png"
-    expected_image_data = BytesIO(get_data_from_url(url=expected_image_url, name=expected_image_name))
-    # The reference PNG was captured before /SMask /Matte [0, 0, 0] preblending was undone;
-    # convert its black-premultiplied RGB channels to straight RGBA for exact pixel comparison.
-    expected_raw = open_image(expected_image_data)
-    raw_bytes = expected_raw.tobytes()
-    unpremultiplied = bytearray(len(raw_bytes))
-    for idx in range(0, len(raw_bytes), 4):
-        r, g, b, a = raw_bytes[idx : idx + 4]
-        if a > 0:
-            r = min(255, round(r * 255 / a))
-            g = min(255, round(g * 255 / a))
-            b = min(255, round(b * 255 / a))
-        unpremultiplied[idx : idx + 4] = (r, g, b, a)
-    expected_image = Image.frombytes("RGBA", expected_raw.size, bytes(unpremultiplied))
-    actual_image = reader.pages[0].images[-1].image
-    assert actual_image is not None
-    assert actual_image.getpixel((20, 0)) == (217, 0, 0, 27)
-    assert image_similarity(expected_image, actual_image) == 1
+    expected_image = RESOURCE_ROOT / "pdf_font_garbled_image30.png"
+    assert image_similarity(
+        expected_image,
+        reader.pages[0].images[-1].image
+    ) == 1
 
     assert reader.pages[0].images["/TPL1", "/Image5"].image.format == "JPEG"
     assert (

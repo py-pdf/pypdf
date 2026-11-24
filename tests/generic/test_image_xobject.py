@@ -1126,7 +1126,7 @@ def test_merge_image() -> None:
         ),
         pytest.param(
             ColorSpaces.DEVICE_RGB,
-            [FloatObject(1.0), FloatObject(0.5), 0],
+            [FloatObject(1.0), FloatObject(0.5), NumberObject(0)],
             bytes([215, 147, 40, 55, 128, 0]),
             bytes([51, 51]),
             "RGBA",
@@ -1256,6 +1256,7 @@ def test_image_replace__preserves_dct_smask_matte_colors_issue_2256() -> None:
     source_writer = PdfWriter()
     page = source_writer.add_blank_page(width=100, height=100)
 
+    indirect_zero = source_writer._add_object(NumberObject(0))
     mask_stream = EncodedStreamObject()
     mask_stream.update(
         {
@@ -1266,7 +1267,7 @@ def test_image_replace__preserves_dct_smask_matte_colors_issue_2256() -> None:
             NameObject(ImageAttributes.COLOR_SPACE): NameObject(ColorSpaces.DEVICE_GRAY),
             NameObject(ImageAttributes.BITS_PER_COMPONENT): NumberObject(8),
             NameObject(StreamAttributes.FILTER): NameObject(FilterTypes.FLATE_DECODE),
-            NameObject(ImageAttributes.MATTE): ArrayObject([NumberObject(0), NumberObject(0), NumberObject(0)]),
+            NameObject(ImageAttributes.MATTE): ArrayObject([indirect_zero, NumberObject(0), NumberObject(0)]),
         }
     )
     mask_stream._data = zlib.compress(bytes([51] * 64))

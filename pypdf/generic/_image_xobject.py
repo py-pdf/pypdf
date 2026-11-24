@@ -1,4 +1,5 @@
 """Functions to convert an image XObject to an image"""
+import functools
 from collections.abc import Sequence
 from io import BytesIO
 from typing import IO, Any, Literal, TypeAlias, cast
@@ -11,8 +12,9 @@ from ..generic import (
     ArrayObject,
     DecodedStreamObject,
     EncodedStreamObject,
+    FloatObject,
     NullObject,
-    PdfObject,
+    NumberObject,
     TextStringObject,
     is_null_or_none,
 )
@@ -631,6 +633,22 @@ def _get_mode_and_invert_color(
     return mode, invert_color
 
 
+@functools.lru_cache(maxsize=16)
+def _build_matte_lut(matte_component: float) -> bytes:
+    """Build a 65536-byte lookup table indexed by ``(alpha << 8) | color``."""
+    m = matte_component * 255.0
+    rows = [bytes(range(256))]
+    for a in range(1, 256):
+        inv_alpha = 255.0 / a
+        rows.append(
+            bytes(
+                min(255, max(0, round(m + (c - m) * inv_alpha)))
+                for c in range(256)
+            )
+        )
+    return b"".join(rows)
+
+
 def _unpremultiply_matte(
     img: Image.Image,
     alpha: Image.Image,
@@ -651,15 +669,7 @@ def _unpremultiply_matte(
     bands = img.split()
     color_bands = bands[:-1] if img.mode in ("LA", "RGBA") else bands
 
-    matte_values: list[float] = []
-    if isinstance(matte, list) and len(matte) == len(color_bands):
-        for entry in matte:
-            val = entry.get_object() if isinstance(entry, PdfObject) else entry
-            if isinstance(val, bool) or not isinstance(val, (int, float)):
-                break
-            matte_values.append(float(val))
-
-    if len(matte_values) != len(color_bands):
+    if not isinstance(matte, ArrayObject) or len(matte) != len(color_bands):
         logger_warning(
             "Ignoring malformed /Matte array %(matte)s; expected %(count)d numeric values.",
             source=__name__,
@@ -668,25 +678,31 @@ def _unpremultiply_matte(
         )
         return img
 
-    alpha_bytes = alpha.tobytes()
-    lut_by_matte: dict[float, list[bytes]] = {}
+    matte_values: list[float] = []
+    for entry in matte:
+        value = entry.get_object()
+        if not isinstance(value, (NumberObject, FloatObject)):
+            logger_warning(
+                "Ignoring malformed /Matte array %(matte)s; expected %(count)d numeric values.",
+                source=__name__,
+                matte=matte,
+                count=len(color_bands),
+            )
+            return img
+        matte_values.append(float(value))
+
+    _validate_image_size(mode="I", size=img.size)
     unpremultiplied_bands: list[Image.Image] = []
     for band, matte_component in zip(color_bands, matte_values):
-        if matte_component not in lut_by_matte:
-            m = matte_component * 255.0
-            rows = [bytes(range(256))]
-            for a in range(1, 256):
-                inv_alpha = 255.0 / a
-                rows.append(
-                    bytes(
-                        min(255, max(0, round(m + (c - m) * inv_alpha)))
-                        for c in range(256)
-                    )
-                )
-            lut_by_matte[matte_component] = rows
-        lut = lut_by_matte[matte_component]
-        data = bytes(lut[a][c] for c, a in zip(band.tobytes(), alpha_bytes))
-        unpremultiplied_bands.append(_create_image_from_bytes("L", img.size, data))
+        lut = _build_matte_lut(matte_component)
+        packed = Image.frombytes(
+            "I",
+            img.size,
+            _merge_image(mode="LA", bands=(band, alpha)).tobytes(),
+            "raw",
+            "I;16",
+        )
+        unpremultiplied_bands.append(packed.point(lut, "L"))
 
     if len(unpremultiplied_bands) == 1:
         return unpremultiplied_bands[0]
