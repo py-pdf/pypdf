@@ -199,6 +199,9 @@ class TextExtraction:
                     self._pending_move = _PendingMove(str_widths or 0.0, self._font_state())
                 else:
                     self._pending_move.str_widths += str_widths or 0.0
+                    # A TJ offset only moves the text matrix, and this move starts again from the
+                    # text line matrix, so an offset shown since the previous move no longer applies.
+                    self._pending_move.tj_offset_widths = 0.0
             elif operator == b"Tj":
                 self._post_process_text_operation(str_widths or 0.0)
 

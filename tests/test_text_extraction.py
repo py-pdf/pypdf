@@ -699,6 +699,23 @@ def test_move_without_text_after_it_keeps_a_label_with_its_value() -> None:
             "add ress",
             id="tm-back-then-offset-past-a-gap",
         ),
+        pytest.param(
+            b"1 0 0 1 40 700 Tm (add) Tj 1 0 0 1 40 700 Tm [-834 -834 (ress)] TJ",
+            "address",
+            id="tm-back-then-split-offset",
+        ),
+        # A TJ offset only moves the text matrix, and the next Td, Tm or T* starts again from the
+        # text line matrix, so an offset shown before that move does not count after it
+        pytest.param(
+            b"1 0 0 1 40 700 Tm (add) Tj 1 0 0 1 40 700 Tm [-2668] TJ 1 0 0 1 60.016 700 Tm (ress) Tj",
+            "address",
+            id="offset-then-tm-to-the-end-of-the-text",
+        ),
+        pytest.param(
+            b"1 0 0 1 40 700 Tm (add) Tj 1 0 0 1 40 700 Tm [-2668] TJ 20.016 0 Td (ress) Tj",
+            "address",
+            id="offset-then-td-to-the-end-of-the-text",
+        ),
         # Without a move before it, an offset is still a word gap
         pytest.param(b"1 0 0 1 40 700 Tm (add) Tj [-1000 (ress)] TJ", "add ress", id="offset-without-a-move"),
     ],
