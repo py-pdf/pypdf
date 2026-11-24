@@ -315,35 +315,12 @@ def skip_over_comments(stream: StreamType, *, limit: int | None = None) -> None:
         comment_count += 1
 
 
+# read_until_regex() reads chunks of 16, 32, 64, ... bytes, up to 8192 bytes
+# each. The maximum token lengths of _CONTENT_STREAM_SIMPLE_TOKEN in
+# generic/_data_structures.py are derived from these chunk sizes; update them
+# when changing these values.
 _READ_UNTIL_REGEX_FIRST_CHUNK_SIZE = 16
 _READ_UNTIL_REGEX_MAXIMUM_CHUNK_SIZE = 8192
-
-
-def get_safe_read_until_regex_length(length: int) -> int:
-    """
-    Get the length of the longest token which read_until_regex() reads without raising.
-
-    read_until_regex() reads chunks of growing size and raises as soon as the
-    bytes read reach ``length``, before it searches the chunk for the end of
-    the token. Whether a longer token raises thus depends on the bytes after
-    it: a token followed by enough bytes raises from one byte more than the
-    returned length on.
-
-    Args:
-        length: The maximum number of bytes passed to read_until_regex().
-
-    Returns:
-        The number of bytes before the match up to which read_until_regex()
-        never raises, or -1 if it can raise for every token.
-
-    """
-    read_length = 0
-    chunk_size = _READ_UNTIL_REGEX_FIRST_CHUNK_SIZE
-    while read_length + chunk_size < length:
-        read_length += chunk_size
-        if chunk_size < _READ_UNTIL_REGEX_MAXIMUM_CHUNK_SIZE:
-            chunk_size <<= 1
-    return read_length - 1
 
 
 def read_until_regex(*, stream: StreamType, regex: Pattern[bytes], length: int = sys.maxsize) -> bytes:

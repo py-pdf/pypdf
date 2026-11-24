@@ -25,7 +25,6 @@ from pypdf._utils import (
     deprecate_with_replacement,
     deprecation_no_replacement,
     format_iso8824_date,
-    get_safe_read_until_regex_length,
     get_stream_data,
     get_stream_size,
     logger_error,
@@ -237,32 +236,6 @@ def test_read_until_regex_no_match_exhausted():
     stream = io.BytesIO(data)
     result = read_until_regex(stream=stream, regex=re.compile(b"ZZZ"))
     assert result == data
-
-
-@pytest.mark.parametrize("length", [17, 20, 48, 49, 64, 100, 128, 4096, 20_000])
-def test_get_safe_read_until_regex_length(length: int) -> None:
-    """
-    The safe length is the longest token read_until_regex() reads without raising, whatever follows it.
-
-    A longer token raises if enough bytes follow it.
-    """
-    safe_length = get_safe_read_until_regex_length(length)
-    regex = re.compile(b" ")
-    trailing = b" " + b"1" * 20_000
-    stream = io.BytesIO(b"A" * safe_length + trailing)
-    assert read_until_regex(stream=stream, regex=regex, length=length) == b"A" * safe_length
-    for suffix in (b"", b" ", trailing[:16]):
-        stream = io.BytesIO(b"A" * safe_length + suffix)
-        assert read_until_regex(stream=stream, regex=regex, length=length) == b"A" * safe_length
-    with pytest.raises(LimitReachedError):
-        read_until_regex(stream=io.BytesIO(b"A" * (safe_length + 1) + trailing), regex=regex, length=length)
-
-
-def test_get_safe_read_until_regex_length__first_chunk_reaches_limit() -> None:
-    """No token is safe if the first chunk already reaches the limit."""
-    assert get_safe_read_until_regex_length(16) == -1
-    with pytest.raises(LimitReachedError):
-        read_until_regex(stream=io.BytesIO(b" " + b"1" * 20), regex=re.compile(b" "), length=16)
 
 
 def test_read_until_regex_exponential_chunk_growth():

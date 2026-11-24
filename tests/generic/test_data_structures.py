@@ -593,7 +593,7 @@ def test_content_stream__parse_content_stream__simple_tokens(data: bytes, caplog
     warnings = caplog.text
     caplog.clear()
     never_matching = mock.Mock(match=mock.Mock(return_value=None))
-    with mock.patch.object(ContentStream, "_SIMPLE_TOKEN_PATTERN", never_matching):
+    with mock.patch("pypdf.generic._data_structures._CONTENT_STREAM_SIMPLE_TOKEN", never_matching):
         assert parse() == operations
     never_matching.match.assert_called()
     assert caplog.text == warnings

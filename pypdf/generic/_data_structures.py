@@ -51,7 +51,6 @@ from .._utils import (
     WHITESPACES,
     BinaryStreamType,
     StreamType,
-    get_safe_read_until_regex_length,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -94,75 +93,58 @@ logger = logging.getLogger(__name__)
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
-def _create_simple_token_pattern(operator_length_limit: int) -> re.Pattern[bytes]:
-    """
-    Create the pattern of the tokens making up most of a content stream.
-
-    Each alternative only matches what the generic parsing in
-    ContentStream._parse_content_stream would read the same way; everything
-    else, like strings, arrays, inline images or overlong tokens, is left to
-    it.
-
-    The PDF specification defines no maximum length of a token (ISO
-    32000-2:2020, Annex C), but the generic parsing raises LimitReachedError
-    for names longer than NameObject._LENGTH_LIMIT, operators longer than
-    ContentStream._OPERATOR_LENGTH_LIMIT and numbers longer than
-    NumberObject._LENGTH_LIMIT. It reads these tokens with read_until_regex(),
-    which checks the limit after reading each chunk, but before searching the
-    chunk for the end of the token. Whether a token slightly shorter than the
-    limit raises thus depends on the bytes after it: a name of 4,092 bytes
-    before " gs" is read, but raises before " 1 1 1 gs". The maximum lengths in
-    the pattern are those up to which the generic parsing never raises,
-    whatever follows the token, as given by get_safe_read_until_regex_length(),
-    e.g. 4,079 for the limit of 4,096. Longer tokens are left to the generic
-    parsing, which raises or not as before.
-
-    Args:
-        operator_length_limit: The maximum length of an operator in the
-            generic parsing.
-
-    Returns:
-        The pattern, with the groups float, int, name and operator.
-
-    """
-    number_length = get_safe_read_until_regex_length(NumberObject._LENGTH_LIMIT)
-    name_length = get_safe_read_until_regex_length(NameObject._LENGTH_LIMIT)
-    operator_length = get_safe_read_until_regex_length(operator_length_limit)
-    return re.compile(
-        (
-            # Skip the whitespace before the token, like read_non_whitespace()
-            # does.
-            rb"[\x00\t\n\f\r ]*"
-            rb"(?:"
-            # A number, which the generic parsing reads up to the first
-            # character NumberObject.NumberPattern matches. The lookahead limits
-            # this run of characters to the maximum length.
-            rb"(?=[+,\-.0-9]{1,%d}(?![+,\-.0-9]))"
-            rb"(?:"
-            # A decimal number with an optional sign, like 1.5, -1. or .5. The
-            # lookahead rejects runs going on with more characters, like 1.2.3,
-            # 1,5 or 1-2, which the generic parsing reads differently.
-            rb"(?P<float>[+-]?(?:\d+\.\d*|\.\d+))(?![+,\-.0-9])"
-            # An integer with an optional sign. The second lookahead rejects
-            # the object number of what looks like an indirect reference, like
-            # "1 0 R", which read_object() reads instead.
-            rb"|(?P<int>[+-]?\d+)(?![+,\-.0-9])(?!\s+\d+\s+R(?![a-zA-Z]))"
-            rb")"
-            # A name, ending at whitespace, a delimiter or the end of the data.
-            # Only printable ASCII characters without # are matched, so that
-            # names with # escapes or other bytes are decoded by
-            # NameObject.read_from_stream(). Like there, the maximum length
-            # counts the bytes after the slash.
-            rb"|(?P<name>/[^\x00-\x20\x7f-\xff()<>\[\]{}/%%#]{0,%d})(?=[\s()<>\[\]{}/%%]|\Z)"
-            # An operator, starting with a letter, ' or " like in the generic
-            # parsing, and ending at whitespace, a delimiter or the end of the
-            # data. BI is rejected, as an inline image follows it. The first
-            # character counts towards the maximum length.
-            rb"|(?P<operator>(?!BI(?:[\s()<>\[\]{}/%%]|\Z))[A-Za-z'\"][^\s()<>\[\]{}/%%]{0,%d})(?=[\s()<>\[\]{}/%%]|\Z)"
-            rb")"
-        )
-        % (number_length, name_length, operator_length - 1)
-    )
+# The tokens making up most of a content stream, preceded by whitespace. Each
+# alternative only matches what the generic parsing in
+# ContentStream._parse_content_stream would read the same way; everything else,
+# like strings, arrays, inline images or overlong tokens, is left to it.
+#
+# The PDF specification defines no maximum length of a token (ISO 32000-2:2020,
+# Annex C), but the generic parsing raises LimitReachedError for numbers longer
+# than NumberObject._LENGTH_LIMIT (64), operators longer than
+# ContentStream._OPERATOR_LENGTH_LIMIT (128) and names longer than
+# NameObject._LENGTH_LIMIT (4,096). It reads these tokens with
+# read_until_regex(), which checks the limit after reading each chunk, but
+# before searching the chunk for the end of the token. Whether a token slightly
+# shorter than the limit raises thus depends on the bytes after it: a name of
+# 4,092 bytes before " gs" is read, but raises before " 1 1 1 gs".
+#
+# The maximum lengths below are those up to which the generic parsing never
+# raises, whatever follows the token: one byte less than the end of the last
+# chunk below the limit. The chunks have 16, 32, 64, ... bytes (see
+# _READ_UNTIL_REGEX_FIRST_CHUNK_SIZE and _READ_UNTIL_REGEX_MAXIMUM_CHUNK_SIZE in
+# pypdf/_utils.py), so they end at 16, 48, 112, 240, ..., 4,080 bytes. This
+# gives 47 bytes for numbers, 111 for operators and 4,079 for names, counted
+# after the slash like in NameObject.read_from_stream(). Longer tokens are left
+# to the generic parsing, which raises or not as before.
+_CONTENT_STREAM_SIMPLE_TOKEN = re.compile(
+    # Skip the whitespace before the token, like read_non_whitespace() does.
+    rb"[\x00\t\n\f\r ]*"
+    rb"(?:"
+    # A number, which the generic parsing reads up to the first character
+    # NumberObject.NumberPattern matches. The lookahead limits this run of
+    # characters to 47 bytes.
+    rb"(?=[+,\-.0-9]{1,47}(?![+,\-.0-9]))"
+    rb"(?:"
+    # A decimal number with an optional sign, like 1.5, -1. or .5. The
+    # lookahead rejects runs going on with more characters, like 1.2.3, 1,5 or
+    # 1-2, which the generic parsing reads differently.
+    rb"(?P<float>[+-]?(?:\d+\.\d*|\.\d+))(?![+,\-.0-9])"
+    # An integer with an optional sign. The second lookahead rejects the object
+    # number of what looks like an indirect reference, like "1 0 R", which
+    # read_object() reads instead.
+    rb"|(?P<int>[+-]?\d+)(?![+,\-.0-9])(?!\s+\d+\s+R(?![a-zA-Z]))"
+    rb")"
+    # A name of at most 4,079 bytes after the slash, ending at whitespace, a
+    # delimiter or the end of the data. Only printable ASCII characters without
+    # # are matched, so that names with # escapes or other bytes are decoded by
+    # NameObject.read_from_stream().
+    rb"|(?P<name>/[^\x00-\x20\x7f-\xff()<>\[\]{}/%#]{0,4079})(?=[\s()<>\[\]{}/%]|\Z)"
+    # An operator of at most 111 bytes, starting with a letter, ' or " like in
+    # the generic parsing, and ending at whitespace, a delimiter or the end of
+    # the data. BI is rejected, as an inline image follows it.
+    rb"|(?P<operator>(?!BI(?:[\s()<>\[\]{}/%]|\Z))[A-Za-z'\"][^\s()<>\[\]{}/%]{0,110})(?=[\s()<>\[\]{}/%]|\Z)"
+    rb")"
+)
 
 
 # Direct objects of these types are neither streams nor indirect objects.
@@ -1467,8 +1449,6 @@ class ContentStream(DecodedStreamObject):
     """
     _OPERATOR_LENGTH_LIMIT = 128
 
-    _SIMPLE_TOKEN_PATTERN = _create_simple_token_pattern(_OPERATOR_LENGTH_LIMIT)
-
     def __init__(
         self,
         stream: Any,
@@ -1643,9 +1623,8 @@ class ContentStream(DecodedStreamObject):
         position = 0
         operands: list[int | str | PdfObject] = []
         parsing_budget = StreamParsingBudget(remaining_budget=get_configuration().stream_parsing_work_maximum_count)
-        match_simple_token = self._SIMPLE_TOKEN_PATTERN.match
         while True:
-            match = match_simple_token(data, position)
+            match = _CONTENT_STREAM_SIMPLE_TOKEN.match(data, position)
             if match is not None:
                 self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
                 position = match.end()
