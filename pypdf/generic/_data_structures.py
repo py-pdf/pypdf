@@ -51,6 +51,7 @@ from .._utils import (
     WHITESPACES,
     BinaryStreamType,
     StreamType,
+    deprecate_no_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -1650,6 +1651,21 @@ class ContentStream(DecodedStreamObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
+        """
+        Write the content stream to the stream.
+
+        Args:
+            stream: The stream to write to.
+            encryption_key: Ignored. The writer encrypts the objects before it
+                writes them.
+
+        .. deprecated:: 7.2.0
+            The ``encryption_key`` parameter is deprecated and will be removed
+            in pypdf 8.0.0. It has no effect.
+
+        """
+        if encryption_key is not None:
+            deprecate_no_replacement("The encryption_key parameter of ContentStream.write_to_stream()", "8.0.0")
         if not self._data and self._operations:
             self.get_data()  # this ensures ._data is rebuilt
         super().write_to_stream(stream)
