@@ -554,6 +554,14 @@ def test_content_stream__parse_content_stream__limits() -> None:
         pytest.param(b"1 2 m " + b"9" * 70 + b" w", id="error-integer-too-long"),
         pytest.param(b"1 2 m 0." + b"9" * 70 + b" w", id="error-decimal-too-long"),
         pytest.param(b"/" + b"N" * 5000 + b" gs", id="error-name-too-long"),
+        pytest.param(b"/" + b"N" * 4079 + b" 1 1 1 1 1 1 1 1 1 gs", id="name-at-safe-length"),
+        pytest.param(b"/" + b"N" * 4080 + b" 1 1 1 1 1 1 1 1 1 gs", id="error-name-above-safe-length"),
+        pytest.param(b"A" * 111 + b" 1 1 1 1 1 1 1 1 1 S", id="operator-at-safe-length"),
+        pytest.param(b"A" * 112 + b" 1 1 1 1 1 1 1 1 1 S", id="error-operator-above-safe-length"),
+        pytest.param(b"9" * 47 + b" 1 1 1 1 1 1 1 1 1 w", id="integer-at-safe-length"),
+        pytest.param(b"9" * 48 + b" 1 1 1 1 1 1 1 1 1 w", id="error-integer-above-safe-length"),
+        pytest.param(b"-0." + b"9" * 44 + b" 1 1 1 1 1 1 1 1 1 w", id="decimal-at-safe-length"),
+        pytest.param(b"-0." + b"9" * 45 + b" 1 1 1 1 1 1 1 1 1 w", id="error-decimal-above-safe-length"),
     ],
 )
 def test_content_stream__parse_content_stream__simple_tokens(data: bytes, caplog: pytest.LogCaptureFixture) -> None:
@@ -585,7 +593,7 @@ def test_content_stream__parse_content_stream__simple_tokens(data: bytes, caplog
     warnings = caplog.text
     caplog.clear()
     never_matching = mock.Mock(match=mock.Mock(return_value=None))
-    with mock.patch("pypdf.generic._data_structures._CONTENT_STREAM_SIMPLE_TOKEN", never_matching):
+    with mock.patch.object(ContentStream, "_SIMPLE_TOKEN_PATTERN", never_matching):
         assert parse() == operations
     never_matching.match.assert_called()
     assert caplog.text == warnings
