@@ -2951,7 +2951,7 @@ def test_viewerpreferences():
     v.num_copies = 1
     assert v.num_copies == 1
     assert v.print_pagerange is None
-    with pytest.raises(ValueError, match=r"^ArrayObject is expected$"):
+    with pytest.raises(TypeError, match=r"^ArrayObject is expected$"):
         v.print_pagerange = "toto"
     v.print_pagerange = ArrayObject()
     assert len(v.print_pagerange) == 0

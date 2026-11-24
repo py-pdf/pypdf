@@ -555,16 +555,16 @@ class DictionaryObject(dict[Any, Any], PdfObject):
 
     def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
-            raise ValueError("Key must be a PdfObject")  # noqa: TRY004
+            raise TypeError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
-            raise ValueError("Value must be a PdfObject")  # noqa: TRY004
+            raise TypeError("Value must be a PdfObject")
         return dict.__setitem__(self, key, value)
 
     def setdefault(self, key: Any, value: Any | None = None) -> Any:
         if not isinstance(key, PdfObject):
-            raise ValueError("Key must be a PdfObject")  # noqa: TRY004
+            raise TypeError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
-            raise ValueError("Value must be a PdfObject")  # noqa: TRY004
+            raise TypeError("Value must be a PdfObject")
         return dict.setdefault(self, key, value)
 
     def __getitem__(self, key: Any) -> PdfObject:

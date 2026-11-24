@@ -592,7 +592,7 @@ def test_bytestringobject():
 
 def test_dictionaryobject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError, match=r"^Key must be a PdfObject$") as exc:
+    with pytest.raises(TypeError, match=r"^Key must be a PdfObject$") as exc:
         do["foo"] = NameObject("/GoTo")
     assert exc.value.args[0] == "Key must be a PdfObject"
 
@@ -604,21 +604,21 @@ def test_dictionaryobject_xmp_meta():
 
 def test_dictionaryobject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError, match=r"^Value must be a PdfObject$") as exc:
+    with pytest.raises(TypeError, match=r"^Value must be a PdfObject$") as exc:
         do[NameObject("/S")] = "/GoTo"
     assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError, match=r"^Key must be a PdfObject$") as exc:
+    with pytest.raises(TypeError, match=r"^Key must be a PdfObject$") as exc:
         do.setdefault("foo", NameObject("/GoTo"))
     assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
-    with pytest.raises(ValueError, match=r"^Value must be a PdfObject$") as exc:
+    with pytest.raises(TypeError, match=r"^Value must be a PdfObject$") as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
     assert exc.value.args[0] == "Value must be a PdfObject"
 
