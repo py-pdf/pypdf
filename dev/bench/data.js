@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795520738387,
+  "lastUpdate": 1795520855495,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -178075,6 +178075,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004483232040544408",
             "extra": "mean: 517.5784880000037 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "92b5618255fcdd49d5aa23144c2940bfac30be98",
+          "message": "DEP: Deprecate encryption_key of ContentStream.write_to_stream (#4508)\n\nPassing an encryption key to ContentStream.write_to_stream() now issues\na DeprecationWarning; the parameter will be removed in pypdf 8.0.0.\nThere is no replacement.\n\nUp to pypdf 3.11, each object encrypted itself while it was written,\nwith the RC4 key the writer passed to write_to_stream(). Since the AES\nsupport of pypdf 3.12.0 (#1918), the writer encrypts each object before\nit writes it, and #1936 deprecated the parameter in the same release.\npypdf 7.0.0 removed it from every other class (#4306), but\nContentStream kept accepting it, without a warning and without effect.\n\nThe docstring has a `.. deprecated:: 7.2.0` note, as\nparse_filename_page_ranges() has since #4472.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-24T12:44:03+01:00",
+          "tree_id": "aceb20e4c4681a1a8bf6271a21cafde9be5757f6",
+          "url": "https://github.com/py-pdf/pypdf/commit/92b5618255fcdd49d5aa23144c2940bfac30be98"
+        },
+        "date": 1795520843951,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.880839999608447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033365769109136266",
+            "extra": "mean: 67.20050750000084 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 60.32627192704002,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002875769880788378",
+            "extra": "mean: 16.57652574999866 msec\nrounds: 52"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3254067042546829,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013950135599009194",
+            "extra": "mean: 754.485394400001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 57.174982369014145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009950361286248089",
+            "extra": "mean: 17.49016717741828 msec\nrounds: 62"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.541906719954533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02594292877419977",
+            "extra": "mean: 1.8453360388000022 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.860531013345327,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006424578144426661",
+            "extra": "mean: 537.4809626000001 msec\nrounds: 5"
           }
         ]
       }
