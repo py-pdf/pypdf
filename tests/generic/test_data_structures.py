@@ -535,26 +535,25 @@ def test_content_stream__parse_content_stream__limits() -> None:
 @pytest.mark.parametrize(
     "data",
     [
-        b"1 0 0 1 72 720 cm\nq 0.5 .5 -.5 +1. -0 +7 w Q",
-        b"/F1 12 Tf /Name[1 2]0 d q[/A]TJ/B<</C 1>>BDC",
-        b"1\x002\t3\f4\r5\n6 re f*",
-        b"0 0 1 RG 1 0 0 rg 12 0 Rx 3 4 l",
-        # Numbers that are not plain integers or decimals.
-        b"1,5 1-2 1.2.3 - . +- 0 Td",
-        # Overlong numbers and operators.
-        b"1234567890123456789012 12345.678901234567890123 w " + b"A" * 100 + b" " + b"B" * 101 + b" S",
-        # Names requiring decoding.
-        b"/A#42 gs /\xc3\xa4 gs /\xff gs /" + b"N" * 101 + b" gs",
-        b"BT (Hello) Tj [(W) -120 (orld)] TJ ET % comment\n/Im1 Do",
-        b"q BI /W 1 /H 1 /CS /G /BPC 8 ID \x00 EI Q",
-        b"1 2 m 3 4 l S",
-        # Errors
-        b"1 2 m 1 0 R 3 4 l",
-        b"1 2 m 3\x0b4 l",
-        b"1 2 m " + b"C" * 120 + b" S",
-        b"1 2 m " + b"9" * 70 + b" w",
-        b"1 2 m 0." + b"9" * 70 + b" w",
-        b"/" + b"N" * 5000 + b" gs",
+        pytest.param(b"1 0 0 1 72 720 cm\nq 0.5 .5 -.5 +1. -0 +7 w Q", id="signed-and-decimal-numbers"),
+        pytest.param(b"/F1 12 Tf /Name[1 2]0 d q[/A]TJ/B<</C 1>>BDC", id="tokens-next-to-delimiters"),
+        pytest.param(b"1\x002\t3\f4\r5\n6 re f*", id="all-whitespace-characters"),
+        pytest.param(b"0 0 1 RG 1 0 0 rg 12 0 Rx 3 4 l", id="integers-before-reference-lookalike"),
+        pytest.param(b"1,5 1-2 1.2.3 - . +- 0 Td", id="malformed-numbers"),
+        pytest.param(
+            b"1234567890123456789012 12345.678901234567890123 w " + b"A" * 100 + b" " + b"B" * 101 + b" S",
+            id="overlong-numbers-and-operators",
+        ),
+        pytest.param(b"/A#42 gs /\xc3\xa4 gs /\xff gs /" + b"N" * 101 + b" gs", id="names-requiring-decoding"),
+        pytest.param(b"BT (Hello) Tj [(W) -120 (orld)] TJ ET % comment\n/Im1 Do", id="strings-arrays-and-comment"),
+        pytest.param(b"q BI /W 1 /H 1 /CS /G /BPC 8 ID \x00 EI Q", id="inline-image"),
+        pytest.param(b"1 2 m 3 4 l S", id="simple-path"),
+        pytest.param(b"1 2 m 1 0 R 3 4 l", id="error-indirect-reference"),
+        pytest.param(b"1 2 m 3\x0b4 l", id="error-vertical-tab"),
+        pytest.param(b"1 2 m " + b"C" * 120 + b" S", id="operator-longer-than-simple-token"),
+        pytest.param(b"1 2 m " + b"9" * 70 + b" w", id="error-integer-too-long"),
+        pytest.param(b"1 2 m 0." + b"9" * 70 + b" w", id="error-decimal-too-long"),
+        pytest.param(b"/" + b"N" * 5000 + b" gs", id="error-name-too-long"),
     ],
 )
 def test_content_stream__parse_content_stream__simple_tokens(data: bytes, caplog: pytest.LogCaptureFixture) -> None:
