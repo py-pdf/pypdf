@@ -16,12 +16,13 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject, _get_fonts_walk
-from pypdf.annotations import Highlight, Polygon
+from pypdf.annotations import Highlight, Link, Polygon
 from pypdf.constants import PageAttributes
 from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    DecodedStreamObject,
     DictionaryObject,
     FloatObject,
     IndirectObject,
@@ -314,7 +315,7 @@ def test_compress_content_streams(pdf_path, password):
 
     # test from reader should fail as adding_object out of
     # PdfWriter not possible
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Page must be part of a PdfWriter$"):
         reader.pages[0].compress_content_streams()
 
 
@@ -491,7 +492,7 @@ def test_page_properties():
 def test_page_rotation():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     page = writer.pages[0]
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Rotation angle must be a multiple of 90$") as exc:
         page.rotate(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
@@ -521,7 +522,7 @@ def test_page_indirect_rotation():
 
 def test_page_scale():
     op = Transformation()
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Either sx or sy must be specified$") as exc:
         op.scale()
     assert exc.value.args[0] == "Either sx or sy must be specified"
 
@@ -856,6 +857,81 @@ def test_get_fonts__appearance_states():
     )
 
 
+@pytest.mark.parametrize(
+    ("appearance", "expected"),
+    [
+        pytest.param(DictionaryObject(), None, id="no-normal-appearance"),
+        pytest.param(DictionaryObject({NameObject("/D"): DictionaryObject()}), None, id="down-appearance-only"),
+        pytest.param(DictionaryObject({NameObject("/N"): NullObject()}), None, id="null"),
+        pytest.param(
+            DictionaryObject({NameObject("/N"): NumberObject(3)}),
+            "The normal appearance is not a stream or a dictionary: 3",
+            id="number",
+        ),
+    ],
+)
+def test_get_fonts__malformed_appearance(caplog, appearance, expected):
+    """A missing, null or malformed normal appearance /N collects no font."""
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    resources = DictionaryObject({NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})})
+    widget = DictionaryObject({NameObject("/Resources"): resources, NameObject("/AP"): appearance})
+
+    # The font of the annotation itself is still collected
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
+    if expected is None:
+        assert caplog.text == ""
+    else:
+        assert expected in caplog.text
+
+
+def test_get_fonts__appearance_stream():
+    """The fonts of the normal appearance stream of an annotation are collected."""
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    stream = DecodedStreamObject()
+    stream[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})
+    })
+    widget = DictionaryObject({NameObject("/AP"): DictionaryObject({NameObject("/N"): stream})})
+
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
+
+
+@pytest.mark.parametrize("state_dictionary", [False, True], ids=["stream", "state-dictionary"])
+def test_get_fonts__indirect_normal_appearance(caplog, state_dictionary):
+    """
+    The fonts of a normal appearance /N given as an indirect reference are collected.
+
+    The normal appearance is a stream or a dictionary of streams per state
+    (ISO 32000-2:2020, 12.5.5), and any dictionary value may be an indirect
+    reference (ISO 32000-2:2020, 7.3.10).
+    """
+    writer = PdfWriter()
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    stream = DecodedStreamObject()
+    stream[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})
+    })
+    normal = writer._add_object(stream)
+    if state_dictionary:
+        normal = writer._add_object(DictionaryObject({NameObject("/Yes"): normal}))
+    widget = DictionaryObject({NameObject("/AP"): DictionaryObject({NameObject("/N"): normal})})
+
+    assert _get_fonts_walk(widget, set(), set()) == ({"/Helvetica"}, set())
+    assert caplog.text == ""
+
+
 def test_annotation_getter():
     pdf_path = RESOURCE_ROOT / "commented.pdf"
     reader = PdfReader(pdf_path)
@@ -904,7 +980,7 @@ def test_annotation_setter(pdf_file_path):
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Invalid page object$"):
         writer.add_page(DictionaryObject())
 
     # Act
@@ -1120,6 +1196,112 @@ def test_merge_page_preserves_annotation_quad_points(quad_count, transformation,
     annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
     assert annotation["/QuadPoints"] == pytest.approx(expected)
     assert source_page["/Annots"][0].get_object()["/QuadPoints"] == quad_points
+
+
+@pytest.mark.parametrize("read_source", [False, True], ids=["writer-source", "reader-source"])
+@pytest.mark.parametrize(
+    ("ctm", "expected"),
+    [
+        pytest.param(None, (0, 0, 10, 10), id="identity"),
+        pytest.param((1, 0, 0, 1, 10, 20), (10, 20, 20, 30), id="translation"),
+        pytest.param((2, 0, 0, 3, 0, 0), (0, 0, 20, 30), id="scaling"),
+        pytest.param((-1, 0, 0, 1, 10, 0), (0, 0, 10, 10), id="reflection"),
+        pytest.param((0, 1, -1, 0, 10, 0), (0, 0, 10, 10), id="quarter-turn"),
+        # These integer matrices rotate by 45 degrees and scale by sqrt(2).
+        pytest.param((1, 1, -1, 1, 10, 20), (0, 20, 20, 40), id="positive-45-degree-rotation"),
+        pytest.param((1, -1, 1, 1, 10, 20), (10, 10, 30, 30), id="negative-45-degree-rotation"),
+        pytest.param((1, 0, -1, 1, 10, 20), (0, 20, 20, 30), id="negative-x-shear"),
+        pytest.param((1, -1, 0, 1, 10, 20), (10, 10, 20, 30), id="negative-y-shear"),
+        pytest.param((1, 2, -3, 4, 10, 20), (-20, 20, 20, 80), id="combined-affine-transform"),
+    ],
+)
+def test_merge_page__annotation__rectangle_bounds(read_source, ctm, expected) -> None:
+    """The transformed rectangle must enclose all four corners, including after writing."""
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    if read_source:
+        stream = BytesIO()
+        source.write(stream)
+        source_page = PdfReader(stream).pages[0]
+    else:
+        source_page = source.pages[0]
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    if ctm is None:
+        page.merge_page(source_page)
+    else:
+        page.merge_transformed_page(source_page, ctm)
+
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    annotations = reader.pages[0]["/Annots"]
+    assert len(annotations) == 1
+    annotation = annotations[0].get_object()
+    assert annotation["/Rect"] == pytest.approx(expected)
+    assert annotation["/A"]["/URI"] == "https://example.org"
+    assert annotation.raw_get("/P") == reader.pages[0].indirect_reference
+    assert source_page["/Annots"][0].get_object()["/Rect"] == [0, 0, 10, 10]
+
+
+def test_merge_rotated_page__annotation__rectangle_bounds() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_rotated_page(source.pages[0], 45)
+
+    output = BytesIO()
+    writer.write(output)
+    annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
+    diagonal = math.sqrt(50)
+    assert annotation["/Rect"] == pytest.approx((-diagonal, 0, diagonal, 2 * diagonal))
+
+
+def test_merge_page__annotation__rectangle_encloses_quad_points() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(
+        0,
+        Highlight(
+            rect=(0, 0, 10, 10),
+            quad_points=ArrayObject(FloatObject(value) for value in (0, 10, 10, 10, 0, 0, 10, 0)),
+        ),
+    )
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_transformed_page(source.pages[0], (1, 1, -1, 1, 10, 20))
+
+    output = BytesIO()
+    writer.write(output)
+    annotation = PdfReader(output).pages[0]["/Annots"][0].get_object()
+    assert annotation["/Rect"] == [0, 20, 20, 40]
+    assert annotation["/QuadPoints"] == [0, 30, 10, 40, 10, 20, 20, 30]
+    left, bottom, right, top = annotation["/Rect"]
+    quads = annotation["/QuadPoints"]
+    assert all(left <= x <= right and bottom <= y <= top for x, y in zip(quads[::2], quads[1::2]))
+
+
+def test_merge_page__annotation__rectangle_repeated_merge() -> None:
+    source = PdfWriter()
+    source.add_blank_page(width=100, height=100)
+    source.add_annotation(0, Link(rect=(0, 0, 10, 10), url="https://example.org"))
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    page.merge_transformed_page(source.pages[0], (1, 1, -1, 1, 10, 20))
+    page.merge_transformed_page(source.pages[0], Transformation().translate(50, 60))
+
+    output = BytesIO()
+    writer.write(output)
+    annotations = PdfReader(output).pages[0]["/Annots"]
+    assert len(annotations) == 2
+    assert annotations[0].get_object()["/Rect"] == [0, 20, 20, 40]
+    assert annotations[1].get_object()["/Rect"] == [50, 60, 60, 70]
+    assert annotations[0] != annotations[1]
+    assert source.pages[0]["/Annots"][0].get_object()["/Rect"] == [0, 0, 10, 10]
 
 
 def test_merge_page_reproducible_with_proc_set():
@@ -1639,7 +1821,7 @@ def test_recursive_get_page_from_node():
         writer.add_page(writer.pages[0])
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
     writer.insert_page(writer.pages[0], -1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Invalid index value$"):
         writer.insert_page(writer.pages[0], -10)
 
 

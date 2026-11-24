@@ -41,6 +41,10 @@ for page in reader.pages:
 
 * `root_object_recovery_limit` limits the number of objects to read before stopping with Root object recovery in
   non-strict mode. It defaults to 10 000. Setting it to `None` will fully disable this limit.
+* `xref_stream_maximum_entries` limits the number of entries allowed inside a stream-based cross-reference stream.
+  It defaults to 2 000 000.
+* `xref_rebuild_maximum_entries` limits the number of objects discovered while rebuilding a broken cross-reference
+  table, including object stream members. It defaults to 2 000 000.
 
 If you want to employ custom limits for the *PdfWriter* as well, the currently preferred way
 is to initialize it from the reader, id est something like

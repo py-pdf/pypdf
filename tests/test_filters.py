@@ -175,7 +175,7 @@ def test_ascii85decode_with_overflow():
     )
 
     for i in inputs:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"^Non-Ascii85 digit found: "):
             ASCII85Decode.decode(i)
 
 

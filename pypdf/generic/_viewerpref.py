@@ -26,6 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 from typing import (
     Any,
     cast,
@@ -53,10 +54,8 @@ class ViewerPreferences(DictionaryObject):
         super().__init__(self)
         if not is_null_or_none(obj):
             self.update(obj.items())  # type: ignore[union-attr]
-        try:
+        with contextlib.suppress(AttributeError):
             self.indirect_reference = obj.indirect_reference  # type: ignore[union-attr]
-        except AttributeError:
-            pass
 
     def _resolve(self, key: str, default: PdfObject | None) -> PdfObject | None:
         # Any of these entries may be an indirect reference, which dict.get
@@ -88,10 +87,8 @@ class ViewerPreferences(DictionaryObject):
 
     def _set_arr(self, key: str, v: ArrayObject | None) -> None:
         if v is None:
-            try:
+            with contextlib.suppress(KeyError):
                 del self[NameObject(key)]
-            except KeyError:
-                pass
             return
         if not isinstance(v, ArrayObject):
             raise ValueError("ArrayObject is expected")
@@ -112,7 +109,7 @@ class ViewerPreferences(DictionaryObject):
         self[NameObject(key)] = NumberObject(v)
 
     @property
-    def PRINT_SCALING(self) -> NameObject:
+    def PRINT_SCALING(self) -> NameObject:  # noqa: N802
         return NameObject("/PrintScaling")
 
     def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":  # noqa: PYI034

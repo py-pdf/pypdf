@@ -183,14 +183,12 @@ ignore = [
     "PERF203", # `try`-`except` within a loop incurs performance overhead
     "PLW1510", # `subprocess.run` without explicit `check` argument
     "PLW2901", # `with` statement variable `img` overwritten by assignment target
-    "PT011",   # `pytest.raises(ValueError)` is too broad, set the `match`
     "PT012",   # `pytest.raises()` block should contain a single simple statement
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected
     "S110",    # `try`-`except`-`pass` detected, consider logging the exception
-    "SIM105",  # contextlib.suppress
     "SIM108",  # Don't enforce ternary operators
     "SLF001",  # Private member accessed
     "TC006",   # To discuss: Add quotes to type expression in `typing.cast()`
@@ -213,7 +211,6 @@ max-complexity = 31  # Recommended: 10
 "pypdf/_text_extraction/__init__.py" = ["PLW0603"]  # Using the global statement to update is discouraged
 "docs/conf.py" = ["INP001", "PTH100"]
 "make_release.py" = ["S603", "S607", "T201"]
-"pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff
 "tests/*" = ["ANN001", "ANN201", "B017", "B018", "D103", "D104", "S105", "S106"]
 "tests/test_page.py" = ["PT014"]  # Duplicate test cases in pytest.mark.parametrize
 "tests/test_workflows.py" =  ["T201"]
