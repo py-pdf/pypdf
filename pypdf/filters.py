@@ -226,24 +226,15 @@ class FlateDecode:
             # TIFF prediction:
             if predictor == 2:
                 row_length -= 1  # remove the predictor byte
-                str_data_mut = bytearray(str_data)
                 if bits_per_component == 16:
-                    # Samples are big-endian 16-bit values. Adding them byte by byte
-                    # would drop the carry from the low byte into the high byte.
-                    bpp = colors * 2
-                    for i in range(0, len(str_data_mut) - 1, 2):
-                        if i % row_length >= bpp:
-                            value = (
-                                int.from_bytes(str_data_mut[i:i + 2], "big")
-                                + int.from_bytes(str_data_mut[i - bpp:i - bpp + 2], "big")
-                            ) % 65536
-                            str_data_mut[i:i + 2] = value.to_bytes(2, "big")
+                    str_data = FlateDecode._decode_tiff_prediction_16_bit(str_data, columns, colors)
                 else:
                     bpp = row_length // columns
+                    str_data_mut = bytearray(str_data)
                     for i in range(len(str_data_mut)):
                         if i % row_length >= bpp:
                             str_data_mut[i] = (str_data_mut[i] + str_data_mut[i - bpp]) % 256
-                str_data = bytes(str_data_mut)
+                    str_data = bytes(str_data_mut)
             # PNG prediction:
             elif 10 <= predictor <= 15:
                 str_data = FlateDecode._decode_png_prediction(
@@ -281,6 +272,39 @@ class FlateDecode:
             raise PdfReadError(f"More than 16 bits per component are not allowed: {bits_per_component}")
 
         return columns, colors, bits_per_component
+
+    @staticmethod
+    def _decode_tiff_prediction_16_bit(data: bytes, columns: int, colors: int) -> bytes:
+        # Each sample is the sum of itself and the sample of the previous pixel of the
+        # row, modulo 65536. The samples are big-endian 16-bit values, so adding the
+        # data byte by byte would drop the carry from the low into the high byte.
+        row_length = columns * colors * 2  # number of bytes
+        # Masks to add all samples of a row at once, without carrying over into the next sample.
+        low_mask = int.from_bytes(b"\x7f\xff" * (columns * colors), "big")
+        high_mask = int.from_bytes(b"\x80\x00" * (columns * colors), "big")
+        stride = colors * 2 * 8  # bits of one pixel
+        output = bytearray()
+        for row in range(0, len(data), row_length):
+            row_data = data[row : row + row_length]
+            length = len(row_data) // 2 * 2  # a truncated sample is kept as it is
+            shift = (row_length - length) * 8
+            row_low_mask = low_mask >> shift
+            row_high_mask = high_mask >> shift
+            current = int.from_bytes(row_data[:length], "big")
+            # The running sums are built up in ceil(log2(columns)) steps: adding the
+            # samples of neighbouring pixels gives the sums of two, adding those of
+            # pixels two apart the sums of four, and so on.
+            distance = stride
+            while distance < length * 8:
+                previous = current >> distance
+                # The low 15 bits of each sample are added without carrying into the next
+                # sample, the high bit of each sample is added with XOR, dropping its carry.
+                low_sum = (current & row_low_mask) + (previous & row_low_mask)
+                high_bits = (current ^ previous) & row_high_mask
+                current = low_sum ^ high_bits
+                distance *= 2
+            output += current.to_bytes(length, "big") + row_data[length:]
+        return bytes(output)
 
     @staticmethod
     def _decode_png_prediction(data: bytes, columns: int, row_length: int) -> bytes:
