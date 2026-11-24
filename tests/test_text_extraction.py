@@ -1571,10 +1571,14 @@ def test_character_and_word_spacing_count_towards_the_advance(content: bytes, ex
         pytest.param("utf-16-be", b"\x00\x01\x00\x20", (2, 0), id="two-byte-codes-without-word-spacing"),
         pytest.param("utf-16-be", b"\xd8\x00\xdc\x00", (2, 0), id="two-byte-codes-forming-a-surrogate-pair"),
         pytest.param("cp932", b"\x82\xa0 A", (3, 1), id="mixed-single-and-two-byte-codes"),
+        # A content stream that was not parsed as bytes, like one changed by a PdfWriter
+        pytest.param({65: "A", 32: " "}, TextStringObject("A A"), (3, 1), id="text-string"),
+        # The space added for a gap in a TJ array is no code shown by the content stream
+        pytest.param({65: "A", 32: " "}, " ", (0, 0), id="space-added-for-a-tj-gap"),
     ],
 )
 def test_get_text_operands__counts_character_codes(
-    encoding: str | dict[int, str], operand: bytes, expected: tuple[int, int]
+    encoding: str | dict[int, str], operand: bytes | str, expected: tuple[int, int]
 ) -> None:
     """Character codes and single-byte codes 32 are counted per code, not per byte or decoded character."""
     font = Font(name="Test", encoding=encoding, character_map={}, character_widths={"default": 500})

@@ -1685,7 +1685,7 @@ class PdfDocCommon(ABC):
         """
         if self._encryption is None:
             return None
-        return UserAccessPermissions(self._encryption.P)
+        return UserAccessPermissions(self._encryption.permissions)
 
     @property
     def are_permissions_valid(self) -> bool | None:
@@ -1795,6 +1795,10 @@ class PdfDocCommon(ABC):
         yield from EmbeddedFile._load(self.root_object, strict=self.strict)
 
     @abstractmethod
+    def _get_pdf_bytes(self) -> bytes:
+        """Return the document as the bytes of a PDF file."""
+        ...  # pragma: no cover
+
     def _repr_mimebundle_(
         self,
         include: Iterable[str] | None = None,
@@ -1810,7 +1814,17 @@ class PdfDocCommon(ABC):
 
             https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
-        ...  # pragma: no cover
+        data: dict[str, Any] = {"application/pdf": self._get_pdf_bytes()}
+
+        if include is not None:
+            # Filter representations based on include list
+            data = {k: v for k, v in data.items() if k in include}
+
+        if exclude is not None:
+            # Remove representations based on exclude list
+            data = {k: v for k, v in data.items() if k not in exclude}
+
+        return data
 
 
 class LazyDict(Mapping[Any, Any]):

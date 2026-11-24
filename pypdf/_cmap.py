@@ -143,9 +143,8 @@ def _parse_encoding(
         # Overwrite the standard encoding with the encoding information from the embedded font file, if applicable.
         _correct_encoding(embedded_font_encoding, encoding)
 
-        x: int = 0
-        o: int | str
-        differences = enc["/Differences"].get_object()
+        code: int = 0
+        differences = enc["/Differences"]
         if not isinstance(differences, ArrayObject):
             logger_warning(
                 "Font encoding differences are not an array: %(differences)s",
@@ -153,18 +152,28 @@ def _parse_encoding(
                 differences=differences,
             )
             differences = ArrayObject()
-        for o in differences:
-            if isinstance(o, int):
-                x = o
-            else:  # isinstance(o, str):
+        for entry in differences:
+            entry = entry.get_object()
+            if isinstance(entry, int):
+                code = entry
+            elif isinstance(entry, str):
                 try:
-                    if x < len(encoding):
-                        encoding[x] = _glyph_name_to_unicode(o) or o
+                    if code < len(encoding):
+                        encoding[code] = _glyph_name_to_unicode(entry) or entry
                 except MemoryError:  # pragma: no cover  # TODO: BLE001
                     raise
                 except Exception:
-                    encoding[x] = o
-                x += 1
+                    encoding[code] = entry
+                code += 1
+            else:
+                # Table 114 of the PDF 2.0 specification only allows character
+                # codes and glyph names here. Anything else would end up in the
+                # text and break the decoding later on.
+                logger_warning(
+                    "Ignoring invalid font encoding difference: %(entry)s",
+                    source=__name__,
+                    entry=entry,
+                )
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
 
