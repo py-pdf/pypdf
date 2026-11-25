@@ -83,6 +83,20 @@ class BaseStreamAppearance(DecodedStreamObject):
         matrix = matrix.translate(translation_x_offset, translation_y_offset)
         self[NameObject("/Matrix")] = ArrayObject([FloatObject(round(i, 3)) for i in matrix.ctm])
 
+    def _new_for_clone(self) -> BaseStreamAppearance:
+        """Instantiate a blank object for ``clone()`` without running ``__init__``.
+
+        ``BaseStreamAppearance`` inherits this method from ``DictionaryObject``.
+        ``DictionaryObject._new_for_clone`` checks whether a subclass requires
+        constructor arguments and skips ``__init__`` for those that do.
+        ``TextStreamAppearance.__init__`` can be called without constructor
+        arguments, but running it during ``clone()`` would populate default
+        dictionary entries and a default content stream that pollute the clone.
+        This override calls ``__new__`` directly so cloning starts from an empty
+        object.
+        """
+        return self.__class__.__new__(self.__class__)
+
     def __init__(self, layout: BaseStreamConfig | None) -> None:
         """
         Takes the appearance stream layout as an argument.
@@ -401,7 +415,12 @@ class TextStreamAppearance(BaseStreamAppearance):
             y_offset = margin + (
                 (field_height - font.font_descriptor.ascent * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR) / 2
             )
-        default_appearance = f"{font_name} {font_size} Tf {font_color.as_operator()}"
+        # font_name is in deserialized form here: it either comes from the Tf operands of /DA, where
+        # NameObject parsing has already resolved any "#xx" escapes, or from the caller. renumber()
+        # applies that escaping again, just as it does for the matching /Resources /Font key, so that
+        # a name holding whitespace or a delimiter stays a single Tf operand instead of being split.
+        escaped_font_name = NameObject(font_name).renumber().decode()
+        default_appearance = f"{escaped_font_name} {font_size} Tf {font_color.as_operator()}"
 
         ap_stream = bytearray()
         ap_stream += (

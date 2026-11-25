@@ -18,7 +18,7 @@ from PIL import __version__ as pil_version
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._utils import Version, get_stream_data
 from pypdf.actions import JavaScript
-from pypdf.constants import PageAttributes as PG
+from pypdf.constants import PageAttributes
 from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
     ArrayObject,
@@ -130,7 +130,7 @@ def test_pdfreader_jpeg_image():
             imagetext = pdftext_file.read()
 
         page = reader.pages[0]
-        x_object = page[PG.RESOURCES]["/XObject"].get_object()
+        x_object = page[PageAttributes.RESOURCES]["/XObject"].get_object()
         data = x_object["/Im4"].get_data()
 
         # Compare the text of the PDF to a known source
@@ -177,7 +177,7 @@ def test_rotate_45():
     with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match=r"^Rotation angle must be a multiple of 90$") as exc:
             page.rotate(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
@@ -289,14 +289,14 @@ def test_orientations():
     p.extract_text("", "", 0, 200)
     p.extract_text()
     assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^Invalid positional parameter None$"):
         p.extract_text(None)
     p.extract_text("", 0)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^Invalid positional parameter None$"):
         p.extract_text("", "", None)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^Invalid positional parameter $"):
         p.extract_text("", "", 0, "")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=r"^Invalid positional parameter $"):
         p.extract_text(0, "")
 
     p.extract_text(0, 0)
@@ -775,22 +775,24 @@ def test_get_outline(url, name):
 
 @pytest.mark.enable_socket
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "expected_keys"),
     [
         (
             "https://github.com/user-attachments/files/18381707/tika-935981.pdf",
             "tika-935981.pdf",
+            set(),
         ),
         (
             "https://github.com/user-attachments/files/18381709/tika-937334.pdf",
             "tika-937334.pdf",
+            {"PDFSecurity", "config", "datasets", "localeSet", "postamble", "preamble", "template"}
         ),
     ],
 )
-def test_get_xfa(url, name):
+def test_get_xfa(url, name, expected_keys: set[str]):
     data = BytesIO(get_data_from_url(url=url, name=name))
     reader = PdfReader(data)
-    reader.xfa
+    assert set(reader.xfa.keys()) == expected_keys
 
 
 @pytest.mark.enable_socket
@@ -943,8 +945,11 @@ def test_extra_test_iss1541():
     reader = PdfReader(
         BytesIO(get_stream_data(data).replace(b"EI \n", b"E! \n")), strict=False
     )
+    # The page only shows an inline image, so extract_text() does not need to parse it.
+    assert reader.pages[0].extract_text() == ""
+    content_stream = ContentStream(reader.pages[0]["/Contents"], None, None)
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream\.$"):
-        reader.pages[0].extract_text()
+        content_stream.operations
 
 
 @pytest.mark.enable_socket
@@ -1214,20 +1219,20 @@ def test_get_page_showing_field():
 
     # Exceptions:
     # Invalid Object
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field type is invalid$") as exc:
         reader.get_pages_showing_field(None)
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field type is invalid$") as exc:
         writer.get_pages_showing_field(None)
     assert "Field type is invalid" in exc.value.args[0]
 
     # Damage Field
     del reader.trailer["/Root"]["/AcroForm"]["/Fields"][1].get_object()["/FT"]
     del writer._root_object["/AcroForm"]["/Fields"][1].get_object()["/FT"]
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field is not valid$") as exc:
         reader.get_pages_showing_field(
             reader.trailer["/Root"]["/AcroForm"]["/Fields"][1]
         )
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field is not valid$") as exc:
         writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
     assert "Field is not valid" in exc.value.args[0]
 
@@ -1238,11 +1243,11 @@ def test_get_page_showing_field():
     del writer._root_object["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()[
         "/Parent"
     ]
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field is not valid$") as exc:
         reader.get_pages_showing_field(
             reader.trailer["/Root"]["/AcroForm"]["/Fields"][1]
         )
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Field is not valid$") as exc:
         writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
 
     # remove "/P" (optional)

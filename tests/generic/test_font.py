@@ -108,6 +108,11 @@ def test_collect_cid_character_widths_truncated_w(w_array: list[list[int]]) -> N
             "Expected an array for /DescendantFonts, got x. Ignoring it.",
             id="string",
         ),
+        pytest.param(
+            ArrayObject([NumberObject(42)]),
+            "Expected a dictionary for the descendant font, got 42. Ignoring it.",
+            id="descendant-not-a-dictionary",
+        ),
     ],
 )
 def test_font__from_font_resource__descendant_fonts_not_an_array(
@@ -125,6 +130,34 @@ def test_font__from_font_resource__descendant_fonts_not_an_array(
 
     assert font is not None
     assert expected in caplog.text
+
+
+def test_font__from_font_resource__multiple_descendant_fonts(caplog: pytest.LogCaptureFixture) -> None:
+    """Only the first descendant font is read, as a composite font has a single one."""
+    def get_descendant_font(character_widths: list[int], default_width: int) -> DictionaryObject:
+        return DictionaryObject({
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/CIDFontType2"),
+            NameObject("/W"): ArrayObject(NumberObject(value) for value in character_widths),
+            NameObject("/DW"): NumberObject(default_width),
+        })
+
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type0"),
+        NameObject("/BaseFont"): NameObject("/Foo"),
+        NameObject("/DescendantFonts"): ArrayObject(
+            [get_descendant_font([65, 65, 500], 1000), get_descendant_font([66, 66, 600], 2000)]
+        ),
+    })
+
+    font = Font.from_font_resource(font_res)
+
+    assert font.character_widths["A"] == 500
+    assert "B" not in font.character_widths
+    assert font.character_widths["default"] == 1000
+    assert caplog.messages == [
+        "Expected a single entry in /DescendantFonts, got 2. Ignoring all but the first one."
+    ]
 
 
 @pytest.mark.parametrize("bbox", [

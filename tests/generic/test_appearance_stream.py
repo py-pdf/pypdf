@@ -12,6 +12,7 @@ import pytest
 from pypdf import PdfWriter, Transformation
 from pypdf.generic import (
     ArrayObject,
+    ContentStream,
     DecodedStreamObject,
     DictionaryObject,
     FloatObject,
@@ -590,3 +591,63 @@ def test_text_annotation_default_appearance_with_other_operators(
     assert b"gs" not in appearance.get_data()
     assert list(cast(DictionaryObject, appearance["/Resources"])) == ["/Font"]
     assert expected_warning in caplog.text
+
+
+@pytest.mark.parametrize("force_duplicate", [False, True])
+def test_text_stream_appearance__clone(force_duplicate: bool) -> None:
+    """The clone of an appearance stream has the entries and the content of its source."""
+    source = TextStreamAppearance(
+        BaseStreamConfig(rectangle=RectangleObject((0, 0, 100, 20))),
+        text="Hello",
+    )
+    PdfWriter()._add_object(source)
+
+    clone = source.clone(PdfWriter(), force_duplicate)
+
+    assert isinstance(clone, TextStreamAppearance)
+    assert clone is not source
+    assert b"(Hello) Tj" in clone.get_data()
+    assert clone.get_data() == source.get_data()
+    assert clone["/BBox"] == source["/BBox"]
+    assert clone == source
+
+
+@pytest.mark.parametrize(
+    ("font_name", "escaped_font_name"),
+    [
+        pytest.param("/Times New", b"/Times#20New", id="whitespace"),
+        pytest.param("/Times(New", b"/Times#28New", id="delimiter"),
+    ],
+)
+def test_text_annotation_font_name_is_escaped(font_name: str, escaped_font_name: bytes) -> None:
+    """A font name holding whitespace or a delimiter is written to the appearance stream in escaped form."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    font = writer._add_object(DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    }))
+    widget = writer.add_annotation(0, DictionaryObject({
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Widget"),
+        NameObject("/FT"): NameObject("/Tx"),
+        NameObject("/T"): TextStringObject("name"),
+        NameObject("/Rect"): ArrayObject([FloatObject(v) for v in (72, 700, 272, 716)]),
+        NameObject("/DA"): TextStringObject(f"{escaped_font_name.decode()} 12 Tf 0 g"),
+    }))
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject({
+        NameObject("/Fields"): ArrayObject([widget.indirect_reference]),
+        NameObject("/DR"): DictionaryObject({
+            NameObject("/Font"): DictionaryObject({NameObject(font_name): font}),
+        }),
+    })
+
+    writer.update_page_form_field_values(writer.pages[0], {"name": "Jane"}, auto_regenerate=False)
+
+    appearance = cast(DecodedStreamObject, cast(DictionaryObject, widget["/AP"])["/N"].get_object())
+    assert escaped_font_name + b" 12.0 Tf 0 g\n" in appearance.get_data()
+    content = ContentStream(None, None)
+    content.set_data(appearance.get_data())
+    tf_operands = [operands for operands, operator in content.operations if operator == b"Tf"]
+    assert tf_operands == [[NameObject(font_name), 12]]

@@ -4,12 +4,14 @@ Code related to text extraction.
 Some parts are still in _page.py. In doubt, they will stay there.
 """
 
+import codecs
 import math
+import re
 from collections.abc import Callable, Mapping
 from typing import Any, Literal
 
-from .._utils import is_char_neutral, is_char_rtl
-from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
+from .._utils import RTL_CHARACTER_RANGES, is_char_neutral, is_char_rtl
+from ..generic import ContentStream, DictionaryObject, TextStringObject, encode_pdfdocencoding
 from ..generic._font import Font
 
 CUSTOM_RTL_MIN: str = ""
@@ -18,6 +20,16 @@ CUSTOM_RTL_SPECIAL_CHARS: str = ""
 LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
 UNICODE_LOWER_LIMIT = 0
 UNICODE_UPPER_LIMIT = 0x10FFFF
+RTL_CHARACTER_PATTERN = re.compile("[" + "".join(f"{start}-{end}" for start, end in RTL_CHARACTER_RANGES) + "]")
+
+# The operators that can add text: the text-showing operators (ISO 32000-2:2020,
+# 9.4.3, Table 107) and Do, which can paint a form XObject with text (8.8.1, Table 86).
+# The bytes may also occur in strings, names or inline image data; that only
+# means that the content stream is parsed.
+_TEXT_OPERATORS = (b"Tj", b"TJ", b"Do", b"'", b'"')
+# Searching for their first bytes and comparing the next byte is faster than
+# searching for the alternation Tj|TJ|Do|'|" in content streams with many graphics.
+_TEXT_OPERATOR_START = re.compile(rb"[TD'\"]")
 
 
 class OrientationNotFoundError(Exception):
@@ -155,7 +167,8 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     else:
         lower, upper = line_span[1], line_span[2]
         distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
-    last = (output + text)[-1:]
+    # The last character of output + text, without copying both strings.
+    last = (text or output)[-1:]
     threshold = 0.8 * min(str_height * scale_prev_y, font_size * scale_y)
     if distance > threshold:
         if last not in ("", "\n"):
@@ -189,16 +202,52 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     return text, output, cm_prev, tm_prev, line_span
 
 
+def _count_codes(operand: str | bytes, text: str, font: Font) -> tuple[int, int]:
+    """
+    Count the character codes of a shown string and the single-byte codes 32 in it.
+
+    Character spacing applies to every character code and word spacing only to
+    the single-byte code 32 (Section 9.3.3 of the PDF 2.0 specification).
+
+    Args:
+        operand: The string operand as found in the content stream.
+        text: The operand decoded with the font encoding.
+        font: The font used to show the string.
+
+    Returns:
+        The number of character codes and the number of single-byte codes 32.
+
+    """
+    if isinstance(operand, str):
+        if not isinstance(operand, TextStringObject):
+            # The " " that process_tj_offset adds for a gap in a TJ array: no code was shown.
+            return 0, 0
+        # A content stream that was not parsed as bytes, like one changed by a PdfWriter,
+        # has text strings. Count the codes of the bytes they were read from.
+        operand = operand.get_original_bytes()
+    if isinstance(font.encoding, dict):  # Simple font, one byte per code.
+        return len(operand), operand.count(b" ")
+    if codecs.lookup(font.encoding).name == "utf-16-be":
+        # Two bytes per code. Counting the decoded characters instead would
+        # merge two codes forming a surrogate pair into one character.
+        return len(operand) // 2, 0
+    # Multi-byte encodings like Shift-JIS decode one character per code and
+    # keep the ASCII range as single-byte codes.
+    return len(text), text.count(" ")
+
+
 def get_text_operands(
     operands: list[str | TextStringObject],
     cm_matrix: list[float],
     tm_matrix: list[float],
     font: Font,
     orientations: tuple[int, ...]
-) -> tuple[str, bool, float]:
+) -> tuple[str, bool, float, int, int]:
     text: str = ""
     is_str_operands = False
     widths: float = 0.0
+    glyph_count = 0
+    space_count = 0
     width_cache: dict[str, float] = {}
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
@@ -223,6 +272,7 @@ def get_text_operands(
             else:  # Apply dict encoding
                 text = "".join(font.encoding.get(x, chr(x)) for x in tt)
                 raw_characters = "".join(chr(byte) for byte in tt)
+        glyph_count, space_count = _count_codes(operands[0], text, font)
         for char in (raw_characters or text):
             if char == font.space_char:
                 widths += font.space_width
@@ -232,7 +282,7 @@ def get_text_operands(
                 widths += width_cache[char]
 
     width_cache.clear()
-    return (text, is_str_operands, widths)
+    return (text, is_str_operands, widths, glyph_count, space_count)
 
 
 def get_display_str(
@@ -255,6 +305,13 @@ def get_display_str(
 
     """
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
+    characters = [font.character_map.get(raw_character, raw_character) for raw_character in text_operands]
+    if not rtl_dir and not (CUSTOM_RTL_MIN and CUSTOM_RTL_MAX):
+        # Without a right-to-left character, all characters are appended in order.
+        appended_text = "".join(characters)
+        if RTL_CHARACTER_PATTERN.search(appended_text) is None:
+            return text + appended_text, rtl_dir, ""
+
     completed_text: list[str] = []
     neutral_cache: dict[str, bool] = {}
     rtl_cache: dict[str, bool] = {}
@@ -270,8 +327,7 @@ def get_display_str(
     def get_run_text() -> str:
         return "".join(reversed(run_parts)) if rtl_dir else "".join(run_parts)
 
-    for raw_character in text_operands:
-        x = font.character_map.get(raw_character, raw_character)
+    for x in characters:
         # Test whether x is a sequence of bytes; ex: habibi.pdf
         if len(x) == 1:
             if x not in neutral_cache:
@@ -296,3 +352,32 @@ def get_display_str(
             # Treat a sequence of bytes as a neutral character.
             run_parts.append(x)
     return get_run_text(), rtl_dir, "".join(completed_text)
+
+
+def _has_text_operator(data: bytes) -> bool:
+    """Return whether the bytes contain an operator that can add text."""
+    for match in _TEXT_OPERATOR_START.finditer(data):
+        start = match.start()
+        if data[start : start + 2] in _TEXT_OPERATORS or match[0] in _TEXT_OPERATORS:
+            return True
+    return False
+
+
+def _get_content_stream_for_text(
+    obj: DictionaryObject, pdf: Any, content_key: str | None, *, has_visitor: bool
+) -> ContentStream | None:
+    """
+    Return the content stream to extract text from, or None if it cannot give any text.
+
+    Content without text, e.g. a figure, gives no text either. It is only parsed if
+    a visitor has to see its operators.
+    """
+    try:
+        content = obj[content_key].get_object() if isinstance(content_key, str) else obj
+        if not isinstance(content, ContentStream):
+            content = ContentStream(content, pdf, "bytes")
+    except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
+        return None
+    if not has_visitor and not _has_text_operator(content.get_data()):
+        return None
+    return content

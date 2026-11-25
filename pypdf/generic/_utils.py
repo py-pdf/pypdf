@@ -7,6 +7,8 @@ from .._utils import StreamType, logger_warning, read_non_whitespace
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 from ._base import ByteStringObject, TextStringObject
 
+_PDFDOC_DECODE_MAP = dict(enumerate(_pdfdoc_encoding))
+
 
 def hex_to_rgb(value: str) -> tuple[float, float, float]:
     return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
@@ -176,24 +178,9 @@ def create_string_object(
             obj._original_bytes = string
             return obj
         try:
-            if string.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
-                retval = TextStringObject(string.decode("utf-16"))
-                retval._original_bytes = string
-                retval.autodetect_utf16 = True
-                retval.utf16_bom = string[:2]
-                return retval
-            if string.startswith(b"\x00"):
-                retval = TextStringObject(string.decode("utf-16be"))
-                retval._original_bytes = string
-                retval.autodetect_utf16 = True
-                retval.utf16_bom = codecs.BOM_UTF16_BE
-                return retval
-            if string[1:2] == b"\x00":
-                retval = TextStringObject(string.decode("utf-16le"))
-                retval._original_bytes = string
-                retval.autodetect_utf16 = True
-                retval.utf16_bom = codecs.BOM_UTF16_LE
-                return retval
+            unicode_string = _create_unicode_string_object(string)
+            if unicode_string is not None:
+                return unicode_string
 
             # This is probably a big performance hit here, but we need
             # to convert string objects into the text/unicode-aware
@@ -210,19 +197,67 @@ def create_string_object(
     raise TypeError("create_string_object should have str or unicode arg")
 
 
+def _create_unicode_string_object(data: bytes) -> TextStringObject | None:
+    """
+    Decode a text string which is marked or detected as UTF-8 or UTF-16.
+
+    Args:
+        data: The data being used
+
+    Returns:
+        A TextStringObject, or None if the data should be decoded as PDFDocEncoding.
+
+    Raises:
+        UnicodeDecodeError: If the data cannot be decoded as UTF-16.
+
+    """
+    if data.startswith(codecs.BOM_UTF8):
+        # UTF-8 text strings have been added with PDF 2.0, see ISO 32000-2:2020, 7.9.2.2.1.
+        # Data which is not valid UTF-8 is still decoded as PDFDocEncoding.
+        try:
+            retval = TextStringObject(data[len(codecs.BOM_UTF8):].decode("utf-8"))
+        except UnicodeDecodeError:
+            return None
+        retval._original_bytes = data
+        return retval
+    if data.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
+        retval = TextStringObject(data.decode("utf-16"))
+        retval._original_bytes = data
+        retval.autodetect_utf16 = True
+        retval.utf16_bom = data[:2]
+        return retval
+    if data.startswith(b"\x00"):
+        retval = TextStringObject(data.decode("utf-16be"))
+        retval._original_bytes = data
+        retval.autodetect_utf16 = True
+        retval.utf16_bom = codecs.BOM_UTF16_BE
+        return retval
+    if data[1:2] == b"\x00":
+        retval = TextStringObject(data.decode("utf-16le"))
+        retval._original_bytes = data
+        retval.autodetect_utf16 = True
+        retval.utf16_bom = codecs.BOM_UTF16_LE
+        return retval
+    return None
+
+
 def decode_pdfdocencoding(byte_array: bytes) -> str:
-    retval = ""
-    for b in byte_array:
-        c = _pdfdoc_encoding[b]
-        if c == "\u0000":
-            raise UnicodeDecodeError(
-                "pdfdocencoding",
-                bytearray(b),
-                -1,
-                -1,
-                "does not exist in translation table",
-            )
-        retval += c
+    # latin1 maps each byte to the code point of the same value, so translate()
+    # applies the PDFDocEncoding table in C instead of a Python loop.
+    # Unassigned bytes map to "\u0000"; check for them afterwards.
+    # codecs.charmap_decode() would be faster (a single pass in C), but it is
+    # an undocumented implementation detail of CPython, so we do not use it.
+    retval = bytes(byte_array).decode("latin1").translate(_PDFDOC_DECODE_MAP)
+
+    idx = retval.find("\u0000")
+    if idx != -1:
+        raise UnicodeDecodeError(
+            "pdfdocencoding",
+            bytes(byte_array),
+            idx,  # start
+            idx + 1,  # end
+            "does not exist in translation table",
+        )
     return retval
 
 

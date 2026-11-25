@@ -1,5 +1,87 @@
 # CHANGELOG
 
+## Version 7.1.1, 2026-11-18
+
+### Security (SEC)
+- Limit inline image size for known-size fallback path (#4460)
+- Optimize memory usage of ASCIIHexDecode whitespace removal (#4458)
+- Limit the overall page label size before employing a fallback (#4457)
+- Restrict cross-reference stream work/memory (#4456)
+
+### Performance Improvements (PI)
+- List image identifiers only once when iterating over page images (#4452)
+- Index named destinations when appending a document (#4360)
+- Decode PDFDocEncoding strings with str.translate instead of per-character concatenation (#4429)
+
+### Bug Fixes (BUG)
+- Reject zero-step slices in PageRange (#4404)
+- Label a page that lies between the /Limits of two page label kids (#4385)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.1.0...7.1.1)
+
+## Version 7.1.0, 2026-11-13
+
+### Deprecations (DEP)
+- Deprecate passing a boolean to remove_images (#4412)
+- Make add_outline_item keyword-only (#4401)
+
+### New Features (ENH)
+- Scale a soft mask to the size of its image (#4391)
+
+### Performance Improvements (PI)
+- Do not decode streams to find identical objects (#4424)
+- Speed up the pure-Python RC4 used without a crypto library (#4396)
+- Skip per-character direction checks for left-to-right text in extract_text() (#4395)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.1...7.1.0)
+
+## Version 7.0.1, 2026-11-10
+
+### Security (SEC)
+- Determine image buffer sizes using the actual bytes per pixel (#4374)
+
+### Performance Improvements (PI)
+- Don't parse content streams without text operators in extract_text() (#4346)
+
+### Bug Fixes (BUG)
+- Decode UTF-8 text strings (#4348)
+- Fix page reference lookup for hierarchical page trees in PdfWriter (#4356)
+- Copy the operations in ContentStream.replicate() (#4372)
+- Deal with more rendering intents for inline images (#4383)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.0...7.0.1)
+
+## Version 7.0.0, 2026-11-06
+
+### Security (SEC)
+- Make file identifiers non-deterministic (#4366)
+- Block not strictly increasing offsets in object streams (#4364)
+- Limit XFA form decoding work (#4363)
+- Apply image size limits more strictly (#4361)
+
+### Deprecations (DEP)
+- Cleanup deprecations for the next major release (#4306)
+- Remove support for cryptography<43 (#4304)
+- Drop support for Python 3.9 (#4292)
+
+### New Features (ENH)
+- Allow setting border color for rectangle annotations (#4297)
+
+### Performance Improvements (PI)
+- Speed up LZW decoding for clear table markers (#4354)
+- Build right-to-left text runs with a single join (#4344)
+- Read every page label number tree once for all pages (#4321)
+- Decode the PNG Up predictor a row at a time (#4312)
+
+### Bug Fixes (BUG)
+- Fix cloning of objects that require constructor arguments (#4262)
+- Serialize XMP packets without an XML declaration (#4296)
+
+### Maintenance (MAINT)
+- Generate Symbol and ZapfDingbats encodings from Adobe sources (#4333)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.21.4...7.0.0)
+
 ## Version 6.21.4, 2026-10-28
 
 ### Security (SEC)

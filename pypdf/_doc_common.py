@@ -28,6 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import struct
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -48,26 +49,24 @@ from ._utils import (
     logger_warning,
     parse_iso8824_date,
 )
-from .constants import CatalogAttributes as CA
 from .constants import (
+    CatalogAttributes,
     CheckboxRadioButtonAttributes,
     Core,
+    DocumentInformationAttributes,
+    FieldDictionaryAttributes,
     GoToActionArguments,
+    PageAttributes,
     PagesAttributes,
     UserAccessPermissions,
 )
-from .constants import DocumentInformationAttributes as DI
-from .constants import FieldDictionaryAttributes as FA
-from .constants import PageAttributes as PG
 from .errors import LimitReachedError, PdfReadError, PyPdfError
-from .filters import _decompress_with_limit
 from .generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
     Destination,
     DictionaryObject,
-    EncodedStreamObject,
     Field,
     Fit,
     FloatObject,
@@ -75,12 +74,14 @@ from .generic import (
     NameObject,
     NullObject,
     PdfObject,
+    StreamObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
     create_string_object,
     is_null_or_none,
 )
+from .generic._data_structures import _flatten_name_tree
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
@@ -96,10 +97,10 @@ def convert_to_int(d: bytes, size: int) -> int | tuple[Any, ...]:
 
 # Attributes a page inherits from its ancestors in the page tree.
 _INHERITABLE_PAGE_ATTRIBUTES = (
-    NameObject(PG.RESOURCES),
-    NameObject(PG.MEDIABOX),
-    NameObject(PG.CROPBOX),
-    NameObject(PG.ROTATE),
+    NameObject(PageAttributes.RESOURCES),
+    NameObject(PageAttributes.MEDIABOX),
+    NameObject(PageAttributes.CROPBOX),
+    NameObject(PageAttributes.ROTATE),
 )
 
 
@@ -111,6 +112,16 @@ class _PageTreeItem(NamedTuple):
     inherit: dict[str, Any]
     indirect_reference: IndirectObject | None
     depth: int
+
+
+class _DottedNameNode:
+    """Counts the field names which continue with "." after one part of a dotted name."""
+
+    __slots__ = ("children", "count")
+
+    def __init__(self) -> None:
+        self.count = 0
+        self.children: dict[str, _DottedNameNode] = {}
 
 
 #: A ``/Pages`` node currently being walked: the node - carrying the attributes its
@@ -155,15 +166,16 @@ class DocumentInformation(DictionaryObject):
         specified.
         """
         return (
-            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore[union-attr]
-            if self.get(DI.TITLE)
+            self._get_text(DocumentInformationAttributes.TITLE)
+            or self.get(DocumentInformationAttributes.TITLE).get_object()  # type: ignore[union-attr]
+            if self.get(DocumentInformationAttributes.TITLE)
             else None
         )
 
     @property
     def title_raw(self) -> str | None:
         """The "raw" version of title; can return a ``ByteStringObject``."""
-        return self.get(DI.TITLE)
+        return self.get(DocumentInformationAttributes.TITLE)
 
     @property
     def author(self) -> str | None:
@@ -173,12 +185,12 @@ class DocumentInformation(DictionaryObject):
         Returns a ``TextStringObject`` or ``None`` if the author is not
         specified.
         """
-        return self._get_text(DI.AUTHOR)
+        return self._get_text(DocumentInformationAttributes.AUTHOR)
 
     @property
     def author_raw(self) -> str | None:
         """The "raw" version of author; can return a ``ByteStringObject``."""
-        return self.get(DI.AUTHOR)
+        return self.get(DocumentInformationAttributes.AUTHOR)
 
     @property
     def subject(self) -> str | None:
@@ -188,12 +200,12 @@ class DocumentInformation(DictionaryObject):
         Returns a ``TextStringObject`` or ``None`` if the subject is not
         specified.
         """
-        return self._get_text(DI.SUBJECT)
+        return self._get_text(DocumentInformationAttributes.SUBJECT)
 
     @property
     def subject_raw(self) -> str | None:
         """The "raw" version of subject; can return a ``ByteStringObject``."""
-        return self.get(DI.SUBJECT)
+        return self.get(DocumentInformationAttributes.SUBJECT)
 
     @property
     def creator(self) -> str | None:
@@ -205,12 +217,12 @@ class DocumentInformation(DictionaryObject):
         document from which it was converted. Returns a ``TextStringObject`` or
         ``None`` if the creator is not specified.
         """
-        return self._get_text(DI.CREATOR)
+        return self._get_text(DocumentInformationAttributes.CREATOR)
 
     @property
     def creator_raw(self) -> str | None:
         """The "raw" version of creator; can return a ``ByteStringObject``."""
-        return self.get(DI.CREATOR)
+        return self.get(DocumentInformationAttributes.CREATOR)
 
     @property
     def producer(self) -> str | None:
@@ -222,17 +234,17 @@ class DocumentInformation(DictionaryObject):
         PDF. Returns a ``TextStringObject`` or ``None`` if the producer is not
         specified.
         """
-        return self._get_text(DI.PRODUCER)
+        return self._get_text(DocumentInformationAttributes.PRODUCER)
 
     @property
     def producer_raw(self) -> str | None:
         """The "raw" version of producer; can return a ``ByteStringObject``."""
-        return self.get(DI.PRODUCER)
+        return self.get(DocumentInformationAttributes.PRODUCER)
 
     @property
     def creation_date(self) -> datetime | None:
         """Read-only property accessing the document's creation date."""
-        return parse_iso8824_date(self._get_text(DI.CREATION_DATE))
+        return parse_iso8824_date(self._get_text(DocumentInformationAttributes.CREATION_DATE))
 
     @property
     def creation_date_raw(self) -> str | None:
@@ -242,7 +254,7 @@ class DocumentInformation(DictionaryObject):
         Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
-        return self.get(DI.CREATION_DATE)
+        return self.get(DocumentInformationAttributes.CREATION_DATE)
 
     @property
     def modification_date(self) -> datetime | None:
@@ -251,7 +263,7 @@ class DocumentInformation(DictionaryObject):
 
         The date and time the document was most recently modified.
         """
-        return parse_iso8824_date(self._get_text(DI.MOD_DATE))
+        return parse_iso8824_date(self._get_text(DocumentInformationAttributes.MOD_DATE))
 
     @property
     def modification_date_raw(self) -> str | None:
@@ -262,7 +274,7 @@ class DocumentInformation(DictionaryObject):
         Typically, in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
-        return self.get(DI.MOD_DATE)
+        return self.get(DocumentInformationAttributes.MOD_DATE)
 
     @property
     def keywords(self) -> str | None:
@@ -272,12 +284,12 @@ class DocumentInformation(DictionaryObject):
         Returns a ``TextStringObject`` or ``None`` if keywords are not
         specified.
         """
-        return self._get_text(DI.KEYWORDS)
+        return self._get_text(DocumentInformationAttributes.KEYWORDS)
 
     @property
     def keywords_raw(self) -> str | None:
         """The "raw" version of keywords; can return a ``ByteStringObject``."""
-        return self.get(DI.KEYWORDS)
+        return self.get(DocumentInformationAttributes.KEYWORDS)
 
 
 class PdfDocCommon(ABC):
@@ -343,7 +355,7 @@ class PdfDocCommon(ABC):
     @property
     def viewer_preferences(self) -> ViewerPreferences | None:
         """Returns the existing ViewerPreferences as an overloaded dictionary."""
-        o = self.root_object.get(CA.VIEWER_PREFERENCES, None)
+        o = self.root_object.get(CatalogAttributes.VIEWER_PREFERENCES, None)
         if o is None:
             return None
         o = o.get_object()
@@ -359,7 +371,7 @@ class PdfDocCommon(ABC):
             if hasattr(o, "indirect_reference") and o.indirect_reference is not None:
                 self._replace_object(o.indirect_reference, o)
             else:
-                self.root_object[NameObject(CA.VIEWER_PREFERENCES)] = o
+                self.root_object[NameObject(CatalogAttributes.VIEWER_PREFERENCES)] = o
         return o
 
     def get_num_pages(self) -> int:
@@ -452,33 +464,32 @@ class PdfDocCommon(ABC):
 
     def get_named_dest_root(self) -> ArrayObject:
         named_dest = ArrayObject()
-        if CA.NAMES in self.root_object and isinstance(
-            self.root_object[CA.NAMES], DictionaryObject
+        if CatalogAttributes.NAMES in self.root_object and isinstance(
+            self.root_object[CatalogAttributes.NAMES], DictionaryObject
         ):
-            names = cast(DictionaryObject, self.root_object[CA.NAMES])
-            if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
+            names = cast(DictionaryObject, self.root_object[CatalogAttributes.NAMES])
+            if CatalogAttributes.DESTS in names and isinstance(names[CatalogAttributes.DESTS], DictionaryObject):
                 # §3.6.3 Name Dictionary (PDF spec 1.7)
-                dests = cast(DictionaryObject, names[CA.DESTS])
-                if CA.NAMES in dests:
+                dests = cast(DictionaryObject, names[CatalogAttributes.DESTS])
+                if CatalogAttributes.NAMES in dests:
                     # §7.9.6, entries in a name tree node dictionary
-                    named_dest = cast(ArrayObject, dests[CA.NAMES])
+                    named_dest = cast(ArrayObject, dests[CatalogAttributes.NAMES])
                 else:
-                    named_dest = ArrayObject()
-                    dests[NameObject(CA.NAMES)] = named_dest
+                    named_dest = _flatten_name_tree(dests)
             elif hasattr(self, "_add_object"):
                 dests = DictionaryObject()
                 dests_ref = self._add_object(dests)
-                names[NameObject(CA.DESTS)] = dests_ref
-                dests[NameObject(CA.NAMES)] = named_dest
+                names[NameObject(CatalogAttributes.DESTS)] = dests_ref
+                dests[NameObject(CatalogAttributes.NAMES)] = named_dest
 
         elif hasattr(self, "_add_object"):
             names = DictionaryObject()
             names_ref = self._add_object(names)
-            self.root_object[NameObject(CA.NAMES)] = names_ref
+            self.root_object[NameObject(CatalogAttributes.NAMES)] = names_ref
             dests = DictionaryObject()
             dests_ref = self._add_object(dests)
-            names[NameObject(CA.DESTS)] = dests_ref
-            dests[NameObject(CA.NAMES)] = named_dest
+            names[NameObject(CatalogAttributes.DESTS)] = dests_ref
+            dests[NameObject(CatalogAttributes.NAMES)] = named_dest
 
         return named_dest
 
@@ -517,12 +528,12 @@ class PdfDocCommon(ABC):
 
             # get the name tree
             candidate: PdfObject | None = None
-            if CA.DESTS in catalog:
-                candidate = catalog[CA.DESTS].get_object()
-            elif CA.NAMES in catalog:
-                names = catalog[CA.NAMES].get_object()
-                if isinstance(names, DictionaryObject) and CA.DESTS in names:
-                    candidate = names[CA.DESTS].get_object()
+            if CatalogAttributes.DESTS in catalog:
+                candidate = catalog[CatalogAttributes.DESTS].get_object()
+            elif CatalogAttributes.NAMES in catalog:
+                names = catalog[CatalogAttributes.NAMES].get_object()
+                if isinstance(names, DictionaryObject) and CatalogAttributes.DESTS in names:
+                    candidate = names[CatalogAttributes.DESTS].get_object()
             if candidate is not None and not isinstance(candidate, DictionaryObject):
                 logger_warning(
                     "Destination tree is not a dictionary: %(tree)s",
@@ -576,8 +587,8 @@ class PdfDocCommon(ABC):
                     traversal_state=traversal_state,
                 )
         # §7.9.6, entries in a name tree node dictionary
-        elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
-            names = tree[CA.NAMES].get_object()
+        elif CatalogAttributes.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
+            names = tree[CatalogAttributes.NAMES].get_object()
             if not isinstance(names, ArrayObject):
                 logger_warning(
                     "Destination tree names are not an array: %(names)s",
@@ -669,15 +680,15 @@ class PdfDocCommon(ABC):
             if _traversal_state.entry_count > configuration.form_fields_maximum_entries:
                 raise LimitReachedError("Exceeded maximum number of fields allowed.")
 
-        field_attributes = FA.attributes_dict()
+        field_attributes = FieldDictionaryAttributes.attributes_dict()
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
         if retval is None:
             retval = {}
             catalog = self.root_object
             _visited = set()
             # get the AcroForm tree
-            if CA.ACRO_FORM in catalog:
-                entry = catalog[CA.ACRO_FORM]
+            if CatalogAttributes.ACRO_FORM in catalog:
+                entry = catalog[CatalogAttributes.ACRO_FORM]
                 acro_form = None if entry is None else entry.get_object()
                 if acro_form is not None and not isinstance(
                     acro_form, DictionaryObject
@@ -784,28 +795,37 @@ class PdfDocCommon(ABC):
             fileobj.write("\n")
         retval[key] = Field(field)
         obj = retval[key].indirect_reference.get_object()  # to get the full object
-        if obj.get(FA.FT, "") == "/Ch" and obj.get(NameObject(FA.Opt)):
-            retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
-        if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
+        if obj.get(FieldDictionaryAttributes.FT, "") == "/Ch" and obj.get(NameObject(FieldDictionaryAttributes.Opt)):
+            retval[key][NameObject("/_States_")] = obj[NameObject(FieldDictionaryAttributes.Opt)]
+        if obj.get(FieldDictionaryAttributes.FT, "") == "/Btn" and "/AP" in obj:
             #  Checkbox
             normal = self._normal_appearance(obj["/AP"])
             retval[key][NameObject("/_States_")] = ArrayObject(list(normal.keys()))
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
-        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
+        elif (
+            obj.get(FieldDictionaryAttributes.FT, "") == "/Btn"
+            and obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Radio != 0
+        ):
             states: list[str] = []
-            retval[key][NameObject("/_States_")] = ArrayObject(states)
-            for k in obj.get(FA.Kids, {}):
+            seen_states: set[str] = set()
+            # Widgets often share one /N dictionary, whose states only need to be read once.
+            seen_appearances: set[int] = set()
+            for k in obj.get(FieldDictionaryAttributes.Kids, {}):
                 k = k.get_object()
                 if "/AP" not in k:
                     raise PdfReadError(f"Button field kid missing /AP: {k!r}")
                 normal = self._normal_appearance(k["/AP"])
+                if id(normal) in seen_appearances:
+                    continue
+                seen_appearances.add(id(normal))
                 for s in list(normal.keys()):
-                    if s not in states:
+                    if s not in seen_states:
+                        seen_states.add(s)
                         states.append(s)
-                retval[key][NameObject("/_States_")] = ArrayObject(states)
+            retval[key][NameObject("/_States_")] = ArrayObject(states)
             if (
-                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
+                obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.NoToggleToOff != 0
                 and "/Off" in retval[key]["/_States_"]
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
@@ -843,20 +863,20 @@ class PdfDocCommon(ABC):
                 )
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        field_attributes_tuple = FA.attributes()
+        field_attributes_tuple = FieldDictionaryAttributes.attributes()
         field_attributes_tuple = (
             field_attributes_tuple + CheckboxRadioButtonAttributes.attributes()
         )
 
         for attr in field_attributes_tuple:
             if attr in (
-                FA.Kids,
-                FA.AA,
+                FieldDictionaryAttributes.Kids,
+                FieldDictionaryAttributes.AA,
             ):
                 continue
             attr_name = field_attributes[attr]
             try:
-                if attr == FA.FT:
+                if attr == FieldDictionaryAttributes.FT:
                     # Make the field type value clearer
                     types = {
                         "/Btn": "Button",
@@ -866,12 +886,12 @@ class PdfDocCommon(ABC):
                     }
                     if field[attr] in types:
                         fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
-                elif attr == FA.Parent:
+                elif attr == FieldDictionaryAttributes.Parent:
                     # Let's just write the name of the parent
                     try:
-                        name = field[attr][FA.TM]
+                        name = field[attr][FieldDictionaryAttributes.TM]
                     except KeyError:
-                        name = field[attr][FA.T]
+                        name = field[attr][FieldDictionaryAttributes.T]
                     fileobj.write(f"{attr_name}: {name}\n")
                 else:
                     fileobj.write(f"{attr_name}: {field[attr]}\n")
@@ -894,15 +914,30 @@ class PdfDocCommon(ABC):
             second and following will get the suffix .2, .3, ...
 
         """
+        # The keys as a tree of their dot-separated parts, so that numbering a duplicate
+        # name does not scan all keys collected so far.
+        dotted_names = _DottedNameNode()
 
         def indexed_key(k: str, fields: dict[Any, Any]) -> str:
             if k not in fields:
                 return k
-            return (
-                k
-                + "."
-                + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
-            )
+            return k + "." + str(get_prefix_count(k) + 2)
+
+        def get_prefix_count(k: str) -> int:
+            node = dotted_names
+            for part in k.split("."):
+                if part not in node.children:
+                    return 0
+                node = node.children[part]
+            return node.count
+
+        def count_prefixes(k: Any) -> None:
+            if not isinstance(k, str):
+                return
+            node = dotted_names
+            for part in k.split(".")[:-1]:
+                node = node.children.setdefault(part, _DottedNameNode())
+                node.count += 1
 
         # Retrieve document form fields
         form_fields = self.get_fields()
@@ -914,7 +949,10 @@ class PdfDocCommon(ABC):
                 if full_qualified_name:
                     ff[field] = value.get("/V")
                 else:
-                    ff[indexed_key(cast(str, value.get("/T", field)), ff)] = value.get("/V")
+                    key = indexed_key(cast(str, value.get("/T", field)), ff)
+                    if key not in ff:
+                        count_prefixes(key)
+                    ff[key] = value.get("/V")
         return ff
 
     def get_pages_showing_field(
@@ -1068,12 +1106,14 @@ class PdfDocCommon(ABC):
         # see if there are any more outline items
         if visited is None:
             visited = set()
+        added: set[int] = set()
         while True:
             node_id = id(node)
             if node_id in visited:
                 logger_warning("Detected cycle in outline structure for %(node)s", source=__name__, node=node)
                 break
             visited.add(node_id)
+            added.add(node_id)
             traversal_state.entry_count += 1
             if traversal_state.entry_count > configuration.outline_maximum_entries:
                 raise LimitReachedError(
@@ -1096,12 +1136,12 @@ class PdfDocCommon(ABC):
             # check for sub-outline
             if "/First" in node:
                 sub_outline: list[Any] = []
-                # Pass a copy to allow multiple outer entries to reference the same inner one.
-                inner_visited = visited.copy()
+                # The inner call forgets its entries on return to allow multiple
+                # outer entries to reference the same inner one.
                 self._get_outline(
                     node=cast(DictionaryObject, node["/First"]),
                     outline=sub_outline,
-                    visited=inner_visited,
+                    visited=visited,
                     depth=depth + 1,
                     traversal_state=traversal_state,
                 )
@@ -1112,6 +1152,7 @@ class PdfDocCommon(ABC):
                 break
             node = cast(DictionaryObject, node["/Next"])
 
+        visited.difference_update(added)
         return outline
 
     @property
@@ -1192,8 +1233,12 @@ class PdfDocCommon(ABC):
             )
             if self.strict:
                 raise
-            # create a link to first Page
-            tmp = self.pages[0].indirect_reference
+            # create a link to the first page if the document has one,
+            # and to a null target otherwise
+            if self.pages:
+                tmp = self.pages[0].indirect_reference
+            else:
+                tmp = None
             indirect_reference = NullObject() if tmp is None else tmp
             return Destination(title, indirect_reference, Fit.fit())
 
@@ -1280,10 +1325,8 @@ class PdfDocCommon(ABC):
                 node.get("/Count", 0) >= 0
             )
         outline_item.node = node
-        try:
+        with contextlib.suppress(AttributeError):
             outline_item.indirect_reference = node.indirect_reference
-        except AttributeError:
-            pass
         return outline_item
 
     @property
@@ -1342,7 +1385,7 @@ class PdfDocCommon(ABC):
              - Show two pages at a time, odd-numbered pages on the right
         """
         try:
-            return cast(NameObject, self.root_object[CA.PAGE_LAYOUT])
+            return cast(NameObject, self.root_object[CatalogAttributes.PAGE_LAYOUT])
         except KeyError:
             return None
 
@@ -1368,7 +1411,7 @@ class PdfDocCommon(ABC):
              - Show attachments panel
         """
         try:
-            return self.root_object["/PageMode"]  # type: ignore[return-value]
+            return self.root_object[CatalogAttributes.PAGE_MODE]  # type: ignore[return-value]
         except KeyError:
             return None
 
@@ -1430,7 +1473,9 @@ class PdfDocCommon(ABC):
             # if the page tree node has no /Type, consider as a page if /Kids is also missing
             elif PagesAttributes.KIDS not in node:
                 # Without /Type, only accept it as a page if it carries a structural page key.
-                if self.strict and not any(key in node for key in (PG.CONTENTS, PG.MEDIABOX, PG.PARENT)):
+                if self.strict and not any(
+                    key in node for key in (PageAttributes.CONTENTS, PageAttributes.MEDIABOX, PageAttributes.PARENT)
+                ):
                     raise PdfReadError(f"Non-page object reached through /Kids: {node!r}")
                 node_type = "/Page"
             else:
@@ -1640,7 +1685,7 @@ class PdfDocCommon(ABC):
         """
         if self._encryption is None:
             return None
-        return UserAccessPermissions(self._encryption.P)
+        return UserAccessPermissions(self._encryption.permissions)
 
     @property
     def are_permissions_valid(self) -> bool | None:
@@ -1674,33 +1719,54 @@ class PdfDocCommon(ABC):
         ...  # pragma: no cover
 
     @property
-    def xfa(self) -> dict[str, Any] | None:
-        retval: dict[str, Any] = {}
+    def xfa(self) -> dict[str, bytes] | None:
+
         catalog = self.root_object
 
         if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
             return None
 
         tree = cast(TreeObject, catalog["/AcroForm"])
+        retval: dict[str, bytes] = {}
 
-        if "/XFA" in tree:
-            fields = tree["/XFA"].get_object()
-            if not isinstance(fields, ArrayObject):
-                logger_warning(
-                    "XFA entry is not an array: %(fields)s",
-                    source=__name__,
-                    fields=fields,
+        if "/XFA" not in tree:
+            return retval
+
+        fields = tree["/XFA"].get_object()
+        if not isinstance(fields, ArrayObject):
+            logger_warning(
+                "XFA entry is not an array: %(fields)s",
+                source=__name__,
+                fields=fields,
+            )
+            return retval
+
+        accumulated_length = 0
+        decoding_work_maximum_length = get_configuration().xfa_decoding_work_maximum_length
+
+        field_iterator = iter(fields)
+        for field in field_iterator:
+            tag = field
+            field = next(field_iterator, None)
+            if is_null_or_none(field):
+                continue
+            assert field is not None, "mypy"
+
+            field = cast(StreamObject | None, field.get_object())
+            if is_null_or_none(field):
+                continue
+            assert field is not None, "mypy"
+
+            decoded_data = field.get_data()
+            accumulated_length += len(decoded_data)
+
+            if accumulated_length > decoding_work_maximum_length:
+                raise LimitReachedError(
+                    "XFA decoding exceeded the maximum accumulated "
+                    f"decoding work of {decoding_work_maximum_length} bytes."
                 )
-                return retval
-            i = iter(fields)
-            for f in i:
-                tag = f
-                f = next(i, None)
-                if isinstance(f, IndirectObject):
-                    field = cast(EncodedStreamObject | None, f.get_object())
-                    if field:
-                        es = _decompress_with_limit(field._data)
-                        retval[tag] = es
+
+            retval[tag] = decoded_data
         return retval
 
     @property
@@ -1729,6 +1795,10 @@ class PdfDocCommon(ABC):
         yield from EmbeddedFile._load(self.root_object, strict=self.strict)
 
     @abstractmethod
+    def _get_pdf_bytes(self) -> bytes:
+        """Return the document as the bytes of a PDF file."""
+        ...  # pragma: no cover
+
     def _repr_mimebundle_(
         self,
         include: Iterable[str] | None = None,
@@ -1744,7 +1814,17 @@ class PdfDocCommon(ABC):
 
             https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
-        ...  # pragma: no cover
+        data: dict[str, Any] = {"application/pdf": self._get_pdf_bytes()}
+
+        if include is not None:
+            # Filter representations based on include list
+            data = {k: v for k, v in data.items() if k in include}
+
+        if exclude is not None:
+            # Remove representations based on exclude list
+            data = {k: v for k, v in data.items() if k not in exclude}
+
+        return data
 
 
 class LazyDict(Mapping[Any, Any]):
