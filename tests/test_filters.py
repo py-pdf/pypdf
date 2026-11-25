@@ -202,6 +202,24 @@ def test_ascii85decode_five_zero_bytes():
         assert ASCII85Decode.decode(i + "~>") == expected
 
 
+def test_ascii85decode_output_limit():
+    """ASCII85Decode raises LimitReachedError when output exceeds limit."""
+    # "z" stands for four zero bytes: 1000 of them decode to 4000 bytes.
+    data = b"z" * 1000 + b"~>"
+    with apply_configuration(ascii85_maximum_output_length=4000):
+        assert ASCII85Decode.decode(data) == b"\x00" * 4000
+
+    with apply_configuration(ascii85_maximum_output_length=3999), \
+            pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
+        ASCII85Decode.decode(data)
+
+    # The check happens before decoding, so the limit is enforced even
+    # though the output would be produced in one go.
+    with apply_configuration(ascii85_maximum_output_length=100), \
+            pytest.raises(LimitReachedError, match=r"^Limit reached while decompressing\.$"):
+        ASCII85Decode.decode(b"z" * 1000 + b"~>")
+
+
 def test_ccittparameters():
     params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78

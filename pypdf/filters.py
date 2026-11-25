@@ -542,6 +542,38 @@ class LZWDecode:
         return LZWDecode.Decoder(data).decode()
 
 
+def _ascii85_decoded_length(data: bytes) -> int:
+    """
+    Compute the exact number of bytes ``a85decode`` would produce for *data*.
+
+    Each ``z`` stands for four zero bytes, each group of five characters
+    decodes to four bytes, and a final partial group of two to four
+    characters decodes to one fewer byte than it has characters. Whitespace
+    and the ``~>`` end marker are ignored. Invalid inputs (for example a
+    ``z`` inside a group, or a single trailing character) are counted as if
+    they were regular characters; decoding them still raises ``ValueError``
+    afterwards.
+    """
+    body = data[:-2] if data.endswith(b"~>") else data
+    if body.startswith(b"<~"):
+        body = body[2:]
+    length = 0
+    group = 0
+    for byte in body:
+        if byte in WHITESPACES_AS_BYTES:
+            continue
+        if byte == 0x7A and group == 0:  # "z"
+            length += 4
+        else:
+            group += 1
+            if group == 5:
+                length += 4
+                group = 0
+    if group > 1:
+        length += group - 1
+    return length
+
+
 class ASCII85Decode:
     """Decodes string ASCII85-encoded data into a byte format."""
 
@@ -567,6 +599,9 @@ class ASCII85Decode:
         data = data.strip(WHITESPACES_AS_BYTES)
         if len(data) > 2 and data.endswith(b">"):
             data = data[:-1].rstrip(WHITESPACES_AS_BYTES) + data[-1:]
+        configuration = get_configuration()
+        if _ascii85_decoded_length(data) > configuration.ascii85_maximum_output_length:
+            raise LimitReachedError("Limit reached while decompressing.")
         try:
             return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
         except ValueError as error:
