@@ -1310,6 +1310,10 @@ class PdfWriter(PdfDocCommon):
 
         assert self.flattened_pages is not None
         for p in self.flattened_pages:
+            if p.indirect_reference is None:
+                # The page was written as a direct object in /Kids and cannot
+                # be referenced. Give it its own object in the writer.
+                self._add_object(p)
             self._replace_object(cast(IndirectObject, p.indirect_reference).idnum, p)
             if not self.incremental:
                 p[NameObject("/Parent")] = self._pages
@@ -2922,19 +2926,26 @@ class PdfWriter(PdfDocCommon):
                 pg = page
             else:
                 pg = reader.pages[page]
-            assert pg.indirect_reference is not None
+            if pg.indirect_reference is None:
+                # The page is written as a direct object in /Kids and cannot
+                # be referenced, so no destination can point to it. Merge it
+                # anyway and key it by its identity, as done for the page label
+                # kids, to keep e.g. the annotation processing working.
+                key: int = id(pg)
+            else:
+                key = pg.indirect_reference.idnum
             if position is None:
                 # numbers in the exclude list identifies that the exclusion is
                 # only applicable to 1st level of cloning
-                srcpages[pg.indirect_reference.idnum] = self.add_page(
+                srcpages[key] = self.add_page(
                     pg, [*list(excluded_fields), 1, "/B", 1, "/Annots"]  # type: ignore[list-item]
                 )
             else:
-                srcpages[pg.indirect_reference.idnum] = self.insert_page(
+                srcpages[key] = self.insert_page(
                     pg, position, [*list(excluded_fields), 1, "/B", 1, "/Annots"]  # type: ignore[list-item]
                 )
                 position += 1
-            srcpages[pg.indirect_reference.idnum].original_page = pg
+            srcpages[key].original_page = pg
 
         reader._named_destinations = (
             reader.named_destinations
@@ -3055,7 +3066,10 @@ class PdfWriter(PdfDocCommon):
                 p = reader.pages[dest["/Page"]]
             except IndexError:
                 return
-            assert p.indirect_reference is not None
+            if p.indirect_reference is None:
+                # A page written as a direct object in /Kids cannot be
+                # referenced by a destination.
+                return
             try:
                 arr[NumberObject(0)] = NumberObject(
                     srcpages[p.indirect_reference.idnum].page_number

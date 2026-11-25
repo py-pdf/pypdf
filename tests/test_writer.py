@@ -2826,6 +2826,70 @@ def test_clone_from__tolerate_dangling_info_reference():
     assert writer._info["/Title"] == NullObject()
 
 
+def _pdf_with_page_as_direct_object_in_kids() -> bytes:
+    """A minimal PDF whose only page is a direct object in /Kids, not an indirect one (#4523)."""
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        (
+            b"<< /Type /Pages /Count 1 /Kids [<< /Type /Page /Parent 2 0 R "
+            b"/MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> "
+            b"/Contents 5 0 R >>] >>"
+        ),
+        b"% placeholder",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    content = b"BT /F1 12 Tf 72 720 Td (Hello World) Tj ET"
+    objects.append(
+        b"<< /Length "
+        + str(len(content)).encode()
+        + b" >>\nstream\n"
+        + content
+        + b"\nendstream"
+    )
+    out = b"%PDF-1.7\n"
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += f"{number} 0 obj\n".encode() + body + b"\nendobj\n"
+    xref_position = len(out)
+    out += b"xref\n0 " + str(len(objects) + 1).encode() + b"\n"
+    out += b"0000000000 65535 f \n"
+    for offset in offsets:
+        out += f"{offset:010d} 00000 n \n".encode()
+    out += (
+        b"trailer\n<< /Size "
+        + str(len(objects) + 1).encode()
+        + b" /Root 1 0 R >>\nstartxref\n"
+        + str(xref_position).encode()
+        + b"\n%%EOF"
+    )
+    return out
+
+
+def test_append__page_as_direct_object_in_kids():
+    """Cf #4523."""
+    writer = PdfWriter()
+    writer.append(BytesIO(_pdf_with_page_as_direct_object_in_kids()))
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output)
+    assert len(reader.pages) == 1
+    assert reader.pages[0].extract_text() == "Hello World"
+    assert reader.pages[0].indirect_reference is not None
+
+
+def test_clone_from__page_as_direct_object_in_kids():
+    """Cf #4523."""
+    writer = PdfWriter(clone_from=BytesIO(_pdf_with_page_as_direct_object_in_kids()))
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output)
+    assert len(reader.pages) == 1
+    assert reader.pages[0].extract_text() == "Hello World"
+
+
 @pytest.mark.parametrize(
     "file_identifier",
     [
