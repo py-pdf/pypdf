@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795552347448,
+  "lastUpdate": 1795601935244,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -131807,6 +131807,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008952709227441374",
             "extra": "mean: 678.6029751999877 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "Syed.tauhidullahshah@ucalgary.ca",
+            "name": "Syed Tauhid Ullah Shah",
+            "username": "SyedTauhidUllahShah"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "06317683225c0aef9991e1958952e1e1de04821f",
+          "message": "BUG: Preserve merged content streams during encryption (#4477)\n\nSerialize ContentStream operations before encrypting their bytes, while preserving the encoded data of other streams. Add regression coverage for merged watermarks and compressed streams with RC4 and AES.\n\nFixes #4476. The watermark regression test is based on MartinThoma’s reproducer in that issue.\n\nDeveloped with assistance from OpenAI Codex (GPT-6).",
+          "timestamp": "2026-11-25T11:16:06+01:00",
+          "tree_id": "d5ab0a95b7c37fdf8aa0a71d57adb8f69784a4ef",
+          "url": "https://github.com/py-pdf/pypdf/commit/06317683225c0aef9991e1958952e1e1de04821f"
+        },
+        "date": 1795601919948,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.657249616367452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012278715853324108",
+            "extra": "mean: 376.32896579999624 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.06362631814543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022913471434425716",
+            "extra": "mean: 45.32346521739204 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25706483697770505,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025551675798974164",
+            "extra": "mean: 3.890069181600006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.631120297934064,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015168128637333632",
+            "extra": "mean: 44.186942000007285 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14650009096035355,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03757578841417376",
+            "extra": "mean: 6.825934328400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5275646065188613,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018360399976101074",
+            "extra": "mean: 654.6367961999863 msec\nrounds: 5"
           }
         ]
       }
