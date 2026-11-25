@@ -3208,27 +3208,27 @@ def test_reattach_fields():
     assert len(writer.reattach_fields(writer.pages[1])) == 0
 
 
-def _null(_writer) -> NullObject:
+def _create_null_object(_writer) -> NullObject:
     return NullObject()
 
 
-def _empty_form(_writer) -> DictionaryObject:
+def _create_empty_form(_writer) -> DictionaryObject:
     return DictionaryObject()
 
 
-def _reference_to_null(writer) -> IndirectObject:
+def _create_reference_to_null(writer) -> IndirectObject:
     return writer._add_object(NullObject())
 
 
 @pytest.mark.parametrize(
     ("acro_form", "fields", "annotations"),
     [
-        pytest.param(_null, None, None, id="acroform-null"),
-        pytest.param(_reference_to_null, None, None, id="acroform-reference-to-null"),
-        pytest.param(_empty_form, _null, None, id="fields-null"),
-        pytest.param(_empty_form, _reference_to_null, None, id="fields-reference-to-null"),
-        pytest.param(None, None, _null, id="annots-null"),
-        pytest.param(None, None, _reference_to_null, id="annots-reference-to-null"),
+        pytest.param(_create_null_object, None, None, id="acroform-null"),
+        pytest.param(_create_reference_to_null, None, None, id="acroform-reference-to-null"),
+        pytest.param(_create_empty_form, _create_null_object, None, id="fields-null"),
+        pytest.param(_create_empty_form, _create_reference_to_null, None, id="fields-reference-to-null"),
+        pytest.param(None, None, _create_null_object, id="annots-null"),
+        pytest.param(None, None, _create_reference_to_null, id="annots-reference-to-null"),
     ],
 )
 def test_reattach_fields__null_entries(acro_form, fields, annotations):
@@ -3257,9 +3257,16 @@ def test_reattach_fields__null_entries(acro_form, fields, annotations):
     if annotations is not None:
         first_page[NameObject("/Annots")] = annotations(writer)
 
-    assert writer.reattach_fields() == [widget]
+    reattached = writer.reattach_fields()
 
-    assert writer.root_object["/AcroForm"]["/Fields"] == [widget.indirect_reference]
+    assert reattached == [widget]
+    assert isinstance(reattached[0], DictionaryObject)
+    # Whatever was null is replaced by a new form with a list of fields
+    form = writer.root_object["/AcroForm"]
+    assert isinstance(form, DictionaryObject)
+    assert isinstance(form["/Fields"], ArrayObject)
+    assert form["/Fields"] == [widget.indirect_reference]
+    assert isinstance(form["/Fields"][0], IndirectObject)
 
 
 @pytest.mark.enable_socket
