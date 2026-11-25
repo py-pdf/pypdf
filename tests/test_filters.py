@@ -198,7 +198,7 @@ def test_ascii85decode_five_zero_bytes():
 
     assert ASCII85Decode.decode("!!!!!~>") == ASCII85Decode.decode("z~>")
 
-    for expected, i in zip(exp_outputs, inputs):
+    for expected, i in zip(exp_outputs, inputs, strict=True):
         assert ASCII85Decode.decode(i + "~>") == expected
 
 

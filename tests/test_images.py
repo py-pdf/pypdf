@@ -368,7 +368,7 @@ def test_cmyk_dct_with_identity_decode_is_not_inverted():
         ((449, 629), (153, 137, 74, 82)),     # dark suit
     ):
         actual = image.getpixel(xy)
-        assert all(abs(a - e) <= 8 for a, e in zip(actual, expected)), (
+        assert all(abs(a - e) <= 8 for a, e in zip(actual, expected, strict=True)), (
             f"pixel {xy}: got {actual}, expected close to {expected}. "
             f"Without the fix this decodes to roughly "
             f"{tuple(255 - value for value in expected)}."

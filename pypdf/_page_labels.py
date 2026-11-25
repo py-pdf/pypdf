@@ -456,7 +456,9 @@ class _FirstKidFinder:
         end = bisect_right(self._covered_starts, last)
         gaps = []
         position = first
-        for covered_start, covered_end in zip(self._covered_starts[start:end], self._covered_ends[start:end]):
+        for covered_start, covered_end in zip(
+            self._covered_starts[start:end], self._covered_ends[start:end], strict=True
+        ):
             if covered_start > position:
                 gaps.append((position, covered_start - 1))
             position = max(position, covered_end + 1)
@@ -553,7 +555,7 @@ def _get_labels_from_kids(number_tree: DictionaryObject, page_count: int) -> lis
             if leaf_nums is not None
             else [get_label_from_nums(leaf, index) for index in leaf_indexes]
         )
-        for index, label in zip(leaf_indexes, leaf_labels):
+        for index, label in zip(leaf_indexes, leaf_labels, strict=True):
             labels[index] = label
     for index in sorted(unmatched):
         logger_warning("Could not reliably determine page label for %(index)d.", source=__name__, index=index)

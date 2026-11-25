@@ -133,7 +133,13 @@ class TextStateManager:
         """Only a/b/c/d/e/f matrix params"""
         defaults = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
         values = (_a, _b, _c, _d, _e, _f)
-        return dict(zip(range(6), (TextStateManager._as_float(v, d) for v, d in zip(values, defaults))))
+        return dict(
+            zip(
+                range(6),
+                (TextStateManager._as_float(v, d) for v, d in zip(values, defaults, strict=True)),
+                strict=True,
+            )
+        )
 
     @staticmethod
     def new_transform(

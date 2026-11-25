@@ -45,7 +45,7 @@ class Color:
         ):
             # Create instance of the appropriate subclass
             color_subclass = color_types[color_length]
-            kwargs = dict(zip(color_subclass._ordered_fields, color))
+            kwargs = dict(zip(color_subclass._ordered_fields, color, strict=True))
             return color_subclass(**kwargs)
 
         return None

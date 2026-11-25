@@ -449,7 +449,7 @@ def matrix_multiply(
     a: TransformationMatrixType, b: TransformationMatrixType
 ) -> TransformationMatrixType:
     return tuple(  # type: ignore[return-value]
-        tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b))
+        tuple(sum(float(i) * float(j) for i, j in zip(row, col, strict=True)) for col in zip(*b, strict=True))
         for row in a
     )
 
@@ -525,7 +525,7 @@ def deprecate_positional_arguments(removed_in: str) -> Callable[[Callable[_P, _R
                         f"{func.__qualname__}() takes {positional_count + len(keyword_only_names)} "
                         f"positional arguments but {len(args)} were given"
                     )
-                for name, value in zip(keyword_only_names, extra_args):
+                for name, value in zip(keyword_only_names, extra_args, strict=False):
                     if name in kwargs:
                         raise TypeError(f"{func.__qualname__}() got multiple values for argument '{name}'")
                     kwargs[name] = value
@@ -768,7 +768,7 @@ class Version:
         if not isinstance(other, Version):
             raise ValueError(f"Version cannot be compared against {type(other)}")
 
-        for self_component, other_component in zip(self.components, other.components):
+        for self_component, other_component in zip(self.components, other.components, strict=False):
             self_value, self_suffix = self_component
             other_value, other_suffix = other_component
 
