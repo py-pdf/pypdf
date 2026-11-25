@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795602910751,
+  "lastUpdate": 1795603002714,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -178669,6 +178669,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06550226300379801",
             "extra": "mean: 941.7325757999834 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7b6722efae9aac10d6e34c42e53eb3dafb11e8b4",
+          "message": "MAINT: Raise AssertionError in the unreachable branch of _content_stream_rename (#4511)\n\n_content_stream_rename() creates a new ContentStream from the data of\nthe given one instead of copying its operations, so its operations\nalways come from parsing: the operands are a list, or the dictionary of\nan inline image. The KeyError for any other type could never be raised\nand was a line of _page.py that no test runs.\n\nIt is an AssertionError now, with a comment on why nothing else can\noccur. pyproject excludes \"raise AssertionError\" from coverage as\ndefensive assertion code, and the error still says what went wrong if\nthe assumption ever breaks.\n\nBehavior: the same; the branch cannot be reached.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-25T11:33:20+01:00",
+          "tree_id": "93a5425ccf858a4b6227d63dcb11f5ba78d12cf1",
+          "url": "https://github.com/py-pdf/pypdf/commit/7b6722efae9aac10d6e34c42e53eb3dafb11e8b4"
+        },
+        "date": 1795602993219,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 21.44581302765468,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020875982811547476",
+            "extra": "mean: 46.62914848275913 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 53.743996525475374,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0055517086791146645",
+            "extra": "mean: 18.606729395830968 msec\nrounds: 48"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.8239097670107136,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030302532952609144",
+            "extra": "mean: 548.272737000002 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 53.82656533770413,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014860538359232758",
+            "extra": "mean: 18.578187066666235 msec\nrounds: 90"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.46516865333878304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06260873417973495",
+            "extra": "mean: 2.1497579272000054 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.738585918139191,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03759136272361083",
+            "extra": "mean: 575.1800872000047 msec\nrounds: 5"
           }
         ]
       }
