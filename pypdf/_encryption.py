@@ -52,6 +52,7 @@ from .generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
+    ContentStream,
     DictionaryObject,
     NameObject,
     NullObject,
@@ -84,7 +85,10 @@ class CryptFilter:
         elif isinstance(obj, StreamObject):
             obj2 = StreamObject()
             obj2.update(obj)
-            obj2.set_data(self.stm_crypt.encrypt(obj._data))
+            # ContentStream builds its bytes lazily from operations. Other streams
+            # must retain their encoded bytes and filters during encryption.
+            data = obj.get_data() if isinstance(obj, ContentStream) else obj._data
+            obj2.set_data(self.stm_crypt.encrypt(data))
             for key, value in obj.items():  # Don't forget the Stream dict.
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
