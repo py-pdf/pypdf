@@ -645,6 +645,49 @@ def test_tj_offset_right_after_a_font_change_inside_a_word_is_not_a_space() -> N
     assert page.extract_text() == "Complaint"
 
 
+def test_tj_offset_right_after_a_font_change_keeps_a_real_word_gap() -> None:
+    """A two-thirds-of-a-space TJ offset right after a Tf is a word gap (#4504).
+
+    Regression test for the source2e case: the body font (space 500) sets
+    "(category", the mono font (space 525) continues with a -342 offset,
+    i.e. 0.65 of its space. That offset is a real interword gap and must
+    keep its space, while the #4502 kern (-150, 0.54 of the space) above
+    must not.
+    """
+
+    def build(content: bytes) -> str:
+        writer = PdfWriter()
+        page = writer.add_blank_page(width=612, height=792)
+
+        def font(base_font: str, space_width: int) -> DictionaryObject:
+            font_dict = DictionaryObject()
+            font_dict[NameObject("/Type")] = NameObject("/Font")
+            font_dict[NameObject("/Subtype")] = NameObject("/Type1")
+            font_dict[NameObject("/BaseFont")] = NameObject(base_font)
+            font_dict[NameObject("/FirstChar")] = NumberObject(32)
+            font_dict[NameObject("/LastChar")] = NumberObject(126)
+            font_dict[NameObject("/Widths")] = ArrayObject([NumberObject(space_width)] * 95)
+            return font_dict
+
+        font_resources = DictionaryObject()
+        font_resources[NameObject("/F1")] = writer._add_object(font("/Helvetica", 500))
+        font_resources[NameObject("/F2")] = writer._add_object(font("/Courier", 525))
+        resources = DictionaryObject()
+        resources[NameObject("/Font")] = font_resources
+        page[NameObject("/Resources")] = resources
+
+        stream = DecodedStreamObject()
+        stream.set_data(content)
+        page[NameObject("/Contents")] = writer._add_object(stream)
+
+        buffer = BytesIO()
+        writer.write(buffer)
+        buffer.seek(0)
+        return PdfReader(buffer).pages[0].extract_text()
+
+    assert build(b"BT /F1 10 Tf 40 700 Td [(category)] TJ /F2 10 Tf [-342 (latex)] TJ ET") == "category latex"
+
+
 @pytest.mark.parametrize(
     ("content_stream", "expected"),
     [
