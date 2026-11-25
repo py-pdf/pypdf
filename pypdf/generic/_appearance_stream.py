@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import re
 from dataclasses import dataclass, field
 from enum import IntEnum
 from io import BytesIO
@@ -28,6 +29,7 @@ from ..generic import (
 from ..generic._base import ByteStringObject, TextStringObject
 from ._color import Color, DeviceGray
 from ._font import Font
+from ._utils import hex_to_rgb
 
 if TYPE_CHECKING:
     from pypdf._writer import PdfWriter
@@ -959,3 +961,128 @@ def transform_annotation_appearance(annotation_obj: DictionaryObject, transforma
         state_obj[NameObject("/Matrix")] = ArrayObject(
             FloatObject(x) for x in Transformation(old_matrix).transform(transformation).ctm
         )
+
+
+_CORE_FONT_FAMILIES: dict[str, dict[tuple[bool, bool], str]] = {
+    "helvetica": {
+        (False, False): "Helvetica",
+        (True, False): "Helvetica-Bold",
+        (False, True): "Helvetica-Oblique",
+        (True, True): "Helvetica-BoldOblique",
+    },
+    "courier": {
+        (False, False): "Courier",
+        (True, False): "Courier-Bold",
+        (False, True): "Courier-Oblique",
+        (True, True): "Courier-BoldOblique",
+    },
+    "times": {
+        (False, False): "Times-Roman",
+        (True, False): "Times-Bold",
+        (False, True): "Times-Italic",
+        (True, True): "Times-BoldItalic",
+    },
+    "arial": {
+        (False, False): "Arial",
+        (True, False): "Arial,Bold",
+        (False, True): "Arial,Italic",
+        (True, True): "Arial,BoldItalic",
+    },
+    "couriernew": {
+        (False, False): "CourierNew",
+        (True, False): "CourierNew,Bold",
+        (False, True): "CourierNew,Italic",
+        (True, True): "CourierNew,BoldItalic",
+    },
+    "timesnewroman": {
+        (False, False): "TimesNewRoman",
+        (True, False): "TimesNewRoman,Bold",
+        (False, True): "TimesNewRoman,Italic",
+        (True, True): "TimesNewRoman,BoldItalic",
+    },
+}
+_CORE_FONT_FAMILIES["times-roman"] = _CORE_FONT_FAMILIES["times"]
+_CORE_TEXT_FONT_NAMES: frozenset[str] = frozenset(
+    name for variants in _CORE_FONT_FAMILIES.values() for name in variants.values()
+)
+
+
+def _resolve_core_font_name(font: str, *, bold: bool = False, italic: bool = False) -> str:
+    """Resolve a font name and style flags to one of the supported Adobe core text fonts."""
+    cleaned = font.strip().removeprefix("/")
+    family = _CORE_FONT_FAMILIES.get(cleaned.lower().replace(" ", ""))
+    if family is not None:
+        return family[(bold, italic)]
+    if cleaned in _CORE_TEXT_FONT_NAMES:
+        return cleaned
+    return _CORE_FONT_FAMILIES["helvetica"][(bold, italic)]
+
+
+def _parse_font_size(font_size: str, default: float = 14.0) -> float:
+    """Parse a numeric font size from a CSS-style string such as ``'14pt'``."""
+    match = re.match(r"\s*(\d+(?:\.\d+)?|\.\d+)", font_size)
+    return float(match.group(1)) if match else default
+
+
+def _parse_hex_color(color: str | None) -> Color | None:
+    """Convert a hex RGB color string to a ``Color``, returning ``None`` when empty or unset."""
+    if not color:
+        return None
+    return Color.from_normalized_values(hex_to_rgb(color))
+
+
+def create_free_text_appearance_stream(
+    *,
+    rectangle: RectangleObject,
+    text: str,
+    font: str = "Helvetica",
+    bold: bool = False,
+    italic: bool = False,
+    font_size: str = "14pt",
+    font_color: str | None = "000000",
+    border_color: str | None = "000000",
+    background_color: str | None = "ffffff",
+) -> TextStreamAppearance:
+    """
+    Create the normal appearance stream (``/AP /N``) for a FreeText annotation.
+
+    Args:
+        rectangle: The annotation rectangle.
+        text: The annotation contents.
+        font: Font name or family (unknown fonts fall back to Helvetica).
+        bold: Whether to select the bold font variant.
+        italic: Whether to select the italic/oblique font variant.
+        font_size: Font size string such as ``"14pt"``.
+        font_color: Hex RGB text color, or ``None``/empty for black.
+        border_color: Hex RGB border color, or ``None`` for no border.
+        background_color: Hex RGB background color, or ``None`` for transparent.
+
+    Returns:
+        A ``TextStreamAppearance`` form XObject for the annotation's ``/AP /N`` entry.
+    """
+    bbox = RectangleObject((0, 0, abs(rectangle[2] - rectangle[0]), abs(rectangle[3] - rectangle[1])))
+    if border_color is None:
+        border_width = 0
+        parsed_border_color: Color | None = None
+    else:
+        border_width = 1
+        parsed_border_color = _parse_hex_color(border_color) or DeviceGray()
+
+    layout = BaseStreamConfig(
+        rectangle=bbox,
+        border_width=border_width,
+        border_color=parsed_border_color,
+        background_color=_parse_hex_color(background_color),
+    )
+    core_font_name = _resolve_core_font_name(font, bold=bold, italic=italic)
+    font_obj = Font.from_core_font_name(f"/{core_font_name}")
+    return TextStreamAppearance(
+        layout=layout,
+        text=text,
+        font=font_obj,
+        font_resource=font_obj.as_font_resource(),
+        font_name=f"/{font_obj.name}",
+        font_size=_parse_font_size(font_size),
+        font_color=_parse_hex_color(font_color),
+        is_multiline=True,
+    )

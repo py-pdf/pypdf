@@ -27,6 +27,7 @@ from pypdf.generic._appearance_stream import (
     BaseStreamAppearance,
     BaseStreamConfig,
     TextStreamAppearance,
+    create_free_text_appearance_stream,
 )
 from pypdf.generic._color import Color, DeviceCMYK, DeviceGray, DeviceRGB
 from pypdf.generic._font import HAS_FONTTOOLS, Font
@@ -651,3 +652,99 @@ def test_text_annotation_font_name_is_escaped(font_name: str, escaped_font_name:
     content.set_data(appearance.get_data())
     tf_operands = [operands for operands, operator in content.operations if operator == b"Tf"]
     assert tf_operands == [[NameObject(font_name), 12]]
+
+
+@pytest.mark.parametrize(
+    ("font", "bold", "italic", "expected_font_name"),
+    [
+        ("Helvetica", False, False, "/Helvetica"),
+        ("Helvetica", True, False, "/Helvetica-Bold"),
+        ("Helvetica", False, True, "/Helvetica-Oblique"),
+        ("Helvetica", True, True, "/Helvetica-BoldOblique"),
+        ("Arial", True, True, "/Arial,BoldItalic"),
+        ("Courier", False, True, "/Courier-Oblique"),
+        ("Courier New", True, False, "/CourierNew,Bold"),
+        ("Times", False, False, "/Times-Roman"),
+        ("Times-Roman", True, True, "/Times-BoldItalic"),
+        ("Times New Roman", False, True, "/TimesNewRoman,Italic"),
+        ("/Helvetica-Bold", False, False, "/Helvetica-Bold"),
+        ("UnknownFont", True, False, "/Helvetica-Bold"),
+        ("ZapfDingbats", False, False, "/Helvetica"),
+    ],
+)
+def test_create_free_text_appearance_stream__fonts(
+    font: str,
+    bold: bool,
+    italic: bool,
+    expected_font_name: str,
+) -> None:
+    appearance = create_free_text_appearance_stream(
+        rectangle=RectangleObject((0, 0, 120, 40)),
+        text="Sample",
+        font=font,
+        bold=bold,
+        italic=italic,
+    )
+    assert isinstance(appearance, TextStreamAppearance)
+    fonts = cast(DictionaryObject, cast(DictionaryObject, appearance["/Resources"])["/Font"])
+    assert expected_font_name in fonts
+    assert cast(DictionaryObject, fonts[expected_font_name])["/BaseFont"] == NameObject(expected_font_name)
+    assert f"{expected_font_name} 14.0 Tf".encode("ascii") in appearance.get_data()
+
+
+def test_create_free_text_appearance_stream__colors_and_layout() -> None:
+    colored = create_free_text_appearance_stream(
+        rectangle=RectangleObject((50, 550, 200, 650)),
+        text="Hello\nWorld",
+        font_color="00ff00",
+        border_color="0000ff",
+        background_color="cdcdcd",
+    )
+    data = colored.get_data()
+    assert b"0.804 0.804 0.804 rg\nf\n" in data
+    assert b"0 0 1 RG\ns\n" in data
+    assert b"0 1 0 rg" in data
+
+    plain = create_free_text_appearance_stream(
+        rectangle=RectangleObject((0, 0, 100, 50)),
+        text="Plain",
+        font_color="",
+        border_color=None,
+        background_color=None,
+    )
+    plain_data = plain.get_data()
+    assert b"\nf\n" not in plain_data
+    assert b"\ns\n" not in plain_data
+    assert b"0 g\n" in plain_data
+
+    empty_border = create_free_text_appearance_stream(
+        rectangle=RectangleObject((0, 0, 100, 50)),
+        text="Border",
+        font_color=None,
+        border_color="",
+        background_color=None,
+    )
+    empty_border_data = empty_border.get_data()
+    assert b"0 G\ns\n" in empty_border_data
+    assert b"0 g\n" in empty_border_data
+
+    inverted = create_free_text_appearance_stream(
+        rectangle=RectangleObject((500, 550, 200, 650)),
+        text="Inverted",
+    )
+    assert inverted["/BBox"] == RectangleObject((0, 0, 300, 100))
+
+    wrapped = create_free_text_appearance_stream(
+        rectangle=RectangleObject((0, 0, 80, 40)),
+        text="word " * 20,
+        font_size="0pt",
+    )
+    wrapped_data = wrapped.get_data()
+    assert wrapped_data.count(b") Tj") > 1
+
+    fallback_size = create_free_text_appearance_stream(
+        rectangle=RectangleObject((0, 0, 100, 50)),
+        text="Fallback",
+        font_size="invalid",
+    )
+    assert b"14.0 Tf" in fallback_size.get_data()
