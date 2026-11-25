@@ -441,7 +441,7 @@ def test_layout_mode_space_vertically_font_height_weight():
         text = page.extract_text(extraction_mode="layout", layout_mode_space_vertically=True).encode("utf-8")
 
         # Compare the text of the PDF to a known source
-        for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines()):
+        for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines(), strict=True):
             assert expected_line == actual_line
 
         pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
@@ -455,7 +455,7 @@ def test_layout_mode_space_vertically_font_height_weight():
                                  layout_mode_font_height_weight=0.85).encode("utf-8")
 
         # Compare the text of the PDF to a known source
-        for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines()):
+        for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines(), strict=True):
             assert expected_line == actual_line
 
         pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows

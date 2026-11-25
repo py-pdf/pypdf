@@ -139,7 +139,7 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
             new_count=len(new_links),
         )
 
-    return list(zip(new_links, old_links))
+    return list(zip(new_links, old_links, strict=False))
 
 
 def _build_link(indirect_object: IndirectObject, page: "PageObject") -> ReferenceLink | None:

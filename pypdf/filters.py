@@ -991,7 +991,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
                 f"decoding work of {decoding_work_maximum_length} bytes."
             )
 
-    for filter_name, params in zip(filters, decode_parms):
+    for filter_name, params in zip(filters, decode_parms, strict=False):
         _check_decoding_work(amount=len(data))
 
         params = params.get_object()

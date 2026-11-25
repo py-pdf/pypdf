@@ -236,7 +236,7 @@ def test__derive_encoding_from_type1_font_file():
     embedded_encoding = _parse_encoding_from_embedded_font(ft)
     # The encoding of this font is "/WinAnsiEncoding". Assert that we have
     # correctly derived this encoding from the embedded font.
-    win_ansi_encoding = dict(zip(range(256), charset_encoding[ft["/Encoding"]]))
+    win_ansi_encoding = dict(zip(range(256), charset_encoding[ft["/Encoding"]], strict=True))
     for key, value in embedded_encoding.items():
         assert win_ansi_encoding[key] == value
 
@@ -372,7 +372,7 @@ def test_get_encoding__encoding_value_is_none():
     ft = DictionaryObject()
     ft[NameObject("/Encoding")] = NullObject()
     assert get_encoding(ft) == (
-        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        dict(zip(range(256), charset_encoding["/StandardEncoding"], strict=True)),
         {}
     )
 
@@ -392,7 +392,7 @@ def test_get_encoding__type1_font_file_without_encoding():
     # Clear part of the embedded Type1 program has no /Encoding section.
     ft = _type1_font(b"%!PS-AdobeFont\n/FontName /Foo def\neexec\nbinary")
     assert get_encoding(ft) == (
-        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        dict(zip(range(256), charset_encoding["/StandardEncoding"], strict=True)),
         {}
     )
 
@@ -1235,7 +1235,7 @@ def test_get_encoding__unknown_base_encoding_falls_back_to_standard_encoding(cap
         }),
     })
     encoding, _ = get_encoding(font)
-    assert encoding == dict(zip(range(256), charset_encoding["/StandardEncoding"]))
+    assert encoding == dict(zip(range(256), charset_encoding["/StandardEncoding"], strict=True))
     assert "not implemented yet" in caplog.text
 
 

@@ -1282,7 +1282,7 @@ def test_merge_page__annotation__rectangle_encloses_quad_points() -> None:
     assert annotation["/QuadPoints"] == [0, 30, 10, 40, 10, 20, 20, 30]
     left, bottom, right, top = annotation["/Rect"]
     quads = annotation["/QuadPoints"]
-    assert all(left <= x <= right and bottom <= y <= top for x, y in zip(quads[::2], quads[1::2]))
+    assert all(left <= x <= right and bottom <= y <= top for x, y in zip(quads[::2], quads[1::2], strict=True))
 
 
 def test_merge_page__annotation__rectangle_repeated_merge() -> None:

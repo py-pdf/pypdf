@@ -378,7 +378,7 @@ def _handle_flate(
             cmyk_lookup = bytearray()
             for index in range(0, len(lookup) - colorant_count + 1, colorant_count):
                 cmyk = bytearray(4)
-                for channel, tint in zip(channels, lookup[index : index + colorant_count]):
+                for channel, tint in zip(channels, lookup[index : index + colorant_count], strict=True):
                     cmyk[channel] = tint
                 cmyk_lookup += cmyk
             lookup = bytes(cmyk_lookup)
@@ -435,7 +435,7 @@ def _handle_flate(
                     source.point(
                         [low_value] * 128 + [high_value] * 128
                     )
-                    for low_value, high_value in zip(colors_arr[0], colors_arr[1])
+                    for low_value, high_value in zip(colors_arr[0], colors_arr[1], strict=True)
                 ]
                 img = bands[0] if nb == 1 else _merge_image(mode=mode, bands=bands)
             else:

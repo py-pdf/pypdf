@@ -28,7 +28,7 @@ def test_din_a_aspect_ratio(dimensions: papersizes.Dimensions) -> None:
 
 @pytest.mark.parametrize(
     ("dimensions_a", "dimensions_b"),
-    list(zip(papersizes._din_a, papersizes._din_a[1:])),
+    list(zip(papersizes._din_a, papersizes._din_a[1:], strict=False)),
 )
 def test_din_a_size_doubling(
     dimensions_a: papersizes.Dimensions, dimensions_b: papersizes.Dimensions

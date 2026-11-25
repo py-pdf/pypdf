@@ -1793,7 +1793,7 @@ class PdfWriter(PdfDocCommon):
         cnv = {v[0]: v[1] for v in self._idnum_hash.values() if len(v[1]) > 0}
         cnv_rev: dict[IndirectObject, IndirectObject] = {}
         for k, v in cnv.items():
-            cnv_rev.update(zip(v, (k,) * len(v)))
+            cnv_rev.update(zip(v, (k,) * len(v), strict=True))
 
         # replace reference to merged objects
         for obj in self._objects:

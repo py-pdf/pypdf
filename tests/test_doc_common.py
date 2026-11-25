@@ -1366,7 +1366,7 @@ def _create_writer_with_shared_outline_child(count: int) -> PdfWriter:
         for i in range(count)
     ]
     references = [writer._add_object(outline) for outline in outlines]
-    for outline, reference in zip(outlines, references[1:]):
+    for outline, reference in zip(outlines, references[1:], strict=False):
         outline[NameObject("/Next")] = reference
     writer.root_object[NameObject("/Outlines")] = DictionaryObject({NameObject("/First"): references[0]})
     return writer

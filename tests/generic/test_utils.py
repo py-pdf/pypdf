@@ -15,7 +15,7 @@ def test_create_string_object__forced_encoding__list() -> None:
 
 
 def test_create_string_object__forced_encoding__dict() -> None:
-    forced_encoding = dict(zip(range(250), map(chr, range(250))))
+    forced_encoding = dict(zip(range(250), map(chr, range(250)), strict=True))
     assert create_string_object(b"Hello World!", forced_encoding=forced_encoding) == "Hello World!"
 
     forced_encoding = {ord("A"): "Hello", ord("B"): "World"}

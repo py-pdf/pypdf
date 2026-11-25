@@ -256,7 +256,7 @@ def test_get_images(src, expected_images):
     images_extracted = page.images
 
     assert len(images_extracted) == len(expected_images)
-    for image, expected_image in zip(images_extracted, expected_images):
+    for image, expected_image in zip(images_extracted, expected_images, strict=True):
         assert image.name == expected_image
         assert (
             image.name.split(".")[-1].upper()
@@ -1345,7 +1345,7 @@ def _make_form_topname_reader(font_id: int = 6, generation: int = 0, compressed:
     entries[1] = (1, xref_offset, 0)
     size = max(entries) + 1
     free_ids = [number for number in range(size) if number not in entries]
-    for number, following in zip(free_ids, [*free_ids[1:], 0]):
+    for number, following in zip(free_ids, [*free_ids[1:], 0], strict=True):
         entries[number] = (0, following, 65535 if number == 0 else 0)
     xref = b"".join(struct.pack(">BIH", *entries[number]) for number in range(size))
     data.extend(b"1 0 obj\n" + make_stream(xref, b"/Type /XRef /Root 2 0 R /Size %d /W [1 4 2]" % size) + b"\nendobj\n")

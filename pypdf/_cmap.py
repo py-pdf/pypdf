@@ -94,12 +94,12 @@ def _parse_encoding(
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
             # This will match Symbol and ZapfDingBats
             encoding = dict(
-                zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
+                zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])], strict=True)
             )
         else:
             # Set StandardEncoding as fallback option.
             encoding = dict(
-                zip(range(256), charset_encoding["/StandardEncoding"])
+                zip(range(256), charset_encoding["/StandardEncoding"], strict=True)
             )
         # Overwrite the standard encoding with the encoding information from the embedded font file.
         _correct_encoding(embedded_font_encoding, encoding)
@@ -175,7 +175,7 @@ def _parse_encoding(
                     entry=entry,
                 )
     if isinstance(encoding, list):
-        encoding = dict(zip(range(256), encoding))
+        encoding = dict(zip(range(256), encoding, strict=True))
 
     return encoding
 

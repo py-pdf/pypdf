@@ -540,7 +540,7 @@ def test_read_array_of_numbers_and_references__function_calls():
 def test_read_array_of_nulls(data, expected):
     array = ArrayObject.read_from_stream(BytesIO(data), ReaderDummy())
     assert array == expected
-    assert all(type(value) is type(other) for value, other in zip(array, expected))
+    assert all(type(value) is type(other) for value, other in zip(array, expected, strict=True))
 
 
 @pytest.mark.parametrize("data", [b"[nul]", b"[nu", b"[n"])

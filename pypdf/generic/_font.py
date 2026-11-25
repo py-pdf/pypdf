@@ -242,6 +242,7 @@ class Font:
                         for _cidx, _width in zip(
                             range(start_idx, stop_idx, 1),
                             width_list,
+                            strict=True,
                         )
                     }
                 )
