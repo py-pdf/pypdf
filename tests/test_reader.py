@@ -2926,6 +2926,109 @@ def test_objstm_does_not_cache_stale_objects_from_non_authoritative_stream():
     assert field["/V"] == "42"
 
 
+def test_xref_stream_reusing_a_live_object_number_does_not_shadow_it():
+    """
+    An incremental update may reuse the object number of a cross-reference
+    stream for a regular object, e.g. the /Names dictionary.
+
+    The xref table then points to that regular object, but pypdf used to cache
+    the xref stream itself under its own object number *before* reading the
+    subsections, so ``get_object()`` kept returning the xref dictionary and
+    the real object could never be reached. Attachments were therefore never
+    detected (see #3304).
+    """
+
+    def _write_obj(buf: io.BytesIO, objnum: int, data: str | bytes) -> int:
+        offset = buf.tell()
+        buf.write(f"{objnum} 0 obj\n".encode())
+        buf.write(data if isinstance(data, bytes) else data.encode())
+        buf.write(b"\nendobj\n")
+        return offset
+
+    def _write_xref_stream(
+        buf: io.BytesIO,
+        objnum: int,
+        entries: list[tuple[int, int, int]],
+        size: int,
+        index: list[int],
+        prev: int | None = None,
+    ) -> int:
+        offset = buf.tell()
+        data = bytearray()
+        for typ, field1, field2 in entries:
+            data.append(typ)
+            data.extend(field1.to_bytes(4, "big"))
+            data.extend(field2.to_bytes(2, "big"))
+        header = (
+            f"<< /Type /XRef /Size {size} /W [1 4 2] /Root 1 0 R "
+            f"/Length {len(data)} /Index [{index[0]} {index[1]}]"
+        )
+        if prev is not None:
+            header += f" /Prev {prev}"
+        header += " >>"
+        buf.write(f"{objnum} 0 obj\n{header}".encode())
+        buf.write(b"\nstream\n")
+        buf.write(bytes(data))
+        buf.write(b"\nendstream\nendobj\n")
+        return offset
+
+    buf = io.BytesIO()
+    buf.write(b"%PDF-1.5\n")
+
+    offsets = {}
+    offsets[1] = _write_obj(buf, 1, "<< /Type /Catalog /Pages 2 0 R /Names 4 0 R >>")
+    offsets[2] = _write_obj(buf, 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    offsets[3] = _write_obj(
+        buf, 3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] >>"
+    )
+    # Object 4 is the /Names dictionary we want to reach.
+    offsets[4] = _write_obj(buf, 4, "<< /EmbeddedFiles 5 0 R >>")
+    offsets[5] = _write_obj(buf, 5, "<< /Names [(attachment.txt) 6 0 R] >>")
+    offsets[6] = _write_obj(
+        buf,
+        6,
+        "<< /Type /Filespec /F (attachment.txt) /UF (attachment.txt) "
+        "/EF << /F 7 0 R >> >>",
+    )
+    offsets[7] = _write_obj(
+        buf, 7, "<< /Type /EmbeddedFile /Length 5 >>\nstream\nhello\nendstream"
+    )
+
+    # First revision: the cross-reference stream happens to be object 4 as
+    # well, but its /Index does not mention object 4 at all.
+    first_revision = _write_xref_stream(
+        buf,
+        4,
+        [(0, 0, 65535), (1, offsets[1], 0), (1, offsets[2], 0), (1, offsets[3], 0)],
+        size=8,
+        index=[0, 4],
+    )
+
+    # Incremental revision: a second cross-reference stream (object 8) that
+    # defines objects 4..7 and points object 4 at the real /Names dictionary.
+    second_revision = _write_xref_stream(
+        buf,
+        8,
+        [
+            (1, offsets[4], 0),
+            (1, offsets[5], 0),
+            (1, offsets[6], 0),
+            (1, offsets[7], 0),
+        ],
+        size=9,
+        index=[4, 4],
+        prev=first_revision,
+    )
+    buf.write(f"startxref\n{second_revision}\n%%EOF\n".encode())
+
+    reader = PdfReader(BytesIO(buf.getvalue()))
+
+    # Object 4 must resolve to the /Names dictionary, not to the xref stream.
+    names = reader.trailer["/Root"].get_object()["/Names"].get_object()
+    assert "/EmbeddedFiles" in names
+    assert [attachment.name for attachment in reader.attachment_list] == ["attachment.txt"]
+
+
 def test_xref_table_with_comments_before_trailer():
     """Comments between xref entries and trailer are legal per PDF spec §7.2.3.
 

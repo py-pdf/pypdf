@@ -1448,12 +1448,12 @@ class PdfReader(PdfDocCommon):
 
     def _read_pdf15_xref_stream(self, stream: StreamType) -> StreamObject:
         """Read the cross-reference stream for PDF 1.5+."""
+        xref_stream_offset = stream.tell() - 1
         stream.seek(-1, 1)
         stream_idnum, stream_generation = self.read_object_header(stream)
         xref_stream = cast(StreamObject, read_object(stream, self))
         if cast(str, xref_stream["/Type"]) != "/XRef":
             raise PdfReadError(f"Unexpected type {xref_stream['/Type']!r}")
-        self.cache_indirect_object(stream_generation, stream_idnum, xref_stream)
 
         # Index pairs specify the subsections in the dictionary.
         # If none, create one subsection that spans everything.
@@ -1501,6 +1501,21 @@ class PdfReader(PdfDocCommon):
 
         # Iterate through each subsection
         self._read_xref_subsections(index_pairs, get_entry, used_before)
+
+        # Cache the xref stream *after* the subsections have been processed.
+        # A cross-reference stream can reuse an object number that is still in
+        # use for a regular object in an incremental update (see #3304): the
+        # xref table then points to the *other* definition, and caching this
+        # stream first would make get_object() return the xref dictionary
+        # forever, hiding the real object.
+        generation_table = self.xref.get(stream_generation)
+        cached_offset = (
+            generation_table.get(stream_idnum)
+            if isinstance(generation_table, dict)
+            else None
+        )
+        if cached_offset in (None, xref_stream_offset):
+            self.cache_indirect_object(stream_generation, stream_idnum, xref_stream)
         return xref_stream
 
     @staticmethod
