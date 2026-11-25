@@ -77,7 +77,7 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
             else:
                 indirect_ref = getattr(in_reply_to, "indirect_reference", None)
                 if not isinstance(indirect_ref, IndirectObject):
-                    raise NotImplementedError(
+                    raise TypeError(
                         "in_reply_to must be a registered annotation "
                         "(added via writer.add_annotation() first)"
                     )

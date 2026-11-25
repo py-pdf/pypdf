@@ -148,7 +148,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
             if not is_null_or_none(retval):
                 break
     if not isinstance(retval, ArrayObject):
-        raise ValueError(f"Expected an array of four values for {name}, got {retval}")  # noqa: TRY004
+        raise TypeError(f"Expected an array of four values for {name}, got {retval}")
     if (length := len(retval)) != 4:
         if length > 4:
             # Keep backwards-compatibility with files previously written in a
