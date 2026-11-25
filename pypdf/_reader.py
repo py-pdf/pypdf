@@ -388,7 +388,7 @@ class PdfReader(PdfDocCommon):
             # /Kids holds pages written inline instead of as indirect objects):
             # they cannot be addressed by indirect reference anyway.
             self._page_id2num = {
-                x.indirect_reference.idnum: i  # type: ignore[union-attr]
+                x.indirect_reference.idnum: i
                 for i, x in enumerate(self.pages)
                 if x.indirect_reference is not None
             }
