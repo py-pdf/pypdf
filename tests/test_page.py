@@ -17,7 +17,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject, _get_fonts_walk
 from pypdf.annotations import Highlight, Link, Polygon
-from pypdf.constants import PageAttributes
+from pypdf.constants import AnnotationDictionaryAttributes, PageAttributes
 from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -2357,6 +2357,17 @@ def test_content_stream_rename__device_color_space_abbreviation_in_inline_image_
     assert image_operator == b"INLINE IMAGE"
     assert image_operands["settings"]["/CS"] == "/G"
     assert image_operands["data"] == b"\x80"
+
+
+def test_scale__annotation_rect() -> None:
+    page = PageObject.create_blank_page(None, 100, 100)
+    rectangle = ArrayObject([NumberObject(1), NumberObject(2), NumberObject(3), NumberObject(4)])
+    annotation = DictionaryObject({AnnotationDictionaryAttributes.RECT: rectangle})
+    page[NameObject(PageAttributes.ANNOTS)] = ArrayObject([annotation, DictionaryObject()])
+
+    page.scale(2, 3)
+
+    assert rectangle == ArrayObject([FloatObject(2), FloatObject(6), FloatObject(6), FloatObject(12)])
 
 
 @pytest.mark.parametrize("as_array", [True, False])
