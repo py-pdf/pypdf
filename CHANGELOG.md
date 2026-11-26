@@ -7,6 +7,39 @@
 - Rename ``TypArguments`` to ``TypeArguments`` and ``TypFitArguments`` to ``FitTypes``
 - Add semantic names for stroking and non-stroking graphics-state constants
 
+## Version 7.2.0, 2026-11-26
+
+### Security (SEC)
+- Limit memory for embedded files dictionary API (#4533)
+- Limit size of indexed color space lookup tables (#4532)
+- Avoid cmap data splitting before size validation (#4531)
+
+### Deprecations (DEP)
+- Deprecate encryption_key of ContentStream.write_to_stream (#4508)
+- Deprecate parse_filename_page_ranges (#4472)
+
+### Performance Improvements (PI)
+- Check inline image names against a set when listing page images (#4467)
+- Count duplicate form field names and radio states without rescanning (#4478)
+- Avoid copying the visited set for each nested outline item (#4455)
+- Fix cache evaluation for XMP data retrieval (#4380)
+- Stop copying the page text for every text fragment (#4463)
+- Look up PageObject.page_number in constant time (#4439)
+- Use a set for the AcroForm field check in merge() (#4447)
+
+### Bug Fixes (BUG)
+- Preserve merged content streams during encryption (#4477)
+- Escape the font name in generated text field appearances (#4489)
+- Keep the generation number of objects in incremental updates (#4484)
+- Keep the writer's state when used as a context manager (#4488)
+- Remove every part of a combined ObjectDeletionFlag (#4446)
+- Remove objects which only unreferenced objects use (#4426)
+
+### Robustness (ROB)
+- Fall back for unsupported RC4 key lengths (#4461)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.1.1...7.2.0)
+
 ## Version 7.1.1, 2026-11-18
 
 ### Security (SEC)

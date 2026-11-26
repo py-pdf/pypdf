@@ -119,8 +119,8 @@ def test_get_attachments__alternative_name_is_none():
             "pypdf._writer.PdfWriter.attachment_list",
             new_callable=mock.PropertyMock(return_value=[attachment])
     ), mock.patch(
-            "pypdf.generic._files.EmbeddedFile.content",
-            new_callable=mock.PropertyMock(return_value=b"content")
+            "pypdf.generic._files.EmbeddedFile._get_content",
+            return_value=b"content"
     ):
         assert dict(writer.attachments) == {"test.txt": [b"content"]}
 

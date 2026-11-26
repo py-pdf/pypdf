@@ -1778,16 +1778,19 @@ class PdfDocCommon(ABC):
             for name in entry._names:
                 entries.setdefault(name, []).append(entry)
 
+        configuration = get_configuration()
+        traversal_state = _TraversalState(entry_count=configuration.embedded_files_maximum_output_length)
+
         return LazyDict(
             {
-                name: (self._get_attachment_contents, attachment_entries)
+                name: (self._get_attachment_contents, attachment_entries, traversal_state)
                 for name, attachment_entries in entries.items()
             }
         )
 
     @classmethod
-    def _get_attachment_contents(cls, entries: list[EmbeddedFile]) -> list[bytes]:
-        return [entry.content for entry in entries]
+    def _get_attachment_contents(cls, entries: list[EmbeddedFile], traversal_state: _TraversalState) -> list[bytes]:
+        return [entry._get_content(traversal_state=traversal_state) for entry in entries]
 
     @property
     def attachment_list(self) -> Iterator[EmbeddedFile]:
@@ -1832,8 +1835,8 @@ class LazyDict(Mapping[Any, Any]):
         self._raw_dict = dict(*args, **kwargs)
 
     def __getitem__(self, key: str) -> Any:
-        func, arg = self._raw_dict.__getitem__(key)
-        return func(arg)
+        func, *arg = self._raw_dict.__getitem__(key)
+        return func(*arg)
 
     def __iter__(self) -> Iterator[Any]:
         return iter(self._raw_dict)
