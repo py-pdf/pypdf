@@ -1027,10 +1027,10 @@ class PageObject(DictionaryObject):
 
     def _merge_resources(
         self,
-        res1: DictionaryObject,
-        res2: DictionaryObject,
-        resource: Any,
-        new_res1: bool = True,
+        original_resources: DictionaryObject,
+        page2_resources: DictionaryObject,
+        resource_type: Any,
+        copy_original: bool = True,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
@@ -1056,7 +1056,7 @@ class PageObject(DictionaryObject):
                 value.
 
             """
-            value = page2res.raw_get(base_key)
+            value = page2_type_resources.raw_get(base_key)
             # TODO: a possible improvement for writer, the indirect_reference
             # cannot be found because translated
 
@@ -1066,8 +1066,8 @@ class PageObject(DictionaryObject):
             # to be maximally annoying.
             computed_key = base_key
             idx = 0
-            while computed_key in new_res:
-                if new_res.raw_get(computed_key) == value:
+            while computed_key in merged_type_resources:
+                if merged_type_resources.raw_get(computed_key) == value:
                     # there's already a resource of this name, with the exact
                     # same value
                     return computed_key, True
@@ -1075,34 +1075,34 @@ class PageObject(DictionaryObject):
                 idx += 1
             return computed_key, False
 
-        if new_res1:
-            new_res = DictionaryObject()
-            new_res.update(res1.get(resource, DictionaryObject()).get_object())
+        if copy_original:
+            merged_type_resources = DictionaryObject()
+            merged_type_resources.update(original_resources.get(resource_type, DictionaryObject()).get_object())
         else:
-            new_res = cast(DictionaryObject, res1[resource])
-        page2res = cast(
-            DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
+            merged_type_resources = cast(DictionaryObject, original_resources[resource_type])
+        page2_type_resources = cast(
+            DictionaryObject, page2_resources.get(resource_type, DictionaryObject()).get_object()
         )
-        rename_res = {}
-        for key in page2res:
+        rename_mapping = {}
+        for key in page2_type_resources:
             unique_key, same_value = compute_unique_key(key)
             newname = NameObject(unique_key)
             if key != unique_key:
                 # we have to use a different name for this
-                rename_res[key] = newname
+                rename_mapping[key] = newname
 
             if not same_value:
                 if is_pdf_writer:
-                    new_res[newname] = page2res.raw_get(key).clone(pdf)
+                    merged_type_resources[newname] = page2_type_resources.raw_get(key).clone(pdf)
                     with contextlib.suppress(AttributeError):
-                        new_res[newname] = new_res[newname].indirect_reference
+                        merged_type_resources[newname] = merged_type_resources[newname].indirect_reference
                 else:
-                    new_res[newname] = page2res.raw_get(key)
-            lst = sorted(new_res.items())
-            new_res.clear()
+                    merged_type_resources[newname] = page2_type_resources.raw_get(key)
+            lst = sorted(merged_type_resources.items())
+            merged_type_resources.clear()
             for el in lst:
-                new_res[el[0]] = el[1]
-        return new_res, rename_res
+                merged_type_resources[el[0]] = el[1]
+        return merged_type_resources, rename_mapping
 
     @staticmethod
     def _content_stream_rename(
@@ -1312,12 +1312,12 @@ class PageObject(DictionaryObject):
             Resources.FONT,
             Resources.PROPERTIES,
         ):
-            new_resource, new_rename = self._merge_resources(
+            merged_type_resources, rename_mapping = self._merge_resources(
                 original_resources, page2_resources, resource_type
             )
-            if new_resource:
-                new_resources[NameObject(resource_type)] = new_resource
-                rename.update(new_rename)
+            if merged_type_resources:
+                new_resources[NameObject(resource_type)] = merged_type_resources
+                rename.update(rename_mapping)
 
         # Combine /ProcSet sets, making sure there is a consistent order
         new_resources[NameObject(Resources.PROC_SET)] = ArrayObject(
