@@ -91,7 +91,7 @@ class ViewerPreferences(DictionaryObject):
                 del self[NameObject(key)]
             return
         if not isinstance(v, ArrayObject):
-            raise ValueError("ArrayObject is expected")
+            raise TypeError("ArrayObject is expected")
         if key == "/PrintPageRange" and len(v) % 2:
             # The array holds first/last page pairs, so an odd length leaves a
             # range without its end.

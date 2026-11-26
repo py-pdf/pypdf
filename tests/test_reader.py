@@ -1630,7 +1630,7 @@ def get_outline_property(outline, attribute_name: str):
             else:
                 results.append(get_outline_property(outline_item, attribute_name))
     else:
-        raise ValueError(f"got {type(outline)}")
+        raise TypeError(f"got {type(outline)}")
     return results
 
 

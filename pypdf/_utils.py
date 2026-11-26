@@ -774,7 +774,7 @@ class Version:
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Version):
-            raise ValueError(f"Version cannot be compared against {type(other)}")
+            raise TypeError(f"Version cannot be compared against {type(other)}")
 
         for self_component, other_component in zip(self.components, other.components):
             self_value, self_suffix = self_component
