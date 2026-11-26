@@ -4,9 +4,10 @@ import bisect
 from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
+from pypdf._configuration import get_configuration
 from pypdf._utils import format_iso8824_date, logger_warning, parse_iso8824_date
 from pypdf.constants import AFRelationship, CatalogAttributes, FileSpecificationDictionaryEntries, PageAttributes
-from pypdf.errors import PdfReadError, PyPdfError
+from pypdf.errors import LimitReachedError, PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     import datetime
     from collections.abc import Iterator
 
+    from pypdf._utils import _TraversalState
     from pypdf._writer import PdfWriter
 
 
@@ -127,15 +129,23 @@ class EmbeddedFile:
             return names
 
         # We have an existing embedded files entry.
+        configuration = get_configuration()
         embedded_files_names_tree = cast(DictionaryObject, names_dict["/EmbeddedFiles"])
         if "/Names" in embedded_files_names_tree:
             # Simple case: We already have a flat list.
-            return cast(ArrayObject, embedded_files_names_tree[NameObject(CatalogAttributes.NAMES)])
+            names_tree = cast(ArrayObject, embedded_files_names_tree[NameObject(CatalogAttributes.NAMES)])
+            if len(names_tree) // 2 > configuration.embedded_files_maximum_count:
+                raise LimitReachedError("Maximum embedded file entry limit reached.")
+            return names_tree
         if "/Kids" not in embedded_files_names_tree:
             # Invalid case: This is no name tree.
             raise PdfReadError("Got neither Names nor Kids in embedded files tree.")
 
-        return _flatten_name_tree(embedded_files_names_tree)
+        configuration = get_configuration()
+        return _flatten_name_tree(
+            embedded_files_names_tree,
+            maximum_entries=configuration.embedded_files_maximum_count
+        )
 
     @classmethod
     def _get_insertion_index(cls, names_array: ArrayObject, name: str) -> int:
@@ -257,7 +267,7 @@ class EmbeddedFile:
     @property
     def content(self) -> bytes:
         """Retrieve the actual file content."""
-        return self._embedded_file.get_data()
+        return self._get_content()
 
     @content.setter
     def content(self, value: str | bytes) -> None:
@@ -265,6 +275,15 @@ class EmbeddedFile:
         if isinstance(value, str):
             value = value.encode("latin-1")
         self._embedded_file.set_data(value)
+
+    def _get_content(self, traversal_state: _TraversalState | None = None) -> bytes:
+        """Retrieve the actual file content, but track the overall content budget if requested."""
+        content = self._embedded_file.get_data()
+        if traversal_state is not None:
+            traversal_state.entry_count -= len(content)
+            if traversal_state.entry_count < 0:
+                raise LimitReachedError("Maximum aggregate attachment content size exceeded.")
+        return content
 
     @property
     def size(self) -> int | None:
@@ -364,7 +383,10 @@ class EmbeddedFile:
         logger_warning(message, source=__name__)
 
     @classmethod
-    def _load_from_names(cls, names: ArrayObject, strict: bool = False) -> Iterator[EmbeddedFile]:
+    def _load_from_names(
+            cls, names: ArrayObject, strict: bool = False, *,
+            traversal_state: _TraversalState, traversal_limit: int,
+    ) -> Iterator[EmbeddedFile]:
         """
         Convert the given name tree into class instances.
 
@@ -372,6 +394,8 @@ class EmbeddedFile:
             names: The name tree to load the data from.
             strict: Whether to raise an exception on a file specification that is not a dictionary
                 instead of issuing a warning and skipping it.
+            traversal_state: Shared visitor counter.
+            traversal_limit: Allowed number of embedded files.
 
         Returns:
             Iterable of class instances for the files found.
@@ -389,6 +413,9 @@ class EmbeddedFile:
                         f"Embedded file specification is not a dictionary: {file_dictionary}", strict=strict
                     )
                     continue
+                traversal_state.entry_count += 1
+                if traversal_state.entry_count > traversal_limit:
+                    raise LimitReachedError("Maximum embedded file entry limit exceeded.")
                 direct_name = names[i - 1].get_object()
                 yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary, parent=names)
 
@@ -425,6 +452,10 @@ class EmbeddedFile:
             cls._report_malformed(f"Embedded files entry is not a dictionary: {container}", strict=strict)
             return
 
+        from pypdf._utils import _TraversalState  # noqa: PLC0415
+        traversal_state = _TraversalState()
+
+        configuration = get_configuration()
         for node in _iter_name_tree(container):
             if not isinstance(node, DictionaryObject):
                 cls._report_malformed(f"Embedded files kid is not a dictionary: {node}", strict=strict)
@@ -438,4 +469,9 @@ class EmbeddedFile:
             if not isinstance(node_names, ArrayObject):
                 cls._report_malformed(f"Embedded files name list is not an array: {node_names}", strict=strict)
                 continue
-            yield from cls._load_from_names(node_names, strict=strict)
+            yield from cls._load_from_names(
+                node_names,
+                strict=strict,
+                traversal_state=traversal_state,
+                traversal_limit=configuration.embedded_files_maximum_count
+            )
