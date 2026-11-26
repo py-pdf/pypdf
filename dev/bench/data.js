@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795705441738,
+  "lastUpdate": 1795705584735,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -179131,6 +179131,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03888656148335937",
             "extra": "mean: 853.536162800026 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ab0395b8db3554e47c53b302ee0fd02791f8e5b9",
+          "message": "SEC: Limit memory for embedded files dictionary API (#4533)\n\nThis change improves the overall memory usage for attachment/embedded\nfiles API.\n\nThe first change affects both the dictionary- and list-based API by only\nallowing a fixed number of attachments. The corresponding count is\nevaluated as soon as possible, thus large name arrays are declined as a\nwhole.\n\nThe second change only affects the dictionary-based API, which now\nlimits the total content bytes returned during traversal. The limit is\nchecked \"live\", thus some entries might already have been returned.\nAdditionally, we allow for an overlap of one maximum stream size to\nactually perform the check. This might be a breaking change for users\npreviously relying on the dictionary-based API to call\n`EmbeddedFile.content`, but due to this being an internal implementation\ndetail, I decided against a deprecation. Please note that users of the\nlist-based attachment API do not use this budget, as the list-based API\nallows users to gain more/their own control over the whole process,\nwhile the (legacy) dictionary-based API does not have this flexibility.\n\nSome parts of this change were\n\nCo-Authored-By: Giriprasada <agireesh2002@gmail.com>\n\n---------\n\nCo-authored-by: Giriprasada <agireesh2002@gmail.com>",
+          "timestamp": "2026-11-26T16:01:41+01:00",
+          "tree_id": "3d6e8b0053b78665131b9093bf7e5434ad5955a9",
+          "url": "https://github.com/py-pdf/pypdf/commit/ab0395b8db3554e47c53b302ee0fd02791f8e5b9"
+        },
+        "date": 1795705569473,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.022148432157255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021115911692472292",
+            "extra": "mean: 71.31574771428616 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.20523948370676,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012348321745113364",
+            "extra": "mean: 39.6742907619038 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.099778540410751,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0253831774416166",
+            "extra": "mean: 909.2739703999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 35.211155869169616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017286182129511423",
+            "extra": "mean: 28.40009012244854 msec\nrounds: 49"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.31009833668022746,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04518247315848443",
+            "extra": "mean: 3.224783501600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0646983971824762,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02897502120291307",
+            "extra": "mean: 939.2331224000259 msec\nrounds: 5"
           }
         ]
       }
