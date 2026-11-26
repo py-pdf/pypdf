@@ -162,6 +162,11 @@ class PdfReader(PdfDocCommon):
 
         self._validated_root: DictionaryObject | None = None
 
+        # Must be ready before _initialize_stream: reading/xref recovery can call
+        # get_object → _get_object_recovery_offset during PdfReader construction.
+        self._object_recovery_cache: dict[tuple[int, int], int] | None = None
+        self._object_stream_resolution_stack: list[int] = []
+
         self._initialize_stream(stream)
         self._known_objects: set[tuple[int, int]] = set()
 
@@ -173,8 +178,6 @@ class PdfReader(PdfDocCommon):
             raise PdfReadError("Not an encrypted file")
 
         self._named_destinations_cache: dict[str, Destination] | None = None
-        self._object_stream_resolution_stack: list[int] = []
-        self._object_recovery_cache: dict[tuple[int, int], int] | None = None
 
     def _initialize_stream(self, stream: StrByteType | Path) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
