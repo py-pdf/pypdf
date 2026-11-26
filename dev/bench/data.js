@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795719066339,
+  "lastUpdate": 1795721174855,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -132269,6 +132269,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005713308491373939",
             "extra": "mean: 657.2355532000188 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "tanishkjain3011@gmail.com",
+            "name": "Tanishk",
+            "username": "tanishhhk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0fbb2dd611ea67c2e18c09f43a9bda6b15c55247",
+          "message": "MAINT: Enable Ruff rule TRY004 (#4505)\n\n* MAINT: Enable Ruff rule TRY004\n\nRaise TypeError when a Version is compared against a non-Version, and in a\ntest helper. In the public API, keep ValueError and silence the rule per\nline, as changing the exception type would break callers that catch\nValueError.\n\nRef #3327\n\n* Raise TypeError for wrong types, NotImplementedError for unregistered reply parents\n\n* Raise TypeError for unregistered reply parents and non-array page boxes\n\n* Exempt the unreachable AssertionError in _content_stream_rename from TRY004\n\nThe branch was added in #4511 to mark a case that should never happen, so\nAssertionError is intended there rather than TypeError.",
+          "timestamp": "2026-11-26T20:24:45+01:00",
+          "tree_id": "a434d7c5422b99e993a6d7196c203fa6d91d3ec0",
+          "url": "https://github.com/py-pdf/pypdf/commit/0fbb2dd611ea67c2e18c09f43a9bda6b15c55247"
+        },
+        "date": 1795721164381,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.978484518306725,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01341852491264231",
+            "extra": "mean: 200.86433859999602 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 31.076482876288452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013656923103907734",
+            "extra": "mean: 32.17867362857224 msec\nrounds: 35"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.5520694895157512,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006289614850280807",
+            "extra": "mean: 1.8113661757999922 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 40.25674850366564,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010693653980292516",
+            "extra": "mean: 24.840555612904097 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.25627152966591954,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025352296255707965",
+            "extra": "mean: 3.9021111759999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 2.6258593613169685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00824331677434733",
+            "extra": "mean: 380.827707200001 msec\nrounds: 5"
           }
         ]
       }
