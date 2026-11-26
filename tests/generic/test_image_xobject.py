@@ -817,6 +817,127 @@ def test_xobj_to_image__dct_decode_requires_jpeg(image_format: str) -> None:
     assert img.format == "JPEG"
 
 
+def _create_jpeg_image_xobject(color_space: Any, mode: str = "L", size: tuple[int, int] = (8, 8)) -> StreamObject:
+    """Build an image XObject holding a real JPEG file with the given color space."""
+    diagonal_colors: dict[str, PixelColor] = {"L": 255, "RGB": (255, 0, 0), "CMYK": (0, 255, 255, 0)}
+    data = BytesIO()
+    _create_image(mode, size, diagonal_color=diagonal_colors[mode]).save(data, format="JPEG")
+    stream = StreamObject()
+    stream[NameObject("/Subtype")] = NameObject("/Image")
+    stream[NameObject("/Width")] = NumberObject(size[0])
+    stream[NameObject("/Height")] = NumberObject(size[1])
+    stream[NameObject("/ColorSpace")] = color_space
+    stream[NameObject("/BitsPerComponent")] = NumberObject(8)
+    stream[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.DCT_DECODE)
+    stream.set_data(data.getvalue())
+    return stream
+
+
+@pytest.mark.parametrize(
+    ("color_space", "mode"),
+    [
+        (NameObject(ColorSpaces.DEVICE_GRAY), "L"),
+        (NameObject(ColorSpaces.DEVICE_RGB), "RGB"),
+        (ArrayObject([NameObject("/CalRGB")]), "RGB"),
+        (ArrayObject([NameObject("/CalGray")]), "L"),
+    ],
+)
+def test_xobj_to_image__dct_decode_returns_embedded_jpeg_unchanged(
+    color_space: Any, mode: str
+) -> None:
+    """A plain JPEG is returned byte-identical instead of being re-encoded (#4434)."""
+    x_object = _create_jpeg_image_xobject(color_space, mode)
+    embedded = x_object.get_data()
+
+    extension, data, img = _xobj_to_image(x_object)
+
+    assert extension == ".jpg"
+    assert data == embedded
+    assert img.format == "JPEG"
+    img.load()
+    assert img.size == (8, 8)
+
+
+@pytest.mark.parametrize(
+    ("components", "expected_unchanged"), [(1, True), (3, True), (4, False)]
+)
+def test_xobj_to_image__dct_decode_icc_based_pass_through(
+    components: int, expected_unchanged: bool
+) -> None:
+    """/ICCBased with 1 or 3 components allows the pass-through, 4 components do not (#4434)."""
+    icc_profile = StreamObject()
+    icc_profile[NameObject("/N")] = NumberObject(components)
+    color_space = ArrayObject([NameObject("/ICCBased"), icc_profile])
+    mode = {1: "L", 3: "RGB", 4: "CMYK"}[components]
+    x_object = _create_jpeg_image_xobject(color_space, mode)
+
+    _, data, _ = _xobj_to_image(x_object)
+
+    assert (data == x_object.get_data()) is expected_unchanged
+
+
+def test_xobj_to_image__dct_decode_cmyk_is_reencoded() -> None:
+    """CMYK JPEGs keep the re-encoding path with the Adobe inversion (#4434)."""
+    x_object = _create_jpeg_image_xobject(NameObject(ColorSpaces.DEVICE_CMYK), "CMYK")
+    embedded = x_object.get_data()
+
+    extension, data, img = _xobj_to_image(x_object)
+
+    assert extension == ".jpg"
+    assert data != embedded
+    assert img.format == "JPEG"
+    assert img.mode == "CMYK"
+
+
+def test_xobj_to_image__dct_decode_with_decode_array_is_reencoded() -> None:
+    """A /Decode array must be applied, so the JPEG cannot be passed through (#4434)."""
+    x_object = _create_jpeg_image_xobject(NameObject(ColorSpaces.DEVICE_GRAY))
+    x_object[NameObject(ImageAttributes.DECODE)] = ArrayObject([0, 1])
+
+    extension, data, _ = _xobj_to_image(x_object)
+
+    assert extension == ".jpg"
+    assert data != x_object.get_data()
+
+
+def test_xobj_to_image__dct_decode_with_smask_is_reencoded() -> None:
+    """An /SMask must be applied, so the JPEG cannot be passed through (#4434)."""
+    x_object = _create_jpeg_image_xobject(NameObject(ColorSpaces.DEVICE_RGB), "RGB")
+    x_object[NameObject(ImageAttributes.S_MASK)] = _minimal_image_xobject()
+
+    extension, data, img = _xobj_to_image(x_object)
+
+    # An alpha channel cannot stay in a plain JPEG, so the image is re-encoded
+    # as JPEG 2000 (or PNG when Pillow lacks OpenJPEG).
+    assert extension in (".jp2", ".png")
+    assert data != x_object.get_data()
+    assert img.mode == "RGBA"
+
+
+def test_xobj_to_image__dct_decode_with_pillow_parameters_is_reencoded() -> None:
+    """Explicit Pillow parameters still get a freshly encoded image (#4434)."""
+    x_object = _create_jpeg_image_xobject(NameObject(ColorSpaces.DEVICE_RGB), "RGB")
+
+    extension, data, _ = _xobj_to_image(x_object, pillow_parameters={"quality": 75})
+
+    assert extension == ".jpg"
+    assert data != x_object.get_data()
+
+
+def test_xobj_to_image__dct_decode_pass_through_respects_buffer_limit() -> None:
+    """The pass-through validates the image size against the configured
+    buffer limit just like the re-encoding path (#4434).
+    """
+    x_object = _create_jpeg_image_xobject(NameObject(ColorSpaces.DEVICE_RGB), "RGB")
+
+    with apply_configuration(image_maximum_buffer_size=10):
+        # 8x8 RGB requires 192 bytes, so both paths refuse to decode.
+        with pytest.raises(LimitReachedError):
+            _xobj_to_image(x_object)
+        with pytest.raises(LimitReachedError):
+            _xobj_to_image(x_object, pillow_parameters={"quality": 75})
+
+
 def test_get_imagemode__device_n_single_non_black_cmyk_component(caplog: pytest.LogCaptureFixture) -> None:
     """
     A single-colorant /DeviceN with a /DeviceCMYK alternate is read as inverted gray.
