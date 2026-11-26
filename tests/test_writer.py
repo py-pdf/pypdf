@@ -2385,6 +2385,38 @@ def test_update_form_fields(caplog, tmp_path):
     Path(write_data_here).unlink()
 
 
+def test_update_form_fields_without_appearance_dictionary(caplog):
+    """
+    Checkbox widgets without an /AP dictionary must not raise KeyError
+    (issue #4528).
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    stream = DecodedStreamObject()
+    stream.set_data(b"")
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    btn = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/FT"): NameObject("/Btn"),
+            NameObject("/T"): TextStringObject("Check1"),
+            NameObject("/Rect"): RectangleObject([0, 0, 50, 50]),
+            # no /AP
+        }
+    )
+    page[NameObject("/Annots")] = ArrayObject([writer._add_object(btn)])
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject(
+        {NameObject("/Fields"): ArrayObject([btn.indirect_reference])}
+    )
+    writer.update_page_form_field_values(
+        writer.pages[0], {"Check1": "/Yes"}, auto_regenerate=False
+    )
+    assert btn["/V"] == "/Yes"
+    assert btn["/AS"] == "/Yes"
+    assert "no appearance dictionary" in caplog.text
+
+
 def test_add_apstream_object():
     writer = PdfWriter()
     page = writer.add_blank_page(1000, 1000)

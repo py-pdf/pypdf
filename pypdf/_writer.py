@@ -1142,9 +1142,18 @@ class PdfWriter(PdfDocCommon):
                     # We can find the associated appearance stream object
                     # within the annotation.
                     v = NameObject(value)
-                    ap = cast(DictionaryObject, annotation[NameObject(AnnotationDictionaryAttributes.AP)])
-                    normal_ap = cast(DictionaryObject, ap["/N"])
-                    if v not in normal_ap:
+                    ap = cast(
+                        DictionaryObject,
+                        annotation.get(NameObject(AnnotationDictionaryAttributes.AP), DictionaryObject()),
+                    )
+                    normal_ap = cast(DictionaryObject, ap.get(NameObject("/N"), DictionaryObject()))
+                    if not normal_ap:
+                        logger_warning(
+                            f"Field {field} has no appearance dictionary (/AP or /AP /N is missing); "
+                            "the requested value is set without appearance state validation.",
+                            source=__name__,
+                        )
+                    elif v not in normal_ap:
                         v = NameObject("/Off")
                     appearance_stream_obj = normal_ap.get(v)
                     # Other cases will be updated through the for loop
