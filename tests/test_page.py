@@ -2074,7 +2074,7 @@ def test_get_rectangle__value_is_not_an_array(value, expected):
     stream.seek(0)
 
     with pytest.raises(
-        ValueError, match=f"Expected an array of four values for /MediaBox, {expected}"
+        TypeError, match=f"Expected an array of four values for /MediaBox, {expected}"
     ):
         _ = PdfReader(stream).pages[0].mediabox
 

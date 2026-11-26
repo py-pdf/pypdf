@@ -1251,3 +1251,19 @@ def test_get_encoding__to_unicode_stream_with_str_data() -> None:
     font = DictionaryObject({NameObject("/ToUnicode"): to_unicode})
     _, map_dict = get_encoding(font)
     assert map_dict["\x01"] == "A"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param(b"0003  0020  0008 0025 0009 0026 000A 0027 000B 0028 000C 0029 000D 002A", id="below-limit"),
+        pytest.param(b"0003  0020  0008  0025 0009 0026 000A 0027 000B   0028 000C 0029    000D 002A", id="above-limit")
+    ]
+)
+def test_parse_bfchar__mapping_size_is_being_recalculated(line: bytes) -> None:
+    int_entry = [1, 2, 3]
+
+    with mock.patch("pypdf._cmap.MAPPING_DICTIONARY_SIZE_LIMIT", 10), \
+            mock.patch("pypdf._cmap._check_mapping_size") as check_mock:
+        parse_bfchar(line=line, int_entry=int_entry, map_dict={})
+    check_mock.assert_called_once_with(10)
