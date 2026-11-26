@@ -4,6 +4,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from io import BytesIO
 from operator import itemgetter
 from pathlib import Path
@@ -118,8 +119,8 @@ def test_get_attachments__alternative_name_is_none():
             "pypdf._writer.PdfWriter.attachment_list",
             new_callable=mock.PropertyMock(return_value=[attachment])
     ), mock.patch(
-            "pypdf.generic._files.EmbeddedFile.content",
-            new_callable=mock.PropertyMock(return_value=b"content")
+            "pypdf.generic._files.EmbeddedFile._get_content",
+            return_value=b"content"
     ):
         assert dict(writer.attachments) == {"test.txt": [b"content"]}
 
@@ -1356,24 +1357,58 @@ def test_get_outline__entry_count():
         writer._get_outline()
 
 
-@pytest.mark.slow
-@pytest.mark.timeout(10)  # Previously 75 seconds.
-def test_get_outline__speed():
+def _create_writer_with_shared_outline_child(count: int) -> PdfWriter:
+    """Create a writer whose outline has `count` items that all have the same child."""
     writer = PdfWriter()
     inner = writer._add_object(DictionaryObject({NameObject("/Title"): TextStringObject("Inner")}))
     outlines = [
         DictionaryObject({NameObject("/Title"): TextStringObject(f"Title{i}"), NameObject("/First"): inner})
-        for i in range(50_000)
+        for i in range(count)
     ]
     references = [writer._add_object(outline) for outline in outlines]
     for outline, reference in zip(outlines, references[1:]):
         outline[NameObject("/Next")] = reference
     writer.root_object[NameObject("/Outlines")] = DictionaryObject({NameObject("/First"): references[0]})
+    return writer
 
-    outline = writer._get_outline()
-    assert len(outline) == 100_000
-    assert outline[-2]["/Title"] == "Title49999"
-    assert outline[-1][0]["/Title"] == "Inner"
+
+def _measure_get_outline_cpu_time(count: int, runs: int) -> float:
+    """Return the lowest CPU time of `runs` readings of an outline of `count` items."""
+    timings = []
+    for _ in range(runs):
+        writer = _create_writer_with_shared_outline_child(count)
+        start = time.process_time()
+        outline = writer._get_outline()
+        timings.append(time.process_time() - start)
+        assert len(outline) == 2 * count
+        assert outline[-2]["/Title"] == f"Title{count - 1}"
+        assert outline[-1][0]["/Title"] == "Inner"
+    return min(timings)
+
+
+@pytest.mark.slow
+@pytest.mark.timeout(60)
+def test_get_outline__speed():
+    """
+    An outline whose items share one child is read in linear time.
+
+    The test reads outlines of 2,500 and 20,000 items and compares the CPU times,
+    so the speed of the machine cancels out. Linear time gives a ratio of about 8,
+    quadratic time a ratio of about 64. The limit of 16 is twice the linear ratio.
+
+    Before #4455, every item copied the set of visited items, which is quadratic.
+    Ratios measured with Python 3.13 on an Intel i7-6700HQ, three runs each:
+
+    * before #4455: 52 to 53, and 23 to 24 with --cov=pypdf
+    * after #4455: 9.4 to 10.2, and 7.5 to 8.8 with --cov=pypdf
+
+    The small outline is read three times because a single short measurement is
+    noisy. The large one is read once to keep the test fast. The timeout only
+    guards against a hang.
+    """
+    small = _measure_get_outline_cpu_time(2_500, runs=3)
+    large = _measure_get_outline_cpu_time(20_000, runs=1)
+    assert large / small < 32  # linear would be 8, quadratic would be 64
 
 
 @pytest.mark.parametrize(

@@ -619,9 +619,9 @@ def test_markup_annotation_in_reply_to_custom_name():
 
 
 def test_markup_annotation_in_reply_to_unregistered():
-    """Test that an unregistered parent raises ValueError."""
+    """Test that an unregistered parent raises NotImplementedError."""
     unregistered = Text(text="Not added to writer", rect=(0, 0, 100, 100))
-    with pytest.raises(ValueError, match="in_reply_to must be a registered annotation"):
+    with pytest.raises(TypeError, match="in_reply_to must be a registered annotation"):
         Text(
             text="Reply",
             rect=(0, 0, 100, 100),

@@ -197,7 +197,6 @@ ignore = [
     "TID252",  # We want relative imports
     "TRY002",  # Create your own exception
     "TRY003",  # Avoid specifying long messages outside the exception class
-    "TRY004",  # Prefer `TypeError` exception for invalid type
     "TRY301",  # Abstract `raise` to an inner function
 ]
 

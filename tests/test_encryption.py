@@ -12,12 +12,12 @@ import pytest
 
 import pypdf
 import pypdf._crypt_providers._fallback
-from pypdf import PasswordType, PdfReader, PdfWriter
+from pypdf import PasswordType, PdfReader, PdfWriter, Transformation
 from pypdf._crypt_providers import crypt_provider
 from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
 from pypdf._encryption import AlgV5, CryptAES, CryptRC4, EncryptAlgorithm, Encryption, _saslprep
 from pypdf.errors import DependencyError, PdfReadError, PdfStreamError, WrongPasswordError
-from pypdf.generic import ByteStringObject, DictionaryObject, NameObject, NullObject, NumberObject
+from pypdf.generic import ByteStringObject, DecodedStreamObject, DictionaryObject, NameObject, NullObject, NumberObject
 from tests import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
@@ -328,6 +328,61 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
     page = reader.pages[0]
     text1 = page.extract_text()
     assert text0 == text1
+
+
+@pytest.mark.parametrize("encrypt_before_merging", [False, True])
+@pytest.mark.parametrize(
+    "algorithm",
+    [None, pytest.param("AES-256", marks=pytest.mark.skipif(not HAS_AES, reason="No AES implementation"))],
+)
+def test_encrypt_keeps_merged_page_content(algorithm, encrypt_before_merging):
+    """
+    Encrypting a stamped page preserves the stamp and the original text.
+
+    This is a regression test for issue #4476, based on the maintainer's reproducer.
+    """
+    stamp_page = PdfReader(RESOURCE_ROOT / "jpeg.pdf").pages[0]
+    original = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    original_text = original.pages[0].extract_text()
+    writer = PdfWriter(clone_from=original)
+    if encrypt_before_merging:
+        writer.encrypt("", algorithm=algorithm)
+    writer.pages[0].merge_transformed_page(stamp_page, Transformation().scale(0.5))
+    if not encrypt_before_merging:
+        writer.encrypt("", algorithm=algorithm)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, password="")
+    assert reader.is_encrypted
+    page = reader.pages[0]
+    assert b"Do" in [operator for _, operator in page.get_contents().operations]
+    text = page.extract_text()
+    assert original_text in text
+    assert stamp_page.extract_text().strip() in text
+
+
+@pytest.mark.parametrize(
+    "algorithm",
+    [None, pytest.param("AES-256", marks=pytest.mark.skipif(not HAS_AES, reason="No AES implementation"))],
+)
+def test_encrypt_preserves_stream_encoding(algorithm):
+    """Encrypting an encoded stream preserves its filter and encoded bytes."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    content = DecodedStreamObject()
+    content.set_data(b"q\n10 10 20 20 re\nf\nQ\n")
+    encoded = content.flate_encode()
+    page[NameObject("/Contents")] = writer._add_object(encoded)
+    writer.encrypt("password", algorithm=algorithm)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, password="password")
+    result = reader.pages[0]["/Contents"]
+    assert result["/Filter"] == "/FlateDecode"
+    assert result._data == encoded._data
+    assert result.get_data() == content.get_data()
 
 
 @pytest.mark.parametrize(

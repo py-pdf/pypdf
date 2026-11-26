@@ -1,3 +1,4 @@
+import re
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from functools import partial
@@ -143,9 +144,8 @@ def _parse_encoding(
         # Overwrite the standard encoding with the encoding information from the embedded font file, if applicable.
         _correct_encoding(embedded_font_encoding, encoding)
 
-        x: int = 0
-        o: int | str
-        differences = enc["/Differences"].get_object()
+        code: int = 0
+        differences = enc["/Differences"]
         if not isinstance(differences, ArrayObject):
             logger_warning(
                 "Font encoding differences are not an array: %(differences)s",
@@ -153,18 +153,28 @@ def _parse_encoding(
                 differences=differences,
             )
             differences = ArrayObject()
-        for o in differences:
-            if isinstance(o, int):
-                x = o
-            else:  # isinstance(o, str):
+        for entry in differences:
+            entry = entry.get_object()
+            if isinstance(entry, int):
+                code = entry
+            elif isinstance(entry, str):
                 try:
-                    if x < len(encoding):
-                        encoding[x] = _glyph_name_to_unicode(o) or o
+                    if code < len(encoding):
+                        encoding[code] = _glyph_name_to_unicode(entry) or entry
                 except MemoryError:  # pragma: no cover  # TODO: BLE001
                     raise
                 except Exception:
-                    encoding[x] = o
-                x += 1
+                    encoding[code] = entry
+                code += 1
+            else:
+                # Table 114 of the PDF 2.0 specification only allows character
+                # codes and glyph names here. Anything else would end up in the
+                # text and break the decoding later on.
+                logger_warning(
+                    "Ignoring invalid font encoding difference: %(entry)s",
+                    source=__name__,
+                    entry=entry,
+                )
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
 
@@ -323,10 +333,16 @@ def parse_bfrange(
     int_entry: list[int],
     multiline_rg: tuple[int, int] | None,
 ) -> tuple[int, int] | None:
-    lst = line.split()
-    closure_found = False
     entry_count = len(int_entry)
     _check_mapping_size(entry_count)
+
+    # Bound tokenization to the range header, the remaining allowed
+    # destinations, and one extra token to detect a mapping-limit violation.
+    allowed_length = MAPPING_DICTIONARY_SIZE_LIMIT - entry_count
+    max_splits = 3 + max(allowed_length, 0) + 1
+    lst = line.split(maxsplit=max_splits)
+
+    closure_found = False
     decode_utf16 = partial(bytes.decode, encoding="utf-16-be", errors="surrogatepass")
     if multiline_rg is not None:
         a = multiline_rg[0]  # a, b not in the current line
@@ -386,7 +402,18 @@ def parse_bfrange(
     return None if closure_found else (a, b)
 
 
+# Match non-empty tokens using the same separator as the `parse_bfchar` split call.
+_NON_SPACE_RUN = re.compile(rb"[^ ]+")
+
+
 def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) -> None:
+    # Estimate the number of mappings using the number of separators.
+    # Only count tokens exactly when the estimate indicates that the mapping
+    # size limit might be exceeded. This avoids regex scanning for normal CMaps.
+    if len(int_entry) + (line.count(b" ") + 1) // 2 > MAPPING_DICTIONARY_SIZE_LIMIT:
+        token_count = sum(1 for _ in _NON_SPACE_RUN.finditer(line))
+        _check_mapping_size(len(int_entry) + token_count // 2)
+
     lst = [x for x in line.split(b" ") if x]
     lst_length = len(lst)
     if lst_length == 0:
@@ -395,8 +422,6 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
     if lst_length % 2:
         logger_warning("Ignoring final token of odd-length line %(line)r.", source=__name__, line=line)
 
-    new_count = lst_length // 2
-    _check_mapping_size(len(int_entry) + new_count)  # This can be checked beforehand.
     map_dict[-1] = len(lst[0]) // 2
 
     for index in range(0, lst_length - 1, 2):

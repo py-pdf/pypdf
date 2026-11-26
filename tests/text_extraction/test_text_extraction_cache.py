@@ -1,6 +1,7 @@
 """Tests for text-extraction character lookup caching."""
 
 import pypdf._text_extraction as text_extraction
+from pypdf.generic import TextStringObject
 from pypdf.generic._font import Font
 
 
@@ -158,7 +159,8 @@ def test_get_text_operands_caches_repeated_character_lookups(monkeypatch) -> Non
 
     monkeypatch.setattr(font, "get_text_width", counted_width)
 
-    operands = ["A" * 10_000]
+    # A string operand read from a content stream is a TextStringObject
+    operands = [TextStringObject("A" * 10_000)]
     text, is_str_operands, widths, glyph_count, space_count = text_extraction.get_text_operands(
         operands=operands,
         cm_matrix=[1, 0, 0, 1, 0, 0],
