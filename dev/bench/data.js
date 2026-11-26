@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795704197986,
+  "lastUpdate": 1795704383047,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -132005,6 +132005,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005510195622977876",
             "extra": "mean: 658.0377403999933 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "da93da31859584ee995b45cfcdf4f46a760b5f7a",
+          "message": "SEC: Limit size of indexed color space lookup tables (#4532)\n\nThis includes some internal refactoring as well to reduce the size of the existing handler function.\n\nCo-authored-by: alex <alex-sc@users.noreply.github.com>",
+          "timestamp": "2026-11-26T15:44:03+01:00",
+          "tree_id": "cdd84b03e139a82d4ee1f48d25d805d14f3a27d5",
+          "url": "https://github.com/py-pdf/pypdf/commit/da93da31859584ee995b45cfcdf4f46a760b5f7a"
+        },
+        "date": 1795704368139,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.6551596916961486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009190580040513265",
+            "extra": "mean: 376.6251812000007 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.2356967106885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019929758055355906",
+            "extra": "mean: 44.972730695652494 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25421317964773604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032668611210943624",
+            "extra": "mean: 3.9337063537999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 22.133211272443756,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015280593183527352",
+            "extra": "mean: 45.180972055556076 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14533884339778272,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027534739071480782",
+            "extra": "mean: 6.880473083600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4025254942774328,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13592626775189814",
+            "extra": "mean: 712.9995170000029 msec\nrounds: 5"
           }
         ]
       }
