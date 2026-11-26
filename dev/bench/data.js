@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795718951137,
+  "lastUpdate": 1795719066339,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -179395,6 +179395,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03967320556649475",
             "extra": "mean: 870.1358110000115 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "12dfbbc129a8aba17dfc176e693082c97efe4997",
+          "message": "PI: Parse simple content stream tokens with one regular expression (#4501)\n\n* PI: Parse simple content stream tokens with one regular expression\n\nText extraction of documents with large content streams spends most of\nits time tokenizing them. Parsing stays O(n), n = bytes of the content\nstream, but the cost per token drops: extracting the text of the\ndocuments of py-pdf/benchmarks gets up to 2x faster.\n\n## Problem\n\nContentStream._parse_content_stream() read every token through the\ngeneric object parser, byte by byte from a BytesIO:\nread_non_whitespace() to find the next token and seek back,\nread_object() to dispatch on its first byte, peeking 20 bytes for\nnumbers and seeking back again, and read_until_regex() reading\noperators in chunks. For 2201.00214.pdf, with 19.3 MB of page content,\n1.4 million operators and 2.5 million operands, this meant 14.5 million\nBytesIO.read() calls, 10.5 million BytesIO.seek() calls and 2.6 million\nread_object() calls.\n\n## Solution\n\nEach token is first matched against one regular expression at the\ncurrent position of the stream data, which skips the whitespace and\nreads a plain number, name or operator in one call. Tokens it does not\nmatch are read by the previous code. As only valid numbers are\nmatched, they are created with float.__new__() and int.__new__()\ndirectly, skipping the error handling of FloatObject() and\nNumberObject(): 0.24 µs instead of 0.52 µs per number.\n\nFor 2201.00214.pdf, 3,909,504 of the 3.9 million tokens match; the\nother 2,292 are strings, arrays and the like. 0.34 million read(),\n0.21 million seek() and 84,000 read_object() calls are left. Reading\nthe stream data into one bytes object does not copy it, as\nBytesIO.read() returns the bytes the BytesIO was created from.\n\n## Benchmark\n\nPdfReader() and extract_text() for every page, CPU time, best of 3\nruns, CPython 3.13.3, Intel i7-6700HQ; \"Content\" is the decoded page\ncontent:\n\n| PDF              | Pages | Content |    main | this change | Speedup |\n|------------------|------:|--------:|--------:|------------:|--------:|\n| 2201.00214.pdf   |    22 | 19.3 MB | 21.51 s |     10.94 s |   1.97x |\n| 2201.00151.pdf   |    12 |  6.1 MB |  6.14 s |      3.55 s |   1.73x |\n| GeoTopo-book.pdf |   117 |  3.6 MB |  6.49 s |      4.29 s |   1.51x |\n| 1707.09725.pdf   |   134 |  1.2 MB |  3.61 s |      3.12 s |   1.16x |\n\nCreated via:\n\n```python\nimport sys\nimport time\n\nfrom pypdf import PdfReader\n\nfor path in sys.argv[1:]:\n    best = float(\"inf\")\n    for _ in range(3):\n        start = time.process_time()\n        reader = PdfReader(path)\n        for page in reader.pages:\n            page.extract_text()\n        best = min(best, time.process_time() - start)\n    print(f\"{path}\\t{len(reader.pages)}\\t{best:.2f}\")\n```\n\n## Behavior\n\nWhat stays the same:\n\n* The operations, with the exact types and values of the operands, the\n  warnings and the exceptions. Each alternative of the regular\n  expression only matches tokens that the generic parsing reads the\n  same way, and leaves everything else to it: strings, arrays,\n  dictionaries, comments, inline images, names with # escapes or\n  non-ASCII bytes, numbers like \"1,5\" or \"1.2.3\" or with more than 18\n  digits, integers followed by what looks like an indirect reference,\n  and overlong operators and names.\n* The limits: the parsing budget is decremented for every token as\n  before.\n\nThis was checked on the 445 PDFs the tests use (on main 9dec168c: the\noperations of all 13,070 pages, the extracted text, the warnings and\nthe exceptions), on 30,000 random token sequences, and by the new\ntest, which parses 16 snippets with tricky tokens with and without the\nregular expression.\n\nWhat changed:\n\n* Nothing.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* TST: Give the simple content stream token cases meaningful IDs\n\nA failing case now says what it covers instead of data0 or a\ntruncated byte string.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* MAINT: Derive the simple content stream token lengths from the limits\n\nThe pattern for simple content stream tokens used arbitrary maximum\nlengths: 100 characters for names and operators and 18 digits for\nnumbers. The PDF specification defines no maximum length (ISO\n32000-2:2020, Annex C), but the generic parsing raises\nLimitReachedError for tokens longer than NameObject._LENGTH_LIMIT,\nContentStream._OPERATOR_LENGTH_LIMIT and NumberObject._LENGTH_LIMIT.\n\nThese limits are not exact token lengths: read_until_regex() checks\nthem after reading each chunk but before searching the chunk for the\nend of the token, so whether a token slightly shorter than the limit\nraises depends on the bytes after it.\n\nget_safe_read_until_regex_length() now computes the length up to\nwhich read_until_regex() never raises, from the same chunk sizes it\nuses, and the pattern uses these lengths: 4,079 bytes for names, 111\nfor operators and 47 for numbers, which one lookahead checks for the\nwhole run of number characters. The pattern moves into ContentStream\nto use its operator limit, and gets a comment for each alternative.\n\nBehavior: the same. Longer tokens are still left to the generic\nparsing, which raises or not as before; new test cases at the safe\nlengths and one byte above them check this.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* MAINT: Hard-code the simple content stream token lengths\n\nThe previous commit computed the maximum token lengths of the pattern\nwith get_safe_read_until_regex_length() and built the pattern in\n_create_simple_token_pattern(). That is more code than the three\nnumbers need.\n\n_CONTENT_STREAM_SIMPLE_TOKEN is a module constant again, with the\nlengths hard-coded: 47 bytes for numbers, 111 for operators and 4,079\nfor names. Its comment explains how they follow from the limits and\nthe chunk sizes of read_until_regex(), which are now named constants\nin pypdf/_utils.py that refer back to the pattern.\n\nBehavior: the same. The pattern is identical to the computed one, and\nthe test cases at the safe lengths and one byte above them stay.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-26T19:46:59+01:00",
+          "tree_id": "214e8f9cd185bd49bf3f9838e4380d967f2144e2",
+          "url": "https://github.com/py-pdf/pypdf/commit/12dfbbc129a8aba17dfc176e693082c97efe4997"
+        },
+        "date": 1795719053864,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.431842391795637,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020527386304611515",
+            "extra": "mean: 54.253936136363606 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 26.049989628660416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044271446064977786",
+            "extra": "mean: 38.38773121428777 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3668890167169359,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03594129099387454",
+            "extra": "mean: 731.5882912000063 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 43.43941886414443,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0159986939938069",
+            "extra": "mean: 23.020565793650974 msec\nrounds: 63"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.40281030327084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04869362588068363",
+            "extra": "mean: 2.482558146799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4369664121602765,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03559611544697374",
+            "extra": "mean: 695.91049 msec\nrounds: 5"
           }
         ]
       }
