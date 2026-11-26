@@ -646,7 +646,7 @@ def test_tj_offset_right_after_a_font_change_inside_a_word_is_not_a_space() -> N
 
 
 def test_tj_offset_right_after_a_font_change_keeps_a_real_word_gap() -> None:
-    """A two-thirds-of-a-space TJ offset right after a Tf is a word gap (#4504).
+    """A two-thirds-of-a-space TJ offset right after a Tf is a word gap (#4502).
 
     Regression test for the source2e case: the body font (space 500) sets
     "(category", the mono font (space 525) continues with a -342 offset,
@@ -659,7 +659,7 @@ def test_tj_offset_right_after_a_font_change_keeps_a_real_word_gap() -> None:
         writer = PdfWriter()
         page = writer.add_blank_page(width=612, height=792)
 
-        def font(base_font: str, space_width: int) -> DictionaryObject:
+        def create_font(base_font: str, space_width: int) -> DictionaryObject:
             font_dict = DictionaryObject()
             font_dict[NameObject("/Type")] = NameObject("/Font")
             font_dict[NameObject("/Subtype")] = NameObject("/Type1")
@@ -670,8 +670,8 @@ def test_tj_offset_right_after_a_font_change_keeps_a_real_word_gap() -> None:
             return font_dict
 
         font_resources = DictionaryObject()
-        font_resources[NameObject("/F1")] = writer._add_object(font("/Helvetica", 500))
-        font_resources[NameObject("/F2")] = writer._add_object(font("/Courier", 525))
+        font_resources[NameObject("/F1")] = writer._add_object(create_font("/Helvetica", 500))
+        font_resources[NameObject("/F2")] = writer._add_object(create_font("/Courier", 525))
         resources = DictionaryObject()
         resources[NameObject("/Font")] = font_resources
         page[NameObject("/Resources")] = resources
