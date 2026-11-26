@@ -46,7 +46,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from ._configuration import apply_legacy_configuration
+from ._configuration import apply_legacy_configuration, get_configuration
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._utils import (
@@ -63,7 +63,7 @@ from ._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from .constants import TrailerKeys as TK
+from .constants import TrailerKeys
 from .errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -116,6 +116,9 @@ class PdfReader(PdfDocCommon):
             this security measure, pass ``None``.
         xref_stream_maximum_entries: The maximum number of entries which are
             allowed inside a stream-based cross-reference stream.
+        xref_rebuild_maximum_entries: The maximum number of objects discovered
+            while rebuilding a broken cross-reference table, including object
+            stream members.
 
     """
 
@@ -130,6 +133,7 @@ class PdfReader(PdfDocCommon):
         *,
         root_object_recovery_limit: int | None = 10_000,
         xref_stream_maximum_entries: int = 2_000_000,
+        xref_rebuild_maximum_entries: int = 2_000_000,
     ) -> None:
         self.strict = strict
         self.flattened_pages: list[PageObject] | None = None
@@ -150,6 +154,7 @@ class PdfReader(PdfDocCommon):
         )
         self._xref_stream_maximum_entries = xref_stream_maximum_entries
         self._xref_stream_entry_count = 0
+        self._xref_rebuild_maximum_entries = xref_rebuild_maximum_entries
         apply_legacy_configuration()
 
         # Map page indirect_reference number to page number
@@ -190,7 +195,7 @@ class PdfReader(PdfDocCommon):
         # Some documents may not have a /ID, use two empty
         # byte strings instead. Solves
         # https://github.com/py-pdf/pypdf/issues/608
-        id_entry = self.trailer.get(TK.ID, NullObject()).get_object()
+        id_entry = self.trailer.get(TrailerKeys.ID, NullObject()).get_object()
         id1_entry = b""
         if isinstance(id_entry, ArrayObject) and id_entry:
             first_id_entry = id_entry[0].get_object()
@@ -200,7 +205,7 @@ class PdfReader(PdfDocCommon):
                 logger_warning("Ignoring non-string first /ID entry of the trailer", source=__name__)
         elif not isinstance(id_entry, NullObject):
             logger_warning("Ignoring malformed /ID entry of the trailer", source=__name__)
-        encrypt_entry = self.trailer[TK.ENCRYPT]
+        encrypt_entry = self.trailer[TrailerKeys.ENCRYPT]
         if not isinstance(encrypt_entry, DictionaryObject):
             raise PdfReadError("/Encrypt entry of the trailer is not a dictionary")
         self._encryption = Encryption.read(encrypt_entry, id1_entry)
@@ -242,7 +247,7 @@ class PdfReader(PdfDocCommon):
         """Provide access to "/Root". Standardized with PdfWriter."""
         if self._validated_root:
             return self._validated_root
-        root = self.trailer.get(TK.ROOT, NullObject()).get_object()
+        root = self.trailer.get(TrailerKeys.ROOT, NullObject()).get_object()
         root_dictionary: DictionaryObject
         if isinstance(root, DictionaryObject):
             root_dictionary = root
@@ -259,6 +264,11 @@ class PdfReader(PdfDocCommon):
         if self._validated_root is None:
             logger_warning('Searching object with "/Catalog" key', source=__name__)
             number_of_objects = cast(int, self.trailer.get("/Size", 0))
+            if not isinstance(number_of_objects, int):
+                # the trailer may be corrupted and carry a non-integer /Size;
+                # treat it like a missing one and fail with the regular
+                # PdfReadError for an unrecoverable root
+                number_of_objects = 0
             for i in range(number_of_objects):
                 if i >= self._root_object_recovery_limit:
                     raise LimitReachedError("Maximum Root object recovery limit reached.")
@@ -297,7 +307,7 @@ class PdfReader(PdfDocCommon):
             /Info Dictionary; None if the entry does not exist
 
         """
-        info = self.trailer.get(TK.INFO, None)
+        info = self.trailer.get(TrailerKeys.INFO, None)
         if is_null_or_none(info):
             return None
         assert info is not None, "mypy"
@@ -309,19 +319,27 @@ class PdfReader(PdfDocCommon):
         return info
 
     @property
-    def _ID(self) -> ArrayObject | None:
+    def _file_identifiers(self) -> ArrayObject | None:
         """
         Provide access to "/ID". Standardized with PdfWriter.
 
         Returns:
             /ID array; None if the entry does not exist
 
+        Raises:
+            PdfReadError: If the entry exists but is not an array.
+
         """
-        file_identifiers = self.trailer.get(TK.ID, None)
+        file_identifiers = self.trailer.get(TrailerKeys.ID, None)
         if is_null_or_none(file_identifiers):
             return None
         assert file_identifiers is not None, "mypy"
-        return cast(ArrayObject, file_identifiers.get_object())
+        file_identifiers = file_identifiers.get_object()
+        if not isinstance(file_identifiers, ArrayObject):
+            raise PdfReadError(
+                "Trailer /ID entry does not point to an array"
+            )
+        return file_identifiers
 
     @property
     def pdf_header(self) -> str:
@@ -330,9 +348,9 @@ class PdfReader(PdfDocCommon):
 
         This is typically something like ``'%PDF-1.6'`` and can be used to
         detect if the file is actually a PDF file and which version it is.
+
+        Returns a str and not bytes, see issue #4275.
         """
-        # TODO: Make this return a bytes object for consistency
-        #       but that needs a deprecation
         loc = self.stream.tell()
         self.stream.seek(0, 0)
         pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace")
@@ -346,7 +364,7 @@ class PdfReader(PdfDocCommon):
             # The document-level metadata stream is exempt from encryption
             # only if /EncryptMetadata is false (ISO 32000-2, Table 21).
             self._override_encryption = (
-                self._encryption is not None and not self._encryption.EncryptMetadata
+                self._encryption is not None and not self._encryption.encrypt_metadata
             )
             return cast(XmpInformation, self.root_object.xmp_metadata)
         finally:
@@ -378,7 +396,14 @@ class PdfReader(PdfDocCommon):
         else:
             idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
-        return self._page_id2num.get(idnum, None)
+        number: int | None = self._page_id2num.get(idnum, None)
+        if number is not None and not (
+            number < len(self.pages) and getattr(self.pages[number].indirect_reference, "idnum", None) == idnum
+        ):
+            # The pages changed since the map was built, for example by remove_page().
+            self._page_id2num = None
+            return self._get_page_number_by_indirect(indirect_reference)
+        return number
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
@@ -396,9 +421,26 @@ class PdfReader(PdfDocCommon):
             # indirect reference to object in object stream
             # read the entire object stream into memory
             stmnum, _idx = self.xref_objStm[indirect_reference.idnum]
-            obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore[assignment]
-            # This is an xref to a stream, so its type better be a stream
-            assert cast(str, obj_stm["/Type"]) == "/ObjStm"
+            obj_stm = IndirectObject(stmnum, 0, self).get_object()
+            # This is an xref to a stream, so its type better be a stream.
+            # A missing or wrongly typed object stream (e.g. in a truncated
+            # file) is ignored in non-strict mode.
+            if not isinstance(obj_stm, StreamObject) or obj_stm.get("/Type") != "/ObjStm":
+                if self.strict:
+                    raise PdfReadError(
+                        f"Object stream {stmnum} referenced by object {obj_id} "
+                        "is missing or is not an object stream."
+                    )
+                logger_warning(
+                    (
+                        "Object stream %(stmnum)d referenced by object %(obj_id)d "
+                        "is missing or is not an object stream; ignoring it."
+                    ),
+                    source=__name__,
+                    stmnum=stmnum,
+                    obj_id=obj_id,
+                )
+                return NullObject()
             # Parse ALL objects in this stream in one pass and cache them.
             # This avoids O(N²) behavior when many objects from the same stream
             # are resolved individually (each call would re-parse the header).
@@ -1243,7 +1285,7 @@ class PdfReader(PdfDocCommon):
                 try:
                     xrefstream = self._read_pdf15_xref_stream(stream)
                 except Exception as exception:  # pragma: no cover
-                    if TK.ROOT in self.trailer:
+                    if TrailerKeys.ROOT in self.trailer:
                         logger_warning(
                             "Previous trailer cannot be read: %(args)s",
                             source=__name__,
@@ -1251,7 +1293,7 @@ class PdfReader(PdfDocCommon):
                         )
                         break
                     raise PdfReadError(f"Trailer cannot be read: {exception!s}") from exception  # pragma: no cover
-                self._process_xref_stream(xrefstream)
+                self._process_xref_stream(xrefstream, stream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
                 else:
@@ -1261,18 +1303,20 @@ class PdfReader(PdfDocCommon):
 
     # The trailer keys a PDF 1.5+ cross-reference stream carries in place of a
     # `trailer` keyword (PDF 2.0 specification, table 17).
-    _XREF_STREAM_TRAILER_KEYS = (TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE)
+    _XREF_STREAM_TRAILER_KEYS = (
+        TrailerKeys.ROOT, TrailerKeys.ENCRYPT, TrailerKeys.INFO, TrailerKeys.ID, TrailerKeys.SIZE
+    )
 
-    def _process_xref_stream(self, xrefstream: DictionaryObject) -> None:
+    def _process_xref_stream(self, xrefstream: DictionaryObject, stream: StreamType) -> None:
         """Process and handle the xref stream."""
         for key in self._XREF_STREAM_TRAILER_KEYS:
             if key in xrefstream and key not in self.trailer:
                 self.trailer[NameObject(key)] = xrefstream.raw_get(key)
         if "/XRefStm" in xrefstream:
-            p = self.stream.tell()
-            self.stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
-            self._read_pdf15_xref_stream(self.stream)
-            self.stream.seek(p, 0)
+            p = stream.tell()
+            stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
+            self._read_pdf15_xref_stream(stream)
+            stream.seek(p, 0)
 
     def _read_xref(self, stream: StreamType) -> int | None:
         self._read_standard_xref_table(stream)
@@ -1291,6 +1335,9 @@ class PdfReader(PdfDocCommon):
             try:
                 self._read_pdf15_xref_stream(stream)
             except MemoryError:  # pragma: no cover  # TODO: BLE001
+                raise
+            except LimitReachedError:
+                # Do not continue on reaching the resource limits.
                 raise
             except Exception:
                 logger_warning(
@@ -1431,6 +1478,9 @@ class PdfReader(PdfDocCommon):
             )
 
         stream_data = BytesIO(xref_stream.get_data())
+        # Do not keep the decoded data cached, as the stream remains in resolved_objects.
+        if isinstance(xref_stream, EncodedStreamObject):
+            xref_stream.decoded_self = None
 
         def get_entry(i: int) -> int | tuple[int, ...]:
             # Reads the correct number of bytes for each entry. See the
@@ -1555,12 +1605,31 @@ class PdfReader(PdfDocCommon):
 
             index += 7  # len(b"trailer")
 
+    def _ensure_xref_rebuild_entry_limit(self, entry_count: int) -> None:
+        if entry_count > self._xref_rebuild_maximum_entries:
+            raise LimitReachedError(
+                f"Maximum xref rebuild entry limit exceeded: "
+                f"{entry_count} > {self._xref_rebuild_maximum_entries}."
+            )
+
     def _rebuild_xref_table(self, stream: StreamType) -> None:
         self.xref = {}
+        # Rebuild loads the whole file into memory; reuse the shared stream
+        # length budget instead of introducing a separate configuration knob.
+        input_length = get_stream_size(stream)
+        maximum_input_length = get_configuration().maximum_declared_stream_length
+        if input_length > maximum_input_length:
+            raise LimitReachedError(
+                f"Maximum xref rebuild input length exceeded: "
+                f"{input_length} > {maximum_input_length}."
+            )
         stream.seek(0, 0)
         stream_data = stream.read(-1)
 
+        entry_count = 0
         for object_number, generation_number, object_start in self._find_pdf_objects(stream_data):
+            entry_count += 1
+            self._ensure_xref_rebuild_entry_limit(entry_count)
             if generation_number not in self.xref:
                 self.xref[generation_number] = {}
             self.xref[generation_number][object_number] = object_start
@@ -1607,6 +1676,9 @@ class PdfReader(PdfDocCommon):
                         inner_offset = int(current)
                         self.xref_objStm[inner_object_number] = (object_number, inner_offset)
                         actual_count += 1
+                        # Compressed members also consume the rebuild entry budget.
+                        entry_count += 1
+                        self._ensure_xref_rebuild_entry_limit(entry_count)
                     expected_count = cast(int, obj["/N"])
                     if actual_count != expected_count:  # pragma: no cover
                         logger_warning(  # pragma: no cover
@@ -1715,7 +1787,7 @@ class PdfReader(PdfDocCommon):
         Note that this property, if true, will remain true even after the
         :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
         """
-        return TK.ENCRYPT in self.trailer
+        return TrailerKeys.ENCRYPT in self.trailer
 
     def add_form_topname(self, name: str) -> DictionaryObject | None:
         """
@@ -1792,36 +1864,10 @@ class PdfReader(PdfDocCommon):
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
 
-    def _repr_mimebundle_(
-        self,
-        include: Iterable[str] | None = None,
-        exclude: Iterable[str] | None = None,
-    ) -> dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        .. seealso::
-
-            https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
+    def _get_pdf_bytes(self) -> bytes:
+        """Return the bytes of the stream the document was read from."""
         self.stream.seek(0)
-        pdf_data = self.stream.read()
-        data = {
-            "application/pdf": pdf_data,
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
+        return self.stream.read()
 
     def _get_named_destinations(
         self,

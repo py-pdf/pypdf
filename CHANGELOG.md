@@ -7,6 +7,41 @@
 - Rename ``TypArguments`` to ``TypeArguments`` and ``TypFitArguments`` to ``FitTypes``
 - Add semantic names for stroking and non-stroking graphics-state constants
 
+## Version 7.1.1, 2026-11-18
+
+### Security (SEC)
+- Limit inline image size for known-size fallback path (#4460)
+- Optimize memory usage of ASCIIHexDecode whitespace removal (#4458)
+- Limit the overall page label size before employing a fallback (#4457)
+- Restrict cross-reference stream work/memory (#4456)
+
+### Performance Improvements (PI)
+- List image identifiers only once when iterating over page images (#4452)
+- Index named destinations when appending a document (#4360)
+- Decode PDFDocEncoding strings with str.translate instead of per-character concatenation (#4429)
+
+### Bug Fixes (BUG)
+- Reject zero-step slices in PageRange (#4404)
+- Label a page that lies between the /Limits of two page label kids (#4385)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.1.0...7.1.1)
+
+## Version 7.1.0, 2026-11-13
+
+### Deprecations (DEP)
+- Deprecate passing a boolean to remove_images (#4412)
+- Make add_outline_item keyword-only (#4401)
+
+### New Features (ENH)
+- Scale a soft mask to the size of its image (#4391)
+
+### Performance Improvements (PI)
+- Do not decode streams to find identical objects (#4424)
+- Speed up the pure-Python RC4 used without a crypto library (#4396)
+- Skip per-character direction checks for left-to-right text in extract_text() (#4395)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.0.1...7.1.0)
+
 ## Version 7.0.1, 2026-11-10
 
 ### Security (SEC)

@@ -1,4 +1,5 @@
 """Test the pypdf.xmp module."""
+import re
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
@@ -111,7 +112,7 @@ def test_converter_date():
     date = pypdf.xmp._converter_date("2021-04-28T12:23:34.123Z")
     assert date == datetime(2021, 4, 28, 12, 23, 34, 123000)
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Invalid date format: today$") as exc:
         pypdf.xmp._converter_date("today")
     assert exc.value.args[0].startswith("Invalid date format")
 
@@ -134,9 +135,9 @@ def test_converter_date():
 )
 def test_converter_date_out_of_range(value, date_parts):
     """Invalid timestamps retain their value and datetime's specific reason."""
-    with pytest.raises(ValueError) as datetime_exc:
+    with pytest.raises(ValueError, match=r"(year|month|day|hour|minute|second) ") as datetime_exc:
         datetime(*date_parts)
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=rf"^Invalid date {re.escape(repr(value))}: ") as exc:
         pypdf.xmp._converter_date(value)
     assert str(exc.value) == f"Invalid date {value!r}: {datetime_exc.value}"
 
@@ -1145,3 +1146,38 @@ def test_custom_properties__malformed_escape(local_name, expected):
         ).encode()
     )
     assert XmpInformation(stream).custom_properties == expected
+
+
+@pytest.mark.timeout(5)
+def test_xmp_missing_properties_cache():
+    """
+    Test that querying missing properties in XMP metadata uses the cache
+    and does not repeatedly traverse the XML tree (which caused O(N^2) DoS).
+    """
+    num_nodes = 1000
+    evil_xml = ['<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>']
+    evil_xml.append('<x:xmpmeta xmlns:x="adobe:ns:meta/">')
+    evil_xml.append(
+        '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+    )
+
+    evil_xml.extend(
+        [
+            '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:dummy>test</dc:dummy></rdf:Description>'
+        ]
+        * num_nodes
+    )
+
+    evil_xml.append("</rdf:RDF>")
+    evil_xml.append("</x:xmpmeta>")
+    evil_xml.append('<?xpacket end="r"?>')
+
+    xmp_data = "\n".join(evil_xml).encode("utf-8")
+    stream = StreamObject()
+    stream.set_data(xmp_data)
+    xmp = XmpInformation(stream)
+
+    for _ in range(10):
+        assert not xmp.dc_title
+        assert not xmp.dc_creator
+        assert not xmp.pdf_keywords
