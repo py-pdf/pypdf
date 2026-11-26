@@ -1080,21 +1080,36 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
         del child_obj[NameObject("/Prev")]
 
 
-def _iter_name_tree(tree: DictionaryObject) -> Iterator[Any]:
-    """Yield the nodes of a name tree in key order, each object once, without changing it."""
-    pending: list[Any] = [tree]
+def _iter_name_tree(
+    tree: DictionaryObject, on_revisit: Callable[[], None] | None = None
+) -> Iterator[tuple[Any, int]]:
+    """
+    Yield the nodes of a name tree in key order, each object once, without changing it.
+
+    Each node comes with its depth, the number of /Kids entries followed from
+    *tree* to reach it. A node that is reached again, as in a cycle, is skipped;
+    a dictionary is also reported to *on_revisit*.
+
+    The nodes are not checked: a node can be any object, and a /Kids entry
+    that is not an array is ignored here, so that callers can report both.
+    """
+    # A stack with the next node to visit at its end.
+    pending: list[tuple[Any, int]] = [(tree, 0)]
     visited: set[int] = set()
     while pending:
-        node = pending.pop(0).get_object()
+        entry, depth = pending.pop()
+        node = entry.get_object()
         if id(node) in visited:
+            if on_revisit is not None and isinstance(node, DictionaryObject):
+                on_revisit()
             continue
         visited.add(id(node))
-        yield node
+        yield node, depth
         if not isinstance(node, DictionaryObject):
             continue
         kids = node.get("/Kids", NullObject()).get_object()
         if isinstance(kids, ArrayObject):
-            pending[:0] = kids
+            pending.extend((kid, depth + 1) for kid in reversed(kids))
 
 
 def _flatten_name_tree(tree: DictionaryObject, *, maximum_entries: int | None = None) -> ArrayObject:
@@ -1111,7 +1126,7 @@ def _flatten_name_tree(tree: DictionaryObject, *, maximum_entries: int | None = 
     """
     names = ArrayObject()
     remaining_entries = maximum_entries if maximum_entries is not None else sys.maxsize
-    for node in _iter_name_tree(tree):
+    for node, _ in _iter_name_tree(tree):
         if not isinstance(node, DictionaryObject):
             continue
         node_names = node.get("/Names", NullObject()).get_object()

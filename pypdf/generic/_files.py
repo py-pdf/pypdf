@@ -455,7 +455,7 @@ class EmbeddedFile:
         traversal_state = _TraversalState()
 
         configuration = get_configuration()
-        for node in _iter_name_tree(container):
+        for node, _ in _iter_name_tree(container):
             if not isinstance(node, DictionaryObject):
                 cls._report_malformed(f"Embedded files kid is not a dictionary: {node}", strict=strict)
                 continue

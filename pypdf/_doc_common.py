@@ -81,7 +81,7 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
-from .generic._data_structures import _flatten_name_tree
+from .generic._data_structures import _flatten_name_tree, _iter_name_tree
 from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
@@ -494,141 +494,111 @@ class PdfDocCommon(ABC):
         return named_dest
 
     ## common
-    def _get_named_destinations(
-        self,
-        *,
-        tree: DictionaryObject | None = None,
-        retval: dict[str, Destination] | None = None,
-        visited: set[int] | None = None,
-        depth: int = 0,
-        traversal_state: _TraversalState | None = None,
-    ) -> dict[str, Destination]:
+    def _get_named_destinations(self) -> dict[str, Destination]:
         """
         Retrieve the named destinations present in the document.
-
-        Args:
-            tree: The current tree.
-            retval: The previously retrieved destinations for nested calls.
-            visited: Already known/visited objects.
-            depth: Current name tree nesting depth.
-            traversal_state: Shared visitor counters.
 
         Returns:
             A dictionary which maps names to destinations.
 
         """
-        if traversal_state is None:
-            traversal_state = _TraversalState()
-
-        if visited is None:
-            visited = set()
-        if retval is None:
-            retval = {}
-            catalog = self.root_object
-
-            # get the name tree
-            candidate: PdfObject | None = None
-            if CatalogAttributes.DESTS in catalog:
-                candidate = catalog[CatalogAttributes.DESTS].get_object()
-            elif CatalogAttributes.NAMES in catalog:
-                names = catalog[CatalogAttributes.NAMES].get_object()
-                if isinstance(names, DictionaryObject) and CatalogAttributes.DESTS in names:
-                    candidate = names[CatalogAttributes.DESTS].get_object()
-            if candidate is not None and not isinstance(candidate, DictionaryObject):
-                logger_warning(
-                    "Destination tree is not a dictionary: %(tree)s",
-                    source=__name__,
-                    tree=candidate,
-                )
-                return retval
-            if candidate is not None:
-                tree = candidate
-
-        if is_null_or_none(tree):
+        retval: dict[str, Destination] = {}
+        tree = self._get_named_destinations_tree()
+        if tree is None:
             return retval
-        assert tree is not None, "mypy"
 
         configuration = get_configuration()
-        if depth > configuration.named_destinations_maximum_depth:
-            raise LimitReachedError(
-                f"Maximum named destination depth exceeded: "
-                f"{depth} > {configuration.named_destinations_maximum_depth}."
-            )
-
-        tree_id = id(tree)
-        if tree_id in visited:
-            logger_warning("Detected cycle in destination tree.", source=__name__)
-            return retval
-        visited.add(tree_id)
-
-        traversal_state.entry_count += 1
-        if traversal_state.entry_count > configuration.named_destinations_maximum_entries:
-            raise LimitReachedError(
-                f"Maximum named destination entry limit exceeded: "
-                f"{traversal_state.entry_count} > {configuration.named_destinations_maximum_entries}."
-            )
-
-        if PagesAttributes.KIDS in tree:
-            kids = tree[PagesAttributes.KIDS].get_object()
-            if not isinstance(kids, ArrayObject):
-                logger_warning(
-                    "Destination tree kids are not an array: %(kids)s",
-                    source=__name__,
-                    kids=kids,
+        entry_count = 0
+        for node, depth in _iter_name_tree(
+            tree, on_revisit=lambda: logger_warning("Detected cycle in destination tree.", source=__name__)
+        ):
+            if is_null_or_none(node):
+                continue
+            if depth > configuration.named_destinations_maximum_depth:
+                raise LimitReachedError(
+                    f"Maximum named destination depth exceeded: "
+                    f"{depth} > {configuration.named_destinations_maximum_depth}."
                 )
-                return retval
-            # recurse down the tree
-            for kid in kids:
-                self._get_named_destinations(
-                    tree=kid.get_object(),
-                    retval=retval,
-                    visited=visited,
-                    depth=depth + 1,
-                    traversal_state=traversal_state,
+            entry_count += 1
+            if entry_count > configuration.named_destinations_maximum_entries:
+                raise LimitReachedError(
+                    f"Maximum named destination entry limit exceeded: "
+                    f"{entry_count} > {configuration.named_destinations_maximum_entries}."
                 )
-        # §7.9.6, entries in a name tree node dictionary
-        elif CatalogAttributes.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
-            names = tree[CatalogAttributes.NAMES].get_object()
-            if not isinstance(names, ArrayObject):
-                logger_warning(
-                    "Destination tree names are not an array: %(names)s",
-                    source=__name__,
-                    names=names,
-                )
-                return retval
-            i = 0
-            while i < len(names):
-                key = names[i].get_object()
-                i += 1
-                if not isinstance(key, (bytes, str)):
-                    continue
-                try:
-                    value = names[i].get_object()
-                except IndexError:
-                    break
-                i += 1
-                if isinstance(value, DictionaryObject):
-                    if "/D" in value:
-                        value = value["/D"]
-                    else:
-                        continue
-                dest = self._build_destination(key, value)
-                if dest is not None:
-                    retval[cast(str, dest["/Title"])] = dest
-                    # Remain backwards-compatible.
-                    retval[str(key)] = dest
-        else:  # case where /Dests is in the document's catalog dictionary (PDF 1.7 specs, §2 about PDF 1.1)
-            for k__, v__ in tree.items():
-                val = v__.get_object()
-                if isinstance(val, DictionaryObject):
-                    if "/D" in val:
-                        val = val["/D"].get_object()
-                    else:
-                        continue
-                dest = self._build_destination(k__, val)
-                if dest is not None:
-                    retval[k__] = dest
+            if not isinstance(node, DictionaryObject):
+                logger_warning("Destination tree kid is not a dictionary: %(kid)s", source=__name__, kid=node)
+                continue
+
+            if PagesAttributes.KIDS in node:
+                # _iter_name_tree() walks the kids. /Kids and /Names are exclusive (ISO 32000-2:2020, 7.9.6).
+                kids = node[PagesAttributes.KIDS].get_object()
+                if not isinstance(kids, ArrayObject):
+                    logger_warning("Destination tree kids are not an array: %(kids)s", source=__name__, kids=kids)
+            elif CatalogAttributes.NAMES in node:
+                names = node[CatalogAttributes.NAMES].get_object()
+                if not isinstance(names, ArrayObject):
+                    logger_warning(
+                        "Destination tree names are not an array: %(names)s", source=__name__, names=names
+                    )
+                else:
+                    self._add_named_destinations_from_names(names, retval)
+            else:
+                # /Dests in the document catalog (PDF 1.1) maps names to destinations directly.
+                self._add_named_destinations_from_dictionary(node, retval)
         return retval
+
+    def _get_named_destinations_tree(self) -> DictionaryObject | None:
+        """Return the /Dests dictionary of the catalog, or else its name tree in /Names, if any."""
+        catalog = self.root_object
+        candidate: PdfObject | None = None
+        if CatalogAttributes.DESTS in catalog:
+            candidate = catalog[CatalogAttributes.DESTS].get_object()
+        elif CatalogAttributes.NAMES in catalog:
+            names = catalog[CatalogAttributes.NAMES].get_object()
+            if isinstance(names, DictionaryObject) and CatalogAttributes.DESTS in names:
+                candidate = names[CatalogAttributes.DESTS].get_object()
+        if candidate is None:
+            return None
+        if not isinstance(candidate, DictionaryObject):
+            logger_warning("Destination tree is not a dictionary: %(tree)s", source=__name__, tree=candidate)
+            return None
+        return candidate
+
+    def _add_named_destinations_from_names(self, names: ArrayObject, retval: dict[str, Destination]) -> None:
+        """Add the destinations of the key-value pairs of a /Names array of a name tree leaf."""
+        i = 0
+        while i < len(names):
+            key = names[i].get_object()
+            i += 1
+            if not isinstance(key, (bytes, str)):
+                continue
+            try:
+                value = names[i].get_object()
+            except IndexError:
+                break
+            i += 1
+            if isinstance(value, DictionaryObject):
+                if "/D" in value:
+                    value = value["/D"]
+                else:
+                    continue
+            dest = self._build_destination(key, value)
+            retval[cast(str, dest["/Title"])] = dest
+            # Remain backwards-compatible.
+            retval[str(key)] = dest
+
+    def _add_named_destinations_from_dictionary(
+        self, tree: DictionaryObject, retval: dict[str, Destination]
+    ) -> None:
+        """Add the destinations of a dictionary that maps names to destinations directly."""
+        for k__, v__ in tree.items():
+            val = v__.get_object()
+            if isinstance(val, DictionaryObject):
+                if "/D" in val:
+                    val = val["/D"].get_object()
+                else:
+                    continue
+            retval[k__] = self._build_destination(k__, val)
 
     # A select group of relevant field attributes. For the complete list,
     # see §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
