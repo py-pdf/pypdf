@@ -141,7 +141,6 @@ class EmbeddedFile:
             # Invalid case: This is no name tree.
             raise PdfReadError("Got neither Names nor Kids in embedded files tree.")
 
-        configuration = get_configuration()
         return _flatten_name_tree(
             embedded_files_names_tree,
             maximum_entries=configuration.embedded_files_maximum_count
