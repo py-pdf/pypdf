@@ -1141,15 +1141,22 @@ class PdfWriter(PdfDocCommon):
                     # Checkbox button (no /FT found in Radio widgets);
                     # We can find the associated appearance stream object
                     # within the annotation.
-                    v = NameObject(value)
                     ap = cast(DictionaryObject, annotation[NameObject(AnnotationDictionaryAttributes.AP)])
                     normal_ap = cast(DictionaryObject, ap["/N"])
-                    if v not in normal_ap:
-                        v = NameObject("/Off")
+                    if value is None:
+                        # No new value supplied (flatten-only): keep the
+                        # current state and use its appearance stream.
+                        v = cast(
+                            NameObject,
+                            annotation.get(AnnotationDictionaryAttributes.AS, NameObject("/Off")),
+                        )
+                    else:
+                        v = NameObject(value)
+                        if v not in normal_ap:
+                            v = NameObject("/Off")
+                        annotation[NameObject(AnnotationDictionaryAttributes.AS)] = v
+                        annotation[NameObject(FieldDictionaryAttributes.V)] = v
                     appearance_stream_obj = normal_ap.get(v)
-                    # Other cases will be updated through the for loop
-                    annotation[NameObject(AnnotationDictionaryAttributes.AS)] = v
-                    annotation[NameObject(FieldDictionaryAttributes.V)] = v
                 elif (
                     parent_annotation.get(FieldDictionaryAttributes.FT) == "/Tx"
                     or parent_annotation.get(FieldDictionaryAttributes.FT) == "/Ch"

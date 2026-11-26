@@ -2385,6 +2385,29 @@ def test_update_form_fields(caplog, tmp_path):
     Path(write_data_here).unlink()
 
 
+def test_update_form_fields_flatten_only_keeps_checkbox_state():
+    """
+    Flattening without providing a new value (value=None) must not reset
+    the current state of checkbox fields (issue #4526).
+    """
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "pdflatex-forms.pdf")
+    writer.update_page_form_field_values(
+        writer.pages[0], {"Check": "/Yes"}, auto_regenerate=False
+    )
+    writer.update_page_form_field_values(
+        writer.pages[0], {"Check": None}, auto_regenerate=False, flatten=True
+    )
+    writer.write(BytesIO())
+    annot = None
+    for annotation in writer.pages[0]["/Annots"]:
+        obj = annotation.get_object()
+        if obj.get("/T") == "Check":
+            annot = obj
+    assert annot is not None
+    assert annot["/V"] == "/Yes"
+    assert annot["/AS"] == "/Yes"
+
+
 def test_add_apstream_object():
     writer = PdfWriter()
     page = writer.add_blank_page(1000, 1000)
