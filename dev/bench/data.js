@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795703703292,
+  "lastUpdate": 1795703848969,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -178801,6 +178801,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03759136272361083",
             "extra": "mean: 575.1800872000047 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9cf6e8bdde4cbbde3f62730c993c6664dae13519",
+          "message": "SEC: Avoid cmap data splitting before size validation (#4531)\n\nWe would previously split the cmap data first before validating/limiting\nthe size and possibly failing for disallowed inputs. This could cause\nunnecessarily large memory allocation.",
+          "timestamp": "2026-11-26T15:32:44+01:00",
+          "tree_id": "cfd5ff1e46e569c57f12e1146df4b22942053399",
+          "url": "https://github.com/py-pdf/pypdf/commit/9cf6e8bdde4cbbde3f62730c993c6664dae13519"
+        },
+        "date": 1795703833433,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.14833031974402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020091174671521907",
+            "extra": "mean: 70.67971819999835 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 25.832907684926752,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01149918106509226",
+            "extra": "mean: 38.7103152380903 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.10387894663538,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027537296637196316",
+            "extra": "mean: 905.8964327999888 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 34.82997671287246,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017793202863702978",
+            "extra": "mean: 28.71090061999439 msec\nrounds: 50"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.31424102713407265,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07809806827821911",
+            "extra": "mean: 3.182270657400011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.076325766792621,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04975536014145569",
+            "extra": "mean: 929.0867419999927 msec\nrounds: 5"
           }
         ]
       }
