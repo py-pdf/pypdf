@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795726015380,
+  "lastUpdate": 1795726170713,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -179791,6 +179791,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03546733288367124",
             "extra": "mean: 585.1352184000007 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39011904+Goldloli@users.noreply.github.com",
+            "name": "小卡塔克",
+            "username": "Goldloli"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "966627c0534de8c684bfd98d97b6bb7e862dd266",
+          "message": "PI: Return embedded JPEG images unchanged instead of re-encoding them (#4448)\n\n* PI: Return embedded JPEG images unchanged instead of re-encoding them\n\nFor /DCTDecode images where nothing has to be applied to the decoded data\n(no /SMask, /Mask or /Decode, a gray or RGB color space, no explicit Pillow\nparameters), return the stream data unchanged: it already is the JPEG file.\nThe PIL image is then just Image.open() on those bytes, which only reads\nthe header. No pixel buffer is allocated on this path, so the image buffer\nsize limit no longer applies to it either.\n\nCloses #4434\n\nCo-authored-by: Kimi Code (Moonshot AI) <noreply@moonshot.ai>\n\n* MAINT: Address review of #4448 - Route the JPEG pass-through through _create_image_from_buffer so the configured image buffer limit is respected in every case - Rename _jpeg_image_xobject to _create_jpeg_image_xobject - Parametrize the color space and ICC component test cases - Re-use _minimal_image_xobject() for the /SMask test\n\n---------\n\nCo-authored-by: Kimi Code (Moonshot AI) <noreply@moonshot.ai>",
+          "timestamp": "2026-11-26T21:45:34+01:00",
+          "tree_id": "e437e515f7a7920beb3427d9d5a4d79aed05f90f",
+          "url": "https://github.com/py-pdf/pypdf/commit/966627c0534de8c684bfd98d97b6bb7e862dd266"
+        },
+        "date": 1795726158035,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 18.273692326353128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019548324012227225",
+            "extra": "mean: 54.7234780000025 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 28.286444106997877,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020623833184948665",
+            "extra": "mean: 35.35262319354615 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3815475799123198,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030703374613860572",
+            "extra": "mean: 723.8259576000019 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 41.126820462713475,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017886515763752633",
+            "extra": "mean: 24.3150330793654 msec\nrounds: 63"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.39511495959361564,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012500521461482509",
+            "extra": "mean: 2.5309089815999926 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5552454656687231,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04876446146768116",
+            "extra": "mean: 642.9853177999917 msec\nrounds: 5"
           }
         ]
       }
