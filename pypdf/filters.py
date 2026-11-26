@@ -1005,9 +1005,9 @@ def decode_stream_data(stream: StreamObject) -> bytes:
                 source=__name__, value=params,
             )
             params = DictionaryObject()
-        if filter_name in (FilterTypes.ASCII_HEX_DECODE, FilterTypeAbbreviations.AHx):
+        if filter_name in (FilterTypes.ASCII_HEX_DECODE, FilterTypeAbbreviations.AHX):
             _deprecate_inline_image_filters(
-                filter_name=filter_name, old_name=FilterTypeAbbreviations.AHx, new_name=FilterTypes.ASCII_HEX_DECODE
+                filter_name=filter_name, old_name=FilterTypeAbbreviations.AHX, new_name=FilterTypes.ASCII_HEX_DECODE
             )
             data = ASCIIHexDecode.decode(data)
         elif filter_name in (FilterTypes.ASCII_85_DECODE, FilterTypeAbbreviations.A85):

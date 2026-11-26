@@ -795,8 +795,8 @@ class PdfDocCommon(ABC):
             fileobj.write("\n")
         retval[key] = Field(field)
         obj = retval[key].indirect_reference.get_object()  # to get the full object
-        if obj.get(FieldDictionaryAttributes.FT, "") == "/Ch" and obj.get(NameObject(FieldDictionaryAttributes.Opt)):
-            retval[key][NameObject("/_States_")] = obj[NameObject(FieldDictionaryAttributes.Opt)]
+        if obj.get(FieldDictionaryAttributes.FT, "") == "/Ch" and obj.get(NameObject(FieldDictionaryAttributes.OPT)):
+            retval[key][NameObject("/_States_")] = obj[NameObject(FieldDictionaryAttributes.OPT)]
         if obj.get(FieldDictionaryAttributes.FT, "") == "/Btn" and "/AP" in obj:
             #  Checkbox
             normal = self._normal_appearance(obj["/AP"])
@@ -805,13 +805,13 @@ class PdfDocCommon(ABC):
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
         elif (
             obj.get(FieldDictionaryAttributes.FT, "") == "/Btn"
-            and obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Radio != 0
+            and obj.get(FieldDictionaryAttributes.FF, 0) & FieldDictionaryAttributes.FfBits.RADIO != 0
         ):
             states: list[str] = []
             seen_states: set[str] = set()
             # Widgets often share one /N dictionary, whose states only need to be read once.
             seen_appearances: set[int] = set()
-            for k in obj.get(FieldDictionaryAttributes.Kids, {}):
+            for k in obj.get(FieldDictionaryAttributes.KIDS, {}):
                 k = k.get_object()
                 if "/AP" not in k:
                     raise PdfReadError(f"Button field kid missing /AP: {k!r}")
@@ -825,7 +825,7 @@ class PdfDocCommon(ABC):
                         states.append(s)
             retval[key][NameObject("/_States_")] = ArrayObject(states)
             if (
-                obj.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.NoToggleToOff != 0
+                obj.get(FieldDictionaryAttributes.FF, 0) & FieldDictionaryAttributes.FfBits.NO_TOGGLE_TO_OFF != 0
                 and "/Off" in retval[key]["/_States_"]
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
@@ -870,7 +870,7 @@ class PdfDocCommon(ABC):
 
         for attr in field_attributes_tuple:
             if attr in (
-                FieldDictionaryAttributes.Kids,
+                FieldDictionaryAttributes.KIDS,
                 FieldDictionaryAttributes.AA,
             ):
                 continue
@@ -886,7 +886,7 @@ class PdfDocCommon(ABC):
                     }
                     if field[attr] in types:
                         fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
-                elif attr == FieldDictionaryAttributes.Parent:
+                elif attr == FieldDictionaryAttributes.PARENT:
                     # Let's just write the name of the parent
                     try:
                         name = field[attr][FieldDictionaryAttributes.TM]

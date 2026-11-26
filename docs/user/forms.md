@@ -99,7 +99,7 @@ fields = []
 for page in reader.pages:
     for annot in page.annotations:
         annot = annot.get_object()
-        if annot[AnnotationDictionaryAttributes.Subtype] == "/Widget":
+        if annot[AnnotationDictionaryAttributes.SUBTYPE] == "/Widget":
             fields.append(annot)
 ```
 

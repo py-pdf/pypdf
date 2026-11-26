@@ -63,10 +63,10 @@ from ..constants import (
     CheckboxRadioButtonAttributes,
     FieldDictionaryAttributes,
     FilterTypes,
+    FitTypes,
     OutlineFontFlag,
     StreamAttributes,
-    TypArguments,
-    TypFitArguments,
+    TypeArguments,
 )
 from ..errors import STREAM_TRUNCATED_PREMATURELY, LimitReachedError, PdfReadError, PdfStreamError
 from ._base import (
@@ -1792,12 +1792,12 @@ class Field(TreeObject):
     @property
     def parent(self) -> DictionaryObject | None:
         """Read-only property accessing the parent of this field."""
-        return self.get(FieldDictionaryAttributes.Parent)
+        return self.get(FieldDictionaryAttributes.PARENT)
 
     @property
     def kids(self) -> Optional["ArrayObject"]:
         """Read-only property accessing the kids of this field."""
-        return self.get(FieldDictionaryAttributes.Kids)
+        return self.get(FieldDictionaryAttributes.KIDS)
 
     @property
     def name(self) -> str | None:
@@ -1825,7 +1825,7 @@ class Field(TreeObject):
         Read-only property accessing the field flags, specifying various
         characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
         """
-        return self.get(FieldDictionaryAttributes.Ff)
+        return self.get(FieldDictionaryAttributes.FF)
 
     @property
     def value(self) -> Any | None:
@@ -1914,42 +1914,42 @@ class Destination(TreeObject):
                 args.append(NumberObject(0.0))
             # surplus arguments are ignored rather than failing the unpacking
             (
-                self[NameObject(TypArguments.LEFT)],
-                self[NameObject(TypArguments.TOP)],
+                self[NameObject(TypeArguments.LEFT)],
+                self[NameObject(TypeArguments.TOP)],
                 self[NameObject("/Zoom")],
             ) = args[:3]
         elif len(args) == 0:
             pass
-        elif typ == TypFitArguments.FIT_R:
+        elif typ == FitTypes.FIT_R:
             if len(args) == 4:  # a wrong number of arguments degrades to null
                 (
-                    self[NameObject(TypArguments.LEFT)],
-                    self[NameObject(TypArguments.BOTTOM)],
-                    self[NameObject(TypArguments.RIGHT)],
-                    self[NameObject(TypArguments.TOP)],
+                    self[NameObject(TypeArguments.LEFT)],
+                    self[NameObject(TypeArguments.BOTTOM)],
+                    self[NameObject(TypeArguments.RIGHT)],
+                    self[NameObject(TypeArguments.TOP)],
                 ) = args
             else:
                 (
-                    self[NameObject(TypArguments.LEFT)],
-                    self[NameObject(TypArguments.BOTTOM)],
-                    self[NameObject(TypArguments.RIGHT)],
-                    self[NameObject(TypArguments.TOP)],
+                    self[NameObject(TypeArguments.LEFT)],
+                    self[NameObject(TypeArguments.BOTTOM)],
+                    self[NameObject(TypeArguments.RIGHT)],
+                    self[NameObject(TypeArguments.TOP)],
                 ) = (NullObject(), NullObject(), NullObject(), NullObject())
-        elif typ in [TypFitArguments.FIT_H, TypFitArguments.FIT_BH]:
+        elif typ in [FitTypes.FIT_H, FitTypes.FIT_BH]:
             try:  # Prefer to be more robust not only to null parameters
-                (self[NameObject(TypArguments.TOP)],) = args
+                (self[NameObject(TypeArguments.TOP)],) = args
             except MemoryError:  # pragma: no cover  # TODO: BLE001
                 raise
             except Exception:
-                (self[NameObject(TypArguments.TOP)],) = (NullObject(),)
-        elif typ in [TypFitArguments.FIT_V, TypFitArguments.FIT_BV]:
+                (self[NameObject(TypeArguments.TOP)],) = (NullObject(),)
+        elif typ in [FitTypes.FIT_V, FitTypes.FIT_BV]:
             try:  # Prefer to be more robust not only to null parameters
-                (self[NameObject(TypArguments.LEFT)],) = args
+                (self[NameObject(TypeArguments.LEFT)],) = args
             except MemoryError:  # pragma: no cover  # TODO: BLE001
                 raise
             except Exception:
-                (self[NameObject(TypArguments.LEFT)],) = (NullObject(),)
-        elif typ in [TypFitArguments.FIT, TypFitArguments.FIT_B]:
+                (self[NameObject(TypeArguments.LEFT)],) = (NullObject(),)
+        elif typ in [FitTypes.FIT, FitTypes.FIT_B]:
             pass
         else:
             raise PdfReadError(f"Unknown Destination Type: {typ!r}")
