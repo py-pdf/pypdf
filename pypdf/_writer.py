@@ -316,7 +316,7 @@ class PdfWriter(PdfDocCommon):
 
         self._reader = None
 
-        self._ID: ArrayObject | None = None
+        self._file_identifiers: ArrayObject | None = None
         """The PDF file identifier,
         defined by the ID in the PDF file's trailer dictionary."""
 
@@ -413,11 +413,11 @@ class PdfWriter(PdfDocCommon):
             self._add_object(self._root_object)
         if full and not incremental:
             self.incremental = False
-        if isinstance(self._ID, list):
-            if isinstance(self._ID[0], TextStringObject):
-                self._ID[0] = ByteStringObject(self._ID[0].original_bytes)
-            if isinstance(self._ID[1], TextStringObject):
-                self._ID[1] = ByteStringObject(self._ID[1].original_bytes)
+        if isinstance(self._file_identifiers, list):
+            if isinstance(self._file_identifiers[0], TextStringObject):
+                self._file_identifiers[0] = ByteStringObject(self._file_identifiers[0].original_bytes)
+            if isinstance(self._file_identifiers[1], TextStringObject):
+                self._file_identifiers[1] = ByteStringObject(self._file_identifiers[1].original_bytes)
 
     # for commonality
     @property
@@ -1174,8 +1174,7 @@ class PdfWriter(PdfDocCommon):
                         ] = self._add_object(appearance_stream_obj)
                     else:  # [/AP][/N] exists
                         n = annotation[AnnotationDictionaryAttributes.AP]["/N"].indirect_reference.idnum  # type: ignore[index]
-                        self._objects[n - 1] = appearance_stream_obj
-                        appearance_stream_obj.indirect_reference = IndirectObject(n, 0, self)
+                        self._replace_object(n, appearance_stream_obj)
                 elif (
                     annotation.get(FieldDictionaryAttributes.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
@@ -1271,7 +1270,13 @@ class PdfWriter(PdfDocCommon):
             object_ids = self._collect_incremental_clone_object_ids(reader)
             self._objects = [None] * (object_ids[-1] if object_ids else 0)
             for object_id in object_ids:
-                reader_object = reader.get_object(object_id)
+                # Generation numbers only increase when an object number is reused,
+                # thus the highest one is the version the references point to.
+                generation = max(
+                    (generation for generation, entries in reader.xref.items() if object_id in entries),
+                    default=0,
+                )
+                reader_object = reader.get_object(IndirectObject(object_id, generation, reader))
                 if reader_object is not None:
                     self._objects[object_id - 1] = reader_object.replicate(self)
         else:
@@ -1349,7 +1354,7 @@ class PdfWriter(PdfDocCommon):
         # else: _info_obj = None done in clone_reader_document_root()
 
         with contextlib.suppress(AttributeError):
-            self._ID = cast(ArrayObject, reader._ID).clone(self)
+            self._file_identifiers = cast(ArrayObject, reader._file_identifiers).clone(self)
 
         if callable(after_page_append):
             for page in cast(
@@ -1369,13 +1374,13 @@ class PdfWriter(PdfDocCommon):
         identifier matches, a different version of the correct file has been found.
         see §14.4 "File Identifiers".
         """
-        if self._ID:
-            id1 = self._ID[0]
+        if self._file_identifiers:
+            id1 = self._file_identifiers[0]
             id2 = ByteStringObject(secrets.token_bytes(16))
         else:
             id1 = ByteStringObject(secrets.token_bytes(16))
             id2 = id1
-        self._ID = ArrayObject((id1, id2))
+        self._file_identifiers = ArrayObject((id1, id2))
 
     def encrypt(
         self,
@@ -1426,8 +1431,8 @@ class PdfWriter(PdfDocCommon):
             if not use_128bit:
                 alg = EncryptAlgorithm.RC4_40
         self.generate_file_identifiers()
-        assert self._ID
-        self._encryption = Encryption.make(alg, permissions_flag, self._ID[0])
+        assert self._file_identifiers
+        self._encryption = Encryption.make(alg, permissions_flag, self._file_identifiers[0])
         # in case call `encrypt` again
         entry = self._encryption.write_entry(user_password, owner_password, strict=self.strict)
         if self._encrypt_entry:
@@ -1559,9 +1564,11 @@ class PdfWriter(PdfDocCommon):
             ):
                 idnum = i + 1
                 assert isinstance(obj, PdfObject), "mypy"
+                reference = getattr(obj, "indirect_reference", None)
+                generation = reference.generation if isinstance(reference, IndirectObject) else 0
                 # first write new/modified object
-                object_positions[idnum] = stream.tell()
-                stream.write(f"{idnum} 0 obj\n".encode())
+                object_positions[idnum] = (stream.tell(), generation)
+                stream.write(f"{idnum} {generation} obj\n".encode())
                 obj.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
 
@@ -1588,7 +1595,7 @@ class PdfWriter(PdfDocCommon):
                 [NumberObject(_it) for _su in object_blocks for _it in _su]
             ),
             NameObject("/W"): ArrayObject(
-                [NumberObject(1), NumberObject(4), NumberObject(1)]
+                [NumberObject(1), NumberObject(4), NumberObject(2)]
             ),
             "__streamdata__": b"",
         }
@@ -1602,12 +1609,12 @@ class PdfWriter(PdfDocCommon):
         ):
             init_data[NameObject(TrailerKeys.INFO)] = self._info.indirect_reference
         init_data[NameObject(TrailerKeys.PREV)] = NumberObject(self._reader._startxref)
-        if self._ID:
-            init_data[NameObject(TrailerKeys.ID)] = self._ID
+        if self._file_identifiers:
+            init_data[NameObject(TrailerKeys.ID)] = self._file_identifiers
         xr = StreamObject.initialize_from_dictionary(init_data)
         xr.set_data(
             b"".join(
-                [struct.pack(b">BIB", 1, _pos, 0) for _pos in object_positions.values()]
+                [struct.pack(b">BIH", 1, _pos, _gen) for _pos, _gen in object_positions.values()]
             )
         )
         xr.write_to_stream(stream)
@@ -1666,8 +1673,8 @@ class PdfWriter(PdfDocCommon):
         )
         if self._info is not None:
             trailer[NameObject(TrailerKeys.INFO)] = self._info.indirect_reference
-        if self._ID is not None:
-            trailer[NameObject(TrailerKeys.ID)] = self._ID
+        if self._file_identifiers is not None:
+            trailer[NameObject(TrailerKeys.ID)] = self._file_identifiers
         if self._encrypt_entry:
             trailer[NameObject(TrailerKeys.ENCRYPT)] = self._encrypt_entry.indirect_reference
         trailer.write_to_stream(stream)
@@ -1804,7 +1811,7 @@ class PdfWriter(PdfDocCommon):
         reachable: set[int] = set()
         object_count = len(self._objects)
         objects_to_visit: list[Any] = []
-        for obj in (self.root_object, self._info, self._ID, self._encrypt_entry):
+        for obj in (self.root_object, self._info, self._file_identifiers, self._encrypt_entry):
             reference = getattr(obj, "indirect_reference", None)
             objects_to_visit.append(obj if reference is None else reference)
         while objects_to_visit:
@@ -3104,7 +3111,9 @@ class PdfWriter(PdfDocCommon):
             visited.add(article_id)
 
             page = self._get_cloned_page(
-                cast("PageObject", current_article["/P"]), pages, reader
+                cast("PageObject", current_article.get("/P", NullObject()).get_object()),
+                pages,
+                reader,
             )
             if page is not None:
                 if new_article is None:
@@ -3634,36 +3643,11 @@ class PdfWriter(PdfDocCommon):
         page_labels[NameObject("/Nums")] = nums
         self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)] = page_labels
 
-    def _repr_mimebundle_(
-        self,
-        include: Iterable[str] | None = None,
-        exclude: Iterable[str] | None = None,
-    ) -> dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        .. seealso::
-
-           https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
+    def _get_pdf_bytes(self) -> bytes:
+        """Write the document into memory and return its bytes."""
         pdf_data = BytesIO()
         self.write(pdf_data)
-        data = {
-            "application/pdf": pdf_data.getvalue(),
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
+        return pdf_data.getvalue()
 
 
 def _pdf_objectify(obj: dict[str, Any] | str | float | list[Any]) -> PdfObject:

@@ -127,6 +127,11 @@ class Configuration:
     or appending pages.
     """
 
+    embedded_files_maximum_count: int = 1000
+    """The maximum allowed number of embedded files."""
+    embedded_files_maximum_output_length: int = 250_000_000
+    """The maximum allowed number of aggregated content bytes for the dictionary-based attachment API."""
+
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
 

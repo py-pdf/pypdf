@@ -20,9 +20,11 @@ from pypdf._codecs import charset_encoding
 from pypdf.errors import LimitReachedError
 from pypdf.generic import (
     ArrayObject,
+    BooleanObject,
     DecodedStreamObject,
     DictionaryObject,
     EncodedStreamObject,
+    FloatObject,
     IndirectObject,
     NameObject,
     NullObject,
@@ -954,6 +956,63 @@ def test_get_encoding__differences_is_an_array(caplog):
 
 
 @pytest.mark.parametrize(
+    ("entry", "expected"),
+    [
+        pytest.param(
+            NullObject(),
+            "Ignoring invalid font encoding difference: NullObject",
+            id="null",
+        ),
+        pytest.param(
+            FloatObject(1.5),
+            "Ignoring invalid font encoding difference: 1.5",
+            id="float",
+        ),
+        pytest.param(
+            BooleanObject(True),
+            "Ignoring invalid font encoding difference: True",
+            id="boolean",
+        ),
+        pytest.param(
+            ArrayObject([NameObject("/B")]),
+            "Ignoring invalid font encoding difference: ['/B']",
+            id="array",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Ignoring invalid font encoding difference: {}",
+            id="dictionary",
+        ),
+    ],
+)
+def test_get_encoding__differences_with_invalid_entry(
+    caplog: pytest.LogCaptureFixture, entry: PdfObject, expected: str
+) -> None:
+    """An entry that is neither a character code nor a glyph name is skipped without consuming a code."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), entry, NameObject("/quotesingle")]))
+    )
+
+    assert encoding[65] == "'"
+    assert encoding[66] == "B"
+    assert expected in caplog.text
+
+
+def test_get_encoding__differences_with_indirect_entries(caplog: pytest.LogCaptureFixture) -> None:
+    """Character codes and glyph names given as indirect references are resolved."""
+    writer = PdfWriter()
+    differences = ArrayObject(
+        [writer._add_object(NumberObject(65)), writer._add_object(NameObject("/quotesingle"))]
+    )
+
+    encoding, _ = get_encoding(_generate_font_with_differences(differences))
+
+    assert encoding[65] == "'"
+    assert encoding[66] == "B"
+    assert caplog.text == ""
+
+
+@pytest.mark.parametrize(
     ("glyph_name", "expected"),
     [
         ("/u1D6FD", "𝛽"),
@@ -1192,3 +1251,19 @@ def test_get_encoding__to_unicode_stream_with_str_data() -> None:
     font = DictionaryObject({NameObject("/ToUnicode"): to_unicode})
     _, map_dict = get_encoding(font)
     assert map_dict["\x01"] == "A"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param(b"0003  0020  0008 0025 0009 0026 000A 0027 000B 0028 000C 0029 000D 002A", id="below-limit"),
+        pytest.param(b"0003  0020  0008  0025 0009 0026 000A 0027 000B   0028 000C 0029    000D 002A", id="above-limit")
+    ]
+)
+def test_parse_bfchar__mapping_size_is_being_recalculated(line: bytes) -> None:
+    int_entry = [1, 2, 3]
+
+    with mock.patch("pypdf._cmap.MAPPING_DICTIONARY_SIZE_LIMIT", 10), \
+            mock.patch("pypdf._cmap._check_mapping_size") as check_mock:
+        parse_bfchar(line=line, int_entry=int_entry, map_dict={})
+    check_mock.assert_called_once_with(10)

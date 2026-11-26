@@ -10,7 +10,7 @@ from unittest import mock
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
 from pypdf.constants import ImageAttributes, PageAttributes, UserAccessPermissions
@@ -1868,7 +1868,7 @@ def test_trailer_id__non_array_raises(corrupt_id):
     data = data.replace(b"<< /Size 3 /Root", b"<< /Size 3 " + corrupt_id + b" /Root")
     reader = PdfReader(BytesIO(data))
     with pytest.raises(PdfReadError, match=r"^Trailer /ID entry does not point to an array$"):
-        reader._ID
+        reader._file_identifiers
 
 
 def test_writer__clone_from__non_array_id_raises():
@@ -3859,3 +3859,151 @@ def test_get_object_from_stream__invalid_object_stream(objstm_num, strict_messag
     reader = PdfReader(BytesIO(data), strict=True)
     with pytest.raises(PdfReadError, match=strict_message):
         reader.get_object(4)
+
+
+@pytest.mark.enable_socket
+def test_read_xref__unreadable_xref_stm(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    A trailer whose /XRefStm points to an unreadable cross-reference stream is read with a warning.
+
+    The stream at offset 1008 has a damaged /Length key.
+    ISO 32000-2:2020, 7.5.8.4, Table 19: /XRefStm is the offset of a cross-reference
+    stream in a hybrid-reference file.
+    """
+    url = "https://github.com/py-pdf/pypdf/files/5536984/test.pdf"
+    name = "pypdf-5536984.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)), strict=True)
+    assert len(reader.pages) == 5
+    assert "XRef object at 1008 can not be read, some object may be missing" in caplog.messages
+
+
+@pytest.mark.samples
+def test_read_xref__prev_pointing_to_nowhere() -> None:
+    """
+    A /Prev offset that points to no cross-reference table raises a PdfReadError in strict mode.
+
+    The /Prev offset 2815238 points into the middle of an object.
+    ISO 32000-2:2020, 7.5.5, Table 15: /Prev is the offset of the previous cross-reference section.
+    """
+    with pytest.raises(PdfReadError, match=r"^Could not find xref table at specified location$"):
+        PdfReader(SAMPLE_ROOT / "017-unreadable-meta-data" / "unreadablemetadata.pdf", strict=True)
+
+
+@pytest.mark.enable_socket
+def test_get_object__expected_object_not_found_with_non_zero_indexed_xref(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    An object whose cross-reference entry points to another object raises a PdfReadError in strict mode.
+
+    The cross-reference table starts at object 1 instead of 0, and object 8 is not found.
+    ISO 32000-2:2020, 7.5.4: the first subsection starts with object number 0.
+    """
+    url = "https://github.com/py-pdf/pypdf/files/14628314/iss2516.pdf"
+    name = "iss2516.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)), strict=True)
+    assert caplog.messages == ["Xref table not zero-indexed. ID numbers for objects will be corrected."]
+    with pytest.raises(
+        PdfReadError,
+        match=(
+            r"^Expected object ID \(8 0\) does not match actual \(-1 -1\); "
+            r"xref table not zero-indexed\.$"
+        ),
+    ):
+        reader.get_object(8)
+
+
+def test_decrypt__not_encrypted() -> None:
+    """
+    Decrypting a document that is not encrypted raises a PdfReadError.
+
+    ISO 32000-2:2020, 7.6.2: without an /Encrypt entry in the trailer, the document is not encrypted.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    with pytest.raises(PdfReadError, match=r"^Not encrypted file$"):
+        reader.decrypt("password")
+
+
+@pytest.mark.xfail(
+    reason="An object that a newer cross-reference section marks as free is read from an older section.",
+    strict=True,
+)
+@pytest.mark.enable_socket
+def test_get_object__object_deleted_in_incremental_update() -> None:
+    """
+    An object deleted by an incremental update is read as the null object.
+
+    The stamp annotation 17 is marked free by a later update of the file, and no object refers to it any more.
+    ISO 32000-2:2020, 7.5.6: an incremental update deletes an object by marking it free.
+    """
+    url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
+    name = "graph_letter.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert reader.get_object(17) == NullObject()
+
+
+def test_rebuild_xref_table__maximum_entries() -> None:
+    """Rebuilding a broken xref must honor the discovered-object budget."""
+    objects = {
+        1: b"<< /Type /Catalog /Pages 2 0 R >>",
+        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        3: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        4: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        5: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+    }
+    pdf_data = bytearray(b"%PDF-1.7\n")
+    for number, obj in objects.items():
+        pdf_data += b"%d 0 obj\n" % number + obj + b"\nendobj\n"
+    pdf_data += b"startxref\n0\n%%%%EOF\n"
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()), xref_rebuild_maximum_entries=2)
+    with pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild entry limit exceeded: 3 > 2\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))
+
+
+def test_rebuild_xref_table__maximum_input_length() -> None:
+    """Rebuilding must refuse oversized inputs before loading the whole file."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()))
+
+    oversized = b"%PDF-1.7\n" + (b"%xxxxxxxx\n" * 5) + b"startxref\n0\n%%%%EOF\n"
+    assert len(oversized) > 10
+    with apply_configuration(maximum_declared_stream_length=10), pytest.raises(
+        LimitReachedError,
+        match=rf"^Maximum xref rebuild input length exceeded: {len(oversized)} > 10\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(oversized))
+
+
+def test_rebuild_xref_table__maximum_entries_from_objstm() -> None:
+    """ObjStm members must also consume the xref rebuild entry budget."""
+    # Two top-level objects stay under the budget; the first ObjStm member
+    # pushes entry_count over the limit during the second recovery pass.
+    payload = b"10 0\n<< /Type /Page >>"
+    objstm = (
+        b"<< /Type /ObjStm /N 1 /First 4 /Length %d >>\nstream\n%s\nendstream"
+        % (len(payload), payload)
+    )
+    pdf_data = bytearray(b"%PDF-1.7\n")
+    pdf_data += b"1 0 obj\n<< /Type /Catalog >>\nendobj\n"
+    pdf_data += b"2 0 obj\n" + objstm + b"\nendobj\n"
+    pdf_data += b"startxref\n0\n%%%%EOF\n"
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    valid = BytesIO()
+    writer.write(valid)
+    reader = PdfReader(BytesIO(valid.getvalue()), xref_rebuild_maximum_entries=2)
+    with pytest.raises(
+        LimitReachedError,
+        match=r"^Maximum xref rebuild entry limit exceeded: 3 > 2\.$",
+    ):
+        reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))

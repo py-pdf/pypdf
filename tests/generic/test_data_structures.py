@@ -415,6 +415,31 @@ def test_content_stream__array_based__output_length() -> None:
         _ = reader.pages[0].get_contents()
 
 
+def test_content_stream__write_to_stream__encryption_key() -> None:
+    """
+    Passing an encryption key to ContentStream.write_to_stream() warns and writes the stream unchanged.
+
+    The writer encrypts the streams of the indirect objects before it writes them
+    (ISO 32000-2:2020, 7.6.2), so the parameter has no effect.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    content = reader.pages[0].get_contents()
+    assert isinstance(content, ContentStream)
+    expected = BytesIO()
+    content.write_to_stream(expected)
+
+    output = BytesIO()
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^The encryption_key parameter of ContentStream\.write_to_stream\(\) is deprecated "
+            r"and will be removed in pypdf 8\.0\.0\.$"
+        ),
+    ):
+        content.write_to_stream(output, b"key")
+    assert output.getvalue() == expected.getvalue()
+
+
 @pytest.mark.timeout(5)
 def test_dictionary_object__read_from_stream__infinite_loop(caplog: pytest.LogCaptureFixture) -> None:
     data = b"""1 0 obj

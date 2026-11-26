@@ -51,6 +51,7 @@ from .._utils import (
     WHITESPACES,
     BinaryStreamType,
     StreamType,
+    deprecate_no_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -1096,20 +1097,30 @@ def _iter_name_tree(tree: DictionaryObject) -> Iterator[Any]:
             pending[:0] = kids
 
 
-def _flatten_name_tree(tree: DictionaryObject) -> ArrayObject:
+def _flatten_name_tree(tree: DictionaryObject, *, maximum_entries: int | None = None) -> ArrayObject:
     """
     Turn a name tree into a single node holding all its names, in place.
 
     A node holds either /Kids or /Names (ISO 32000-2, 7.9.6), so a name added
     next to /Kids would be ignored by readers.
+
+    Args:
+        tree: The name tree root to flatten.
+        maximum_entries: Optional maximum number of name/value pairs. When set,
+            raise ``LimitReachedError`` before adding a pair that would exceed it.
     """
     names = ArrayObject()
+    remaining_entries = maximum_entries if maximum_entries is not None else sys.maxsize
     for node in _iter_name_tree(tree):
         if not isinstance(node, DictionaryObject):
             continue
         node_names = node.get("/Names", NullObject()).get_object()
-        if isinstance(node_names, ArrayObject):
-            names.extend(node_names)
+        if not isinstance(node_names, ArrayObject):
+            continue
+        remaining_entries -= (len(node_names) // 2)
+        if remaining_entries < 0:
+            raise LimitReachedError("Maximum name tree entry limit reached.")
+        names.extend(node_names)
     tree.pop(NameObject("/Kids"), None)
     tree.pop(NameObject("/Limits"), None)
     tree[NameObject("/Names")] = names
@@ -1650,6 +1661,21 @@ class ContentStream(DecodedStreamObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: str | bytes | None = None
     ) -> None:
+        """
+        Write the content stream to the stream.
+
+        Args:
+            stream: The stream to write to.
+            encryption_key: Ignored. The writer encrypts the objects before it
+                writes them.
+
+        .. deprecated:: 7.2.0
+            The ``encryption_key`` parameter is deprecated and will be removed
+            in pypdf 8.0.0. It has no effect.
+
+        """
+        if encryption_key is not None:
+            deprecate_no_replacement("The encryption_key parameter of ContentStream.write_to_stream()", "8.0.0")
         if not self._data and self._operations:
             self.get_data()  # this ensures ._data is rebuilt
         super().write_to_stream(stream)
