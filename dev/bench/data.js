@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795705584735,
+  "lastUpdate": 1795707005229,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -132137,6 +132137,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007192967434683815",
             "extra": "mean: 643.401626800005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "1aa10eccead290884dde46849bead23ed0fdee2a",
+          "message": "REL: 7.2.0\n\n## What's new\n\n### Security (SEC)\n- Limit memory for embedded files dictionary API (#4533) by @stefan6419846\n- Limit size of indexed color space lookup tables (#4532) by @stefan6419846\n- Avoid cmap data splitting before size validation (#4531) by @stefan6419846\n\n### Deprecations (DEP)\n- Deprecate encryption_key of ContentStream.write_to_stream (#4508) by @MartinThoma\n- Deprecate parse_filename_page_ranges (#4472) by @MartinThoma\n\n### Performance Improvements (PI)\n- Check inline image names against a set when listing page images (#4467) by @prawalpokharel\n- Count duplicate form field names and radio states without rescanning (#4478) by @kholdrex\n- Avoid copying the visited set for each nested outline item (#4455) by @metsw24-max\n- Fix cache evaluation for XMP data retrieval (#4380) by @1x98\n- Stop copying the page text for every text fragment (#4463) by @MartinThoma\n- Look up PageObject.page_number in constant time (#4439) by @MartinThoma\n- Use a set for the AcroForm field check in merge() (#4447) by @patrick-immometrica\n\n### Bug Fixes (BUG)\n- Preserve merged content streams during encryption (#4477) by @SyedTauhidUllahShah\n- Escape the font name in generated text field appearances (#4489) by @metsw24-max\n- Keep the generation number of objects in incremental updates (#4484) by @metsw24-max\n- Keep the writer's state when used as a context manager (#4488) by @MartinThoma\n- Remove every part of a combined ObjectDeletionFlag (#4446) by @patrick-immometrica\n- Remove objects which only unreferenced objects use (#4426) by @MartinThoma\n\n### Robustness (ROB)\n- Fall back for unsupported RC4 key lengths (#4461) by @Zephyr761\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.1.1...7.2.0)",
+          "timestamp": "2026-11-26T16:27:11+01:00",
+          "tree_id": "d60e83ba503f6c928934bbbba74dab7f3d365e59",
+          "url": "https://github.com/py-pdf/pypdf/commit/1aa10eccead290884dde46849bead23ed0fdee2a"
+        },
+        "date": 1795706990219,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7286424656049975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010109823687458011",
+            "extra": "mean: 366.48260540000024 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 23.176119408451477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019929914570896846",
+            "extra": "mean: 43.14786191666483 msec\nrounds: 24"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26775069425116327,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007595878856923752",
+            "extra": "mean: 3.7348175802000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 23.006045609186707,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018484999082301037",
+            "extra": "mean: 43.46683549999931 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.14638737467272717,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04061059619477355",
+            "extra": "mean: 6.8311902050000075 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5085431521627488,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038636409732598687",
+            "extra": "mean: 662.8912129999947 msec\nrounds: 5"
           }
         ]
       }
