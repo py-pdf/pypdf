@@ -250,22 +250,23 @@ class _RootPagePrefix:
         self._page_numbers = set()
         self._has_other_kid = False
 
-    def _add_kid(self, kid: PdfObject) -> bool:
-        """Add the kid if it is a page that is not in the prefix yet."""
+    def _is_new_page(self, kid: PdfObject) -> bool:
+        """Check whether the kid is a page that is not in the prefix yet."""
         # Same checks as in the tree walk, which also rejects an object seen before.
         # The writer resolves a reference by its object number only.
         if not isinstance(kid, IndirectObject) or kid.idnum in self._page_numbers:
             return False
         page = kid.get_object()
-        if not isinstance(page, DictionaryObject) or page.get("/Type") != "/Page":
-            return False
-        self._page_numbers.add(kid.idnum)
-        return True
+        return isinstance(page, DictionaryObject) and page.get("/Type") == "/Page"
 
     def contains(self, kids: ArrayObject, page_number: int) -> bool:
         self._update(kids)
         while not self._has_other_kid and len(self._page_numbers) <= page_number < len(kids):
-            self._has_other_kid = not self._add_kid(kids[len(self._page_numbers)])
+            kid = kids[len(self._page_numbers)]
+            if self._is_new_page(kid):
+                self._page_numbers.add(kid.idnum)
+            else:
+                self._has_other_kid = True
         return page_number < len(self._page_numbers)
 
     def record_insertion(self, kids: ArrayObject, index: int) -> None:
@@ -274,8 +275,13 @@ class _RootPagePrefix:
             self.reset()
             return
         self._length += 1
-        if index <= len(self._page_numbers) and not self._add_kid(kids[index]):
+        if index > len(self._page_numbers):
+            return
+        kid = kids[index]
+        if not self._is_new_page(kid):
             self.reset()
+            return
+        self._page_numbers.add(kid.idnum)
 
 
 class PdfWriter(PdfDocCommon):

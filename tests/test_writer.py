@@ -413,9 +413,7 @@ def _build_writer_with_page_tree(
 ) -> PdfWriter:
     """Build the page tree from a layout like [0, [1, 2], 3], where numbers are pages and lists are nodes."""
     writer = PdfWriter()
-    for width in range(1, 5):
-        writer.add_blank_page(width, 10)
-    pages = [page.indirect_reference for page in writer.pages]
+    pages = [writer.add_blank_page(width, 10).indirect_reference for width in range(1, 5)]
     root = cast(DictionaryObject, writer.root_object["/Pages"])
 
     def build_kids(layout: list[Any], parent: IndirectObject) -> tuple[ArrayObject, int]:
@@ -442,7 +440,7 @@ def _build_writer_with_page_tree(
         kids.append(IndirectObject(pages[other_generation_of_page].idnum, 1, writer))
         page_count += 1
     root[NameObject("/Kids")] = writer._add_object(kids) if indirect_kids else kids
-    count = NumberObject(page_count if root_count is None else root_count)
+    count = NumberObject(root_count or page_count)
     root[NameObject("/Count")] = writer._add_object(count) if indirect_count else count
     if untyped_page is not None:
         del pages[untyped_page].get_object()[NameObject("/Type")]
@@ -490,13 +488,13 @@ def test_insert_page__root_kids_are_checked_once():
     for _ in range(3):
         writer.add_blank_page(10, 10)
     with mock.patch.object(PdfDocCommon, "_get_page_in_node") as walk_tree, mock.patch.object(
-        _RootPagePrefix, "_add_kid", autospec=True, side_effect=_RootPagePrefix._add_kid
-    ) as add_kid:
+        _RootPagePrefix, "_is_new_page", autospec=True, side_effect=_RootPagePrefix._is_new_page
+    ) as is_new_page:
         for index in (0, 2, 4):
             writer.insert_blank_page(5, 5, index=index)
     walk_tree.assert_not_called()
     # Each lookup checks one more kid, and each insertion records the new kid.
-    assert add_kid.call_count == 6
+    assert is_new_page.call_count == 6
     assert [page.mediabox.width for page in writer.pages] == [5, 10, 5, 10, 5, 10]
 
 
@@ -520,10 +518,11 @@ def test_insert_page__root_kids_after_changes():
     for width in (1, 2, 3):
         writer.add_blank_page(width, 10)
     writer.insert_blank_page(4, 10, index=0)
+    writer.add_blank_page(8, 10)
     del writer.pages[1]
     writer.add_blank_page(5, 10)
     writer.insert_blank_page(6, 10, index=1)
-    assert [page.mediabox.width for page in writer.pages] == [4, 6, 2, 3, 5]
+    assert [page.mediabox.width for page in writer.pages] == [4, 6, 2, 3, 8, 5]
     _assert_page_positions_as_in_tree_walk(writer)
 
     writer.insert_page(writer.pages[3], index=0)
