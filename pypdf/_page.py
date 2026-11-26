@@ -1127,7 +1127,7 @@ class PageObject(DictionaryObject):
                 # The new content stream parses the data of the old one instead
                 # of copying its operations, so the operands are a list or the
                 # dictionary of an inline image.
-                raise AssertionError(f"Type of operands is {type(operands)}")
+                raise AssertionError(f"Type of operands is {type(operands)}")  # noqa: TRY004
         return stream
 
     @staticmethod
