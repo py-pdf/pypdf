@@ -4017,10 +4017,14 @@ def test_reader_does_not_copy_the_stream() -> None:
     tracemalloc = pytest.importorskip("tracemalloc", reason="Requires tracemalloc")
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
-    writer.add_metadata({"/Padding": "x" * 1_000_000})
+    # Pad well past PdfReader's ~3 KB fixed overhead so a full-stream copy stands out.
+    writer.add_metadata({"/Padding": "x" * 100_000})
     buffer = BytesIO()
     writer.write(buffer)
     data = buffer.getvalue()
+
+    # Trigger any one-time lazy imports before starting tracemalloc.
+    PdfReader(BytesIO(data))
 
     stream = BytesIO(data)
     tracemalloc.start()
@@ -4032,4 +4036,6 @@ def test_reader_does_not_copy_the_stream() -> None:
         tracemalloc.stop()
 
     assert len(reader.pages) == 1
+    # Without copying, retained memory is a few KB; a getbuffer() copy retains >= len(data),
+    # so len(data) // 2 cleanly separates normal overhead from a copied stream.
     assert after - before < len(data) // 2
