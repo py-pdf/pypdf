@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795723468159,
+  "lastUpdate": 1795723524706,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -179659,6 +179659,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.037847713926319033",
             "extra": "mean: 685.1700423999944 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "78355114+lyn1dev@users.noreply.github.com",
+            "name": "lyn1",
+            "username": "lyn1dev"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b758a0e14b0509c389f53b86e9e51d0c850f6260",
+          "message": "PI: Avoid copying the stream in get_stream_size() and get_stream_data() (#4378)\n\n* PI: Avoid copying the stream in get_stream_size() and get_stream_data()\n\nget_stream_size() used getbuffer() for streams providing it. For a BytesIO\ncreated from bytes, getbuffer() materializes the whole buffer, copying the\ncomplete file and keeping the copy alive as long as the stream exists.\nPdfReader measures every xref table this way, so opening a 10 MB BytesIO\nretained another 10 MB. Seeking to the end and restoring the position\nreturns the same size without allocating.\n\nget_stream_data() had the same getbuffer() branch and thus copied the\nbuffer twice: once to materialize it and once for the returned bytes.\nReading with read() returns the same data with a single copy.\n\nCloses #4369\n\n* TST: Run the stream copy regression test only where tracemalloc exists\n\nPyPy does not provide the tracemalloc module, so importing it at module\nlevel broke the collection of tests/test_reader.py and tests/test_utils.py\nthere. The two helper tests now use a BytesIO whose getbuffer() raises\ninstead of measuring allocations, and the PdfReader test skips when\ntracemalloc is unavailable.\n\n* TST: Remove the getbuffer() implementation-detail tests\n\nThe two helper tests subclassed BytesIO with a getbuffer() that raises, so\nthey asserted that no arbitrary method is called instead of the memory\nbehaviour the change is about. The PdfReader test in tests/test_reader.py\nalready fails without the change and covers the overhead, and the existing\ntest_get_stream_size() and test_get_stream_data() tests keep covering the\nreturned values and the restored stream position.\n\n* TST: Explain why the tracemalloc regression test is skipped on PyPy\n\n* TST: shrink payload and warm up PdfReader in stream copy test",
+          "timestamp": "2026-11-26T21:02:10+01:00",
+          "tree_id": "d12d3dc330d41df95462c452467c15ca49ed25ee",
+          "url": "https://github.com/py-pdf/pypdf/commit/b758a0e14b0509c389f53b86e9e51d0c850f6260"
+        },
+        "date": 1795723514769,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 21.793529181755762,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018406103346851953",
+            "extra": "mean: 45.88517957142711 msec\nrounds: 28"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 46.935012280072954,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007981277878819266",
+            "extra": "mean: 21.30605600000166 msec\nrounds: 40"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.775295863663064,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032749340597160136",
+            "extra": "mean: 563.2863910000026 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 53.13246829605473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015267381865184235",
+            "extra": "mean: 18.820883577777497 msec\nrounds: 90"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.47457610806739214,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0537169385265752",
+            "extra": "mean: 2.107143581400004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7090066852144186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03546733288367124",
+            "extra": "mean: 585.1352184000007 msec\nrounds: 5"
           }
         ]
       }
