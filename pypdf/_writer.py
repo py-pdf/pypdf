@@ -2235,8 +2235,8 @@ class PdfWriter(PdfDocCommon):
             to_delete: ObjectDeletionFlag,
             text_filters: dict[str, Any] | None = None,
     ) -> None:
-        font_id = None
-        font_id_stack: list[Any] = []
+        font_id: NameObject | None = None
+        font_id_stack: list[NameObject | None] = []
         font_ids_to_delete = []
         if text_filters and to_delete & ObjectDeletionFlag.TEXT:
             font_ids_to_delete = text_filters.get("font_ids", [])

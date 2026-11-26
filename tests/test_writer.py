@@ -620,6 +620,40 @@ def test_remove_objects_from_page__text_filters_only_narrow_text():
     assert b"re" not in data
 
 
+def test_remove_objects_from_page__text_filters_follow_the_graphics_state():
+    """Q restores the font a Tf set before the matching q, so the text after it uses that font."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(200, 200)
+    writer._merge_content_stream_to_page(
+        page, b"BT /F1 12 Tf q /F2 12 Tf (inner) Tj Q (outer) Tj ET"
+    )
+
+    writer.remove_objects_from_page(
+        writer.pages[0], ObjectDeletionFlag.TEXT, text_filters={"font_ids": ["/F2"]}
+    )
+
+    data = writer.pages[0].get_contents().get_data()
+    assert b"(inner)" not in data
+    assert b"(outer)" in data
+
+
+def test_remove_objects_from_page__text_filters_with_unbalanced_q():
+    """A Q that restores nothing keeps the font in force instead of raising."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(200, 200)
+    writer._merge_content_stream_to_page(
+        page, b"BT /F1 12 Tf (before) Tj Q (after) Tj ET"
+    )
+
+    writer.remove_objects_from_page(
+        writer.pages[0], ObjectDeletionFlag.TEXT, text_filters={"font_ids": ["/F1"]}
+    )
+
+    data = writer.pages[0].get_contents().get_data()
+    assert b"(before)" not in data
+    assert b"(after)" not in data
+
+
 def test_remove_text_all_operators(pdf_file_path):
     stream = (
         b"BT "
