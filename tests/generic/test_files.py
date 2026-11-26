@@ -2,14 +2,15 @@
 import datetime
 import shutil
 import subprocess
+from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf.constants import AFRelationship
-from pypdf.errors import PdfReadError, PyPdfError
+from pypdf.errors import LimitReachedError, PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -678,6 +679,41 @@ def test_embedded_file__create__kids_based_name_tree() -> None:
     ]
 
 
+def test_embedded_file__create__nested_kids_based_name_tree() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.add_attachment("a.txt", b"a")
+    names = writer.root_object["/Names"]
+    assert isinstance(names, DictionaryObject)
+    files = names["/EmbeddedFiles"]
+    assert isinstance(files, DictionaryObject)
+    leaf = DictionaryObject({NameObject("/Names"): files["/Names"]})
+    middle = DictionaryObject({NameObject("/Kids"): ArrayObject([writer._add_object(leaf)])})
+    del files["/Names"]
+    files[NameObject("/Kids")] = ArrayObject([writer._add_object(middle)])
+
+    writer.add_attachment("b.txt", b"b")
+
+    assert dict(writer.attachments) == {"a.txt": [b"a"], "b.txt": [b"b"]}
+
+
+def test_embedded_file__load__nested_kids_and_cycle() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.add_attachment("a.txt", b"a")
+    names = writer.root_object["/Names"]
+    assert isinstance(names, DictionaryObject)
+    files = names["/EmbeddedFiles"]
+    assert isinstance(files, DictionaryObject)
+    files_ref = files.indirect_reference
+    leaf = DictionaryObject({NameObject("/Names"): files["/Names"]})
+    middle = DictionaryObject({NameObject("/Kids"): ArrayObject([writer._add_object(leaf), files_ref])})
+    del files["/Names"]
+    files[NameObject("/Kids")] = ArrayObject([writer._add_object(middle)])
+
+    assert [attachment.name for attachment in EmbeddedFile._load(writer.root_object, strict=True)] == ["a.txt"]
+
+
 def test_embedded_file__create__neither_kids_nor_names() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
@@ -780,3 +816,99 @@ def test_embedded_file__order() -> None:
         "test.txt", attachment4.pdf_object.indirect_reference,
         "xyz.txt", attachment3.pdf_object.indirect_reference,
     ]
+
+
+def test_embedded_file__load__maximum_count() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+    for i in range(10):
+        writer.add_attachment(f"f{i:02d}.txt", b"content")
+
+    with apply_configuration(embedded_files_maximum_count=10):
+        assert len(list(writer.attachments)) == 10
+
+    with apply_configuration(embedded_files_maximum_count=9), \
+            pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Maximum embedded file entry limit exceeded\.$"
+            ):
+        assert len(list(writer.attachments)) == 10
+
+
+def test_embedded_file__get_names_array__maximum_count__flat() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+    for i in range(10):
+        writer.add_attachment(f"f{i:02d}.txt", b"content")
+
+    with apply_configuration(embedded_files_maximum_count=10):
+        # We check on get, not during writing.
+        # `test1.txt` is the 11th entry and will only be detected when attempting to write the 12th,
+        # as inserting the 11th entry will only load and check the existing 10 entries.
+        writer.add_attachment("test1.txt", b"content")
+
+        with pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Maximum embedded file entry limit reached\.$"
+        ):
+            writer.add_attachment("test2.txt", b"content")
+
+
+@pytest.mark.parametrize(
+    ("maximum_count", "exception_message"),
+    [
+        pytest.param(10, None, id="at-limit"),
+        pytest.param(9, r"^Maximum name tree entry limit reached\.$", id="over-limit"),
+    ]
+)
+def test_embedded_file__get_names_array__maximum_count__tree(maximum_count: int, exception_message: str | None) -> None:
+    names_leaf = ArrayObject()
+    for i in range(10):
+        names_leaf.append(TextStringObject(f"f{i:02d}.txt"))
+        names_leaf.append(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Filespec"),
+                    NameObject("/F"): TextStringObject(f"f{i:02d}.txt"),
+                }
+            )
+        )
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer.root_object[NameObject("/Names")] = DictionaryObject(
+        {
+            NameObject("/EmbeddedFiles"): DictionaryObject(
+                {NameObject("/Kids"): ArrayObject([DictionaryObject({NameObject("/Names"): names_leaf})])}
+            )
+        }
+    )
+
+    context = (
+        pytest.raises(expected_exception=LimitReachedError, match=exception_message) if exception_message
+        else nullcontext()
+    )
+    with apply_configuration(embedded_files_maximum_count=maximum_count), context:
+        writer.add_attachment("extra.txt", b"content")
+
+
+def test_attachments__content_limit() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=10, height=10)
+    for i in range(10):
+        writer.add_attachment(f"f{i:02d}.txt", b"AAAAABBBBB")
+
+    with apply_configuration(embedded_files_maximum_output_length=100):
+        _ = list(writer.attachments.items())
+
+    # Reset between each call.
+    with apply_configuration(embedded_files_maximum_output_length=100):
+        _ = list(writer.attachments.items())
+
+    # Exceed limit.
+    seen_names: set[str] = set()
+    with apply_configuration(embedded_files_maximum_output_length=99), \
+            pytest.raises(
+                expected_exception=LimitReachedError, match=r"^Maximum aggregate attachment content size exceeded\.$"
+            ):
+        for name, content in writer.attachments.items():
+            seen_names.add(name)
+            assert content == [b"AAAAABBBBB"]
+    assert seen_names == {f"f{i:02d}.txt" for i in range(9)}

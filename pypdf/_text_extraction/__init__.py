@@ -4,6 +4,7 @@ Code related to text extraction.
 Some parts are still in _page.py. In doubt, they will stay there.
 """
 
+import codecs
 import math
 import re
 from collections.abc import Callable, Mapping
@@ -166,7 +167,8 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     else:
         lower, upper = line_span[1], line_span[2]
         distance = 0.0 if lower <= axis <= upper else min(abs(axis - lower), abs(axis - upper))
-    last = (output + text)[-1:]
+    # The last character of output + text, without copying both strings.
+    last = (text or output)[-1:]
     threshold = 0.8 * min(str_height * scale_prev_y, font_size * scale_y)
     if distance > threshold:
         if last not in ("", "\n"):
@@ -200,16 +202,52 @@ def crlf_space_check(  # noqa: PLR0913, PLR0917
     return text, output, cm_prev, tm_prev, line_span
 
 
+def _count_codes(operand: str | bytes, text: str, font: Font) -> tuple[int, int]:
+    """
+    Count the character codes of a shown string and the single-byte codes 32 in it.
+
+    Character spacing applies to every character code and word spacing only to
+    the single-byte code 32 (Section 9.3.3 of the PDF 2.0 specification).
+
+    Args:
+        operand: The string operand as found in the content stream.
+        text: The operand decoded with the font encoding.
+        font: The font used to show the string.
+
+    Returns:
+        The number of character codes and the number of single-byte codes 32.
+
+    """
+    if isinstance(operand, str):
+        if not isinstance(operand, TextStringObject):
+            # The " " that process_tj_offset adds for a gap in a TJ array: no code was shown.
+            return 0, 0
+        # A content stream that was not parsed as bytes, like one changed by a PdfWriter,
+        # has text strings. Count the codes of the bytes they were read from.
+        operand = operand.get_original_bytes()
+    if isinstance(font.encoding, dict):  # Simple font, one byte per code.
+        return len(operand), operand.count(b" ")
+    if codecs.lookup(font.encoding).name == "utf-16-be":
+        # Two bytes per code. Counting the decoded characters instead would
+        # merge two codes forming a surrogate pair into one character.
+        return len(operand) // 2, 0
+    # Multi-byte encodings like Shift-JIS decode one character per code and
+    # keep the ASCII range as single-byte codes.
+    return len(text), text.count(" ")
+
+
 def get_text_operands(
     operands: list[str | TextStringObject],
     cm_matrix: list[float],
     tm_matrix: list[float],
     font: Font,
     orientations: tuple[int, ...]
-) -> tuple[str, bool, float]:
+) -> tuple[str, bool, float, int, int]:
     text: str = ""
     is_str_operands = False
     widths: float = 0.0
+    glyph_count = 0
+    space_count = 0
     width_cache: dict[str, float] = {}
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
@@ -234,6 +272,7 @@ def get_text_operands(
             else:  # Apply dict encoding
                 text = "".join(font.encoding.get(x, chr(x)) for x in tt)
                 raw_characters = "".join(chr(byte) for byte in tt)
+        glyph_count, space_count = _count_codes(operands[0], text, font)
         for char in (raw_characters or text):
             if char == font.space_char:
                 widths += font.space_width
@@ -243,7 +282,7 @@ def get_text_operands(
                 widths += width_cache[char]
 
     width_cache.clear()
-    return (text, is_str_operands, widths)
+    return (text, is_str_operands, widths, glyph_count, space_count)
 
 
 def get_display_str(

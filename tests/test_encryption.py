@@ -12,12 +12,12 @@ import pytest
 
 import pypdf
 import pypdf._crypt_providers._fallback
-from pypdf import PasswordType, PdfReader, PdfWriter
+from pypdf import PasswordType, PdfReader, PdfWriter, Transformation
 from pypdf._crypt_providers import crypt_provider
 from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
 from pypdf._encryption import AlgV5, CryptAES, CryptRC4, EncryptAlgorithm, Encryption, _saslprep
 from pypdf.errors import DependencyError, PdfReadError, PdfStreamError, WrongPasswordError
-from pypdf.generic import ByteStringObject, DictionaryObject, NameObject, NullObject, NumberObject
+from pypdf.generic import ByteStringObject, DecodedStreamObject, DictionaryObject, NameObject, NullObject, NumberObject
 from tests import RESOURCE_ROOT, SAMPLE_ROOT, get_data_from_url
 
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
@@ -253,12 +253,12 @@ def test_alg_v5_generate_values():
     """
     key = b"0123456789123451"
     values = AlgV5.generate_values(
-        R=5,
+        revision=5,
         user_password=b"foo",
         owner_password=b"bar",
         key=key,
-        p=0,
-        metadata_encrypted=True,
+        permissions=0,
+        encrypt_metadata=True,
     )
     assert values == {
         "/U": values["/U"],
@@ -293,7 +293,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
 
     # test with invalid algorithm name
     if alg == "ABCD":
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match=r"^Algorithm 'ABCD' NOT supported$") as exc:
             writer.encrypt(
                 user_password=user_password,
                 owner_password=owner_password,
@@ -328,6 +328,61 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
     page = reader.pages[0]
     text1 = page.extract_text()
     assert text0 == text1
+
+
+@pytest.mark.parametrize("encrypt_before_merging", [False, True])
+@pytest.mark.parametrize(
+    "algorithm",
+    [None, pytest.param("AES-256", marks=pytest.mark.skipif(not HAS_AES, reason="No AES implementation"))],
+)
+def test_encrypt_keeps_merged_page_content(algorithm, encrypt_before_merging):
+    """
+    Encrypting a stamped page preserves the stamp and the original text.
+
+    This is a regression test for issue #4476, based on the maintainer's reproducer.
+    """
+    stamp_page = PdfReader(RESOURCE_ROOT / "jpeg.pdf").pages[0]
+    original = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    original_text = original.pages[0].extract_text()
+    writer = PdfWriter(clone_from=original)
+    if encrypt_before_merging:
+        writer.encrypt("", algorithm=algorithm)
+    writer.pages[0].merge_transformed_page(stamp_page, Transformation().scale(0.5))
+    if not encrypt_before_merging:
+        writer.encrypt("", algorithm=algorithm)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, password="")
+    assert reader.is_encrypted
+    page = reader.pages[0]
+    assert b"Do" in [operator for _, operator in page.get_contents().operations]
+    text = page.extract_text()
+    assert original_text in text
+    assert stamp_page.extract_text().strip() in text
+
+
+@pytest.mark.parametrize(
+    "algorithm",
+    [None, pytest.param("AES-256", marks=pytest.mark.skipif(not HAS_AES, reason="No AES implementation"))],
+)
+def test_encrypt_preserves_stream_encoding(algorithm):
+    """Encrypting an encoded stream preserves its filter and encoded bytes."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    content = DecodedStreamObject()
+    content.set_data(b"q\n10 10 20 20 re\nf\nQ\n")
+    encoded = content.flate_encode()
+    page[NameObject("/Contents")] = writer._add_object(encoded)
+    writer.encrypt("password", algorithm=algorithm)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output, password="password")
+    result = reader.pages[0]["/Contents"]
+    assert result["/Filter"] == "/FlateDecode"
+    assert result._data == encoded._data
+    assert result.get_data() == content.get_data()
 
 
 @pytest.mark.parametrize(
@@ -670,6 +725,26 @@ def test_rc4_fallback_warns_once(caplog, monkeypatch) -> None:
     assert sum("RC4 is not supported" in message for message in caplog.messages) == 1
 
 
+@pytest.mark.skipif(not USE_CRYPTOGRAPHY, reason="Requires the cryptography provider")
+def test_read_rc4_pdf_with_48_bit_key(caplog, monkeypatch) -> None:
+    from pypdf._crypt_providers import _cryptography  # noqa: PLC0415
+
+    monkeypatch.setattr(CryptRC4, "_is_rc4_supported", True)
+    monkeypatch.setattr(_cryptography, "_warned_rc4_key_sizes", set())
+    path = RESOURCE_ROOT / "encryption" / "rc4-len48.pdf"
+
+    reader = PdfReader(path, password="pw")
+    metadata = reader.metadata
+
+    assert metadata is not None
+    assert metadata.title == "hello"
+    assert CryptRC4._is_rc4_supported is True
+    assert caplog.messages.count(
+        "cryptography does not support 48-bit RC4 keys; "
+        "falling back to the pure-Python RC4 implementation."
+    ) == 1
+
+
 @pytest.mark.parametrize(
     ("algorithm", "requires_aes"),
     [
@@ -856,12 +931,12 @@ def test_read_non_boolean_encrypt_metadata(caplog):
     """A non-boolean /EncryptMetadata falls back to the default, a null one is treated as absent."""
     entry = _build_minimal_encryption_dictionary()
     entry[NameObject("/EncryptMetadata")] = NameObject("/Yes")
-    assert Encryption.read(entry, b"").EncryptMetadata is True
+    assert Encryption.read(entry, b"").encrypt_metadata is True
     assert "Ignoring non-boolean /EncryptMetadata entry of the encryption dictionary" in caplog.messages
 
     caplog.clear()
     entry[NameObject("/EncryptMetadata")] = NullObject()
-    assert Encryption.read(entry, b"").EncryptMetadata is True
+    assert Encryption.read(entry, b"").encrypt_metadata is True
     assert caplog.messages == []
 
 

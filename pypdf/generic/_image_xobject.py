@@ -30,6 +30,10 @@ ImageMode: TypeAlias = Literal[
 
 MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
+# The maximum valid index value for /Indexed `hival` parameters.
+# See section 8.6.6.3 of ISO 32000-2:2020.
+_INDEXED_COLOR_SPACE__MAXIMUM_HIVAL = 255
+
 _PROCESS_COLORANTS = ("/Cyan", "/Magenta", "/Yellow", "/Black")
 
 
@@ -82,7 +86,8 @@ def _get_image_mode(
         color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
-        color_components = cast(int, icc_profile["/N"])
+        # /N is required, but a profile without it is read with the components known
+        color_components = cast(int, icc_profile.get("/N", color_components))
         color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space_str = color_space[1].get_object()
@@ -345,6 +350,85 @@ def __handle_flate__indexed(color_space: ArrayObject) -> tuple[Any, Any, Any, An
     raise PdfReadError(f"Expected color space with 4 values, got {count}: {color_space}")
 
 
+def __handle_flate__valid_mode(
+        *, img: Image.Image, nb: int, base: Any, lookup: Any, mode: ImageMode, conv: str, hival: int,
+        is_hival_limited: bool, obj_as_text: str,
+) -> Image.Image:
+    if img.mode == "1" and nb == 0:
+        # A two-color lookup needs at least one byte per color, but the
+        # base color space resolves to a 1-bit or palette image.
+        logger_warning(
+            "Cannot apply lookup for base %(base)s to image with mode 1. "
+            "Please share PDF with pypdf dev team",
+            source=__name__,
+            base=base,
+        )
+    elif img.mode == "1":
+        # Two values ("high" and "low").
+        expected_count = 2 * nb
+        actual_count = len(lookup)
+        if actual_count != expected_count:
+            if actual_count < expected_count:
+                logger_warning(
+                    "Not enough lookup values: Expected %(expected_count)d, got %(actual_count)d.",
+                    source=__name__,
+                    expected_count=expected_count,
+                    actual_count=actual_count,
+                )
+                lookup += bytes([0] * (expected_count - actual_count))
+            elif not check_if_whitespace_only(lookup[expected_count:]):
+                logger_warning(
+                    "Too many lookup values: Expected %(expected_count)d, got %(actual_count)d.",
+                    source=__name__,
+                    expected_count=expected_count,
+                    actual_count=actual_count,
+                )
+            lookup = lookup[:expected_count]
+        colors_arr = [lookup[:nb], lookup[nb:]]
+        source = _convert_image(image=img, mode="L")
+        bands = [
+            source.point(
+                [low_value] * 128 + [high_value] * 128
+            )
+            for low_value, high_value in zip(colors_arr[0], colors_arr[1])
+        ]
+        img = bands[0] if nb == 1 else _merge_image(mode=mode, bands=bands)
+    else:
+        img = _convert_image(image=img, mode=conv)
+        if is_hival_limited:
+            lookup = lookup[: (hival + 1) * nb]
+        if len(lookup) != (hival + 1) * nb:
+            logger_warning("Invalid Lookup Table in %(obj_as_text)s", source=__name__, obj_as_text=obj_as_text)
+            lookup = None
+        elif mode == "L":
+            # gray lookup does not work: it is converted to a similar RGB lookup
+            lookup = b"".join([bytes([b, b, b]) for b in lookup])
+            mode = "RGB"
+        elif mode == "CMYK":
+            # Convert the CMYK palette to RGB manually. Pillow can unpack
+            # CMYK palettes natively since 10.1.0 (see
+            # https://github.com/python-pillow/Pillow/pull/7310),
+            # but this is not reliable across versions: Starting with
+            # Pillow 12.2.0, the palette stays CMYK and `convert("RGB")`
+            # does not convert its colors anymore.
+            # Pillow rounds the values while this code truncates them, so
+            # results can differ by one for some channels.
+            _rgb = []
+            for _c, _m, _y, _k in (
+                    lookup[n: n + 4] for n in range(0, 4 * (len(lookup) // 4), 4)
+            ):
+                _r = int(255 * (1 - _c / 255) * (1 - _k / 255))
+                _g = int(255 * (1 - _m / 255) * (1 - _k / 255))
+                _b = int(255 * (1 - _y / 255) * (1 - _k / 255))
+                _rgb.append(bytes((_r, _g, _b)))
+            lookup = b"".join(_rgb)
+            mode = "RGB"
+        if lookup is not None:
+            img.putpalette(lookup, rawmode=mode)
+
+    return _convert_image(image=img, mode="L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
+
+
 def _handle_flate(
     size: tuple[int, int],
     data: bytes,
@@ -371,9 +455,31 @@ def _handle_flate(
             lookup = lookup.original_bytes
         if isinstance(lookup, str):
             lookup = lookup.encode()
+
+        is_hival_limited = isinstance(hival, (int, float)) and hival > _INDEXED_COLOR_SPACE__MAXIMUM_HIVAL
+        if is_hival_limited:
+            logger_warning(
+                (
+                    "hival %(hival)d of /Indexed color space exceeds the maximum of %(limit)d in %(obj_as_text)s. "
+                    "Ignoring additional lookup entries."
+                ),
+                source=__name__,
+                hival=hival,
+                limit=_INDEXED_COLOR_SPACE__MAXIMUM_HIVAL,
+                obj_as_text=obj_as_text,
+            )
+            hival = _INDEXED_COLOR_SPACE__MAXIMUM_HIVAL
+
         if (channels := _get_process_colorant_channels(base)) is not None:
             # Put each tint into its own CMYK channel instead of evaluating the tint transform.
             colorant_count = len(channels)
+            expected_length = max(0, int(hival + 1)) * colorant_count
+            if is_hival_limited:
+                lookup = lookup[: expected_length]
+            else:
+                # Do not convert more than one surplus entry. This keeps a too long lookup invalid
+                # for the length check below without converting all of it.
+                lookup = lookup[: expected_length + colorant_count]
             cmyk_lookup = bytearray()
             for index in range(0, len(lookup) - colorant_count + 1, colorant_count):
                 cmyk = bytearray(4)
@@ -382,6 +488,7 @@ def _handle_flate(
                 cmyk_lookup += cmyk
             lookup = bytes(cmyk_lookup)
             base = ColorSpaces.DEVICE_CMYK
+
         try:
             nb, conv, mode = {  # type: ignore[assignment]
                 "1": (0, "", ""),
@@ -398,76 +505,10 @@ def _handle_flate(
             )
             lookup = None
         else:
-            if img.mode == "1" and nb == 0:
-                # A two-color lookup needs at least one byte per color, but the
-                # base color space resolves to a 1-bit or palette image.
-                logger_warning(
-                    "Cannot apply lookup for base %(base)s to image with mode 1. "
-                    "Please share PDF with pypdf dev team",
-                    source=__name__,
-                    base=base,
-                )
-            elif img.mode == "1":
-                # Two values ("high" and "low").
-                expected_count = 2 * nb
-                actual_count = len(lookup)
-                if actual_count != expected_count:
-                    if actual_count < expected_count:
-                        logger_warning(
-                            "Not enough lookup values: Expected %(expected_count)d, got %(actual_count)d.",
-                            source=__name__,
-                            expected_count=expected_count,
-                            actual_count=actual_count,
-                        )
-                        lookup += bytes([0] * (expected_count - actual_count))
-                    elif not check_if_whitespace_only(lookup[expected_count:]):
-                        logger_warning(
-                            "Too many lookup values: Expected %(expected_count)d, got %(actual_count)d.",
-                            source=__name__,
-                            expected_count=expected_count,
-                            actual_count=actual_count,
-                        )
-                    lookup = lookup[:expected_count]
-                colors_arr = [lookup[:nb], lookup[nb:]]
-                source = _convert_image(image=img, mode="L")
-                bands = [
-                    source.point(
-                        [low_value] * 128 + [high_value] * 128
-                    )
-                    for low_value, high_value in zip(colors_arr[0], colors_arr[1])
-                ]
-                img = bands[0] if nb == 1 else _merge_image(mode=mode, bands=bands)
-            else:
-                img = _convert_image(image=img, mode=conv)
-                if len(lookup) != (hival + 1) * nb:
-                    logger_warning("Invalid Lookup Table in %(obj_as_text)s", source=__name__, obj_as_text=obj_as_text)
-                    lookup = None
-                elif mode == "L":
-                    # gray lookup does not work: it is converted to a similar RGB lookup
-                    lookup = b"".join([bytes([b, b, b]) for b in lookup])
-                    mode = "RGB"
-                elif mode == "CMYK":
-                    # Convert the CMYK palette to RGB manually. Pillow can unpack
-                    # CMYK palettes natively since 10.1.0 (see
-                    # https://github.com/python-pillow/Pillow/pull/7310),
-                    # but this is not reliable across versions: Starting with
-                    # Pillow 12.2.0, the palette stays CMYK and `convert("RGB")`
-                    # does not convert its colors anymore.
-                    # Pillow rounds the values while this code truncates them, so
-                    # results can differ by one for some channels.
-                    _rgb = []
-                    for _c, _m, _y, _k in (
-                        lookup[n : n + 4] for n in range(0, 4 * (len(lookup) // 4), 4)
-                    ):
-                        _r = int(255 * (1 - _c / 255) * (1 - _k / 255))
-                        _g = int(255 * (1 - _m / 255) * (1 - _k / 255))
-                        _b = int(255 * (1 - _y / 255) * (1 - _k / 255))
-                        _rgb.append(bytes((_r, _g, _b)))
-                    lookup = b"".join(_rgb)
-                    mode = "RGB"
-                if lookup is not None:
-                    img.putpalette(lookup, rawmode=mode)
-            img = _convert_image(image=img, mode="L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
+            img = __handle_flate__valid_mode(
+                img=img, nb=nb, base=base, lookup=lookup, mode=mode, conv=conv, hival=hival,
+                is_hival_limited=is_hival_limited, obj_as_text=obj_as_text
+            )
     elif not is_null_or_none(color_space) and color_space[0] == "/ICCBased":
         # Exclude pure black-and-white images.
         # TODO: The ICC profile itself is never applied; only the number of components

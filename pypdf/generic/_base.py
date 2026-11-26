@@ -161,13 +161,16 @@ class PdfObject:
         except Exception:
             pass
         ind = self.indirect_reference
+        generation = 0
         if (
             pdf_dest.incremental
             and ind is not None
             and ind.pdf == pdf_dest._reader
             and ind.idnum <= len(pdf_dest._objects)
         ):
+            # Keep the number and generation the incremental source uses for this object.
             i = ind.idnum
+            generation = ind.generation
         else:
             i = len(pdf_dest._objects) + 1
         if ind is not None:
@@ -189,7 +192,7 @@ class PdfObject:
         except IndexError:
             pdf_dest._objects.append(clone)
             i = len(pdf_dest._objects)
-        clone.indirect_reference = IndirectObject(i, 0, pdf_dest)
+        clone.indirect_reference = IndirectObject(i, generation, pdf_dest)
         return clone
 
     def get_object(self) -> Optional["PdfObject"]:

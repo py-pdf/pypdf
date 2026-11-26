@@ -4,6 +4,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from io import BytesIO
 from operator import itemgetter
 from pathlib import Path
@@ -18,6 +19,7 @@ from pypdf.filters import FlateDecode
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    DecodedStreamObject,
     DictionaryObject,
     EmbeddedFile,
     EncodedStreamObject,
@@ -117,8 +119,8 @@ def test_get_attachments__alternative_name_is_none():
             "pypdf._writer.PdfWriter.attachment_list",
             new_callable=mock.PropertyMock(return_value=[attachment])
     ), mock.patch(
-            "pypdf.generic._files.EmbeddedFile.content",
-            new_callable=mock.PropertyMock(return_value=b"content")
+            "pypdf.generic._files.EmbeddedFile._get_content",
+            return_value=b"content"
     ):
         assert dict(writer.attachments) == {"test.txt": [b"content"]}
 
@@ -1099,6 +1101,99 @@ def test_get_form_text_fields__mapping_name_without_partial_name():
     assert reader.get_form_text_fields() == {"mappingname": "hello"}
 
 
+def _build_reader_with_text_fields(*, top_level_titles=(), child_titles=()) -> PdfReader:
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    fields = ArrayObject()
+    for index, title in enumerate(top_level_titles):
+        fields.append(writer._add_object(DictionaryObject({
+            NameObject("/T"): title,
+            NameObject("/FT"): NameObject("/Tx"),
+            NameObject("/V"): TextStringObject(f"t{index}"),
+        })))
+    # Same partial names below different parents give the same short name.
+    for index, title in enumerate(child_titles):
+        parent = writer._add_object(DictionaryObject({NameObject("/T"): TextStringObject(f"p{index}")}))
+        child = writer._add_object(DictionaryObject({
+            NameObject("/T"): TextStringObject(title),
+            NameObject("/FT"): NameObject("/Tx"),
+            NameObject("/V"): TextStringObject(str(index)),
+            NameObject("/Parent"): parent,
+        }))
+        parent.get_object()[NameObject("/Kids")] = ArrayObject([child])
+        fields.append(parent)
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(DictionaryObject({NameObject("/Fields"): fields}))
+    data = BytesIO()
+    writer.write(data)
+    return PdfReader(data)
+
+
+@pytest.mark.parametrize(
+    ("child_titles", "expected"),
+    [
+        pytest.param(
+            ["x", "x", "x.2", "x", "a.b", "a", "a", "a.b", "x."],
+            [
+                ("x", "0"), ("x.2", "1"), ("x.2.2", "2"), ("x.4", "3"), ("a.b", "4"),
+                ("a", "5"), ("a.3", "6"), ("a.b.2", "7"), ("x.", "8"),
+            ],
+            id="numbered-duplicates",
+        ),
+        pytest.param(["x", "x.3", "x", "x"], [("x", "0"), ("x.3", "3")], id="numbered-duplicate-overwrites-name"),
+    ],
+)
+def test_get_form_text_fields__duplicate_names(child_titles, expected):
+    reader = _build_reader_with_text_fields(child_titles=child_titles)
+
+    assert list(reader.get_form_text_fields().items()) == expected
+
+
+def test_get_form_text_fields__name_which_is_not_a_string():
+    reader = _build_reader_with_text_fields(top_level_titles=[NumberObject(5)], child_titles=["x", "x"])
+
+    assert reader.get_form_text_fields() == {5: "t0", "x": "0", "x.2": "1"}
+
+
+@pytest.mark.parametrize(
+    ("flags", "expected"),
+    [
+        pytest.param(32768, ["/A", "/Off", "/B", "/C"], id="radio"),
+        pytest.param(32768 | 16384, ["/A", "/B", "/C"], id="radio-no-toggle-to-off"),
+    ],
+)
+def test_get_fields__radio_states_in_order_of_first_appearance(flags, expected):
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    appearance = DecodedStreamObject()
+    appearance.set_data(b"")
+    appearance_reference = writer._add_object(appearance)
+    kids = ArrayObject()
+    field = writer._add_object(DictionaryObject({
+        NameObject("/T"): TextStringObject("radio"),
+        NameObject("/FT"): NameObject("/Btn"),
+        NameObject("/Ff"): NumberObject(flags),
+        NameObject("/Kids"): kids,
+    }))
+    shared_normal_appearance = writer._add_object(
+        DictionaryObject({NameObject(state): appearance_reference for state in ("/A", "/C")})
+    )
+    for states in (["/A", "/Off"], ["/B", "/Off"], ["/A", "/C"], None, None):
+        normal_appearance = (
+            shared_normal_appearance
+            if states is None
+            else DictionaryObject({NameObject(state): appearance_reference for state in states})
+        )
+        kids.append(writer._add_object(DictionaryObject({
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/Parent"): field,
+            NameObject("/AP"): DictionaryObject({NameObject("/N"): normal_appearance}),
+        })))
+    acro_form = DictionaryObject({NameObject("/Fields"): ArrayObject([field])})
+    writer.root_object[NameObject("/AcroForm")] = writer._add_object(acro_form)
+
+    assert list(writer.get_fields()["radio"]["/_States_"]) == expected
+
+
 @pytest.mark.timeout(5)
 def test_get_pages_showing_field__cyclic() -> None:
     writer = PdfWriter()
@@ -1260,6 +1355,60 @@ def test_get_outline__entry_count():
                 expected_exception=LimitReachedError, match=r"^Maximum outline entry limit reached: 1001 > 1000\.$"
             ):
         writer._get_outline()
+
+
+def _create_writer_with_shared_outline_child(count: int) -> PdfWriter:
+    """Create a writer whose outline has `count` items that all have the same child."""
+    writer = PdfWriter()
+    inner = writer._add_object(DictionaryObject({NameObject("/Title"): TextStringObject("Inner")}))
+    outlines = [
+        DictionaryObject({NameObject("/Title"): TextStringObject(f"Title{i}"), NameObject("/First"): inner})
+        for i in range(count)
+    ]
+    references = [writer._add_object(outline) for outline in outlines]
+    for outline, reference in zip(outlines, references[1:]):
+        outline[NameObject("/Next")] = reference
+    writer.root_object[NameObject("/Outlines")] = DictionaryObject({NameObject("/First"): references[0]})
+    return writer
+
+
+def _measure_get_outline_cpu_time(count: int, runs: int) -> float:
+    """Return the lowest CPU time of `runs` readings of an outline of `count` items."""
+    timings = []
+    for _ in range(runs):
+        writer = _create_writer_with_shared_outline_child(count)
+        start = time.process_time()
+        outline = writer._get_outline()
+        timings.append(time.process_time() - start)
+        assert len(outline) == 2 * count
+        assert outline[-2]["/Title"] == f"Title{count - 1}"
+        assert outline[-1][0]["/Title"] == "Inner"
+    return min(timings)
+
+
+@pytest.mark.slow
+@pytest.mark.timeout(60)
+def test_get_outline__speed():
+    """
+    An outline whose items share one child is read in linear time.
+
+    The test reads outlines of 2,500 and 20,000 items and compares the CPU times,
+    so the speed of the machine cancels out. Linear time gives a ratio of about 8,
+    quadratic time a ratio of about 64. The limit of 16 is twice the linear ratio.
+
+    Before #4455, every item copied the set of visited items, which is quadratic.
+    Ratios measured with Python 3.13 on an Intel i7-6700HQ, three runs each:
+
+    * before #4455: 52 to 53, and 23 to 24 with --cov=pypdf
+    * after #4455: 9.4 to 10.2, and 7.5 to 8.8 with --cov=pypdf
+
+    The small outline is read three times because a single short measurement is
+    noisy. The large one is read once to keep the test fast. The timeout only
+    guards against a hang.
+    """
+    small = _measure_get_outline_cpu_time(2_500, runs=3)
+    large = _measure_get_outline_cpu_time(20_000, runs=1)
+    assert large / small < 32  # linear would be 8, quadratic would be 64
 
 
 @pytest.mark.parametrize(
@@ -2029,3 +2178,95 @@ def test_xfa__work_limit() -> None:
                 match=r"^XFA decoding exceeded the maximum accumulated decoding work of 5000 bytes\.$"
             ):
         _ = writer.xfa
+
+
+def test_get_named_dest_root__dests_without_names_array():
+    """
+    Named destinations can be added to a /Dests name tree without a /Names array.
+
+    The /Dests entry of the name dictionary is the root of a name tree
+    (ISO 32000-2:2020, 7.7.4, Table 32, and 7.9.6). get_named_dest_root()
+    returns an empty array and stores it as /Names of that root, so a
+    destination added afterwards is written and read back.
+
+    /Names means two different things at two levels of the same structure.
+    /Dests sits between those two levels.
+
+    Catalog
+    └── /Names  → the name dictionary                (7.7.4, Table 32)
+        ├── /Dests       → root of a name tree       (7.9.6, Table 36)
+        │   └── /Names   → [(first) dest1 (second) dest2 …]
+        ├── /EmbeddedFiles → another name tree
+        └── /JavaScript    → another name tree
+
+    1. Catalog /Names is the name dictionary.
+       It holds one name tree per category:
+        /Dests for named destinations,
+        /EmbeddedFiles for attachments,
+        /JavaScript, and so on.
+    2. /Dests is the root node of the name tree for destinations.
+    3. /Names inside a tree node is the flat key/value array of that tree:
+        [key1 value1 key2 value2 …].
+        A large tree uses /Kids in its place, pointing to child nodes
+        that hold the /Names arrays.
+
+    Per Table 36, the root node has *exactly one* of the two:
+    /Kids is "present in the root node if and only if Names is not present".
+    So a root with neither is invalid.
+
+    What the test builds is exactly that invalid case.
+    It then checks two things:
+    1. get_named_dest_root() repairs the root by adding
+       an empty key/value array: dests["/Names"] == [].
+    2. add_named_destination("first", 0) puts "first" into that array,
+       and the name is still there after writing the file and reading it back.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    dests = DictionaryObject()  # tree root with neither /Names nor /Kids
+    # catalog /Names → name dictionary → /Dests:
+    writer.root_object[NameObject("/Names")] = DictionaryObject({NameObject("/Dests"): dests})
+
+    assert writer.get_named_dest_root() == []
+    assert dests["/Names"] == []
+
+    writer.add_named_destination("first", 0)
+    output = BytesIO()
+    writer.write(output)
+    assert list(PdfReader(output).named_destinations) == ["first"]
+
+
+def test_named_destinations__entries_without_destination_are_skipped():
+    """
+    Named destinations without a destination are skipped, and the others are kept.
+
+    The value of a named destination is a destination array or a dictionary
+    whose /D entry is one (ISO 32000-2:2020, 12.3.2.4). This holds for both
+    places a document can keep its named destinations: the /Dests name tree
+    of the name dictionary (7.7.4, Table 32) and the /Dests dictionary of the
+    catalog used by PDF 1.1 (7.7.2, Table 29).
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    page = writer.pages[0].indirect_reference
+    no_destination = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
+    with_destination = DictionaryObject({NameObject("/D"): ArrayObject([page, NameObject("/Fit")])})
+
+    # Name tree in the /Names dictionary (PDF 1.2+).
+    writer.root_object[NameObject("/Names")] = DictionaryObject({
+        NameObject("/Dests"): DictionaryObject({
+            NameObject("/Names"): ArrayObject([
+                TextStringObject("missing"), no_destination,
+                TextStringObject("present"), with_destination,
+            ]),
+        }),
+    })
+    assert list(writer.named_destinations) == ["present"]
+
+    # /Dests dictionary in the document catalog (PDF 1.1).
+    del writer.root_object["/Names"]
+    writer.root_object[NameObject("/Dests")] = DictionaryObject({
+        NameObject("/missing"): no_destination,
+        NameObject("/present"): with_destination,
+    })
+    assert list(writer.named_destinations) == ["/present"]

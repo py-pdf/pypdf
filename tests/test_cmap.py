@@ -9,8 +9,9 @@ from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import (
     __parse_bfrange__decode,
     _check_token_length,
-    _derive_character_map_from_cff_type1_font_file,
-    _parse_to_unicode,
+    _derive_encoding_from_cff_type1_font_file,
+    _parse_encoding,
+    _parse_encoding_from_embedded_font,
     get_encoding,
     parse_bfchar,
     parse_bfrange,
@@ -19,9 +20,11 @@ from pypdf._codecs import charset_encoding
 from pypdf.errors import LimitReachedError
 from pypdf.generic import (
     ArrayObject,
+    BooleanObject,
     DecodedStreamObject,
     DictionaryObject,
     EncodedStreamObject,
+    FloatObject,
     IndirectObject,
     NameObject,
     NullObject,
@@ -226,10 +229,16 @@ def test_tabs_in_cmap():
 
 
 @pytest.mark.enable_socket
-def test_ignoring_non_put_entries():
-    """Issue #2290"""
+def test__derive_encoding_from_type1_font_file():
+    """This tests deriving an encoding from an embedded Type1 font and addresses issue #2290"""
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
-    reader.pages[0].extract_text()
+    ft = reader.pages[0]["/Resources"]["/Font"]["/F1"]
+    embedded_encoding = _parse_encoding_from_embedded_font(ft)
+    # The encoding of this font is "/WinAnsiEncoding". Assert that we have
+    # correctly derived this encoding from the embedded font.
+    win_ansi_encoding = dict(zip(range(256), charset_encoding[ft["/Encoding"]]))
+    for key, value in embedded_encoding.items():
+        assert win_ansi_encoding[key] == value
 
 
 @pytest.mark.enable_socket
@@ -389,12 +398,20 @@ def test_get_encoding__type1_font_file_without_encoding():
 
 
 def test_get_encoding__type1_font_file_truncated_dup_line():
-    # A "dup" entry missing the glyph name must be skipped, not crash.
+    """
+    Verify that malformed ``dup`` lines in a Type 1 encoding are safely skipped.
+
+    Covers:
+    - Truncated lines missing a character code, glyph name, or ``put`` keyword;
+    - Lines whose fourth token is not ``put``;
+    - Lines with a non-integer character code; and
+    - Valid lines lacking whitespace before the glyph slash (e.g., ``97/a``).
+    """
     ft = _type1_font(
-        b"/Encoding 256 array\ndup\ndup 65\ndup 97 /a put\nreadonly def\neexec\n"
+        b"/Encoding 256 array\ndup\ndup 65\ndup 66 /c\ndup 97/a put\ndup 97/a tup\ndup abc/a put\nreadonly def\neexec\n"
     )
-    _encoding, character_map = get_encoding(ft)
-    assert character_map == {"a": "a"}
+    encoding = _parse_encoding_from_embedded_font(ft)
+    assert encoding == {97: "a"}
 
 
 @pytest.mark.parametrize(
@@ -847,7 +864,7 @@ def test_japanese_cmap_encodings(cmap_name: str, python_codec: str, caplog) -> N
     assert "Advanced encoding" not in caplog.text
 
 
-def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
+def test__derive_encoding_from_cff_type1_font_file_guards(caplog):
     font_file_stream = StreamObject()
     font_dict = DictionaryObject(
         {
@@ -862,7 +879,7 @@ def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
     font_dict[NameObject("/FontDescriptor")] = font_descriptor
     # Ensure a warning is logged when fontTools is missing for CFF Type1 font parsing
     with mock.patch("pypdf.generic._font.HAS_FONTTOOLS", False):
-        _parse_to_unicode(font_dict)
+        _parse_encoding(font_dict)
     assert (
         "fontTools is required to fully parse the encoding of a CFF Type1 font in font dictionary"
         in caplog.text
@@ -876,7 +893,7 @@ def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
     font_file_stream.update({NameObject("/Subtype"): NameObject("/Type1C")})
     font_descriptor = DictionaryObject({NameObject("/FontFile3"): font_file_stream})
     font_dict[NameObject("/FontDescriptor")] = font_descriptor
-    _parse_to_unicode(font_dict)
+    _parse_encoding(font_dict)
 
     # Ensure we return early when encoding is a string
     mock_cff_set = mock.MagicMock()
@@ -885,7 +902,7 @@ def test__derive_character_map_from_cff_type1_font_file_guards(caplog):
     mock_cff_set.topDictIndex = [mock_font_str_encoding]
 
     with mock.patch("fontTools.cffLib.CFFFontSet", return_value=mock_cff_set):
-        _parse_to_unicode(font_dict)
+        _parse_encoding(font_dict)
 
 
 def _generate_font_with_differences(differences: PdfObject) -> DictionaryObject:
@@ -939,6 +956,63 @@ def test_get_encoding__differences_is_an_array(caplog):
 
 
 @pytest.mark.parametrize(
+    ("entry", "expected"),
+    [
+        pytest.param(
+            NullObject(),
+            "Ignoring invalid font encoding difference: NullObject",
+            id="null",
+        ),
+        pytest.param(
+            FloatObject(1.5),
+            "Ignoring invalid font encoding difference: 1.5",
+            id="float",
+        ),
+        pytest.param(
+            BooleanObject(True),
+            "Ignoring invalid font encoding difference: True",
+            id="boolean",
+        ),
+        pytest.param(
+            ArrayObject([NameObject("/B")]),
+            "Ignoring invalid font encoding difference: ['/B']",
+            id="array",
+        ),
+        pytest.param(
+            DictionaryObject(),
+            "Ignoring invalid font encoding difference: {}",
+            id="dictionary",
+        ),
+    ],
+)
+def test_get_encoding__differences_with_invalid_entry(
+    caplog: pytest.LogCaptureFixture, entry: PdfObject, expected: str
+) -> None:
+    """An entry that is neither a character code nor a glyph name is skipped without consuming a code."""
+    encoding, _ = get_encoding(
+        _generate_font_with_differences(ArrayObject([NumberObject(65), entry, NameObject("/quotesingle")]))
+    )
+
+    assert encoding[65] == "'"
+    assert encoding[66] == "B"
+    assert expected in caplog.text
+
+
+def test_get_encoding__differences_with_indirect_entries(caplog: pytest.LogCaptureFixture) -> None:
+    """Character codes and glyph names given as indirect references are resolved."""
+    writer = PdfWriter()
+    differences = ArrayObject(
+        [writer._add_object(NumberObject(65)), writer._add_object(NameObject("/quotesingle"))]
+    )
+
+    encoding, _ = get_encoding(_generate_font_with_differences(differences))
+
+    assert encoding[65] == "'"
+    assert encoding[66] == "B"
+    assert caplog.text == ""
+
+
+@pytest.mark.parametrize(
     ("glyph_name", "expected"),
     [
         ("/u1D6FD", "𝛽"),
@@ -979,7 +1053,11 @@ def _build_cff_font_program(encoding: dict[int, str]) -> bytes:
 
 
 def _build_pdf_with_cff_font(
-    font_program: bytes, font_dictionaries: int, resource_names: int, pages: int
+    font_program: bytes,
+    font_dictionaries: int,
+    resource_names: int,
+    pages: int,
+    font_encoding: NameObject | DictionaryObject | NullObject | None = None,
 ) -> tuple[PdfWriter, DecodedStreamObject]:
     """
     A PDF showing "AB" with a Type1 font embedding the given CFF font program on each page.
@@ -1005,16 +1083,17 @@ def _build_pdf_with_cff_font(
                 }
             )
         )
-        font = writer._add_object(
-            DictionaryObject(
-                {
-                    NameObject("/Type"): NameObject("/Font"),
-                    NameObject("/Subtype"): NameObject("/Type1"),
-                    NameObject("/BaseFont"): NameObject("/Test"),
-                    NameObject("/FontDescriptor"): font_descriptor,
-                }
-            )
+        font_dictionary = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/BaseFont"): NameObject("/Test"),
+                NameObject("/FontDescriptor"): font_descriptor,
+            }
         )
+        if font_encoding is not None:
+            font_dictionary[NameObject("/Encoding")] = font_encoding
+        font = writer._add_object(font_dictionary)
         for name_index in range(resource_names):
             fonts[NameObject(f"/F{font_index}_{name_index}")] = font
     resources = writer._add_object(DictionaryObject({NameObject("/Font"): fonts}))
@@ -1041,8 +1120,8 @@ def test_cff_type1_font_file_is_parsed_once_per_font_program():
     reader = PdfReader(stream)
 
     with mock.patch(
-        "pypdf._cmap._derive_character_map_from_cff_type1_font_file",
-        wraps=_derive_character_map_from_cff_type1_font_file,
+        "pypdf._cmap._derive_encoding_from_cff_type1_font_file",
+        wraps=_derive_encoding_from_cff_type1_font_file,
     ) as parse:
         assert [page.extract_text() for page in reader.pages] == ["ZY"] * 4
         assert parse.call_count == 1
@@ -1060,8 +1139,8 @@ def test_cff_type1_font_file_is_parsed_again_when_its_data_changes():
     )
 
     with mock.patch(
-        "pypdf._cmap._derive_character_map_from_cff_type1_font_file",
-        wraps=_derive_character_map_from_cff_type1_font_file,
+        "pypdf._cmap._derive_encoding_from_cff_type1_font_file",
+        wraps=_derive_encoding_from_cff_type1_font_file,
     ) as parse:
         assert [page.extract_text() for page in writer.pages] == ["ZY"] * 2
         assert parse.call_count == 1
@@ -1069,6 +1148,66 @@ def test_cff_type1_font_file_is_parsed_again_when_its_data_changes():
         font_file.set_data(_build_cff_font_program({65: "Q"}))
         assert [page.extract_text() for page in writer.pages] == ["QB"] * 2
         assert parse.call_count == 2
+
+
+def _build_cff_font_encoding(
+    base_encoding: str | None, differences: list[PdfObject] | None
+) -> DictionaryObject:
+    encoding = DictionaryObject({NameObject("/Type"): NameObject("/Encoding")})
+    if base_encoding is not None:
+        encoding[NameObject("/BaseEncoding")] = NameObject(base_encoding)
+    if differences is not None:
+        encoding[NameObject("/Differences")] = ArrayObject(differences)
+    return encoding
+
+
+@pytest.mark.parametrize(
+    ("font_encoding", "expected"),
+    [
+        # ISO 32000-2:2020, 9.6.6.1: without /Encoding the built-in encoding is the base encoding.
+        (None, "ZY"),
+        # A null /Encoding is the same as a missing one.
+        (NullObject(), "ZY"),
+        # An /Encoding dictionary without /Differences keeps the built-in encoding as the base.
+        (_build_cff_font_encoding(None, None), "ZY"),
+        # A named /Encoding replaces the built-in encoding.
+        (NameObject("/WinAnsiEncoding"), "AB"),
+        # A /BaseEncoding replaces the built-in encoding, and /Differences override it.
+        (_build_cff_font_encoding("/WinAnsiEncoding", [NumberObject(65), NameObject("/A"), NameObject("/B")]), "AB"),
+        # Without /BaseEncoding the built-in encoding is the base encoding, but /Differences
+        # still take precedence over it.
+        (_build_cff_font_encoding(None, [NumberObject(65), NameObject("/A")]), "AY"),
+    ],
+    ids=[
+        "no-encoding",
+        "null-encoding",
+        "empty-encoding-dict",
+        "named-encoding",
+        "base-encoding",
+        "differences-only",
+    ],
+)
+def test_get_encoding__cff_type1_font_program_is_ranked_below_font_encoding(
+    font_encoding: NameObject | DictionaryObject | NullObject | None, expected: str
+) -> None:
+    """
+    The font program's built-in encoding is only the base encoding of a font dictionary.
+
+    The content stream shows the codes 0x41 and 0x42, which the CFF program maps to "Z" and "Y".
+    The font dictionary's /Encoding must win over the font program. Resolves #4343.
+    """
+    pytest.importorskip("fontTools", reason="Requires fontTools")
+    writer, _ = _build_pdf_with_cff_font(
+        _build_cff_font_program({65: "Z", 66: "Y"}),
+        font_dictionaries=1,
+        resource_names=1,
+        pages=1,
+        font_encoding=font_encoding,
+    )
+    stream = BytesIO()
+    writer.write(stream)
+
+    assert PdfReader(stream).pages[0].extract_text() == expected
 
 
 @pytest.mark.timeout(5)  # Previously: 22 seconds
@@ -1112,3 +1251,19 @@ def test_get_encoding__to_unicode_stream_with_str_data() -> None:
     font = DictionaryObject({NameObject("/ToUnicode"): to_unicode})
     _, map_dict = get_encoding(font)
     assert map_dict["\x01"] == "A"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param(b"0003  0020  0008 0025 0009 0026 000A 0027 000B 0028 000C 0029 000D 002A", id="below-limit"),
+        pytest.param(b"0003  0020  0008  0025 0009 0026 000A 0027 000B   0028 000C 0029    000D 002A", id="above-limit")
+    ]
+)
+def test_parse_bfchar__mapping_size_is_being_recalculated(line: bytes) -> None:
+    int_entry = [1, 2, 3]
+
+    with mock.patch("pypdf._cmap.MAPPING_DICTIONARY_SIZE_LIMIT", 10), \
+            mock.patch("pypdf._cmap._check_mapping_size") as check_mock:
+        parse_bfchar(line=line, int_entry=int_entry, map_dict={})
+    check_mock.assert_called_once_with(10)

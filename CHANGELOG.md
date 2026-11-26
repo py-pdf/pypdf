@@ -1,5 +1,57 @@
 # CHANGELOG
 
+## Version 7.2.0, 2026-11-26
+
+### Security (SEC)
+- Limit memory for embedded files dictionary API (#4533)
+- Limit size of indexed color space lookup tables (#4532)
+- Avoid cmap data splitting before size validation (#4531)
+
+### Deprecations (DEP)
+- Deprecate encryption_key of ContentStream.write_to_stream (#4508)
+- Deprecate parse_filename_page_ranges (#4472)
+
+### Performance Improvements (PI)
+- Check inline image names against a set when listing page images (#4467)
+- Count duplicate form field names and radio states without rescanning (#4478)
+- Avoid copying the visited set for each nested outline item (#4455)
+- Fix cache evaluation for XMP data retrieval (#4380)
+- Stop copying the page text for every text fragment (#4463)
+- Look up PageObject.page_number in constant time (#4439)
+- Use a set for the AcroForm field check in merge() (#4447)
+
+### Bug Fixes (BUG)
+- Preserve merged content streams during encryption (#4477)
+- Escape the font name in generated text field appearances (#4489)
+- Keep the generation number of objects in incremental updates (#4484)
+- Keep the writer's state when used as a context manager (#4488)
+- Remove every part of a combined ObjectDeletionFlag (#4446)
+- Remove objects which only unreferenced objects use (#4426)
+
+### Robustness (ROB)
+- Fall back for unsupported RC4 key lengths (#4461)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.1.1...7.2.0)
+
+## Version 7.1.1, 2026-11-18
+
+### Security (SEC)
+- Limit inline image size for known-size fallback path (#4460)
+- Optimize memory usage of ASCIIHexDecode whitespace removal (#4458)
+- Limit the overall page label size before employing a fallback (#4457)
+- Restrict cross-reference stream work/memory (#4456)
+
+### Performance Improvements (PI)
+- List image identifiers only once when iterating over page images (#4452)
+- Index named destinations when appending a document (#4360)
+- Decode PDFDocEncoding strings with str.translate instead of per-character concatenation (#4429)
+
+### Bug Fixes (BUG)
+- Reject zero-step slices in PageRange (#4404)
+- Label a page that lies between the /Limits of two page label kids (#4385)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/7.1.0...7.1.1)
+
 ## Version 7.1.0, 2026-11-13
 
 ### Deprecations (DEP)

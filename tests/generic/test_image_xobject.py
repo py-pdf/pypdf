@@ -319,6 +319,42 @@ def test_get_mode_and_invert_color() -> None:
 
 
 @pytest.mark.enable_socket
+def test_xobj_to_image__icc_based_without_components() -> None:
+    """A real-world PDF with an /ICCBased profile without /N, from the unstructured repository."""
+    url = "https://raw.githubusercontent.com/Unstructured-IO/unstructured/main/example-docs/pdf/pdf-bad-color-space.pdf"
+    name = "pdf-bad-color-space.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    image = reader.pages[0].images[0].image
+    assert image is not None
+    image.load()
+    assert (image.mode, image.size) == ("RGB", (1142, 507))
+
+
+@pytest.mark.parametrize(
+    ("profile", "colors", "expected"),
+    [
+        # /N is required, but a profile without it is read with the known components
+        pytest.param({}, 3, ("RGB", False), id="no-components-rgb"),
+        pytest.param({}, 1, ("L", False), id="no-components-gray"),
+        pytest.param({}, 4, ("CMYK", True), id="no-components-cmyk"),
+        pytest.param(
+            {"/Alternate": NameObject("/DeviceRGB")}, 3, ("RGB", False), id="no-components-with-alternate"
+        ),
+        # /N still wins when it is given
+        pytest.param({"/N": NumberObject(1)}, 3, ("L", False), id="components"),
+    ],
+)
+def test_get_image_mode__icc_based_without_components(
+    profile: dict[str, object], colors: int, expected: tuple[str, bool]
+) -> None:
+    stream = DecodedStreamObject()
+    for key, value in profile.items():
+        stream[NameObject(key)] = value
+    color_space = ArrayObject([NameObject("/ICCBased"), stream])
+    assert _get_image_mode(color_space, colors, "") == expected
+
+
+@pytest.mark.enable_socket
 def test_get_imagemode__empty_array() -> None:
     url = "https://github.com/user-attachments/files/23050451/poc.pdf"
     name = "issue3499.pdf"
@@ -1192,3 +1228,64 @@ def test_merge_image() -> None:
                 expected_exception=LimitReachedError, match=r"^Requested image buffer size 6400 exceeds limit 100\.$"
             ):
         _merge_image(mode="RGB", bands=[_create_image(mode="L", size=(40, 40)) for _ in range(3)])
+
+
+@pytest.mark.parametrize(
+    ("base", "entries", "expected_pixels"),
+    [
+        ("/DeviceGray", [b"\x0a", b"\x14"], [10, 20]),
+        ("/DeviceRGB", [b"\x01\x02\x03", b"\x04\x05\x06"], [(1, 2, 3), (4, 5, 6)]),
+        ("/DeviceCMYK", [b"\x00\x00\x00\x00", b"\xff\x00\x00\x00"], [(255, 255, 255), (0, 255, 255)]),
+    ],
+    ids=["device-gray", "device-rgb", "device-cmyk"]
+)
+def test_handle_flate__indexed_hival_above_maximum(
+    caplog: pytest.LogCaptureFixture, base: str, entries: list[bytes], expected_pixels: list[Any]
+) -> None:
+    """A hival above 255 is limited before the lookup is converted."""
+    entry_count = 1000
+    lookup = DecodedStreamObject()
+    lookup.set_data(b"".join(entries) + bytes(len(entries[0]) * (entry_count - len(entries))))
+    color_space = ArrayObject([NameObject("/Indexed"), NameObject(base), NumberObject(entry_count - 1), lookup])
+
+    image = _handle_flate(
+        size=(2, 1), data=b"\x00\x01", mode="P", color_space=color_space, colors=1, obj_as_text="dummy"
+    )[0]
+
+    assert [image.getpixel((x, 0)) for x in range(2)] == expected_pixels
+    assert caplog.messages == [
+        "hival 999 of /Indexed color space exceeds the maximum of 255 in dummy. Ignoring additional lookup entries."
+    ]
+
+
+def test_handle_flate__indexed_device_n__hival_above_maximum(caplog: pytest.LogCaptureFixture) -> None:
+    """A hival above 255 is limited before a /DeviceN lookup is converted to CMYK."""
+    entry_count = 1000
+    lookup = DecodedStreamObject()
+    lookup.set_data(b"\x00\xff" + bytes(entry_count - 2))
+    color_space = ArrayObject(
+        [NameObject("/Indexed"), _create_device_n("/Cyan"), NumberObject(entry_count - 1), lookup]
+    )
+
+    image = _handle_flate(
+        size=(2, 1), data=b"\x00\x01", mode="P", color_space=color_space, colors=1, obj_as_text="dummy"
+    )[0]
+
+    assert [image.getpixel((x, 0)) for x in range(2)] == [(255, 255, 255), (0, 255, 255)]
+    assert caplog.messages == [
+        "hival 999 of /Indexed color space exceeds the maximum of 255 in dummy. Ignoring additional lookup entries."
+    ]
+
+
+def test_handle_flate__indexed_device_n__too_long_lookup(caplog: pytest.LogCaptureFixture) -> None:
+    """A /DeviceN lookup with more entries than hival allows is invalid."""
+    lookup = DecodedStreamObject()
+    lookup.set_data(b"\x00\xff" + bytes(998))
+    color_space = ArrayObject([NameObject("/Indexed"), _create_device_n("/Cyan"), NumberObject(1), lookup])
+
+    image = _handle_flate(
+        size=(2, 1), data=b"\x00\x01", mode="P", color_space=color_space, colors=1, obj_as_text="dummy"
+    )[0]
+
+    assert image.size == (2, 1)
+    assert caplog.messages == ["Invalid Lookup Table in dummy"]

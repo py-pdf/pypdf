@@ -259,7 +259,7 @@ def is_char_neutral(char: str, custom_special_characters: str = "") -> bool:
     return bool(custom_special_characters and char in custom_special_characters)
 
 
-RTL_CHARACTER_RANGES = (
+RTL_CHARACTER_RANGES: tuple[tuple[str, str], ...] = (
     ("\u0590", "\u08FF"),  # Hebrew, Arabic, Syriac, Thaana, N'Ko, etc.
     ("\uFB1D", "\uFDFF"),  # Hebrew & Arabic Presentation Forms-A
     ("\uFE70", "\uFEFF"),  # Arabic Presentation Forms-B
@@ -315,6 +315,14 @@ def skip_over_comments(stream: StreamType, *, limit: int | None = None) -> None:
         comment_count += 1
 
 
+# read_until_regex() reads chunks of 16, 32, 64, ... bytes, up to 8192 bytes
+# each. The maximum token lengths of _CONTENT_STREAM_SIMPLE_TOKEN in
+# generic/_data_structures.py are derived from these chunk sizes; update them
+# when changing these values.
+_READ_UNTIL_REGEX_FIRST_CHUNK_SIZE = 16
+_READ_UNTIL_REGEX_MAXIMUM_CHUNK_SIZE = 8192
+
+
 def read_until_regex(*, stream: StreamType, regex: Pattern[bytes], length: int = sys.maxsize) -> bytes:
     """
     Read until the regular expression pattern matched (ignore the match).
@@ -332,7 +340,7 @@ def read_until_regex(*, stream: StreamType, regex: Pattern[bytes], length: int =
     parts: list[bytes] = []
     total_length = 0
     tail = b""
-    chunk_size = 16
+    chunk_size = _READ_UNTIL_REGEX_FIRST_CHUNK_SIZE
     while True:
         token = stream.read(chunk_size)
         if not token:
@@ -358,7 +366,7 @@ def read_until_regex(*, stream: StreamType, regex: Pattern[bytes], length: int =
         # Fixed overlap: 16 bytes is sufficient for the short
         # delimiter patterns used in PDF parsing.
         tail = token[-16:]
-        if chunk_size < 8192:
+        if chunk_size < _READ_UNTIL_REGEX_MAXIMUM_CHUNK_SIZE:
             chunk_size <<= 1
 
 
@@ -635,10 +643,6 @@ def _human_readable_bytes(bytes: int) -> str:
 
 
 def get_stream_size(stream: StreamType) -> int:
-    if hasattr(stream, "getbuffer"):
-        with stream.getbuffer() as view:
-            return cast(int, view.nbytes)
-
     position = stream.tell()
     stream.seek(0, os.SEEK_END)
     size = stream.tell()
@@ -647,10 +651,6 @@ def get_stream_size(stream: StreamType) -> int:
 
 
 def get_stream_data(stream: StreamType) -> bytes:
-    if hasattr(stream, "getbuffer"):
-        with stream.getbuffer() as view:
-            return bytes(view)
-
     position = stream.tell()
     stream.seek(0, os.SEEK_SET)
     data = stream.read(-1)
@@ -766,7 +766,7 @@ class Version:
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Version):
-            raise ValueError(f"Version cannot be compared against {type(other)}")
+            raise TypeError(f"Version cannot be compared against {type(other)}")
 
         for self_component, other_component in zip(self.components, other.components):
             self_value, self_suffix = self_component
