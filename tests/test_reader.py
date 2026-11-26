@@ -13,6 +13,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
+from pypdf._utils import get_stream_data
 from pypdf.constants import ImageAttributes, PageAttributes, UserAccessPermissions
 from pypdf.errors import (
     EmptyFileError,
@@ -3165,6 +3166,74 @@ def test_load_recovery_cache():
     ]
     with mock.patch.object(reader, "_find_pdf_objects", return_value=iter(pdf_objects)):
         assert reader._load_recovery_cache(b"") == {1: (10, 0), 2: (30, 0), 3: (42, 1)}
+
+
+def test_get_object__missing_ids_scan_stream_once(caplog):
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    buffer = BytesIO()
+    writer.write(buffer)
+
+    reader = PdfReader(BytesIO(buffer.getvalue()))
+    with mock.patch("pypdf._reader.get_stream_data", wraps=get_stream_data) as mocked:
+        for number in range(90001, 90006):
+            reader.get_object(number)
+        assert mocked.call_count == 1
+
+        for number in range(90001, 90006):
+            reader.get_object(number)
+        assert mocked.call_count == 1
+
+    missing_warnings = [
+        message
+        for message in caplog.messages
+        if message.startswith("Object ") and message.endswith(" not defined.")
+    ]
+    assert missing_warnings == [
+        "Object 90001 0 not defined.",
+        "Object 90002 0 not defined.",
+        "Object 90003 0 not defined.",
+        "Object 90004 0 not defined.",
+        "Object 90005 0 not defined.",
+    ]
+
+
+def test_get_object__recovers_object_missing_from_xref(caplog):
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    orphan = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Action"),
+                NameObject("/S"): NameObject("/JavaScript"),
+                NameObject("/JS"): TextStringObject("1"),
+            }
+        )
+    )
+    orphan_id = orphan.idnum
+    buffer = BytesIO()
+    writer.write(buffer)
+
+    reader = PdfReader(BytesIO(buffer.getvalue()))
+    for generation_map in reader.xref.values():
+        generation_map.pop(orphan_id, None)
+
+    recovered = reader.get_object(orphan_id)
+    assert isinstance(recovered, DictionaryObject)
+    assert recovered.get("/Type") == "/Action"
+    assert f"Object {orphan_id} 0 found" in caplog.messages
+    assert reader.get_object(orphan_id) is recovered
+
+
+def test_get_object__missing_id_strict_still_raises():
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    buffer = BytesIO()
+    writer.write(buffer)
+
+    reader = PdfReader(BytesIO(buffer.getvalue()), strict=True)
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Could not find object\.$"):
+        reader.get_object(90001)
 
 
 def test_flatten_rejects_typeless_non_page_kid_strict():
