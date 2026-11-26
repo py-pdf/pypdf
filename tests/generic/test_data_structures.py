@@ -557,6 +557,87 @@ def test_content_stream__parse_content_stream__limits() -> None:
         content_stream._parse_content_stream(stream)
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        pytest.param(b"1 0 0 1 72 720 cm\nq 0.5 .5 -.5 +1. -0 +7 w Q", id="signed-and-decimal-numbers"),
+        pytest.param(b"/F1 12 Tf /Name[1 2]0 d q[/A]TJ/B<</C 1>>BDC", id="tokens-next-to-delimiters"),
+        pytest.param(b"1\x002\t3\f4\r5\n6 re f*", id="all-whitespace-characters"),
+        pytest.param(b"0 0 1 RG 1 0 0 rg 12 0 Rx 3 4 l", id="integers-before-reference-lookalike"),
+        pytest.param(b"1,5 1-2 1.2.3 - . +- 0 Td", id="malformed-numbers"),
+        pytest.param(
+            b"1234567890123456789012 12345.678901234567890123 w " + b"A" * 100 + b" " + b"B" * 101 + b" S",
+            id="overlong-numbers-and-operators",
+        ),
+        pytest.param(b"/A#42 gs /\xc3\xa4 gs /\xff gs /" + b"N" * 101 + b" gs", id="names-requiring-decoding"),
+        pytest.param(b"BT (Hello) Tj [(W) -120 (orld)] TJ ET % comment\n/Im1 Do", id="strings-arrays-and-comment"),
+        pytest.param(b"q BI /W 1 /H 1 /CS /G /BPC 8 ID \x00 EI Q", id="inline-image"),
+        pytest.param(b"1 2 m 3 4 l S", id="simple-path"),
+        pytest.param(b"1 2 m 1 0 R 3 4 l", id="error-indirect-reference"),
+        pytest.param(b"1 2 m 3\x0b4 l", id="error-vertical-tab"),
+        pytest.param(b"1 2 m " + b"C" * 120 + b" S", id="operator-longer-than-simple-token"),
+        pytest.param(b"1 2 m " + b"9" * 70 + b" w", id="error-integer-too-long"),
+        pytest.param(b"1 2 m 0." + b"9" * 70 + b" w", id="error-decimal-too-long"),
+        pytest.param(b"/" + b"N" * 5000 + b" gs", id="error-name-too-long"),
+        pytest.param(b"/" + b"N" * 4079 + b" 1 1 1 1 1 1 1 1 1 gs", id="name-at-safe-length"),
+        pytest.param(b"/" + b"N" * 4080 + b" 1 1 1 1 1 1 1 1 1 gs", id="error-name-above-safe-length"),
+        pytest.param(b"A" * 111 + b" 1 1 1 1 1 1 1 1 1 S", id="operator-at-safe-length"),
+        pytest.param(b"A" * 112 + b" 1 1 1 1 1 1 1 1 1 S", id="error-operator-above-safe-length"),
+        pytest.param(b"9" * 47 + b" 1 1 1 1 1 1 1 1 1 w", id="integer-at-safe-length"),
+        pytest.param(b"9" * 48 + b" 1 1 1 1 1 1 1 1 1 w", id="error-integer-above-safe-length"),
+        pytest.param(b"-0." + b"9" * 44 + b" 1 1 1 1 1 1 1 1 1 w", id="decimal-at-safe-length"),
+        pytest.param(b"-0." + b"9" * 45 + b" 1 1 1 1 1 1 1 1 1 w", id="error-decimal-above-safe-length"),
+    ],
+)
+def test_content_stream__parse_content_stream__simple_tokens(data: bytes, caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Content stream tokens are parsed the same with and without the regular expression for simple tokens.
+
+    The operations, the operand types, the warnings and the exceptions are compared for
+    snippets with tokens at the edge of what the regular expression accepts.
+    ISO 32000-2:2020, 7.8.2 (content streams), 7.2.3 (white-space and delimiter
+    characters), 7.3.3 (numbers) and 7.3.5 (names).
+    """
+    def parse() -> tuple[list[tuple[object, bytes]], str]:
+        content_stream = ContentStream(stream=None, pdf=None)
+        try:
+            content_stream._parse_content_stream(BytesIO(data))
+            error = ""
+        except Exception as exception:
+            error = repr(exception)
+        operations = [
+            (
+                [(type(operand), operand) for operand in operands] if isinstance(operands, list) else operands,
+                operator,
+            )
+            for operands, operator in content_stream._operations
+        ]
+        return operations, error
+
+    operations = parse()
+    warnings = caplog.text
+    caplog.clear()
+    never_matching = mock.Mock(match=mock.Mock(return_value=None))
+    with mock.patch("pypdf.generic._data_structures._CONTENT_STREAM_SIMPLE_TOKEN", never_matching):
+        assert parse() == operations
+    never_matching.match.assert_called()
+    assert caplog.text == warnings
+
+
+def test_content_stream__parse_content_stream__simple_tokens_without_read_object() -> None:
+    """
+    Numbers, names and operators of a content stream are parsed without the generic object parser.
+
+    ISO 32000-2:2020, 7.8.2: a content stream is a sequence of operands and operators.
+    """
+    content_stream = ContentStream(stream=None, pdf=None)
+    with mock.patch("pypdf.generic._data_structures.read_object", side_effect=AssertionError):
+        content_stream._parse_content_stream(BytesIO(b"q 1 0 0 1 72 720 cm /F1 12.5 Tf T*\nQ"))
+    assert content_stream._operations == [
+        ([], b"q"), ([1, 0, 0, 1, 72, 720], b"cm"), (["/F1", 12.5], b"Tf"), ([], b"T*"), ([], b"Q")
+    ]
+
+
 def test_tree_object__insert_child__cycle() -> None:
     writer = PdfWriter()
 

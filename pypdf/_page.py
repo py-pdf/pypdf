@@ -148,7 +148,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
             if not is_null_or_none(retval):
                 break
     if not isinstance(retval, ArrayObject):
-        raise ValueError(f"Expected an array of four values for {name}, got {retval}")
+        raise TypeError(f"Expected an array of four values for {name}, got {retval}")
     if (length := len(retval)) != 4:
         if length > 4:
             # Keep backwards-compatibility with files previously written in a
@@ -1123,7 +1123,11 @@ class PageObject(DictionaryObject):
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op, op)
             else:
-                raise KeyError(f"Type of operands is {type(operands)}")
+                # It's not expected to ever hit this branch.
+                # The new content stream parses the data of the old one instead
+                # of copying its operations, so the operands are a list or the
+                # dictionary of an inline image.
+                raise AssertionError(f"Type of operands is {type(operands)}")  # noqa: TRY004
         return stream
 
     @staticmethod

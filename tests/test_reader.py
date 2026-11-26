@@ -1630,7 +1630,7 @@ def get_outline_property(outline, attribute_name: str):
             else:
                 results.append(get_outline_property(outline_item, attribute_name))
     else:
-        raise ValueError(f"got {type(outline)}")
+        raise TypeError(f"got {type(outline)}")
     return results
 
 
@@ -4007,3 +4007,35 @@ def test_rebuild_xref_table__maximum_entries_from_objstm() -> None:
         match=r"^Maximum xref rebuild entry limit exceeded: 3 > 2\.$",
     ):
         reader._rebuild_xref_table(BytesIO(bytes(pdf_data)))
+
+
+
+def test_reader_does_not_copy_the_stream() -> None:
+    """This test is a regression test for issue #4369."""
+    # tracemalloc is not available on PyPy (its `_tracemalloc` C module is
+    # missing), so this test is skipped there.
+    tracemalloc = pytest.importorskip("tracemalloc", reason="Requires tracemalloc")
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    # Pad well past PdfReader's ~3 KB fixed overhead so a full-stream copy stands out.
+    writer.add_metadata({"/Padding": "x" * 100_000})
+    buffer = BytesIO()
+    writer.write(buffer)
+    data = buffer.getvalue()
+
+    # Trigger any one-time lazy imports before starting tracemalloc.
+    PdfReader(BytesIO(data))
+
+    stream = BytesIO(data)
+    tracemalloc.start()
+    try:
+        before, _ = tracemalloc.get_traced_memory()
+        reader = PdfReader(stream)
+        after, _ = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert len(reader.pages) == 1
+    # Without copying, retained memory is a few KB; a getbuffer() copy retains >= len(data),
+    # so len(data) // 2 cleanly separates normal overhead from a copied stream.
+    assert after - before < len(data) // 2
