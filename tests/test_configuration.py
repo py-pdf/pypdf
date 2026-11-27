@@ -225,7 +225,7 @@ def test_apply_legacy_configuration() -> None:
     overwrite_mock.assert_not_called()
 
 
-def test_apply_legacy_configuration__multiple_overrides(caplog) -> None:
+def test_apply_legacy_configuration__multiple_overrides(caplog: pytest.LogCaptureFixture) -> None:
     with mock.patch("pypdf.filters.MAX_DECLARED_STREAM_LENGTH", 42), \
             mock.patch("pypdf.filters.LZW_MAX_OUTPUT_LENGTH", 43), \
             mock.patch("pypdf._page.MERGE_CROP_BOX", "trimbox"), \
