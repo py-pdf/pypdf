@@ -187,12 +187,25 @@ class TextExtraction:
                 if self._pending_move is None:
                     self._pending_move = _PendingMove(str_widths or 0.0, self._font_state())
                 else:
+                    # Includes a TJ offset shown since the previous move, which no longer applies:
+                    # the offset only moved the text matrix, and this move starts again from the
+                    # text line matrix (see process_tj_offset).
                     self._pending_move.str_widths += str_widths or 0.0
             elif operator == b"Tj":
                 self._post_process_text_operation(str_widths or 0.0)
 
     def process_tj_offset(self, offset: float, space_width: float) -> None:
         """Add a space for a word gap in a TJ array and count the offset in the text width."""
+        if self._pending_move is not None:
+            # No glyph has been shown since the last Td, Tm or T*, so the offset only moves where the
+            # next glyph starts, and whether that is a word gap is decided when the glyph is shown. A Tm
+            # back to the start of the line followed by [-3045.6 (es)] TJ can continue a word. The offset
+            # counts as advance from the text line matrix, and for the word-gap check it shortens the
+            # text shown before the move by as much.
+            advance = -offset * self.font_size * self.char_scale
+            self._actual_str_size["str_widths"] += advance
+            self._pending_move.str_widths -= self.compute_str_widths(advance)
+            return
         # The offset moved the pen, so it counts towards the width and the added space does not.
         # Like the glyph widths, it is scaled horizontally.
         str_widths = self._actual_str_size["str_widths"] - offset * self.font_size * self.char_scale

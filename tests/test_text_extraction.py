@@ -685,6 +685,83 @@ def test_move_without_text_after_it_keeps_a_label_with_its_value() -> None:
     assert "Foo:\tbar\nABC:\tDEF" in reader.pages[0].extract_text()
 
 
+@pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        # "add" is 20.016 wide in Helvetica 12, so the offset moves to just after it
+        pytest.param(
+            b"1 0 0 1 40 700 Tm (add) Tj 1 0 0 1 40 700 Tm [-1668 (ress)] TJ",
+            "address",
+            id="tm-back-then-offset-to-the-end-of-the-text",
+        ),
+        pytest.param(
+            b"1 0 0 1 40 700 Tm (add) Tj 1 0 0 1 40 700 Tm [-2668 (ress)] TJ",
+            "add ress",
+            id="tm-back-then-offset-past-a-gap",
+        ),
+        pytest.param(
+            b"1 0 0 1 40 700 Tm (add) Tj 1 0 0 1 40 700 Tm [-834 -834 (ress)] TJ",
+            "address",
+            id="tm-back-then-split-offset",
+        ),
+        # A TJ offset only moves the text matrix, and the next Td, Tm or T* starts again from the
+        # text line matrix, so an offset shown before that move does not count after it
+        pytest.param(
+            b"1 0 0 1 40 700 Tm (add) Tj 1 0 0 1 40 700 Tm [-2668] TJ 1 0 0 1 60.016 700 Tm (ress) Tj",
+            "address",
+            id="offset-then-tm-to-the-end-of-the-text",
+        ),
+        pytest.param(
+            b"1 0 0 1 40 700 Tm (add) Tj 1 0 0 1 40 700 Tm [-2668] TJ 20.016 0 Td (ress) Tj",
+            "address",
+            id="offset-then-td-to-the-end-of-the-text",
+        ),
+        # Without a move before it, an offset is still a word gap
+        pytest.param(b"1 0 0 1 40 700 Tm (add) Tj [-1000 (ress)] TJ", "add ress", id="offset-without-a-move"),
+    ],
+)
+def test_tj_offset_right_after_a_move_moves_the_next_glyph(content: bytes, expected: str) -> None:
+    """An offset before the first glyph of a TJ array after a Td, Tm or T* only moves where that glyph starts."""
+    page = PdfReader(_page_with_helvetica(b"BT /F1 12 Tf " + content + b" ET")).pages[0]
+    assert page.extract_text() == expected
+
+
+@pytest.mark.enable_socket
+@pytest.mark.parametrize(
+    ("url", "name", "page_number", "expected"),
+    [
+        pytest.param(
+            "https://github.com/py-pdf/pypdf/files/14031491/Form_Structure_v50.pdf",
+            "iss2452.pdf",
+            1,
+            "Condition (overall resource condition)",
+            id="form",
+        ),
+        pytest.param(
+            "https://github.com/py-pdf/pypdf/files/11714214/PDF32000_2008.pdf",
+            "PDF32000_2008.pdf",
+            18,
+            "Document structure. The PDF",
+            id="pdf-specification",
+        ),
+        pytest.param(
+            "https://github.com/py-pdf/pypdf/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf",
+            "gh-issue-997.pdf",
+            5,
+            "Verify that the information",
+            id="tax-form",
+        ),
+        pytest.param(None, "iss1718.pdf", 28, "required to submit proposals demonstrating", id="planning-document"),
+    ],
+)
+def test_tj_offset_right_after_a_move_keeps_words_whole(
+    url: str | None, name: str, page_number: int, expected: str
+) -> None:
+    """A Tm back to the start of the line, then a TJ array starting with an offset, continues the word."""
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert expected in reader.pages[page_number].extract_text()
+
+
 @pytest.mark.enable_socket
 def test_surname_in_capital_and_small_capitals_stays_one_word() -> None:
     """
