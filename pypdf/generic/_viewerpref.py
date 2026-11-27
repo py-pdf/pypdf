@@ -32,6 +32,7 @@ from typing import (
     cast,
 )
 
+from .._utils import deprecate_no_replacement
 from ..constants import PageAttributes
 from ._base import BooleanObject, NameObject, NumberObject, PdfObject, is_null_or_none
 from ._data_structures import ArrayObject, DictionaryObject
@@ -110,6 +111,14 @@ class ViewerPreferences(DictionaryObject):
 
     @property
     def PRINT_SCALING(self) -> NameObject:  # noqa: N802
+        """
+        The ``/PrintScaling`` name.
+
+        .. deprecated:: 7.3.0
+            ``ViewerPreferences.PRINT_SCALING`` is deprecated and will be removed
+            in pypdf 8.0.0. Use ``NameObject("/PrintScaling")`` instead.
+        """
+        deprecate_no_replacement("ViewerPreferences.PRINT_SCALING", "8.0.0")
         return NameObject("/PrintScaling")
 
     def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":  # noqa: PYI034
