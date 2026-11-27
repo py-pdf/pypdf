@@ -200,6 +200,33 @@ class FlateDecode:
         """
         str_data = decompress(data)
 
+        return FlateDecode._decode_prediction(str_data, decode_parms, filter_name="flatedecode")
+
+    @staticmethod
+    def _decode_prediction(
+        str_data: bytes,
+        decode_parms: DictionaryObject | IndirectObject | None,
+        filter_name: str = "flatedecode",
+    ) -> bytes:
+        """
+        Reverse the predictor function declared in the decoding parameters.
+
+        This is shared by /FlateDecode and /BrotliDecode, see §7.4.4.4 LZW and Flate
+        predictor functions of the PDF 2.0 specification and section 5.2 of the Brotli
+        extension, https://pdfa.org/download-area/publications/pdf-extension-brotli.pdf.
+
+        Args:
+          str_data: The decompressed data.
+          decode_parms: The /DecodeParms entry of the stream.
+          filter_name: The filter being decoded, used in error messages.
+
+        Returns:
+          The data with the prediction reversed.
+
+        Raises:
+          PdfReadError: An unsupported /Predictor value has been found.
+
+        """
         if isinstance(decode_parms, dict):
             parameters = decode_parms
         else:
@@ -213,36 +240,34 @@ class FlateDecode:
         predictor = parameters.get("/Predictor", 1)
 
         # predictor 1 == no predictor
-        if predictor != 1:
-            columns, colors, bits_per_component = FlateDecode._get_parameters(parameters)
-            configuration = get_configuration()
+        if predictor == 1:
+            return str_data
 
-            # PNG predictor can vary by row and so is the lead byte on each row
-            row_length = (
-                math.ceil(columns * colors * bits_per_component / 8) + 1
-            )  # number of bytes
-            if row_length > configuration.flate_maximum_row_length:
-                raise LimitReachedError(
-                    f"Row length of {row_length} exceeds defined limit of {configuration.flate_maximum_row_length}."
-                )
+        columns, colors, bits_per_component = FlateDecode._get_parameters(parameters)
+        configuration = get_configuration()
 
-            # TIFF prediction:
-            if predictor == 2:
-                row_length -= 1  # remove the predictor byte
-                bpp = row_length // columns
-                str_data_mut = bytearray(str_data)
-                for i in range(len(str_data_mut)):
-                    if i % row_length >= bpp:
-                        str_data_mut[i] = (str_data_mut[i] + str_data_mut[i - bpp]) % 256
-                str_data = bytes(str_data_mut)
-            # PNG prediction:
-            elif 10 <= predictor <= 15:
-                str_data = FlateDecode._decode_png_prediction(
-                    str_data, columns, row_length
-                )
-            else:
-                raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
-        return str_data
+        # PNG predictor can vary by row and so is the lead byte on each row
+        row_length = (
+            math.ceil(columns * colors * bits_per_component / 8) + 1
+        )  # number of bytes
+        if row_length > configuration.flate_maximum_row_length:
+            raise LimitReachedError(
+                f"Row length of {row_length} exceeds defined limit of {configuration.flate_maximum_row_length}."
+            )
+
+        # TIFF prediction:
+        if predictor == 2:
+            row_length -= 1  # remove the predictor byte
+            bpp = row_length // columns
+            str_data_mut = bytearray(str_data)
+            for i in range(len(str_data_mut)):
+                if i % row_length >= bpp:
+                    str_data_mut[i] = (str_data_mut[i] + str_data_mut[i - bpp]) % 256
+            return bytes(str_data_mut)
+        # PNG prediction:
+        if 10 <= predictor <= 15:
+            return FlateDecode._decode_png_prediction(str_data, columns, row_length)
+        raise PdfReadError(f"Unsupported {filter_name} predictor {predictor!r}")
 
     @staticmethod
     def _get_parameters(parameters: DictionaryObject) -> tuple[int, int, int]:
@@ -645,13 +670,15 @@ class BrotliDecode:
 
         Args:
           data: text to decode.
-          decode_parms: this filter does not use parameters.
+          decode_parms: a dictionary of parameter values, including the
+            optional /Predictor transform.
 
         Returns:
           decoded data.
 
         Raises:
           DependencyError: If the ``brotli`` package is not installed.
+          PdfReadError: An unsupported /Predictor value has been found.
 
         """
         BrotliDecode._check_brotli_available()
@@ -676,7 +703,9 @@ class BrotliDecode:
             remaining -= len(part)
             if remaining < 0:
                 raise LimitReachedError("Limit reached while decompressing.")
-        return bytes(output)
+        str_data = bytes(output)
+
+        return FlateDecode._decode_prediction(str_data, decode_parms, filter_name="brotlidecode")
 
     @staticmethod
     def encode(data: bytes, **kwargs: Any) -> bytes:
@@ -1044,7 +1073,7 @@ def decode_stream_data(stream: StreamObject) -> bytes:
         elif filter_name == FilterTypes.JPX_DECODE:
             data = JPXDecode.decode(data)
         elif filter_name == FilterTypes.BROTLI_DECODE:
-            data = BrotliDecode.decode(data)
+            data = BrotliDecode.decode(data, params)
         elif filter_name == FilterTypes.JBIG2_DECODE:
             data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":
