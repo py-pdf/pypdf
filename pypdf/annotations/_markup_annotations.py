@@ -4,6 +4,7 @@ from typing import Any, Literal, TypeAlias
 
 from ..constants import AnnotationFlag
 from ..generic import ArrayObject, DictionaryObject
+from ..generic._appearance_stream import create_free_text_appearance_stream
 from ..generic._base import (
     BooleanObject,
     FloatObject,
@@ -181,6 +182,22 @@ class FreeText(MarkupAnnotation):
             self[NameObject("/C")] = ArrayObject(
                 [FloatObject(n) for n in hex_to_rgb(background_color)]
             )
+
+        self[NameObject("/AP")] = DictionaryObject(
+            {
+                NameObject("/N"): create_free_text_appearance_stream(
+                    rectangle=RectangleObject(rect),
+                    text=text,
+                    font=font,
+                    bold=bold,
+                    italic=italic,
+                    font_size=font_size,
+                    font_color=font_color,
+                    border_color=border_color,
+                    background_color=background_color,
+                )
+            }
+        )
 
 
 class Line(MarkupAnnotation):

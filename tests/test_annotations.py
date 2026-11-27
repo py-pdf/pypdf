@@ -182,6 +182,76 @@ def test_free_text__font_color(font_color, border_color, expected_appearance):
     assert annotation["/DA"] == expected_appearance
 
 
+def test_free_text__appearance_stream():
+    free_text_annotation = FreeText(
+        text="Hello World\nSecond line",
+        rect=(50, 550, 200, 650),
+        font_color="00ff00",
+        border_color="0000ff",
+        background_color="cdcdcd",
+    )
+    writer = PdfWriter()
+    writer.add_blank_page(width=300, height=700)
+    writer.add_annotation(0, free_text_annotation)
+    output = BytesIO()
+    writer.write(output)
+
+    reader = PdfReader(output)
+    annotation = reader.pages[0]["/Annots"][0].get_object()
+    appearance = annotation["/AP"]["/N"].get_object()
+    assert appearance["/Type"] == "/XObject"
+    assert appearance["/Subtype"] == "/Form"
+    assert appearance["/BBox"] == [0, 0, 150, 100]
+    assert appearance["/Resources"]["/Font"]["/Helvetica"]["/BaseFont"] == "/Helvetica"
+    data = appearance.get_data()
+    assert b"(Hello World) Tj" in data
+    assert b"(Second line) Tj" in data
+    assert b"0.804 0.804 0.804 rg" in data
+    assert b"0 0 1 RG" in data
+    assert b"0 1 0 rg" in data
+
+    # Cover Helvetica bold/italic variants and Arial alias mapping.
+    font_cases = [
+        ("Helvetica", True, False, "/Helvetica-Bold"),
+        ("Helvetica", False, True, "/Helvetica-Oblique"),
+        ("Helvetica", True, True, "/Helvetica-BoldOblique"),
+        ("Arial", True, True, "/Arial,BoldItalic"),
+    ]
+    for font, bold, italic, expected in font_cases:
+        annot = FreeText(text="x", rect=(0, 0, 100, 50), font=font, bold=bold, italic=italic)
+        writer = PdfWriter()
+        writer.add_blank_page(width=200, height=100)
+        writer.add_annotation(0, annot)
+        out = BytesIO()
+        writer.write(out)
+        ap = PdfReader(out).pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_object()
+        assert ap["/Resources"]["/Font"][expected]["/BaseFont"] == expected
+
+    # Empty font_color and omitted border/background exercise default text color and no-box branches.
+    plain = FreeText(
+        text="plain",
+        rect=(0, 0, 100, 50),
+        font_color="",
+        border_color=None,
+        background_color=None,
+    )
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=100)
+    writer.add_annotation(0, plain)
+    out = BytesIO()
+    writer.write(out)
+    ap = PdfReader(out).pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_object()
+    assert ap["/Subtype"] == "/Form"
+    ap_data = ap.get_data()
+    assert b"0 g" in ap_data
+    assert b"\nf\n" not in ap_data
+    assert b"\ns\n" not in ap_data
+
+    # Inverted rectangle coordinates normalize to positive BBox dimensions.
+    inverted = FreeText(text="inv", rect=(500, 550, 200, 650))
+    assert inverted["/AP"]["/N"]["/BBox"] == [0, 0, 300, 100]
+
+
 def test_annotation_dictionary():
     a = AnnotationDictionary()
     a.flags = AnnotationFlag.HIDDEN | AnnotationFlag.PRINT | AnnotationFlag.NO_ZOOM
@@ -722,7 +792,15 @@ def test_clone_and_replicate_annotation(annotation):
     for copy in (cloned, replicated):
         assert type(copy) is type(annotation)
         assert copy is not annotation
-        assert copy.items() == annotation.items()
+        expected = dict(annotation.items())
+        actual = dict(copy.items())
+        if "/AP" in expected:
+            # Cloning stores a direct appearance stream as an indirect object, so compare stream contents and entries.
+            actual_ap = actual.pop("/AP")["/N"].get_object()
+            expected_ap = expected.pop("/AP")["/N"].get_object()
+            assert actual_ap.get_data() == expected_ap.get_data()
+            assert dict(actual_ap.items()) == dict(expected_ap.items())
+        assert actual == expected
 
         # The copy must not share its entries with the source annotation.
         copy[NameObject("/Test")] = NumberObject(1)
