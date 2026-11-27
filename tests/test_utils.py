@@ -738,7 +738,7 @@ def test_version_compare_equal_str():
 
 def test_version_compare_lt_str():
     a = Version("1.0")
-    with pytest.raises(ValueError, match=r"^Version cannot be compared against <class 'str'>$") as exc:
+    with pytest.raises(TypeError, match=r"^Version cannot be compared against <class 'str'>$") as exc:
         a < "1.0"  # noqa: B015
     assert exc.value.args[0] == "Version cannot be compared against <class 'str'>"
 

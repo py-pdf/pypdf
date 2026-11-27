@@ -93,6 +93,61 @@ logger = logging.getLogger(__name__)
 
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
+
+# The tokens making up most of a content stream, preceded by whitespace. Each
+# alternative only matches what the generic parsing in
+# ContentStream._parse_content_stream would read the same way; everything else,
+# like strings, arrays, inline images or overlong tokens, is left to it.
+#
+# The PDF specification defines no maximum length of a token (ISO 32000-2:2020,
+# Annex C), but the generic parsing raises LimitReachedError for numbers longer
+# than NumberObject._LENGTH_LIMIT (64), operators longer than
+# ContentStream._OPERATOR_LENGTH_LIMIT (128) and names longer than
+# NameObject._LENGTH_LIMIT (4,096). It reads these tokens with
+# read_until_regex(), which checks the limit after reading each chunk, but
+# before searching the chunk for the end of the token. Whether a token slightly
+# shorter than the limit raises thus depends on the bytes after it: a name of
+# 4,092 bytes before " gs" is read, but raises before " 1 1 1 gs".
+#
+# The maximum lengths below are those up to which the generic parsing never
+# raises, whatever follows the token: one byte less than the end of the last
+# chunk below the limit. The chunks have 16, 32, 64, ... bytes (see
+# _READ_UNTIL_REGEX_FIRST_CHUNK_SIZE and _READ_UNTIL_REGEX_MAXIMUM_CHUNK_SIZE in
+# pypdf/_utils.py), so they end at 16, 48, 112, 240, ..., 4,080 bytes. This
+# gives 47 bytes for numbers, 111 for operators and 4,079 for names, counted
+# after the slash like in NameObject.read_from_stream(). Longer tokens are left
+# to the generic parsing, which raises or not as before.
+_CONTENT_STREAM_SIMPLE_TOKEN = re.compile(
+    # Skip the whitespace before the token, like read_non_whitespace() does.
+    rb"[\x00\t\n\f\r ]*"
+    rb"(?:"
+    # A number, which the generic parsing reads up to the first character
+    # NumberObject.NumberPattern matches. The lookahead limits this run of
+    # characters to 47 bytes.
+    rb"(?=[+,\-.0-9]{1,47}(?![+,\-.0-9]))"
+    rb"(?:"
+    # A decimal number with an optional sign, like 1.5, -1. or .5. The
+    # lookahead rejects runs going on with more characters, like 1.2.3, 1,5 or
+    # 1-2, which the generic parsing reads differently.
+    rb"(?P<float>[+-]?(?:\d+\.\d*|\.\d+))(?![+,\-.0-9])"
+    # An integer with an optional sign. The second lookahead rejects the object
+    # number of what looks like an indirect reference, like "1 0 R", which
+    # read_object() reads instead.
+    rb"|(?P<int>[+-]?\d+)(?![+,\-.0-9])(?!\s+\d+\s+R(?![a-zA-Z]))"
+    rb")"
+    # A name of at most 4,079 bytes after the slash, ending at whitespace, a
+    # delimiter or the end of the data. Only printable ASCII characters without
+    # # are matched, so that names with # escapes or other bytes are decoded by
+    # NameObject.read_from_stream().
+    rb"|(?P<name>/[^\x00-\x20\x7f-\xff()<>\[\]{}/%#]{0,4079})(?=[\s()<>\[\]{}/%]|\Z)"
+    # An operator of at most 111 bytes, starting with a letter, ' or " like in
+    # the generic parsing, and ending at whitespace, a delimiter or the end of
+    # the data. BI is rejected, as an inline image follows it.
+    rb"|(?P<operator>(?!BI(?:[\s()<>\[\]{}/%]|\Z))[A-Za-z'\"][^\s()<>\[\]{}/%]{0,110})(?=[\s()<>\[\]{}/%]|\Z)"
+    rb")"
+)
+
+
 # Direct objects of these types are neither streams nor indirect objects.
 # Large arrays consist mostly of them, for example in the /ParentTree of the
 # structure tree, so the clone loops check the exact type first and skip the
@@ -556,16 +611,16 @@ class DictionaryObject(dict[Any, Any], PdfObject):
 
     def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
-            raise ValueError("Key must be a PdfObject")
+            raise TypeError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
-            raise ValueError("Value must be a PdfObject")
+            raise TypeError("Value must be a PdfObject")
         return dict.__setitem__(self, key, value)
 
     def setdefault(self, key: Any, value: Any | None = None) -> Any:
         if not isinstance(key, PdfObject):
-            raise ValueError("Key must be a PdfObject")
+            raise TypeError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
-            raise ValueError("Value must be a PdfObject")
+            raise TypeError("Value must be a PdfObject")
         return dict.setdefault(self, key, value)
 
     def __getitem__(self, key: Any) -> PdfObject:
@@ -1590,9 +1645,30 @@ class ContentStream(DecodedStreamObject):
     def _parse_content_stream(self, stream: StreamType) -> None:
         # 7.8.2 Content Streams
         stream.seek(0, 0)
+        data = stream.read()
+        position = 0
         operands: list[int | str | PdfObject] = []
         parsing_budget = StreamParsingBudget(remaining_budget=get_configuration().stream_parsing_work_maximum_count)
         while True:
+            match = _CONTENT_STREAM_SIMPLE_TOKEN.match(data, position)
+            if match is not None:
+                self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
+                position = match.end()
+                float_value, int_value, name, operator = match.groups()
+                if operator is not None:
+                    self._operations.append((operands, operator))
+                    operands = []
+                # Only valid numbers are matched, thus skip the error handling
+                # of the constructors, which is costly for millions of numbers.
+                elif float_value is not None:
+                    operands.append(float.__new__(FloatObject, float_value))
+                elif int_value is not None:
+                    operands.append(int.__new__(NumberObject, int_value))
+                else:
+                    operands.append(NameObject(name.decode()))
+                continue
+
+            stream.seek(position, 0)
             peek = read_non_whitespace(stream)
             if peek in (b"", 0):
                 break
@@ -1625,6 +1701,7 @@ class ContentStream(DecodedStreamObject):
             else:
                 self._check_limits(parsing_budget=parsing_budget, token_decrement=1)
                 operands.append(read_object(stream, None, self.forced_encoding, parsing_budget=parsing_budget))
+            position = stream.tell()
 
     # This overrides the parent method
     def get_data(self) -> bytes:
