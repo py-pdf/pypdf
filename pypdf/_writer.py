@@ -1226,11 +1226,24 @@ class PdfWriter(PdfDocCommon):
                     # We can find the associated appearance stream object
                     # within the annotation.
                     v = NameObject(value)
-                    ap = cast(DictionaryObject, annotation[NameObject(AnnotationDictionaryAttributes.AP)])
-                    normal_ap = cast(DictionaryObject, ap["/N"])
-                    if v not in normal_ap:
-                        v = NameObject("/Off")
-                    appearance_stream_obj = normal_ap.get(v)
+                    if AnnotationDictionaryAttributes.AP in annotation:
+                        ap = cast(
+                            DictionaryObject,
+                            annotation[NameObject(AnnotationDictionaryAttributes.AP)],
+                        )
+                        normal_ap = cast(DictionaryObject, ap["/N"])
+                        if v not in normal_ap:
+                            v = NameObject("/Off")
+                        appearance_stream_obj = normal_ap.get(v)
+                    else:
+                        # No appearance dictionary: such widgets do occur in
+                        # real documents (PDF 32000-1 allows the viewer to
+                        # generate the appearance, e.g. with /NeedAppearances).
+                        # Set the value anyway and warn instead of crashing.
+                        logger_warning(
+                            "No /AP dictionary in annotation; the appearance will not be updated",
+                            source=__name__,
+                        )
                     # Other cases will be updated through the for loop
                     annotation[NameObject(AnnotationDictionaryAttributes.AS)] = v
                     annotation[NameObject(FieldDictionaryAttributes.V)] = v
