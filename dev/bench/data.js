@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795726170713,
+  "lastUpdate": 1795771135171,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -132467,6 +132467,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004011811845926975",
             "extra": "mean: 331.43115919998536 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99543778+RavSinghChandan@users.noreply.github.com",
+            "name": "Chandan Kumar",
+            "username": "RavSinghChandan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "deba32f9303c66d5de69375bd40fc1e036e4659f",
+          "message": "ROB: Read a null /AcroForm, /Fields or /Annots as missing in reattach… (#4492)\n\n* ROB: Read a null /AcroForm, /Fields or /Annots as missing in reattach_fields()\n\n* TST: Name the helpers of the reattach_fields() tests with an action and check the objects",
+          "timestamp": "2026-11-27T10:16:48+01:00",
+          "tree_id": "fe984fd089bcd5328face6692543a66fd930cb78",
+          "url": "https://github.com/py-pdf/pypdf/commit/deba32f9303c66d5de69375bd40fc1e036e4659f"
+        },
+        "date": 1795771116804,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1754015975809002,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009292726622001857",
+            "extra": "mean: 314.920796399997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 27.341081158402325,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0072470141252569285",
+            "extra": "mean: 36.5749984137948 msec\nrounds: 29"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.4051848222625203,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016595348424716865",
+            "extra": "mean: 2.4680095232000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 23.664903835243244,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012086419593942553",
+            "extra": "mean: 42.256668650000506 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.16810341733584847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01901949909236889",
+            "extra": "mean: 5.948719043599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.8335024250997578,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001983959844227388",
+            "extra": "mean: 545.4042418000029 msec\nrounds: 5"
           }
         ]
       }
