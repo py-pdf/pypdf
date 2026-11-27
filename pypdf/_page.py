@@ -1086,18 +1086,18 @@ class PageObject(DictionaryObject):
         rename_mapping = {}
         for key in page2_type_resources:
             unique_key, same_value = compute_unique_key(key)
-            newname = NameObject(unique_key)
+            new_name = NameObject(unique_key)
             if key != unique_key:
                 # we have to use a different name for this
-                rename_mapping[key] = newname
+                rename_mapping[key] = new_name
 
             if not same_value:
                 if is_pdf_writer:
-                    merged_type_resources[newname] = page2_type_resources.raw_get(key).clone(pdf)
+                    merged_type_resources[new_name] = page2_type_resources.raw_get(key).clone(pdf)
                     with contextlib.suppress(AttributeError):
-                        merged_type_resources[newname] = merged_type_resources[newname].indirect_reference
+                        merged_type_resources[new_name] = merged_type_resources[new_name].indirect_reference
                 else:
-                    merged_type_resources[newname] = page2_type_resources.raw_get(key)
+                    merged_type_resources[new_name] = page2_type_resources.raw_get(key)
             lst = sorted(merged_type_resources.items())
             merged_type_resources.clear()
             for el in lst:
