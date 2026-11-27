@@ -3365,7 +3365,15 @@ class PdfWriter(PdfDocCommon):
             logger_warning("Outline node is not a dictionary: %(node)s", source=__name__, node=node)
             return new_outline
 
-        if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
+        if node.get("/Type", "") == "/Outlines" or (
+            "/Title" not in node
+            # An outline item without /Title is invalid, but it is still an item,
+            # not the outline root: it keeps its position in the item chain and
+            # its destination or action. Only descend through /First for roots.
+            and not any(
+                key in node for key in ("/Dest", "/A", "/Next", "/Prev", "/Parent")
+            )
+        ):
             node_id = id(node)
             if node_id in visited:
                 logger_warning("Detected cycle in outlines.", source=__name__)

@@ -681,3 +681,24 @@ def test_merge_widget_with_cyclic_parent_chain():
     assert merged_second["/Kids"] == [merged_widget.raw_get("/Parent")]
     fields = [obj for obj in writer._objects if isinstance(obj, DictionaryObject) and "/T" in obj]
     assert len(fields) == 2
+
+
+def test_append_outline_with_missing_title():
+    """Regression test for #4545.
+
+    The first outline item of the file has no /Title, so it is invalid, but the
+    reader reads it with an empty title and clone_from preserves it. append()
+    used to mistake it for the outline root, which only descends through
+    /First, silently dropping the whole outline on merge.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf")
+    expected_titles = ["", "Bar", "Baz", "Foo", "Bar", "Baz", "Foo", "Bar", "Baz"]
+    assert [str(item.title) for item in reader.outline] == expected_titles
+
+    writer = PdfWriter()
+    writer.append(reader)
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+    result = PdfReader(output)
+    assert [str(item.title) for item in result.outline] == expected_titles
