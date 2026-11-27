@@ -1204,20 +1204,22 @@ class PdfWriter(PdfDocCommon):
                 lst += self.reattach_fields(p)
             return lst
 
-        try:
-            af = cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])
-        except KeyError:
-            af = DictionaryObject()
-            self._root_object[NameObject(CatalogAttributes.ACRO_FORM)] = af
-        try:
-            fields = cast(ArrayObject, af[InteractiveFormDictEntries.Fields])
-        except KeyError:
-            fields = ArrayObject()
-            af[NameObject(InteractiveFormDictEntries.Fields)] = fields
+        acro_form = self._root_object.get(CatalogAttributes.ACRO_FORM, NullObject()).get_object()
+        if is_null_or_none(acro_form):
+            # Missing, null, or a reference to an object that does not exist
+            acro_form = DictionaryObject()
+            self._root_object[NameObject(CatalogAttributes.ACRO_FORM)] = acro_form
+        af = cast(DictionaryObject, acro_form)
+        field_array = af.get(InteractiveFormDictEntries.Fields, NullObject()).get_object()
+        if is_null_or_none(field_array):
+            field_array = ArrayObject()
+            af[NameObject(InteractiveFormDictEntries.Fields)] = field_array
+        fields = cast(ArrayObject, field_array)
 
-        if "/Annots" not in page:
+        annotation_array = page.get("/Annots", NullObject()).get_object()
+        if is_null_or_none(annotation_array):
             return lst
-        annotations = cast(ArrayObject, page["/Annots"])
+        annotations = cast(ArrayObject, annotation_array)
         for idx, annotation in enumerate(annotations):
             is_indirect = isinstance(annotation, IndirectObject)
             annotation = cast(DictionaryObject, annotation.get_object())
