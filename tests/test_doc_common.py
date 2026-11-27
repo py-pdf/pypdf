@@ -1870,6 +1870,20 @@ def test_xfa__entry_not_an_array(caplog, xfa, expected):
     assert expected in caplog.text
 
 
+@pytest.mark.parametrize("reference", [False, True])
+def test_xfa__null_acro_form(reference):
+    """A null /AcroForm, or a reference to the null object, is read as missing."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    null = writer._add_object(NullObject()) if reference else NullObject()
+    writer.root_object[NameObject("/AcroForm")] = null
+    data = BytesIO()
+    writer.write(data)
+    data.seek(0)
+
+    assert PdfReader(data).xfa is None
+
+
 def test_xfa__array_with_a_trailing_tag(caplog):
     """/XFA holds tag/value pairs; a trailing tag raised StopIteration."""
     reader = _generate_reader_with_xfa(ArrayObject([TextStringObject("datasets")]))
