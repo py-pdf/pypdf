@@ -1309,11 +1309,23 @@ class PdfWriter(PdfDocCommon):
             raise PdfReadError("Got index error while flattening.") from exception  # pragma: no cover
 
         assert self.flattened_pages is not None
+        direct_pages = False
         for p in self.flattened_pages:
-            self._replace_object(cast(IndirectObject, p.indirect_reference).idnum, p)
+            if p.indirect_reference is None:
+                # The page was written as a direct dictionary in /Kids, so
+                # it has no object number of its own; give it one instead
+                # of crashing on ``None.idnum``.
+                self._add_object(p)
+                direct_pages = True
+            else:
+                self._replace_object(cast(IndirectObject, p.indirect_reference).idnum, p)
             if not self.incremental:
                 p[NameObject("/Parent")] = self._pages
-        if not self.incremental:
+        if not self.incremental or direct_pages:
+            # In incremental mode the /Kids array is normally left alone,
+            # but a page that was a direct dictionary must now be
+            # referenced through the indirect object created above,
+            # otherwise the new object would be orphaned.
             cast(DictionaryObject, self._pages.get_object())[
                 NameObject("/Kids")
             ] = ArrayObject([p.indirect_reference for p in self.flattened_pages])
@@ -2916,25 +2928,34 @@ class PdfWriter(PdfDocCommon):
                 '"pages" must be a tuple of (start, stop[, step]) or a list'
             )
 
-        srcpages = {}
+        srcpages: dict[int, PageObject] = {}
+        # Object numbers are >= 1, so negative keys can never collide with
+        # a real object number. They are only used for pages written as
+        # direct dictionaries in /Kids, which have no indirect reference
+        # and therefore cannot be the target of a destination anyway.
+        direct_key = -1
         for page in pages:
             if isinstance(page, PageObject):
                 pg = page
             else:
                 pg = reader.pages[page]
-            assert pg.indirect_reference is not None
             if position is None:
                 # numbers in the exclude list identifies that the exclusion is
                 # only applicable to 1st level of cloning
-                srcpages[pg.indirect_reference.idnum] = self.add_page(
+                new_page = self.add_page(
                     pg, [*list(excluded_fields), 1, "/B", 1, "/Annots"]  # type: ignore[list-item]
                 )
             else:
-                srcpages[pg.indirect_reference.idnum] = self.insert_page(
+                new_page = self.insert_page(
                     pg, position, [*list(excluded_fields), 1, "/B", 1, "/Annots"]  # type: ignore[list-item]
                 )
                 position += 1
-            srcpages[pg.indirect_reference.idnum].original_page = pg
+            if pg.indirect_reference is None:
+                srcpages[direct_key] = new_page
+                direct_key -= 1
+            else:
+                srcpages[pg.indirect_reference.idnum] = new_page
+            new_page.original_page = pg
 
         reader._named_destinations = (
             reader.named_destinations
@@ -3055,7 +3076,22 @@ class PdfWriter(PdfDocCommon):
                 p = reader.pages[dest["/Page"]]
             except IndexError:
                 return
-            assert p.indirect_reference is not None
+            if p.indirect_reference is None:
+                # Page written as a direct dictionary in /Kids: it has no
+                # object number, so find the merged page via its original page.
+                merged_page = next(
+                    (
+                        merged
+                        for merged in srcpages.values()
+                        if getattr(merged, "original_page", None) == p
+                    ),
+                    None,
+                )
+                if merged_page is None:
+                    return
+                arr[NumberObject(0)] = NumberObject(merged_page.page_number)
+                self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
+                return
             try:
                 arr[NumberObject(0)] = NumberObject(
                     srcpages[p.indirect_reference.idnum].page_number
@@ -3063,10 +3099,12 @@ class PdfWriter(PdfDocCommon):
                 self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
             except KeyError:
                 pass
-        elif dest["/Page"].indirect_reference.idnum in srcpages:
-            arr[NumberObject(0)] = srcpages[
-                dest["/Page"].indirect_reference.idnum
-            ].indirect_reference
+        elif (
+            (page_ref := getattr(dest["/Page"], "indirect_reference", None))
+            is not None
+            and page_ref.idnum in srcpages
+        ):
+            arr[NumberObject(0)] = srcpages[page_ref.idnum].indirect_reference
             self._add_named_destination_array_indexed(dest["/Title"], arr, named_destinations)
 
     def _add_named_destination_array_indexed(

@@ -2826,6 +2826,85 @@ def test_clone_from__tolerate_dangling_info_reference():
     assert writer._info["/Title"] == NullObject()
 
 
+def _build_pdf_with_direct_kids_page() -> bytes:
+    """Build a PDF whose single page is a direct dictionary in /Kids.
+
+    Regression test data for #4523: the page has no indirect reference,
+    so ``reader.pages[0].indirect_reference`` is None.
+    """
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        # The page is a direct object in /Kids, not an indirect one.
+        (
+            b"<< /Type /Pages /Count 1 /Kids [<< /Type /Page /Parent 2 0 R "
+            b"/MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> "
+            b"/Contents 5 0 R >>] >>"
+        ),
+        b"% placeholder",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    content = b"BT /F1 12 Tf 72 720 Td (Hello World) Tj ET"
+    objects.append(
+        b"<< /Length " + str(len(content)).encode()
+        + b" >>\nstream\n" + content + b"\nendstream"
+    )
+    out = b"%PDF-1.7\n"
+    offsets = []
+    for i, obj in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += str(i).encode() + b" 0 obj\n" + obj + b"\nendobj\n"
+    xref_pos = len(out)
+    out += b"xref\n0 " + str(len(objects) + 1).encode() + b"\n"
+    out += b"0000000000 65535 f \n"
+    for off in offsets:
+        out += f"{off:010d} 00000 n \n".encode()
+    out += (
+        b"trailer\n<< /Size " + str(len(objects) + 1).encode()
+        + b" /Root 1 0 R >>\nstartxref\n" + str(xref_pos).encode() + b"\n%%EOF"
+    )
+    return out
+
+
+def test_writer__direct_kids_page():
+    """Cf #4523: pages written as direct objects in /Kids."""
+    data = _build_pdf_with_direct_kids_page()
+    reader = PdfReader(BytesIO(data))
+    assert len(reader.pages) == 1
+    assert reader.pages[0].extract_text() == "Hello World"
+    assert reader.pages[0].indirect_reference is None
+
+    # append() / merge()
+    writer = PdfWriter()
+    writer.append(BytesIO(data))
+    output = BytesIO()
+    writer.write(output)
+    assert PdfReader(output).pages[0].extract_text() == "Hello World"
+
+    # merge() with an insert position
+    writer.merge(0, BytesIO(data))
+    output = BytesIO()
+    writer.write(output)
+    reread = PdfReader(output)
+    assert len(reread.pages) == 2
+    assert [page.extract_text() for page in reread.pages] == [
+        "Hello World",
+        "Hello World",
+    ]
+
+    # clone_from()
+    writer = PdfWriter(clone_from=BytesIO(data))
+    # The rebuilt /Kids must hold an indirect reference, not None.
+    kids = writer._pages.get_object()["/Kids"]
+    assert len(kids) == 1
+    assert isinstance(kids[0], IndirectObject)
+    assert isinstance(writer.pages[0].indirect_reference, IndirectObject)
+    output = BytesIO()
+    writer.write(output)
+    reread = PdfReader(output)
+    assert len(reread.pages) == 1
+    assert reread.pages[0].extract_text() == "Hello World"
+
+
 @pytest.mark.parametrize(
     "file_identifier",
     [
