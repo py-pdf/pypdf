@@ -815,6 +815,16 @@ def _xobj_to_image(
     if not isinstance(decode_parms, dict):
         decode_parms = {}
 
+    if x_object.get("/BitsPerComponent") == 16 and last_filter not in (
+        FT.DCT_DECODE,
+        FT.JPX_DECODE,
+        FT.CCITT_FAX_DECODE,
+        FT.JBIG2_DECODE,
+    ):
+        # Pillow has no 16-bit mode for multi-band images, so keep the most
+        # significant byte of each big-endian sample, as pdf.js and MuPDF do.
+        data = data[::2]
+
     extension = None
     if last_filter in (FilterTypes.FLATE_DECODE, FilterTypes.RUN_LENGTH_DECODE):
         img, image_format, extension, _ = _handle_flate(

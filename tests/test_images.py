@@ -666,6 +666,55 @@ def test_low_bit_devicergb_image_without_filter():
     )
 
 
+@pytest.mark.parametrize(
+    ("color_space", "data", "mode", "expected"),
+    [
+        pytest.param(
+            "/DeviceGray",
+            b"\x00\x00\xff\xff\x80\x00\x40\x00",
+            "L",
+            bytes([0, 255, 128, 64]),
+            id="gray",
+        ),
+        pytest.param(
+            "/DeviceRGB",
+            b"\xff\xff\x00\x00\x80\x00\x00\x00\xff\xff\x00\x00\x12\x34\x56\x78\x9a\xbc\x00\x01\xfe\x01\x7f\xff",
+            "RGB",
+            bytes([255, 0, 128, 0, 255, 0, 0x12, 0x56, 0x9A, 0, 0xFE, 0x7F]),
+            id="rgb",
+        ),
+    ],
+)
+@pytest.mark.parametrize("compressed", [False, True], ids=["no-filter", "flate"])
+def test_images__keep_high_byte_of_16_bit_samples(compressed, color_space, data, mode, expected):
+    """16-bit samples are reduced to their high byte instead of being read as pairs of 8-bit samples."""
+    writer = PdfWriter()
+    image = DecodedStreamObject()
+    image.set_data(data)
+    image[NameObject("/Type")] = NameObject("/XObject")
+    image[NameObject("/Subtype")] = NameObject("/Image")
+    image[NameObject("/Width")] = NumberObject(2)
+    image[NameObject("/Height")] = NumberObject(2)
+    image[NameObject("/BitsPerComponent")] = NumberObject(16)
+    image[NameObject("/ColorSpace")] = NameObject(color_space)
+    if compressed:
+        image = image.flate_encode()
+
+    page = writer.add_blank_page(20, 20)
+    page[NameObject("/Resources")] = DictionaryObject()
+    page["/Resources"][NameObject("/XObject")] = DictionaryObject()
+    page["/Resources"]["/XObject"][NameObject("/Im0")] = writer._add_object(image)
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    img = PdfReader(output).pages[0].images[0].image
+    assert img.mode == mode
+    assert img.size == (2, 2)
+    assert img.tobytes() == expected
+
+
 @pytest.mark.enable_socket
 def test_no_filter_with_colorspace_as_list():
     """Tests for #2998"""

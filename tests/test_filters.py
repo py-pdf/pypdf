@@ -405,6 +405,32 @@ def test_tiff_predictor():
     assert get_image_data(img) == get_image_data(refimg)
 
 
+@pytest.mark.parametrize(
+    ("colors", "encoded", "expected"),
+    [
+        pytest.param(1, b"\x00\xff\xff\x02", b"\x00\xff\x00\x01", id="gray"),
+        pytest.param(
+            3,
+            b"\x00\xff\x80\x00\x00\x01\xff\x02\x80\x00\xff\xff",
+            b"\x00\xff\x80\x00\x00\x01\x00\x01\x00\x00\x00\x00",
+            id="rgb",
+        ),
+    ],
+)
+def test_flatedecode__tiff_predictor__add_16_bit_samples(colors, encoded, expected):
+    """TIFF predictor 2 adds 16-bit samples as a whole, keeping the carry between their bytes."""
+    parameters = DictionaryObject(
+        {
+            NameObject("/Predictor"): NumberObject(2),
+            NameObject("/Colors"): NumberObject(colors),
+            NameObject("/Columns"): NumberObject(2),
+            NameObject("/BitsPerComponent"): NumberObject(16),
+        }
+    )
+    # Two identical rows: the prediction restarts at the beginning of each row.
+    assert FlateDecode.decode(zlib.compress(encoded * 2), parameters) == expected * 2
+
+
 @pytest.mark.enable_socket
 def test_rgba():
     """Decode RGB with transparency"""
