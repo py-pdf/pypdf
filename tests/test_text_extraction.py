@@ -1590,6 +1590,36 @@ def test_get_text_operands__counts_character_codes(
     assert (glyph_count, space_count) == expected
 
 
+@pytest.mark.enable_socket
+@pytest.mark.parametrize(
+    ("url", "name", "page_number", "expected"),
+    [
+        # Type3 fonts with /FontMatrix [1 0 0 1 0 0]
+        pytest.param(
+            "https://github.com/py-pdf/pypdf/files/12543290/whitepaper.WBT.token.blockchain.whitepaper.pdf",
+            "iss2165.pdf",
+            5,
+            "is visible and accessible. Users can verify",
+            id="font-matrix-of-text-space-units",
+        ),
+        # A Type3 font with /FontMatrix [0.0120482 0 0 0.0120482 0 0]
+        pytest.param(
+            "https://github.com/py-pdf/pypdf/files/13307713/missing-base-font.pdf",
+            "missing-base-font.pdf",
+            0,
+            "JAHRES-REISESCHUTZ 1PLUS",
+            id="other-font-matrix",
+        ),
+        # TeX's Type3 fonts, with matrices from [0.00581 ...] to [0.01721 ...]
+        pytest.param(None, "ascii charset.pdf", 18, "notazione asintotica, ma", id="tex-type3-fonts"),
+    ],
+)
+def test_type3_font_widths_keep_words_whole(url: str | None, name: str, page_number: int, expected: str) -> None:
+    """The glyph widths of a Type3 font are scaled by its /FontMatrix, so no space is added inside words."""
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+    assert expected in reader.pages[page_number].extract_text()
+
+
 def test_wrapped_table_cell_line_is_not_split():
     """The second wrapped line of a cell stays with the row label. Regression #4130."""
     # Label baseline sits between the two wrapped cell baselines. Comparing only

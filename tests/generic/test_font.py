@@ -196,6 +196,58 @@ def test_type3_font_malformed_bbox(bbox: ArrayObject) -> None:
     assert font.font_descriptor.bbox == FontDescriptor._DEFAULT_BBOX
 
 
+@pytest.mark.parametrize(
+    ("font_matrix", "width"),
+    [
+        pytest.param([0.001, 0, 0, 0.001, 0, 0], 500, id="thousandths-of-a-text-space-unit"),
+        pytest.param([1, 0, 0, 1, 0, 0], 0.5, id="text-space-units"),
+        pytest.param([1 / 2048, 0, 0, 1 / 2048, 0, 0], 1024, id="2048-units-per-em"),
+        pytest.param(None, 500, id="no-font-matrix"),
+    ],
+)
+def test_type3_font_widths_follow_the_font_matrix(font_matrix: list[float] | None, width: float) -> None:
+    """The /Widths of a Type3 font are in its glyph space, which /FontMatrix maps to text space."""
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type3"),
+        NameObject("/ToUnicode"): NumberObject(0),
+        NameObject("/FirstChar"): NumberObject(65),
+        NameObject("/LastChar"): NumberObject(65),
+        NameObject("/Widths"): ArrayObject([FloatObject(width)]),
+    })
+    if font_matrix is not None:
+        font_res[NameObject("/FontMatrix")] = ArrayObject(FloatObject(value) for value in font_matrix)
+
+    font = Font.from_font_resource(font_res)
+
+    # Text extraction uses widths in thousandths of a text space unit, as for the other fonts
+    assert font.character_widths["A"] == pytest.approx(500)
+
+
+@pytest.mark.parametrize(
+    "font_matrix",
+    [
+        pytest.param(ArrayObject(NumberObject(value) for value in [0, 0, 0, 1, 0, 0]), id="zero-scale"),
+        pytest.param(
+            ArrayObject([NameObject("/x"), *(NumberObject(value) for value in [0, 0, 1, 0, 0])]), id="non-numeric"
+        ),
+        pytest.param(ArrayObject([FloatObject(0.001)]), id="too-short"),
+        pytest.param(NumberObject(1), id="not-an-array"),
+    ],
+)
+def test_type3_font_with_an_invalid_font_matrix_keeps_its_widths(font_matrix: PdfObject) -> None:
+    """A /FontMatrix that cannot scale the widths is treated like the usual [0.001 0 0 0.001 0 0]."""
+    font_res = DictionaryObject({
+        NameObject("/Subtype"): NameObject("/Type3"),
+        NameObject("/ToUnicode"): NumberObject(0),
+        NameObject("/FirstChar"): NumberObject(65),
+        NameObject("/LastChar"): NumberObject(65),
+        NameObject("/Widths"): ArrayObject([NumberObject(500)]),
+        NameObject("/FontMatrix"): font_matrix,
+    })
+
+    assert Font.from_font_resource(font_res).character_widths["A"] == pytest.approx(500)
+
+
 def test_font_file() -> None:
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
 
