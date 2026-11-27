@@ -1216,6 +1216,12 @@ def test_get_pages_showing_field__cyclic() -> None:
 
 @pytest.mark.timeout(5)
 def test_get_named_destinations__cyclic(caplog) -> None:
+    """
+    A destination name tree whose /Kids form a cycle is read once with a warning.
+
+    ISO 32000-2:2020, 7.9.6: the /Kids of a name tree node are its children,
+    so a node that is its own descendant is malformed.
+    """
     writer = PdfWriter()
 
     tree1 = TreeObject()
@@ -1224,8 +1230,9 @@ def test_get_named_destinations__cyclic(caplog) -> None:
     reference2 = writer._add_object(tree2)
     tree1[NameObject("/Kids")] = ArrayObject([reference2.indirect_reference])
     tree2[NameObject("/Kids")] = ArrayObject([reference1.indirect_reference])
+    writer.root_object[NameObject("/Names")] = DictionaryObject({NameObject("/Dests"): reference1})
 
-    assert writer._get_named_destinations(tree=tree1) == {}
+    assert writer._get_named_destinations() == {}
     assert caplog.messages == ["Detected cycle in destination tree."]
 
 
@@ -1656,6 +1663,72 @@ def test_get_named_destinations__node_entry_is_not_an_array(caplog, key, value, 
 
     assert PdfReader(stream).named_destinations == {}
     assert expected in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("kid", "expected"),
+    [
+        pytest.param(NumberObject(5), "Destination tree kid is not a dictionary: 5", id="number"),
+        pytest.param(TextStringObject("x"), "Destination tree kid is not a dictionary: x", id="string"),
+    ],
+)
+def test_get_named_destinations__kid_is_not_a_dictionary(caplog, kid, expected):
+    """
+    A /Kids entry that is not a dictionary is skipped and the other kids are read.
+
+    ISO 32000-2:2020, 7.9.6: the /Kids array of a name tree node holds indirect
+    references to its kids, which are name tree nodes, so dictionaries.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    leaf = DictionaryObject(
+        {
+            NameObject("/Names"): ArrayObject(
+                [TextStringObject("dest1"), ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")])]
+            )
+        }
+    )
+    writer.root_object[NameObject("/Names")] = DictionaryObject(
+        {NameObject("/Dests"): DictionaryObject({NameObject("/Kids"): ArrayObject([kid, writer._add_object(leaf)])})}
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert list(PdfReader(stream).named_destinations) == ["dest1"]
+    assert expected in caplog.text
+
+
+def test_get_named_destinations__repeated_null_kid(caplog):
+    """
+    A /Kids array that references the same null object twice is read without a warning.
+
+    ISO 32000-2:2020, 7.3.9: a reference to the null object is equivalent to an
+    omitted entry, so reaching it again is no cycle.
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    null_reference = writer._add_object(NullObject())
+    leaf = DictionaryObject(
+        {
+            NameObject("/Names"): ArrayObject(
+                [TextStringObject("dest1"), ArrayObject([writer.pages[0].indirect_reference, NameObject("/Fit")])]
+            )
+        }
+    )
+    writer.root_object[NameObject("/Names")] = DictionaryObject(
+        {
+            NameObject("/Dests"): DictionaryObject(
+                {NameObject("/Kids"): ArrayObject([null_reference, null_reference, writer._add_object(leaf)])}
+            )
+        }
+    )
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    assert list(PdfReader(stream).named_destinations) == ["dest1"]
+    assert caplog.messages == []
 
 
 def test_get_named_destinations__names_is_not_a_dictionary():
