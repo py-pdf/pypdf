@@ -2380,7 +2380,7 @@ def test_scale__viewport_bounding_box(as_array: bool) -> None:
     assert scaled_viewport["/BBox"] == RectangleObject((0, 0, 20, 60))
 
 
-def _viewport(*box: float) -> DictionaryObject:
+def create_viewport(*box: float) -> DictionaryObject:
     return DictionaryObject({NameObject("/BBox"): RectangleObject(box)})
 
 
@@ -2389,13 +2389,13 @@ def _viewport(*box: float) -> DictionaryObject:
     [
         pytest.param(lambda _writer: ArrayObject(), [], False, id="empty-array"),
         pytest.param(
-            lambda writer: ArrayObject([writer._add_object(_viewport(0, 0, 10, 20))]),
+            lambda writer: ArrayObject([writer._add_object(create_viewport(0, 0, 10, 20))]),
             [(0, 0, 20, 60)],
             False,
             id="indirect-viewport",
         ),
         pytest.param(
-            lambda writer: writer._add_object(ArrayObject([_viewport(0, 0, 10, 20)])),
+            lambda writer: writer._add_object(ArrayObject([create_viewport(0, 0, 10, 20)])),
             [(0, 0, 20, 60)],
             False,
             id="indirect-array",
@@ -2409,13 +2409,13 @@ def _viewport(*box: float) -> DictionaryObject:
             id="indirect-bbox",
         ),
         pytest.param(
-            lambda _writer: ArrayObject([_viewport(0, 0, 10, 20), _viewport(5, 5, 15, 25)]),
+            lambda _writer: ArrayObject([create_viewport(0, 0, 10, 20), create_viewport(5, 5, 15, 25)]),
             [(0, 0, 20, 60), (10, 15, 30, 75)],
             False,
             id="two-viewports",
         ),
         pytest.param(
-            lambda _writer: ArrayObject([DictionaryObject(), _viewport(0, 0, 10, 20)]),
+            lambda _writer: ArrayObject([DictionaryObject(), create_viewport(0, 0, 10, 20)]),
             [(0, 0, 20, 60)],
             True,
             id="viewport-without-bbox",
@@ -2429,7 +2429,7 @@ def _viewport(*box: float) -> DictionaryObject:
             id="bbox-with-two-values",
         ),
         pytest.param(
-            lambda _writer: ArrayObject([NullObject(), _viewport(0, 0, 10, 20)]),
+            lambda _writer: ArrayObject([NullObject(), create_viewport(0, 0, 10, 20)]),
             [(0, 0, 20, 60)],
             True,
             id="null-viewport",
