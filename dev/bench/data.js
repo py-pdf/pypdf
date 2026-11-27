@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795774461282,
+  "lastUpdate": 1795811418235,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -132665,6 +132665,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007911401003851641",
             "extra": "mean: 609.7629764000033 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a1a2674bc74dfa5f3564a3bd718ef9daf0b489de",
+          "message": "STY: Use descriptive variable names in _merge_page (#4517)\n\n* MAINT: Use descriptive variable names in _merge_page\n\nThe two implementations of PageObject._merge_page used short or\nrun-together names such as a, aa, r, q, x, arr, trsf, annots,\npage2resources and newrename. They are now annotation,\nannotation_copy, rectangle, quad_points, procedure_set, procedure_sets,\ntransformation, annotations, page2_resources and new_rename, with the\nsame names in both implementations. This prepares merging the two\nimplementations into one.\n\nBehavior: the same. Only local variables and the page2transformation\nparameter of the private _merge_page_writer() are renamed; for 486\nmerges of 9 PDFs of resources/ into each other, the merged pages are\nthe same as before.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Better and more renames; small test fix\n\n* STY: newname -> new_name\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-27T21:28:37+01:00",
+          "tree_id": "f7e5d733b72857438239ea20f211d606936bc4d8",
+          "url": "https://github.com/py-pdf/pypdf/commit/a1a2674bc74dfa5f3564a3bd718ef9daf0b489de"
+        },
+        "date": 1795811405285,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.537660095329889,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00997215022764002",
+            "extra": "mean: 220.37789939999897 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 34.99698830725073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0075977231540772195",
+            "extra": "mean: 28.573887307692083 msec\nrounds: 39"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.568914222448059,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01704244319717948",
+            "extra": "mean: 1.7577342252000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 31.080362526620796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009475700561624251",
+            "extra": "mean: 32.174656879998906 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.22157533238935714,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03311140507990894",
+            "extra": "mean: 4.513137763200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.985636687338903,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0076025386140661086",
+            "extra": "mean: 503.6168027999992 msec\nrounds: 5"
           }
         ]
       }
