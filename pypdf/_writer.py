@@ -1164,9 +1164,10 @@ class PdfWriter(PdfDocCommon):
                 annotation itself.
 
         """
-        if CatalogAttributes.ACRO_FORM not in self._root_object:
+        acro_form = self._root_object.get(CatalogAttributes.ACRO_FORM, NullObject()).get_object()
+        if is_null_or_none(acro_form):
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
-        acro_form = cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])
+        acro_form = cast(DictionaryObject, acro_form)
         if InteractiveFormDictEntries.Fields not in acro_form:
             raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
@@ -1176,15 +1177,17 @@ class PdfWriter(PdfDocCommon):
             page = list(self.pages)
         if isinstance(page, list):
             for p in page:
-                if PageAttributes.ANNOTS in p:  # just to prevent warnings
+                if not is_null_or_none(p.get(PageAttributes.ANNOTS, NullObject()).get_object()):
+                    # just to prevent warnings
                     self.update_page_form_field_values(p, fields, flags, None, flatten=flatten)
             return
-        if PageAttributes.ANNOTS not in page:
+        annotations = page.get(PageAttributes.ANNOTS, NullObject()).get_object()
+        if is_null_or_none(annotations):
             logger_warning("No fields to update on this page", source=__name__)
             return
         appearance_stream_obj: StreamObject | None = None
 
-        for annotation in page[PageAttributes.ANNOTS]:  # type: ignore[attr-defined]
+        for annotation in annotations:
             annotation = cast(DictionaryObject, annotation.get_object())
             if annotation.get("/Subtype", "") != "/Widget":
                 continue

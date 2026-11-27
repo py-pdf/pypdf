@@ -1723,10 +1723,11 @@ class PdfDocCommon(ABC):
 
         catalog = self.root_object
 
-        if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
+        tree = catalog.get("/AcroForm", NullObject()).get_object()
+        if is_null_or_none(tree) or not tree:
             return None
 
-        tree = cast(TreeObject, catalog["/AcroForm"])
+        tree = cast(TreeObject, tree)
         retval: dict[str, bytes] = {}
 
         if "/XFA" not in tree:

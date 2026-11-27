@@ -2938,6 +2938,58 @@ def test_da_missing_in_annot():
     )
 
 
+def _create_writer_with_form_page(*, acro_form=None, annotations=None) -> PdfWriter:
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    if acro_form is not None:
+        writer.root_object[NameObject("/AcroForm")] = acro_form(writer)
+    if annotations is not None:
+        page[NameObject("/Annots")] = annotations(writer)
+    return writer
+
+
+@pytest.mark.parametrize(
+    "acro_form",
+    [
+        pytest.param(lambda _writer: NullObject(), id="null"),
+        pytest.param(lambda writer: writer._add_object(NullObject()), id="reference-to-null"),
+    ],
+)
+def test_update_page_form_field_values__null_acro_form(acro_form):
+    """A null /AcroForm, or a reference to the null object, is read as missing."""
+    writer = _create_writer_with_form_page(acro_form=acro_form)
+
+    with pytest.raises(PyPdfError) as exc:
+        writer.update_page_form_field_values(writer.pages[0], {"foo": "text"})
+    assert exc.value.args[0] == "No /AcroForm dictionary in PDF of PdfWriter Object"
+    with pytest.raises(PyPdfError) as exc:
+        writer.update_page_form_field_values(None, {"foo": "text"})
+    assert exc.value.args[0] == "No /AcroForm dictionary in PDF of PdfWriter Object"
+
+
+@pytest.mark.parametrize(
+    "annotations",
+    [
+        pytest.param(lambda _writer: NullObject(), id="null"),
+        pytest.param(lambda writer: writer._add_object(NullObject()), id="reference-to-null"),
+    ],
+)
+def test_update_page_form_field_values__null_annotations(caplog, annotations):
+    """A null /Annots, or a reference to the null object, is read as missing."""
+    writer = _create_writer_with_form_page(
+        acro_form=lambda _writer: DictionaryObject({NameObject("/Fields"): ArrayObject()}),
+        annotations=annotations,
+    )
+
+    writer.update_page_form_field_values(writer.pages[0], {"foo": "text"})
+    assert "No fields to update on this page" in caplog.text
+
+    # The pages without annotations are skipped without a warning, as when it is missing
+    caplog.clear()
+    writer.update_page_form_field_values(None, {"foo": "text"})
+    assert caplog.text == ""
+
+
 def test_missing_fields(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
 
