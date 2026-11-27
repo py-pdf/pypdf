@@ -146,6 +146,9 @@ class PdfReader(PdfDocCommon):
         self.xref = {}
         self.xref_free_entry: dict[int, dict[Any, Any]] = {}
         self.xref_objStm: dict[int, tuple[Any, Any]] = {}
+        # (generation, idnum) -> offset of every xref stream we cached, so the
+        # cache can be reconciled once the whole xref chain has been read.
+        self._xref_stream_cache_candidates: dict[tuple[int, int], int] = {}
         self.trailer = DictionaryObject()
 
         # Security parameters.
@@ -241,6 +244,7 @@ class PdfReader(PdfDocCommon):
         self.xref = {}
         self.xref_free_entry = {}
         self.xref_objStm = {}
+        self._xref_stream_cache_candidates = {}
 
     @property
     def root_object(self) -> DictionaryObject:
@@ -1254,6 +1258,7 @@ class PdfReader(PdfDocCommon):
         self.xref_free_entry = {}
         self.xref_objStm = {}
         self._xref_stream_entry_count = 0
+        self._xref_stream_cache_candidates = {}
         self.trailer = DictionaryObject()
         visited_xref_offsets: set[int] = set()
         while startxref is not None:
@@ -1300,6 +1305,54 @@ class PdfReader(PdfDocCommon):
                     break
             else:
                 startxref = self._read_xref_other_error(stream, startxref)
+
+        # The chain was walked newest first, so a stream read early on could not
+        # see the definitions stored in older revisions yet. Reconcile now that
+        # every revision has been seen (see #3304).
+        self._drop_shadowed_xref_stream_cache()
+
+    def _drop_shadowed_xref_stream_cache(self) -> None:
+        """Drop cached xref streams that lost to another definition.
+
+        ``get_object()`` consults ``resolved_objects`` first, so a cached xref
+        stream hides whatever ``xref_objStm``/``xref`` say about the same object
+        number. A stream is only safe to keep when it is still the definition
+        that wins; every entry is re-checked here, including the ones that
+        looked fine when they were cached.
+        """
+        for (generation, idnum), offset in self._xref_stream_cache_candidates.items():
+            if self._xref_stream_is_authoritative(generation, idnum, offset):
+                continue
+            self.resolved_objects.pop((generation, idnum), None)
+        self._xref_stream_cache_candidates = {}
+
+    def _xref_stream_is_authoritative(
+        self, generation: int, idnum: int, stream_offset: int
+    ) -> bool:
+        """Whether an xref stream is the definition ``get_object()`` would pick.
+
+        ``get_object()`` resolves an object number in this order: the cache,
+        then ``xref_objStm`` (objects stored in an object stream), then
+        ``xref`` (regular objects, with ``xref_free_entry`` marking free ones).
+        Caching a stream that a later check would override makes the stream win
+        permanently, so every other definition has to be ruled out first.
+
+        A dangling ``xref_objStm`` entry - one whose object stream is not in the
+        cross-reference table at all - does not count: broken files list
+        objects as compressed even though the stream never existed, and there
+        the cached xref stream is the only usable definition (see
+        ``test_read_pdf15_xref_stream__decoded_data_not_retained``).
+        """
+        if generation == 0 and idnum in self.xref_objStm:
+            object_stream_number = self.xref_objStm[idnum][0]
+            if object_stream_number in self.xref.get(0, {}):
+                return False
+        if self.xref_free_entry.get(generation, {}).get(idnum, False):
+            return False
+        generation_table = self.xref.get(generation)
+        if not isinstance(generation_table, dict) or idnum not in generation_table:
+            return True
+        return bool(generation_table[idnum] == stream_offset)
 
     # The trailer keys a PDF 1.5+ cross-reference stream carries in place of a
     # `trailer` keyword (PDF 2.0 specification, table 17).
@@ -1448,12 +1501,14 @@ class PdfReader(PdfDocCommon):
 
     def _read_pdf15_xref_stream(self, stream: StreamType) -> StreamObject:
         """Read the cross-reference stream for PDF 1.5+."""
+        # Every call site seeks to ``offset + 1`` before getting here; step back
+        # so that ``tell()`` is the offset of the object itself.
         stream.seek(-1, 1)
+        xref_stream_offset = stream.tell()
         stream_idnum, stream_generation = self.read_object_header(stream)
         xref_stream = cast(StreamObject, read_object(stream, self))
         if cast(str, xref_stream["/Type"]) != "/XRef":
             raise PdfReadError(f"Unexpected type {xref_stream['/Type']!r}")
-        self.cache_indirect_object(stream_generation, stream_idnum, xref_stream)
 
         # Index pairs specify the subsections in the dictionary.
         # If none, create one subsection that spans everything.
@@ -1478,7 +1533,9 @@ class PdfReader(PdfDocCommon):
             )
 
         stream_data = BytesIO(xref_stream.get_data())
-        # Do not keep the decoded data cached, as the stream remains in resolved_objects.
+        # Drop the decoded copy: the stream is usually cached and can be
+        # re-decoded from the raw bytes, so keeping both doubles the memory for
+        # no gain.
         if isinstance(xref_stream, EncodedStreamObject):
             xref_stream.decoded_self = None
 
@@ -1501,6 +1558,24 @@ class PdfReader(PdfDocCommon):
 
         # Iterate through each subsection
         self._read_xref_subsections(index_pairs, get_entry, used_before)
+
+        # Cache the xref stream *after* the subsections have been processed.
+        # A cross-reference stream can reuse an object number that is still in
+        # use for a regular object in an incremental update (see #3304): the
+        # xref table then points to the *other* definition, and caching this
+        # stream first would make get_object() return the xref dictionary
+        # forever, hiding the real object.
+        #
+        # This check only sees the revisions read so far; older ones are
+        # reconciled by _drop_shadowed_xref_stream_cache() at the end of the
+        # chain walk.
+        if self._xref_stream_is_authoritative(
+            stream_generation, stream_idnum, xref_stream_offset
+        ):
+            self.cache_indirect_object(stream_generation, stream_idnum, xref_stream)
+            self._xref_stream_cache_candidates[
+                (stream_generation, stream_idnum)
+            ] = xref_stream_offset
         return xref_stream
 
     @staticmethod
