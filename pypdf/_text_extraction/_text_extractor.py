@@ -59,8 +59,6 @@ class _PendingMove:
 
     str_widths: float  # Width of the text shown before the first of the moves
     font_state: _FontState  # Font values at the first of the moves
-    # Offsets of a TJ array before its first glyph, in the unit of str_widths: they move where it starts
-    tj_offset_widths: float = 0.0
 
 
 class TextExtraction:
@@ -176,16 +174,7 @@ class TextExtraction:
             if operator == b"Tj" and self._pending_move is not None:
                 pending_move = self._pending_move
                 self._pending_move = None
-                self._post_process_text_operation(
-                    pending_move.str_widths,
-                    pending_move.font_state,
-                    self.compute_str_widths(pending_move.tj_offset_widths),
-                )
-                if pending_move.tj_offset_widths:
-                    # From here on, the offsets count as advance from the text line matrix, as they
-                    # do anywhere else in a TJ array, so the next checks measure from that matrix.
-                    self.tm_prev = self.tm_matrix.copy()
-                    self._actual_str_size["str_widths"] += pending_move.tj_offset_widths
+                self._post_process_text_operation(pending_move.str_widths, pending_move.font_state)
             str_widths = handler(operands)
 
             # Post-process operations that affect text positioning. A move only matters once
@@ -198,10 +187,10 @@ class TextExtraction:
                 if self._pending_move is None:
                     self._pending_move = _PendingMove(str_widths or 0.0, self._font_state())
                 else:
+                    # Includes a TJ offset shown since the previous move, which no longer applies:
+                    # the offset only moved the text matrix, and this move starts again from the
+                    # text line matrix (see process_tj_offset).
                     self._pending_move.str_widths += str_widths or 0.0
-                    # A TJ offset only moves the text matrix, and this move starts again from the
-                    # text line matrix, so an offset shown since the previous move no longer applies.
-                    self._pending_move.tj_offset_widths = 0.0
             elif operator == b"Tj":
                 self._post_process_text_operation(str_widths or 0.0)
 
@@ -210,8 +199,12 @@ class TextExtraction:
         if self._pending_move is not None:
             # No glyph has been shown since the last Td, Tm or T*, so the offset only moves where the
             # next glyph starts, and whether that is a word gap is decided when the glyph is shown. A Tm
-            # back to the start of the line followed by [-3045.6 (es)] TJ can continue a word.
-            self._pending_move.tj_offset_widths -= offset * self.font_size * self.char_scale
+            # back to the start of the line followed by [-3045.6 (es)] TJ can continue a word. The offset
+            # counts as advance from the text line matrix, and for the word-gap check it shortens the
+            # text shown before the move by as much.
+            advance = -offset * self.font_size * self.char_scale
+            self._actual_str_size["str_widths"] += advance
+            self._pending_move.str_widths -= self.compute_str_widths(advance)
             return
         # The offset moved the pen, so it counts towards the width and the added space does not.
         # Like the glyph widths, it is scaled horizontally.
@@ -230,24 +223,16 @@ class TextExtraction:
             space_width = min(space_width, self._previous_font_space)
         return _FontState(self.font_resource, self.font_size, space_width, self._actual_str_size["str_height"])
 
-    def _post_process_text_operation(
-        self, str_widths: float, font_state: _FontState | None = None, tj_offset: float = 0.0
-    ) -> None:
+    def _post_process_text_operation(self, str_widths: float, font_state: _FontState | None = None) -> None:
         """Handle common post-processing for text positioning operations."""
         text_was_empty = self.text == ""
         if font_state is None:
             font_state = self._font_state()
-        tm_matrix = self.tm_matrix
-        if tj_offset:
-            # Where the glyph starts. The text line matrix itself stays, as later moves are relative to it.
-            tm_matrix = self.tm_matrix.copy()
-            tm_matrix[4] += tj_offset * tm_matrix[0]
-            tm_matrix[5] += tj_offset * tm_matrix[1]
         try:
             self.text, self.output, self.cm_prev, self.tm_prev, self._line_span = crlf_space_check(
                 self.text,
                 (self.cm_prev, self.tm_prev),
-                (self.cm_matrix, tm_matrix),
+                (self.cm_matrix, self.tm_matrix),
                 (self.memo_cm, self.memo_tm),
                 font_state.font_resource,
                 self.orientations,
@@ -261,7 +246,7 @@ class TextExtraction:
             )
             if text_was_empty or self.text == "":
                 self.memo_cm = self.cm_matrix.copy()
-                self.memo_tm = tm_matrix.copy()
+                self.memo_tm = self.tm_matrix.copy()
         except OrientationNotFoundError:
             pass
 
