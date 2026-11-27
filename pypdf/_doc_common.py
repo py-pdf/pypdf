@@ -1061,7 +1061,7 @@ class PdfDocCommon(ABC):
     def _get_outline(
         self,
         *,
-        node: DictionaryObject | None = None,
+        node: PdfObject | None = None,
         outline: Any | None = None,
         visited: set[int] | None = None,
         depth: int = 0,
@@ -1093,7 +1093,7 @@ class PdfDocCommon(ABC):
 
                 # §12.3.3 Document outline, entries in the outline dictionary
                 if "/First" in lines:
-                    node = cast(DictionaryObject, lines["/First"])
+                    node = lines["/First"]
             self._named_destinations = self._get_named_destinations()
 
         if node is None:
@@ -1139,7 +1139,7 @@ class PdfDocCommon(ABC):
                 # The inner call forgets its entries on return to allow multiple
                 # outer entries to reference the same inner one.
                 self._get_outline(
-                    node=cast(DictionaryObject, node["/First"]),
+                    node=node["/First"],
                     outline=sub_outline,
                     visited=visited,
                     depth=depth + 1,
@@ -1150,7 +1150,7 @@ class PdfDocCommon(ABC):
 
             if "/Next" not in node:
                 break
-            node = cast(DictionaryObject, node["/Next"])
+            node = node["/Next"]
 
         visited.difference_update(added)
         return outline
@@ -1212,7 +1212,7 @@ class PdfDocCommon(ABC):
     def _build_destination(
         self,
         title: str | bytes,
-        array: ArrayObject | None,
+        array: PdfObject | None,
     ) -> Destination:
         page, typ = None, None
         # A valid destination is an array of at least a page and a fit type.
