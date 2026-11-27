@@ -457,6 +457,21 @@ def test_startxref_same_line_garbage_raises_pdfreaderror(value):
         PdfReader(BytesIO(data))
 
 
+def test_xref_subsection_header_not_a_number_raises_pdfreaderror():
+    """An xref subsection header not starting with a number must raise
+    PdfReadError, not TypeError (#4518).
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    buffer = io.BytesIO()
+    writer.write(buffer)
+    # The xref subsection header "0 N" with its first number replaced by a name.
+    broken = buffer.getvalue().replace(b"xref\n0 ", b"xref\n/0 ", 1)
+    assert broken != buffer.getvalue()
+    with pytest.raises(PdfReadError, match="Invalid xref subsection header"):
+        PdfReader(io.BytesIO(broken))
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [(b"123", 123), (b"+123", 123), (b"-123", -123), (b"0", 0), (b"1_234", 1234)],

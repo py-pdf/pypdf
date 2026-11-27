@@ -1120,6 +1120,8 @@ class PdfReader(PdfDocCommon):
         previous_position: int | None = None
         while True:
             num = cast(int, read_object(stream, self))
+            if not isinstance(num, int):
+                raise PdfReadError(f"Invalid xref subsection header: expected an integer object number, got {num!r}.")
             if first_time and num != 0:
                 self.xref_index = num
                 if self.strict:
