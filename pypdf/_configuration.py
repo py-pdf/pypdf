@@ -72,6 +72,11 @@ class Configuration:
     The maximum allowed number of uncompressed bytes during decompression when using the ``/BrotliDecode`` filter
     (Brotli compression).
     """
+    ascii85_maximum_output_length: int = 75_000_000
+    """
+    The maximum allowed number of uncompressed bytes during decompression when using the ``/ASCII85Decode`` filter
+    (ASCII85 encoding).
+    """
 
     flate_maximum_columns: int = 250_000
     """The maximum allowed number of columns when using the ``/FlateDecode`` filter."""
