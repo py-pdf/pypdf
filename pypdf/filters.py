@@ -561,6 +561,9 @@ class ASCII85Decode:
         Returns:
           decoded data.
 
+        Raises:
+          PdfStreamError:
+
         """
         if isinstance(data, str):
             data = data.encode()
@@ -572,8 +575,14 @@ class ASCII85Decode:
         except ValueError as error:
             if error.args[0] == "Ascii85 encoded byte sequences must end with b'~>'":
                 logger_warning("Ignoring missing Ascii85 end marker.", source=__name__)
-                return a85decode(data, adobe=False, ignorechars=WHITESPACES_AS_BYTES)
-            raise
+                try:
+                    return a85decode(data, adobe=False, ignorechars=WHITESPACES_AS_BYTES)
+                except ValueError as retry_error:
+                    raise PdfStreamError(f"Invalid data in ASCII85Decode stream: {retry_error}") from retry_error
+            # All other ValueErrors from a85decode (invalid digits,
+            # "Ascii85 overflow", ...) mean malformed stream data;
+            # surface them as PdfStreamError like the other decoders do.
+            raise PdfStreamError(f"Invalid data in ASCII85Decode stream: {error}") from error
 
 
 class DCTDecode:

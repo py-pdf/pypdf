@@ -6,6 +6,7 @@ import struct
 import subprocess
 import sys
 import zlib
+from base64 import a85encode
 from collections.abc import Callable
 from copy import deepcopy
 from io import BytesIO
@@ -175,7 +176,7 @@ def test_ascii85decode_with_overflow():
     )
 
     for i in inputs:
-        with pytest.raises(ValueError, match=r"^Non-Ascii85 digit found: "):
+        with pytest.raises(PdfStreamError, match=r"Non-Ascii85 digit found: "):
             ASCII85Decode.decode(i)
 
 
@@ -674,15 +675,61 @@ def test_ascii85decode__invalid_end__recoverable(caplog):
 def test_ascii85decode__non_recoverable(caplog):
     # Without our custom handling, this would complain about the final `~>` being missing.
     data = "äöüß"
-    with pytest.raises(ValueError, match="Non-Ascii85 digit found: Ã"):
+    with pytest.raises(PdfStreamError, match="Non-Ascii85 digit found: Ã"):
         ASCII85Decode.decode(data)
     assert "Ignoring missing Ascii85 end marker." in caplog.text
     caplog.clear()
 
     data += "~>"
-    with pytest.raises(ValueError, match="Non-Ascii85 digit found: Ã"):
+    with pytest.raises(PdfStreamError, match="Non-Ascii85 digit found: Ã"):
         ASCII85Decode.decode(data)
     assert caplog.text == ""
+
+
+def test_ascii85decode__malformed_stream_raises_pdfstreamerror():
+    """From #4522: malformed ASCII85 data must raise PdfStreamError, not ValueError."""
+    # Corrupted digit and overflowing group, decoded directly.
+    with pytest.raises(PdfStreamError, match="Non-Ascii85 digit found: v"):
+        ASCII85Decode.decode(b"9jqo^vBlbD~>")
+    with pytest.raises(PdfStreamError, match="Ascii85 overflow"):
+        ASCII85Decode.decode(b"<~u8~>")
+
+    # Same corrupted digit inside a real PDF, via text extraction.
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>"
+        ),
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    content = b"BT /F1 12 Tf 72 720 Td (Hello World) Tj ET"
+    a85 = a85encode(content, adobe=True)
+    a85 = a85[:10] + b"v" + a85[11:]  # corrupt one digit
+    objects.append(
+        b"<< /Filter /ASCII85Decode /Length " + str(len(a85)).encode() + b" >>\nstream\n" + a85 + b"\nendstream"
+    )
+    out = b"%PDF-1.7\n"
+    offsets = []
+    for i, obj in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += str(i).encode() + b" 0 obj\n" + obj + b"\nendobj\n"
+    xref_pos = len(out)
+    out += b"xref\n0 " + str(len(objects) + 1).encode() + b"\n"
+    out += b"0000000000 65535 f \n"
+    for off in offsets:
+        out += f"{off:010d} 00000 n \n".encode()
+    out += (
+        b"trailer\n<< /Size "
+        + str(len(objects) + 1).encode()
+        + b" /Root 1 0 R >>\nstartxref\n"
+        + str(xref_pos).encode()
+        + b"\n%%EOF"
+    )
+    reader = PdfReader(BytesIO(out))
+    with pytest.raises(PdfStreamError, match="Non-Ascii85 digit found: v"):
+        reader.pages[0].extract_text()
 
 
 def test_ascii85decode__ignore_whitespaces(caplog):
