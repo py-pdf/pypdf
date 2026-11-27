@@ -1056,6 +1056,41 @@ def test_get_destination_page_number():
             reader.get_destination_page_number(outline_item)
 
 
+def test_get_destination_page_number_with_page_as_direct_object_in_kids():
+    """
+    A page written as a direct object in /Kids has no indirect reference.
+
+    Building the page number map must skip such pages instead of crashing
+    with an AttributeError when resolving an outline destination.
+
+    https://github.com/py-pdf/pypdf/issues/4519
+    """
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R /Outlines 3 0 R >>",
+        b"<< /Type /Pages /Kids [<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] >>] /Count 1 >>",
+        b"<< /Type /Outlines /First 4 0 R /Last 4 0 R /Count 1 >>",
+        b"<< /Title (Chapter 1) /Parent 3 0 R /Dest [0 /Fit] >>",
+    ]
+    pdf_data = b"%PDF-1.7\n"
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(pdf_data))
+        pdf_data += b"%d 0 obj\n%s\nendobj\n" % (number, body)
+    xref = len(pdf_data)
+    pdf_data += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    pdf_data += b"".join(b"%010d 00000 n \n" % offset for offset in offsets)
+    pdf_data += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (
+        len(objects) + 1,
+        xref,
+    )
+
+    reader = PdfReader(BytesIO(pdf_data))
+    assert len(reader.pages) == 1
+    # The inline page cannot be addressed by an indirect reference, thus the
+    # destination cannot be resolved to a page number - but it must not crash.
+    assert reader.get_destination_page_number(reader.outline[0]) is None
+
+
 def test_do_not_get_stuck_on_large_files_without_start_xref():
     """
     Tests for the absence of a DoS bug, where a large file without an
