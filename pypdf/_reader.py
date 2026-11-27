@@ -46,7 +46,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from ._configuration import apply_legacy_configuration
+from ._configuration import apply_legacy_configuration, get_configuration
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._utils import (
@@ -116,6 +116,9 @@ class PdfReader(PdfDocCommon):
             this security measure, pass ``None``.
         xref_stream_maximum_entries: The maximum number of entries which are
             allowed inside a stream-based cross-reference stream.
+        xref_rebuild_maximum_entries: The maximum number of objects discovered
+            while rebuilding a broken cross-reference table, including object
+            stream members.
 
     """
 
@@ -130,6 +133,7 @@ class PdfReader(PdfDocCommon):
         *,
         root_object_recovery_limit: int | None = 10_000,
         xref_stream_maximum_entries: int = 2_000_000,
+        xref_rebuild_maximum_entries: int = 2_000_000,
     ) -> None:
         self.strict = strict
         self.flattened_pages: list[PageObject] | None = None
@@ -150,6 +154,7 @@ class PdfReader(PdfDocCommon):
         )
         self._xref_stream_maximum_entries = xref_stream_maximum_entries
         self._xref_stream_entry_count = 0
+        self._xref_rebuild_maximum_entries = xref_rebuild_maximum_entries
         apply_legacy_configuration()
 
         # Map page indirect_reference number to page number
@@ -314,19 +319,27 @@ class PdfReader(PdfDocCommon):
         return info
 
     @property
-    def _ID(self) -> ArrayObject | None:
+    def _file_identifiers(self) -> ArrayObject | None:
         """
         Provide access to "/ID". Standardized with PdfWriter.
 
         Returns:
             /ID array; None if the entry does not exist
 
+        Raises:
+            PdfReadError: If the entry exists but is not an array.
+
         """
         file_identifiers = self.trailer.get(TrailerKeys.ID, None)
         if is_null_or_none(file_identifiers):
             return None
         assert file_identifiers is not None, "mypy"
-        return cast(ArrayObject, file_identifiers.get_object())
+        file_identifiers = file_identifiers.get_object()
+        if not isinstance(file_identifiers, ArrayObject):
+            raise PdfReadError(
+                "Trailer /ID entry does not point to an array"
+            )
+        return file_identifiers
 
     @property
     def pdf_header(self) -> str:
@@ -351,7 +364,7 @@ class PdfReader(PdfDocCommon):
             # The document-level metadata stream is exempt from encryption
             # only if /EncryptMetadata is false (ISO 32000-2, Table 21).
             self._override_encryption = (
-                self._encryption is not None and not self._encryption.EncryptMetadata
+                self._encryption is not None and not self._encryption.encrypt_metadata
             )
             return cast(XmpInformation, self.root_object.xmp_metadata)
         finally:
@@ -1592,12 +1605,31 @@ class PdfReader(PdfDocCommon):
 
             index += 7  # len(b"trailer")
 
+    def _ensure_xref_rebuild_entry_limit(self, entry_count: int) -> None:
+        if entry_count > self._xref_rebuild_maximum_entries:
+            raise LimitReachedError(
+                f"Maximum xref rebuild entry limit exceeded: "
+                f"{entry_count} > {self._xref_rebuild_maximum_entries}."
+            )
+
     def _rebuild_xref_table(self, stream: StreamType) -> None:
         self.xref = {}
+        # Rebuild loads the whole file into memory; reuse the shared stream
+        # length budget instead of introducing a separate configuration knob.
+        input_length = get_stream_size(stream)
+        maximum_input_length = get_configuration().maximum_declared_stream_length
+        if input_length > maximum_input_length:
+            raise LimitReachedError(
+                f"Maximum xref rebuild input length exceeded: "
+                f"{input_length} > {maximum_input_length}."
+            )
         stream.seek(0, 0)
         stream_data = stream.read(-1)
 
+        entry_count = 0
         for object_number, generation_number, object_start in self._find_pdf_objects(stream_data):
+            entry_count += 1
+            self._ensure_xref_rebuild_entry_limit(entry_count)
             if generation_number not in self.xref:
                 self.xref[generation_number] = {}
             self.xref[generation_number][object_number] = object_start
@@ -1644,6 +1676,9 @@ class PdfReader(PdfDocCommon):
                         inner_offset = int(current)
                         self.xref_objStm[inner_object_number] = (object_number, inner_offset)
                         actual_count += 1
+                        # Compressed members also consume the rebuild entry budget.
+                        entry_count += 1
+                        self._ensure_xref_rebuild_entry_limit(entry_count)
                     expected_count = cast(int, obj["/N"])
                     if actual_count != expected_count:  # pragma: no cover
                         logger_warning(  # pragma: no cover
@@ -1829,36 +1864,10 @@ class PdfReader(PdfDocCommon):
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
 
-    def _repr_mimebundle_(
-        self,
-        include: Iterable[str] | None = None,
-        exclude: Iterable[str] | None = None,
-    ) -> dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        .. seealso::
-
-            https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
+    def _get_pdf_bytes(self) -> bytes:
+        """Return the bytes of the stream the document was read from."""
         self.stream.seek(0)
-        pdf_data = self.stream.read()
-        data = {
-            "application/pdf": pdf_data,
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
+        return self.stream.read()
 
     def _get_named_destinations(
         self,

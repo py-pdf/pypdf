@@ -121,6 +121,17 @@ class Configuration:
     named_destinations_maximum_depth: int = 100
     """The maximum allowed depth for a named destination name tree."""
 
+    annotations_maximum_per_page: int = 100_000
+    """
+    The maximum allowed number of annotations processed per page when merging
+    or appending pages.
+    """
+
+    embedded_files_maximum_count: int = 1000
+    """The maximum allowed number of embedded files."""
+    embedded_files_maximum_output_length: int = 250_000_000
+    """The maximum allowed number of aggregated content bytes for the dictionary-based attachment API."""
+
     xform_maximum_invocations_per_extraction: int = 5_000
     """The maximum allowed number of ``/XObject`` forms per page during text extraction."""
 

@@ -15,9 +15,12 @@ from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
     ContentStream,
+    DecodedStreamObject,
     Destination,
     DictionaryObject,
+    Field,
     Fit,
+    IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
@@ -412,6 +415,31 @@ def test_content_stream__array_based__output_length() -> None:
         _ = reader.pages[0].get_contents()
 
 
+def test_content_stream__write_to_stream__encryption_key() -> None:
+    """
+    Passing an encryption key to ContentStream.write_to_stream() warns and writes the stream unchanged.
+
+    The writer encrypts the streams of the indirect objects before it writes them
+    (ISO 32000-2:2020, 7.6.2), so the parameter has no effect.
+    """
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    content = reader.pages[0].get_contents()
+    assert isinstance(content, ContentStream)
+    expected = BytesIO()
+    content.write_to_stream(expected)
+
+    output = BytesIO()
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            r"^The encryption_key parameter of ContentStream\.write_to_stream\(\) is deprecated "
+            r"and will be removed in pypdf 8\.0\.0\.$"
+        ),
+    ):
+        content.write_to_stream(output, b"key")
+    assert output.getvalue() == expected.getvalue()
+
+
 @pytest.mark.timeout(5)
 def test_dictionary_object__read_from_stream__infinite_loop(caplog: pytest.LogCaptureFixture) -> None:
     data = b"""1 0 obj
@@ -527,6 +555,87 @@ def test_content_stream__parse_content_stream__limits() -> None:
             match=r"^Read stream length of 240 exceeds maximum allowed length of 128\.$"
     ):
         content_stream._parse_content_stream(stream)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        pytest.param(b"1 0 0 1 72 720 cm\nq 0.5 .5 -.5 +1. -0 +7 w Q", id="signed-and-decimal-numbers"),
+        pytest.param(b"/F1 12 Tf /Name[1 2]0 d q[/A]TJ/B<</C 1>>BDC", id="tokens-next-to-delimiters"),
+        pytest.param(b"1\x002\t3\f4\r5\n6 re f*", id="all-whitespace-characters"),
+        pytest.param(b"0 0 1 RG 1 0 0 rg 12 0 Rx 3 4 l", id="integers-before-reference-lookalike"),
+        pytest.param(b"1,5 1-2 1.2.3 - . +- 0 Td", id="malformed-numbers"),
+        pytest.param(
+            b"1234567890123456789012 12345.678901234567890123 w " + b"A" * 100 + b" " + b"B" * 101 + b" S",
+            id="overlong-numbers-and-operators",
+        ),
+        pytest.param(b"/A#42 gs /\xc3\xa4 gs /\xff gs /" + b"N" * 101 + b" gs", id="names-requiring-decoding"),
+        pytest.param(b"BT (Hello) Tj [(W) -120 (orld)] TJ ET % comment\n/Im1 Do", id="strings-arrays-and-comment"),
+        pytest.param(b"q BI /W 1 /H 1 /CS /G /BPC 8 ID \x00 EI Q", id="inline-image"),
+        pytest.param(b"1 2 m 3 4 l S", id="simple-path"),
+        pytest.param(b"1 2 m 1 0 R 3 4 l", id="error-indirect-reference"),
+        pytest.param(b"1 2 m 3\x0b4 l", id="error-vertical-tab"),
+        pytest.param(b"1 2 m " + b"C" * 120 + b" S", id="operator-longer-than-simple-token"),
+        pytest.param(b"1 2 m " + b"9" * 70 + b" w", id="error-integer-too-long"),
+        pytest.param(b"1 2 m 0." + b"9" * 70 + b" w", id="error-decimal-too-long"),
+        pytest.param(b"/" + b"N" * 5000 + b" gs", id="error-name-too-long"),
+        pytest.param(b"/" + b"N" * 4079 + b" 1 1 1 1 1 1 1 1 1 gs", id="name-at-safe-length"),
+        pytest.param(b"/" + b"N" * 4080 + b" 1 1 1 1 1 1 1 1 1 gs", id="error-name-above-safe-length"),
+        pytest.param(b"A" * 111 + b" 1 1 1 1 1 1 1 1 1 S", id="operator-at-safe-length"),
+        pytest.param(b"A" * 112 + b" 1 1 1 1 1 1 1 1 1 S", id="error-operator-above-safe-length"),
+        pytest.param(b"9" * 47 + b" 1 1 1 1 1 1 1 1 1 w", id="integer-at-safe-length"),
+        pytest.param(b"9" * 48 + b" 1 1 1 1 1 1 1 1 1 w", id="error-integer-above-safe-length"),
+        pytest.param(b"-0." + b"9" * 44 + b" 1 1 1 1 1 1 1 1 1 w", id="decimal-at-safe-length"),
+        pytest.param(b"-0." + b"9" * 45 + b" 1 1 1 1 1 1 1 1 1 w", id="error-decimal-above-safe-length"),
+    ],
+)
+def test_content_stream__parse_content_stream__simple_tokens(data: bytes, caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Content stream tokens are parsed the same with and without the regular expression for simple tokens.
+
+    The operations, the operand types, the warnings and the exceptions are compared for
+    snippets with tokens at the edge of what the regular expression accepts.
+    ISO 32000-2:2020, 7.8.2 (content streams), 7.2.3 (white-space and delimiter
+    characters), 7.3.3 (numbers) and 7.3.5 (names).
+    """
+    def parse() -> tuple[list[tuple[object, bytes]], str]:
+        content_stream = ContentStream(stream=None, pdf=None)
+        try:
+            content_stream._parse_content_stream(BytesIO(data))
+            error = ""
+        except Exception as exception:
+            error = repr(exception)
+        operations = [
+            (
+                [(type(operand), operand) for operand in operands] if isinstance(operands, list) else operands,
+                operator,
+            )
+            for operands, operator in content_stream._operations
+        ]
+        return operations, error
+
+    operations = parse()
+    warnings = caplog.text
+    caplog.clear()
+    never_matching = mock.Mock(match=mock.Mock(return_value=None))
+    with mock.patch("pypdf.generic._data_structures._CONTENT_STREAM_SIMPLE_TOKEN", never_matching):
+        assert parse() == operations
+    never_matching.match.assert_called()
+    assert caplog.text == warnings
+
+
+def test_content_stream__parse_content_stream__simple_tokens_without_read_object() -> None:
+    """
+    Numbers, names and operators of a content stream are parsed without the generic object parser.
+
+    ISO 32000-2:2020, 7.8.2: a content stream is a sequence of operands and operators.
+    """
+    content_stream = ContentStream(stream=None, pdf=None)
+    with mock.patch("pypdf.generic._data_structures.read_object", side_effect=AssertionError):
+        content_stream._parse_content_stream(BytesIO(b"q 1 0 0 1 72 720 cm /F1 12.5 Tf T*\nQ"))
+    assert content_stream._operations == [
+        ([], b"q"), ([1, 0, 0, 1, 72, 720], b"cm"), (["/F1", 12.5], b"Tf"), ([], b"T*"), ([], b"Q")
+    ]
 
 
 def test_tree_object__insert_child__cycle() -> None:
@@ -988,6 +1097,165 @@ def test_dictionary_object__clone__cycle_detection() -> None:
     writer = PdfWriter()
     writer.append(BytesIO(data))
     assert len(writer.pages) == 1
+
+
+def test_dictionary_object__read_from_stream__deeply_nested_dictionary_raises_pdfreaderror() -> None:
+    """
+    A dictionary nested deeper than Python's recursion limit raises a PdfReadError in strict mode.
+
+    ISO 32000-2 sets no limit for the nesting of objects, so this checks how pypdf handles
+    a malformed or hostile file.
+    """
+    depth = sys.getrecursionlimit()
+    data = b"<</A " * depth + b"1" + b">>" * depth
+    with pytest.raises(PdfReadError, match=r"^Error reading PDF file\.$"):
+        DictionaryObject.read_from_stream(BytesIO(data), ReaderDummy(strict=True))  # type: ignore[arg-type]
+
+
+def test_dictionary_object__read_from_stream__nul_bytes_are_whitespace() -> None:
+    """
+    A dictionary with NUL bytes between its entries is read.
+
+    ISO 32000-2:2020, 7.2.3, Table 1: NUL is a white-space character.
+    """
+    stream = BytesIO(b"<<\x00/Key (Value)\x00>>")
+    assert DictionaryObject.read_from_stream(stream, None) == {"/Key": "Value"}
+
+
+def test_dictionary_object__read_from_stream__spaces_after_stream_keyword() -> None:
+    """
+    A stream whose keyword stream is followed by spaces before the line feed is read.
+
+    ISO 32000-2:2020, 7.3.8.1: the keyword stream shall be followed by CR LF or LF.
+    The spaces break that rule, and the stream data is read anyway.
+    """
+    stream = BytesIO(b"<< /Length 3 >>stream   \nabc\nendstream")
+    result = DictionaryObject.read_from_stream(stream, None)
+    assert isinstance(result, StreamObject)
+    assert result.get_data() == b"abc"
+
+
+def _create_tree_with_writer() -> tuple[PdfWriter, TreeObject]:
+    writer = PdfWriter()
+    tree = TreeObject()
+    writer._add_object(tree)
+    return writer, tree
+
+
+def _create_tree_node(writer: PdfWriter, **links: IndirectObject) -> DictionaryObject:
+    node = DictionaryObject({NameObject(f"/{key}"): value for key, value in links.items()})
+    writer._add_object(node)
+    return node
+
+
+def test_tree_object__insert_first_child_drops_stale_siblings() -> None:
+    """
+    The first child inserted into an empty tree has no /Next and /Prev entries.
+
+    The child has /Next and /Prev entries pointing to a node that is not in the tree.
+    ISO 32000-2:2020, 12.3.3, Table 151: /Prev and /Next link the items of one level.
+    """
+    writer, tree = _create_tree_with_writer()
+    stale = writer._add_object(DictionaryObject())
+    child = _create_tree_node(writer, Next=stale, Prev=stale)
+
+    tree.insert_child(child, None, writer)
+
+    assert tree["/First"] == child
+    assert tree["/Last"] == child
+    assert "/Next" not in child
+    assert "/Prev" not in child
+
+
+def test_tree_object__append_child_drops_stale_next() -> None:
+    """
+    A child appended as the last item of a tree has no /Next entry.
+
+    The child has a /Next entry pointing to a node that is not in the tree.
+    ISO 32000-2:2020, 12.3.3, Table 151: /Next is absent for the last item of a level.
+    """
+    writer, tree = _create_tree_with_writer()
+    first = _create_tree_node(writer)
+    tree.insert_child(first, None, writer)
+    stale = writer._add_object(DictionaryObject())
+    second = _create_tree_node(writer, Next=stale)
+
+    tree.insert_child(second, None, writer)
+
+    assert tree["/Last"] == second
+    assert first["/Next"] == second
+    assert second["/Prev"] == first
+    assert "/Next" not in second
+
+
+def test_stream_object__flate_encode__filter_array_with_non_array_decode_parms() -> None:
+    """
+    Flate encoding a stream with a /Filter array and a null /DecodeParms gives one null per filter.
+
+    ISO 32000-2:2020, 7.3.8.2, Table 5: with several filters, /DecodeParms is an array
+    with one entry per filter, null for a filter without parameters.
+    """
+    stream = DecodedStreamObject()
+    stream.set_data(b"abc")
+    stream[NameObject("/Filter")] = ArrayObject([NameObject("/ASCIIHexDecode")])
+    stream[NameObject("/DecodeParms")] = NullObject()
+
+    encoded = stream.flate_encode()
+
+    assert encoded["/Filter"] == ArrayObject([NameObject("/FlateDecode"), NameObject("/ASCIIHexDecode")])
+    assert encoded["/DecodeParms"] == ArrayObject([NullObject(), NullObject()])
+
+
+def _create_field_with_stream_value(data: bytes) -> Field:
+    stream = DecodedStreamObject()
+    stream.set_data(data)
+    value = stream.flate_encode()
+    field = DictionaryObject({NameObject("/FT"): NameObject("/Tx"), NameObject("/V"): value})
+    field.indirect_reference = None
+    return Field(field)
+
+
+def test_field__stream_value() -> None:
+    """
+    A text field whose /V is a stream has the text of the stream as its value.
+
+    ISO 32000-2:2020, 12.7.5.3: since PDF 1.5, the text of a text field may be held
+    in a stream in /V.
+    """
+    assert _create_field_with_stream_value(b"text")["/V"] == TextStringObject("text")
+
+
+def test_field__stream_value_without_data() -> None:
+    """
+    A text field whose /V is a stream without data has an empty value.
+
+    ISO 32000-2:2020, 12.7.5.3: since PDF 1.5, the text of a text field may be held
+    in a stream in /V.
+    """
+    assert _create_field_with_stream_value(b"")["/V"] == TextStringObject("")
+
+
+@pytest.mark.parametrize(
+    ("fit", "expected"),
+    [
+        (Fit(fit_type="/FitH", fit_args=(1, 2)), {"/Top": NullObject()}),
+        (Fit(fit_type="/FitBH", fit_args=(1, 2)), {"/Top": NullObject()}),
+        (Fit(fit_type="/FitV", fit_args=(1, 2)), {"/Left": NullObject()}),
+        (Fit(fit_type="/FitBV", fit_args=(1, 2)), {"/Left": NullObject()}),
+        (Fit(fit_type="/Fit", fit_args=(1,)), {}),
+        (Fit(fit_type="/FitB", fit_args=(1,)), {}),
+    ],
+)
+def test_destination__unexpected_number_of_fit_arguments(fit: Fit, expected: dict[str, NullObject]) -> None:
+    """
+    A destination with too many fit arguments has a null coordinate instead of a wrong one.
+
+    /FitH and /FitBH take one top coordinate and /FitV and /FitBV one left coordinate;
+    given two, the coordinate is null, which keeps the current one. /Fit and /FitB take
+    none, so they get no coordinate. ISO 32000-2:2020, 12.3.2.2, Table 149.
+    """
+    destination = Destination("title", NumberObject(0), fit)
+    assert {key: destination[key] for key in ("/Left", "/Top") if key in destination} == expected
 
 
 @pytest.mark.parametrize(

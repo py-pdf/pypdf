@@ -218,8 +218,13 @@ def _count_codes(operand: str | bytes, text: str, font: Font) -> tuple[int, int]
         The number of character codes and the number of single-byte codes 32.
 
     """
-    if isinstance(operand, str):  # Already decoded, one character per code.
-        return len(text), text.count(" ")
+    if isinstance(operand, str):
+        if not isinstance(operand, TextStringObject):
+            # The " " that process_tj_offset adds for a gap in a TJ array: no code was shown.
+            return 0, 0
+        # A content stream that was not parsed as bytes, like one changed by a PdfWriter,
+        # has text strings. Count the codes of the bytes they were read from.
+        operand = operand.get_original_bytes()
     if isinstance(font.encoding, dict):  # Simple font, one byte per code.
         return len(operand), operand.count(b" ")
     if codecs.lookup(font.encoding).name == "utf-16-be":

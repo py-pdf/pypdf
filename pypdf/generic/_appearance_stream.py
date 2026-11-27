@@ -415,7 +415,12 @@ class TextStreamAppearance(BaseStreamAppearance):
             y_offset = margin + (
                 (field_height - font.font_descriptor.ascent * font_size / TEXT_SPACE_TO_GLYPH_SPACE_FACTOR) / 2
             )
-        default_appearance = f"{font_name} {font_size} Tf {font_color.as_operator()}"
+        # font_name is in deserialized form here: it either comes from the Tf operands of /DA, where
+        # NameObject parsing has already resolved any "#xx" escapes, or from the caller. renumber()
+        # applies that escaping again, just as it does for the matching /Resources /Font key, so that
+        # a name holding whitespace or a delimiter stays a single Tf operand instead of being split.
+        escaped_font_name = NameObject(font_name).renumber().decode()
+        default_appearance = f"{escaped_font_name} {font_size} Tf {font_color.as_operator()}"
 
         ap_stream = bytearray()
         ap_stream += (

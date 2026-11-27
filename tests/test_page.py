@@ -315,7 +315,7 @@ def test_compress_content_streams(pdf_path, password):
 
     # test from reader should fail as adding_object out of
     # PdfWriter not possible
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Page must be part of a PdfWriter$"):
         reader.pages[0].compress_content_streams()
 
 
@@ -492,7 +492,7 @@ def test_page_properties():
 def test_page_rotation():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
     page = writer.pages[0]
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Rotation angle must be a multiple of 90$") as exc:
         page.rotate(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
@@ -522,7 +522,7 @@ def test_page_indirect_rotation():
 
 def test_page_scale():
     op = Transformation()
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match=r"^Either sx or sy must be specified$") as exc:
         op.scale()
     assert exc.value.args[0] == "Either sx or sy must be specified"
 
@@ -980,7 +980,7 @@ def test_annotation_setter(pdf_file_path):
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Invalid page object$"):
         writer.add_page(DictionaryObject())
 
     # Act
@@ -1821,7 +1821,7 @@ def test_recursive_get_page_from_node():
         writer.add_page(writer.pages[0])
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
     writer.insert_page(writer.pages[0], -1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Invalid index value$"):
         writer.insert_page(writer.pages[0], -10)
 
 
@@ -2074,7 +2074,7 @@ def test_get_rectangle__value_is_not_an_array(value, expected):
     stream.seek(0)
 
     with pytest.raises(
-        ValueError, match=f"Expected an array of four values for /MediaBox, {expected}"
+        TypeError, match=f"Expected an array of four values for /MediaBox, {expected}"
     ):
         _ = PdfReader(stream).pages[0].mediabox
 

@@ -28,6 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 import struct
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -1324,10 +1325,8 @@ class PdfDocCommon(ABC):
                 node.get("/Count", 0) >= 0
             )
         outline_item.node = node
-        try:
+        with contextlib.suppress(AttributeError):
             outline_item.indirect_reference = node.indirect_reference
-        except AttributeError:
-            pass
         return outline_item
 
     @property
@@ -1686,7 +1685,7 @@ class PdfDocCommon(ABC):
         """
         if self._encryption is None:
             return None
-        return UserAccessPermissions(self._encryption.P)
+        return UserAccessPermissions(self._encryption.permissions)
 
     @property
     def are_permissions_valid(self) -> bool | None:
@@ -1779,16 +1778,19 @@ class PdfDocCommon(ABC):
             for name in entry._names:
                 entries.setdefault(name, []).append(entry)
 
+        configuration = get_configuration()
+        traversal_state = _TraversalState(entry_count=configuration.embedded_files_maximum_output_length)
+
         return LazyDict(
             {
-                name: (self._get_attachment_contents, attachment_entries)
+                name: (self._get_attachment_contents, attachment_entries, traversal_state)
                 for name, attachment_entries in entries.items()
             }
         )
 
     @classmethod
-    def _get_attachment_contents(cls, entries: list[EmbeddedFile]) -> list[bytes]:
-        return [entry.content for entry in entries]
+    def _get_attachment_contents(cls, entries: list[EmbeddedFile], traversal_state: _TraversalState) -> list[bytes]:
+        return [entry._get_content(traversal_state=traversal_state) for entry in entries]
 
     @property
     def attachment_list(self) -> Iterator[EmbeddedFile]:
@@ -1796,6 +1798,10 @@ class PdfDocCommon(ABC):
         yield from EmbeddedFile._load(self.root_object, strict=self.strict)
 
     @abstractmethod
+    def _get_pdf_bytes(self) -> bytes:
+        """Return the document as the bytes of a PDF file."""
+        ...  # pragma: no cover
+
     def _repr_mimebundle_(
         self,
         include: Iterable[str] | None = None,
@@ -1811,7 +1817,17 @@ class PdfDocCommon(ABC):
 
             https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
-        ...  # pragma: no cover
+        data: dict[str, Any] = {"application/pdf": self._get_pdf_bytes()}
+
+        if include is not None:
+            # Filter representations based on include list
+            data = {k: v for k, v in data.items() if k in include}
+
+        if exclude is not None:
+            # Remove representations based on exclude list
+            data = {k: v for k, v in data.items() if k not in exclude}
+
+        return data
 
 
 class LazyDict(Mapping[Any, Any]):
@@ -1819,8 +1835,8 @@ class LazyDict(Mapping[Any, Any]):
         self._raw_dict = dict(*args, **kwargs)
 
     def __getitem__(self, key: str) -> Any:
-        func, arg = self._raw_dict.__getitem__(key)
-        return func(arg)
+        func, *arg = self._raw_dict.__getitem__(key)
+        return func(*arg)
 
     def __iter__(self) -> Iterator[Any]:
         return iter(self._raw_dict)
