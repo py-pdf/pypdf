@@ -4820,6 +4820,48 @@ def test_update_page_form_field_values__warns_for_unannotated_page(caplog):
     assert "No fields to update on this page" in caplog.text
 
 
+def test_update_page_form_field_values__checkbox_without_appearance(caplog, tmp_path):
+    # https://github.com/py-pdf/pypdf/issues/4528
+    # A checkbox widget without an /AP dictionary: the value must be set
+    # (with a warning) instead of raising a raw KeyError('/AP').
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    stream = DecodedStreamObject()
+    stream.set_data(b"")
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    button = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/FT"): NameObject("/Btn"),
+            NameObject("/T"): TextStringObject("Check1"),
+            NameObject("/Rect"): RectangleObject([0, 0, 50, 50]),
+            # no /AP
+        }
+    )
+    page[NameObject("/Annots")] = ArrayObject([writer._add_object(button)])
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject(
+        {NameObject("/Fields"): ArrayObject([button.indirect_reference])}
+    )
+    write_data_here = tmp_path / "out.pdf"
+    writer.write(write_data_here)
+
+    writer = PdfWriter(clone_from=write_data_here)
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Check1": "/Yes"},
+        auto_regenerate=False,
+    )
+    assert "No /AP dictionary in annotation" in caplog.text
+
+    annotation = writer.pages[0]["/Annots"][0].get_object()
+    assert annotation["/V"] == "/Yes"
+    assert annotation["/AS"] == "/Yes"
+
+    writer.write(write_data_here)
+    assert PdfReader(write_data_here).get_fields()["Check1"]["/V"] == "/Yes"
+
+
 def test_update_page_form_field_values__skips_unannotated_page_in_list(caplog):
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
     page = writer.add_blank_page(width=100, height=100)
