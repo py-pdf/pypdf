@@ -4,6 +4,7 @@ import struct
 import sys
 import time
 import zlib
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from unittest import mock
@@ -123,6 +124,137 @@ def test_read_metadata_title_is_utf8():
         title = reader.metadata.title
         # Should be a str.
         assert title == "Microsoft Word - トランスバース社買収電話会議英語Final.docx"
+
+
+def _build_minimal_pdf(objects: list[tuple[str, str]]) -> bytes:
+    """Build a minimal PDF from (object number, object body) pairs, numbered from 1."""
+    out = bytearray(b"%PDF-1.4\n")
+    offsets = {}
+    for number, body in objects:
+        offsets[int(number)] = len(out)
+        out += number.encode() + b" 0 obj\n" + body.encode() + b"\nendobj\n"
+    xref_pos = len(out)
+    count = len(objects) + 1
+    out += b"xref\n0 %d\n" % count
+    out += b"0000000000 65535 f \n"
+    for number, _ in objects:
+        out += b"%010d 00000 n \n" % int(number)
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\n" % count
+    out += b"startxref\n%d\n%%%%EOF\n" % xref_pos
+    return bytes(out)
+
+
+def _pdf_with_info(info: str, *extra_objects: str) -> bytes:
+    """Build a PDF whose trailer has /Info 3 0 R, with the given /Info body and objects 4, 5, ..."""
+    objects = [
+        ("1", "<< /Type /Catalog /Pages 2 0 R >>"),
+        ("2", "<< /Type /Pages /Kids [] /Count 0 >>"),
+        ("3", info),
+    ]
+    objects += [(str(number), body) for number, body in enumerate(extra_objects, start=4)]
+    return _build_minimal_pdf(objects).replace(
+        b"/Root 1 0 R >>", b"/Root 1 0 R /Info 3 0 R >>"
+    )
+
+
+def _pdf_with_indirect_info_entries() -> bytes:
+    return _pdf_with_info(
+        "<< /Title (Direct Title) /Author 4 0 R /Subject 5 0 R"
+        " /Creator 6 0 R /Producer 7 0 R /Keywords 8 0 R"
+        " /CreationDate 9 0 R /ModDate 10 0 R >>",
+        "(Indirect Author)",
+        "(Indirect Subject)",
+        "(Indirect Creator)",
+        "(Indirect Producer)",
+        "(Indirect Keywords)",
+        "(D:20240102030405)",
+        "(D:20240102030406)",
+    )
+
+
+@pytest.mark.parametrize(
+    ("prop", "expected"),
+    [
+        ("title", "Direct Title"),
+        ("author", "Indirect Author"),
+        ("subject", "Indirect Subject"),
+        ("creator", "Indirect Creator"),
+        ("producer", "Indirect Producer"),
+        ("keywords", "Indirect Keywords"),
+        ("creation_date", datetime(2024, 1, 2, 3, 4, 5)),
+        ("modification_date", datetime(2024, 1, 2, 3, 4, 6)),
+    ],
+)
+def test_metadata_properties_resolve_indirect_entries(prop, expected):
+    """
+    The metadata properties return the value of an indirect /Info entry.
+
+    ISO 32000-2:2020, 14.3.3, Table 349: the entries of the document information
+    dictionary are text strings and dates, and like any object they may be indirect
+    objects (7.3.10).
+    """
+    reader = PdfReader(BytesIO(_pdf_with_indirect_info_entries()))
+    docinfo = reader.metadata
+    assert docinfo is not None
+    assert getattr(docinfo, prop) == expected
+
+
+@pytest.mark.parametrize(
+    ("prop", "expected"),
+    [
+        ("title_raw", "Direct Title"),
+        ("author_raw", "Indirect Author"),
+        ("subject_raw", "Indirect Subject"),
+        ("creator_raw", "Indirect Creator"),
+        ("producer_raw", "Indirect Producer"),
+        ("keywords_raw", "Indirect Keywords"),
+        ("creation_date_raw", "D:20240102030405"),
+        ("modification_date_raw", "D:20240102030406"),
+    ],
+)
+def test_metadata_raw_properties_resolve_indirect_entries(prop, expected):
+    """
+    The raw metadata properties return the object of an indirect /Info entry, not the reference.
+
+    ISO 32000-2:2020, 14.3.3, Table 349, and 7.3.10.
+    """
+    reader = PdfReader(BytesIO(_pdf_with_indirect_info_entries()))
+    docinfo = reader.metadata
+    assert docinfo is not None
+    assert getattr(docinfo, prop) == expected
+
+
+def test_metadata__reference_to_undefined_object() -> None:
+    """
+    An /Info entry that refers to an undefined object reads as missing, and the other entries stay readable.
+
+    ISO 32000-2:2020, 7.3.10: an indirect reference to an undefined object shall not be
+    considered an error; it shall be treated as a reference to the null object.
+    """
+    reader = PdfReader(BytesIO(_pdf_with_info("<< /Title (T) /Author 99 0 R >>")))
+
+    metadata = reader.metadata
+
+    assert metadata is not None
+    assert metadata.title == "T"
+    assert metadata.author is None
+
+
+@pytest.mark.parametrize("value", ["/MyName", "42", "[(a) (b)]"])
+@pytest.mark.parametrize("key", ["/Title", "/Author"])
+def test_metadata__entry_that_is_not_text(key: str, value: str) -> None:
+    """
+    A text property of the metadata is None when its /Info entry is not a text string.
+
+    ISO 32000-2:2020, 14.3.3, Table 349: /Title and /Author are text strings.
+    """
+    reader = PdfReader(BytesIO(_pdf_with_info(f"<< {key} {value} >>")))
+
+    metadata = reader.metadata
+
+    assert metadata is not None
+    assert metadata.title is None
+    assert metadata.author is None
 
 
 @pytest.mark.enable_socket

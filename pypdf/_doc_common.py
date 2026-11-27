@@ -165,12 +165,7 @@ class DocumentInformation(DictionaryObject):
         Returns a ``TextStringObject`` or ``None`` if the title is not
         specified.
         """
-        return (
-            self._get_text(DocumentInformationAttributes.TITLE)
-            or self.get(DocumentInformationAttributes.TITLE).get_object()  # type: ignore[union-attr]
-            if self.get(DocumentInformationAttributes.TITLE)
-            else None
-        )
+        return self._get_text(DocumentInformationAttributes.TITLE)
 
     @property
     def title_raw(self) -> str | None:
@@ -344,7 +339,18 @@ class PdfDocCommon(ABC):
         retval = DocumentInformation()
         if self._info is None:
             return None
-        retval.update(self._info)
+        # Text entries of the /Info dictionary may be indirect references;
+        # resolve them so every property sees the value, not the reference.
+        for key, value in self._info.items():
+            try:
+                resolved = value.get_object()
+            except Exception:
+                resolved = None
+            if resolved is None:
+                # ISO 32000-2:2020, 7.3.10: a reference to an undefined object
+                # is not an error; treat it as a reference to the null object.
+                resolved = NullObject()
+            retval[key] = resolved
         return retval
 
     @property
