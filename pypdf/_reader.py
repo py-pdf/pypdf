@@ -162,6 +162,11 @@ class PdfReader(PdfDocCommon):
 
         self._validated_root: DictionaryObject | None = None
 
+        # Must be ready before _initialize_stream: reading/xref recovery can call
+        # get_object → _get_object_recovery_offset during PdfReader construction.
+        self._object_recovery_cache: dict[tuple[int, int], int] | None = None
+        self._object_stream_resolution_stack: list[int] = []
+
         self._initialize_stream(stream)
         self._known_objects: set[tuple[int, int]] = set()
 
@@ -173,7 +178,6 @@ class PdfReader(PdfDocCommon):
             raise PdfReadError("Not an encrypted file")
 
         self._named_destinations_cache: dict[str, Destination] | None = None
-        self._object_stream_resolution_stack: list[int] = []
 
     def _initialize_stream(self, stream: StrByteType | Path) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
@@ -633,12 +637,10 @@ class PdfReader(PdfDocCommon):
             except MemoryError:  # pragma: no cover  # TODO: BLE001
                 raise
             except Exception:
-                buf = get_stream_data(self.stream)
-                m = re.search(
-                    rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
-                    buf,
+                offset = self._get_object_recovery_offset(
+                    indirect_reference.idnum, indirect_reference.generation
                 )
-                if m is not None:
+                if offset is not None:
                     logger_warning(
                         "Object ID %(idnum)d,%(generation)d ref repaired",
                         source=__name__,
@@ -647,8 +649,8 @@ class PdfReader(PdfDocCommon):
                     )
                     self.xref[indirect_reference.generation][
                         indirect_reference.idnum
-                    ] = (m.start(0) + 1)
-                    self.stream.seek(m.start(0) + 1)
+                    ] = offset
+                    self.stream.seek(offset)
                     idnum, generation = self.read_object_header(self.stream)
                 else:
                     idnum = -1
@@ -689,12 +691,10 @@ class PdfReader(PdfDocCommon):
                     strict=self.strict,
                 )
         else:
-            buf = get_stream_data(self.stream)
-            m = re.search(
-                rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
-                buf,
+            offset = self._get_object_recovery_offset(
+                indirect_reference.idnum, indirect_reference.generation
             )
-            if m is not None:
+            if offset is not None:
                 logger_warning(
                     "Object %(idnum)d %(generation)d found",
                     source=__name__,
@@ -703,12 +703,9 @@ class PdfReader(PdfDocCommon):
                 )
                 if indirect_reference.generation not in self.xref:
                     self.xref[indirect_reference.generation] = {}
-                self.xref[indirect_reference.generation][indirect_reference.idnum] = (
-                    m.start(0) + 1
-                )
-                self.stream.seek(m.end(0) + 1)
-                skip_over_whitespace(self.stream)
-                self.stream.seek(-1, 1)
+                self.xref[indirect_reference.generation][indirect_reference.idnum] = offset
+                self.stream.seek(offset)
+                self.read_object_header(self.stream)
                 retval = read_object(self.stream, self)
 
                 # override encryption is used for the /Encrypt dictionary
@@ -1091,6 +1088,18 @@ class PdfReader(PdfDocCommon):
                 continue
             cache[object_number] = (object_start, generation_number)
         return cache
+
+    def _get_object_recovery_offset(self, idnum: int, generation: int) -> int | None:
+        if self._object_recovery_cache is None:
+            buf = get_stream_data(self.stream)
+            cache: dict[tuple[int, int], int] = {}
+            for object_number, generation_number, object_start in self._find_pdf_objects(buf):
+                key = (object_number, generation_number)
+                if key not in cache:
+                    # Always use the first match.
+                    cache[key] = object_start
+            self._object_recovery_cache = cache
+        return self._object_recovery_cache.get((idnum, generation))
 
     def _read_standard_xref_table__handle_size(self, stream: StreamType) -> int | None:
         size = cast(int, read_object(stream, self))
