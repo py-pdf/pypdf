@@ -162,7 +162,7 @@ class Font:
             encoding: The encoding of the font.
             current_widths: The character widths to update.
             width_scale: For a Type3 font, the factor that converts its glyph space widths
-                to thousandths of a text space unit, see _type3_width_scale.
+                to thousandths of a text space unit, see _get_type3_width_scale.
 
         """
         widths_array = pdf_font_dict["/Widths"].get_object()
@@ -311,7 +311,7 @@ class Font:
         return space_char
 
     @staticmethod
-    def _type3_width_scale(pdf_font_dict: DictionaryObject) -> float:
+    def _get_type3_width_scale(pdf_font_dict: DictionaryObject) -> float:
         """
         Return the factor from a Type3 font's glyph space to thousandths of a text space unit.
 
@@ -461,7 +461,7 @@ class Font:
                     for cname in pdf_font_dict.get("/CharProcs") or []
                 )
             if interpretable:  # Save some overhead if font is not interpretable
-                width_scale = cls._type3_width_scale(pdf_font_dict) if sub_type == "Type3" else None
+                width_scale = cls._get_type3_width_scale(pdf_font_dict) if sub_type == "Type3" else None
                 if "/Widths" in pdf_font_dict:
                     cls._collect_tt_t1_character_widths(
                         pdf_font_dict, character_map, encoding, character_widths, width_scale

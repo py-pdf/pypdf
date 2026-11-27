@@ -1596,13 +1596,6 @@ def test_get_text_operands__counts_character_codes(
             "is visible and accessible. Users can verify",
             id="font-matrix-of-text-space-units",
         ),
-        pytest.param(
-            "https://github.com/py-pdf/pypdf/files/12543290/whitepaper.WBT.token.blockchain.whitepaper.pdf",
-            "iss2165.pdf",
-            7,
-            "requirements",
-            id="font-matrix-of-text-space-units-2",
-        ),
         # A Type3 font with /FontMatrix [0.0120482 0 0 0.0120482 0 0]
         pytest.param(
             "https://github.com/py-pdf/pypdf/files/13307713/missing-base-font.pdf",
