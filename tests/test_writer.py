@@ -4721,6 +4721,30 @@ def test_get_filtered_outline__node_is_none() -> None:
     assert writer._get_filtered_outline(node=None, pages={}, reader=reader) == []
 
 
+def test_append__keeps_outline_with_title_less_first_item() -> None:
+    # https://github.com/py-pdf/pypdf/issues/4545
+    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf")
+    assert len(reader.outline) == 9
+    assert reader.outline[0]["/Title"] == ""
+
+    writer = PdfWriter()
+    writer.append(reader)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    def _titles(outline) -> list[str]:
+        titles = []
+        for item in outline:
+            if isinstance(item, list):
+                titles.extend(_titles(item))
+            else:
+                titles.append(item["/Title"])
+        return titles
+
+    assert _titles(PdfReader(stream).outline) == _titles(reader.outline)
+
+
 def _create_outline_item(**entries: Any) -> DictionaryObject:
     item = DictionaryObject({NameObject("/Title"): TextStringObject("Chapter")})
     for key, value in entries.items():
