@@ -1027,10 +1027,10 @@ class PageObject(DictionaryObject):
 
     def _merge_resources(
         self,
-        res1: DictionaryObject,
-        res2: DictionaryObject,
-        resource: Any,
-        new_res1: bool = True,
+        original_resources: DictionaryObject,
+        page2_resources: DictionaryObject,
+        resource_type: Any,
+        copy_original: bool = True,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
@@ -1056,7 +1056,7 @@ class PageObject(DictionaryObject):
                 value.
 
             """
-            value = page2res.raw_get(base_key)
+            value = page2_type_resources.raw_get(base_key)
             # TODO: a possible improvement for writer, the indirect_reference
             # cannot be found because translated
 
@@ -1066,8 +1066,8 @@ class PageObject(DictionaryObject):
             # to be maximally annoying.
             computed_key = base_key
             idx = 0
-            while computed_key in new_res:
-                if new_res.raw_get(computed_key) == value:
+            while computed_key in merged_type_resources:
+                if merged_type_resources.raw_get(computed_key) == value:
                     # there's already a resource of this name, with the exact
                     # same value
                     return computed_key, True
@@ -1075,34 +1075,34 @@ class PageObject(DictionaryObject):
                 idx += 1
             return computed_key, False
 
-        if new_res1:
-            new_res = DictionaryObject()
-            new_res.update(res1.get(resource, DictionaryObject()).get_object())
+        if copy_original:
+            merged_type_resources = DictionaryObject()
+            merged_type_resources.update(original_resources.get(resource_type, DictionaryObject()).get_object())
         else:
-            new_res = cast(DictionaryObject, res1[resource])
-        page2res = cast(
-            DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
+            merged_type_resources = cast(DictionaryObject, original_resources[resource_type])
+        page2_type_resources = cast(
+            DictionaryObject, page2_resources.get(resource_type, DictionaryObject()).get_object()
         )
-        rename_res = {}
-        for key in page2res:
+        rename_mapping = {}
+        for key in page2_type_resources:
             unique_key, same_value = compute_unique_key(key)
-            newname = NameObject(unique_key)
+            new_name = NameObject(unique_key)
             if key != unique_key:
                 # we have to use a different name for this
-                rename_res[key] = newname
+                rename_mapping[key] = new_name
 
             if not same_value:
                 if is_pdf_writer:
-                    new_res[newname] = page2res.raw_get(key).clone(pdf)
+                    merged_type_resources[new_name] = page2_type_resources.raw_get(key).clone(pdf)
                     with contextlib.suppress(AttributeError):
-                        new_res[newname] = new_res[newname].indirect_reference
+                        merged_type_resources[new_name] = merged_type_resources[new_name].indirect_reference
                 else:
-                    new_res[newname] = page2res.raw_get(key)
-            lst = sorted(new_res.items())
-            new_res.clear()
+                    merged_type_resources[new_name] = page2_type_resources.raw_get(key)
+            lst = sorted(merged_type_resources.items())
+            merged_type_resources.clear()
             for el in lst:
-                new_res[el[0]] = el[1]
-        return new_res, rename_res
+                merged_type_resources[el[0]] = el[1]
+        return merged_type_resources, rename_mapping
 
     @staticmethod
     def _content_stream_rename(
@@ -1294,16 +1294,16 @@ class PageObject(DictionaryObject):
         rename: dict[str, Any] = {}
         original_resources = cast(DictionaryObject, self.get(PageAttributes.RESOURCES, DictionaryObject()).get_object())
         page2_resources = cast(DictionaryObject, page2.get(PageAttributes.RESOURCES, DictionaryObject()).get_object())
-        new_annots = ArrayObject()
+        new_annotations = ArrayObject()
 
         for page in (self, page2):
             if PageAttributes.ANNOTS in page:
-                annots = page[PageAttributes.ANNOTS]
-                if isinstance(annots, ArrayObject):
-                    new_annots.extend(annots)
-        self[NameObject(PageAttributes.ANNOTS)] = new_annots
+                annotations = page[PageAttributes.ANNOTS]
+                if isinstance(annotations, ArrayObject):
+                    new_annotations.extend(annotations)
+        self[NameObject(PageAttributes.ANNOTS)] = new_annotations
 
-        for res in (
+        for resource_type in (
             Resources.EXT_G_STATE,
             Resources.COLOR_SPACE,
             Resources.PATTERN,
@@ -1312,12 +1312,12 @@ class PageObject(DictionaryObject):
             Resources.FONT,
             Resources.PROPERTIES,
         ):
-            new, new_resource_name = self._merge_resources(
-                original_resources, page2_resources, res
+            merged_type_resources, rename_mapping = self._merge_resources(
+                original_resources, page2_resources, resource_type
             )
-            if new:
-                new_resources[NameObject(res)] = new
-                rename.update(new_resource_name)
+            if merged_type_resources:
+                new_resources[NameObject(resource_type)] = merged_type_resources
+                rename.update(rename_mapping)
 
         # Combine /ProcSet sets, making sure there is a consistent order
         new_resources[NameObject(Resources.PROC_SET)] = ArrayObject(
@@ -1380,7 +1380,7 @@ class PageObject(DictionaryObject):
     def _merge_page_writer(
         self,
         page2: "PageObject",
-        page2transformation: Callable[[Any], ContentStream] | None = None,
+        page2_transformation: Callable[[Any], ContentStream] | None = None,
         ctm: CompressedTransformationMatrix | None = None,
         over: bool = True,
         expand: bool = False,
@@ -1395,10 +1395,10 @@ class PageObject(DictionaryObject):
         if self.get(PageAttributes.RESOURCES, NullObject()).get_object() is not original_resources:
             # missing, null or malformed: the merged resources are stored in a new dictionary
             self[NameObject(PageAttributes.RESOURCES)] = original_resources
-        page2resources = _get_page_resources(page2, inherit=False)
+        page2_resources = _get_page_resources(page2, inherit=False)
 
         rename = {}
-        for res in (
+        for resource_type in (
             Resources.EXT_G_STATE,
             Resources.COLOR_SPACE,
             Resources.PATTERN,
@@ -1407,65 +1407,65 @@ class PageObject(DictionaryObject):
             Resources.FONT,
             Resources.PROPERTIES,
         ):
-            if res in page2resources:
-                if res not in original_resources:
-                    original_resources[NameObject(res)] = DictionaryObject()
-                _, newrename = self._merge_resources(
-                    original_resources, page2resources, res, False
+            if resource_type in page2_resources:
+                if resource_type not in original_resources:
+                    original_resources[NameObject(resource_type)] = DictionaryObject()
+                _, new_rename = self._merge_resources(
+                    original_resources, page2_resources, resource_type, False
                 )
-                rename.update(newrename)
+                rename.update(new_rename)
         # Combine /ProcSet sets
-        if Resources.PROC_SET in page2resources:
+        if Resources.PROC_SET in page2_resources:
             if Resources.PROC_SET not in original_resources:
                 original_resources[NameObject(Resources.PROC_SET)] = ArrayObject()
-            arr = cast(ArrayObject, original_resources[Resources.PROC_SET])
-            for x in cast(ArrayObject, page2resources[Resources.PROC_SET]):
-                if x not in arr:
-                    arr.append(x)
-            arr.sort()
+            procedure_sets = cast(ArrayObject, original_resources[Resources.PROC_SET])
+            for procedure_set in cast(ArrayObject, page2_resources[Resources.PROC_SET]):
+                if procedure_set not in procedure_sets:
+                    procedure_sets.append(procedure_set)
+            procedure_sets.sort()
 
         if not is_null_or_none(page2.get(PageAttributes.ANNOTS, None)):
-            annots = self.get(PageAttributes.ANNOTS, NullObject()).get_object()
-            if not isinstance(annots, ArrayObject):
-                if not is_null_or_none(annots):
+            annotations = self.get(PageAttributes.ANNOTS, NullObject()).get_object()
+            if not isinstance(annotations, ArrayObject):
+                if not is_null_or_none(annotations):
                     logger_warning(
                         "Annotations are not an array: %(annotations)s",
                         source=__name__,
-                        annotations=annots,
+                        annotations=annotations,
                     )
-                annots = ArrayObject()
-                self[NameObject(PageAttributes.ANNOTS)] = annots
+                annotations = ArrayObject()
+                self[NameObject(PageAttributes.ANNOTS)] = annotations
             if ctm is None:
-                trsf = Transformation()
+                transformation = Transformation()
             else:
-                trsf = Transformation(ctm)
-            page2_annots = cast(ArrayObject, page2[PageAttributes.ANNOTS])
+                transformation = Transformation(ctm)
+            page2_annotations = cast(ArrayObject, page2[PageAttributes.ANNOTS])
             configuration = get_configuration()
-            if len(page2_annots) > configuration.annotations_maximum_per_page:
+            if len(page2_annotations) > configuration.annotations_maximum_per_page:
                 raise LimitReachedError(
                     f"Maximum annotations per page exceeded: "
-                    f"{len(page2_annots)} > {configuration.annotations_maximum_per_page}."
+                    f"{len(page2_annotations)} > {configuration.annotations_maximum_per_page}."
                 )
             # Ensure we are working on a copy of the list. Otherwise, if both pages
             # are the same object, we might run into an infinite loop.
-            for a in deepcopy(page2_annots):
-                a = a.get_object()
-                aa = a.clone(
+            for annotation in deepcopy(page2_annotations):
+                annotation = annotation.get_object()
+                annotation_copy = annotation.clone(
                     pdf,
                     ignore_fields=("/P", "/StructParent", "/Parent"),
                     force_duplicate=True,
                 )
-                r = cast(ArrayObject, a["/Rect"])
+                rectangle = cast(ArrayObject, annotation["/Rect"])
                 # Rotation and shear can move the other corners beyond this diagonal.
                 points = [
-                    trsf.apply_on((r[0], r[1]), True),  # Original lower-left corner.
-                    trsf.apply_on((r[2], r[1]), True),  # Original lower-right corner.
-                    trsf.apply_on((r[0], r[3]), True),  # Original upper-left corner.
-                    trsf.apply_on((r[2], r[3]), True),  # Original upper-right corner.
+                    transformation.apply_on((rectangle[0], rectangle[1]), True),  # Original lower-left corner.
+                    transformation.apply_on((rectangle[2], rectangle[1]), True),  # Original lower-right corner.
+                    transformation.apply_on((rectangle[0], rectangle[3]), True),  # Original upper-left corner.
+                    transformation.apply_on((rectangle[2], rectangle[3]), True),  # Original upper-right corner.
                 ]
                 x_coordinates = [point[0] for point in points]
                 y_coordinates = [point[1] for point in points]
-                aa[NameObject("/Rect")] = ArrayObject(
+                annotation_copy[NameObject("/Rect")] = ArrayObject(
                     (
                         min(x_coordinates),
                         min(y_coordinates),
@@ -1473,12 +1473,12 @@ class PageObject(DictionaryObject):
                         max(y_coordinates),
                     )
                 )
-                if "/QuadPoints" in a:
-                    q = cast(ArrayObject, a["/QuadPoints"])
-                    aa[NameObject("/QuadPoints")] = ArrayObject(
+                if "/QuadPoints" in annotation:
+                    quad_points = cast(ArrayObject, annotation["/QuadPoints"])
+                    annotation_copy[NameObject("/QuadPoints")] = ArrayObject(
                         value
-                        for i in range(0, len(q), 2)
-                        for value in trsf.apply_on((q[i], q[i + 1]), True)
+                        for i in range(0, len(quad_points), 2)
+                        for value in transformation.apply_on((quad_points[i], quad_points[i + 1]), True)
                     )
                 # The /Rect update above only repositions and resizes the
                 # annotation's bounding box; it does not touch the
@@ -1487,11 +1487,11 @@ class PageObject(DictionaryObject):
                 from pypdf.generic._appearance_stream import (  # noqa: PLC0415
                     transform_annotation_appearance,
                 )
-                transform_annotation_appearance(aa, trsf)
+                transform_annotation_appearance(annotation_copy, transformation)
                 with contextlib.suppress(KeyError):
-                    aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
-                aa[NameObject("/P")] = self.indirect_reference
-                annots.append(aa.indirect_reference)
+                    annotation_copy["/Popup"][NameObject("/Parent")] = annotation_copy.indirect_reference
+                annotation_copy[NameObject("/P")] = self.indirect_reference
+                annotations.append(annotation_copy.indirect_reference)
 
         new_content_array = ArrayObject()
         original_content = self.get_contents()
@@ -1499,11 +1499,11 @@ class PageObject(DictionaryObject):
             original_content.isolate_graphics_state()
             new_content_array.append(original_content)
 
-        page2content = page2.get_contents()
-        if page2content is not None:
+        page2_content = page2.get_contents()
+        if page2_content is not None:
             configuration = get_configuration()
             rect = getattr(page2, configuration.page_merge_box)
-            page2content.operations.insert(
+            page2_content.operations.insert(
                 0,
                 (
                     map(
@@ -1518,18 +1518,18 @@ class PageObject(DictionaryObject):
                     b"re",
                 ),
             )
-            page2content.operations.insert(1, ([], b"W"))
-            page2content.operations.insert(2, ([], b"n"))
-            if page2transformation is not None:
-                page2content = page2transformation(page2content)
-            page2content = PageObject._content_stream_rename(
-                page2content, rename, self.pdf
+            page2_content.operations.insert(1, ([], b"W"))
+            page2_content.operations.insert(2, ([], b"n"))
+            if page2_transformation is not None:
+                page2_content = page2_transformation(page2_content)
+            page2_content = PageObject._content_stream_rename(
+                page2_content, rename, self.pdf
             )
-            page2content.isolate_graphics_state()
+            page2_content.isolate_graphics_state()
             if over:
-                new_content_array.append(page2content)
+                new_content_array.append(page2_content)
             else:
-                new_content_array.insert(0, page2content)
+                new_content_array.insert(0, page2_content)
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:

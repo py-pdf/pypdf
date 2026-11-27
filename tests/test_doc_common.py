@@ -1379,18 +1379,17 @@ def _create_writer_with_shared_outline_child(count: int) -> PdfWriter:
     return writer
 
 
-def _measure_get_outline_cpu_time(count: int, runs: int) -> float:
-    """Return the lowest CPU time of `runs` readings of an outline of `count` items."""
-    timings = []
-    for _ in range(runs):
-        writer = _create_writer_with_shared_outline_child(count)
-        start = time.process_time()
+def _measure_get_outline_cpu_time(count: int, *, reads: int = 1) -> float:
+    """Return the CPU time of reading an outline of `count` items, averaged over `reads` readings."""
+    writer = _create_writer_with_shared_outline_child(count)
+    start = time.process_time()
+    for _ in range(reads):
         outline = writer._get_outline()
-        timings.append(time.process_time() - start)
-        assert len(outline) == 2 * count
-        assert outline[-2]["/Title"] == f"Title{count - 1}"
-        assert outline[-1][0]["/Title"] == "Inner"
-    return min(timings)
+    cpu_time = (time.process_time() - start) / reads
+    assert len(outline) == 2 * count
+    assert outline[-2]["/Title"] == f"Title{count - 1}"
+    assert outline[-1][0]["/Title"] == "Inner"
+    return cpu_time
 
 
 @pytest.mark.slow
@@ -1404,18 +1403,19 @@ def test_get_outline__speed():
     quadratic time a ratio of about 64. The limit of 16 is twice the linear ratio.
 
     Before #4455, every item copied the set of visited items, which is quadratic.
-    Ratios measured with Python 3.13 on an Intel i7-6700HQ, three runs each:
+    Ratios measured with Python 3.12 on an Apple M1 Pro:
 
-    * before #4455: 52 to 53, and 23 to 24 with --cov=pypdf
-    * after #4455: 9.4 to 10.2, and 7.5 to 8.8 with --cov=pypdf
+    * before #4455: 50 to 54, and 27 to 29 with --cov=pypdf
+    * after #4455: 7.6 to 11.3, and 7.8 to 9.5 with --cov=pypdf
 
-    The small outline is read three times because a single short measurement is
-    noisy. The large one is read once to keep the test fast. The timeout only
-    guards against a hang.
+    The small outline is read eight times within one measurement, so both
+    measurements read 20,000 items. A single read of the small outline is too
+    short to measure: on Windows, process_time() only advances every 15.6 ms,
+    which made the ratio jump between runs. The timeout only guards against a hang.
     """
-    small = _measure_get_outline_cpu_time(2_500, runs=3)
-    large = _measure_get_outline_cpu_time(20_000, runs=1)
-    assert large / small < 32  # linear would be 8, quadratic would be 64
+    small = _measure_get_outline_cpu_time(2_500, reads=8)
+    large = _measure_get_outline_cpu_time(20_000)
+    assert large / small < 16  # linear would be 8, quadratic would be 64
 
 
 @pytest.mark.parametrize(
