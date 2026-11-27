@@ -2385,6 +2385,41 @@ def test_update_form_fields(caplog, tmp_path):
     Path(write_data_here).unlink()
 
 
+def test_update_form_fields__flatten_only_keeps_btn_value():
+    """
+    Regression test for issue #4526.
+    Flattening with value=None must leave the current button state
+    untouched (/V and /AS preserved) instead of resetting it to /Off.
+    """
+    # Checkbox: tick it, then flatten without providing a new value.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "pdflatex-forms.pdf")
+    writer.update_page_form_field_values(writer.pages[0], {"Check": "/Yes"}, auto_regenerate=False)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+
+    writer = PdfWriter(clone_from=stream)
+    writer.update_page_form_field_values(writer.pages[0], {"Check": None}, flatten=True)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    flds = PdfReader(stream).get_fields()
+    assert flds["Check"]["/V"] == "/Yes"
+    assert flds["Check"].indirect_reference.get_object()["/AS"] == "/Yes"
+
+    # Radio button: the selected option must be preserved as well.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.update_page_form_field_values(writer.pages[0], {"RadioGroup1": "/2"}, auto_regenerate=False)
+    writer.update_page_form_field_values(writer.pages[0], {"RadioGroup1": None}, flatten=True)
+    stream = BytesIO()
+    writer.write(stream)
+    stream.seek(0)
+    flds = PdfReader(stream).get_fields()
+    assert flds["RadioGroup1"]["/V"] == "/2"
+    assert flds["RadioGroup1"]["/Kids"][0].get_object()["/AS"] == "/Off"
+    assert flds["RadioGroup1"]["/Kids"][1].get_object()["/AS"] == "/2"
+
+
 def test_add_apstream_object():
     writer = PdfWriter()
     page = writer.add_blank_page(1000, 1000)
