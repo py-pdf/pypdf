@@ -688,6 +688,62 @@ def test_tj_offset_right_after_a_font_change_keeps_a_real_word_gap() -> None:
     assert build(b"BT /F1 10 Tf 40 700 Td [(category)] TJ /F2 10 Tf [-342 (latex)] TJ ET") == "category latex"
 
 
+def _page_with_two_fonts(content: bytes, fonts: list[tuple[str, str, int]]) -> BytesIO:
+    """Build a single page with the given (resource, base font, space width) fonts."""
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    font_resources = DictionaryObject()
+    for resource, base_font, space_width in fonts:
+        font_dict = DictionaryObject()
+        font_dict[NameObject("/Type")] = NameObject("/Font")
+        font_dict[NameObject("/Subtype")] = NameObject("/Type1")
+        font_dict[NameObject("/BaseFont")] = NameObject(base_font)
+        font_dict[NameObject("/FirstChar")] = NumberObject(32)
+        font_dict[NameObject("/LastChar")] = NumberObject(126)
+        font_dict[NameObject("/Widths")] = ArrayObject(
+            [NumberObject(space_width)] + [NumberObject(500)] * 94
+        )
+        font_resources[NameObject(resource)] = writer._add_object(font_dict)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+    stream = DecodedStreamObject()
+    stream.set_data(content)
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def test_tj_smaller_gap_after_a_real_font_change_is_a_space() -> None:
+    """A gap above the half-space threshold keeps its space after a font change (#4502).
+
+    Regression test for the source2e review: a -280 offset (0.53 of the mono
+    font's space) after switching from the body font to the mono font is a
+    word gap, even though it is below the raised bar that applies when a Tf
+    only re-selects the same font.
+    """
+    page = PdfReader(
+        _page_with_two_fonts(
+            b"BT /F1 10 Tf 40 700 Td [(file)] TJ /F2 10 Tf [-280 (latex.ltx)] TJ ET",
+            [("/F1", "/Helvetica", 500), ("/F2", "/Courier", 525)],
+        )
+    ).pages[0]
+    assert page.extract_text() == "file latex.ltx"
+
+
+def test_tj_offset_after_reselecting_same_font_via_another_resource_is_not_a_space() -> None:
+    """Re-selecting the same font through another resource is still a re-selection (#4502)."""
+    page = PdfReader(
+        _page_with_two_fonts(
+            b"BT /F1 12 Tf 72 700 Td (Comp) Tj /F2 12 Tf [-150 (laint)] TJ ET",
+            [("/F1", "/Custom", 250), ("/F2", "/Custom", 250)],
+        )
+    ).pages[0]
+    assert page.extract_text() == "Complaint"
+
+
 @pytest.mark.parametrize(
     ("content_stream", "expected"),
     [

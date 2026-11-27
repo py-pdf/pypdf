@@ -37,6 +37,14 @@ from ..generic._font import Font, FontDescriptor
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
 
+def _font_family_name(name: str) -> str:
+    """Return a font name without its subset tag (``ABCDEF+Calibri`` -> ``Calibri``)."""
+    tag, sep, rest = name.partition("+")
+    if sep and len(tag) == 6 and tag.isalpha() and tag.isupper():
+        return rest
+    return name
+
+
 def _get_number_operand(operands: list[Any], index: int, default: float) -> float:
     """Return the operand at index as a float, or default if it is missing or not a number."""
     if index < len(operands) and isinstance(operands[index], (int, float)):
@@ -101,6 +109,8 @@ class TextExtraction:
         self._space_width: float = 500.0  # will be set correctly at first Tf
         # Right after a Tf, a word gap is a gap in either the previous or the new font.
         self._previous_font_space: float | None = None
+        # Whether the last Tf merely re-selected the font already in use, see process_tj_offset.
+        self._tf_reselected_same_font: bool = False
         self._actual_str_size: dict[str, float] = {
             "str_widths": 0.0,
             "str_height": 0.0,
@@ -164,6 +174,7 @@ class TextExtraction:
         self.rtl_dir = False
         self._line_span = None
         self._pending_move = None
+        self._tf_reselected_same_font = False
 
     def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
@@ -200,16 +211,19 @@ class TextExtraction:
         previous = self.text or self.output
         # A positive offset moves the next glyph back (kerning), so only a negative one can be a gap.
         # A Tf just before this TJ has already moved the text to the output,
-        # so an offset at the start of the new run is ambiguous: producers
-        # use small offsets there as a font-change kern (italic correction),
-        # while a real word gap is about two-thirds of a space. The usual
-        # half-space threshold cannot tell them apart -- #4502 is -150, i.e.
-        # 0.54 of the space, and must stay joined, while source2e is -342,
-        # i.e. 0.65 of the mono font's space, and must stay a gap -- so right
-        # after a Tf the bar is raised to about three-fifths of a space.
-        # Within a run the usual threshold still applies, so the smaller
-        # word gaps producers emit (#1328) keep working.
-        threshold = space_width * 1.3 if self.text == "" else space_width
+        # so an offset at the start of the new run is ambiguous when that Tf
+        # merely re-selected the font already in use (same font, same size):
+        # producers use small offsets there as a kern inside a word -- #4502
+        # is -150, i.e. 0.54 of the space, and must stay joined -- so after a
+        # re-selection the bar is raised to about three-fifths of a space.
+        # A Tf that actually changes the font is judged by the usual
+        # threshold instead: in source2e the word gaps follow a change from
+        # the body font to a mono font, the -342 one (0.65 of the mono
+        # font's space) as well as many smaller ones that the raised bar
+        # swallowed, joining words that were separate before. Within a run
+        # the usual threshold still applies, so the smaller word gaps
+        # producers emit (#1328) keep working.
+        threshold = space_width * 1.3 if self.text == "" and self._tf_reselected_same_font else space_width
         if -offset >= threshold and previous and previous[-1] not in " \n":
             self.process_operation(b"Tj", [" "])
         self._actual_str_size["str_widths"] = str_widths
@@ -376,6 +390,9 @@ class TextExtraction:
 
     def _handle_tf(self, operands: list[Any]) -> None:
         """Handle Tf (Set font size) operation - Table 5.2 page 398."""
+        previous_font = getattr(self, "font", None)
+        previous_name = _font_family_name(previous_font.name) if previous_font is not None else None
+        previous_size = self.font_size
         if self.text != "":
             self._previous_font_space = self.font_size * self._space_width
             self.output += self.text  # .translate(cmap)
@@ -405,6 +422,13 @@ class TextExtraction:
             raise
         except Exception:
             pass  # keep previous size
+        # A re-selection of the same font at the same size does not start a
+        # new word, so a TJ offset right after it is a kern, not a gap.
+        self._tf_reselected_same_font = (
+            previous_name is not None
+            and _font_family_name(self.font.name) == previous_name
+            and self.font_size == previous_size
+        )
 
     def _handle_td(self, operands: list[Any]) -> float:
         """Handle Td (Move text position) operation - Table 5.5 page 406."""
@@ -446,6 +470,7 @@ class TextExtraction:
         if not operands or not isinstance(operands[0], (str, bytes)):
             return 0.0
         self._previous_font_space = None
+        self._tf_reselected_same_font = False
         self.text, self.rtl_dir, self._actual_str_size = self._handle_tj(
             self.text,
             operands,
