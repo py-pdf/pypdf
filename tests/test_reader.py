@@ -3029,6 +3029,225 @@ def test_xref_stream_reusing_a_live_object_number_does_not_shadow_it():
     assert [attachment.name for attachment in reader.attachment_list] == ["attachment.txt"]
 
 
+def test_xref_stream_read_before_the_older_revision_does_not_shadow_it():
+    """The xref chain is read newest first, so the check must survive that order.
+
+    Here the *newest* revision holds the cross-reference stream (object 4) and
+    the older one holds the real /Names dictionary under the same number. When
+    the stream is cached the older revision has not been read yet, so at that
+    moment nothing seems to claim object 4. The cache therefore has to be
+    reconciled once the whole chain has been walked (see #3304).
+    """
+
+    def _write_obj(buf: io.BytesIO, objnum: int, data: str | bytes) -> int:
+        offset = buf.tell()
+        buf.write(f"{objnum} 0 obj\n".encode())
+        buf.write(data if isinstance(data, bytes) else data.encode())
+        buf.write(b"\nendobj\n")
+        return offset
+
+    def _write_xref_stream(
+        buf: io.BytesIO,
+        objnum: int,
+        entries: list[tuple[int, int, int]],
+        size: int,
+        index: list[int],
+        prev: int | None = None,
+    ) -> int:
+        offset = buf.tell()
+        data = bytearray()
+        for typ, field1, field2 in entries:
+            data.append(typ)
+            data.extend(field1.to_bytes(4, "big"))
+            data.extend(field2.to_bytes(2, "big"))
+        header = (
+            f"<< /Type /XRef /Size {size} /W [1 4 2] /Root 1 0 R "
+            f"/Length {len(data)} /Index [{index[0]} {index[1]}]"
+        )
+        if prev is not None:
+            header += f" /Prev {prev}"
+        header += " >>"
+        buf.write(f"{objnum} 0 obj\n{header}".encode())
+        buf.write(b"\nstream\n")
+        buf.write(bytes(data))
+        buf.write(b"\nendstream\nendobj\n")
+        return offset
+
+    buf = io.BytesIO()
+    buf.write(b"%PDF-1.5\n")
+
+    offsets = {}
+    offsets[1] = _write_obj(buf, 1, "<< /Type /Catalog /Pages 2 0 R /Names 4 0 R >>")
+    offsets[2] = _write_obj(buf, 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    offsets[3] = _write_obj(
+        buf, 3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] >>"
+    )
+    offsets[4] = _write_obj(buf, 4, "<< /EmbeddedFiles 5 0 R >>")
+    offsets[5] = _write_obj(buf, 5, "<< /Names [(attachment.txt) 6 0 R] >>")
+    offsets[6] = _write_obj(
+        buf,
+        6,
+        "<< /Type /Filespec /F (attachment.txt) /UF (attachment.txt) "
+        "/EF << /F 7 0 R >> >>",
+    )
+    offsets[7] = _write_obj(
+        buf, 7, "<< /Type /EmbeddedFile /Length 5 >>\nstream\nhello\nendstream"
+    )
+
+    # Older revision: a cross-reference stream (object 8) that points object 4
+    # at the real /Names dictionary.
+    older_revision = _write_xref_stream(
+        buf,
+        8,
+        [
+            (0, 0, 65535),
+            (1, offsets[1], 0),
+            (1, offsets[2], 0),
+            (1, offsets[3], 0),
+            (1, offsets[4], 0),
+            (1, offsets[5], 0),
+            (1, offsets[6], 0),
+            (1, offsets[7], 0),
+        ],
+        size=9,
+        index=[0, 8],
+    )
+
+    # Newer revision: an incremental update whose cross-reference stream reuses
+    # object number 4, while /Index [0 4] does not mention object 4 itself.
+    newer_revision = _write_xref_stream(
+        buf,
+        4,
+        [(0, 0, 65535), (1, offsets[1], 0), (1, offsets[2], 0), (1, offsets[3], 0)],
+        size=9,
+        index=[0, 4],
+        prev=older_revision,
+    )
+    buf.write(f"startxref\n{newer_revision}\n%%EOF\n".encode())
+
+    reader = PdfReader(BytesIO(buf.getvalue()))
+
+    # Object 4 must resolve to the /Names dictionary, not to the newer stream.
+    names = reader.trailer["/Root"].get_object()["/Names"].get_object()
+    assert "/EmbeddedFiles" in names
+    assert [attachment.name for attachment in reader.attachment_list] == ["attachment.txt"]
+
+
+def test_xref_stream_does_not_shadow_an_object_stored_in_an_object_stream():
+    """A compressed object claims the number over the xref stream as well.
+
+    ``get_object()`` looks in ``xref_objStm`` before ``xref``, so an
+    incremental update that stores an object inside an object stream must not
+    be hidden by the old cross-reference stream that used the same number.
+    """
+
+    def _write_obj(buf: io.BytesIO, objnum: int, data: str | bytes) -> int:
+        offset = buf.tell()
+        buf.write(f"{objnum} 0 obj\n".encode())
+        buf.write(data if isinstance(data, bytes) else data.encode())
+        buf.write(b"\nendobj\n")
+        return offset
+
+    def _write_xref_stream(
+        buf: io.BytesIO,
+        objnum: int,
+        entries: list[tuple[int, int, int]],
+        size: int,
+        index: list[int],
+        prev: int | None = None,
+    ) -> int:
+        offset = buf.tell()
+        data = bytearray()
+        for typ, field1, field2 in entries:
+            data.append(typ)
+            data.extend(field1.to_bytes(4, "big"))
+            data.extend(field2.to_bytes(2, "big"))
+        header = (
+            f"<< /Type /XRef /Size {size} /W [1 4 2] /Root 1 0 R "
+            f"/Length {len(data)} /Index [{index[0]} {index[1]}]"
+        )
+        if prev is not None:
+            header += f" /Prev {prev}"
+        header += " >>"
+        buf.write(f"{objnum} 0 obj\n{header}".encode())
+        buf.write(b"\nstream\n")
+        buf.write(bytes(data))
+        buf.write(b"\nendstream\nendobj\n")
+        return offset
+
+    buf = io.BytesIO()
+    buf.write(b"%PDF-1.5\n")
+
+    offsets = {}
+    offsets[1] = _write_obj(buf, 1, "<< /Type /Catalog /Pages 2 0 R /Names 4 0 R >>")
+    offsets[2] = _write_obj(buf, 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    offsets[3] = _write_obj(
+        buf, 3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] >>"
+    )
+    offsets[5] = _write_obj(buf, 5, "<< /Names [(attachment.txt) 6 0 R] >>")
+    offsets[6] = _write_obj(
+        buf,
+        6,
+        "<< /Type /Filespec /F (attachment.txt) /UF (attachment.txt) "
+        "/EF << /F 7 0 R >> >>",
+    )
+    offsets[7] = _write_obj(
+        buf, 7, "<< /Type /EmbeddedFile /Length 5 >>\nstream\nhello\nendstream"
+    )
+
+    # Object 9 is an object stream holding object 4, the real /Names dictionary.
+    compressed_object = "<< /EmbeddedFiles 5 0 R >>"
+    objstm_header = "4 0\n"
+    objstm_payload = objstm_header + compressed_object
+    offsets[9] = _write_obj(
+        buf,
+        9,
+        f"<< /Type /ObjStm /N 1 /First {len(objstm_header)} "
+        f"/Length {len(objstm_payload)} >>\nstream\n{objstm_payload}\nendstream",
+    )
+
+    # Older revision: the cross-reference stream is object 4 and /Index [0 4]
+    # never mentions object 4, so it would happily cache itself.
+    older_revision = _write_xref_stream(
+        buf,
+        4,
+        [(0, 0, 65535), (1, offsets[1], 0), (1, offsets[2], 0), (1, offsets[3], 0)],
+        size=10,
+        index=[0, 4],
+    )
+
+    # Newer revision: object 4 now lives inside the object stream 9, which is
+    # only recorded in xref_objStm, never in xref.
+    newer_offset = buf.tell()
+    newer_revision = _write_xref_stream(
+        buf,
+        8,
+        [
+            (0, 0, 65535),
+            (1, offsets[1], 0),
+            (1, offsets[2], 0),
+            (1, offsets[3], 0),
+            (2, 9, 0),
+            (1, offsets[5], 0),
+            (1, offsets[6], 0),
+            (1, offsets[7], 0),
+            (1, newer_offset, 0),
+            (1, offsets[9], 0),
+        ],
+        size=10,
+        index=[0, 10],
+        prev=older_revision,
+    )
+    buf.write(f"startxref\n{newer_revision}\n%%EOF\n".encode())
+
+    reader = PdfReader(BytesIO(buf.getvalue()))
+
+    assert 4 in reader.xref_objStm
+    names = reader.trailer["/Root"].get_object()["/Names"].get_object()
+    assert "/EmbeddedFiles" in names
+    assert [attachment.name for attachment in reader.attachment_list] == ["attachment.txt"]
+
+
 def test_xref_table_with_comments_before_trailer():
     """Comments between xref entries and trailer are legal per PDF spec §7.2.3.
 
