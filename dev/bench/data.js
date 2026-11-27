@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795811950461,
+  "lastUpdate": 1795812050405,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -180517,6 +180517,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05323269029460578",
             "extra": "mean: 653.7595327999952 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alexandrkholodniak@gmail.com",
+            "name": "Alex Kholodniak",
+            "username": "kholdrex"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bbf6aeb41fa09f62c4d746d1cfef402ecdc04005",
+          "message": "TST: Measure enough work in test_get_outline__speed for coarse clocks (#4542)\n\nA single read of the small outline takes about one tick of process_time()\non Windows (15.6 ms), so the ratio of the two measurements jumped between\nruns and the limit had been raised to 32. With coverage, the quadratic code\nbefore #4455 gives a ratio of about 28, so the test no longer caught it.\n\nRead the small outline eight times within one measurement, so both\nmeasurements cover 20,000 items, and restore the limit of 16.",
+          "timestamp": "2026-11-27T21:37:26+01:00",
+          "tree_id": "441835704c68c9d007b729d95a7b4bbad75ebe24",
+          "url": "https://github.com/py-pdf/pypdf/commit/bbf6aeb41fa09f62c4d746d1cfef402ecdc04005"
+        },
+        "date": 1795812039289,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 20.87845295767705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017584771941436695",
+            "extra": "mean: 47.89626904000556 msec\nrounds: 25"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 39.911196327811474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012017693789427556",
+            "extra": "mean: 25.055625789477176 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.7222340191425487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030945779130577007",
+            "extra": "mean: 580.6411839999953 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 51.22427520939131,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016688374039271398",
+            "extra": "mean: 19.52199413095186 msec\nrounds: 84"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.4503844107466044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044735221085025485",
+            "extra": "mean: 2.2203255177999948 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.7304397881781264,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030627581841910962",
+            "extra": "mean: 577.8877756000043 msec\nrounds: 5"
           }
         ]
       }
