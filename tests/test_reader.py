@@ -3878,6 +3878,26 @@ def test_read_xref__unreadable_xref_stm(caplog: pytest.LogCaptureFixture) -> Non
 
 
 @pytest.mark.samples
+def test_read_xref__invalid_subsection_header() -> None:
+    """
+    A xref subsection header that does not start with a number raises a PdfReadError.
+
+    Instead of a TypeError deep inside the xref parser, the invalid subsection
+    header (a name where the first object number belongs) is reported like the
+    other malformed-xref cases.
+    https://github.com/py-pdf/pypdf/issues/4518
+    """
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    buffer = BytesIO()
+    writer.write(buffer)
+    # The xref subsection header "0 N" with its first number replaced by a name.
+    broken = buffer.getvalue().replace(b"xref\n0 ", b"xref\n/0 ", 1)
+
+    with pytest.raises(PdfReadError, match=r"^Invalid xref subsection header"):
+        PdfReader(BytesIO(broken))
+
+
 def test_read_xref__prev_pointing_to_nowhere() -> None:
     """
     A /Prev offset that points to no cross-reference table raises a PdfReadError in strict mode.
