@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795772975555,
+  "lastUpdate": 1795773085416,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -180055,6 +180055,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05023336743253151",
             "extra": "mean: 643.6378927999897 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "81588100+zeyadrabie@users.noreply.github.com",
+            "name": "Zeyad Rabie",
+            "username": "zeyadrabie"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d5e78aa50fdaae936e6e18fcaac18add93389c33",
+          "message": "DEP: Deprecate ViewerPreferences.PRINT_SCALING (#4543)\n\nViewerPreferences.PRINT_SCALING now issues a DeprecationWarning and will\nbe removed in pypdf 8.0.0. There is no replacement: pass\nNameObject(\"/PrintScaling\") directly.\n\nIt is the only uppercase name on ViewerPreferences and needs a\n`noqa: N802`. In the review of #4436 we agreed to deprecate it without a\nreplacement until pypdf uses named constants everywhere (#3653).\n\nCo-authored-by: zeyadrabie <81588100+Corencas@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-11-27T10:47:43+01:00",
+          "tree_id": "ef41d5fca1f354c789ba68c3aac3ddfc91d180e8",
+          "url": "https://github.com/py-pdf/pypdf/commit/d5e78aa50fdaae936e6e18fcaac18add93389c33"
+        },
+        "date": 1795773072779,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 14.570173783066513,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003751868339266552",
+            "extra": "mean: 68.63336120000176 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 55.94765697348402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002981333773879934",
+            "extra": "mean: 17.873849488888204 msec\nrounds: 45"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.3296278406616746,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00868641421554999",
+            "extra": "mean: 752.0901483999921 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 55.3327565959476,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007949515391543246",
+            "extra": "mean: 18.072477525423647 msec\nrounds: 59"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.5526111866027917,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03045703374005827",
+            "extra": "mean: 1.809590584199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.9734830448305278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015730510826047223",
+            "extra": "mean: 506.7183133999891 msec\nrounds: 5"
           }
         ]
       }
