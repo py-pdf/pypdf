@@ -398,6 +398,9 @@ class PdfWriter(PdfDocCommon):
         )
 
         if self.incremental:
+            # clone_from is an alias of fileobj, so the document may arrive under either name.
+            if clone_from is not None and isinstance(fileobj, str) and fileobj == "":
+                fileobj = clone_from
             if isinstance(fileobj, (str, Path)):
                 with open(fileobj, "rb") as f:
                     fileobj = BytesIO(f.read(-1))

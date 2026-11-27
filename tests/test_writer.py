@@ -4025,6 +4025,21 @@ def test_increment_writer(caplog):
     writer.write(b)
 
 
+@pytest.mark.parametrize("incremental", [True, False])
+def test_incremental__source_given_as_clone_from(incremental):
+    """The document may be passed as clone_from instead of fileobj."""
+    source = RESOURCE_ROOT / "crazyones.pdf"
+    writer = PdfWriter(clone_from=source, incremental=incremental)
+    assert writer.incremental is incremental
+    assert len(writer.pages) == 1
+
+    b = BytesIO()
+    writer.write(b)
+    expected = BytesIO()
+    PdfWriter(source, incremental=incremental).write(expected)
+    assert b.getvalue() == expected.getvalue()
+
+
 @pytest.mark.enable_socket
 def test_append_pdf_with_dest_without_page(caplog):
     """Tests for #2842"""
