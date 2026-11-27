@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795773085416,
+  "lastUpdate": 1795774092594,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -132599,6 +132599,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005354903165844582",
             "extra": "mean: 443.4875636000015 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alexandrkholodniak@gmail.com",
+            "name": "Alex Kholodniak",
+            "username": "kholdrex"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "51a284c93a1bbeecf97589d49540b3c970d199ca",
+          "message": "PI: Insert pages into a flat page tree without walking all previous pages (#4509)\n\n* PI: Insert pages into a flat page tree without walking all previous pages\n\nInserting a page walked the root /Kids from the start, so inserting n pages\ninto a flat tree took quadratic time. The writer now remembers how many of\nthe first root kids are pages, each referenced once, and returns the root and\nthe page number directly below that count.\n\n* MAINT: Address review comments",
+          "timestamp": "2026-11-27T11:05:56+01:00",
+          "tree_id": "da85759fa2fd9f47eb664d5e8b2de4012a7aed59",
+          "url": "https://github.com/py-pdf/pypdf/commit/51a284c93a1bbeecf97589d49540b3c970d199ca"
+        },
+        "date": 1795774077418,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7792028325582017,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008306419783390234",
+            "extra": "mean: 359.8154075999986 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.169701813066734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020429609442166852",
+            "extra": "mean: 45.10660578260931 msec\nrounds: 23"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.33864388912017296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03194619962636552",
+            "extra": "mean: 2.952954511000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 21.42339107408232,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004713420988819924",
+            "extra": "mean: 46.67795105555368 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1440080880965269,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035197684241239945",
+            "extra": "mean: 6.944054415400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.6399814988832677,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007911401003851641",
+            "extra": "mean: 609.7629764000033 msec\nrounds: 5"
           }
         ]
       }
