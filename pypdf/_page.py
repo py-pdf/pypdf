@@ -1760,25 +1760,23 @@ class PageObject(DictionaryObject):
                             rectangle[3] = FloatObject(float(rectangle[3]) * sy)
 
         if PageAttributes.VP in self:
-            viewport = self[PageAttributes.VP]
-            if isinstance(viewport, ArrayObject):
-                bbox = viewport[0]["/BBox"]
-            else:
-                bbox = viewport["/BBox"]  # type: ignore[index]
-            scaled_bbox = RectangleObject(
-                (
-                    float(bbox[0]) * sx,
-                    float(bbox[1]) * sy,
-                    float(bbox[2]) * sx,
-                    float(bbox[3]) * sy,
-                )
-            )
-            if isinstance(viewport, ArrayObject):
-                self[NameObject(PageAttributes.VP)][NumberObject(0)][  # type: ignore[index]
-                    NameObject("/BBox")
-                ] = scaled_bbox
-            else:
-                self[NameObject(PageAttributes.VP)][NameObject("/BBox")] = scaled_bbox  # type: ignore[index]
+            viewports = self[PageAttributes.VP]
+            if not isinstance(viewports, ArrayObject):
+                # /VP has to be an array, but a single dictionary is scaled as well.
+                viewports = ArrayObject([viewports])
+            for viewport in viewports:
+                viewport_obj = viewport.get_object()
+                bbox = viewport_obj.get("/BBox") if isinstance(viewport_obj, DictionaryObject) else None
+                if isinstance(bbox, IndirectObject):
+                    bbox = bbox.get_object()
+                if not isinstance(bbox, ArrayObject) or len(bbox) != 4:
+                    logger_warning(
+                        "Not scaling the viewport without a valid /BBox: %(viewport)s",
+                        source=__name__,
+                        viewport=viewport_obj,
+                    )
+                    continue
+                viewport_obj[NameObject("/BBox")] = RectangleObject(bbox).scale(sx, sy)
 
     def scale_by(self, factor: float) -> None:
         """
