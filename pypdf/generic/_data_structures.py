@@ -1148,11 +1148,17 @@ def _iter_name_tree(
     The nodes are not checked: a node can be any object, and a /Kids entry
     that is not an array is ignored here, so that callers can report both.
     """
-    # A stack with the next node to visit at its end.
-    pending: list[tuple[Any, int]] = [(tree, 0)]
+    # One iterator per level, from the root down to the current node: the memory
+    # grows with the depth of the tree, not with the number of siblings.
+    levels: list[Iterator[Any]] = [iter((tree,))]
+    exhausted = object()
     visited: set[int] = set()
-    while pending:
-        entry, depth = pending.pop()
+    while levels:
+        entry: Any = next(levels[-1], exhausted)
+        if entry is exhausted:
+            levels.pop()
+            continue
+        depth = len(levels) - 1
         node = entry.get_object()
         if id(node) in visited:
             if on_revisit is not None and isinstance(node, DictionaryObject):
@@ -1164,7 +1170,7 @@ def _iter_name_tree(
             continue
         kids = node.get("/Kids", NullObject()).get_object()
         if isinstance(kids, ArrayObject):
-            pending.extend((kid, depth + 1) for kid in reversed(kids))
+            levels.append(iter(kids))
 
 
 def _flatten_name_tree(tree: DictionaryObject, *, maximum_entries: int | None = None) -> ArrayObject:
