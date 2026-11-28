@@ -1080,13 +1080,19 @@ def test_xobj_to_image__lzw_ascii85_image_format(filter_name, container_format, 
 
 
 def test_handle_flate__indexed_cmyk_palette():
+    """An /Indexed image with a CMYK base is converted to RGB and returned as a PNG.
+
+    This test is a regression test for #4532.
+    """
     # CMYK: white, cyan, mid-tone, black
     lookup = bytes([0, 0, 0, 0,  255, 0, 0, 0,  128, 64, 32, 16,  0, 0, 0, 255])
     color_space = ArrayObject(
         [NameObject("/Indexed"), NameObject("/DeviceCMYK"), NumberObject(3), ByteStringObject(lookup)]
     )
 
-    img = _handle_flate((4, 1), bytes([0, 1, 2, 3]), "P", color_space, 1, "")[0]
+    img, image_format, extension, _ = _handle_flate(
+        (4, 1), bytes([0, 1, 2, 3]), "P", color_space, 1, ""
+    )
 
     # The palette has to be converted to RGB regardless of the installed Pillow version:
     # Starting with Pillow 12.2.0, `putpalette(..., rawmode="CMYK")` keeps a CMYK palette.
@@ -1097,6 +1103,9 @@ def test_handle_flate__indexed_cmyk_palette():
         (119, 179, 209),
         (0, 0, 0),
     ]
+    # The converted palette is RGB, so the container is a PNG, not an uncompressed TIFF.
+    assert image_format == "PNG"
+    assert extension == ".png"
 
 
 def test_inline_image__perceptual() -> None:
