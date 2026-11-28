@@ -353,7 +353,7 @@ def __handle_flate__indexed(color_space: ArrayObject) -> tuple[Any, Any, Any, An
 def __handle_flate__valid_mode(
         *, img: Image.Image, nb: int, base: Any, lookup: Any, mode: ImageMode, conv: str, hival: int,
         is_hival_limited: bool, obj_as_text: str,
-) -> Image.Image:
+) -> tuple[Image.Image, ImageMode]:
     if img.mode == "1" and nb == 0:
         # A two-color lookup needs at least one byte per color, but the
         # base color space resolves to a 1-bit or palette image.
@@ -426,7 +426,11 @@ def __handle_flate__valid_mode(
         if lookup is not None:
             img.putpalette(lookup, rawmode=mode)
 
-    return _convert_image(image=img, mode="L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
+    # The palette handling above may have replaced a gray or CMYK palette with an
+    # RGB one. Return the mode the palette was written in, so the caller picks the
+    # same container as the code inlined in _handle_flate() before #4532. This is
+    # not always the mode of the returned image: a gray base is converted to "L".
+    return _convert_image(image=img, mode="L" if base == ColorSpaces.DEVICE_GRAY else "RGB"), mode
 
 
 def _handle_flate(
@@ -505,7 +509,7 @@ def _handle_flate(
             )
             lookup = None
         else:
-            img = __handle_flate__valid_mode(
+            img, mode = __handle_flate__valid_mode(
                 img=img, nb=nb, base=base, lookup=lookup, mode=mode, conv=conv, hival=hival,
                 is_hival_limited=is_hival_limited, obj_as_text=obj_as_text
             )
