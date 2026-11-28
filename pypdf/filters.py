@@ -572,8 +572,14 @@ class ASCII85Decode:
         except ValueError as error:
             if error.args[0] == "Ascii85 encoded byte sequences must end with b'~>'":
                 logger_warning("Ignoring missing Ascii85 end marker.", source=__name__)
-                return a85decode(data, adobe=False, ignorechars=WHITESPACES_AS_BYTES)
-            raise
+                try:
+                    return a85decode(data, adobe=False, ignorechars=WHITESPACES_AS_BYTES)
+                except ValueError as retry_error:
+                    raise PdfStreamError(f"Invalid Ascii85 encoded data: {retry_error}") from retry_error
+            # Invalid digits or a group overflowing the 32-bit limit:
+            # Surface a pypdf exception instead of the one from the standard
+            # library, consistent with the other stream filters.
+            raise PdfStreamError(f"Invalid Ascii85 encoded data: {error}") from error
 
 
 class DCTDecode:
