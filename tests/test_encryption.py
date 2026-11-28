@@ -998,3 +998,137 @@ def test_encrypt__empty_owner_password_uses_user_password():
     reader = PdfReader(output)
     assert reader.decrypt("userpwd") == PasswordType.OWNER_PASSWORD
     assert len(reader.pages) == 1
+
+
+def _build_minimal_v5_encryption_dictionary() -> DictionaryObject:
+    entry = DictionaryObject()
+    entry[NameObject("/Filter")] = NameObject("/Standard")
+    entry[NameObject("/V")] = NumberObject(5)
+    entry[NameObject("/R")] = NumberObject(6)
+    entry[NameObject("/Length")] = NumberObject(256)
+    entry[NameObject("/P")] = NumberObject(-4)
+    std_cf = DictionaryObject()
+    std_cf[NameObject("/AuthEvent")] = NameObject("/DocOpen")
+    std_cf[NameObject("/CFM")] = NameObject("/AESV3")
+    std_cf[NameObject("/Length")] = NumberObject(32)
+    cf = DictionaryObject()
+    cf[NameObject("/StdCF")] = std_cf
+    entry[NameObject("/CF")] = cf
+    entry[NameObject("/StmF")] = NameObject("/StdCF")
+    entry[NameObject("/StrF")] = NameObject("/StdCF")
+    entry[NameObject("/O")] = ByteStringObject(b"O" * 48)
+    entry[NameObject("/U")] = ByteStringObject(b"U" * 48)
+    entry[NameObject("/OE")] = ByteStringObject(b"E" * 32)
+    entry[NameObject("/UE")] = ByteStringObject(b"K" * 32)
+    entry[NameObject("/Perms")] = ByteStringObject(b"P" * 16)
+    return entry
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "message"),
+    [
+        ("/O", ByteStringObject(b"O" * 32), "/O entry of the encryption dictionary must be at least 48 bytes"),
+        ("/U", ByteStringObject(b"U" * 47), "/U entry of the encryption dictionary must be at least 48 bytes"),
+        ("/OE", None, "/OE entry of the encryption dictionary is missing"),
+        ("/UE", None, "/UE entry of the encryption dictionary is missing"),
+        ("/OE", ByteStringObject(b"short"), "/OE entry of the encryption dictionary must be 32 bytes"),
+        ("/OE", ByteStringObject(b"E" * 16), "/OE entry of the encryption dictionary must be 32 bytes"),
+        ("/UE", ByteStringObject(b"short"), "/UE entry of the encryption dictionary must be 32 bytes"),
+        ("/UE", ByteStringObject(b"K" * 48), "/UE entry of the encryption dictionary must be 32 bytes"),
+    ],
+)
+def test_v5_encryption_dictionary_invalid_entry_lengths(key, value, message):
+    """V=5 encryption dictionaries with missing or wrong-length /O, /U, /OE or /UE raise PdfReadError."""
+    entry = _build_minimal_v5_encryption_dictionary()
+    if value is None:
+        del entry[NameObject(key)]
+    else:
+        entry[NameObject(key)] = value
+    with pytest.raises(PdfReadError, match=f"^{re.escape(message)}$"):
+        Encryption.read(entry, b"0" * 16)
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_v5_encryption_allows_extended_o_and_u_entries():
+    """V=5 /O and /U entries longer than 48 bytes remain accepted."""
+    file_key = secrets.token_bytes(32)
+    values = AlgV5.generate_values(
+        revision=6,
+        user_password=b"user",
+        owner_password=b"owner",
+        key=file_key,
+        permissions=0xFFFFFFFC,
+        encrypt_metadata=True,
+    )
+    entry = _build_minimal_v5_encryption_dictionary()
+    entry[NameObject("/O")] = ByteStringObject(values["/O"] + b"\x00" * 16)
+    entry[NameObject("/U")] = ByteStringObject(values["/U"] + b"\x00" * 16)
+    entry[NameObject("/OE")] = ByteStringObject(values["/OE"])
+    entry[NameObject("/UE")] = ByteStringObject(values["/UE"])
+    entry[NameObject("/Perms")] = ByteStringObject(values["/Perms"])
+
+    encryption = Encryption.read(entry, b"0" * 16)
+    assert encryption.verify("user") == PasswordType.USER_PASSWORD
+    assert encryption.verify("owner") == PasswordType.OWNER_PASSWORD
+    assert encryption._are_permissions_valid is True
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+@pytest.mark.parametrize("perms_value", [None, ByteStringObject(b"short")])
+def test_v5_encryption_missing_or_truncated_perms_does_not_crash(caplog, perms_value):
+    """A missing or truncated /Perms entry marks permissions invalid instead of raising ValueError."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer.encrypt(user_password="user", owner_password="owner", algorithm="AES-256")
+    output = BytesIO()
+    writer.write(output)
+
+    data = bytearray(output.getvalue())
+    perms_marker = b"/Perms "
+    idx = data.find(perms_marker)
+    assert idx != -1
+    start = data.index(b"<", idx)
+    end = data.index(b">", start)
+    if perms_value is None:
+        # Replace /Perms <...> with spaces of equal length to keep xref offsets valid.
+        data[idx : end + 1] = b" " * (end + 1 - idx)
+    else:
+        hex_str = b"<" + perms_value.original_bytes.hex().encode("ascii") + b">"
+        assert len(hex_str) <= end + 1 - start
+        data[start : end + 1] = hex_str.ljust(end + 1 - start, b" ")
+
+    reader = PdfReader(BytesIO(bytes(data)))
+    assert reader.decrypt("user") == PasswordType.USER_PASSWORD
+    assert reader.are_permissions_valid is False
+    assert len(reader.pages) == 1
+    assert "ignore '/Perms' verify failed" in caplog.messages
+
+
+def test_alg_v5_verify_perms_invalid_lengths():
+    """AlgV5.verify_perms returns False for non-16-byte /Perms or non-32-byte key."""
+    assert AlgV5.verify_perms(b"k" * 32, b"", 0xFFFFFFFC, True) is False
+    assert AlgV5.verify_perms(b"k" * 32, b"short", 0xFFFFFFFC, True) is False
+    assert AlgV5.verify_perms(b"k" * 32, b"P" * 32, 0xFFFFFFFC, True) is False
+    assert AlgV5.verify_perms(b"k" * 16, b"P" * 16, 0xFFFFFFFC, True) is False
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_v5_reader_rejects_truncated_ue_entry():
+    """Opening a V=5 PDF with a truncated /UE entry raises PdfReadError instead of ValueError."""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer.encrypt(user_password="user", owner_password="owner", algorithm="AES-256")
+    output = BytesIO()
+    writer.write(output)
+
+    data = bytearray(output.getvalue())
+    ue_marker = b"/UE "
+    idx = data.find(ue_marker)
+    assert idx != -1
+    start = data.index(b"<", idx)
+    end = data.index(b">", start)
+    hex_str = b"<" + b"short".hex().encode("ascii") + b">"
+    data[start : end + 1] = hex_str.ljust(end + 1 - start, b" ")
+
+    with pytest.raises(PdfReadError, match=r"^/UE entry of the encryption dictionary must be 32 bytes$"):
+        PdfReader(BytesIO(bytes(data)), password="user")
