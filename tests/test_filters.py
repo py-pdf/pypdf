@@ -6,7 +6,7 @@ import struct
 import subprocess
 import sys
 import zlib
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from io import BytesIO
 from itertools import product as cartesian_product
@@ -979,6 +979,187 @@ def test_brotli_decode_stream_data():
     stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
     stream._data = compressed  # type: ignore[attr-defined]
     assert decode_stream_data(stream) == original
+
+
+def _encode_tiff_prediction(data: bytes, columns: int, colors: int, bits_per_component: int) -> bytes:
+    """Apply the TIFF predictor of §7.4.5 to a raw image."""
+    row_length = columns * colors * bits_per_component // 8
+    bpp = row_length // columns
+    encoded = bytearray(data)
+    for i in range(len(encoded)):
+        if i % row_length >= bpp:
+            encoded[i] = (data[i] - data[i - bpp]) % 256
+    return bytes(encoded)
+
+
+def _encode_png_prediction(
+    data: bytes,
+    columns: int,
+    colors: int,
+    bits_per_component: int,
+    filter_byte: int | Sequence[int],
+) -> bytes:
+    """Split a raw image into rows, apply the PNG filter and prefix each row with its type."""
+    row_length = columns * colors * bits_per_component // 8
+    filters = [filter_byte] if isinstance(filter_byte, int) else list(filter_byte)
+    encoded = bytearray()
+    for index, row in enumerate(range(0, len(data), row_length)):
+        filter_type = filters[index % len(filters)]
+        row_data = bytearray(data[row : row + row_length])
+        if filter_type == 1:
+            bpp = row_length // columns
+            for i in range(row_length - 1, bpp - 1, -1):
+                row_data[i] = (row_data[i] - row_data[i - bpp]) % 256
+        elif filter_type == 2 and row:
+            previous = data[row - row_length : row]
+            for i in range(row_length):
+                row_data[i] = (row_data[i] - previous[i]) % 256
+        encoded += bytearray([filter_type])
+        encoded += row_data
+    return bytes(encoded)
+
+
+@pytest.mark.parametrize(
+    ("predictor", "filter_byte"),
+    [
+        pytest.param(2, None, id="tiff"),
+        pytest.param(15, 0, id="png-none"),
+        pytest.param(15, 1, id="png-sub"),
+        pytest.param(15, 2, id="png-up"),
+    ],
+)
+def test_brotli_decode_applies_predictor(predictor, filter_byte):
+    """BrotliDecode applies the /Predictor transform, as the Brotli extension requires."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    data = b"".join(struct.pack("<BBB", *pixel) for pixel in zip(*[iter(range(72))] * 3)) * 4
+    columns, colors, bits_per_component = 8, 3, 8
+    if filter_byte is None:
+        predicted = _encode_tiff_prediction(data, columns, colors, bits_per_component)
+    else:
+        predicted = _encode_png_prediction(data, columns, colors, bits_per_component, filter_byte)
+
+    decode_parms = DictionaryObject(
+        {
+            NameObject("/Predictor"): NumberObject(predictor),
+            NameObject("/Columns"): NumberObject(columns),
+            NameObject("/Colors"): NumberObject(colors),
+            NameObject("/BitsPerComponent"): NumberObject(bits_per_component),
+        }
+    )
+    assert BrotliDecode.decode(BrotliDecode.encode(predicted), decode_parms) == data
+
+
+def test_brotli_decode_rejects_unsupported_predictor():
+    """BrotliDecode raises PdfReadError for a predictor it cannot undo."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    compressed = BrotliDecode.encode(b"0123456789")
+    with pytest.raises(PdfReadError, match=r"^Unsupported brotlidecode predictor 3$"):
+        BrotliDecode.decode(compressed, DictionaryObject({NameObject("/Predictor"): NumberObject(3)}))
+
+
+def test_brotli_decode_stream_data_applies_predictor():
+    """decode_stream_data forwards /DecodeParms to BrotliDecode."""
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    columns, colors, bits_per_component = 4, 1, 8
+    data = bytes(range(32))
+    predicted = _encode_png_prediction(data, columns, colors, bits_per_component, filter_byte=1)
+
+    stream = DictionaryObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream[NameObject("/DecodeParms")] = DictionaryObject(
+        {
+            NameObject("/Predictor"): NumberObject(15),
+            NameObject("/Columns"): NumberObject(columns),
+            NameObject("/Colors"): NumberObject(colors),
+            NameObject("/BitsPerComponent"): NumberObject(bits_per_component),
+        }
+    )
+    stream._data = BrotliDecode.encode(predicted)  # type: ignore[attr-defined]
+    assert decode_stream_data(stream) == data
+
+
+def _build_image_pdf(raw_samples: bytes, *, width: int, height: int, filter_name: str, predictor: int) -> bytes:
+    """Write a one-page PDF whose single image holds ``raw_samples`` behind a predictor."""
+    if filter_name == "/BrotliDecode":
+        assert predictor in (2, 15)
+        encoded = BrotliDecode.encode(
+            _encode_tiff_prediction(raw_samples, width, 3, 8)
+            if predictor == 2
+            else _encode_png_prediction(raw_samples, width, 3, 8, 1)
+        )
+    else:
+        assert filter_name == "/FlateDecode"
+        assert predictor == 15
+        encoded = zlib.compress(_encode_png_prediction(raw_samples, width, 3, 8, 1))
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+
+    image_stream = DecodedStreamObject()
+    image_stream.set_data(encoded)
+    image_stream.update(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Image"),
+            NameObject("/Width"): NumberObject(width),
+            NameObject("/Height"): NumberObject(height),
+            NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+            NameObject("/Filter"): NameObject(filter_name),
+            NameObject("/DecodeParms"): DictionaryObject(
+                {
+                    NameObject("/Predictor"): NumberObject(predictor),
+                    NameObject("/Columns"): NumberObject(width),
+                    NameObject("/Colors"): NumberObject(3),
+                    NameObject("/BitsPerComponent"): NumberObject(8),
+                }
+            ),
+        }
+    )
+    reference = writer._add_object(image_stream)
+    page[NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/XObject"): DictionaryObject({NameObject("/Im0"): reference})}
+    )
+
+    contents = ContentStream(stream=None, pdf=writer)
+    contents.set_data(b"q\n200 0 0 200 0 0 cm\n/Im0 Do\nQ\n")
+    page.replace_contents(contents)
+
+    buffer = BytesIO()
+    writer.write(buffer)
+    return buffer.getvalue()
+
+
+@pytest.mark.parametrize("predictor", [2, 15], ids=["tiff", "png"])
+def test_brotli_decode_image_predictor_matches_flate(predictor):
+    """
+    Regression test for issue #4384 through a complete PDF, not only the filter API.
+
+    The same raw image is stored twice: once with /FlateDecode and the PNG predictor,
+    which is the decoding path that already worked, and once with /BrotliDecode and the
+    requested predictor. Both have to yield the very same samples, otherwise the
+    prediction is left in place and the reader returns the residual image.
+    """
+    pytest.importorskip("brotli", reason="Requires brotli")
+
+    width, height = 320, 100
+    raw_samples = bytes((x * 7 + y * 11) % 251 for y in range(height) for x in range(3 * width))
+    control = PdfReader(BytesIO(_build_image_pdf(raw_samples, width=width, height=height,
+                                                 filter_name="/FlateDecode", predictor=15)))
+    candidate = PdfReader(BytesIO(_build_image_pdf(raw_samples, width=width, height=height,
+                                                   filter_name="/BrotliDecode", predictor=predictor)))
+
+    image = candidate.pages[0]["/Resources"]["/XObject"]["/Im0"].get_object()
+    assert image["/Filter"] == "/BrotliDecode"
+    assert image["/DecodeParms"]["/Predictor"] == predictor
+
+    expected = control.pages[0]["/Resources"]["/XObject"]["/Im0"].get_data()
+    assert expected == raw_samples
+    assert image.get_data() == expected
+    assert candidate.pages[0].images[0].image.tobytes() == control.pages[0].images[0].image.tobytes()
 
 
 def test_brotli_pdf_roundtrip():
