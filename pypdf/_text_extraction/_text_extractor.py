@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import math
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, NamedTuple
@@ -111,6 +112,9 @@ class TextExtraction:
         self._previous_font_space: float | None = None
         # Whether the last Tf merely re-selected the font already in use, see process_tj_offset.
         self._tf_reselected_same_font: bool = False
+        # Italic-correction allowance (in glyph-space units) for the first TJ
+        # offset after the last Tf, see _handle_tf and process_tj_offset.
+        self._tf_italic_allowance: float = 0.0
         self._actual_str_size: dict[str, float] = {
             "str_widths": 0.0,
             "str_height": 0.0,
@@ -175,6 +179,7 @@ class TextExtraction:
         self._line_span = None
         self._pending_move = None
         self._tf_reselected_same_font = False
+        self._tf_italic_allowance = 0.0
 
     def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
@@ -214,7 +219,7 @@ class TextExtraction:
         # so an offset at the start of the new run is ambiguous when that Tf
         # merely re-selected the font already in use (same font, same size):
         # producers use small offsets there as a kern inside a word -- #4502
-        # is -150, i.e. 0.54 of the space, and must stay joined -- so after a
+        # is -150, i.e. 0.60 of the space, and must stay joined -- so after a
         # re-selection the bar is raised to about three-fifths of a space.
         # A Tf that actually changes the font is judged by the usual
         # threshold instead: in source2e the word gaps follow a change from
@@ -223,7 +228,27 @@ class TextExtraction:
         # swallowed, joining words that were separate before. Within a run
         # the usual threshold still applies, so the smaller word gaps
         # producers emit (#1328) keep working.
-        threshold = space_width * 1.3 if self.text == "" and self._tf_reselected_same_font else space_width
+        # A Tf that switches from a slanted font to a less slanted one gets
+        # the same treatment for a different reason: the last glyph shown in
+        # the slanted font overhangs its advance, and the producer compensates
+        # with a small negative kern before the next glyph (amsldoc "TikZ":
+        # -108 after an italic-to-roman change). The allowance for that kern
+        # is computed in _handle_tf from the previous font's FontDescriptor
+        # (italic_angle, cap_height); it is a bar of its own, so the offset
+        # must clear both it and the usual half-space bar to count as a gap.
+        # It only covers the overhang of a lowercase glyph: symbols, digits
+        # and punctuation after a slanted font carry no such overhang, and
+        # their small offsets are real gaps (source2e "⟨name⟩ +", "⟨*initex,").
+        threshold = space_width
+        if self.text == "":
+            if self._tf_reselected_same_font:
+                threshold = space_width * 1.3
+            if (
+                self._tf_italic_allowance
+                and previous
+                and previous[-1].islower()
+            ):
+                threshold = max(threshold, self._tf_italic_allowance)
         if -offset >= threshold and previous and previous[-1] not in " \n":
             self.process_operation(b"Tj", [" "])
         self._actual_str_size["str_widths"] = str_widths
@@ -429,6 +454,29 @@ class TextExtraction:
             and _font_family_name(self.font.name) == previous_name
             and self.font_size == previous_size
         )
+        # An italic font leans, so the last glyph shown in it overhangs its
+        # advance: producers compensate with a small negative kern right after
+        # switching to a less slanted font (amsldoc "TikZ": the -108 kern after
+        # an italic-to-roman change). Only the font being left can overhang,
+        # so the allowance comes from the previous font's FontDescriptor
+        # (italic_angle, cap_height) and only applies when the new font leans
+        # less; a switch into a slanted font gets no allowance, so a real gap
+        # after it still counts as a gap. The allowance is the largest
+        # correction the preceding glyph could need -- a cap-height glyph
+        # leaning by the slant reduction -- so it is a bar of its own, not
+        # something added on top of the half-space bar (adding it would
+        # swallow real word gaps after slanted fonts in source2e).
+        previous_descriptor = (
+            previous_font.font_descriptor if previous_font is not None else FontDescriptor()
+        )
+        previous_slant = abs(previous_descriptor.italic_angle)
+        new_slant = abs(self.font.font_descriptor.italic_angle)
+        if new_slant < previous_slant:
+            self._tf_italic_allowance = previous_descriptor.cap_height * math.tan(
+                math.radians(previous_slant - new_slant)
+            )
+        else:
+            self._tf_italic_allowance = 0.0
 
     def _handle_td(self, operands: list[Any]) -> float:
         """Handle Td (Move text position) operation - Table 5.5 page 406."""
@@ -471,6 +519,7 @@ class TextExtraction:
             return 0.0
         self._previous_font_space = None
         self._tf_reselected_same_font = False
+        self._tf_italic_allowance = 0.0
         self.text, self.rtl_dir, self._actual_str_size = self._handle_tj(
             self.text,
             operands,

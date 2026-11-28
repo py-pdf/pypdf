@@ -651,7 +651,7 @@ def test_tj_offset_right_after_a_font_change_keeps_a_real_word_gap() -> None:
     Regression test for the source2e case: the body font (space 500) sets
     "(category", the mono font (space 525) continues with a -342 offset,
     i.e. 0.65 of its space. That offset is a real interword gap and must
-    keep its space, while the #4502 kern (-150, 0.54 of the space) above
+    keep its space, while the #4502 kern (-150, 0.60 of the space) above
     must not.
     """
 
@@ -742,6 +742,112 @@ def test_tj_offset_after_reselecting_same_font_via_another_resource_is_not_a_spa
         )
     ).pages[0]
     assert page.extract_text() == "Complaint"
+
+
+def _page_with_slant_change(
+    content: bytes, prev_italic_angle: float, new_italic_angle: float
+) -> BytesIO:
+    """Build a page where F1 is a slanted font and F2 continues it (#4502).
+
+    F1 carries a /FontDescriptor with the given italic angle and an x-height
+    of 431 (the Computer Modern value); F2 carries the other angle. Both
+    fonts have a 250-wide space.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    font_resources = DictionaryObject()
+    for resource, base_font, italic_angle in (
+        ("/F1", "/CMTI10", prev_italic_angle),
+        ("/F2", "/CMR10", new_italic_angle),
+    ):
+        font_dict = DictionaryObject()
+        font_dict[NameObject("/Type")] = NameObject("/Font")
+        font_dict[NameObject("/Subtype")] = NameObject("/Type1")
+        font_dict[NameObject("/BaseFont")] = NameObject(base_font)
+        font_dict[NameObject("/FirstChar")] = NumberObject(32)
+        font_dict[NameObject("/LastChar")] = NumberObject(126)
+        font_dict[NameObject("/Widths")] = ArrayObject(
+            [NumberObject(250)] + [NumberObject(500)] * 94
+        )
+        descriptor = DictionaryObject()
+        descriptor[NameObject("/Type")] = NameObject("/FontDescriptor")
+        descriptor[NameObject("/FontName")] = NameObject(base_font)
+        descriptor[NameObject("/Flags")] = NumberObject(4)
+        descriptor[NameObject("/FontBBox")] = ArrayObject(
+            [NumberObject(-100), NumberObject(-200), NumberObject(1000), NumberObject(900)]
+        )
+        descriptor[NameObject("/ItalicAngle")] = NumberObject(italic_angle)
+        descriptor[NameObject("/Ascent")] = NumberObject(700)
+        descriptor[NameObject("/Descent")] = NumberObject(-200)
+        descriptor[NameObject("/CapHeight")] = NumberObject(683)
+        descriptor[NameObject("/XHeight")] = NumberObject(431)
+        font_dict[NameObject("/FontDescriptor")] = descriptor
+        font_resources[NameObject(resource)] = writer._add_object(font_dict)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = font_resources
+    page[NameObject("/Resources")] = resources
+    stream = DecodedStreamObject()
+    stream.set_data(content)
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    buffer = BytesIO()
+    writer.write(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def test_tj_offset_after_italic_to_roman_change_is_a_kern() -> None:
+    """An italic-correction kern after switching to a roman font is not a space (#4502).
+
+    Regression test for the amsldoc "TikZ" case: the word is set in an
+    italic font (italic angle -14, cap height 683) and continues in the roman
+    font after a Tf; the -150 TJ offset is within the italic correction the
+    slanted font's last glyph could need (at most 683 * tan(14 deg) = 170),
+    not a word gap, so the word stays whole.
+    """
+    page = PdfReader(
+        _page_with_slant_change(
+            b"BT /F1 12 Tf 72 700 Td (Tik) Tj /F2 12 Tf [-150 (Z)] TJ ET",
+            -14,
+            0,
+        )
+    ).pages[0]
+    assert page.extract_text() == "TikZ"
+
+
+def test_tj_offset_after_roman_to_italic_change_is_a_space() -> None:
+    """The same offset after switching into a slanted font is still a word gap (#4502).
+
+    The italic-correction allowance only covers the overhang of the font
+    being left: switching from a roman font into an italic one leans the
+    next glyph the other way, so a -150 offset there is a real gap and must
+    keep its space (the amsldoc "dx" case after a roman-to-italic change).
+    """
+    page = PdfReader(
+        _page_with_slant_change(
+            b"BT /F1 12 Tf 72 700 Td (Tik) Tj /F2 12 Tf [-150 (Z)] TJ ET",
+            0,
+            -14,
+        )
+    ).pages[0]
+    assert page.extract_text() == "Tik Z"
+
+
+def test_tj_offset_after_italic_to_roman_change_after_uppercase_is_a_space() -> None:
+    """The allowance only covers the overhang of a lowercase glyph (#4502).
+
+    The italic-correction allowance is scoped to the preceding glyph: an
+    uppercase letter, digit or symbol after a slanted font carries no such
+    overhang, so a -150 offset after one is a real gap and must keep its
+    space (the amsldoc "A xxx B" case, where the space is part of the text).
+    """
+    page = PdfReader(
+        _page_with_slant_change(
+            b"BT /F1 12 Tf 72 700 Td (A) Tj /F2 12 Tf [-150 (Z)] TJ ET",
+            -14,
+            0,
+        )
+    ).pages[0]
+    assert page.extract_text() == "A Z"
 
 
 @pytest.mark.parametrize(
