@@ -7,16 +7,19 @@ import PIL
 import pytest
 from PIL import Image, features
 
-from pypdf import PdfReader, apply_configuration
+from pypdf import PdfReader, PdfWriter, apply_configuration
 from pypdf._utils import Version
 from pypdf.constants import ColorSpaces, FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, LimitReachedError, PdfReadError
 from pypdf.generic import (
     ArrayObject,
+    BooleanObject,
     DecodedStreamObject,
     DictionaryObject,
     EncodedStreamObject,
+    FloatObject,
     NameObject,
+    NullObject,
     NumberObject,
     PdfObject,
     StreamObject,
@@ -1289,3 +1292,206 @@ def test_handle_flate__indexed_device_n__too_long_lookup(caplog: pytest.LogCaptu
 
     assert image.size == (2, 1)
     assert caplog.messages == ["Invalid Lookup Table in dummy"]
+
+
+@pytest.mark.parametrize(
+    ("color_space", "matte", "image_data", "mask_data", "expected_mode", "expected_pixels"),
+    [
+        pytest.param(
+            ColorSpaces.DEVICE_RGB,
+            [NumberObject(0), NumberObject(0), NumberObject(0)],
+            bytes([51, 51, 51, 0, 0, 0, 10, 20, 30, 200, 0, 0]),
+            bytes([51, 0, 255, 51]),
+            "RGBA",
+            [(255, 255, 255, 51), (0, 0, 0, 0), (10, 20, 30, 255), (255, 0, 0, 51)],
+            id="rgb-black-matte-and-clamp-high",
+        ),
+        pytest.param(
+            ColorSpaces.DEVICE_RGB,
+            [FloatObject(1.0), FloatObject(0.5), NumberObject(0)],
+            bytes([215, 147, 40, 55, 128, 0]),
+            bytes([51, 51]),
+            "RGBA",
+            [(55, 225, 200, 51), (0, 130, 0, 51)],
+            id="rgb-mixed-matte-and-clamp-low",
+        ),
+        pytest.param(
+            ColorSpaces.DEVICE_GRAY,
+            [NumberObject(1)],
+            bytes([215, 255]),
+            bytes([51, 0]),
+            "LA",
+            [(55, 51), (255, 0)],
+            id="gray-white-matte",
+        ),
+        pytest.param(
+            ColorSpaces.DEVICE_CMYK,
+            [NumberObject(0), NumberObject(0), NumberObject(0), NumberObject(0)],
+            bytes([51, 0, 0, 0]),
+            bytes([51]),
+            "RGBA",
+            [(0, 255, 255, 51)],
+            id="cmyk-black-zero-matte",
+        ),
+    ],
+)
+def test_xobj_to_image__smask_matte_unpremultiply(
+    color_space: str,
+    matte: list[Any],
+    image_data: bytes,
+    mask_data: bytes,
+    expected_mode: str,
+    expected_pixels: list[tuple[int, ...]],
+) -> None:
+    """
+    Parent image samples preblended with /Matte are un-premultiplied using the /SMask alpha.
+
+    ISO 32000-1:2008, 11.6.5.3 (Table 146): c' = m + alpha * (c - m), so for
+    alpha > 0 the straight color is c = m + (c' - m) / alpha, clamped to [0, 1].
+    Regression test for issue #2256.
+    """
+    width = len(mask_data)
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(width)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(color_space)
+    image.set_data(image_data)
+
+    mask = _minimal_image_xobject()
+    mask[NameObject(ImageAttributes.WIDTH)] = NumberObject(width)
+    mask[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
+    mask[NameObject(ImageAttributes.MATTE)] = ArrayObject(matte)
+    mask.set_data(mask_data)
+    image[NameObject(ImageAttributes.S_MASK)] = mask
+
+    _, _, result = _xobj_to_image(image)
+
+    assert result.mode == expected_mode
+    assert [result.getpixel((x, 0)) for x in range(width)] == expected_pixels
+
+
+@requires_jpeg2000
+def test_xobj_to_image__smask_matte_on_rgba_source_and_null_matte() -> None:
+    """An RGBA source with an external /SMask + /Matte un-premultiplies its 3 color bands; /Matte null is a no-op."""
+    data = BytesIO()
+    _create_image("RGBA", (2, 1), color=(51, 51, 51, 255)).save(data, format="PNG")
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.WIDTH)] = NumberObject(2)
+    image[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_RGB)
+    image[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.LZW_DECODE)
+    image.set_data(data.getvalue())
+
+    mask = _minimal_image_xobject()
+    mask[NameObject(ImageAttributes.WIDTH)] = NumberObject(2)
+    mask[NameObject(ImageAttributes.HEIGHT)] = NumberObject(1)
+    mask[NameObject(ImageAttributes.MATTE)] = ArrayObject([NumberObject(0), NumberObject(0), NumberObject(0)])
+    mask.set_data(bytes([51, 255]))
+    image[NameObject(ImageAttributes.S_MASK)] = mask
+
+    _, _, result = _xobj_to_image(image)
+    assert result.mode == "RGBA"
+    assert [result.getpixel((0, 0)), result.getpixel((1, 0))] == [(255, 255, 255, 51), (51, 51, 51, 255)]
+
+    # Explicit NullObject /Matte leaves samples untouched without warning.
+    mask[NameObject(ImageAttributes.MATTE)] = NullObject()
+    _, _, result_null = _xobj_to_image(image)
+    assert result_null.getpixel((0, 0)) == (51, 51, 51, 51)
+
+
+@pytest.mark.parametrize(
+    "matte",
+    [
+        NumberObject(0),
+        ArrayObject([NumberObject(0), NumberObject(0)]),
+        ArrayObject([NumberObject(0), NameObject("/Bad"), NumberObject(0)]),
+        ArrayObject([BooleanObject(True), NumberObject(0), NumberObject(0)]),
+    ],
+    ids=["not-an-array", "wrong-length", "non-numeric-item", "boolean-item"],
+)
+def test_xobj_to_image__malformed_smask_matte(
+    matte: PdfObject, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A malformed /Matte entry logs a warning and leaves parent image samples unchanged."""
+    image = _minimal_image_xobject()
+    image[NameObject(ImageAttributes.COLOR_SPACE)] = NameObject(ColorSpaces.DEVICE_RGB)
+    image.set_data(bytes([51, 51, 51]))
+
+    mask = _minimal_image_xobject()
+    mask[NameObject(ImageAttributes.MATTE)] = matte
+    mask.set_data(bytes([51]))
+    image[NameObject(ImageAttributes.S_MASK)] = mask
+
+    _, _, result = _xobj_to_image(image)
+
+    assert result.getpixel((0, 0)) == (51, 51, 51, 51)
+    assert "Ignoring malformed /Matte array" in caplog.text
+
+
+@requires_jpeg2000
+def test_image_replace__preserves_dct_smask_matte_colors_issue_2256() -> None:
+    """Replacing a JPEG image that has an /SMask with /Matte [0 0 0] preserves straight RGB colors (#2256)."""
+    jpeg_buf = BytesIO()
+    # Preblended white (255, 255, 255) over black matte [0, 0, 0] at alpha = 51 -> (51, 51, 51).
+    Image.new("RGB", (8, 8), color=(51, 51, 51)).save(jpeg_buf, format="JPEG", quality=100, subsampling=0)
+
+    source_writer = PdfWriter()
+    page = source_writer.add_blank_page(width=100, height=100)
+
+    indirect_zero = source_writer._add_object(NumberObject(0))
+    mask_stream = EncodedStreamObject()
+    mask_stream.update(
+        {
+            NameObject(ImageAttributes.TYPE): NameObject("/XObject"),
+            NameObject(ImageAttributes.SUBTYPE): NameObject("/Image"),
+            NameObject(ImageAttributes.WIDTH): NumberObject(8),
+            NameObject(ImageAttributes.HEIGHT): NumberObject(8),
+            NameObject(ImageAttributes.COLOR_SPACE): NameObject(ColorSpaces.DEVICE_GRAY),
+            NameObject(ImageAttributes.BITS_PER_COMPONENT): NumberObject(8),
+            NameObject(StreamAttributes.FILTER): NameObject(FilterTypes.FLATE_DECODE),
+            NameObject(ImageAttributes.MATTE): ArrayObject([indirect_zero, NumberObject(0), NumberObject(0)]),
+        }
+    )
+    mask_stream._data = zlib.compress(bytes([51] * 64))
+    mask_ref = source_writer._add_object(mask_stream)
+
+    img_stream = EncodedStreamObject()
+    img_stream.update(
+        {
+            NameObject(ImageAttributes.TYPE): NameObject("/XObject"),
+            NameObject(ImageAttributes.SUBTYPE): NameObject("/Image"),
+            NameObject(ImageAttributes.WIDTH): NumberObject(8),
+            NameObject(ImageAttributes.HEIGHT): NumberObject(8),
+            NameObject(ImageAttributes.COLOR_SPACE): NameObject(ColorSpaces.DEVICE_RGB),
+            NameObject(ImageAttributes.BITS_PER_COMPONENT): NumberObject(8),
+            NameObject(StreamAttributes.FILTER): NameObject(FilterTypes.DCT_DECODE),
+            NameObject(ImageAttributes.S_MASK): mask_ref,
+        }
+    )
+    img_stream._data = jpeg_buf.getvalue()
+    img_ref = source_writer._add_object(img_stream)
+
+    page[NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/XObject"): DictionaryObject({NameObject("/Im0"): img_ref})}
+    )
+    content = DecodedStreamObject()
+    content.set_data(b"q 100 0 0 100 0 0 cm /Im0 Do Q")
+    page[NameObject("/Contents")] = source_writer._add_object(content)
+
+    pdf_bytes = BytesIO()
+    source_writer.write(pdf_bytes)
+    pdf_bytes.seek(0)
+
+    writer = PdfWriter(clone_from=pdf_bytes)
+    for writer_page in writer.pages:
+        for img_obj in writer_page.images:
+            assert img_obj.image is not None
+            img_obj.replace(img_obj.image)
+
+    out_bytes = BytesIO()
+    writer.write(out_bytes)
+    out_bytes.seek(0)
+
+    replaced_img = PdfReader(out_bytes).pages[0].images[0].image
+    assert replaced_img is not None
+    assert replaced_img.getpixel((4, 4)) == (255, 255, 255, 51)

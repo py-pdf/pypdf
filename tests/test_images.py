@@ -164,8 +164,8 @@ def test_image_new_property():
     assert len(reader.pages[0].images.items()) == 36
     assert reader.pages[0].images[0].name == "I0.png"
 
-    expected_image_url = "https://github.com/user-attachments/assets/3bf25760-2113-4e25-b4c2-fc1d3a84a263"
-    expected_image_name = "pdf_font_garbled_image30.png"
+    expected_image_url = "https://github.com/user-attachments/assets/4292a195-9c28-44cf-bd83-2d5522cfbde6"
+    expected_image_name = "pdf_font_garbled_image30_unpremultiplied.png"
     expected_image_data = BytesIO(get_data_from_url(url=expected_image_url, name=expected_image_name))
     assert image_similarity(
         expected_image_data,

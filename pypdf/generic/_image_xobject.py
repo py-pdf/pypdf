@@ -1,4 +1,5 @@
 """Functions to convert an image XObject to an image"""
+import functools
 from collections.abc import Sequence
 from io import BytesIO
 from typing import IO, Any, Literal, TypeAlias, cast
@@ -11,7 +12,9 @@ from ..generic import (
     ArrayObject,
     DecodedStreamObject,
     EncodedStreamObject,
+    FloatObject,
     NullObject,
+    NumberObject,
     TextStringObject,
     is_null_or_none,
 )
@@ -670,6 +673,83 @@ def _get_mode_and_invert_color(
     return mode, invert_color
 
 
+@functools.lru_cache(maxsize=16)
+def _build_matte_lut(matte_component: float) -> bytes:
+    """Build a 65536-byte lookup table indexed by ``(alpha << 8) | color``."""
+    m = matte_component * 255.0
+    rows = [bytes(range(256))]
+    for a in range(1, 256):
+        inv_alpha = 255.0 / a
+        rows.append(
+            bytes(
+                min(255, max(0, round(m + (c - m) * inv_alpha)))
+                for c in range(256)
+            )
+        )
+    return b"".join(rows)
+
+
+def _unpremultiply_matte(
+    img: Image.Image,
+    alpha: Image.Image,
+    s_mask: Any,
+) -> Image.Image:
+    """
+    Undo /Matte preblending on parent image samples using the soft-mask opacity.
+
+    ISO 32000-1:2008, 11.6.5.3 (Table 146): if the soft-mask dictionary has a
+    /Matte array [m_1 ... m_n], each parent color component c' was preblended
+    as c' = m + alpha * (c - m), so for alpha > 0 the straight component is
+    c = m + (c' - m) / alpha, clamped to [0, 1].
+    """
+    matte = s_mask.get_object().get(ImageAttributes.MATTE, NullObject()).get_object()
+    if is_null_or_none(matte):
+        return img
+
+    bands = img.split()
+    color_bands = bands[:-1] if img.mode in ("LA", "RGBA") else bands
+
+    if not isinstance(matte, ArrayObject) or len(matte) != len(color_bands):
+        logger_warning(
+            "Ignoring malformed /Matte array %(matte)s; expected %(count)d numeric values.",
+            source=__name__,
+            matte=matte,
+            count=len(color_bands),
+        )
+        return img
+
+    matte_values: list[float] = []
+    for entry in matte:
+        value = entry.get_object()
+        if not isinstance(value, (NumberObject, FloatObject)):
+            logger_warning(
+                "Ignoring malformed /Matte array %(matte)s; expected %(count)d numeric values.",
+                source=__name__,
+                matte=matte,
+                count=len(color_bands),
+            )
+            return img
+        matte_values.append(float(value))
+
+    _validate_image_size(mode="I", size=img.size)
+    unpremultiplied_bands: list[Image.Image] = []
+    for band, matte_component in zip(color_bands, matte_values):
+        lut = _build_matte_lut(matte_component)
+        packed = Image.frombytes(
+            "I",
+            img.size,
+            _merge_image(mode="LA", bands=(band, alpha)).tobytes(),
+            "raw",
+            "I;16",
+        )
+        unpremultiplied_bands.append(packed.point(lut, "L"))
+
+    if len(unpremultiplied_bands) == 1:
+        return unpremultiplied_bands[0]
+    color_mode = "RGB" if len(unpremultiplied_bands) == 3 else img.mode
+    return _merge_image(mode=color_mode, bands=unpremultiplied_bands)
+
+
 def _apply_alpha(
     *,
     img: Image.Image,
@@ -706,6 +786,7 @@ def _apply_alpha(
         img = _convert_image(image=img, mode="RGB")
     elif img.mode == "1":
         img = _convert_image(image=img, mode="L")
+    img = _unpremultiply_matte(img=img, alpha=alpha, s_mask=s_mask)
     img.putalpha(alpha)
 
     if "JPEG" in image_format:
