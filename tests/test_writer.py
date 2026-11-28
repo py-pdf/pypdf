@@ -4,10 +4,11 @@ import re
 import shutil
 import subprocess
 import zlib
+from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any
+from typing import Any, cast
 from unittest import mock
 
 import pytest
@@ -21,8 +22,9 @@ from pypdf import (
     Transformation,
     apply_configuration,
 )
+from pypdf._doc_common import PdfDocCommon
 from pypdf._utils import get_stream_data
-from pypdf._writer import _NamedDestinationIndex
+from pypdf._writer import _NamedDestinationIndex, _RootPagePrefix
 from pypdf.annotations import Link, Text
 from pypdf.constants import FieldDictionaryAttributes
 from pypdf.errors import DeprecationError, LimitReachedError, PageSizeNotDefinedError, PdfReadError, PyPdfError
@@ -397,6 +399,197 @@ def test_insert_blank_page__no_pages_yet_and_no_size():
     """Matches add_blank_page, which raises rather than an opaque IndexError."""
     with pytest.raises(PageSizeNotDefinedError):
         PdfWriter().insert_blank_page()
+
+
+def _build_writer_with_page_tree(
+    kids_layout: list[Any],
+    *,
+    root_count: int | None = None,
+    indirect_count: bool = False,
+    indirect_kids: bool = False,
+    untyped_page: int | None = None,
+    inline_page: int | None = None,
+    other_generation_of_page: int | None = None,
+) -> PdfWriter:
+    """Build the page tree from a layout like [0, [1, 2], 3], where numbers are pages and lists are nodes."""
+    writer = PdfWriter()
+    pages = [writer.add_blank_page(width, 10).indirect_reference for width in range(1, 5)]
+    root = cast(DictionaryObject, writer.root_object["/Pages"])
+
+    def build_kids(layout: list[Any], parent: IndirectObject) -> tuple[ArrayObject, int]:
+        kids = ArrayObject()
+        page_count = 0
+        for item in layout:
+            if isinstance(item, int):
+                pages[item].get_object()[NameObject("/Parent")] = parent
+                kids.append(pages[item].get_object() if item == inline_page else pages[item])
+                page_count += 1
+                continue
+            node = DictionaryObject({NameObject("/Type"): NameObject("/Pages"), NameObject("/Parent"): parent})
+            node_reference = writer._add_object(node)
+            node_kids, node_count = build_kids(item, node_reference)
+            node[NameObject("/Kids")] = node_kids
+            node[NameObject("/Count")] = NumberObject(node_count)
+            kids.append(node_reference)
+            page_count += node_count
+        return kids, page_count
+
+    kids, page_count = build_kids(kids_layout, root.indirect_reference)
+    if other_generation_of_page is not None:
+        # The writer resolves a reference by its object number only.
+        kids.append(IndirectObject(pages[other_generation_of_page].idnum, 1, writer))
+        page_count += 1
+    root[NameObject("/Kids")] = writer._add_object(kids) if indirect_kids else kids
+    count = NumberObject(root_count or page_count)
+    root[NameObject("/Count")] = writer._add_object(count) if indirect_count else count
+    if untyped_page is not None:
+        del pages[untyped_page].get_object()[NameObject("/Type")]
+    return writer
+
+
+def _get_page_position(writer: PdfWriter, page_number: int, *, walk_tree: bool) -> object:
+    get_page_in_node = PdfDocCommon._get_page_in_node if walk_tree else PdfWriter._get_page_in_node
+    try:
+        node, index = get_page_in_node(writer, page_number)
+    except (KeyError, PyPdfError, TypeError) as exception:
+        return repr(exception)
+    return node.indirect_reference, index
+
+
+def _assert_page_positions_as_in_tree_walk(writer: PdfWriter) -> None:
+    for page_number in range(-1, len(writer.pages) + 2):
+        expected = _get_page_position(writer, page_number, walk_tree=True)
+        assert _get_page_position(writer, page_number, walk_tree=False) == expected
+
+
+@pytest.mark.parametrize(
+    ("kids_layout", "tree_options"),
+    [
+        pytest.param([0, 1, 2, 3], {}, id="flat"),
+        pytest.param([0, [1, 2], 3], {}, id="nested"),
+        pytest.param([0, 1, 2, 3], {"root_count": 2}, id="root-count-too-small"),
+        pytest.param([0, 1, 2, 3], {"root_count": 6}, id="root-count-too-large"),
+        pytest.param([0, 1, 2, 3], {"indirect_count": True}, id="indirect-count"),
+        pytest.param([0, 1, 2, 3], {"indirect_kids": True}, id="indirect-kids"),
+        pytest.param([0, 1, 2, 3], {"untyped_page": 1}, id="page-without-type"),
+        pytest.param([0, 1, 2, 3], {"inline_page": 1}, id="inline-page"),
+        pytest.param([0, 1, 1, 2], {}, id="page-referenced-twice"),
+        pytest.param([[0, 1], 1], {}, id="page-referenced-twice-at-different-levels"),
+        pytest.param([0, 1, 2], {"other_generation_of_page": 1}, id="page-referenced-with-other-generation"),
+    ],
+)
+def test_get_page_in_node__same_as_tree_walk(kids_layout, tree_options):
+    writer = _build_writer_with_page_tree(kids_layout, **tree_options)
+    _assert_page_positions_as_in_tree_walk(writer)
+
+
+def test_insert_page__root_kids_are_checked_once():
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(10, 10)
+    with mock.patch.object(PdfDocCommon, "_get_page_in_node") as walk_tree, mock.patch.object(
+        _RootPagePrefix, "_is_new_page", autospec=True, side_effect=_RootPagePrefix._is_new_page
+    ) as is_new_page:
+        for index in (0, 2, 4):
+            writer.insert_blank_page(5, 5, index=index)
+    walk_tree.assert_not_called()
+    # Each lookup checks one more kid, and each insertion records the new kid.
+    assert is_new_page.call_count == 6
+    assert [page.mediabox.width for page in writer.pages] == [5, 10, 5, 10, 5, 10]
+
+
+def test_insert_page__root_with_pages_before_a_node():
+    writer = _build_writer_with_page_tree([0, 1, [2, 3]])
+    with mock.patch.object(
+        PdfDocCommon, "_get_page_in_node", autospec=True, side_effect=PdfDocCommon._get_page_in_node
+    ) as walk_tree:
+        writer.insert_blank_page(5, 10, index=0)
+        writer.insert_blank_page(6, 10, index=1)
+        assert walk_tree.call_count == 0
+        writer.insert_blank_page(7, 10, index=4)
+        assert walk_tree.call_count == 1
+    stream = BytesIO()
+    writer.write(stream)
+    assert [page.mediabox.width for page in PdfReader(stream).pages] == [5, 6, 1, 2, 7, 3, 4]
+
+
+def test_insert_page__root_kids_after_changes():
+    writer = PdfWriter()
+    for width in (1, 2, 3):
+        writer.add_blank_page(width, 10)
+    writer.insert_blank_page(4, 10, index=0)
+    writer.add_blank_page(8, 10)
+    del writer.pages[1]
+    writer.add_blank_page(5, 10)
+    writer.insert_blank_page(6, 10, index=1)
+    assert [page.mediabox.width for page in writer.pages] == [4, 6, 2, 3, 8, 5]
+    _assert_page_positions_as_in_tree_walk(writer)
+
+    writer.insert_page(writer.pages[3], index=0)
+    _assert_page_positions_as_in_tree_walk(writer)
+
+    other = PdfWriter()
+    other.add_blank_page(7, 10)
+    writer.insert_page(other.pages[0], index=0, excluded_keys=["/Type"])
+    _assert_page_positions_as_in_tree_walk(writer)
+
+
+def _insert_into_incremental_writer(insert: Callable[[PdfWriter, PdfReader], object], *, walk_tree: bool) -> object:
+    writer = PdfWriter()
+    for width in (1, 2):
+        writer.add_blank_page(width, 10)
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+    writer = PdfWriter(reader, incremental=True)
+    tree_walk = PdfDocCommon._get_page_in_node if walk_tree else PdfWriter._get_page_in_node
+    with mock.patch.object(PdfWriter, "_get_page_in_node", tree_walk):
+        try:
+            insert(writer, reader)
+        except (KeyError, PyPdfError) as exception:
+            return repr(exception)
+    return [page.mediabox.width for page in writer.pages]
+
+
+@pytest.mark.parametrize(
+    "insert",
+    [
+        pytest.param(
+            lambda writer, reader: (
+                writer.insert_blank_page(9, 10, index=0),
+                writer.insert_page(reader.pages[0], index=2),
+                writer.insert_blank_page(8, 10, index=3),
+            ),
+            id="page-of-reader-twice",
+        ),
+        pytest.param(
+            lambda writer, reader: (
+                writer.insert_blank_page(9, 10, index=0),
+                writer.insert_page(reader.pages[0], index=1, excluded_keys=["/Type"]),
+            ),
+            id="page-of-reader-without-type",
+        ),
+    ],
+)
+def test_insert_page__page_of_incremental_reader(insert):
+    """Cloning a page of the reader reuses its object number, which can change the page tree."""
+    expected = _insert_into_incremental_writer(insert, walk_tree=True)
+    assert _insert_into_incremental_writer(insert, walk_tree=False) == expected
+
+
+def test_insert_page__after_deleting_only_page_of_node():
+    """Deleting the only page of a node removes two entries from writer.pages, see _VirtualList.__delitem__."""
+    writer = _build_writer_with_page_tree([[0], [1, 2], 3])
+    writer.add_blank_page(5, 10)
+    stream = BytesIO()
+    writer.write(stream)
+
+    writer = PdfWriter(stream, incremental=True)
+    del writer.pages[0]
+    writer.insert_blank_page(9, 10, index=1)
+    stream = BytesIO()
+    writer.write(stream)
+    assert [page.mediabox.width for page in PdfReader(stream).pages] == [2, 9, 3, 4, 5]
 
 
 @pytest.mark.parametrize(
@@ -2893,6 +3086,51 @@ def test_no_i_in_articles():
     writer.append(reader)
 
 
+def test_no_p_in_articles():
+    """A bead without the required /P entry names no page, so it is dropped."""
+    source = PdfWriter()
+    source.add_blank_page(100, 100)
+    source.add_blank_page(100, 100)
+    thread = source._add_object(
+        DictionaryObject({NameObject("/I"): DictionaryObject({NameObject("/T"): TextStringObject("A")})})
+    )
+    rectangle = ArrayObject([NumberObject(0), NumberObject(0), NumberObject(100), NumberObject(100)])
+    first = source._add_object(
+        DictionaryObject({
+            NameObject("/T"): thread,
+            NameObject("/R"): rectangle,
+            NameObject("/P"): source.pages[0].indirect_reference,
+        })
+    )
+    second = source._add_object(
+        DictionaryObject({
+            NameObject("/T"): thread,
+            NameObject("/R"): rectangle,
+            NameObject("/V"): first,
+            NameObject("/N"): first,
+        })
+    )
+    first.get_object()[NameObject("/N")] = second
+    first.get_object()[NameObject("/V")] = second
+    thread.get_object()[NameObject("/F")] = first
+    source.pages[0][NameObject("/B")] = ArrayObject([first])
+    source.pages[1][NameObject("/B")] = ArrayObject([second])
+    stream = BytesIO()
+    source.write(stream)
+
+    writer = PdfWriter()
+    writer.append(PdfReader(stream))
+
+    assert len(writer.pages) == 2
+    assert len(writer.threads) == 1
+    beads = writer.threads[0].get_object()["/F"]
+    assert beads["/P"] == writer.pages[0]
+    # The second bead names no page, so it is not carried over and the chain
+    # closes on the one bead that could be remapped.
+    assert beads["/N"] == beads
+    assert "/B" not in writer.pages[1]
+
+
 @pytest.mark.enable_socket
 def test_damaged_pdf_length_returning_none():
     """
@@ -2951,7 +3189,7 @@ def test_viewerpreferences():
     v.num_copies = 1
     assert v.num_copies == 1
     assert v.print_pagerange is None
-    with pytest.raises(ValueError, match=r"^ArrayObject is expected$"):
+    with pytest.raises(TypeError, match=r"^ArrayObject is expected$"):
         v.print_pagerange = "toto"
     v.print_pagerange = ArrayObject()
     assert len(v.print_pagerange) == 0
@@ -2963,7 +3201,7 @@ def test_viewerpreferences():
 
     assert writer.viewer_preferences.enforce == []
     assert "/Enforce" not in writer.viewer_preferences
-    writer.viewer_preferences.enforce += writer.viewer_preferences.PRINT_SCALING
+    writer.viewer_preferences.enforce += NameObject("/PrintScaling")
     assert writer.viewer_preferences["/Enforce"] == ["/PrintScaling"]
     writer.viewer_preferences.enforce = None
     assert "/Enforce" not in writer.viewer_preferences
@@ -3207,6 +3445,85 @@ def test_reattach_fields():
     assert isinstance(writer.pages[0]["/Annots"][0], IndirectObject)
     del writer.pages[1]["/Annots"]
     assert len(writer.reattach_fields(writer.pages[1])) == 0
+
+
+def _create_null_object(_writer) -> NullObject:
+    return NullObject()
+
+
+def _create_empty_form(_writer) -> DictionaryObject:
+    return DictionaryObject()
+
+
+def _create_reference_to_null(writer) -> IndirectObject:
+    return writer._add_object(NullObject())
+
+
+@pytest.mark.parametrize(
+    ("acro_form", "fields", "annotations"),
+    [
+        pytest.param(_create_null_object, None, None, id="acroform-null"),
+        pytest.param(_create_reference_to_null, None, None, id="acroform-reference-to-null"),
+        pytest.param(_create_empty_form, _create_null_object, None, id="fields-null"),
+        pytest.param(_create_empty_form, _create_reference_to_null, None, id="fields-reference-to-null"),
+        pytest.param(None, None, _create_null_object, id="annots-null"),
+        pytest.param(None, None, _create_reference_to_null, id="annots-reference-to-null"),
+    ],
+)
+def test_reattach_fields__null_entries(acro_form, fields, annotations):
+    """
+    A null /AcroForm, /Fields or /Annots, or a reference to the null object,
+    is read as missing.
+
+    The widget of the second page is reattached in all cases.
+    """
+    writer = PdfWriter()
+    first_page = writer.add_blank_page(100, 100)
+    second_page = writer.add_blank_page(100, 100)
+    widget = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/FT"): NameObject("/Tx"),
+        }
+    )
+    second_page[NameObject("/Annots")] = ArrayObject([writer._add_object(widget)])
+    if acro_form is not None:
+        form = acro_form(writer)
+        if fields is not None:
+            form[NameObject("/Fields")] = fields(writer)
+        writer.root_object[NameObject("/AcroForm")] = form
+    if annotations is not None:
+        first_page[NameObject("/Annots")] = annotations(writer)
+
+    reattached = writer.reattach_fields()
+
+    assert reattached == [widget]
+    assert isinstance(reattached[0], DictionaryObject)
+    # Whatever was null is replaced by a new form with a list of fields
+    form = writer.root_object["/AcroForm"]
+    assert isinstance(form, DictionaryObject)
+    assert isinstance(form["/Fields"], ArrayObject)
+    assert form["/Fields"] == [widget.indirect_reference]
+    assert isinstance(form["/Fields"][0], IndirectObject)
+
+
+@pytest.mark.enable_socket
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        # /AcroForm refers to an object that does not exist
+        ("https://github.com/user-attachments/files/18381733/tika-961883.pdf", "tika-961883.pdf"),
+        # /Annots of a page is null
+        ("https://github.com/user-attachments/files/25507697/sample.pdf", "issue3656.pdf"),
+    ],
+)
+def test_reattach_fields__real_files(url, name):
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url=url, name=name)))
+
+    assert writer.reattach_fields() == []
+
+    assert writer.root_object["/AcroForm"]["/Fields"] == []
 
 
 def test_get_pagenumber_from_indirectobject():
@@ -4062,6 +4379,31 @@ def test_flatten_form_field_without_font_in_resources():
     reader = PdfReader(b)
     form_text_fields = reader.get_form_text_fields()
     assert form_text_fields["Unique reference numberRow1"] == "test"
+
+
+@pytest.mark.enable_socket
+def test_incremental__keeps_generation_of_updated_objects():
+    """The appearance streams of these two fields are stored as `325 1 obj` and `326 1 obj`."""
+    data = get_data_from_url(name="issue-3553.pdf")
+    writer = PdfWriter(BytesIO(data), incremental=True)
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Who is protectedPSC": "Jane Doe", "What is protectedPSC": "Flight"},
+        auto_regenerate=False,
+    )
+    b = BytesIO()
+    writer.write(b)
+    increment = b.getvalue()[len(data):]
+    assert b"\n325 1 obj\n" in increment
+    assert b"\n326 1 obj\n" in increment
+
+    reader = PdfReader(b)
+    annotations = reader.pages[0]["/Annots"]
+    for index, idnum, value in ((2, 325, b"(Jane Doe) Tj"), (3, 326, b"(Flight) Tj")):
+        appearance = annotations[index]["/AP"]["/N"]
+        assert appearance.indirect_reference.idnum == idnum
+        assert appearance.indirect_reference.generation == 1
+        assert value in appearance.get_data()
 
 
 def test_merge_with_null_acroform_does_not_raise_typeerror():

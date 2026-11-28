@@ -96,3 +96,16 @@ def test_viewer_preference__resolves_an_indirect_value(
     assert isinstance(preferences.raw_get(key), IndirectObject)
 
     assert getattr(preferences, preference) == value
+
+
+def test_print_scaling_is_deprecated() -> None:
+    """PRINT_SCALING warns that it is deprecated, but still returns the /PrintScaling name."""
+    preferences = PdfWriter().create_viewer_preferences()
+
+    with pytest.warns(
+        DeprecationWarning,
+        match=r"^ViewerPreferences\.PRINT_SCALING is deprecated and will be removed in pypdf 8\.0\.0\.$",
+    ):
+        name = preferences.PRINT_SCALING
+
+    assert name == NameObject("/PrintScaling")

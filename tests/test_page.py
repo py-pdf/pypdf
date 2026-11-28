@@ -1397,7 +1397,7 @@ def test_merge_resources(apage1, apage2, expected_result, expected_renames):
 
         # Assert
         assert result == expected_result
-    assert renames == expected_renames
+        assert renames == expected_renames
 
 
 def test_merge_page_resources_smoke_test():
@@ -2074,7 +2074,7 @@ def test_get_rectangle__value_is_not_an_array(value, expected):
     stream.seek(0)
 
     with pytest.raises(
-        ValueError, match=f"Expected an array of four values for /MediaBox, {expected}"
+        TypeError, match=f"Expected an array of four values for /MediaBox, {expected}"
     ):
         _ = PdfReader(stream).pages[0].mediabox
 

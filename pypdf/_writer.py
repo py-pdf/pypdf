@@ -222,6 +222,68 @@ class _NamedDestinationIndex:
         self._length = len(names)
 
 
+class _RootPagePrefix:
+    """
+    Track how many of the first kids of the root ``/Pages`` node are pages, each of them once.
+
+    For a page number below that count, the tree walk in ``PdfDocCommon._get_page_in_node``
+    stops at the root's kid with the same index, so ``PdfWriter`` can skip it. The kids are
+    checked only as far as needed and only once while the same ``/Kids`` array keeps its
+    length. ``PdfWriter._add_page`` reports the pages it inserts; any other change to the
+    length of the array makes the next lookup check the kids again.
+    """
+
+    def __init__(self) -> None:
+        self._kids: ArrayObject | None = None
+        self._length = 0
+        self._page_numbers: set[int] = set()
+        self._has_other_kid = False
+
+    def reset(self) -> None:
+        self._kids = None
+
+    def _update(self, kids: ArrayObject) -> None:
+        if kids is self._kids and len(kids) == self._length:
+            return
+        self._kids = kids
+        self._length = len(kids)
+        self._page_numbers = set()
+        self._has_other_kid = False
+
+    def _is_new_page(self, kid: PdfObject) -> bool:
+        """Check whether the kid is a page that is not in the prefix yet."""
+        # Same checks as in the tree walk, which also rejects an object seen before.
+        # The writer resolves a reference by its object number only.
+        if not isinstance(kid, IndirectObject) or kid.idnum in self._page_numbers:
+            return False
+        page = kid.get_object()
+        return isinstance(page, DictionaryObject) and page.get("/Type") == "/Page"
+
+    def contains(self, kids: ArrayObject, page_number: int) -> bool:
+        self._update(kids)
+        while not self._has_other_kid and len(self._page_numbers) <= page_number < len(kids):
+            kid = kids[len(self._page_numbers)]
+            if self._is_new_page(kid):
+                self._page_numbers.add(kid.idnum)
+            else:
+                self._has_other_kid = True
+        return page_number < len(self._page_numbers)
+
+    def record_insertion(self, kids: ArrayObject, index: int) -> None:
+        """Update the count after ``PdfWriter._add_page`` inserted a page at this index of the kids."""
+        if kids is not self._kids or len(kids) != self._length + 1:
+            self.reset()
+            return
+        self._length += 1
+        if index > len(self._page_numbers):
+            return
+        kid = kids[index]
+        if not self._is_new_page(kid):
+            self.reset()
+            return
+        self._page_numbers.add(kid.idnum)
+
+
 class PdfWriter(PdfDocCommon):
     """
     Write a PDF file out, given pages produced by another class or through
@@ -392,6 +454,7 @@ class PdfWriter(PdfDocCommon):
             }
         )
         self.flattened_pages = []
+        self._root_page_prefix = _RootPagePrefix()
         self._page_id2num: dict[int, int] = {}
         self._encryption: Encryption | None = None
         self._encrypt_entry: DictionaryObject | None = None
@@ -611,6 +674,9 @@ class PdfWriter(PdfDocCommon):
         page = cast(
             "PageObject", page_org.clone(self, False, excluded_keys).get_object()
         )
+        if self.incremental and page_org.pdf == self._reader:
+            # Cloning reuses the object numbers of the reader, which can replace pages of the tree.
+            self._root_page_prefix.reset()
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
@@ -618,12 +684,15 @@ class PdfWriter(PdfDocCommon):
         node, idx = self._get_page_in_node(index)
         page[NameObject(PagesAttributes.PARENT)] = node.indirect_reference
 
+        kids = cast(ArrayObject, node[PagesAttributes.KIDS])
         if idx >= 0:
-            cast(ArrayObject, node[PagesAttributes.KIDS]).insert(idx, page.indirect_reference)
+            kids.insert(idx, page.indirect_reference)
             self.flattened_pages.insert(index, page)
         else:
-            cast(ArrayObject, node[PagesAttributes.KIDS]).append(page.indirect_reference)
+            idx = len(kids)
+            kids.append(page.indirect_reference)
             self.flattened_pages.append(page)
+        self._root_page_prefix.record_insertion(kids, idx)
         current: PdfObject | None = node
         recurse = 0
         while not is_null_or_none(current):
@@ -645,6 +714,21 @@ class PdfWriter(PdfDocCommon):
             self._merged_in_pages[page_org.indirect_reference] = page.indirect_reference
 
         return page
+
+    def _get_page_in_node(self, page_number: int) -> tuple[DictionaryObject, int]:
+        top = cast(DictionaryObject, self.root_object["/Pages"])
+        count = top.get("/Count", 1)
+        kids = top.get("/Kids")
+        # Below the root's /Count, the tree walk returns the root and the page number
+        # if all kids up to that index are pages.
+        if (
+            isinstance(count, int)
+            and 0 <= page_number < count
+            and isinstance(kids, ArrayObject)
+            and self._root_page_prefix.contains(kids, page_number)
+        ):
+            return top, page_number
+        return super()._get_page_in_node(page_number)
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
         """
@@ -1174,8 +1258,7 @@ class PdfWriter(PdfDocCommon):
                         ] = self._add_object(appearance_stream_obj)
                     else:  # [/AP][/N] exists
                         n = annotation[AnnotationDictionaryAttributes.AP]["/N"].indirect_reference.idnum  # type: ignore[index]
-                        self._objects[n - 1] = appearance_stream_obj
-                        appearance_stream_obj.indirect_reference = IndirectObject(n, 0, self)
+                        self._replace_object(n, appearance_stream_obj)
                 elif (
                     annotation.get(FieldDictionaryAttributes.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
@@ -1205,20 +1288,22 @@ class PdfWriter(PdfDocCommon):
                 lst += self.reattach_fields(p)
             return lst
 
-        try:
-            af = cast(DictionaryObject, self._root_object[CatalogAttributes.ACRO_FORM])
-        except KeyError:
-            af = DictionaryObject()
-            self._root_object[NameObject(CatalogAttributes.ACRO_FORM)] = af
-        try:
-            fields = cast(ArrayObject, af[InteractiveFormDictEntries.Fields])
-        except KeyError:
-            fields = ArrayObject()
-            af[NameObject(InteractiveFormDictEntries.Fields)] = fields
+        acro_form = self._root_object.get(CatalogAttributes.ACRO_FORM, NullObject()).get_object()
+        if is_null_or_none(acro_form):
+            # Missing, null, or a reference to an object that does not exist
+            acro_form = DictionaryObject()
+            self._root_object[NameObject(CatalogAttributes.ACRO_FORM)] = acro_form
+        af = cast(DictionaryObject, acro_form)
+        field_array = af.get(InteractiveFormDictEntries.Fields, NullObject()).get_object()
+        if is_null_or_none(field_array):
+            field_array = ArrayObject()
+            af[NameObject(InteractiveFormDictEntries.Fields)] = field_array
+        fields = cast(ArrayObject, field_array)
 
-        if "/Annots" not in page:
+        annotation_array = page.get("/Annots", NullObject()).get_object()
+        if is_null_or_none(annotation_array):
             return lst
-        annotations = cast(ArrayObject, page["/Annots"])
+        annotations = cast(ArrayObject, annotation_array)
         for idx, annotation in enumerate(annotations):
             is_indirect = isinstance(annotation, IndirectObject)
             annotation = cast(DictionaryObject, annotation.get_object())
@@ -1271,7 +1356,13 @@ class PdfWriter(PdfDocCommon):
             object_ids = self._collect_incremental_clone_object_ids(reader)
             self._objects = [None] * (object_ids[-1] if object_ids else 0)
             for object_id in object_ids:
-                reader_object = reader.get_object(object_id)
+                # Generation numbers only increase when an object number is reused,
+                # thus the highest one is the version the references point to.
+                generation = max(
+                    (generation for generation, entries in reader.xref.items() if object_id in entries),
+                    default=0,
+                )
+                reader_object = reader.get_object(IndirectObject(object_id, generation, reader))
                 if reader_object is not None:
                     self._objects[object_id - 1] = reader_object.replicate(self)
         else:
@@ -1559,9 +1650,11 @@ class PdfWriter(PdfDocCommon):
             ):
                 idnum = i + 1
                 assert isinstance(obj, PdfObject), "mypy"
+                reference = getattr(obj, "indirect_reference", None)
+                generation = reference.generation if isinstance(reference, IndirectObject) else 0
                 # first write new/modified object
-                object_positions[idnum] = stream.tell()
-                stream.write(f"{idnum} 0 obj\n".encode())
+                object_positions[idnum] = (stream.tell(), generation)
+                stream.write(f"{idnum} {generation} obj\n".encode())
                 obj.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
 
@@ -1588,7 +1681,7 @@ class PdfWriter(PdfDocCommon):
                 [NumberObject(_it) for _su in object_blocks for _it in _su]
             ),
             NameObject("/W"): ArrayObject(
-                [NumberObject(1), NumberObject(4), NumberObject(1)]
+                [NumberObject(1), NumberObject(4), NumberObject(2)]
             ),
             "__streamdata__": b"",
         }
@@ -1607,7 +1700,7 @@ class PdfWriter(PdfDocCommon):
         xr = StreamObject.initialize_from_dictionary(init_data)
         xr.set_data(
             b"".join(
-                [struct.pack(b">BIB", 1, _pos, 0) for _pos in object_positions.values()]
+                [struct.pack(b">BIH", 1, _pos, _gen) for _pos, _gen in object_positions.values()]
             )
         )
         xr.write_to_stream(stream)
@@ -3104,7 +3197,9 @@ class PdfWriter(PdfDocCommon):
             visited.add(article_id)
 
             page = self._get_cloned_page(
-                cast("PageObject", current_article["/P"]), pages, reader
+                cast("PageObject", current_article.get("/P", NullObject()).get_object()),
+                pages,
+                reader,
             )
             if page is not None:
                 if new_article is None:
@@ -3634,36 +3729,11 @@ class PdfWriter(PdfDocCommon):
         page_labels[NameObject("/Nums")] = nums
         self._root_object[NameObject(CatalogAttributes.PAGE_LABELS)] = page_labels
 
-    def _repr_mimebundle_(
-        self,
-        include: Iterable[str] | None = None,
-        exclude: Iterable[str] | None = None,
-    ) -> dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        .. seealso::
-
-           https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
+    def _get_pdf_bytes(self) -> bytes:
+        """Write the document into memory and return its bytes."""
         pdf_data = BytesIO()
         self.write(pdf_data)
-        data = {
-            "application/pdf": pdf_data.getvalue(),
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
+        return pdf_data.getvalue()
 
 
 def _pdf_objectify(obj: dict[str, Any] | str | float | list[Any]) -> PdfObject:
