@@ -641,6 +641,8 @@ class AlgV5:
             A boolean
 
         """
+        if len(key) != 32 or len(permissions_value) != 16:
+            return False
         b8 = b"T" if encrypt_metadata else b"F"
         p1 = struct.pack("<I", permissions) + b"\xff\xff\xff\xff" + b8 + b"adb"
         p2 = aes_ecb_decrypt(key, permissions_value)
@@ -908,6 +910,18 @@ def _get_crypt_filter(filters: DictionaryObject, name: str) -> DictionaryObject:
     if not isinstance(crypt_filter, DictionaryObject):
         raise PdfReadError(f"Crypt filter {name} is missing from /CF or not a dictionary")
     return crypt_filter
+
+
+def _validate_v5_values(values: EncryptionValues) -> None:
+    """Validate byte lengths of V=5 encryption dictionary entries (ISO 32000-2:2020, Table 20)."""
+    if len(values.owner_password_value) < 48:
+        raise PdfReadError("/O entry of the encryption dictionary must be at least 48 bytes")
+    if len(values.user_password_value) < 48:
+        raise PdfReadError("/U entry of the encryption dictionary must be at least 48 bytes")
+    if len(values.owner_encryption_value) != 32:
+        raise PdfReadError("/OE entry of the encryption dictionary must be 32 bytes")
+    if len(values.user_encryption_value) != 32:
+        raise PdfReadError("/UE entry of the encryption dictionary must be 32 bytes")
 
 
 class Encryption:
@@ -1341,6 +1355,7 @@ class Encryption:
             encrypt_metadata = True
         string_types = (ByteStringObject, TextStringObject)
         empty_string = ByteStringObject()
+        is_v5 = alg_ver == 5
         values = EncryptionValues(
             owner_password_value=_get_entry(
                 encryption_entry, "/O", expected_types=string_types, type_name="string", required=True
@@ -1349,15 +1364,27 @@ class Encryption:
                 encryption_entry, "/U", expected_types=string_types, type_name="string", required=True
             ).original_bytes,
             owner_encryption_value=_get_entry(
-                encryption_entry, "/OE", expected_types=string_types, type_name="string", default=empty_string
+                encryption_entry,
+                "/OE",
+                expected_types=string_types,
+                type_name="string",
+                default=empty_string,
+                required=is_v5,
             ).original_bytes,
             user_encryption_value=_get_entry(
-                encryption_entry, "/UE", expected_types=string_types, type_name="string", default=empty_string
+                encryption_entry,
+                "/UE",
+                expected_types=string_types,
+                type_name="string",
+                default=empty_string,
+                required=is_v5,
             ).original_bytes,
             permissions_value=_get_entry(
                 encryption_entry, "/Perms", expected_types=string_types, type_name="string", default=empty_string
             ).original_bytes,
         )
+        if is_v5:
+            _validate_v5_values(values)
         return Encryption(
             version=alg_ver,
             revision=alg_rev,
